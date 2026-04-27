@@ -1,48 +1,196 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
-import { Form, Panel } from 'rsuite';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { formatDateWithoutSeconds } from '@/utils';
-import { addFilterToListRequest } from '@/utils';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetBedTransactionsListQuery } from '@/services/encounterService';
-import { useDispatch } from 'react-redux';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import MyTable from '@/components/MyTable';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetBedTransactionsByDepartmentAndDateRangeQuery } from '@/services/patients/emergency/encounterAssignToBedService';
+import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
+import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
-  const dispatch = useDispatch();
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [initialRefreshDone, setInitialRefreshDone] = useState(false);
 
-  // State to manage the list request used for filtering and pagination
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'department_key',
-        operator: 'match',
-        value: departmentKey
-      }
-    ]
+  const patientBulkIdsRef = useRef<string[]>([]);
+
+  const [
+    getBulkPatientBasicInfo,
+    { data: patientsBasicInfo, isLoading: patientsBulkLoading }
+  ] = useGetBulkPatientBasicInfoMutation();
+
+  const [getRoomsByIds, { data: roomsByIds = [], isLoading: isRoomsByIdsLoading }] =
+    useGetRoomsByIdsMutation();
+
+  const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
+    useGetBedsByIdsMutation();
+
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 15
   });
-  // State to store the selected date range for filtering (fromDate and toDate default to today)
+
+  const [sortState, setSortState] = useState({
+    sortBy: 'transactionDate',
+    sortType: 'desc'
+  });
+
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
   });
-  // Fetch bed transaction data from the backend using the current listRequest as filters
+
+  const [searchParams, setSearchParams] = useState({
+    from: '',
+    to: ''
+  });
+
   const {
-    data: bedTransactionsListResponse,
+    data: bedTransactionsResponse,
     isFetching,
-    isLoading
-  } = useGetBedTransactionsListQuery(listRequest);
+    isLoading,
+    refetch
+  } = useGetBedTransactionsByDepartmentAndDateRangeQuery(
+    {
+      departmentId: departmentKey,
+      from: searchParams.from,
+      to: searchParams.to,
+      page: pagination.page,
+      size: pagination.size,
+      sort: `${sortState.sortBy},${sortState.sortType}`
+    },
+    {
+      skip: !departmentKey || !searchParams.from || !searchParams.to
+    }
+  );
 
-  //Functions
+  const tableData = bedTransactionsResponse?.data ?? [];
 
-  // This function handles manual date-based search for filtering records
+  const patientIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .map((row: any) => row?.patient?.id)
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v));
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  useEffect(() => {
+    if (patientIdsForBulk.length === 0) return;
+
+    patientBulkIdsRef.current = patientIdsForBulk;
+
+    getBulkPatientBasicInfo(patientIdsForBulk as any)
+      .unwrap()
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const roomIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .flatMap((row: any) => [row?.fromRoomId, row?.toRoomId])
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  const bedIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .flatMap((row: any) => [row?.fromBedId, row?.toBedId])
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  useEffect(() => {
+    if (roomIdsForBulk.length === 0) return;
+    getRoomsByIds({ ids: roomIdsForBulk }).catch(() => {});
+  }, [roomIdsForBulk, getRoomsByIds]);
+
+  useEffect(() => {
+    if (bedIdsForBulk.length === 0) return;
+    getBedsByIds({ ids: bedIdsForBulk }).catch(() => {});
+  }, [bedIdsForBulk, getBedsByIds]);
+
+  const patientMap = useMemo(() => {
+    const map = new Map<string, any>();
+    const ids = patientBulkIdsRef.current;
+
+    (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
+      const key = patient?.id ?? ids[index];
+      if (!key) return;
+      map.set(String(key), patient);
+    });
+
+    return map;
+  }, [patientsBasicInfo]);
+
+  const roomsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (roomsByIds ?? []).forEach((room: any) => {
+      if (!room?.id) return;
+      map.set(String(room.id), room);
+    });
+    return map;
+  }, [roomsByIds]);
+
+  const bedsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (bedsByIds ?? []).forEach((bed: any) => {
+      if (!bed?.id) return;
+      map.set(String(bed.id), bed);
+    });
+    return map;
+  }, [bedsByIds]);
+
+  const enrichedTableData = useMemo(() => {
+    return tableData.map((row: any) => {
+      const patientId = row?.patient?.id ?? null;
+      const patient = patientId ? patientMap.get(String(patientId)) : null;
+
+      const firstName = String(patient?.firstName ?? row?.patient?.firstName ?? '').trim();
+      const secondName = String(patient?.secondName ?? row?.patient?.secondName ?? '').trim();
+      const thirdName = String(patient?.thirdName ?? row?.patient?.thirdName ?? '').trim();
+      const lastName = String(patient?.lastName ?? row?.patient?.lastName ?? '').trim();
+
+      const fullName =
+        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() ||
+        row?.patient?.fullName ||
+        '-';
+
+      const dob = patient?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
+      const sexAtBirth =
+        formatEnumString(patient?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
+      const isPrivate = patient?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
+
+      const fromRoom = row?.fromRoomId ? roomsMap.get(String(row.fromRoomId)) : null;
+      const toRoom = row?.toRoomId ? roomsMap.get(String(row.toRoomId)) : null;
+      const fromBed = row?.fromBedId ? bedsMap.get(String(row.fromBedId)) : null;
+      const toBed = row?.toBedId ? bedsMap.get(String(row.toBedId)) : null;
+
+      return {
+        ...row,
+        patientObject: {
+          id: patientId,
+          fullName,
+          medicalRecordNumber:
+            patient?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? '-',
+          dateOfBirth: dob,
+          sexAtBirth,
+          isPrivatePatient: isPrivate
+        },
+        patientAge: dob ? calculateAgeFormat(dob) : null,
+        resolvedFromRoom: fromRoom,
+        resolvedToRoom: toRoom,
+        resolvedFromBed: fromBed,
+        resolvedToBed: toBed
+      };
+    });
+  }, [tableData, patientMap, roomsMap, bedsMap]);
+
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
 
@@ -52,147 +200,192 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     if (fromDate) fromDate.setHours(0, 0, 0, 0);
     if (toDate) toDate.setHours(23, 59, 59, 999);
 
-    if (fromDate && toDate) {
-      setListRequest(
-        addFilterToListRequest(
-          'created_at',
-          'between',
-          `${fromDate.getTime()}_${toDate.getTime()}`,
-          listRequest
-        )
-      );
-    } else if (fromDate) {
-      setListRequest(
-        addFilterToListRequest('created_at', 'gte', fromDate.getTime().toString(), listRequest)
-      );
-    } else if (toDate) {
-      setListRequest(
-        addFilterToListRequest('created_at', 'lte', toDate.getTime().toString(), listRequest)
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'department_key',
-            operator: 'match',
-            value: departmentKey
-          }
-        ]
-      });
-    }
+    setPagination(prev => ({ ...prev, page: 0 }));
+
+    setSearchParams({
+      from: fromDate ? fromDate.toISOString() : '',
+      to: toDate ? toDate.toISOString() : ''
+    });
   };
 
-  //useEffect
+  useEffect(() => {
+    const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+    const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
+
+    if (fromDate) fromDate.setHours(0, 0, 0, 0);
+    if (toDate) toDate.setHours(23, 59, 59, 999);
+
+    setSearchParams({
+      from: fromDate ? fromDate.toISOString() : '',
+      to: toDate ? toDate.toISOString() : ''
+    });
+  }, []);
+
+  useEffect(() => {
+    if (
+      departmentKey &&
+      searchParams.from &&
+      searchParams.to &&
+      !initialRefreshDone
+    ) {
+      refetch();
+      setInitialRefreshDone(true);
+    }
+  }, [departmentKey, searchParams.from, searchParams.to, refetch, initialRefreshDone]);
+
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
-  useEffect(() => {
-    // init list
-    handleManualSearch();
-  }, []);
-  useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
-      dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
-      dispatch(hideSystemLoader());
-    }
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [isLoading, isFetching, dispatch]);
 
-  // table columns
+  const tableLoading =
+    isLoading ||
+    (manualSearchTriggered && isFetching) ||
+    patientsBulkLoading ||
+    isRoomsByIdsLoading ||
+    isBedsByIdsLoading;
+
   const tableColumns = [
     {
-      key: 'queueNumber',
-      title: <Translate>#</Translate>,
-      dataKey: 'queueNumber',
-      render: rowData => rowData?.patient?.patientMrn
+      key: 'medicalRecordNumber',
+      title: <Translate>MRN</Translate>,
+      render: (rowData: any) => rowData?.patientObject?.medicalRecordNumber ?? '-'
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME</Translate>,
-      render: rowData => rowData?.patient?.fullName
-    },
-    {
-      key: 'fromBed',
-      title: <Translate>FROM BED</Translate>,
-      render: rowData => rowData?.fromBed?.name
-    },
-    {
-      key: 'fromRoom',
-      title: <Translate>ROOM</Translate>,
-      render: rowData => rowData.fromRoom?.name
-    },
-    {
-      key: 'toBed',
-      title: <Translate>TO BED</Translate>,
-      render: rowData => rowData?.toBed?.name
-    },
-    {
-      key: 'toRoom',
-      title: <Translate>ROOM</Translate>,
-      render: rowData => rowData.toRoom?.name
-    },
-    {
-      key: 'admitSource',
-      title: <Translate>Admit Source</Translate>,
-      render: rowData =>
-        rowData?.admitOutpatientInpatient?.admitSourceLvalue
-          ? rowData?.admitOutpatientInpatient?.admitSourceLvalue?.lovDisplayVale
-          : rowData?.admitOutpatientInpatient?.admitSourceLkey
-    },
-    {
-      key: 'admissionDate',
-      title: <Translate>Admission Date</Translate>,
-      render: (rowData: any) => {
+      title: 'PATIENT NAME',
+      fullText: true,
+      render: (row: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>MRN: {row?.patientObject?.medicalRecordNumber ?? '-'}</div>
+            <div>Age: {row?.patientAge ?? '-'}</div>
+            <div>Gender: {row?.patientObject?.sexAtBirth ?? '-'}</div>
+          </Tooltip>
+        );
+
         return (
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData?.admitOutpatientInpatient?.createdAt)}
-          </span>
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <div className="encounter-list__patient-name-cell">
+              {row?.patientObject?.isPrivatePatient ? (
+                <Badge color="blue" content="Private">
+                  <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                    {row?.patientObject?.fullName}
+                  </p>
+                </Badge>
+              ) : (
+                <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                  {row?.patientObject?.fullName}
+                </p>
+              )}
+            </div>
+          </Whisper>
         );
       }
     },
     {
-      key: '',
-      title: <Translate>Moved By\At</Translate>,
+      key: 'transactionType',
+      title: <Translate>TRANSACTION TYPE</Translate>,
+      render: (rowData: any) =>
+        rowData?.transactionType ? formatEnumString(rowData?.transactionType) : '-'
+    },
+    {
+      key: 'fromLocation',
+      title: <Translate>FROM</Translate>,
       render: (rowData: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>Room: {rowData?.resolvedFromRoom?.name ?? '-'}</div>
+            <div>Bed: {rowData?.resolvedFromBed?.name ?? '-'}</div>
+            <div>Room ID: {rowData?.fromRoomId ?? '-'}</div>
+            <div>Bed ID: {rowData?.fromBedId ?? '-'}</div>
+          </Tooltip>
+        );
+
         return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="location-table-style">
+              {rowData?.resolvedFromRoom?.name ?? '-'}
+              <br />
+              {rowData?.resolvedFromBed?.name ?? '-'}
+            </span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'toLocation',
+      title: <Translate>TO</Translate>,
+      render: (rowData: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>Room: {rowData?.resolvedToRoom?.name ?? '-'}</div>
+            <div>Bed: {rowData?.resolvedToBed?.name ?? '-'}</div>
+            <div>Room ID: {rowData?.toRoomId ?? '-'}</div>
+            <div>Bed ID: {rowData?.toBedId ?? '-'}</div>
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="location-table-style">
+              {rowData?.resolvedToRoom?.name ?? '-'}
+              <br />
+              {rowData?.resolvedToBed?.name ?? '-'}
+            </span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'transactionDate',
+      title: <Translate>TRANSACTION DATE</Translate>,
+      render: (rowData: any) =>
+        rowData?.transactionDate ? formatDateWithoutSeconds(rowData?.transactionDate) : '-'
+    },
+    {
+      key: 'createdAt',
+      title: 'CREATED BY/AT',
+      expandable: true,
+      render: (row: any) =>
+        row?.createdDate ? (
           <>
-            <span>Current User</span>
+            {row.createdBy}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData?.createdAt)}</span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
           </>
-        );
-      }
+        ) : (
+          ' '
+        )
+    },
+    {
+      key: 'lastModified',
+      title: 'LAST MODIFIED AT / BY',
+      expandable: true,
+      render: (row: any) =>
+        row.lastModifiedDate ? (
+          <>
+            {row.lastModifiedBy}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(row.lastModifiedDate)}
+            </span>
+          </>
+        ) : null
     }
   ];
 
-  const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
-  const totalCount = bedTransactionsListResponse?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+    setPagination({
+      page: 0,
+      size: parseInt(event.target.value, 10)
     });
   };
 
@@ -225,22 +418,32 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       </Form>
     );
   };
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         filters={filters()}
         height={600}
-        data={bedTransactionsListResponse?.object ?? []}
+        data={enrichedTableData}
         columns={tableColumns}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
+        loading={tableLoading}
+        sortColumn={sortState.sortBy}
+        sortType={sortState.sortType as any}
         onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
+          setManualSearchTriggered(true);
+          setSortState({
+            sortBy,
+            sortType
+          });
+          setPagination(prev => ({ ...prev, page: 0 }));
         }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
+        page={pagination.page}
+        rowsPerPage={pagination.size}
+        totalCount={bedTransactionsResponse?.totalCount ?? 0}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />

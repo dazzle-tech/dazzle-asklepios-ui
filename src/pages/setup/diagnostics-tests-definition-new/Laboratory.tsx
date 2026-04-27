@@ -53,10 +53,15 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
     }
   }, [diagnosticsTest]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-      <Form fluid>
+      <Form fluid dir={dir}>
           <div className='container-of-three-fields-diagnostic'>
             <div className='field-in-three-fields-diagnostics'>
         <MyInput

@@ -3,13 +3,13 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { faTrash, faFileArrowDown, faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetPatientAttachmentsQuery, useGetDownloadUrlMutation as useGetPatientDownloadUrlMutation, useDeleteAttachmentMutation as useDeletePatientAttachmentMutation } from '@/services/patients/attachmentService';
 import { useGetDownloadUrlMutation as useGetEncounterDownloadUrlMutation, useDeleteAttachmentMutation as useDeleteEncounterAttachmentMutation, useGetEncounterAttachmentsByEncounterIdsQuery } from '@/services/encounters/attachmentsService';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import { useGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import MyButton from '@/components/MyButton/MyButton';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
@@ -17,7 +17,6 @@ import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/Att
 import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
 import { PatientAttachment as PatientAttachmentType, EncounterAttachment } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
 
 const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -44,35 +43,44 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
     const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
-    // Fetch all encounters for the patient
-    const { data: encountersResponse, isLoading: loadingEncounters } = useGetEncountersQuery(
-        {
-            ...initialListRequest,
-            pageSize: 1000, // Get all encounters
-            filters: [
-                {
-                    fieldName: 'patient_key',
-                    operator: 'match',
-                    value: localPatient?.key || localPatient?.id
-                }
-            ]
-        },
-        { skip: !localPatient?.id && !localPatient?.key }
+    const patientIdNum = useMemo(() => {
+        const v = Number((localPatient as any)?.id ?? (localPatient as any)?.key);
+        return Number.isFinite(v) ? v : Number.NaN;
+    }, [localPatient]);
+
+    // Fetch all encounters for the patient (new API -> returns numeric encounter `id`)
+    const { data: encountersPaged, isLoading: loadingEncounters } = useGetEncountersByPatientQuery(
+        { patientId: patientIdNum as any, page: 0, size: 1000, sort: 'id,desc' },
+        { skip: !Number.isFinite(patientIdNum) || patientIdNum <= 0 }
     );
 
-    const patientEncounters = encountersResponse?.object || [];
-    const encounterIds = patientEncounters.map(enc => enc.id || enc.key).filter(Boolean);
+    const patientEncounters = useMemo<any[]>(() => (encountersPaged?.data ?? []) as any[], [encountersPaged]);
+
+    const encounterIds = useMemo<number[]>(() => {
+        const ids = patientEncounters.map((enc: any) => Number(enc?.id)).filter((n: number) => Number.isFinite(n) && n > 0);
+        return Array.from(new Set(ids));
+    }, [patientEncounters]);
 
     // Fetch patient attachments
-    const { data: patientAttachmentsResponse, refetch: attachmentRefetch, isLoading: loadPatientAttachment } = useGetPatientAttachmentsQuery(
+    const {
+        data: patientAttachmentsResponse,
+        refetch: attachmentRefetch,
+        isLoading: loadPatientAttachment,
+        isUninitialized: isPatientAttachmentsUninitialized
+    } = useGetPatientAttachmentsQuery(
         {
-            patientId: localPatient?.id || localPatient?.key
+            patientId: patientIdNum as any
         },
-        { skip: !localPatient?.id && !localPatient?.key }
+        { skip: !Number.isFinite(patientIdNum) || patientIdNum <= 0 }
     );
 
     // Fetch encounter attachments for all patient encounters using the new endpoint
-    const { data: encounterAttachmentsResponse, refetch: encounterAttachmentsRefetch, isLoading: loadingEncounterAttachments } = useGetEncounterAttachmentsByEncounterIdsQuery(
+    const {
+        data: encounterAttachmentsResponse,
+        refetch: encounterAttachmentsRefetch,
+        isLoading: loadingEncounterAttachments,
+        isUninitialized: isEncounterAttachmentsUninitialized
+    } = useGetEncounterAttachmentsByEncounterIdsQuery(
         {
             encounterIds: encounterIds
         },
@@ -86,7 +94,10 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     const combinedAttachments = [
         ...patientAttachments.map(att => ({ ...att, attachmentType: 'patient' as const, encounterInfo: null })),
         ...encounterAttachments.map(att => {
-            const encounter = patientEncounters.find(enc => (enc.id || enc.key) === att.encounterId);
+            const encounter = patientEncounters.find(enc => {
+                const encId = Number(enc?.id ?? enc?.encounterId ?? enc?.key);
+                return Number.isFinite(encId) && Number(encId) === Number(att.encounterId);
+            });
             return {
                 ...att,
                 attachmentType: 'encounter' as const,
@@ -115,7 +126,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             if (attachmentType === 'patient') {
                 await deletePatientAttachment({
                     id: selectedAttachment.id,
-                    patientId: localPatient?.id || localPatient?.key
+                    patientId: patientIdNum as any
                 }).unwrap();
             } else if (attachmentType === 'encounter') {
                 const encounterAtt = selectedAttachment as any as EncounterAttachment;
@@ -125,8 +136,9 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 }).unwrap();
             }
 
-            attachmentRefetch();
-            encounterAttachmentsRefetch();
+            // Guard refetch: RTK Query throws if we refetch a query that was skipped (uninitialized).
+            if (!isPatientAttachmentsUninitialized) attachmentRefetch();
+            if (!isEncounterAttachmentsUninitialized) encounterAttachmentsRefetch();
             dispatch(notify({ msg: 'Attachment Deleted Successfully', sev: 'success' }));
             handleClearAttachmentDelete();
         } catch (error) {
@@ -148,8 +160,8 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
 
     // Refetch all attachments (patient + encounter)
     const refetchAllAttachments = async () => {
-        attachmentRefetch();
-        encounterAttachmentsRefetch();
+        if (!isPatientAttachmentsUninitialized) attachmentRefetch();
+        if (!isEncounterAttachmentsUninitialized) encounterAttachmentsRefetch();
     };
 
     // Handle Open Edit Modal
@@ -295,10 +307,10 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             render: (rowData: any) => {
                 if (rowData.attachmentType === 'encounter' && rowData.encounterId) {
                     const encounter = patientEncounters.find(enc =>
-                        Number(enc.key) === Number(rowData.encounterId)
+                        Number(enc?.id) === Number(rowData.encounterId)
                     );
                     if (encounter) {
-                        return encounter.visitId;         
+                        return encounter.encounterNumber ?? encounter.id;
                     }
                     return rowData.encounterId;
                 }
@@ -382,7 +394,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             <AttachmentUploadModal
                 isOpen={attachmentsModalOpen}
                 setIsOpen={setAttachmentsModalOpen}
-                patientId={localPatient?.id || localPatient?.key}
+                patientId={patientIdNum as any}
                 refetchData={refetchAllAttachments}
                 source='PATIENT_PROFILE_ATTACHMENT'
             />
@@ -412,7 +424,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 open={editModalOpen}
                 onClose={handleCloseEditModal}
                 selectedAttachment={selectedAttachment}
-                patientId={localPatient?.id || localPatient?.key}
+                patientId={patientIdNum as any}
                 attachmentTypesLov={attachmentTypesLov}
                 onUpdateSuccess={refetchAllAttachments}
             />

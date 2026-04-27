@@ -2,7 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Row, Text, Message, useToaster } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import Icd10Search from '@/pages/medical-component/Icd10Search';
+import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGenerateDischargePdfMutation } from '@/services/setup/dischargeService';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
@@ -31,7 +31,6 @@ import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
-  useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
 
 import { useGetProceduresQuery } from '@/services/procedureService';
@@ -45,6 +44,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import Prescription from '../prescription';
 import MyModal from '@/components/MyModal/MyModal';
 import PrescriptionNew from '@/pages/encounter/encounter-component/prescription-new';
+import Translate from '@/components/Translate';
 
 // Helper to join values
 const joinValuesFromArray = (values: any[]) => {
@@ -60,7 +60,7 @@ const DischargePlanning = () => {
   const patient = state.patient;
   const encounter = state.encounter;
 
-const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
   // Local
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -73,15 +73,14 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const {
     data: existingData,
     isFetching: loadingExisting
-  } = useGetDischargePlanningByEncounterQuery(Number(encounter.key));
+  } = useGetDischargePlanningByEncounterQuery(encounter?.id);
 
   // ------------------ STATE ------------------
   const [object, setObject] = useState({
     ...newDischargePlanning,
-    patientId: Number(patient.key),
-    encounterId: Number(encounter.key)
+    patientId: patient?.id,
+    encounterId: encounter?.id
   });
-
   // tags
   const [medicalEquipmentTags, setMedicalEquipmentTags] = useState<string[]>([]);
   const [topicsCoveredTags, setTopicsCoveredTags] = useState<string[]>([]);
@@ -129,10 +128,10 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     isFetching: isDiagnosisFetching
   } = useGetPatientDiagnosisQuery(diagnosisListRequest);
 
-  const {
-    data: encounterReviewOfSystemsSummaryResponse,
-    isFetching: isReviewSystemsFetching
-  } = useGetEncounterReviewOfSystemsQuery(encounter.key);
+  // const {
+  //   data: encounterReviewOfSystemsSummaryResponse,
+  //   isFetching: isReviewSystemsFetching
+  // } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
   const [proceduresListRequest] = useState({
     ...initialListRequest,
@@ -157,10 +156,10 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     ]
   });
 
-  const {
-    data: orderTestList,
-    isLoading: loadTests
-  } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  // const {
+  //   data: orderTestList,
+  //   isLoading: loadTests
+  // } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
 
   const [prescriptionsListRequest] = useState({
     ...initialListRequest,
@@ -188,10 +187,10 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     ]
   });
 
-  const {
-    data: diagnosticTestsResponse,
-    isFetching: isDiagnosticTestsFetching
-  } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
+  // const {
+  //   data: diagnosticTestsResponse,
+  //   isFetching: isDiagnosticTestsFetching
+  // } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
   const readinessStatus = useEnumOptions("ReadinessStatus");
 
@@ -202,12 +201,12 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const isDataLoading =
     isGeneratingPdf ||
     isDiagnosisFetching ||
-    isReviewSystemsFetching ||
+    // isReviewSystemsFetching ||
     isProceduresFetching ||
     loadTests ||
     isPrescriptionsFetching ||
     isGenericMedicationsFetching ||
-    isDiagnosticTestsFetching ||
+    // isDiagnosticTestsFetching ||
     loadingExisting;
 
   // ------------------ UPSERT / UPDATE ------------------
@@ -226,7 +225,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
 
   const handleSave = async () => {
-        const requiredFields = [
+    const requiredFields = [
       { field: "expectedDischargeDate", label: "Expected discharge date" },
       { field: "readinessStatus", label: "Readiness status" },
       { field: "diagnosisCode", label: "Diagnosis" }
@@ -257,8 +256,8 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         ...object,
         medicalEquipment: medicalEquipmentTags.join(", "),
         topicsCovered: topicsCoveredTags.join(", "),
-        patientId: Number(patient.key),
-        encounterId: Number(encounter.key),
+        patientId: patient?.id,
+        encounterId: encounter?.id,
       };
 
 
@@ -352,15 +351,15 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         };
       }) || [];
 
-    const reviewSystemsData =
-      encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
-        system: item?.systemLvalue?.lovDisplayVale || '',
-        systemDetail:
-          item?.systemDetailLvalue?.lovDisplayVale ||
-          item?.systemDetailLkey ||
-          '',
-        notes: item?.notes || ''
-      })) || [];
+    // const reviewSystemsData =
+    //   encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
+    //     system: item?.systemLvalue?.lovDisplayVale || '',
+    //     systemDetail:
+    //       item?.systemDetailLvalue?.lovDisplayVale ||
+    //       item?.systemDetailLkey ||
+    //       '',
+    //     notes: item?.notes || ''
+    //   })) || [];
 
     const joinValues = (keys: any[], lovValues: any) =>
       keys
@@ -403,14 +402,14 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         };
       }) || [];
 
-    const diagnosticTestsData =
-      diagnosticTestsResponse?.object?.map((test: any) => ({
-        testName: test?.test?.testName || '',
-        processingStatus:
-          test?.processingStatusLvalue?.lovDisplayVale ||
-          test?.processingStatusLkey ||
-          ''
-      })) || [];
+    // const diagnosticTestsData =
+    //   diagnosticTestsResponse?.object?.map((test: any) => ({
+    //     testName: test?.test?.testName || '',
+    //     processingStatus:
+    //       test?.processingStatusLvalue?.lovDisplayVale ||
+    //       test?.processingStatusLkey ||
+    //       ''
+    //   })) || [];
 
     return {
       patient: patientData,
@@ -418,10 +417,10 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
       user: userData,
       facility: facilityData,
       diagnoses: diagnosesData,
-      reviewSystems: reviewSystemsData,
+      // reviewSystems: reviewSystemsData,
       procedures: proceduresData,
       prescriptions: prescriptionsData,
-      diagnosticTests: diagnosticTestsData
+      // diagnosticTests: diagnosticTestsData
     };
   };
 
@@ -489,8 +488,15 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   };
 
   // ------------------ RENDER ------------------
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Row gutter={15} className="d">
         <Form fluid>
           <Col md={12}>
@@ -596,10 +602,11 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                       <Col md={24}>
                         <div className="container-ofiicd10-search-discharge-planning">
                           <Icd10Search
-                          
                             object={object}
                             setOpject={setObject}
                             fieldName="diagnosisCode"
+                            label="Diagnosis"
+                            mode="singleICD10"
                           />
                         </div>
                       </Col>
@@ -693,7 +700,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                   <>
                     <Row>
                       <Col md={12}>
-                        <Text>Medications to Continue</Text>
+                        <Text><Translate>Medications to Continue</Translate></Text>
                       </Col>
                       <Col md={12}>
                         <MyButton
@@ -821,6 +828,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Leaflet</Translate>}
                           fieldName="materialLeaflet"
                           showLabel={false}
                           record={object}
@@ -832,6 +840,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Verbal</Translate>}
                           fieldName="materialVerbal"
                           showLabel={false}
                           record={object}
@@ -843,6 +852,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Video</Translate>}
                           fieldName="materialVideo"
                           showLabel={false}
                           record={object}
@@ -889,8 +899,8 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
           loading={isDataLoading}
           disabled={isDataLoading}
         >
-          <FaModx title="Generate Report" size={20} />
-          {isDataLoading ? 'Preparing...' : isGeneratingPdf ? 'Generating...' : 'Generate Report'}
+          <FaModx title='Generate Report' size={20} />
+          {isDataLoading ? <Translate>Preparing...</Translate> : isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Generate Report</Translate>}
         </MyButton>
 
         <MyButton
@@ -899,7 +909,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
           disabled={isGeneratingPdf}
         >
           <FontAwesomeIcon icon={faPrint} />
-          {isGeneratingPdf ? 'Generating...' : 'Print Report'}
+          {isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Print Report</Translate>}
         </MyButton>
 
         <MyButton
@@ -915,29 +925,29 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         </MyButton>
       </div>
 
-        <MyModal
-          open={prescriptionModalOpen}
-          setOpen={setPrescriptionModalOpen}
-          title="Prescription"
-          size="70vw"
-          hideBack={true}
-          steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
+      <MyModal
+        open={prescriptionModalOpen}
+        setOpen={setPrescriptionModalOpen}
+        title="Prescription"
+        size="70vw"
+        hideBack={true}
+        steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
 
-          content={
-            <PrescriptionNew
-              patient={patient}
-              encounter={encounter}
-              closeModal={() => setPrescriptionModalOpen(false)}
-            />
-          }
+        content={
+          <PrescriptionNew
+            patient={patient}
+            encounter={encounter}
+            closeModal={() => setPrescriptionModalOpen(false)}
+          />
+        }
 
-          actionButtonLabel="Save"
-          hideActionBtn={true}
-        />
+        actionButtonLabel="Save"
+        hideActionBtn={true}
+      />
 
 
 
-    </>
+    </div>
   );
 };
 

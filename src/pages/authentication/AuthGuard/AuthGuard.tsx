@@ -1,45 +1,83 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
-import { logout, checkTokenValidity } from '@/reducers/authSlice';
+import { logout, setToken } from '@/reducers/authSlice';
 
-// ==================
-// AuthGuard Component
-// ==================
-// This component protects routes by checking if the user is authenticated.
-// - It validates the token when the component mounts.
-// - It re-checks the token periodically (every 60 seconds).
-// - If the token is invalid or session is expired, it logs the user out and redirects to login.
-// Wrap protected routes with <AuthGuard> ... </AuthGuard>.
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
-  const { token, sessionExpiredBackdrop } = useSelector((state: RootState) => state.auth);
 
-  // Check token validity on component mount
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  const { token, sessionExpiredBackdrop } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  const isLoginPage = location.pathname === '/login';
+
+  const isPublicPage = [
+    '/login',
+    '/reset-password',
+    '/create-password',
+  ].includes(location.pathname);
+
   useEffect(() => {
-    dispatch(checkTokenValidity());
-  }, [dispatch]);
+    const storedToken = localStorage.getItem('id_token');
 
-  // Re-check token validity every 60 seconds (to auto-logout on expiration)
+    if (!token && storedToken) {
+      dispatch(setToken(storedToken));
+    }
+
+    setIsCheckingAuth(false);
+  }, []);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch(checkTokenValidity());
-    }, 60000); // 1 minute
+    if (token && isLoginPage) {
+      navigate('/', { replace: true });
+    }
+  }, [token, isLoginPage, navigate]);
 
-    return () => clearInterval(interval); // cleanup on unmount
-  }, [dispatch]);
-
-  // Redirect to login if token is missing or session expired
   useEffect(() => {
-    if (!token || sessionExpiredBackdrop) {
+    if (isCheckingAuth) return;
+    if (isPublicPage) return;
+
+    const storedToken = localStorage.getItem('id_token');
+
+    if ((!token && !storedToken) || sessionExpiredBackdrop) {
       dispatch(logout());
       navigate('/login', { replace: true });
     }
-  }, [token, sessionExpiredBackdrop, dispatch, navigate]);
+  }, [
+    isCheckingAuth,
+    isPublicPage,
+    token,
+    sessionExpiredBackdrop,
+    dispatch,
+    navigate,
+  ]);
 
-  // Render child components if authenticated
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (
+        (event.key === 'id_token' && event.newValue === null) ||
+        event.key === 'logout_event'
+      ) {
+        dispatch(logout());
+        navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [dispatch, navigate]);
+
+  if (isCheckingAuth && !isPublicPage) {
+    return null;
+  }
+
   return <>{children}</>;
 };
 

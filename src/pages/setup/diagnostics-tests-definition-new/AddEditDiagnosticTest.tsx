@@ -56,7 +56,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   testRequest
 }) => {
   const dispatch = useAppDispatch();
-    const authSlice = useAppSelector(state => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState({ ...newPathology });
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([]);
@@ -83,7 +83,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
     ...initialListRequest,
     pageSize: 1000
   });
-  const {data:facility}=useGetFacilityByIdQuery(selectedDepartment?.facilityId ?? skipToken, { skip: !selectedDepartment?.facilityId });
+  const { data: facility } = useGetFacilityByIdQuery(selectedDepartment?.facilityId ?? skipToken, { skip: !selectedDepartment?.facilityId });
   // Fetch Age Group Lov response
 
   const ageGroups = useEnumOptions('AgeGroupType');
@@ -321,14 +321,27 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   }, [open, testRequest?.type]);
 
   useEffect(() => {
-   if(open && !diagnosticsTest?.id){
-    console.log('Facility data in useEffect:', facility);
+    if (open && !diagnosticsTest?.id) {
+      console.log('Facility data in useEffect:', facility);
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        currency: facility?.defaultCurrency ?? null
+      }));
+    }
+  }, [open, facility]);
+
+  useEffect(() => {
+
+  if (!diagnosticsTest?.appointable) {
     
-    setDiagnosticsTest(prev => ({
-      ...prev,
-      currency:facility?.defaultCurrency ?? null 
-    }));}
-  }, [open,facility]);
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+      }));
+    
+  }
+}, [diagnosticsTest?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -456,7 +469,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
                 <MyInput
-                required
+                  required
                   width="100%"
                   fieldName="price"
                   fieldType='number'
@@ -589,12 +602,67 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                 />
               </div>
             </div>
+
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
+                <MyInput
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                  width="100%"
+                  required
+                />
+              </div>
+              {diagnosticsTest?.appointable && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultDurationMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                    />
+                  </div>
+                )}
+            </div>
+             {diagnosticsTest?.appointable && (
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferBeforeMinutes"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                  width="100%"
+                  required={diagnosticsTest?.appointable}
+                />
+              </div>
+              <div className="container-of-field-diagnostic">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferAfterMinutes"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                  width="100%"
+                  required={diagnosticsTest?.appointable}
+                />
+              </div>
+            </div>
+             )}
           </Form>
         );
       case 1:
         return handleShowComponent();
     }
   };
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -613,7 +681,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       setOpen={setOpen}
       position="right"
       title={diagnosticsTest?.id ? 'Edit Diagnostic Test' : 'New Diagnostic Test'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       steps={[
         {
           title: 'Basic Info',

@@ -1,115 +1,193 @@
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import Translate from '@/components/Translate';
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { resetRefetchPatientSide } from '@/reducers/refetchPatientSide';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
 import {
-  useGetAllergiesQuery,
-  useGetObservationSummariesQuery,
-  useGetWarningsQuery
-} from '@/services/observationService';
+  useGetLatestVitalSignsByEncounterIdQuery,
+  useLazyGetLatestVitalSignsByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
+import {
+  useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery
+} from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import {
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import {
+  useGetPrimaryDocumentByPatientQuery,
+  useLazyGetPrimaryDocumentByPatientQuery
+} from '@/services/patients/patientDocumentsService';
+import {
+  useGetLatestPatientObservationsComplaintsByEncounterIdQuery,
+  useLazyGetLatestPatientObservationsComplaintsByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { useGetCurrentMedicationsQuery } from '@/services/patients/currentMedicationService';
+import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
-import { initialListRequest } from '@/types/types';
+import { newPatient } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
-  faExclamationTriangle,
   faFileWaveform,
   faHandDots,
   faIdCard,
-  faUser
+  faScaleBalanced,
+  faStethoscope,
+  faUser,
+  faTriangleExclamation,
+  faPills
 } from '@fortawesome/free-solid-svg-icons';
-import { IoMdClose } from "react-icons/io";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
-import { GiMedicalThermometer } from 'react-icons/gi';
+import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
-import { newApPatient } from '@/types/model-types-constructor';
-import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
-import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
-import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
-import { useGetAllergensQuery } from '@/services/setup/allergensService';
-import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import Translate from '@/components/Translate';
-import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
-import { newPatient} from '@/types/model-types-constructor-new';
 
-const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
+const PatientSide = ({
+  patient,
+  encounter,
+  refetchList = null,
+  setPatient,
+  balance = undefined,
+  showDocumentInfo = true,
+  showPatientInfo = true,
+  showMeasurements = true,
+  showConditions = true,
+  showDiagnosis = true,
+  showVisitDetails = true,
+  showAllergiesWarnings = true,
+  showBalance = true,
+  showCurrentMeds = true
+}) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
+  const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
+  const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
   const dispatch = useDispatch();
+
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
   const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
-
-  // ===== Helpers to avoid NaN / bad output =====
   const toNumber = (v: any) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   };
+
   const fmt = (v: number | null | undefined, digits = 2, fallback = '') =>
     Number.isFinite(v as number) ? (v as number).toFixed(digits) : fallback;
+
   const textOr = (v: any, fallback = '') => (v == null || v === '' ? fallback : v);
-
-  // Existing queries
-  const { data: patirntObservationlist, refetch } = useGetObservationSummariesQuery({
-    ...initialListRequest,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key ?? undefined
-      }
-    ]
-  });
-
-  // New queries for allergies and warnings
-  const { data: allergiesResponse, refetch: refetchAllergies } = useGetAllergiesQuery(
-    {
-      ...initialListRequest,
-      pageSize: 5, // Limit to show only recent ones
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
-      ]
-    },
-    { skip: !patient?.key }
-  );
 
   const { data: allergensListResponse } = useGetAllergensQuery({});
   const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
 
-   const {
-    data: warningsListResponse,
-    refetch: refetchWarnings,
-  } = useGetPatientWarningsByPatientIdQuery(
-    {
-      patientId: patient?.id,
-      showCancelled: false,
-      // ...paginationParams
-    },
-    {
+  const { data: warningsListResponse, refetch: refetchWarnings } =
+    useGetPatientWarningsByPatientIdQuery(
+      {
+        patientId: patient?.id,
+        showCancelled: false
+      },
+      {
+        skip: !patient?.id
+      }
+    );
+
+  const { data: allergiesListResponse, refetch: refetchAllergies } =
+    useGetPatientAllergiesByPatientIdQuery(
+      {
+        patientId: patient?.id,
+        showCancelled: false
+      },
+      {
+        skip: !patient?.id
+      }
+    );
+
+  const { data: primaryDocument, refetch: refetchPrimaryDocument } =
+    useGetPrimaryDocumentByPatientQuery(patient?.id, {
       skip: !patient?.id
+    });
+
+  const [triggerGetPrimaryDocument] = useLazyGetPrimaryDocumentByPatientQuery();
+
+  const { data: latestVitalSigns, refetch: refetchLatestVitalSigns } =
+    useGetLatestVitalSignsByEncounterIdQuery(
+      { encounterId: encounter?.id },
+      {
+        skip: !encounter?.id
+      }
+    );
+
+  const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
+  const [latestBodyMeasurements, setLatestBodyMeasurements] = useState<any>(null);
+  const [triggerGetBodyMeasurementsList] = useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery();
+  const [triggerExistsPrimaryDiagnosis] = useLazyExistsPatientDiagnosisByEncounterIdQuery();
+  const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
+  const {
+    data: latestPatientObservationsComplaints,
+    refetch: refetchLatestPatientObservationsComplaints
+  } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
+    { encounterId: encounter?.id },
+    {
+      skip: !encounter?.id
     }
   );
 
+  // ── Current Medications ──────────────────────────────────────────────────
+  const { data: currentMedicationsResponse } = useGetCurrentMedicationsQuery(
+    { patientId: patient?.id, page: 0, size: 100 },
+    { skip: !patient?.id }
+  );
 
-  const [bodyMeasurements, setBodyMeasurements] = useState<{
-    height: number | string | null;
-    weight: number | string | null;
-    headcircumference: number | string | null;
-  }>({
-    height: null,
-    weight: null,
-    headcircumference: null
+  const { data: activeIngredientsResponse } = useGetActiveIngredientsQuery(
+    { page: 0, size: 1000 },
+    { skip: !patient?.id }
+  );
+
+  const activeIngredientMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activeIngredientsResponse?.data?.forEach((item: any) => {
+      map.set(String(item.id), item.name);
+    });
+    return map;
+  }, [activeIngredientsResponse]);
+
+  const currentMeds = useMemo(
+    () => currentMedicationsResponse?.data ?? [],
+    [currentMedicationsResponse]
+  );
+
+  const getMedColor = () => ({
+    bg: 'var(--light-blue, #dbeafe)',
+    text: 'var(--primary-blue, #1d4ed8)'
   });
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const patientConditionItems =
+    latestPatientObservationsComplaints?.patientConditions
+      ?.split(',')
+      .map(item => item.trim())
+      .filter(Boolean) || [];
+
+  const getPatientConditionColors = () => {
+    return {
+      bg: 'var(--light-purple, #f3e8ff)',
+      text: 'var(--primary-purple, #7e22ce)'
+    };
+  };
+
+  const [triggerGetLatestPatientObservationsComplaints] =
+    useLazyGetLatestPatientObservationsComplaintsByEncounterIdQuery();
 
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
@@ -119,19 +197,47 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     { skip: !patient?.id }
   );
 
+  const encounterIdNumber: number | null = encounter?.id ? Number(encounter.id) : null;
+
+  const [fetchIcdByIds] = useLazyGetIcdDiagnosesByIdsQuery();
+  const [icdMap, setIcdMap] = useState<Record<number, any>>({});
+
+  const diagnosisIds = useMemo(() => {
+    const id = Number(primaryDiagnosis?.diagnosisId);
+    return Number.isFinite(id) && id > 0 ? [id] : [];
+  }, [primaryDiagnosis]);
+
   useEffect(() => {
-    setBodyMeasurements({
-      height: patirntObservationlist?.object?.find(
-        item => item.latestheight != null && item.latestheight != 0
-      )?.latestheight,
-      weight: patirntObservationlist?.object?.find(
-        item => item.latestweight != null && item.latestweight != 0
-      )?.latestweight,
-      headcircumference: patirntObservationlist?.object?.find(
-        item => item.latestheadcircumference != null && item.latestheadcircumference != 0
-      )?.latestheadcircumference
-    });
-  }, [patirntObservationlist]);
+    let cancelled = false;
+
+    const load = async () => {
+      if (!diagnosisIds.length) return;
+
+      const missing = diagnosisIds.filter(id => !icdMap[id]);
+      if (!missing.length) return;
+
+      try {
+        const resp = await fetchIcdByIds({ ids: missing, timestamp: Date.now() }).unwrap();
+        if (cancelled) return;
+
+        setIcdMap(prev => {
+          const next = { ...prev };
+          for (const dto of resp ?? []) {
+            const id = Number((dto as any)?.id);
+            if (Number.isFinite(id) && id > 0) next[id] = dto;
+          }
+          return next;
+        });
+      } catch {
+        //
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [diagnosisIds, fetchIcdByIds, icdMap]);
 
   useEffect(() => {
     if (
@@ -145,50 +251,132 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     }
   }, [fetchPatientImageResponse]);
 
+  const loadLatestBodyMeasurements = async (patientId: number | null) => {
+    if (!patientId) {
+      setLatestBodyMeasurements(null);
+      return;
+    }
+
+    try {
+      const response = await triggerGetBodyMeasurementsList({
+        patientId,
+        page: 0,
+        size: 1,
+        sort: 'createdDate,desc'
+      }).unwrap();
+
+      const latest = response?.content?.[0] ?? null;
+      setLatestBodyMeasurements(latest);
+    } catch {
+      setLatestBodyMeasurements(null);
+    }
+  };
+
+  const loadPrimaryDiagnosis = async (encounterId: number | null) => {
+    if (!encounterId) {
+      setPrimaryDiagnosis(null);
+      setPrimaryDiagnosisError(null);
+      return;
+    }
+
+    try {
+      const exists = await triggerExistsPrimaryDiagnosis({ encounterId }).unwrap();
+      if (!exists) {
+        setPrimaryDiagnosis(null);
+        setPrimaryDiagnosisError(null);
+        return;
+      }
+
+      const resp = await triggerGetPrimaryDiagnosis({
+        encounterId,
+        timestamp: Date.now()
+      }).unwrap();
+
+      setPrimaryDiagnosis(resp ?? null);
+      setPrimaryDiagnosisError(null);
+    } catch (error: any) {
+      if (error?.status === 404) {
+        setPrimaryDiagnosis(null);
+        setPrimaryDiagnosisError(error);
+        return;
+      }
+
+      setPrimaryDiagnosis(null);
+      setPrimaryDiagnosisError(error);
+    }
+  };
+
+  useEffect(() => {
+    loadPrimaryDiagnosis(encounterIdNumber);
+  }, [encounterIdNumber]);
+
+  useEffect(() => {
+    loadLatestBodyMeasurements(patient?.id ? Number(patient.id) : null);
+  }, [patient?.id]);
+
   useEffect(() => {
     if (refetchList) {
-      refetch();
-    }
-  }, [refetchList, refetch]);
+      if (patient?.id) {
+        triggerGetPrimaryDocument(patient?.id);
+        loadLatestBodyMeasurements(Number(patient.id));
+      }
 
-  const handleImageClick = type => {
-    if (patient?.key) profileImageFileInputRef.current?.click();
-  };
+      if (encounter?.id) {
+        triggerGetLatestVitalSigns({ encounterId: encounter?.id });
+        triggerGetLatestPatientObservationsComplaints({ encounterId: encounter?.id });
+        loadPrimaryDiagnosis(Number(encounter.id));
+      }
+    }
+  }, [
+    refetchList,
+    triggerGetPrimaryDocument,
+    triggerGetLatestVitalSigns,
+    triggerGetLatestPatientObservationsComplaints,
+    patient?.id,
+    encounter?.id
+  ]);
 
   useEffect(() => {
     if (refetchPatientSide) {
-      refetch();
+      if (patient?.id) {
+        refetchPrimaryDocument();
+      }
+
+      if (encounter?.id) {
+        refetchLatestVitalSigns();
+        refetchLatestPatientObservationsComplaints();
+        loadPrimaryDiagnosis(Number(encounter.id));
+      }
+      if (patient?.id) {
+        loadLatestBodyMeasurements(Number(patient.id));
+      }
+
       dispatch(resetRefetchPatientSide());
     }
-  }, [refetchPatientSide, refetch, dispatch]);
+  }, [
+    refetchPatientSide,
+    refetchPrimaryDocument,
+    refetchLatestVitalSigns,
+    refetchLatestPatientObservationsComplaints,
+    patient?.id,
+    encounter?.id,
+    dispatch
+  ]);
 
-  // Helper function to get allergen name
-  const getAllergenName = (allergenId: number, medicationClassId: number) => {
-    // if (!allergensListToGetName?.object) return 'Loading...';
-    // const found = allergensListToGetName.object.find(item => item.key === allergenKey);
-    // return found?.allergenName || 'Unknown';
-    if (allergenId && allergensListResponse?.data) {
-      const allergen = allergensListResponse.data.find(
-        (item: any) => item.id === allergenId
-      );
-      return <p>{allergen?.name ?? '-'}</p>;
-    }
-
-    else if (medicationClassId && medicationClassesListResponse) {
-      const medicationClass = medicationClassesListResponse.find(
-        (item: any) => item.id === medicationClassId
-      );
-      return <p>{medicationClass?.name ?? '-'}</p>;
-    }
-
-    return <p>-</p>;
-  };
   useEffect(() => {
     if (!refetchEncounter) return;
 
     const doRefetch = async () => {
       try {
-        await Promise.all([refetchAllergies(), refetchWarnings()]);
+        await Promise.all([
+          refetchWarnings(),
+          refetchAllergies(),
+          patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
+          encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
+          patient?.id ? loadLatestBodyMeasurements(Number(patient.id)) : Promise.resolve(),
+          encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
+          encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
+        ]);
       } catch (e) {
         console.error('Error while refetching side data:', e);
       } finally {
@@ -197,58 +385,127 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     };
 
     doRefetch();
-  }, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
-  // Get active allergies & warnings
-  
+  }, [
+    refetchEncounter,
+    refetchWarnings,
+    refetchAllergies,
+    refetchPrimaryDocument,
+    refetchLatestVitalSigns,
+    refetchLatestPatientObservationsComplaints,
+    patient?.id,
+    encounter?.id,
+    dispatch
+  ]);
 
-  const {
-    data: allergiesListResponse,
-    refetch: fetchallerges,
-    isLoading
-  } = useGetPatientAllergiesByPatientIdQuery(
-    {
-      patientId: patient?.id,
-      showCancelled: false,
-      // ...paginationParams
-    },
-    {
-      skip: !patient?.id
-    }
-  );
-  const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
-   const activeWarnings = warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
-
-  // Helper function to get allergy severity background + text color
-  const getAllergySeverityColors = (severity: string) => {
-
-    if (severity === 'MILD_MINOR') {
-      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-    } else if (severity === 'MODERATE') {
-      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
-    } else {
-      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
-    }
+  const handleImageClick = () => {
+    if (patient?.key) profileImageFileInputRef.current?.click();
   };
 
-  // ===== Safe calculations for BMI / BSA =====
-  const w = toNumber(bodyMeasurements?.weight);
-  const h = toNumber(bodyMeasurements?.height); // h is in cm
+  const getAllergenName = (allergenId: number, medicationClassId: number) => {
+    if (allergenId && allergensListResponse?.data) {
+      const allergen = allergensListResponse.data.find((item: any) => item.id === allergenId);
+      return <p>{allergen?.name ?? '-'}</p>;
+    }
 
-  const bmi = w != null && h != null && h > 0 ? w / Math.pow(h / 100, 2) : null;
-  const bsa = w != null && h != null ? Math.sqrt((w * h) / 3600) : null;
+    if (medicationClassId && medicationClassesListResponse) {
+      const medicationClass = medicationClassesListResponse.find(
+        (item: any) => item.id === medicationClassId
+      );
+      return <p>{medicationClass?.name ?? '-'}</p>;
+    }
+
+    return <p>-</p>;
+  };
+
+  const activeAllergies =
+    allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
+  const activeWarnings =
+    warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
+
+  const getAllergySeverityColors = (severity: string) => {
+    if (severity === 'MILD_MINOR') {
+      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+    }
+    if (severity === 'MODERATE') {
+      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
+    }
+    return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
+  };
+
+  const getDiagnosisColors = (row: any) => {
+    if (row?.major) {
+      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
+    }
+    if (row?.suspected) {
+      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
+    }
+    return { bg: 'var(--light-blue)', text: 'var(--primary-blue)' };
+  };
+
+  const renderDiagnosisText = (row: any) => {
+    const id = Number(row?.diagnosisId);
+    const icd = id ? icdMap[id] : null;
+
+    const code = icd?.icdCode ?? '';
+    const desc = icd?.icdShortDescription || icd?.icdFullDescription || '';
+    const type = row?.type ? formatEnumString(row.type) : '';
+    const flags = [row?.major ? 'Major' : null, row?.suspected ? 'Suspected' : null]
+      .filter(Boolean)
+      .join(' • ');
+
+    return (
+      <div className="diagnosis-badge-text">
+        <span>{code ? `${code} - ${desc}` : desc || 'Diagnosis'}</span>
+        {(type || flags) && <small>{[type, flags].filter(Boolean).join(' • ')}</small>}
+      </div>
+    );
+  };
+
+  const temperature = toNumber(latestVitalSigns?.temperature);
+  const pulseRate = toNumber(latestVitalSigns?.heartRate);
+  const respiratoryRate = toNumber(latestVitalSigns?.respiratoryRate);
+  const oxygenSaturation = toNumber(latestVitalSigns?.oxygenSaturation);
+  const bloodPressureSystolic = toNumber(latestVitalSigns?.bloodPressureSystolic);
+  const bloodPressureDiastolic = toNumber(latestVitalSigns?.bloodPressureDiastolic);
+
+  const weight = toNumber(latestBodyMeasurements?.weight);
+  const height = toNumber(latestBodyMeasurements?.height);
+  const headCircumference = toNumber(latestBodyMeasurements?.headCircumference);
+
+  const bmi =
+    weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
+  const bsa =
+    weight != null && height != null && height > 0 ? Math.sqrt((weight * height) / 3600) : null;
+
+  const documentTypeText = primaryDocument?.type
+    ? formatEnumString(primaryDocument.type)
+    : textOr(patient?.documentTypeLvalue?.lovDisplayVale, '');
+
+  const documentNumberText = textOr(primaryDocument?.number, textOr(patient?.documentNo, ''));
+  const primaryDiagnosisNotFound = primaryDiagnosisError?.status === 404;
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel className="patient-panel">
-      {props?.setPatient && (
-        <div style={{ display: 'flex', justifyContent: "end", marginBottom: "5px" }}>
-          <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newPatient })} />
+    <Panel className="patient-panel" dir={dir}>
+      {setPatient && (
+        <div className="patient-panel-close-btn">
+          <IoMdClose
+            size={22}
+            className="icons-style"
+            onClick={() => setPatient({ ...newPatient })}
+          />
         </div>
       )}
+
       <div className="div-avatar">
         <Avatar
           circle
           bordered
-          onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
+          onClick={() => handleImageClick()}
           src={
             patientImage && patientImage.fileContent
               ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
@@ -256,277 +513,609 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
           }
           alt={patient?.fullName}
         />
+
         <div>
           <div className="patient-info">
-            <Text className="patient-name">{textOr(patient?.firstName + " " + patient?.lastName, 'Patient Name')}</Text>
+            <Text className="patient-name">
+              {textOr(
+                patient?.fullName
+                  ? patient?.fullName
+                  : `${patient?.firstName ?? ''} ${patient?.secondName ?? ''} ${
+                      patient?.thirdName ?? ''
+                    } ${patient?.lastName ?? ''}`.trim(),
+                <Translate>Patient Name</Translate>
+              )}
+            </Text>
           </div>
+
           <div className="info-label"># {textOr(patient?.medicalRecordNumber, 'MRN')}</div>
+
+          <div className="patient-extra-info">
+            <span className="info-label">
+              DOB:{' '}
+              {textOr(
+                patient?.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '-'
+              )}
+            </span>
+          </div>
+
+          <div className="patient-extra-info">
+            <span className="info-label">
+              Gender:{' '}
+              {textOr(patient?.sexAtBirth ? formatEnumString(patient?.sexAtBirth) : '-', '')}
+            </span>
+          </div>
         </div>
       </div>
 
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faIdCard} className="icon-color" />{' '}
-        <span className="section-title-patient-side">Document Information</span>
-      </Text>
-      <br />
-
-      <div className="info-section">
-        <div className="info-column">
-          <Text className="info-label">Document Type</Text>
-          <Text className="info-value">
-            {textOr(patient?.documentTypeLvalue?.lovDisplayVale, '')}
+      {showDocumentInfo && (
+        <>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faIdCard} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Document Information</Translate>
+            </span>
           </Text>
-        </div>
-
-        <div className="info-column">
-          <Text className="info-label">Document No</Text>
-          <Text className="info-value"> {textOr(patient?.documentNo, '')}</Text>
-        </div>
-      </div>
-      <Divider className="divider-style" />
-
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faUser} className="icon-color" />{' '}
-        <span className="section-title-patient-side">Patient Information</span>
-      </Text>
-      <br />
-
-      <div className="info-section">
-        <div className="info-column">
-          <Text className="info-label">Age</Text>
-          <Text className="info-value">{patient?.dateOfBirth ? calculateAgeFormat(patient?.dateOfBirth) : ''}</Text>
-        </div>
-
-        <div className="info-column">
-          <Text className="info-label">Gender</Text>
-          <Text className="info-value"> {textOr(formatEnumString(patient?.sexAtBirth), '')}</Text>
-        </div>
-      </div>
-      <Divider className="divider-style" />
-
-      <Text className="main-info-patient-side">
-        <FaWeight className="icon-color" />{' '}
-        <span className="section-title-patient-side">Measurements</span>
-      </Text>
-      <div className="details-sections">
-        <br />
-        <div className="info-section">
-          <div className="info-column">
-            <Text className="info-label">Weight</Text>
-            <Text className="info-value">
-              {fmt(w, 2, '')}
-              {w != null ? ' kg' : ''}
-            </Text>
-          </div>
-
-          <div className="info-column">
-            <Text className="info-label">Height</Text>
-            <Text className="info-value">
-              {fmt(h, 2, '')}
-              {h != null ? ' cm' : ''}
-            </Text>
-          </div>
-        </div>
-        <div className="info-section">
-          <div className="info-column">
-            <Text className="info-label">H.C</Text>
-            <Text className="info-value">{textOr(bodyMeasurements?.headcircumference, '')}</Text>
-          </div>
-
-          <div className="info-column">
-            <Text className="info-label">BMI</Text>
-            <Text className="info-value">{fmt(bmi, 2, '')}</Text>
-          </div>
-        </div>
-        <div className="info-section">
-          <div className="info-column">
-            <Text className="info-label">BSA</Text>
-            <Text className="info-value">{fmt(bsa, 2, '')}</Text>
-          </div>
-
-          <div className="info-column">
-            <Text className="info-label">Blood Group</Text>
-            <Text className="info-value">
-              {textOr(patient?.bloodGroupLvalue?.lovDisplayVale, '')}
-            </Text>
-          </div>
-        </div>
-      </div>
-      <Divider className="divider-style" />
-
-      {!props?.hideVisitDetails && (
-        <Text className="main-info-patient-side">
-          <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
-          <span className="section-title-patient-side">
-            {encounter?.encounterType !== 'INPATIENT'
-              ? 'Visit Details'
-              : 'Admission Details'}
-          </span>
-        </Text>
-      )}
-      {encounter?.encounterType !== 'INPATIENT' && !props?.hideVisitDetails && (
-        <div className="details-sections">
           <br />
 
           <div className="info-section">
             <div className="info-column">
-              <Text className="info-label">Visit Date</Text>
-              <Text className="info-value">{textOr(encounter?.encounterDate, '')}</Text>
-            </div>
-
-            <div className="info-column">
-              <Text className="info-label">Visit ID</Text>
-              <Text className="info-value"> {textOr(encounter?.encounterNumber, '')}</Text>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <div className="info-column">
-              <Text className="info-label">Visit Type</Text>
+              <Text className="info-label">
+                <Translate>Document Type</Translate>
+              </Text>
               <Text className="info-value">
-                {textOr(encounter?.visitTypeLvalue?.lovDisplayVale, '')}
+                <Translate>{documentTypeText}</Translate>
               </Text>
             </div>
 
             <div className="info-column">
-              <Text className="info-label">Priority</Text>
+              <Text className="info-label">
+                <Translate>Document No</Translate>
+              </Text>
               <Text className="info-value">
-                {textOr(formatEnumString(encounter?.priority), '')}
+                <Translate>{documentNumberText}</Translate>
               </Text>
             </div>
           </div>
 
-          <div className="info-section">
-            <div className="info-column">
-              <Text className="info-label">Reason</Text>
-              <Text className="info-value">
-                {textOr(formatEnumString(encounter?.encounterReason), '')}
-              </Text>
-            </div>
-
-            <div className="info-column">
-              <Text className="info-label">Origin</Text>
-              <Text className="info-value">
-                {' '}
-                {textOr(encounter?.originName, '')}
-              </Text>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {encounter?.encounterType === 'INPATIENT' && (
-        <>
-          <div className="details-sections">
-            <div className="info-section">
-              <div className="info-column">
-                <Text className="info-label">Room</Text>
-                <Text className="info-value">{textOr(encounter?.apRoom?.name, '')}</Text>
-              </div>
-
-              <div className="info-column">
-                <Text className="info-label">Bed</Text>
-                <Text className="info-value">{textOr(encounter?.apBed?.name, '')}</Text>
-              </div>
-            </div>
-
-            <div className="info-section">
-              <div className="info-column">
-                <Text className="info-label">Ward</Text>
-                <Text className="info-value">{textOr(encounter?.departmentName, '')}</Text>
-              </div>
-
-              <div className="info-column">
-                <Text className="info-label">Date of Admission</Text>
-                <Text className="info-value">{textOr(encounter?.actualStartDate, '')}</Text>
-              </div>
-            </div>
-          </div>
-
-          <Divider className="divider-thin" />
-
-          <Text>
-            <GiMedicalThermometer className="icon-title" />
-            <span className="patient-section-title">Diagnosis</span>
-          </Text>
-
-          <div className="margin-top-8">
-            <Text>{textOr(encounter?.diagnosis, '')}</Text>
-          </div>
+          <Divider className="divider-style" />
         </>
       )}
 
-
-
-      {/* ==== Allergy & Warning Banners ==== */}
-      <div className="my-container">
-        {/* Individual Allergies Badges */}
-        {activeAllergies.map((allergy, index) => (
-
-          <Whisper placement='top' speaker={<Tooltip><Translate>Allergy</Translate></Tooltip>}>
-            <span>
-            <MyBadgeStatus
-              key={`allergy-${allergy.id || index}`}
-              backgroundColor={
-                getAllergySeverityColors(allergy.severity || '').bg
-              }
-              color={getAllergySeverityColors(allergy.severity || '').text}
-              contant={
-                <>
-                  <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
-                  {getAllergenName(allergy?.allergenId, allergy?.medicationClassId)}
-                </>
-              }
-            />
-            </span>
-          </Whisper>
-
-
-        ))}
-
-        {/* Individual Warnings Badges */}
-
-        {activeWarnings.map((warning, index) => (
-
-          <Whisper placement='top' speaker={<Tooltip><Translate>Warning</Translate></Tooltip>}>
-            <span>
-            <MyBadgeStatus
-              key={`warning-${warning.id || index}`}
-              backgroundColor={
-                getAllergySeverityColors(warning.severity || '').bg
-              }
-              color={getAllergySeverityColors(warning.severity || '').text}
-              contant={
-                <>
-                  <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
-                  {warning.warning}
-                </>
-              }
-            />
-            </span>
-          </Whisper>
-        ))}
-      </div>
-
-      {props?.balance && (
-        <div>
+      {showPatientInfo && (
+        <>
           <Text className="main-info-patient-side">
-            <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
-            <span className="section-title-patient-side">Balance</span>
+            <FontAwesomeIcon icon={faUser} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Patient Information</Translate>
+            </span>
           </Text>
           <br />
 
           <div className="info-section">
             <div className="info-column">
-              <Text className="info-label">Free Balance</Text>
-              <Text className="info-value">{props?.balance?.freeBalance}</Text>
+              <Text className="info-label">
+                <Translate>Age</Translate>
+              </Text>
+              <Text className="info-value">
+                <Translate>
+                  {patient?.dateOfBirth ? calculateAgeFormat(patient?.dateOfBirth) : ''}
+                </Translate>
+              </Text>
             </div>
 
             <div className="info-column">
-              <Text className="info-label">Outstanding</Text>
-              <Text className="info-value"> {props?.balance?.outstanding}</Text>
+              <Text className="info-label">
+                <Translate>Gender</Translate>
+              </Text>
+              <Text className="info-value">
+                <Translate>{textOr(formatEnumString(patient?.sexAtBirth), '')}</Translate>
+              </Text>
             </div>
           </div>
+
+          <Divider className="divider-style" />
+        </>
+      )}
+
+      {showMeasurements && (
+        <>
+          <Text className="main-info-patient-side">
+            <FaWeight className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Measurements</Translate>
+            </span>
+          </Text>
+
+          <div className="details-sections">
+            <br />
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Weight</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(weight, 2, '')}
+                  {weight != null ? ' kg' : ''}
+                </Text>
+              </div>
+
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Height</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(height, 2, '')}
+                  {height != null ? ' cm' : ''}
+                </Text>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>H.C</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(headCircumference, 2, '')}
+                  {headCircumference != null ? ' cm' : ''}
+                </Text>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>BMI</Translate>
+                </Text>
+                <Text className="info-value">{fmt(bmi, 2, '')}</Text>
+              </div>
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>BSA</Translate>
+                </Text>
+                <Text className="info-value">{fmt(bsa, 2, '')}</Text>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Temperature</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(temperature, 1, '')}
+                  {temperature != null ? ' °C' : ''}
+                </Text>
+              </div>
+
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Pulse Rate</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(pulseRate, 0, '')}
+                  {pulseRate != null ? ' bpm' : ''}
+                </Text>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Respiratory Rate</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(respiratoryRate, 0, '')}
+                  {respiratoryRate != null ? ' /min' : ''}
+                </Text>
+              </div>
+
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Oxygen Saturation</Translate>
+                </Text>
+                <Text className="info-value">
+                  {fmt(oxygenSaturation, 0, '')}
+                  {oxygenSaturation != null ? ' %' : ''}
+                </Text>
+              </div>
+            </div>
+
+            <div className="info-section">
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Blood Pressure</Translate>
+                </Text>
+                <Text className="info-value">
+                  {bloodPressureSystolic != null && bloodPressureDiastolic != null
+                    ? `${fmt(bloodPressureSystolic, 0, '')}/${fmt(
+                        bloodPressureDiastolic,
+                        0,
+                        ''
+                      )} mmHg`
+                    : ''}
+                </Text>
+              </div>
+
+              <div className="info-column" />
+            </div>
+          </div>
+
+          <Divider className="divider-style" />
+        </>
+      )}
+
+      {showDiagnosis && (
+        <>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faStethoscope} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Diagnosis</Translate>
+            </span>
+          </Text>
+          <br />
+
+          <div className="my-container">
+            {primaryDiagnosis && (
+              <Whisper
+                key={`diagnosis-whisper-${primaryDiagnosis.id}`}
+                placement="top"
+                speaker={
+                  <Tooltip>
+                    <Translate>Primary Diagnosis</Translate>
+                  </Tooltip>
+                }
+              >
+                <span>
+                  <MyBadgeStatus
+                    key={`diagnosis-${primaryDiagnosis.id}`}
+                    backgroundColor={getDiagnosisColors(primaryDiagnosis).bg}
+                    color={getDiagnosisColors(primaryDiagnosis).text}
+                    contant={
+                      <div className="diagnosis-badge-content">
+                        <FontAwesomeIcon icon={faStethoscope} className="diagnosis-badge-icon" />
+                        <Translate>{renderDiagnosisText(primaryDiagnosis)}</Translate>
+                      </div>
+                    }
+                  />
+                </span>
+              </Whisper>
+            )}
+
+            {!primaryDiagnosis && primaryDiagnosisNotFound && (
+              <Text className="info-value">
+                <Translate>No primary diagnosis for this encounter.</Translate>
+              </Text>
+            )}
+          </div>
+
+          <Divider className="divider-style" />
+        </>
+      )}
+
+      {showVisitDetails && (
+        <>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              {encounter?.encounterType !== 'INPATIENT' ? (
+                <Translate>Visit Details</Translate>
+              ) : (
+                <Translate>Admission Details</Translate>
+              )}
+            </span>
+          </Text>
+
+          {encounter?.encounterType !== 'INPATIENT' && (
+            <div className="details-sections">
+              <br />
+
+              <div className="info-section">
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Visit Date</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.encounterDate, '')}</Translate>
+                  </Text>
+                </div>
+
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Visit ID</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.encounterNumber, '')}</Translate>
+                  </Text>
+                </div>
+              </div>
+
+              <div className="info-section">
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Priority</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(formatEnumString(encounter?.priority), '')}</Translate>
+                  </Text>
+                </div>
+              </div>
+
+              <div className="info-section">
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Reason</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>
+                      {textOr(formatEnumString(encounter?.encounterReason), '')}
+                    </Translate>
+                  </Text>
+                </div>
+
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Origin</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.originName, '')}</Translate>
+                  </Text>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {encounter?.encounterType === 'INPATIENT' && (
+            <div className="details-sections">
+              <div className="info-section">
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Room</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.apRoom?.name, '')}</Translate>
+                  </Text>
+                </div>
+
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Bed</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.apBed?.name, '')}</Translate>
+                  </Text>
+                </div>
+              </div>
+
+              <div className="info-section">
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Ward</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.departmentName, '')}</Translate>
+                  </Text>
+                </div>
+
+                <div className="info-column">
+                  <Text className="info-label">
+                    <Translate>Date of Admission</Translate>
+                  </Text>
+                  <Text className="info-value">
+                    <Translate>{textOr(encounter?.actualStartDate, '')}</Translate>
+                  </Text>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Divider className="divider-style" />
+        </>
+      )}
+
+      {showAllergiesWarnings && (
+        <div className="container-of-allergies-and-warnings">
+          {activeAllergies.map((allergy, index) => (
+            <Whisper
+              key={`allergy-whisper-${allergy.id || index}`}
+              placement="top"
+              speaker={
+                <Tooltip>
+                  <Translate>Allergy</Translate>
+                </Tooltip>
+              }
+            >
+              <span>
+                <MyBadgeStatus
+                  key={`allergy-${allergy.id || index}`}
+                  backgroundColor={getAllergySeverityColors(allergy.severity || '').bg}
+                  color={getAllergySeverityColors(allergy.severity || '').text}
+                  contant={
+                    <div className="diagnosis-badge-content">
+                      <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />
+                      <Translate>
+                        {getAllergenName(allergy?.allergenId, allergy?.medicationClassId)}
+                      </Translate>
+                    </div>
+                  }
+                />
+              </span>
+            </Whisper>
+          ))}
+
+          {activeWarnings.map((warning, index) => (
+            <Whisper
+              key={`warning-whisper-${warning.id || index}`}
+              placement="top"
+              speaker={
+                <Tooltip>
+                  <Translate>Warning</Translate>
+                </Tooltip>
+              }
+            >
+              <span>
+                <MyBadgeStatus
+                  key={`warning-${warning.id || index}`}
+                  backgroundColor={getAllergySeverityColors(warning.severity || '').bg}
+                  color={getAllergySeverityColors(warning.severity || '').text}
+                  contant={
+                    <div className="diagnosis-badge-content">
+                      <FontAwesomeIcon
+                        icon={faTriangleExclamation}
+                        className="diagnosis-badge-icon"
+                      />
+                      <Translate>{warning.warning}</Translate>
+                    </div>
+                  }
+                />
+              </span>
+            </Whisper>
+          ))}
+        </div>
+      )}
+
+      {showConditions && (
+        <>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faStethoscope} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Condition</Translate>
+            </span>
+          </Text>
+          <br />
+
+          <div className="container-of-allergies-and-warnings">
+            {patientConditionItems.length > 0 ? (
+              patientConditionItems.map((condition, index) => (
+                <Whisper
+                  key={`patient-condition-whisper-${index}`}
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Patient Condition</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <span>
+                    <MyBadgeStatus
+                      key={`patient-condition-${index}`}
+                      backgroundColor={getPatientConditionColors().bg}
+                      color={getPatientConditionColors().text}
+                      contant={
+                        <div className="diagnosis-badge-content">
+                          <FontAwesomeIcon icon={faStethoscope} className="diagnosis-badge-icon" />
+                          <p>
+                            <Translate>{formatEnumString(condition)}</Translate>
+                          </p>
+                        </div>
+                      }
+                    />
+                  </span>
+                </Whisper>
+              ))
+            ) : (
+              <Text className="info-value">
+                <Translate>No conditions found.</Translate>
+              </Text>
+            )}
+          </div>
+
+          <Divider className="divider-style" />
+        </>
+      )}
+
+      {/* ── Current Meds Section ─────────────────────────────────────────── */}
+      {showCurrentMeds && (
+        <>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faPills} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Current Meds</Translate>
+            </span>
+          </Text>
+          <br />
+
+          <div className="container-of-allergies-and-warnings">
+            {currentMeds.length > 0 ? (
+              currentMeds.map((med: any, index: number) => {
+                const medName =
+                  activeIngredientMap.get(String(med.activeIngredientId)) ?? 'Unknown';
+                return (
+                  <Whisper
+                    key={`med-whisper-${med.id ?? index}`}
+                    placement="top"
+                    speaker={
+                      <Tooltip>
+                        {med.instructions ? (
+                          <Translate>{med.instructions}</Translate>
+                        ) : (
+                          <Translate>Current Medication</Translate>
+                        )}
+                      </Tooltip>
+                    }
+                  >
+                    <span>
+                      <MyBadgeStatus
+                        key={`med-${med.id ?? index}`}
+                        backgroundColor={getMedColor().bg}
+                        color={getMedColor().text}
+                        contant={
+                          <div className="diagnosis-badge-content">
+                            <FontAwesomeIcon icon={faPills} className="diagnosis-badge-icon" />
+                            <p>
+                              <Translate>{medName}</Translate>
+                            </p>
+                          </div>
+                        }
+                      />
+                    </span>
+                  </Whisper>
+                );
+              })
+            ) : (
+              <Text className="info-value">
+                <Translate>No current medications.</Translate>
+              </Text>
+            )}
+          </div>
+
+          <Divider className="divider-style" />
+        </>
+      )}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
+      {showBalance && balance && (
+        <div>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
+            <span className="section-title-patient-side">
+              <Translate>Balance</Translate>
+            </span>
+          </Text>
+          <br />
+
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Free Balance</Translate>
+              </Text>
+              <Text className="info-value">
+                <Translate>{balance?.freeBalance}</Translate>
+              </Text>
+            </div>
+
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Outstanding</Translate>
+              </Text>
+              <Text className="info-value">
+                <Translate>{balance?.outstanding}</Translate>
+              </Text>
+            </div>
+          </div>
+
           <Divider className="divider-style" />
         </div>
       )}

@@ -4,6 +4,7 @@ import type {
   DiagnosticOrderTestCollectedSampleBulkSameDTO,
   DiagnosticOrderTestCollectedSampleDTO,
   DiagnosticOrderTestCollectedSampleResponseVM,
+  SampleLabelVM,
 } from "@/types/model-types-new";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
@@ -134,6 +135,15 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       }),
       invalidatesTags: ["DiagnosticOrderTestCollectedSample"],
     }),
+
+    getSampleLabel: builder.query<SampleLabelVM, { orderTestId: number }>({
+      query: ({ orderTestId }) => ({
+        url: `/api/patient/diagnostic-order-test-collected-samples/sample-label/${orderTestId}`,
+        method: 'GET'
+      }),
+       providesTags: ["DiagnosticOrderTestCollectedSample"],
+
+    }),
   }),
 });
 
@@ -146,4 +156,5 @@ export const {
   useCreateCollectedSampleMutation,
   useBulkCreateCollectedSampleSameMutation,
   useDeleteCollectedSampleMutation,
+  useLazyGetSampleLabelQuery
 } = diagnosticOrderTestCollectedSampleService;

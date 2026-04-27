@@ -28,6 +28,7 @@ const TransferTestList = ({
   setSearchTerm,
   searchType,
   setSearchType,
+  onLoadMore,
   isFetching
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -214,119 +215,150 @@ const TransferTestList = ({
   }, [searchType?.type]);
 
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Row>
+    <div dir={dir}>
       <Row>
-        <Form fluid>
-          <div className='transfer-test-list-inputs-handle'>
-            <MyInput
-              fieldName="type"
-              fieldType="select"
-              selectData={diagTypeResponse ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              width={"20vw"}
-              record={searchType}
-              setRecord={setSearchType}
-              disabled={!!isFetching}
-            />
+        <Row>
+          <Form fluid>
+            <div className='transfer-test-list-inputs-handle'>
+              <MyInput
+                fieldName="type"
+                fieldType="select"
+                selectData={diagTypeResponse ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                width={"20vw"}
+                record={searchType}
+                setRecord={setSearchType}
+                disabled={!!isFetching}
+              />
 
-            <MyInput
-              fieldName="catalogId"
-              fieldType="select"
-              fieldLabel="Catalog"
-              selectData={filteredCatalogs ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              width="20vw"
-              record={searchType}
-              setRecord={setSearchType}
-              disabled={!!isFetching}
-            />
+              <MyInput
+                fieldName="catalogId"
+                fieldType="select"
+                fieldLabel="Catalog"
+                selectData={filteredCatalogs ?? []}
+                selectDataLabel="name"
+                selectDataValue="id"
+                width="20vw"
+                record={searchType}
+                setRecord={setSearchType}
+                disabled={!!isFetching}
+              />
 
-          </div>
-        </Form>
-        <Form>
-          <div className='test-name-field-main-container'>
-            <MyInput
-              fieldName="testName"
-              fieldType="text"
-              placeholder="Search Test"
-              record={{ testName: searchInput }}
-              setRecord={(r: any) => setSearchInput(r.testName)}
-              width="100%"
-              disabled={!!isFetching}
-              showLabel={false}
-              rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)} />}
-              enterClick={() => {
-                setSearchTerm(searchInput);
-              }}
-            />
-          </div>
-        </Form>
-      </Row>
-
-      <Row
-        style={{
-          position: 'relative',
-          padding: 10,
-          borderRadius: 5,
-          background:
-            mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)'
-        }}
-      >
-        {isFetching && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(0,0,0,0.25)',
-              zIndex: 10
-            }}
-          >
-            <CircularProgress size={32} />
-          </div>
-        )}
-
-        <Col md={10}>{renderList(filteredLeft)}</Col>
-
-        <Col md={4} style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'stretch', // 👈 مهم
-              height: '100%'
-            }}
-          >
-            <div style={{ flex: 1 }}>
             </div>
+          </Form>
+          <Form>
+            <div className='test-name-field-main-container'>
+              <MyInput
+                fieldName="testName"
+                fieldType="text"
+                placeholder="Search Test"
+                record={{ testName: searchInput }}
+                setRecord={(r: any) => setSearchInput(r.testName)}
+                width="100%"
+                disabled={!!isFetching}
+                showLabel={false}
+                rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)} />}
+                enterClick={() => {
+                  setSearchTerm(searchInput);
+                }}
+              />
+            </div>
+
+          </Form>
+        </Row>
+
+        <Row
+          style={{
+            position: 'relative',
+            padding: 10,
+            borderRadius: 5,
+            background:
+              mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)'
+          }}
+        >
+          {isFetching && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(0,0,0,0.25)',
+                zIndex: 10
+              }}
+            >
+              <CircularProgress size={32} />
+
+            </div>
+          )}
+
+          <Col md={10}>
+            <Paper sx={{ height: '60vh', display: 'flex', flexDirection: 'column' }}>
+
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                {renderList(filteredLeft)}
+              </div>
+              <div style={{ textAlign: 'center', padding: 10 }}>
+                <MyButton
+                  appearance="ghost"
+                  onClick={() => {
+                    onLoadMore?.();
+                  }}
+                  disabled={isFetching}
+                >
+                  Load More
+                </MyButton>
+              </div>
+
+            </Paper>
+          </Col>
+
+
+          <Col md={4} style={{ textAlign: 'center' }}>
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '12px',
-                minWidth: '50px'
+                gap: '16px',
+                alignItems: 'stretch',
+                height: '100%'
               }}
             >
-              <MyButton appearance='ghost' onClick={handleAllRight} disabled={!leftItems.length}>≫</MyButton>
-              <MyButton appearance='ghost' onClick={handleCheckedRight} disabled={!leftChecked.length}>&gt;</MyButton>
-              <MyButton appearance='ghost' onClick={handleCheckedLeft} disabled={!rightChecked.length}>&lt;</MyButton>
-              <MyButton appearance='ghost' onClick={handleAllLeft} disabled={!rightItems.length}>≪</MyButton>
-            </div>
+              <div style={{ flex: 1 }}>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '12px',
+                  minWidth: '50px'
+                }}
+              >
+                <MyButton appearance='ghost' onClick={handleAllRight} disabled={!leftItems.length}>≫</MyButton>
+                <MyButton appearance='ghost' onClick={handleCheckedRight} disabled={!leftChecked.length}>&gt;</MyButton>
+                <MyButton appearance='ghost' onClick={handleCheckedLeft} disabled={!rightChecked.length}>&lt;</MyButton>
+                <MyButton appearance='ghost' onClick={handleAllLeft} disabled={!rightItems.length}>≪</MyButton>
+              </div>
 
-            <div style={{ flex: 1 }}>
+              <div style={{ flex: 1 }}>
+              </div>
             </div>
-          </div>
-        </Col>
-        <Col md={10}>{renderList(rightItems)}</Col>
+          </Col>
+          <Col md={10}>{renderList(rightItems)}</Col>
+        </Row>
       </Row>
-    </Row>
+    </div>
   );
 };
 

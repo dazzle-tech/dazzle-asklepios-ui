@@ -40,7 +40,7 @@ const FormTemplateBuilderPage = () => {
 
   // Header setup like your other pages
   useEffect(() => {
-    const title = templateId ? 'Edit Form Template' : 'New Form Template';
+    const title = templateId ? <Translate>Edit Form Template</Translate> : <Translate>New Form Template</Translate>;
     dispatch(setPageCode('FormTemplateBuilder'));
     dispatch(setDivContent(title));
 
@@ -229,15 +229,22 @@ const FormTemplateBuilderPage = () => {
 
   const saving = createMutation.isLoading || updateMutation.isLoading;
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
-    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
+    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''} dir={dir}>
 
       <div style={styles.contentCard}>
         <RsForm>
           <div className={'form-template-grid'}>
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
-              fieldLabel="Template Name"
+              fieldLabel={<Translate>Template Name</Translate>}
               fieldName="name"
               record={template}
               setRecord={setTemplate}

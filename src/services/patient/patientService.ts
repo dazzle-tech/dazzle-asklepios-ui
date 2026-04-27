@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import * as modelTypes from '@/types/model-types-new';
+import { PatientInformationReportVM, PatientWristbandVM } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -36,6 +37,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 
 type PatientBasicInformationResponseVM = {
   firstName: string;
+  secondName?: string;
   lastName: string;
   medicalRecordNumber: string;
   dateOfBirth: string;
@@ -47,6 +49,13 @@ export const newPatientService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Patient'],
   endpoints: builder => ({
+    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/${id}`
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
+    }),
+
     getPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/patients',
@@ -182,6 +191,20 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
+    getPatientsByIds: builder.query<modelTypes.Patient[], { ids: Id[] }>({
+      query: ({ ids }) => ({
+        url: `/api/patient/by-ids`,
+        params: { ids }
+      }),
+      providesTags: result =>
+        result
+          ? [
+            ...result.map(p => ({ type: 'Patient' as const, id: p.id })),
+            { type: 'Patient', id: 'LIST' }
+          ]
+          : [{ type: 'Patient', id: 'LIST' }]
+    }),
+
     addUnknownPatient: builder.mutation<modelTypes.Patient, void>({
       query: () => ({
         url: '/api/patient/unknown',
@@ -222,24 +245,47 @@ export const newPatientService = createApi({
       query: body => ({
         url: '/api/patient/bulk/basic-info',
         method: 'POST',
-        body,
-      }),
+        body
+      })
     }),
-    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
-  query: ({ id }) => ({
-    url: `/api/patient/${id}`
-  }),
-  providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
-}),
+
+    getPatientLabel: builder.query<modelTypes.PatientLabelVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/label/${patientId}`,
+        method: 'GET'
+      })
+    }),
+
+    getPatientInformationReport: builder.query<PatientInformationReportVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/information-report`,
+        method: 'GET'
+      })
+    }),
+
+    getPatientWristband: builder.query<PatientWristbandVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/wristband`,
+        method: 'GET'
+      })
+    })
+    ,
+    getPatientWristbandPdf: builder.query<Blob, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/wristband/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   })
 });
 
 export const {
+  useGetPatientByIdQuery,
+  useGetPatientsByIdsQuery,
   // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,
-
-  // filters
   useGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useGetPatientsByArchivingNumberQuery,
@@ -250,29 +296,20 @@ export const {
   useLazyGetPatientsByDateOfBirthQuery,
   useGetPatientsByFullNameQuery,
   useLazyGetPatientsByFullNameQuery,
-
-  // document number
   useGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByDocumentNumberQuery,
-
-  // any document number
   useGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
-
-  // mutations
   useAddPatientMutation,
   useUpdatePatientMutation,
-
-  // unknown patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
-  useGetPatientByIdQuery,
   useLazyGetPatientByIdQuery,
-
-  // duplicaton
   useGetDuplicationCandidatesMutation,
-
-  // bulk basic info
-  useGetBulkPatientBasicInfoMutation
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientLabelQuery,
+  useLazyGetPatientInformationReportQuery,
+  useLazyGetPatientWristbandQuery,
+  useLazyGetPatientWristbandPdfQuery
 } = newPatientService;

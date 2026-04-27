@@ -47,8 +47,17 @@ const UOMGroup = () => {
   const totalCount = uomGroupsListResponse?.totalCount ?? 0;
   // Header page setUp
   const divContent = 'UOM Groups';
+
+
+useEffect(() => {
   dispatch(setPageCode('UOM_Groups'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -170,15 +179,16 @@ const UOMGroup = () => {
   );
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         totalCount={totalCount}

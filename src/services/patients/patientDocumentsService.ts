@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
+import type { PatientDocument } from '@/types/model-types-new';
 
 export const patientDocumentsService = createApi({
   reducerPath: 'patientDocumentsApi',
@@ -90,7 +91,15 @@ export const patientDocumentsService = createApi({
         body
       }),
       invalidatesTags: ['PatientDocument']
-    })
+    }),
+    // Backend returns Optional<PatientDocument> (may be null when no primary document exists)
+    getPrimaryDocumentByPatient: builder.query<PatientDocument | null, number>({
+      query: patientId => ({
+        url: `/api/patient/documents/patient/${patientId}/primary`
+      }),
+      transformResponse: (response: any) => response ?? null,
+      providesTags: ['PatientDocument']
+    }),
   })
 });
 
@@ -110,5 +119,7 @@ export const {
   useAddPatientDocumentMutation,
   useAddNoDocumentMutation,
   useUpdatePatientDocumentMutation,
-  useDeletePatientDocumentMutation
+  useDeletePatientDocumentMutation,
+  useGetPrimaryDocumentByPatientQuery,
+  useLazyGetPrimaryDocumentByPatientQuery,
 } = patientDocumentsService;

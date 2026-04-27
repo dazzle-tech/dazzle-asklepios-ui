@@ -14,6 +14,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, observationsObject, refetch, edit }) => {
     const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>(observationsObject);
     const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
@@ -154,7 +155,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                             <MyInput
                                 column
                                 width={150}
-                                fieldLabel='BP Systolic'
+                                fieldLabel={<Translate>BP Systolic</Translate>}
                                 fieldName='latestbpSystolic'
                                 disabled={isEncounterStatusClosed}
                                 fieldType='number'
@@ -166,7 +167,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                             <MyInput
                                 column
                                 width={150}
-                                fieldLabel='BP Diastolic'
+                                fieldLabel={<Translate>BP Diastolic</Translate>}
                                 fieldName='latestbpDiastolic'
                                 disabled={isEncounterStatusClosed}
                                 fieldType='number'
@@ -325,6 +326,14 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
         };
     }
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
     return (
         <MyModal
             open={open}
@@ -355,8 +364,12 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton> 
                 <MyButton onClick={()=>{handleSave();handleCancel();}}>Save</MyButton></>
             }]}
-            content={content}
-        ></MyModal>
+                content={(stepNumber) => (
+                <div dir={dir}>
+                    {content(stepNumber)}
+                </div>
+                )}
+        />
     );
 };
 export default AddEditInpatientObservations;

@@ -2,29 +2,22 @@ import MyButton from '@/components/MyButton/MyButton';
 import PatientInfoCard from '@/components/PatientInfoCard';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { RootState } from '@/store';
 import { ApPatient } from '@/types/model-types';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faCodeMerge, faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as icons from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { Col, Grid, Panel, Row, Table } from 'rsuite';
+import { Col, Grid, Panel, Row } from 'rsuite';
 import { getHeight } from 'rsuite/esm/DOMHelper';
-import ProfileSidebar from '../patient-profile/ProfileSidebar';
-import Translate from '@/components/Translate';
-const { Column, HeaderCell, Cell } = Table;
+import ProfileSidebar from '../patient-profile/ProfileSidebar-new';
 
 const PatientMergeFiles: React.FC = () => {
-  const [expand, setExpand] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(getHeight(window));
+  const [, setExpand] = useState(false);
+  const [windowHeight] = useState(getHeight(window));
   const [fromPatient, setFromPatient] = useState<ApPatient>({ ...newApPatient });
-  const [fromPatientList, setFromPatientList] = useState<ApPatient[]>([{ ...newApPatient }]);
   const [toPatient, setToPatient] = useState<ApPatient>({ ...newApPatient });
-  const [toPatientList, setToPatientList] = useState<ApPatient[]>([{ ...newApPatient }]);
   const [refetchData, setRefetchData] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -34,18 +27,6 @@ const PatientMergeFiles: React.FC = () => {
     setToPatient(newApPatient);
     setFromPatient(newApPatient);
   };
-
-  useEffect(() => {
-    if (fromPatient.key) {
-      setFromPatientList([fromPatient]);
-    }
-  }, [fromPatient]);
-
-  useEffect(() => {
-    if (toPatient.key) {
-      setToPatientList([toPatient]);
-    }
-  }, [toPatient]);
 
   useEffect(() => {
     const divContent = (
@@ -61,9 +42,15 @@ const PatientMergeFiles: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
-      <Grid fluid>
+    <div dir={dir}>
+      <Grid fluid dir={dir}>
         <Row>
           <Col xs={5}>
             <ProfileSidebar
@@ -131,7 +118,7 @@ const PatientMergeFiles: React.FC = () => {
           </Col>
         </Row>
       </Grid>
-    </>
+    </div>
   );
 };
 

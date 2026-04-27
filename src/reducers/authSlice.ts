@@ -34,7 +34,7 @@ function isTokenExpired(token: string): boolean {
 // State definition
 // ==================
 interface AuthState {
-  selectedFacility: any;
+  // selectedFacility: any;
   user: any | null; // logged-in user object
   token: string | null; // JWT token
   tenant: any | null;
@@ -139,11 +139,19 @@ const authSlice = createSlice({
       state.token = null;
       state.tenant = null;
       state.selectedDepartment = null;
+
       localStorage.removeItem('id_token');
+      localStorage.removeItem('menu');
+      localStorage.removeItem('language');
+      localStorage.removeItem('dict');
+      localStorage.removeItem('translations');
       localStorage.removeItem('user');
       localStorage.removeItem('tenant');
-      localStorage.removeItem('langauge');
+      localStorage.removeItem('pageCode');
+      localStorage.removeItem('direction');
+      localStorage.removeItem('lang');
       localStorage.removeItem('selectedDepartment');
+
     },
 
     // Check token validity and clear state if expired
@@ -159,6 +167,12 @@ const authSlice = createSlice({
         localStorage.removeItem('tenant');
         localStorage.removeItem('langauge');
         localStorage.removeItem('selectedDepartment');
+        localStorage.removeItem('menu');
+        localStorage.removeItem('dict');
+        localStorage.removeItem('translations');
+        localStorage.removeItem('pageCode');
+        localStorage.removeItem('direction');
+        localStorage.removeItem('lang');
       }
     }
   }

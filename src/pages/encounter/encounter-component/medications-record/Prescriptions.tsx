@@ -9,7 +9,7 @@ import PrescriptionDetails from "./PrescriptionDetails";
 const Prescriptions = ({ patient }) => {
     const [prescription, setPrescription] = useState<PatientPrescription | null>(null);
 
-    const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
+    const patientId = patient?.id ;
 
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -26,14 +26,13 @@ const Prescriptions = ({ patient }) => {
         },
         { skip: !patientId }
     );
-
+  
     const isSelected = (rowData: PatientPrescription) => {
         if (rowData && prescription && rowData.id === prescription.id) {
             return "selected-row";
         }
         return "";
     };
-
     const tableColumns = [
         {
             key: "prescriptionId",
@@ -69,13 +68,13 @@ const Prescriptions = ({ patient }) => {
             key: "submittedBy",
             title: <Translate>Submitted By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => rowData?.submittedBy ?? rowData?.lastModifiedBy ?? "",
+            render: (rowData: any) => rowData?.submitedBy  ?? "",
         },
         {
             key: "submittedAt",
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submittedAt ?? rowData?.lastModifiedDate),
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submitedDate) ?? "",
         },
     ];
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import './styles.less';
-import { Divider, Form } from 'rsuite';
+import { Divider } from 'rsuite';
 import { useSelector } from 'react-redux';
 import Translate from '../Translate';
 
@@ -31,18 +31,15 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
         maxWidth: maxWidth ?? '100%'
       }}
     >
-      {/* ===== Header ===== */}
-      <Form className="title-div">
+      <div className="title-div">
         <Translate className="title-text">{title}</Translate>
         {action && <div className="title-action">{action}</div>}
-      </Form>
+      </div>
 
       <Divider />
 
-      {/* ===== Content ===== */}
       <div className="section-content">{content}</div>
 
-      {/* ===== Optional Button ===== */}
       {button && (
         <>
           <Divider />

@@ -42,14 +42,25 @@ import 'react-tabs/style/react-tabs.css';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 import { useNavigate } from 'react-router-dom';
+import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+
 const ERList = () => {
   const location = useLocation();
   const dispatch = useDispatch();
 
   const [open, setOpen] = useState(false);
   const divContent = 'ER Department';
-  dispatch(setPageCode('ER_Patient_Encounters'));
-  dispatch(setDivContent(divContent));
+
+  useEffect(() => {
+    dispatch(setPageCode('ER_Patient_Encounters'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
   const navigate = useNavigate();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
@@ -66,6 +77,9 @@ const ERList = () => {
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
+
+
+  const [getPatientById] = useLazyGetPatientByIdQuery();
 
   // *** تمت إضافته لفتح مودال EMR ***
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -115,37 +129,6 @@ const ERList = () => {
   const isSelected = rowData => {
     if (rowData && encounter && rowData.key === encounter.key) return 'selected-row';
     return '';
-  };
-
-  const handleGoToVisit = async (encounterData, patientData) => {
-    await startEncounter(encounterData).unwrap();
-    if (encounterData && encounterData.key) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
-    }
-      const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-    if (patientData.privatePatient) {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    } else {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    }
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleCancelEncounter = async () => {
@@ -262,30 +245,6 @@ const ERList = () => {
                 fieldLabel="Chief Complain"
               />
               <MyInput
-                width={110}
-                fieldName="withPrescription"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="With Prescription"
-              />
-              <MyInput
-                width={80}
-                fieldName="hasOrders"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Orders"
-              />
-              <MyInput
-                width={80}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Is Observed"
-              />
-              <MyInput
                 width={150}
                 fieldName="priority"
                 fieldType="select"
@@ -305,10 +264,6 @@ const ERList = () => {
     </>
   );
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
     refetchEncounter();
@@ -343,11 +298,17 @@ const ERList = () => {
       title: <Translate>PATIENT NAME</Translate>,
       fullText: true,
       render: rowData => {
+
+        const patient = rowData?.patientObject;
+
+        const fullName =
+          `${patient?.firstName ?? ''} ${patient?.lastName ?? ''}`.trim() || '-';
+
         const tooltipSpeaker = (
           <Tooltip>
-            <div>MRN : {rowData?.patientObject?.patientMrn}</div>
-            <div>Age : {rowData?.patientAge}</div>
-            <div>Gender : {rowData?.patientObject?.genderLvalue?.lovDisplayVale}</div>
+            <div>MRN : {patient?.medicalRecordNumber ?? '-'}</div>
+            <div>Age : {rowData?.patientAge ?? '-'}</div>
+            <div>Gender : {patient?.sexAtBirth ?? '-'}</div>
             <div>Visit ID : {rowData?.visitId}</div>
           </Tooltip>
         );
@@ -355,14 +316,16 @@ const ERList = () => {
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
             <div style={{ display: 'inline-block' }}>
-              {rowData?.patientObject?.privatePatient ? (
+              {patient?.privatePatient ? (
                 <Badge color="blue" content="Private">
                   <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.fullName}
+                    {fullName}
                   </p>
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                <p style={{ cursor: 'pointer' }}>
+                  {fullName}
+                </p>
               )}
             </div>
           </Whisper>
@@ -468,12 +431,21 @@ const ERList = () => {
               <div>
                 <MyButton
                   size="small"
-                  onClick={() => {
-                    const patientData = rowData.patientObject;
-                    setLocalEncounter(rowData);
-                    setLocalPatient(patientData);
-                    handleGoToVisit(rowData, patientData);
-                  }}
+                    onClick={async () => {
+                      const patientData = rowData?.patientObject;
+
+                      if (!patientData?.id) return;
+
+                      const fullPatient = await getPatientById({ id: patientData.id }).unwrap();
+
+                      setLocalEncounter(rowData);
+                      setLocalPatient(fullPatient);
+
+                      dispatch(setEncounter(rowData));
+                      dispatch(setPatient(fullPatient));
+
+                      setOpenEMRModal(true);
+                    }}
                 >
                   <FontAwesomeIcon icon={faUserDoctor} />
                 </MyButton>
@@ -500,7 +472,9 @@ const ERList = () => {
                   size="small"
                   backgroundColor="violet"
                   onClick={() => {
-                    const patientData = rowData.patientObject;
+                    const patientData = rowData?.patientObject;
+
+                    if (!patientData) return;
 
                     setLocalEncounter(rowData);
                     setLocalPatient(patientData);
@@ -508,9 +482,9 @@ const ERList = () => {
                     dispatch(setEncounter(rowData));
                     dispatch(setPatient(patientData));
 
-                    // فتح مودال EMR بدل التنقل لصفحة أخرى
                     setOpenEMRModal(true);
                   }}
+
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
@@ -662,7 +636,11 @@ const ERList = () => {
         title="Patient EMR"
         size="95vw"
         content={
-          <PatientEMRModal inModal={true} patient={localPatient} encounter={setLocalEncounter} />
+          <PatientEMRModal
+            inModal={true}
+            patient={localPatient}
+            encounter={encounter}
+          />
         }
         cancelButtonLabel="Close"
         actionButtonLabel="Close"

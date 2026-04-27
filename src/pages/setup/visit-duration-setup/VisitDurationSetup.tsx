@@ -21,6 +21,7 @@ import { Form, Panel } from 'rsuite';
 import VisitDurationSetupModal from './VisitDurationSetupModal';
 import { VisitDuration } from '@/types/model-types-new';
 import { newVisitDuration } from '@/types/model-types-constructor-new';
+import Translate from '@/components/Translate';
 
 type SortType = 'asc' | 'desc';
 
@@ -220,7 +221,7 @@ const VisitDurationSetup: React.FC = () => {
     },
     {
       key: 'durationInMinutes',
-      title: 'Duration (mins)',
+      title: <span><Translate>Duration</Translate><Translate>(mins)</Translate></span>,
       dataKey: 'durationInMinutes',
       width: 150,
       render: (row: VisitDuration) =>
@@ -451,8 +452,15 @@ const VisitDurationSetup: React.FC = () => {
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel className="main-visit-duration-page-gaps">
+    <Panel className="main-visit-duration-page-gaps" dir={dir}>
       <MyTable
         data={tableData}
         columns={columns}

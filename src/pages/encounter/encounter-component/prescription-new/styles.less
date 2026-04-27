@@ -111,6 +111,7 @@
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 .bt-right {
   display: flex;
@@ -711,13 +712,51 @@ form.margin-left-3 .rs-form-control-label {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
 
-  .indication-row {
+  .indication-icd-section {
+    width: 100%;
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0;
+    margin-bottom: 8px;
+
+    .icd10-search__label {
+      display: none;
+    }
+  }
+
+  .indication-icd-label-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .indication-icd-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #262626;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1.5;
+  }
+
+  .required-asterisk {
+    color: #d32f2f;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 2px;
+  }
+
+  .indication-other-fields-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
     align-items: flex-start;
-    padding-top: 1vw;
+    width: 100%;
   }
 
   .indication-textarea {
@@ -729,18 +768,109 @@ form.margin-left-3 .rs-form-control-label {
 }
 
 .indication-textarea-indication-use {
-  position: relative;
-  bottom: 1.2vw;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 6px;
+  padding: 8px;
+  resize: none;
+  border: 1px solid #e5e5e5;
+}
+
+.indication-display-field,
+.indication-manual-textarea {
+  width: 100%;
+  border-radius: 6px;
+  padding: 10px 12px;
+  resize: none;
+  border: 1px solid #d9d9d9;
+  background-color: #ffffff;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  min-height: 120px;
+  height: 120px;
+}
+
+.indication-display-field {
+  cursor: not-allowed;
+
+  &:focus {
+    outline: none;
+    border-color: #d9d9d9;
+  }
+}
+
+.indication-manual-textarea {
+  &:focus {
+    outline: none;
+    border-color: #1675e0;
+    box-shadow: 0 0 0 2px rgba(22, 117, 224, 0.1);
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
 }
 
 .indication-field {
-  flex: 1;
-  min-width: 170px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
+
+.admin-instructions-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 32px;
+}
+
+.admin-instruction-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+}
+
+.admin-instruction-remove-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #ff4d4f;
+    color: white;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
 
 .prescription-dropdown-menuresult {
   position: absolute;

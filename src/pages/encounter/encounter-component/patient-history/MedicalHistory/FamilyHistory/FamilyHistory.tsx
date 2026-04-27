@@ -21,9 +21,6 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
 
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   /*  PAGINATION  */
 
   const [page, setPage] = useState(0);
@@ -32,7 +29,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   /*  API  */
 
   const { data: familyHistoryData, isLoading } = useGetFamilyHistoryQuery({
-    patientId: Number(patient?.key),
+    patientId: Number(patient?.id),
     page,
     size,
     sort: 'id,desc'
@@ -46,18 +43,6 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
 
   /*  ACTIONS  */
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteFamilyHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
 
   const handleEdit = (row: any) => {
     setSelectedRow(row);
@@ -94,14 +79,6 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
             render: row => (
               <div className="family-history-actions">
                 <MdModeEdit size={24} className="edit-icon" onClick={() => handleEdit(row)} />
-                <MdDelete
-                  size={24}
-                  className="delete-icon"
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -157,13 +134,6 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
               patient={patient}
             />
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Family History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
           </>
         }
       />

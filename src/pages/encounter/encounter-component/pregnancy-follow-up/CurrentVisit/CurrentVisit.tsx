@@ -7,6 +7,7 @@ import CurrentVisitModal from './CurrentVisitModal';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdDelete } from 'react-icons/md';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import Translate from '@/components/Translate';
 
 // Sample data for initial visits
 const sampleData = [
@@ -122,6 +123,8 @@ const CurrentVisit = () => {
   ];
 
   // Filter section above the table
+
+
 const tablebuttons = (
   <div className="table-buttons-container">
     <div className="left-group">
@@ -134,7 +137,7 @@ const tablebuttons = (
             setShowCancelled(checked);
           }}
         >
-          Show Cancelled
+<Translate>Show Cancelled</Translate>
         </Checkbox>    </div>
     <div className="right-group">
           <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
@@ -147,8 +150,16 @@ const tablebuttons = (
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       {/* Table component displaying visits with filters and pagination */}
       <MyTable
         data={displayedRecords}

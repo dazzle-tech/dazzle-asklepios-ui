@@ -1,142 +1,164 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
+import React, { useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
-const AddEditIntake = ({
-  open,
-  setOpen,
-  width,
-}) => {
 
-  // Fetch intake Type Lov  response
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+const emptyIntakeForm = {
+  date: null,
+  time: null,
+  intakeType: null,
+  otherType: '',
+  route: null,
+  volume: null,
+  rate: null,
+  notes: ''
+};
+
+const AddEditIntake = ({ open, setOpen, width }) => {
+  const [formData, setFormData] = useState<any>(emptyIntakeForm);
+
   const { data: intakeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
-  // Fetch route Lov response
   const { data: routeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
 
-  // Modal content
-  const conjureFormContent = (stepNumber = 0) => {
-    switch (stepNumber) {
-      case 0:
-        return (
-          <Form fluid>
-            <Row>
-            <Col md={12}>
-            <MyInput
-                width="100%"
-                fieldName="date"
-                fieldType='date'
-                record=""
-                setRecord=""
-              />
-              </Col>
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="time"
-                fieldType='time'
-                record=""
-                setRecord=""
-              />
-              </Col>
-              </Row>
-              <br/>
-              <Row>
-                 <Col md={12}>
-              <MyInput
-                fieldName="intakeType"
-                fieldType="select"
-                selectData={intakeTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record=""
-                setRecord=""
-                width="100%"
-              />
-              </Col>
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="otherType"
-                record=""
-                setRecord=""
-              />
-              </Col>
-              </Row>
-              <br/>
-              <Row>
-                 <Col md={12}>
-              <MyInput
-                fieldName="route"
-                fieldType="select"
-                selectData={routeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record=""
-                setRecord=""
-                width="100%"
-              />
-              </Col>
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="volume"
-                rightAddon="ml"
-                fieldType='number'
-                record=""
-                setRecord=""
-              />
-              </Col>
-              </Row>
-              <br/>
-              <Row>
-                 <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="rate"
-                rightAddon="ml/hr"
-                fieldType='number'
-                record=""
-                setRecord=""
-              />
-              </Col>
-               <Col md={12}>
-               <MyInput
-                width="100%"
-                fieldName=""
-                fieldLabel="Created At\By"
-                record=""
-                setRecord=""
-                readonly
-              />
-              </Col>
-              </Row>
-              <br/>
-               <MyInput
-                width="100%"
-                fieldName="notes"
-                fieldType='textarea'
-                record=""
-                setRecord=""
-              />  
-          </Form>
-        );
-    }
+  const handleSave = () => {
+    // TODO: wire up save mutation
   };
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
+
+  const content = (
+    <Form fluid>
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Date"
+            fieldName="date"
+            fieldType="date"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Time"
+            fieldName="time"
+            fieldType="time"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Intake Type"
+            fieldName="intakeType"
+            fieldType="select"
+            selectData={intakeTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Other Type"
+            fieldName="otherType"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Route"
+            fieldName="route"
+            fieldType="select"
+            selectData={routeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Volume"
+            fieldName="volume"
+            fieldType="number"
+            rightAddon="ml"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Rate"
+            fieldName="rate"
+            fieldType="number"
+            rightAddon="ml/hr"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Created At / By"
+            fieldName="createdAtBy"
+            record={formData}
+            setRecord={setFormData}
+            disabled
+          />
+        </Col>
+      </Row>
+      <br />
+      <MyInput
+        width="100%"
+        fieldLabel="Notes"
+        fieldName="notes"
+        fieldType="textarea"
+        record={formData}
+        setRecord={setFormData}
+      />
+    </Form>
+  );
+
   return (
     <MyModal
       open={open}
-      setOpen={setOpen}
-      title={ 'Intake'}
+      setOpen={value => {
+        if (!value) setFormData(emptyIntakeForm);
+        setOpen(value);
+      }}
+      title="Intake"
       position="right"
-      content={conjureFormContent}
-      actionButtonLabel={'Create'}
-      actionButtonFunction=""
-      steps={[{ title: 'Intake', icon:<FontAwesomeIcon icon={faSquarePollHorizontal} />}]}
+      content={<div dir={dir}>{content}</div>}
+      actionButtonLabel="Create"
+      actionButtonFunction={handleSave}
+      steps={[{ title: 'Intake', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} /> }]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );
 };
+
 export default AddEditIntake;

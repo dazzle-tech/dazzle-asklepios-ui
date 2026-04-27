@@ -112,7 +112,7 @@ export const encounterVaccinationService = createApi({
 
     cancelEncounterVaccination: builder.mutation<
       any,
-      { id: number; cancellationReason: string; cancelledById: number }
+      { id: number; cancellationReason: string }
     >({
       query: body => ({
         url: `/api/patient/encounter-vaccination/cancel`,
@@ -122,7 +122,7 @@ export const encounterVaccinationService = createApi({
       invalidatesTags: ['EncounterVaccination']
     }),
 
-    reviewEncounterVaccination: builder.mutation<any, { id: number; reviewedById: number }>({
+    reviewEncounterVaccination: builder.mutation<any, { id: number }>({
       query: body => ({
         url: `/api/patient/review`,
         method: 'PUT',

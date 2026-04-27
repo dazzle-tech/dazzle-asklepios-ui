@@ -12,7 +12,6 @@ import {
   useUpdateSurgicalHistoryMutation
 } from '@/services/patients/surgicalHistoryService';
 
-import { newSurgicalHistory } from '@/types/model-types-constructor-new';
 import { SurgicalHistory } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -98,7 +97,13 @@ type SurgicalHistoryForm = Omit<
 };
 
 const emptySurgicalHistoryForm: SurgicalHistoryForm = {
-  ...newSurgicalHistory,
+  surgery: '',
+  facility: '',
+  anesthesiaType: null,
+  complications: null,
+  implantsOrDevicesDescription: '',
+  hasImplantsOrDevices: false,
+  patientId: null,
   dateOfSurgery: null,
   adverseReactionsToAnesthesia: []
 };
@@ -126,6 +131,10 @@ const toStringArray = (value: string | string[] | null | undefined) => {
     .filter(Boolean);
 };
 
+// Strip undefined fields so they don't override safe defaults when spread
+const stripUndefined = (obj: Record<string, any>) =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+
 const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
@@ -143,8 +152,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...emptySurgicalHistoryForm,
-        ...initialData,
-        patientId: Number(patient?.key),
+        ...stripUndefined(initialData),
+        patientId: Number(patient?.id),
         dateOfSurgery: toDate(initialData.dateOfSurgery),
         adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
       });
@@ -152,11 +161,11 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     } else {
       setFormData({
         ...emptySurgicalHistoryForm,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
       setOpenImplants({ open: false });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   const validateBeforeSave = () => {
     const errors: string[] = [];
@@ -193,22 +202,29 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const handleSave = async () => {
     const errors = validateBeforeSave();
     if (errors.length) {
-      dispatch(notify({ msg: errors.join('\n'), sev: 'error' }));
+      dispatch(notify({ msg: errors.map(e => `• ${e}`).join('\n'), sev: 'warning' }));
       return;
     }
 
-    const payload = {
-      ...formData,
-      patientId: Number(patient?.key),
+    const payload: any = {
+      patientId: Number(patient?.id),
+      surgery: formData.surgery?.trim() || '',
+      facility: formData.facility?.trim() || '',
+      anesthesiaType: formData.anesthesiaType || null,
       dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
+      complications: formData.complications || null,
+      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia?.length
+        ? formData.adverseReactionsToAnesthesia.join(',')
+        : null,
       hasImplantsOrDevices: openImplants.open,
       implantsOrDevicesDescription: openImplants.open
-        ? formData.implantsOrDevicesDescription
-        : null,
-      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia.length
-        ? formData.adverseReactionsToAnesthesia.join(',')
+        ? (formData.implantsOrDevicesDescription?.trim() || null)
         : null
     };
+
+    if (formData.id) {
+      payload.id = formData.id;
+    }
 
     try {
       if (formData.id) {
@@ -223,6 +239,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       handleCrudError(err, dispatch, SURGICAL_HISTORY_ERROR_MAP);
     }
   };
+
+
 
   const content = (
     <Form fluid layout="inline" className="fields-container">
@@ -317,6 +335,13 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -326,7 +351,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
@@ -20,20 +20,45 @@ type AddEditServiceProps = {
 const AddEditService: React.FC<AddEditServiceProps> = ({
   open,
   setOpen,
-  width,
   service,
   setService,
-  handleSave,
+  handleSave
 }) => {
-  // enums
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
   const currencyOptions = useEnumCapitalized('Currency');
 
-  // facilities (same pattern used in AddEditDepartment)
-  const [facilityListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-  });
+  const [facilityListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+
+  useEffect(() => {
+    if (!facilityListResponse || !service?.facilityId) return;
+
+    const selectedFacility = facilityListResponse.find(
+      (f: any) => Number(f.id) === Number(service.facilityId)
+    );
+
+    if (
+      selectedFacility?.defaultCurrency &&
+      selectedFacility.defaultCurrency !== service.currency
+    ) {
+      setService({
+        ...service,
+        currency: selectedFacility.defaultCurrency
+      });
+    }
+  }, [service?.facilityId, facilityListResponse]);
+
+   useEffect(() => {
+   
+     if (!service?.appointable) {
+       
+         setService(prev => ({
+           ...prev,
+           defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+         }));
+       
+     }
+   }, [service?.appointable]);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -63,13 +88,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   width="100%"
                   fieldName="name"
                   record={service}
-                  setRecord={setService} />
+                  setRecord={setService}
+                />
               </div>
             </div>
             <br />
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
-                <MyInput required width="100%" fieldName="code" record={service} setRecord={setService} />
+                <MyInput
+                  required
+                  width="100%"
+                  fieldName="code"
+                  record={service}
+                  setRecord={setService}
+                />
               </div>
               <div className="container-of-field-service">
                 <MyInput
@@ -102,6 +134,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   fieldType="number"
                   record={service}
                   setRecord={setService}
+                  required
                 />
               </div>
             </div>
@@ -118,10 +151,69 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   selectDataValue="value"
                   record={service}
                   setRecord={setService}
+                  disabled
                 />
               </div>
-              <div className="container-of-field-service" />
+              <div className="container-of-field-service">
+              <MyInput
+                width="100%"
+                fieldType="checkbox"
+                fieldName="appointable"
+                record={service}
+                setRecord={setService}
+              />
+              </div>
             </div>
+             <br />
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required
+                />
+               </div>
+               {service?.appointable && (
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultDurationMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+               )}
+            </div>
+             <br />
+              {service?.appointable && (
+             <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferBeforeMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferAfterMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+             </div>
+              )}
           </Form>
         );
     }
@@ -129,13 +221,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
 
   const isEdit = !!(service?.id ?? service?.key);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={isEdit ? 'Edit Service' : 'New Service'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}

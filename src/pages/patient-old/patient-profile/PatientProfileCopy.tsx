@@ -135,18 +135,15 @@ const PatientProfile = () => {
         "Patient Registration"
     );
 
-    dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContent));
-    dispatch(setPatient({ ...newApPatient }));
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
-    };
-  }, [dispatch, location.pathname]);
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <div className="patient-profile-container">
         <Panel
           bordered
@@ -253,7 +250,7 @@ const PatientProfile = () => {
             })
         }
       />
-    </>
+    </div>
   );
 };
 

@@ -4,7 +4,6 @@ import MyInput from '@/components/MyInput';
 import { newApTransferPatient } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
 import { ApTransferPatient } from '@/types/model-types';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import MyLabel from '@/components/MyLabel';
 import { useSaveApprovalTransferMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
@@ -16,12 +15,7 @@ import { useGetRoomListQuery } from '@/services/setupService';
 import { useGetBedListQuery } from '@/services/setupService';
 const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpatientList }) => {
     const [transferPatient, setTransferPatient] = useState<ApTransferPatient>({ ...newApTransferPatient });
-    const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
-      resourceType: 'INPATIENT_ADMISSION',
-      page: 0,
-      size: 1000,
-      sort: 'id,asc'
-    });
+    const { data: inpatientDepartmentListResponse } = { data: { data: [] as unknown[] } };
     const [saveApprovalTransferPatient] = useSaveApprovalTransferMutation();
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -241,6 +235,13 @@ const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpa
             handleClearField();
         }
     }, [open]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
         <MyModal
             open={open}
@@ -248,7 +249,7 @@ const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpa
             title="Transfer Approval"
             size="60vw"
             bodyheight="70vh"
-            content={modalContent}
+            content={<div dir={dir}>{modalContent}</div>}
             hideCancel={false}
             hideBack={true}
             steps={[{ title: "Transfer Approval", icon: <FontAwesomeIcon icon={faCheckCircle} /> }]}

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
 import { formatEnumString } from '@/utils';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllActivePayorsQuery } from '@/services/setup/payer/PayorService';
 import InsuranceBenefitsCard from './InsuranceBenefitsCard';
 import './styles.less';
 import PlanCoverageItemsSection from './PlanCoverageItemsSection';
@@ -98,10 +98,11 @@ const InsuranceModal = ({
   refetchInsurance,
   editing,
   insuranceBrowsing,
-  relations,
   hideSaveBtn = false
 }) => {
   const dispatch = useAppDispatch();
+  const resolvedPatientId =
+    typeof patientKey === 'object' ? Number(patientKey?.id) : Number(patientKey);
 
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
@@ -110,29 +111,32 @@ const InsuranceModal = ({
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const [relationsList, setRelationsList] = useState<any[]>();
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
 
   const [payorPage, setPayorPage] = useState(0);
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
   const [planPage, setPlanPage] = useState(0);
 
+  // Policy Holder pagination state
+  const [relativePage, setRelativePage] = useState(0);
+  const [allRelatives, setAllRelatives] = useState<any[]>([]);
+
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
     isFetching: payorFetching
-  } = useGetAllPayorsQuery({
+  } = useGetAllActivePayorsQuery({
     page: payorPage,
     size: 20,
-    sort: 'name,asc',
-    ...(payorSearchKeyword && { name: payorSearchKeyword })
+    sort: 'name,asc'
   });
 
   const {
     data: plansResponse,
     isLoading: plansLoading,
     isFetching: plansFetching
-  } = useGetPlansByPayorQuery(
+  } = useGetAllActivePlansQuery(
     {
       payorId: Number(patientInsurance?.payorId) || 0,
       page: planPage,
@@ -142,10 +146,19 @@ const InsuranceModal = ({
     { skip: !patientInsurance?.payorId }
   );
 
-  const { data: relatives, isLoading: relativesLoading } = useGetRelativePatientsByCategoryQuery({
-    patientId: patientKey?.id,
-    categoryType: 'ADULT'
-  });
+  const {
+    data: relativesResponse,
+    isLoading: relativesLoading,
+    isFetching: relativesFetching
+  } = useGetRelativePatientsByCategoryQuery(
+    {
+      patientId: resolvedPatientId,
+      categoryType: 'ADULT',
+      page: relativePage,
+      size: 5
+    },
+    { skip: !resolvedPatientId || !open }
+  );
 
   useEffect(() => {
     setPayorPage(0);
@@ -165,8 +178,37 @@ const InsuranceModal = ({
     setPrevPayorId(currentPayorId);
   }, [patientInsurance?.payorId, prevPayorId]);
 
+  useEffect(() => {
+    if (!open) {
+      setRelativePage(0);
+      setAllRelatives([]);
+      return;
+    }
+
+    if (relativePage === 0) {
+      setAllRelatives(relativesResponse?.data ?? relativesResponse ?? []);
+      return;
+    }
+
+    const incomingRows = relativesResponse?.data ?? relativesResponse ?? [];
+
+    setAllRelatives(prev => {
+      const seenIds = new Set(prev.map(item => Number(item.id)));
+      const merged = [...prev];
+
+      incomingRows.forEach(item => {
+        if (!seenIds.has(Number(item.id))) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+  }, [relativesResponse, relativePage, open]);
+
   const hasMorePayors = payorResponse?.links?.next != null;
   const hasMorePlans = plansResponse?.links?.next != null;
+  const hasMoreRelatives = relativesResponse?.links?.next != null;
 
   const handleLoadMorePayors = () => {
     if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
@@ -176,10 +218,16 @@ const InsuranceModal = ({
     if (hasMorePlans && !plansFetching) setPlanPage(currentPage => currentPage + 1);
   };
 
+  const handleLoadMoreRelatives = () => {
+    if (hasMoreRelatives && !relativesFetching) {
+      setRelativePage(currentPage => currentPage + 1);
+    }
+  };
+
   const handleSave = async () => {
     const insuranceBody: PatientInsurance = {
       ...patientInsurance,
-      patientId: patientKey.id
+      patientId: resolvedPatientId
     };
 
     try {
@@ -204,17 +252,10 @@ const InsuranceModal = ({
     setPayorPage(0);
     setPayorSearchKeyword('');
     setPlanPage(0);
+    setRelativePage(0);
+    setAllRelatives([]);
     onClose();
   };
-
-  useEffect(() => {
-    const namesAndIds =
-      relations?.map(relation => ({
-        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
-        id: relation.id
-      })) || [];
-    setRelationsList(namesAndIds);
-  }, [relations]);
 
   useEffect(() => {
     if (open) {
@@ -232,6 +273,8 @@ const InsuranceModal = ({
         setPayorSearchKeyword('');
         setPlanPage(0);
       }
+
+      setRelativePage(0);
     }
   }, [open, editing]);
 
@@ -243,10 +286,14 @@ const InsuranceModal = ({
         setPayorPage(0);
         setPayorSearchKeyword('');
         setPlanPage(0);
+        setRelativePage(0);
+        setAllRelatives([]);
       }, 300);
       return () => clearTimeout(resetTimer);
     }
   }, [open]);
+
+  const relativeOptions = useMemo(() => allRelatives ?? [], [allRelatives]);
 
   const renderLeftContent = () => (
     <div className="insurance-modal__left-content">
@@ -320,7 +367,7 @@ const InsuranceModal = ({
         <MyInput
           column
           required
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Policy Number"
           fieldName="policyNumber"
           record={patientInsurance}
@@ -329,7 +376,7 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Group Number"
           fieldName="groupNumber"
           record={patientInsurance}
@@ -349,16 +396,19 @@ const InsuranceModal = ({
         <MyInput
           column
           fieldLabel="Policy Holder"
-          fieldType="select"
+          fieldType="selectPagination"
           fieldName="policyHolderId"
-          selectData={relatives ?? []}
+          selectData={relativeOptions}
           selectDataLabel={['firstName', 'lastName']}
           selectDataValue="id"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          loading={relativesLoading}
-          searchable={false}
+          loading={relativesLoading || relativesFetching}
+          searchable={true}
+          hasMore={hasMoreRelatives}
+          onFetchMore={handleLoadMoreRelatives}
+          placeholder="Select Policy Holder..."
         />
         <MyInput
           column
@@ -376,6 +426,12 @@ const InsuranceModal = ({
     </div>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <AdvancedModal
       open={open}
@@ -383,8 +439,8 @@ const InsuranceModal = ({
       leftTitle="Benefits Overview"
       rightTitle="Patient Insurance"
       subRightTitle={editing?.id ? 'Edit Insurance Information' : 'Add New Insurance'}
-      leftContent={renderLeftContent()}
-      rightContent={renderRightContent()}
+      leftContent={<div dir={dir}>{renderLeftContent()}</div>}
+      rightContent={<div dir={dir}>{renderRightContent()}</div>}
       actionButtonLabel="Save"
       actionButtonFunction={hideSaveBtn ? null : handleSave}
       hideCancel={false}

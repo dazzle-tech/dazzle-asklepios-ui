@@ -123,8 +123,18 @@ const ERTriage = () => {
 
   // Create a JSX element to display as the page header content
   const divContent = 'ER Triage';
+
+
+
+useEffect(() => {
   dispatch(setPageCode('ER_Triage'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
@@ -215,9 +225,6 @@ const ERTriage = () => {
 
     const targetPath = '/ER-start-triage';
 
-    // Save source in sessionStorage before navigating
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
     navigate(targetPath, {
       state: {
         info: 'to_Start_Triage',
@@ -227,11 +234,6 @@ const ERTriage = () => {
       }
     });
   };
-
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {

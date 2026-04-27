@@ -34,19 +34,19 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const isLightMode = mode === 'light';
 
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+useEffect(() => {
+  const handleResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', handleResize);
+  handleResize();
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
-  useEffect(() => {
-    if (width > 800) {
-      setDisplaySearch(true);
-    } else {
-      setDisplaySearch(false);
-    }
-  }, [width, setDisplaySearch]);
+useEffect(() => {
+  const nextValue = width > 800;
+  if (displaySearch !== nextValue) {
+    setDisplaySearch(nextValue);
+  }
+}, [width, displaySearch, setDisplaySearch]);
 
   useEffect(() => {
   if (!record.eventKey) return;
@@ -77,7 +77,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
       )}
 
       <div className="main-screen-bar-filters-header" >
-        <Form fluid layout="inline">
+        <Form fluid>
           <div className="main-screen-bar-buttons-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
             {width > 800 || displaySearch ? (
               <>

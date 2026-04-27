@@ -20,14 +20,13 @@ import {
 
 import { newTelephonicConsultation, newPractitioner } from '@/types/model-types-constructor-new';
 
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { Practitioner, TelephonicConsultation } from '@/types/model-types-new';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
+import { Practitioner, TelephonicConsultations } from '@/types/model-types-new';
 
 import {
-  useLazyGetPractitionersByFacilityQuery,
+  useLazyGetActivePractitionersByFacilityQuery,
   useLazyGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
-
 
 const TELEPHONIC_FIELD_LABELS: Record<string, string> = {
   facilityId: 'Facility',
@@ -63,7 +62,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -79,7 +78,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n• Facility: is required${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -89,7 +88,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: keyMap[errorKey] + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -100,11 +99,10 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   dispatch(
     notify({
       msg: fallbackMsg + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
-
 
 const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Telephonic consultation payload is required.',
@@ -132,7 +130,6 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'db.constraint': 'Database constraint violation.'
 };
 
-
 const DetailsTele = ({
   patient,
   encounter,
@@ -154,17 +151,16 @@ const DetailsTele = ({
   const pageSize = 5;
   const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
 
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
   const [createConsultation] = useCreateMutation();
   const [updateConsultation] = useUpdateMutation();
 
   const [triggerGetPractitionersByFacility, practitionersResult] =
-    useLazyGetPractitionersByFacilityQuery();
+    useLazyGetActivePractitionersByFacilityQuery();
 
   const [triggerGetPractitionerById, { data: practitionerById, isSuccess: practitionerLoaded }] =
     useLazyGetPractitionerByIdQuery();
-
 
   useEffect(() => {
     if (!open) return;
@@ -172,28 +168,34 @@ const DetailsTele = ({
     if (consultationOrders?.id) {
       setFormData({
         ...consultationOrders,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key)
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
     } else {
       setFormData({
         ...newTelephonicConsultation,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key)
+        patientId: patient?.id,
+        encounterId: encounter?.id,
+        practitionerId: null
       });
+
       setPractitioner({ ...newPractitioner });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.key, encounter?.key]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !consultationOrders?.practitionerId) return;
+    if (!open || !consultationOrders?.id) return;
+    if (!consultationOrders?.practitionerId) return;
+
     triggerGetPractitionerById(consultationOrders.practitionerId);
-  }, [open, consultationOrders?.practitionerId]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !practitionerLoaded || !practitionerById) return;
+    if (!open || !consultationOrders?.id) return;
+
+    if (!practitionerLoaded || !practitionerById) return;
 
     setPractitioner({
       ...newPractitioner,
@@ -208,15 +210,13 @@ const DetailsTele = ({
       page: 0,
       size: pageSize,
       sort: 'id,asc'
-    }).catch(err => {
-      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     });
 
     setFormData(prev => ({
       ...prev,
       practitionerId: practitionerById.id
     }));
-  }, [open, practitionerLoaded, practitionerById]);
+  }, [open, consultationOrders?.id, practitionerLoaded]);
 
   useEffect(() => {
     if (!practitionersResult?.data?.data) return;
@@ -235,17 +235,51 @@ const DetailsTele = ({
   const handleClear = () => {
     setFormData({
       ...newTelephonicConsultation,
-      patientId: Number(patient.key),
-      encounterId: Number(encounter?.key)
+      patientId: patient.id,
+      encounterId: encounter?.id
     });
     setPractitioner({ ...newPractitioner });
     setAllPractitioners([]);
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!practitioner?.facilityId) {
+      fieldErrors.push({ field: 'facilityId', message: 'must not be null' });
+    }
+
+    if (!formData.practitionerId) {
+      fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+    }
+
+    if (!formData.dateOfCall) {
+      fieldErrors.push({ field: 'dateOfCall', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+          data: { fieldErrors },
+          status: 400
+        }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
+    }
+
     try {
-      if ((formData as TelephonicConsultation).id) {
+      if ((formData as TelephonicConsultations).id) {
         const payload = {
           id: consultationOrders?.id,
           practitionerId: formData.practitionerId,
@@ -255,28 +289,50 @@ const DetailsTele = ({
           notes: formData.notes,
           extraDocumentation: formData.extraDocumentation
         };
+
         await updateConsultation(payload).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation updated successfully',
+            sev: 'success'
+          })
+        );
       } else {
-        await createConsultation(formData).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
+        const createPayload = {
+          ...formData,
+          patientId: patient?.id
+        };
+
+        await createConsultation(createPayload).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation created successfully',
+            sev: 'success'
+          })
+        );
       }
 
-      refetchCon?.();
       setOpen(false);
+      refetchCon?.();
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     }
   };
-
   const handleOpenAttachmentModal = () => {
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -381,7 +437,7 @@ const DetailsTele = ({
                 <MyInput
                   width="12vw"
                   fieldName="approvalNumber"
-                  fieldType="number"
+                  fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
                   setRecord={setFormData}
@@ -432,7 +488,7 @@ const DetailsTele = ({
         source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
         sourceId={(formData as any)?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

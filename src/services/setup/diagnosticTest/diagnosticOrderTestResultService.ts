@@ -54,6 +54,15 @@ export type DiagnosticOrderTestResultFilterParams = {
   resultType?: "NUMBER" | "TEXT";
 } & PagedParams;
 
+export type BulkIdsDTO = {
+  ids: number[];
+};
+
+export type BulkRejectDTO = {
+  ids: number[];
+  rejectedReason: string;
+};
+
 /* ================= Service ================= */
 
 export const diagnosticOrderTestResultService = createApi({
@@ -142,6 +151,19 @@ export const diagnosticOrderTestResultService = createApi({
       invalidatesTags: ["DiagnosticOrderTestResult"],
     }),
 
+    /* 🔹 Bulk Approve */
+    bulkApproveDiagnosticOrderTestResult: builder.mutation<
+      void,
+      BulkIdsDTO
+    >({
+      query: (body) => ({
+        url: "/api/patient/diagnostic-order-tests-results/bulk-approve",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["DiagnosticOrderTestResult"],
+    }),
+
     getFilledProfileTestIds: builder.query<
       number[],
       FilledProfileTestIdsParams
@@ -178,13 +200,25 @@ export const diagnosticOrderTestResultService = createApi({
       }),
     }),
 
-
     rejectDiagnosticOrderTestResult: builder.mutation<
       DiagnosticOrderTestResultResponseVM,
       { id: number; body: DiagnosticOrderTestResultRejectDTO }
     >({
       query: ({ id, body }) => ({
         url: `/api/patient/diagnostic-order-tests-results/${id}/reject`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["DiagnosticOrderTestResult"],
+    }),
+
+    /* 🔹 Bulk Reject */
+    bulkRejectDiagnosticOrderTestResult: builder.mutation<
+      void,
+      BulkRejectDTO
+    >({
+      query: (body) => ({
+        url: "/api/patient/diagnostic-order-tests-results/bulk-reject",
         method: "POST",
         body,
       }),
@@ -201,7 +235,9 @@ export const {
   useUpdateDiagnosticOrderTestResultMutation,
   useToggleReviewDiagnosticOrderTestResultMutation,
   useApproveDiagnosticOrderTestResultMutation,
+  useBulkApproveDiagnosticOrderTestResultMutation,
   useRejectDiagnosticOrderTestResultMutation,
+  useBulkRejectDiagnosticOrderTestResultMutation,
   useGetFilledProfileTestIdsQuery,
   useGetFilledProfileTestIdsByOrderTestQuery,
   useGetLabResultLogsByResultIdQuery,

@@ -165,7 +165,7 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
         source: 'PATIENT_DOCUMENT'
       };
 
-      const result = await uploadAttachments(uploadParams).unwrap();
+      await uploadAttachments(uploadParams).unwrap();
 
       dispatch(
         notify({
@@ -335,6 +335,11 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
   </div>
 );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -345,7 +350,7 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
       position="right"
       hideActionBtn
       hideBack
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

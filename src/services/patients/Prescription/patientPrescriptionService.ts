@@ -55,9 +55,9 @@ export const patientPrescriptionService = createApi({
       PagedResult<PatientPrescription>,
       PatientPrescriptionListParams
     >({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+      query: (params) => ({
         url: `/api/patient/patient-prescriptions`,
-        params: { page, size, sort },
+        params,
       }),
 
       transformResponse: (
@@ -124,12 +124,11 @@ export const patientPrescriptionService = createApi({
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
       PatientPrescription,
-      { id: number, lastModifiedBy: string }
+      { id: number }
     >({
-      query: ({ id, lastModifiedBy }) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-prescriptions/${id}/submit`,
         method: 'POST',
-        params: { lastModifiedBy }
       }),
       onQueryStarted,
       transformResponse: (response: any) => response,
@@ -155,6 +154,14 @@ export const patientPrescriptionService = createApi({
         'PatientPrescription',
       ],
     }),
+
+    getPrescriptionPdf: builder.query<Blob, { prescriptionId: number }>({
+      query: ({ prescriptionId }) => ({
+        url: `/api/analytics/prescriptions/${prescriptionId}/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   }),
 });
 
@@ -166,4 +173,6 @@ export const {
   useUpdatePatientPrescriptionMutation,
   useSubmitPatientPrescriptionMutation,
   useCancelPatientPrescriptionMutation,
+  useGetPrescriptionPdfQuery,
+  useLazyGetPrescriptionPdfQuery
 } = patientPrescriptionService;

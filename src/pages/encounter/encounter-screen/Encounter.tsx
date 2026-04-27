@@ -4,14 +4,13 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
+import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBed,
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
@@ -20,7 +19,7 @@ import {
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
@@ -36,27 +35,46 @@ import AllergiesModal from './AllergiesModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import WarningiesModal from './WarningiesModal';
-// import AiAssistantPopup from './AiAssistantPopup';
 import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import AiAssistantPopup from './AiAssistantPopup';
+import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 const Encounter = () => {
-
   const mode = useSelector((state: any) => state.ui.mode);
-  // create the action for the Customize Dashboard that we defined it in Patient summary page
   const [action, setAction] = useState(() => () => {});
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
-  
+  const propsData = location.state || {};
+
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
-  // const outletPatient = propsData?.patient;
-  // const outletEncounter = propsData?.encounter;
-  const savedState = sessionStorage.getItem('encounterPageSource');
+  const encounterId = propsData?.encounter?.id;
+  const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
+    useLazyExistsPatientDiagnosisByEncounterIdQuery();
+
+  const patientIdToFetch =
+    (propsData?.patient as any)?.id ??
+    (propsData?.patient as any)?.key ??
+    (propsData?.patient as any)?.patientId ??
+    null;
+
+  const shouldFetchPatient =
+    patientIdToFetch != null &&
+    String(patientIdToFetch).trim() !== '' &&
+    String(patientIdToFetch) !== 'undefined';
+
+  const { data: fetchedPatient } = useGetPatientByIdQuery(
+    { id: patientIdToFetch as any },
+    {
+      skip: !shouldFetchPatient
+    }
+  );
+
+  const patientToSend = fetchedPatient ?? propsData?.patient;
+
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
@@ -67,9 +85,13 @@ const Encounter = () => {
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
-  const [fromPage, setFromPage] = useState(savedState);
+  const [fromPage, setFromPage] = useState(propsData?.fromPage || '');
+  const [patientSideRefreshKey, setPatientSideRefreshKey] = useState(0);
 
-  // States for floating consultation button
+  const handlePatientDiagnosisSaved = () => {
+    setPatientSideRefreshKey(prev => prev + 1);
+  };
+
   const [openConsultationPopup, setOpenConsultationPopup] = useState<boolean>(false);
   const [buttonPosition, setButtonPosition] = useState({
     x: typeof window !== 'undefined' ? window.innerWidth - 100 : 100,
@@ -78,13 +100,12 @@ const Encounter = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
-  const buttonRef = useRef<HTMLDivElement>(null);
+  // const buttonRef = useRef<HTMLDivElement>(null);
 
-  // AI floating button states
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, 
+    x: typeof window !== 'undefined' ? window.innerWidth - 95 : 95,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -94,19 +115,17 @@ const Encounter = () => {
 
   const aiButtonRef = useRef<HTMLDivElement>(null);
 
-  // Handle mouse down on the floating button
-  const handleMouseDown = e => {
-    setIsDragging(true);
-    setHasMoved(false);
-    setDragOffset({
-      x: e.clientX - buttonPosition.x,
-      y: e.clientY - buttonPosition.y
-    });
-    e.preventDefault();
-  };
+  // const handleMouseDown = (e: any) => {
+  //   setIsDragging(true);
+  //   setHasMoved(false);
+  //   setDragOffset({
+  //     x: e.clientX - buttonPosition.x,
+  //     y: e.clientY - buttonPosition.y
+  //   });
+  //   e.preventDefault();
+  // };
 
-  // Handle mouse move to drag the button
-  const handleMouseMove = e => {
+  const handleMouseMove = (e: any) => {
     if (!isDragging) return;
 
     if (!hasMoved) {
@@ -126,7 +145,6 @@ const Encounter = () => {
     });
   };
 
-  // Handle mouse up to stop dragging
   const handleMouseUp = () => {
     if (!hasMoved && !isDragging) {
       setOpenConsultationPopup(true);
@@ -135,14 +153,12 @@ const Encounter = () => {
     setIsDragging(false);
   };
 
-  // Handle click (for click only without drag)
   const handleClick = () => {
     if (!hasMoved && !isDragging) {
       setOpenConsultationPopup(true);
     }
   };
 
-  // Add event listeners for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -155,26 +171,20 @@ const Encounter = () => {
     }
   }, [isDragging, dragOffset, hasMoved]);
 
-  // Use departmentKey from encounter, fallback to 5001 if not available
-  const departmentKeyToUse = localEncounter?.departmentId ;
+  const departmentKeyToUse = localEncounter?.departmentId;
 
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
-  
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
   useEffect(() => {
-    if (location.state && location.state.fromPage) {
+    if (location.state?.fromPage) {
       setFromPage(location.state.fromPage);
     }
   }, [location.state]);
-
- 
-
-
 
   useEffect(() => {
     if (
@@ -185,48 +195,69 @@ const Encounter = () => {
     } else if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
-  }, [completeEncounterMutation]);
+  }, [completeEncounterMutation, localEncounter?.encounterType, navigate]);
+
+  const currentFromPage = propsData?.fromPage || fromPage || '';
+
+  const sharedNavigationState = useMemo(
+    () => ({
+      patient: propsData?.patient,
+      encounter: propsData?.encounter,
+      edit,
+      fromPage: currentFromPage
+    }),
+    [propsData?.patient, propsData?.encounter, edit, currentFromPage]
+  );
 
   const handleGoBack = () => {
-    if (savedState === 'PatientEMR') {
+
+    if (currentFromPage === 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
-          localPatient: propsData.patient,
+          localPatient: propsData?.patient,
           fromPage: 'clinicalVisit'
         }
       });
     } else if (localEncounter?.encounterType == 'INPATIENT') {
       navigate('/inpatient-encounters-list');
-    } else if (propsData?.fromPage === 'DayCaseList') {
+    } else if (currentFromPage === 'DayCaseList') {
       navigate('/day-case-list');
-    } else if (propsData?.fromPage === 'ER_Department') {
+    } else if (currentFromPage === 'ER_Department') {
       navigate('/ER-department');
+    } else if (currentFromPage === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
     }
   };
 
   const followUpDraftAppointmentData = React.useMemo(() => {
-    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
-    const patient = propsData?.patient;
-    if (!patient) return null;
+    if (!patientToSend) return null;
     return {
-      patient,
-      patientId: patient?.id
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null,
+      sourceEncounterId: encounterId ?? null
     };
-  }, [propsData?.patient]);
+  }, [patientToSend, encounterId]);
 
   const handleCompleteEncounter = async () => {
     try {
-      if (propsData.encounter) {
-await completeEncounter({ id: propsData.encounter.id }).unwrap();
+      if (propsData?.encounter) {
+        await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
+
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
     setAiHasMoved(false);
@@ -296,10 +327,17 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
   const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
   const divContent = `Patient Visit > ${currentHeader}`;
+
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
-  }, [currentHeader, dispatch]);
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [currentHeader, dispatch, divContent]);
+
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
   }, [location.pathname, headersMap]);
@@ -329,37 +367,21 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
   }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
-  const selectedFacId = useAppSelector(s => s.auth.selectedDepartment?.facilityId);
-
-  const initialDeptRef = useRef<string | number | undefined>(undefined);
-  const initialFacRef = useRef<string | number | undefined>(undefined);
-  const didCaptureRef = useRef(false);
 
   useEffect(() => {
-    if (!location.pathname.startsWith('/encounter')) return;
+    if (!location.pathname.includes('/encounter')) return;
 
-    if (!didCaptureRef.current) {
-      if (selectedDeptId == null) return;
-      didCaptureRef.current = true;
-      initialDeptRef.current = selectedDeptId;
-      initialFacRef.current = selectedFacId;
-      return;
-    }
+    const encounterDeptId = propsData?.encounter?.departmentId;
 
-    const deptChanged = String(selectedDeptId) !== String(initialDeptRef.current);
-    const facChanged = String(selectedFacId) !== String(initialFacRef.current);
-
-    if (deptChanged || facChanged) {
+    if (!propsData?.encounter || !encounterDeptId || encounterDeptId !== selectedDeptId) {
       navigate('/encounter-list', { replace: true });
     }
-  }, [selectedDeptId, selectedFacId, location.pathname, navigate]);
-
+  }, [selectedDeptId, propsData?.encounter, location.pathname, navigate]);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
-        {/* Floating Consultation Button */}
-        <div
+        {/* <div
           ref={buttonRef}
           className={`draggable-container ${isDragging ? 'grabbing' : 'grab'}`}
           style={{ left: `${buttonPosition.x}px`, top: `${buttonPosition.y}px` }}
@@ -391,7 +413,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
           </button>
 
           {!isDragging && <div className="draggable-pulse" />}
-        </div>
+        </div> */}
 
         <div
           ref={aiButtonRef}
@@ -442,6 +464,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                   />
                 </Form>
               </div>
+
               <div className="right">
                 {isMedicalHistoryTab && (
                   <MyButton
@@ -463,48 +486,62 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                 >
                   Create Follow-up
                 </MyButton>
-                {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
-                  !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
-                    <MyButton
-                      prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
-                      onClick={() => {
-                        setOpenAdmitModal(true);
-                      }}
-                      appearance="ghost"
-                    >
-                      <Translate>Admit to Inpatient</Translate>
-                    </MyButton>
-                  )}
-               
-                  <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                    onClick={() =>
-                      //when handling inpatient logic add this condition to show discharge modal only for inpatient encounter types
-                      // propsData?.encounter?.encounterType === 'INPATIENT' ||
-                      // propsData?.encounter?.encounterType === 'DAYCASE' ||
-                      // propsData?.encounter?.encounterType === 'PROCEDURE' ||
-                      // propsData?.encounter?.encounterType === 'EMERGENCY'
-                      //   ? setOpenDischargeModal(true)
-                      //   :
-                         handleCompleteEncounter()
-                    }
-                    appearance="ghost"
-                  >
-                    <Translate>
-                      Complete Visit
-                      {/* {propsData?.encounter?.encounterType === 'INPATIENT' ||
-                      propsData?.encounter?.encounterType === 'DAYCASE' ||
-                      propsData?.encounter?.encounterType === 'PROCEDURE' ||
-                      propsData?.encounter?.encounterType === 'EMERGENCY'
-                        ? 'Discharge'
-                        :
-                         'Complete Visit'
-                         } */}
-                    </Translate>
-                  </MyButton>
-                
 
-                {/* show this button only on the dashboard page */}
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  onClick={async () => {
+                    try {
+                      if (localEncounter?.encounterType === 'EMERGENCY') {
+                        setOpenDischargeModal(true);
+                        return;
+                      }
+
+                      if (!encounterId) {
+                        dispatch(
+                          notify({
+                            msg: 'Encounter not found',
+                            sev: 'error'
+                          })
+                        );
+                        return;
+                      }
+
+                      const exists = await checkDiagnosisExists({ encounterId }).unwrap();
+
+                      if (!exists) {
+                        dispatch(
+                          notify({
+                            msg: 'Please add patient diagnosis before completing the visit',
+                            sev: 'warning'
+                          })
+                        );
+                        return;
+                      }
+
+                      handleCompleteEncounter();
+                    } catch (error) {
+                      console.error('Diagnosis check error:', error);
+                      dispatch(
+                        notify({
+                          msg: 'Failed to validate patient diagnosis',
+                          sev: 'error'
+                        })
+                      );
+                    }
+                  }}
+                  disabled={
+                    localEncounter?.encounterType !== 'EMERGENCY' &&
+                    (!encounterId || isCheckingPatientDiagnosis)
+                  }
+                  appearance="ghost"
+                >
+                  <Translate>
+                    {localEncounter?.encounterType === 'EMERGENCY'
+                      ? 'Disposition'
+                      : 'Complete Visit'}
+                  </Translate>
+                </MyButton>
+
                 {location.pathname == '/encounter' && (
                   <MyButton
                     prefixIcon={() => (
@@ -518,7 +555,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                     )}
                     onClick={action}
                     backgroundColor="#8360BF"
-                  ></MyButton>
+                  />
                 )}
 
                 {location.pathname !== '/encounter' && (
@@ -534,6 +571,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                 )}
               </div>
             </div>
+
             <Divider />
 
             <Drawer
@@ -546,6 +584,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
               <Drawer.Header className="header-drawer">
                 <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
               </Drawer.Header>
+
               <Drawer.Body className="drawer-body">
                 <Form fluid>
                   <Row>
@@ -568,13 +607,14 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                     className="drawer-item return-button"
                     onClick={() => {
                       const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                      navigate(basePath, { state: location.state });
+                      navigate(basePath, { state: sharedNavigationState });
                       setIsDrawerOpen(false);
                     }}
                   >
                     <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                     <Translate>Dashboard</Translate>
                   </List.Item>
+
                   {visibleSheets.map(({ code, name, icon, path }) => {
                     const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -585,23 +625,11 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                         onClick={() => {
                           setIsDrawerOpen(false);
                           navigate(fullPath, {
-                            state: {
-                              patient: propsData.patient,
-                              encounter: propsData.encounter,
-                              edit
-                            }
+                            state: sharedNavigationState
                           });
                         }}
                       >
-                        <Link
-                          to={fullPath}
-                          state={{
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }}
-                          className="inherit-link"
-                        >
+                        <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
                           {icon}
                           <span className="margin-left-10">
                             <Translate>{name}</Translate>
@@ -621,7 +649,8 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                     patient: propsData?.patient,
                     encounter: propsData?.encounter,
                     edit,
-                    setLocalEncounter
+                    setLocalEncounter,
+                    onDiagnosisSaved: handlePatientDiagnosisSaved
                   }}
                 />
               </div>
@@ -632,8 +661,8 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                     expand={expand}
                     setExpand={setExpand}
                     windowHeight={windowHeight}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
+                    patient={propsData?.patient}
+                    encounter={propsData?.encounter}
                   />
                 </div>
               )}
@@ -641,17 +670,20 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
           </Panel>
         </div>
 
-        {/* Right box with PatientSide and Medical Timeline */}
         <div className="right-box">
-          <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
+          <PatientSide
+            patient={propsData?.patient}
+            encounter={propsData?.encounter}
+            edit={edit}
+            refetchList={patientSideRefreshKey}
+          />
         </div>
       </div>
 
-      {/* Modals */}
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-        patient={propsData?.patien}
+        patient={propsData?.patient}
       />
 
       <WarningiesModal
@@ -670,8 +702,10 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false);
+          setModalOpen(false);
+          setShowAppointmentOnly(false);
         }}
+        patient={patientToSend}
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
@@ -694,7 +728,6 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
         encounter={propsData?.encounter}
       />
 
-      {/* Consultation Popup */}
       <ConsultationPopup
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
@@ -703,7 +736,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
       />
 
       <AiAssistantPopup
-       open={openAiPopup}
+        open={openAiPopup}
         setOpen={setOpenAiPopup}
         patient={propsData?.patient}
         encounter={propsData?.encounter}

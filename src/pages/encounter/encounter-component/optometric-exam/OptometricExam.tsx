@@ -248,7 +248,7 @@ const OptometricExam = () => {
             setOptometricExamStatus('');
           }
         }} >
-          Show Cancelled
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
         <Checkbox
           onChange={(value, checked) => {

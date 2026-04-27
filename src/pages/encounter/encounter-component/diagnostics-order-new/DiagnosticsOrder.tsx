@@ -59,8 +59,15 @@ const DiagnosticsOrder = (props: any) => {
     };
   }, []);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}
@@ -160,8 +167,9 @@ const DiagnosticsOrder = (props: any) => {
         handleRecallFavoriteTest={vm.handleRecallFavoriteTest}
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
+        handleLoadMore={vm.handleLoadMore}
       />
-    </>
+    </div>
   );
 };
 

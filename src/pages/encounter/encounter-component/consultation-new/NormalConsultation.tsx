@@ -15,7 +15,7 @@ import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
 
@@ -37,6 +37,7 @@ import { useGetDepartmentsBulkMutation } from '@/services/security/departmentSer
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import Details from './Details';
 import './styles.less';
+import PreviewConsultation from './PreviewConsultation';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -84,7 +85,9 @@ const NormalConsultation = props => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -100,8 +103,8 @@ const NormalConsultation = props => {
 
   const [consultation, setConsultation] = useState<Consultation>({
     ...newConsultation,
-    patientId: patient?.id ?? patient?.key,
-    encounterId: encounter?.id ?? encounter?.key
+    patientId: patient?.id,
+    encounterId: encounter?.id
   });
 
   const [modalKey, setModalKey] = useState(0);
@@ -235,8 +238,8 @@ const NormalConsultation = props => {
   const handleClear = useCallback(() => {
     setConsultation({
       ...newConsultation,
-      patientId: patient?.id ?? patient?.key,
-      encounterId: encounter?.id ?? encounter?.key
+      patientId: patient?.id,
+      encounterId: encounter?.id
     });
     setSelectedRows([]);
     setSelectedRow(null);
@@ -279,8 +282,7 @@ const NormalConsultation = props => {
     try {
       await cancelConsultation({
         id: selectedRow.id,
-        cancellationReason: consultation?.cancellationReason ?? '',
-        cancelledBy: user?.id
+        cancellationReason: consultation?.cancellationReason ?? ''
       }).unwrap();
 
       dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
@@ -374,7 +376,9 @@ const NormalConsultation = props => {
             const id = String(rowData.practitionerId ?? '');
             const record = (practitionersBulk ?? []).find(r => String(r.id) === id);
             if (!record) return <span>{rowData.practitionerId ?? ''}</span>;
-            const full = `${String(record.firstName ?? '').trim()} ${String(record.lastName ?? '').trim()}`.trim();
+            const full = `${String(record.firstName ?? '').trim()} ${String(
+              record.lastName ?? ''
+            ).trim()}`.trim();
             return <span>{full || rowData.practitionerId}</span>;
           }
 
@@ -388,10 +392,7 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) => {
           const status = String(rowData.status ?? '').toUpperCase();
           return (
-            <MyBadgeStatus
-              contant={formatEnumString(status)}
-              color={getStatusColor(status)}
-            />
+            <MyBadgeStatus contant={formatEnumString(status)} color={getStatusColor(status)} />
           );
         }
       },
@@ -460,23 +461,41 @@ const NormalConsultation = props => {
         key: 'action',
         title: <Translate>ACTIONS</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (
-          <MdModeEdit
-            size={22}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              if (rowData.toFacilityId) {
-                getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
-              }
-              setConsultation(rowData);
-              setSelectedRow(rowData);
-              setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
-              setModalKey(prev => prev + 1);
-              setOpenDetailsModal(true);
-            }}
-            className="icon-button"
-          />
-        )
+        render: (rowData: Consultation) => {
+const status = String(rowData.status ?? '').toUpperCase();
+
+const editDisabled =
+  edit ||
+  status === 'CONFIRMED' ||
+  status === 'CANCELLED';
+
+return (
+  <MdModeEdit
+    size={22}
+    fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
+    title={
+      editDisabled
+        ? 'Edit not allowed for cancelled or confirmed consultation'
+        : 'Edit'
+    }
+    onClick={() => {
+      if (editDisabled) return;
+
+      if (rowData.toFacilityId) {
+        getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+      }
+
+      setConsultation(rowData);
+      setSelectedRow(rowData);
+      setEditing(status !== 'NEW');
+      setModalKey(prev => prev + 1);
+      setOpenDetailsModal(true);
+    }}
+    className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
+    style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+  />
+);
+        }
       }
     ],
     [
@@ -485,7 +504,8 @@ const NormalConsultation = props => {
       practitionersBulk,
       isFacilitiesDataLoading,
       isTargetsDataLoading,
-      getDepartmentsByFacility
+      getDepartmentsByFacility,
+      edit
     ]
   );
 
@@ -517,8 +537,16 @@ const NormalConsultation = props => {
 
   const pageIndex = page;
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
@@ -546,6 +574,7 @@ const NormalConsultation = props => {
               <div className="bt-left-2">
                 <MyButton
                   disabled={
+                    isNurse ||
                     !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
                   }
                   onClick={() => setOpenConfirmCancelModel(true)}
@@ -559,11 +588,11 @@ const NormalConsultation = props => {
                 </MyButton>
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                  Show Cancelled
+                <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
 
-              <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
+              <div className={clsx('bt-right-2', { 'disabled-panel': edit || isNurse })}>
                 <MyButton
                   onClick={() => {
                     handleClear();
@@ -605,7 +634,6 @@ const NormalConsultation = props => {
         encounter={encounter}
         editing={editing}
         consultationOrders={consultation}
-        setConsultationOrder={setConsultation}
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
         refetchCon={handleRefetchData}

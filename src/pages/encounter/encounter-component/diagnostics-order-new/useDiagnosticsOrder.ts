@@ -22,7 +22,7 @@ import { useGetFavoriteDiagnosticTestsByUserQuery } from '@/services/diagnosic-o
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
-  useGetAllDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
   useGetDiagnosticTestsByIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -40,6 +40,8 @@ import type {
 } from '@/types/model-types-new';
 
 import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
+import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
+import { formatEnumString } from '@/utils';
 
 type UseDiagnosticsOrderArgs = {
   patient?: any;
@@ -69,8 +71,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
-  const patientId = patient?.id ;
-  const encounterId = encounter?.id ;
+  const patientId = patient?.id;
+  const encounterId = encounter?.id;
 
   const tableContainerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -102,12 +104,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [bulkDepartmentModalOpen, setBulkDepartmentModalOpen] = useState(false);
 
-  const [paginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: 5,
     sort: 'id,asc',
-    timestamp: Date.now()
+    // timestamp: Date.now()
+
   });
+
 
   const [filters, setFilters] = useState({
     testName: '',
@@ -125,7 +129,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const normalizeOrderTest = (rowData: any) => ({
     ...rowData,
-    reasonLkey: rowData.reasonLkey ?? rowData.reason
+    reason: rowData.reason
   });
 
   // Lookups
@@ -154,8 +158,39 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-  const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-  const testsList = testsResponse?.data ?? [];
+  const [allTests, setAllTests] = useState<any[]>([]);
+
+
+
+  const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
+
+  const testsList = allTests;
+
+  useEffect(() => {
+    if (!testsResponse?.data) return;
+
+    setAllTests(prev => {
+      const existingIds = new Set(prev.map(x => x.id));
+      const newData = testsResponse.data.filter(x => !existingIds.has(x.id));
+      return [...prev, ...newData];
+    });
+  }, [testsResponse]);
+
+  const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+
+  const handleLoadMore = () => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: prev.page + 1
+    }));
+  };
+
+  const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
@@ -232,6 +267,25 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const favoriteTestIds = useMemo(() => favoriteLinks?.map((f: any) => f.testId) ?? [], [favoriteLinks]);
 
+  const orderTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (orderTestList ?? [])
+            .map((ot: any) => ot.testId)
+            .filter(Boolean)
+        )
+      ),
+    [orderTestList]
+  );
+
+  const { data: diagnosticTestsByIdsResponse } = useGetDiagnosticTestsByIdsQuery(
+    orderTestIds.length ? { ids: orderTestIds } : skipToken
+  );
+
+
+
+  
   const { data: favoriteTests, isFetching: loadingFavorites } = useGetDiagnosticTestsByIdsQuery(
     favoriteTestIds.length ? { ids: favoriteTestIds } : skipToken
   );
@@ -253,6 +307,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
+
 
   // Modals state
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
@@ -307,9 +362,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
+          reason: orderTest?.reason,
           notes: orderTest?.notes,
-          orderType: resolveOrderType(test)
+          orderType: resolveOrderType(test),
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -319,8 +375,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
-          notes: orderTest?.notes
+          reason: orderTest?.reason,
+          notes: orderTest?.notes,
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
+
         };
 
         await updateOrderTest({ id: orderTestId, body: updatePayload }).unwrap();
@@ -367,6 +425,136 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
   };
 
+
+  const convertToMonths = (value: number, unit?: string) => {
+    const normalizedUnit = String(unit || '').toUpperCase();
+
+    switch (normalizedUnit) {
+      case 'MINUTE':
+      case 'MINUTES':
+        return value / (60 * 24 * 30);
+
+      case 'HOUR':
+      case 'HOURS':
+        return value / (24 * 30);
+
+      case 'DAY':
+      case 'DAYS':
+        return value / 30;
+
+      case 'WEEK':
+      case 'WEEKS':
+        return value * 7 / 30;
+
+      case 'MONTH':
+      case 'MONTHS':
+        return value;
+
+      case 'YEAR':
+      case 'YEARS':
+        return value * 12;
+
+      default:
+        return value;
+    }
+  };
+
+  const getPatientAgeInMonths = (patient: any) => {
+    const rawDob = patient?.dateOfBirth || patient?.dob;
+    if (!rawDob) return null;
+
+    const dob = new Date(rawDob);
+    if (Number.isNaN(dob.getTime())) return null;
+
+    const now = new Date();
+    const diffMs = now.getTime() - dob.getTime();
+
+    return diffMs / (1000 * 60 * 60 * 24 * 30);
+  };
+
+  const getPatientAgeGroup = (patient: any) => {
+    const patientAgeInMonths = getPatientAgeInMonths(patient);
+    if (patientAgeInMonths === null) return '';
+    if (!ageGroupsList.length) return '';
+
+    const patientFacilityId =
+      patient?.facilityId ||
+      encounter?.facilityId ||
+      selectedDepartment?.facilityId;
+
+    const matchingAgeGroup = ageGroupsList.find((group: any) => {
+      if (
+        patientFacilityId &&
+        group?.facilityId &&
+        Number(group.facilityId) !== Number(patientFacilityId)
+      ) {
+        return false;
+      }
+
+      const fromAge = Number(group?.fromAge ?? 0);
+      const toAge = Number(group?.toAge ?? 0);
+
+      const fromAgeInMonths = convertToMonths(fromAge, group?.fromAgeUnit);
+      const toAgeInMonths = convertToMonths(toAge, group?.toAgeUnit);
+
+      return (
+        patientAgeInMonths >= fromAgeInMonths &&
+        patientAgeInMonths <= toAgeInMonths
+      );
+    });
+
+    return matchingAgeGroup?.ageGroup || '';
+  };
+
+  const validateTestForPatient = (test: any, patient: any) => {
+    const warnings: string[] = [];
+    const testName = test.name || 'Test';
+
+    // Gender
+    if (test.genderSpecific && test.gender) {
+      const testGender = String(test.gender).toUpperCase();
+      const patientGender = String(
+        patient?.gender || patient?.genderType || patient?.sexAtBirth || ''
+      ).toUpperCase();
+
+      if (patientGender && testGender !== patientGender) {
+        warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
+      }
+    }
+
+    // Age
+    if (test.ageSpecific && test.ageGroupList?.length) {
+      const patientAgeGroup = String(
+        patient?.ageGroup || getPatientAgeGroup(patient)
+      ).toUpperCase();
+
+      const matches = test.ageGroupList.some(
+        (age: any) => String(age).toUpperCase() === patientAgeGroup
+      );
+
+      if (patientAgeGroup && !matches) {
+        warnings.push(
+          `${testName}: Only for ${test.ageGroupList.map((age: any) => formatEnumString(String(age))).join(', ')} (Patient is ${formatEnumString(patientAgeGroup)})`
+        );
+      }
+    }
+
+    // Special Population
+    if (test.specialPopulation && test.specialPopulationValues?.length) {
+      const patientSpecialPopulation = patient?.specialPopulationValues ?? [];
+
+      const match = test.specialPopulationValues.some((val: any) =>
+        patientSpecialPopulation.includes(val)
+      );
+
+      if (!match) {
+        warnings.push(`${testName}: Special population mismatch`);
+      }
+    }
+
+    return warnings;
+  };
+
   const handleSaveTests = async () => {
     setOpenTestsModal(false);
 
@@ -385,25 +573,90 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
     try {
       const pickTestId = (t: any) =>
-        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id ?? t?.diagnosticTest?.id);
+        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
 
-      await Promise.all(
-        selectedTestsList
-          .map(item => {
-            const testId = pickTestId(item);
-            if (!testId) return null;
+      let warnings: string[] = [];
+      selectedTestsList.forEach(item => {
+        const realTest = testsList.find(
+          t => String(t.id) === String(item.id || item.testId)
+        );
 
-            return createOrderTest({
-              orderId: _orderId,
-              testId,
-              orderType: item.type
-            }).unwrap();
+        if (!realTest) return;
+
+        const w = validateTestForPatient(realTest, patient);
+        warnings.push(...w);
+      });
+
+      if (warnings.length) {
+        const uniqueWarnings = Array.from(new Set(warnings));
+
+        dispatch(
+          notify({
+            msg:
+              '⚠ Validation Warnings:\n\n' +
+              uniqueWarnings.join('\n'),
+            sev: 'warning'
           })
-          .filter(Boolean) as any
+        );
+      }
+
+      const validTests = selectedTestsList.filter(item =>
+        pickTestId(item)
       );
 
-      dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
+      const existingTestIds = new Set(
+        orderTestList
+          .filter(t => t.status !== DiagnosticOrderTestStatus.CANCELLED)
+          .map(t => String(t.testId))
+      );
+
+      let added: string[] = [];
+      let duplicates: string[] = [];
+
+      await Promise.all(
+        validTests.map(async item => {
+          const testId = pickTestId(item);
+          const testName = item.name || item.testName || 'Test';
+
+          if (existingTestIds.has(String(testId))) {
+            duplicates.push(testName);
+            return;
+          }
+
+          try {
+            await createOrderTest({
+              orderId: _orderId,
+              testId,
+              orderType: item.type || 'LABORATORY'
+            }).unwrap();
+
+            added.push(testName);
+          } catch (e) {
+            console.warn('❌ Failed test:', testId, e);
+          }
+        })
+      );
+
+      if (added.length) {
+        dispatch(
+          notify({
+            msg: `✅ ${added.join(', ')} added successfully`,
+            sev: 'success'
+          })
+        );
+      }
+
+      if (duplicates.length) {
+        dispatch(
+          notify({
+            msg: `⚠ ${duplicates.join(', ')} already added`,
+            sev: 'warning'
+          })
+        );
+      }
+
       await orderTestRefetch();
+
     } catch (error: any) {
       console.error('Save tests failed:', error);
       dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
@@ -477,6 +730,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
 
+
       await ordersRefetch();
       await orderTestRefetch();
 
@@ -491,7 +745,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const handleEdit = (rowData: any) => {
     setOrderTest({
       ...rowData,
-      reasonLkey: rowData.reasonLkey ?? rowData.reason
+      reason: rowData.reason ?? rowData.reason
     });
 
     if (!ReasonLovQueryResponse?.object?.length) return;
@@ -528,8 +782,16 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
   };
 
+
+
   // Normalization + sorting
-  const testsMap = useMemo(() => new Map((testsList ?? []).map((t: any) => [t.id, t])), [testsList]);
+    const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
+      [diagnosticTestsByIds]
+    );
+
 
   const STATUS_PRIORITY: Record<string, number> = {
     NEW: 1,
@@ -551,6 +813,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
         return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
       });
   }, [orderTestList, testsMap]);
+
 
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
@@ -690,6 +953,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
     // refetch
     ordersRefetch,
-    orderTestRefetch
+    orderTestRefetch,
+    handleLoadMore
   };
 };

@@ -66,13 +66,21 @@ const BulkRegistration = ({ open, setOpen }) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Bulk Registration"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       size={width > 600 ? '36vw' : '70vw'}
       steps={[

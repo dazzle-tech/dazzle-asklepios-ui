@@ -15,6 +15,8 @@ import MyInput from '@/components/MyInput';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
+import Translate from '@/components/Translate';
+import { useAppSelector } from '@/hooks';
 
 type Props = {
   // data
@@ -92,7 +94,17 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
   const orderId = orders?.id ?? orders?.key ?? null;
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   return (
+  <div dir={dir}>
     <div className="main-container">
       <div className="enhanced-header">
         {/* Row 1 */}
@@ -116,7 +128,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             </div>
 
             <div>
-              <div className="prescripton-word-style">Order</div>
+              <div className="prescripton-word-style"><Translate>Order</Translate></div>
               <div className="prescripton-number-style">{orders?.orderNumber ?? '_'}</div>
             </div>
           </div>
@@ -126,7 +138,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               loading={isFetching}
               onClick={handleSaveOrders}
               prefixIcon={() => <PlusIcon />}
-              disabled={hasOpenOrder}
+              disabled={hasOpenOrder || isNurse}
             >
               New Order
             </MyButton>
@@ -214,7 +226,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
           </MyButton>
 
-          <MyButton onClick={handleSubmitPres} disabled={isSubmitDisabled} prefixIcon={() => <CheckIcon />}>
+          <MyButton onClick={handleSubmitPres} disabled={isSubmitDisabled || isNurse} prefixIcon={() => <CheckIcon />}>
             Sign &amp; Submit
           </MyButton>
         </div>
@@ -229,28 +241,29 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         <div className="top-container">
           <div className="buttons-sect">
             <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)}>
-              Show Canceled
+            <Translate>Show Canceled</Translate>
             </Checkbox>
 
-            <MyButton disabled={orders.id == null} onClick={() => setOpenTestsModal(true)}>
-              <FontAwesomeIcon icon={faPlus} /> Add Test
+            <MyButton disabled={isSubmitDisabled || isNurse} onClick={() => setOpenTestsModal(true)}>
+              <FontAwesomeIcon icon={faPlus} /> <Translate>Add Test</Translate>
             </MyButton>
 
             <MyButton
-              disabled={orders.id ?? orders.key ? selectedRows.length === 0 : true}
+              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)}
               prefixIcon={() => <CloseOutlineIcon />}
               onClick={OpenConfirmDeleteModel}
             >
               Cancel
             </MyButton>
 
-            <MyButton disabled={selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
+            <MyButton disabled={isNurse || selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
               Assign Department
             </MyButton>
           </div>
         </div>
       </Row>
     </div>
+  </div>
   );
 };
 

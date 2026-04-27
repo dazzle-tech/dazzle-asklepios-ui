@@ -31,7 +31,15 @@ const PostalTable = ({ onRowClick }) => {
 
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <MyTable
       data={paginatedData}
       columns={columns}
@@ -52,6 +60,7 @@ const PostalTable = ({ onRowClick }) => {
       }}
       onRowClick={onRowClick}
     />
+    </div>
   );
 };
 

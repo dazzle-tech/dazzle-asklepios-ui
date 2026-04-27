@@ -49,10 +49,7 @@ export const telephonicConsultationService = createApi({
       invalidatesTags: ['TelephonicConsultation']
     }),
 
-    cancel: builder.mutation<
-      TelephonicConsultation,
-      { id: number; reason: string; cancelledBy?: number }
-    >({
+    cancel: builder.mutation<TelephonicConsultation, { id: number; reason: string }>({
       query: ({ id, ...body }) => ({
         url: `/api/patient/telephonic-consultation/${id}/cancel`,
         method: 'PUT',
@@ -67,6 +64,30 @@ export const telephonicConsultationService = createApi({
     >({
       query: ({ encounterId, page = 0, size = 20 }) => ({
         url: `/api/patient/telephonic-consultation/not-cancelled/by-encounter/${encounterId}`,
+        params: { page, size }
+      }),
+
+      transformResponse: (
+        response: TelephonicConsultation[],
+        meta
+      ): PagedResult<TelephonicConsultation> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+
+        return {
+          data: response ?? [],
+          totalCount
+        };
+      },
+
+      providesTags: ['TelephonicConsultation']
+    }),
+
+    findByPatient: builder.query<
+      PagedResult<TelephonicConsultation>,
+      { patientId: string; page?: number; size?: number }
+    >({
+      query: ({ patientId, page = 0, size = 20 }) => ({
+        url: `/api/patient/telephonic-consultation/by-patient/${patientId}`,
         params: { page, size }
       }),
 
@@ -129,5 +150,6 @@ export const {
   useUpdateMutation,
   useCancelMutation,
   useFindNotCancelledByEncounterQuery,
-  useFindAllByEncounterQuery
+  useFindAllByEncounterQuery,
+  useFindByPatientQuery
 } = telephonicConsultationService;

@@ -1,9 +1,15 @@
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
 import Translate from '@/components/Translate';
-import { useGetPatientsQuery } from '@/services/patientService';
-import { initialListRequest, type ListRequest } from '@/types/types';
-import { fromCamelCaseToDBName } from '@/utils';
+import type { Patient } from '@/types/model-types-new';
+import {
+  useLazyGetPatientsByAnyDocumentNumberQuery,
+  useLazyGetPatientsByArchivingNumberQuery,
+  useLazyGetPatientsByDateOfBirthQuery,
+  useLazyGetPatientsByFullNameQuery,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
+  useLazyGetPatientsByPrimaryPhoneQuery
+} from '@/services/patient/patientService';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DatePicker, Form, Input } from 'rsuite';
 import { FaXmark } from 'react-icons/fa6';
@@ -40,6 +46,8 @@ type PatientSearchProps = {
    * Default: full set of supported criteria.
    */
   criteriaOptions?: PatientSearchCriterion[];
+  /** Min width of the outer wrapper; lower (e.g. 0) for dense filter toolbars. @default 320 */
+  containerMinWidth?: number | string;
 };
 
 const PatientSearch: React.FC<PatientSearchProps> = ({
@@ -54,21 +62,41 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   showLabel = true,
   showClear = true,
   resetToken = 0,
-  criteriaOptions
+  criteriaOptions,
+  containerMinWidth = 320
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   // Default should be the first option in the allowed criteria; if none exist, keep it empty.
   const [selectedCriterion, setSelectedCriterion] = useState<PatientSearchCriterionOrEmpty>('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [dobValue, setDobValue] = useState<Date | null>(null);
-  const [patientListRequest, setPatientListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: true
-  });
+  const [results, setResults] = useState<any[]>([]);
+  const [isFetchingPatients, setIsFetchingPatients] = useState(false);
 
-  const { data: patientListResponse, isFetching: isFetchingPatients } = useGetPatientsQuery(
-    { ...patientListRequest, filterLogic: 'or' } as any
-  );
+  const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
+  const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
+  const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
+  const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
+  const [fetchByFullName] = useLazyGetPatientsByFullNameQuery();
+  const [fetchByDocumentNo] = useLazyGetPatientsByAnyDocumentNumberQuery();
+
+  const toDisplayPatient = (p: Patient) => {
+    const first = String((p as any)?.firstName ?? '').trim();
+    const second = String((p as any)?.secondName ?? '').trim();
+    const third = String((p as any)?.thirdName ?? '').trim();
+    const last = String((p as any)?.lastName ?? '').trim();
+    const fullName = [first, second, third, last].filter(Boolean).join(' ').trim() || '-';
+    const mrn = (p as any)?.medicalRecordNumber ?? (p as any)?.patientMrn ?? undefined;
+
+    return {
+      ...(p as any),
+      id: (p as any)?.id,
+      key: (p as any)?.id,
+      fullName,
+      patientMrn: mrn,
+      medicalRecordNumber: mrn
+    };
+  };
 
   const effectiveCriteriaOptions = useMemo<PatientSearchCriterion[]>(() => {
     const defaults: PatientSearchCriterion[] = [
@@ -123,7 +151,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     setSearchKeyword('');
     setDobValue(null);
     onChange(null);
-    setPatientListRequest({ ...initialListRequest, ignore: true });
+    setResults([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCriterion]);
 
@@ -132,7 +160,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     setSearchKeyword('');
     setDobValue(null);
     onChange(null);
-    setPatientListRequest({ ...initialListRequest, ignore: true });
+    setResults([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetToken]);
 
@@ -146,7 +174,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   useEffect(() => {
     // once a patient is selected, stop searching
     if (value) {
-      setPatientListRequest({ ...initialListRequest, ignore: true });
+      setResults([]);
     }
   }, [value]);
 
@@ -157,24 +185,46 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     if (!selectedCriterion) return;
 
     if (!searchKeyword || searchKeyword.length < minChars) {
-      setPatientListRequest({ ...initialListRequest, ignore: true });
+      setResults([]);
       return;
     }
 
     const t = setTimeout(() => {
-      const filters = [
-        {
-          fieldName: fromCamelCaseToDBName(selectedCriterion),
-          operator: 'containsIgnoreCase',
-          value: searchKeyword
-        }
-      ];
+      const run = async () => {
+        setIsFetchingPatients(true);
+        try {
+          const common = { page: 0, size: 20, sort: 'id,asc', timestamp: Date.now() };
+          let res: any = null;
 
-      setPatientListRequest({
-        ...initialListRequest,
-        ignore: false,
-        filters
-      });
+          switch (selectedCriterion) {
+            case 'patientMrn':
+              res = await fetchByMrn({ medicalRecordNumber: searchKeyword, ...common } as any).unwrap();
+              break;
+            case 'documentNo':
+              res = await fetchByDocumentNo({ number: searchKeyword, ...common } as any).unwrap();
+              break;
+            case 'archivingNumber':
+              res = await fetchByArchiving({ archivingNumber: searchKeyword, ...common } as any).unwrap();
+              break;
+            case 'phoneNumber':
+              res = await fetchByPrimaryPhone({ phone: searchKeyword, ...common } as any).unwrap();
+              break;
+            case 'fullName':
+            default:
+              res = await fetchByFullName({ keyword: searchKeyword, ...common } as any).unwrap();
+              break;
+          }
+
+          const rows = (res?.data ?? res?.content ?? []) as Patient[];
+          setResults((rows ?? []).map(toDisplayPatient));
+        } catch (e) {
+          setResults([]);
+        } finally {
+          setIsFetchingPatients(false);
+        }
+      };
+
+      run();
     }, debounceMs);
 
     return () => clearTimeout(t);
@@ -186,7 +236,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     if (selectedCriterion !== 'dob') return;
 
     if (!dobValue) {
-      setPatientListRequest({ ...initialListRequest, ignore: true });
+      setResults([]);
       return;
     }
 
@@ -196,41 +246,49 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       const day = String(dobValue.getDate()).padStart(2, '0');
       const searchValue = `${year}-${month}-${day}`;
 
-      setPatientListRequest({
-        ...initialListRequest,
-        ignore: false,
-        filters: [
-          {
-            fieldName: fromCamelCaseToDBName('dob'),
-            operator: 'equals',
-            value: searchValue
-          }
-        ]
-      });
+      const run = async () => {
+        setIsFetchingPatients(true);
+        try {
+          const res = await fetchByDob({
+            date: searchValue,
+            page: 0,
+            size: 20,
+            sort: 'id,asc',
+            timestamp: Date.now()
+          } as any).unwrap();
+
+          const rows = (res?.data ?? res?.content ?? []) as Patient[];
+          setResults((rows ?? []).map(toDisplayPatient));
+        } catch (e) {
+          setResults([]);
+        } finally {
+          setIsFetchingPatients(false);
+        }
+      };
+
+      run();
     } catch (e) {
       console.error('Invalid date:', e);
-      setPatientListRequest({ ...initialListRequest, ignore: true });
+      setResults([]);
     }
   }, [dobValue, selectedCriterion, value]);
 
   const showPatientResults =
-    !value &&
-    !patientListRequest.ignore &&
-    (selectedCriterion === 'dob' ? !!dobValue : searchKeyword.length >= minChars);
+    !value && (selectedCriterion === 'dob' ? !!dobValue : searchKeyword.length >= minChars);
 
   return (
     <Form.Group
       className={`my-input-container patient-search ${mode === 'light' ? 'light' : 'dark'}`}
-      style={{ position: 'relative', width, minWidth: 320 }}
+      style={{ position: 'relative', width, minWidth: containerMinWidth }}
     >
-      <Form.ControlLabel style={{ marginBottom: 2 }}>
-        {showLabel && (
+      {showLabel ? (
+        <Form.ControlLabel style={{ marginBottom: 2 }}>
           <MyLabel
             label={fieldLabel}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
-        )}
-      </Form.ControlLabel>
+        </Form.ControlLabel>
+      ) : null}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap' }}>
         <div style={{ flex: `0 0 ${criteriaWidthPx}px`, minWidth: criteriaWidthPx }}>
           <MyInput
@@ -297,7 +355,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   onChange(null);
                   setSearchKeyword('');
                   setDobValue(null);
-                  setPatientListRequest({ ...initialListRequest, ignore: true });
+                  setResults([]);
                 }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -305,7 +363,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                     onChange(null);
                     setSearchKeyword('');
                     setDobValue(null);
-                    setPatientListRequest({ ...initialListRequest, ignore: true });
+                    setResults([]);
                   }
                 }}
                 style={{
@@ -369,10 +427,10 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
             <div style={{ padding: 10, fontSize: 12 }}>
               <Translate>Searching...</Translate>
             </div>
-          ) : (patientListResponse?.object ?? []).length ? (
-            (patientListResponse?.object ?? []).slice(0, 20).map((p: any) => (
+          ) : results.length ? (
+            results.slice(0, 20).map((p: any) => (
               <div
-                key={p?.key}
+                key={p?.key ?? p?.id ?? p?.medicalRecordNumber ?? p?.patientMrn ?? Math.random()}
                 style={{
                   padding: '8px 10px',
                   cursor: 'pointer',
@@ -380,7 +438,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                 }}
                 onClick={() => {
                   onChange(p);
-                  setPatientListRequest({ ...initialListRequest, ignore: true });
+                  setResults([]);
                 }}
               >
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{p?.fullName ?? ''}</div>

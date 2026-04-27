@@ -18,6 +18,8 @@ import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
 
+const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
+
 const toHumanPatientDocumentError = (
   err,
   fieldLabels = {
@@ -35,7 +37,6 @@ const toHumanPatientDocumentError = (
 
   const traceId =
     data.traceId || data.correlationId ? `\nTrace ID: ${data.traceId || data.correlationId}` : '';
-
 
   const isValidation =
     data?.message === 'error.validation' ||
@@ -95,7 +96,11 @@ const AddExtraDetails = ({
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
 
-  const patientDocumentEnum = useEnumOptions('DocumentType');
+  // ✅ Keep only NATIONAL_ID and IQAMA — SOCIAL_CARD also excluded
+  const patientDocumentEnum = useEnumOptions('DocumentType', {
+    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+  });
+
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
   const PAGE_SIZE = 5;
@@ -105,6 +110,7 @@ const AddExtraDetails = ({
   const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
   const [docCountryOpen, setDocCountryOpen] = useState(false);
   const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+  const [saudiCountryId, setSaudiCountryId] = useState(null);
 
   const { data: docCountriesData } = useGetActiveCountriesQuery({
     page: docCountryPage,
@@ -127,10 +133,33 @@ const AddExtraDetails = ({
     }));
 
     setDocCountryCache(prev => (docCountryPage === 0 ? mapped : [...prev, ...mapped]));
-
     setDocHasMoreCountries(docCountriesData.last === false);
     setDocPaginationLoading(false);
+
+    // ✅ Capture Saudi Arabia's id once found in the loaded pages
+    const saudi = mapped.find(c => c.name === SAUDI_ARABIA_LOV_NAME);
+    if (saudi) {
+      setSaudiCountryId(saudi.id);
+    }
   }, [docCountriesData, docCountryPage, countryLovQueryResponse]);
+
+  // ✅ Set defaults when modal opens for a new document
+  useEffect(() => {
+    if (open && !secondaryDocument.id) {
+      setSecondaryDocument(prev => ({
+        ...prev,
+        type: prev.type || 'NATIONAL_ID',
+        countryId: prev.countryId || saudiCountryId || null
+      }));
+    }
+  }, [open, saudiCountryId]);
+
+  // ✅ If Saudi id resolves after modal is already open, apply it
+  useEffect(() => {
+    if (open && !secondaryDocument.id && saudiCountryId && !secondaryDocument.countryId) {
+      setSecondaryDocument(prev => ({ ...prev, countryId: saudiCountryId }));
+    }
+  }, [saudiCountryId]);
 
   const loadMoreDocCountries = () => {
     if (!docHasMoreCountries || docPaginationLoading) return;
@@ -138,13 +167,43 @@ const AddExtraDetails = ({
     setDocCountryPage(p => p + 1);
   };
 
-  useEffect(() => {
-    const isNoDoc = secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
+  const isSaudiCountry = () => {
+    if (!secondaryDocument.countryId) return false;
+    const selected = docCountryCache.find(c => c.id === secondaryDocument.countryId);
+    return selected?.name === SAUDI_ARABIA_LOV_NAME;
+  };
 
-    if (isNoDoc && !secondaryDocument.isPrimary) {
-      setSecondaryDocument(prev => ({ ...prev, isPrimary: true }));
+  const validateDocument = () => {
+    const { type, number } = secondaryDocument;
+    const numberStr = String(number ?? '').trim();
+    const saudi = isSaudiCountry();
+
+    if (!saudi) return true;
+
+    if (type === 'NATIONAL_ID') {
+      if (!numberStr.startsWith('1')) {
+        dispatch(notify({ msg: 'Saudi National ID number must start with 1.', sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
     }
-  }, [secondaryDocument.type]);
+
+    if (type === 'IQAMA' || type === 'BORDER_NUMBER') {
+      if (!numberStr.startsWith('2')) {
+        dispatch(notify({ msg: `Saudi ${type} number must start with 2.`, sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const content = () => (
     <Form layout="inline" fluid className="patient-doc-secondary-container">
@@ -207,6 +266,7 @@ const AddExtraDetails = ({
           required
           column
           width={300}
+          fieldType="number"
           fieldLabel="Document Number"
           fieldName="number"
           record={secondaryDocument}
@@ -214,22 +274,15 @@ const AddExtraDetails = ({
             setSecondaryDocument(prev => ({
               ...prev,
               number:
-                prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT' ? 'NO_DOCUMENT' : r.number
+                prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT'
+                  ? 'NO_DOCUMENT'
+                  : String(r.number ?? '')
             }))
           }
         />
       )}
 
-      <MyInput
-        width={200}
-        column
-        fieldLabel="Primary Document"
-        fieldType="checkbox"
-        fieldName="isPrimary"
-        disabled={secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'}
-        record={secondaryDocument}
-        setRecord={setSecondaryDocument}
-      />
+      {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
     </Form>
   );
 
@@ -243,6 +296,10 @@ const AddExtraDetails = ({
   const handleSaveSecondaryDocument = async () => {
     const isNoDoc = secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
+    if (!isNoDoc && !validateDocument()) {
+      return;
+    }
+
     try {
       if (isNoDoc) {
         await addNoDocument({
@@ -251,10 +308,15 @@ const AddExtraDetails = ({
           isPrimary: true
         }).unwrap();
       } else {
+        // ✅ Auto-mark as primary if this is the first document
+        const isFirstDocument =
+          !secondaryDocument.id && (!localPatient.documents || localPatient.documents.length === 0);
+
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
-          isPrimary: secondaryDocument.isPrimary ?? false
+          number: String(secondaryDocument.number ?? '').trim(),
+          isPrimary: isFirstDocument ? true : false
         };
 
         secondaryDocument.id
@@ -266,7 +328,7 @@ const AddExtraDetails = ({
       refetch();
       handleClear();
     } catch (err) {
-      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'error' }));
+      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
     }
   };
 

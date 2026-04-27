@@ -16,7 +16,6 @@ import {
 import { Form } from 'rsuite';
 import { ApBed, ApPatient, ApRoom, ApTransferPatient } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import MyLabel from '@/components/MyLabel';
 import { useSaveTransferPatientMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
@@ -31,12 +30,7 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
   const [transferPatient, setTransferPatient] = useState<ApTransferPatient>({
     ...newApTransferPatient
   });
-  const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
-    resourceType: 'INPATIENT_ADMISSION',
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
+  const { data: inpatientDepartmentListResponse } = { data: { data: [] as unknown[] } };
   const [bedCount, setBedCount] = useState({ count: 0 });
   const [saveTransferPatient] = useSaveTransferPatientMutation();
   const dispatch = useAppDispatch();
@@ -344,6 +338,11 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     }
   }, [isFetching, bedCountResponse, transferPatient?.toInpatientDepartmentKey]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <AdvancedModal
       open={open}
@@ -353,8 +352,8 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
       actionButtonFunction={handleSave}
       leftWidth="40%"
       rightWidth="60%"
-      rightContent={rightModalContent}
-      leftContent={modalContent}
+      rightContent={<div dir={dir}>{rightModalContent}</div>}
+      leftContent={<div dir={dir}>{modalContent}</div>}
       actionButtonLabel="Transfer"
     ></AdvancedModal>
   );

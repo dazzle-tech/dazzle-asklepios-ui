@@ -9,8 +9,8 @@ import {
   useUpdateProcdureMutation
 } from '@/services/patients/patientProcedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,11 +21,12 @@ import { Form } from 'rsuite';
 import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
-import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
+import { useLazyGetActiveProceduresByFacilityAndCategoryQuery } from '@/services/setup/procedure/procedureService';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 const FIELD_ORDER = [
   'procedureId',
   'toFacilityId',
@@ -51,13 +52,12 @@ const handleProcedureCrudError = (
   err: any,
   dispatch: any,
   keyMap: Record<string, string>,
-  record: any // ✅ procedure object
+  record: any
 ) => {
   const data = err?.data ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  // ✅ Field labels for UI
   const FIELD_LABELS: Record<string, string> = {
     procedureId: 'procedure name',
     toFacilityId: 'facility',
@@ -70,74 +70,45 @@ const handleProcedureCrudError = (
     indicationId: 'indication'
   };
 
-  // ✅ Normalize backend messages
   const normalizeMsg = (msg: string) => {
     const m = (msg || '').toLowerCase();
-
-    // Backend error codes
     if (m.includes('required')) return 'is required';
     if (m.includes('must not be null')) return 'is required';
     if (m.includes('must not be blank')) return 'is required';
     if (m.includes('cannot be null')) return 'is required';
-
     return msg || 'invalid value';
   };
 
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    // ✅ Copy errors array (avoid frozen redux object)
     let errors = [...data.fieldErrors];
 
-    // ✅ Fields returned from backend
     const backendFields = errors.map((e: any) => e.field);
 
-    // ======================================================
-    // ✅ Add missing required fields ONLY if value is empty
-    // ======================================================
     REQUIRED_FIELDS.forEach(field => {
       const value = record?.[field];
-
       const isEmpty =
         value === null ||
         value === undefined ||
         value === '' ||
         (typeof value === 'string' && value.trim() === '');
 
-      // ✅ Add only if empty AND backend did not already return it
       if (isEmpty && !backendFields.includes(field)) {
-        errors.push({
-          field,
-          message: `${field}.required`
-        });
+        errors.push({ field, message: `${field}.required` });
       }
     });
 
-    // ======================================================
-    // ✅ Remove duplicates (same field twice)
-    // ======================================================
     const uniqueMap = new Map<string, any>();
-    errors.forEach(e => {
-      uniqueMap.set(e.field, e);
-    });
-
+    errors.forEach(e => uniqueMap.set(e.field, e));
     errors = Array.from(uniqueMap.values());
 
-    // ======================================================
-    // ✅ Sort errors according to form order
-    // ======================================================
-    const sortedErrors = [...errors].sort((a, b) => {
-      return FIELD_ORDER.indexOf(a.field) - FIELD_ORDER.indexOf(b.field);
-    });
+    const sortedErrors = [...errors].sort(
+      (a, b) => FIELD_ORDER.indexOf(a.field) - FIELD_ORDER.indexOf(b.field)
+    );
 
-    // ======================================================
-    // ✅ Build final readable message
-    // ======================================================
     const lines = sortedErrors.map((fe: any) => {
       const rawField = String(fe.field ?? '');
       const fieldLabel = FIELD_LABELS[rawField] ?? rawField;
-
-      // ✅ Use map if exists, else normalize
       const cleanMsg = keyMap?.[fe.message] || normalizeMsg(fe.message);
-
       return `• ${fieldLabel}: ${cleanMsg}`;
     });
 
@@ -151,9 +122,6 @@ const handleProcedureCrudError = (
     return;
   }
 
-  // ======================================================
-  // ✅ FALLBACK: Unknown error
-  // ======================================================
   dispatch(
     notify({
       msg: data?.message || 'Unexpected error' + suffix,
@@ -185,7 +153,13 @@ const Details = ({
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
   const [procedurePage, setProcedurePage] = useState(0);
+  const [procedureOptions, setProcedureOptions] = useState<any[]>([]);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const deptSize = 20;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   const [createProcedure] = useCreateProcdureMutation();
@@ -198,25 +172,60 @@ const Details = ({
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
-  const [getDepartmentsByFacility, { data: departmentListResponse }] =
-    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartmentsByFacility, { isFetching: deptLoading }] =
+    useLazyGetDepartmentByFacilityQuery();
+
   const [
     getProcedureByFacility,
     { data: procedureByFacility, isLoading: procedureByFacilityLoading }
-  ] = useLazyGetProceduresByFacilityQuery();
+  ] = useLazyGetActiveProceduresByFacilityAndCategoryQuery();
 
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
 
-  useEffect(() => {
-    if (procedure?.toFacilityId) {
-      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
+  const loadDepartments = async ({
+    facilityId,
+    page = 0,
+    append = false
+  }: {
+    facilityId: any;
+    page?: number;
+    append?: boolean;
+  }) => {
+    if (!facilityId) return;
+    try {
+      const response = await getDepartmentsByFacility({
+        facilityId,
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = response?.data ?? [];
+      const nextLink = response?.links?.next ?? null;
+
+      setDeptHasMore(Boolean(nextLink));
+      setDeptNextLink(nextLink);
+
+      if (append) {
+        setAllDepartments(prev => {
+          const seen = new Set(prev.map((d: any) => d.id));
+          return [...prev, ...rows.filter((d: any) => !seen.has(d.id))];
+        });
+      } else {
+        setAllDepartments(rows);
+      }
+    } catch {
+      setAllDepartments([]);
     }
-  }, [procedure?.toFacilityId, getDepartmentsByFacility]);
+  };
 
   useEffect(() => {
     const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
 
     if (facilityId && procedure.categoryKey) {
+      if (procedurePage === 0) {
+        setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
+      }
       getProcedureByFacility({
         facilityId,
         category: procedure.categoryKey,
@@ -224,6 +233,8 @@ const Details = ({
         size: 20,
         sort: 'name,asc'
       });
+    } else {
+      setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
     }
   }, [
     procedure?.toFacilityId,
@@ -234,29 +245,62 @@ const Details = ({
   ]);
 
   useEffect(() => {
-    if (procedure.currentDepartment) {
-      setProcedure({
-        ...procedure,
-        toDepartmentId: null,
-        toFacilityId: authSlice?.selectedDepartment?.facilityId
+    if (!procedureByFacility?.data) return;
+
+    const apiData = procedureByFacility.data;
+
+    if (procedurePage === 0) {
+      const selectedInApi = apiData.some(
+        (p: any) => p.id === procedure?.procedureId
+      );
+
+      if (procedure?.procedureObj && !selectedInApi) {
+        setProcedureOptions([procedure.procedureObj, ...apiData]);
+      } else {
+        setProcedureOptions(apiData);
+      }
+    } else {
+      setProcedureOptions(prev => {
+        const existingIds = new Set(prev.map((p: any) => p.id));
+        const merged = [...prev];
+        apiData.forEach((p: any) => {
+          if (!existingIds.has(p.id)) merged.push(p);
+        });
+        return merged;
       });
     }
-  }, [procedure.currentDepartment]);
+  }, [procedureByFacility?.data]);
 
   useEffect(() => {
-    setProcedurePage(0);
-  }, [procedure.categoryKey]);
-
-  useEffect(() => {
-    if (!procedure?.toFacilityId) {
+    if (procedure.currentDepartment) {
       setProcedure(prev => ({
         ...prev,
-        toDepartmentId: null
+        toDepartmentId: null,
+        toFacilityId: authSlice?.selectedDepartment?.facilityId
       }));
     }
+  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
+
+  // Reset & reload departments whenever facility changes
+  useEffect(() => {
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
+
+    if (!procedure?.toFacilityId) {
+      setProcedure(prev => ({ ...prev, toDepartmentId: null }));
+      return;
+    }
+
+    loadDepartments({ facilityId: procedure.toFacilityId, page: 0 });
   }, [procedure?.toFacilityId]);
 
-  const handleOpenAttachmentModal = () => setShowAttachmentModal(true);
+  // ✅ تصفير الـ page والـ options لما يتغير الـ category أو الـ facility
+  useEffect(() => {
+    setProcedurePage(0);
+    setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
+  }, [procedure?.categoryKey, procedure?.toFacilityId]);
 
   const hasMoreProcedures = procedureByFacility?.links?.next != null;
 
@@ -267,6 +311,12 @@ const Details = ({
   };
 
   const handleClear = () => {
+    setProcedureOptions([]);
+    setProcedurePage(0);
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
     setProcedure({
       indicationId: null,
       bodyPart: '',
@@ -277,42 +327,93 @@ const Details = ({
       toDepartmentId: null,
       categoryKey: null,
       procedureId: null,
-      encounterId: encounter?.key,
-      patientId: patient?.key,
+      procedureObj: null,
+      procedureName: null,
+      encounterId: encounter?.id,
+      patientId: patient?.id,
       currentDepartment: true,
       notes: null,
       extraDocumentation: null,
       scheduledDateTime: null
     });
-    setProcedurePage(0);
+  };
+
+  const validateRequiredFields = (): boolean => {
+    const FIELD_LABELS: Record<string, string> = {
+      procedureId: 'procedure name',
+      toFacilityId: 'facility',
+      procedureLevel: 'procedure level',
+      priority: 'priority',
+      scheduledDateTime: 'scheduled date time',
+      bodyPart: 'body part'
+    };
+
+    const effectiveToFacilityId = procedure.currentDepartment
+      ? authSlice?.selectedDepartment?.facilityId
+      : procedure.toFacilityId;
+
+    const valuesMap: Record<string, any> = {
+      procedureId: procedure.procedureId,
+      toFacilityId: effectiveToFacilityId,
+      procedureLevel: procedure.procedureLevel,
+      priority: procedure.priority,
+      scheduledDateTime: procedure.scheduledDateTime,
+      bodyPart: procedure.bodyPart
+    };
+
+    const missing: string[] = [];
+
+    REQUIRED_FIELDS.forEach(field => {
+      const value = valuesMap[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      if (isEmpty) {
+        missing.push(FIELD_LABELS[field] ?? field);
+      }
+    });
+
+    if (missing.length > 0) {
+      const lines = missing.map(label => `• ${label}: is required`).join('\n');
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
   };
 
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       const procedureData = {
         procedureId: procedure.procedureId,
-        patientId: patient?.key,
-        encounterId: encounter?.key,
-
+        patientId: patient?.id,
+        encounterId: encounter?.id,
         fromFacilityId: authSlice?.selectedDepartment?.facilityId,
         toFacilityId: procedure.currentDepartment
           ? authSlice?.selectedDepartment?.facilityId
           : procedure.toFacilityId,
         fromDepartmentId: authSlice?.selectedDepartment?.departmentId,
         toDepartmentId: procedure.toDepartmentId,
-
         indicationId: procedure.indicationId,
-
         procedureLevel: procedure.procedureLevel,
         priority: procedure.priority,
-
         bodyPart: procedure.bodyPart || '',
         side: procedure.side,
-
         scheduledDateTime: procedure.scheduledDateTime
           ? new Date(procedure.scheduledDateTime).toISOString()
           : null,
-
         notes: procedure.notes,
         extraDocumentation: procedure.extraDocumentation
       };
@@ -320,26 +421,21 @@ const Details = ({
       if (procedure?.id) {
         await updateProcedure({
           id: procedure.id,
-
           procedureId: procedure.procedureId,
-          indicationId: procedure.indicationId,
-
+          indicationId: Array.isArray(procedure.indicationId)
+            ? procedure.indicationId[0]
+            : procedure.indicationId,
           procedureLevel: procedure.procedureLevel,
           priority: procedure.priority,
-
-          bodyPart: procedure.bodyPart,
+          bodyPart: procedure.bodyPart || '',
           side: procedure.side,
-
           toFacilityId: procedure.currentDepartment
             ? authSlice?.selectedDepartment?.facilityId
             : procedure.toFacilityId,
-
           toDepartmentId: procedure.toDepartmentId,
-
           scheduledDateTime: procedure.scheduledDateTime
             ? new Date(procedure.scheduledDateTime).toISOString()
             : null,
-
           notes: procedure.notes,
           extraDocumentation: procedure.extraDocumentation
         }).unwrap();
@@ -347,14 +443,18 @@ const Details = ({
         await createProcedure(procedureData).unwrap();
       }
 
-      proRefetch();
       setOpenDetailsModal(false);
       handleClear();
+      proRefetch();
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       handleProcedureCrudError(error, dispatch, PROCEDURE_ERROR_MAP, procedure);
     }
   };
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <>
@@ -365,7 +465,7 @@ const Details = ({
         actionButtonFunction={handleSave}
         isDisabledActionBtn={edit ? true : procedure.id ? procedure?.status !== 'REQUESTED' : false}
         footerButtons={
-          <div className="footer-buttons">
+          <div className="footer-buttons" dir={dir}>
             <MyButton onClick={handleClear} prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>
               Clear
             </MyButton>
@@ -383,12 +483,13 @@ const Details = ({
         rightTitle="Procedure"
         rightContent={
           <div
+            dir={dir}
             className={clsx({
               'disabled-panel': edit || (procedure?.id && procedure?.status !== 'REQUESTED')
             })}
           >
             <Form fluid>
-              <div className="margin-bottom-10" >
+              <div className="margin-bottom-10">
                 <SectionContainer
                   title="Procedure Details"
                   content={
@@ -419,7 +520,9 @@ const Details = ({
                         setRecord={updatedProcedure => {
                           setProcedure({
                             ...updatedProcedure,
-                            procedureId: null
+                            procedureId: null,
+                            procedureObj: null,
+                            procedureName: null
                           });
                           setProcedurePage(0);
                         }}
@@ -433,7 +536,7 @@ const Details = ({
                           fieldLabel="Procedure Name"
                           fieldType="selectPagination"
                           fieldName="procedureId"
-                          selectData={procedureByFacility?.data ?? []}
+                          selectData={procedureOptions}
                           selectDataLabel="name"
                           selectDataValue="id"
                           record={procedure}
@@ -453,15 +556,25 @@ const Details = ({
                           width="100%"
                           fieldLabel="Department"
                           fieldName="toDepartmentId"
-                          fieldType="select"
-                          selectData={
-                            Array.isArray(departmentListResponse) ? departmentListResponse : []
-                          }
+                          fieldType="selectPagination"
+                          selectData={allDepartments}
                           selectDataLabel="name"
                           selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
                           disabled={!procedure?.toFacilityId}
+                          loading={deptLoading}
+                          hasMore={deptHasMore}
+                          onFetchMore={async () => {
+                            if (!deptNextLink || !procedure?.toFacilityId) return;
+                            const { page } = extractPaginationFromLink(deptNextLink);
+                            setDeptPage(page);
+                            await loadDepartments({
+                              facilityId: procedure.toFacilityId,
+                              page,
+                              append: true
+                            });
+                          }}
                           required
                         />
                       )}
@@ -508,22 +621,25 @@ const Details = ({
                       content={
                         <>
                           <div className="fill-height-content">
-                            <Icd10DiagnosisSearch
-                              diagnosisId={procedure.indicationId}
-                              setDiagnosisId={id => {
-                                setProcedure({
-                                  ...procedure,
-                                  indicationId: id
-                                });
-                              }}
-                              label="Indication"
-                              disabled={
-                                editing ||
-                                edit ||
-                                (procedure?.id && procedure?.status !== 'REQUESTED')
-                              }
-                              pageSize={15}
-                            />
+                            <div style={{ marginBottom: 10 }}>
+                              <PatientDiagnosisTable
+                                patient={patient}
+                                disabled={
+                                  editing ||
+                                  edit ||
+                                  (procedure?.id && procedure?.status !== 'REQUESTED')
+                                }
+                                selectMode
+                                onSelectDiagnosis={(ids) => {
+                                  const selectedIcd = ids?.[0];
+
+                                  setProcedure(prev => ({
+                                    ...prev,
+                                    indicationId: selectedIcd
+                                  }));
+                                }}
+                              />
+                            </div>
 
                             <MyInput
                               width="100%"
@@ -605,7 +721,11 @@ const Details = ({
             </Form>
           </div>
         }
-        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
+        leftContent={
+          <div dir={dir}>
+            <Diagnosis patient={patient} encounter={encounter} />
+          </div>
+        }
       />
 
       <MyModal
@@ -613,13 +733,17 @@ const Details = ({
         setOpen={setOpenOrderModel}
         size="lg"
         title="Add Order"
-        content={<PatientOrder edit={edit} patient={patient} encounter={encounter} />}
+        content={
+          <div dir={dir}>
+            <PatientOrder edit={edit} patient={patient} encounter={encounter} />
+          </div>
+        }
       />
 
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
-        encounterId={encounter?.id || encounter?.key}
+        encounterId={encounter?.id}
         refetchData={() => {}}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.id ? Number(procedure.id) : 0}

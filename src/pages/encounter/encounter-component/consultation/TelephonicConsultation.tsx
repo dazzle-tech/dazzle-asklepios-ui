@@ -9,6 +9,7 @@ import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const TelephonicConsultation = () => {
   // Container that wraps ONLY the table; used to detect inside/outside clicks
@@ -17,6 +18,8 @@ const TelephonicConsultation = () => {
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [consultationOrders, setConsultationOrder] = useState<any>({});
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Utility: is the event target within form-ish/editable elements?
   const isFormField = (node: EventTarget | null) => {
@@ -177,7 +180,8 @@ const TelephonicConsultation = () => {
         <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
           Print
         </MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+        <Checkbox><Translate>Show Cancelled</Translate>
+        </Checkbox>
       </div>
       <div className="bt-right">
         <MyButton onClick={() => setOpenDetailsModal(true)}>Add Consultation</MyButton>
@@ -191,14 +195,19 @@ const TelephonicConsultation = () => {
         <div ref={tableContainerRef}>
           <MyTable
             columns={tableColumns}
-            data={tableData}
+            data={tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
             loading={false}
             tableButtons={tablebuttons}
-            page={0}
-            rowsPerPage={5}
+            page={page}
+            rowsPerPage={rowsPerPage}
             totalCount={tableData.length}
-            onRowClick={row => setSelectedRow(row)} // set current selection
-            rowClassName={isSelected} // highlight the selected row
+            onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+            onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            onRowClick={row => setSelectedRow(row)}
+            rowClassName={isSelected}
           />
         </div>
       </div>
@@ -226,7 +235,7 @@ const TelephonicConsultation = () => {
         setConsultationOrder={setConsultationOrder}
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
-        refetchCon={() => {}}
+        refetchCon={() => { }}
         editing={false}
         edit={false}
       />

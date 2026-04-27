@@ -2,7 +2,6 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import React from "react";
-import { useGetDuplicationCandidatesQuery } from "@/services/potintialDuplicateService";
 
 const PatientDuplicate = ({
   open,
@@ -40,6 +39,13 @@ const PatientDuplicate = ({
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -48,14 +54,14 @@ const PatientDuplicate = ({
       actionButtonLabel="Ignore and Proceed"
       cancelButtonLabel="Cancel Registration"
       actionButtonFunction={handleSave}
-      content={
+      content={<div dir={dir}>
         <MyTable
           loading={false}
           data={list ?? []}
           columns={columns}
           onRowClick={(rowData) => handleSelect(rowData)}
         />
-      }
+      </div>}
     />
   );
 };

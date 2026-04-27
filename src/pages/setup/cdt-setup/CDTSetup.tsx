@@ -570,8 +570,16 @@ const CDTSetup: React.FC = () => {
   // ----------------------------------------
   // Render
   // ----------------------------------------
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {/* Main CDT table */}
       <MyTable
         data={tableData}
@@ -620,7 +628,7 @@ const CDTSetup: React.FC = () => {
         pagesCount={1}
         hideActionBtn={true}
         content={
-          <div>
+          <div dir={dir}>
             {conflicts && conflicts.length > 0 ? (
               <MyTable
                 data={pagedConflicts}
@@ -672,7 +680,7 @@ const CDTSetup: React.FC = () => {
           cdtId={selectedCdtRow.id}
         />
       ) : null}
-    </>
+    </div>
   );
 };
 

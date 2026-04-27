@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
-import { PatientEncounter } from '@/types/model-types-new';
+import { PatientEncounter, PatientEncounterDischarge } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -71,14 +71,15 @@ export const patientEncounterService = createApi({
         departmentId: Id;
         fromDate?: string;
         toDate?: string;
+        statuses?: string | string[];
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-        encounterReasonIn?: string[];
+        encounterReasons?: string[];
         chiefComplaint?: string;
-        priorityIn?: string[];
-        withPrescription?: boolean;
-        hasOrders?: boolean;
+        priorities?: string[];
+        hasPrescription?: boolean;
+        hasOrder?: boolean;
         isObserved?: boolean;
       } & PagedParams
     >({
@@ -86,39 +87,45 @@ export const patientEncounterService = createApi({
         departmentId,
         fromDate,
         toDate,
+        statuses,
         statusIn,
         patientName,
         mrn,
-        encounterReasonIn,
+        encounterReasons,
         chiefComplaint,
-        priorityIn,
-        withPrescription,
-        hasOrders,
+        priorities,
+        hasPrescription,
+        hasOrder,
         isObserved,
         page,
         size,
         sort = 'id,desc'
-      }) => ({
-        url: `/api/patient/encounter`,
-        method: 'GET',
-        params: {
-          departmentId,
-          fromDate,
-          toDate,
-          statusIn,
-          patientName,
-          mrn,
-          encounterReasonIn,
-          chiefComplaint,
-          priorityIn,
-          withPrescription,
-          hasOrders,
-          isObserved,
-          page,
-          size,
-          sort
-        }
-      }),
+      }) => {
+        const src = statuses ?? statusIn;
+        const statusesCsv = Array.isArray(src) ? src.join(',') : src;
+
+        return {
+          url: `/api/patient/encounter`,
+          method: 'GET',
+          params: {
+            departmentId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterReasons,
+            chiefComplaint,
+            priorities,
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page,
+            size,
+            sort
+          }
+        };
+      },
       transformResponse: (response: any, meta) => {
         const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
@@ -188,10 +195,14 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    dischargeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
-      query: ({ id }) => ({
+    dischargeEncounter: builder.mutation<
+      PatientEncounter,
+      { id: Id; body: PatientEncounterDischarge }
+    >({
+      query: ({ id, body }) => ({
         url: `/api/patient/encounter/${id}/discharge`,
-        method: 'POST'
+        method: 'POST',
+        body
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
@@ -223,7 +234,13 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-
+    getEncounterById: builder.query<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
+    }),
     getEncountersByPatient: builder.query<PagedResult<PatientEncounter>, { patientId: Id } & PagedParams>({
       query: ({ patientId, page, size, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/encounter/patient/${patientId}`,
@@ -238,7 +255,82 @@ export const patientEncounterService = createApi({
         res
           ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
-    })
+    }),
+
+    getEncountersByAppointment: builder.query<string, { appointmentId: Id }>({
+      query: ({ appointmentId }) => ({
+        url: `/api/patient/encounter/appointment/${appointmentId}`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    getPreviousClosedEncounter: builder.query<PatientEncounter, { encounterId: Id }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+    moveWaitingListToNew: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/move-to-new`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
+    }),
+    // ✅ Date Range Counts
+
+    countDepartmentTotalByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/total`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentWaitingListByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/waiting-list`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentTriageByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/triage`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentDischargedByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/discharged`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
   })
 });
 
@@ -262,7 +354,16 @@ export const {
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
-
+  useGetEncounterByIdQuery,
+  useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
-  useLazyGetEncountersByPatientQuery
+  useLazyGetEncountersByPatientQuery,
+  useGetEncountersByAppointmentQuery,
+  useLazyGetEncountersByAppointmentQuery,
+  useGetPreviousClosedEncounterQuery,
+  useMoveWaitingListToNewMutation,
+  useCountDepartmentTotalByDateRangeQuery,
+  useCountDepartmentWaitingListByDateRangeQuery,
+  useCountDepartmentTriageByDateRangeQuery,
+  useCountDepartmentDischargedByDateRangeQuery,
 } = patientEncounterService;

@@ -93,6 +93,13 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
     tryClick();
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Form fluid>
       <Row gutter={15}>
@@ -368,14 +375,14 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
         title="Pre Medication"
         size="80vw"
         bodyheight="78vh"
-        content={<DrugOrder patient={patient} encounter={encounter} edit={false} />}
+        content={<div dir={dir}><DrugOrder patient={patient} encounter={encounter} edit={false} /></div>}
       />
 
       <MyModal
         open={openDiagnostic}
         setOpen={setOpenDiagnostic}
         title="Test Result"
-        content={<DiagnosticsResult />}
+        content={<div dir={dir}><DiagnosticsResult /></div>}
       />
     </Form>
   );

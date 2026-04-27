@@ -1,24 +1,25 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
+import { Modal } from 'rsuite';
 
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
-import { formatDate, formatEnumString } from '@/utils';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
-import { initialListRequest, ListRequest } from '@/types/types';
 import {
-  useGetEREncountersListQuery,
-  useSaveEncounterChangesMutation,
-  useCancelEncounterMutation
-} from '@/services/encounterService';
+  useCancelEncounterMutation,
+  useFilterEncountersQuery,
+  useUpdateEncounterMutation
+} from '@/services/encounters/patientEncounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch, useSelector } from 'react-redux';
@@ -30,7 +31,6 @@ import { faBarcode } from '@fortawesome/free-solid-svg-icons';
 import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useNavigate } from 'react-router-dom';
@@ -43,13 +43,30 @@ import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-ne
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import '../styles.less';
+import PatientPaymentInfo, {
+  PatientPaymentInfoHandle
+} from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
+import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 import {
   useCreateOrGetEmergencyTriageMutation,
   useGetLatestEmergencyTriageByEncounterQuery
 } from '@/services/encounters/er-triage/emergencyTriageService';
+import {
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
+  useLazyGetPatientWristbandQuery
+} from '@/services/patient/patientService';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+import { printPatientWristband } from '@/utils/printPatientWristband';
+import { useAppSelector } from '@/hooks';
+import { is } from 'date-fns/locale';
 
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
+const DEFAULT_ENCOUNTER_STATUS_CODES = [
+  'WAITING_TRIAGE',
+  'PENDING_PAYMENT',
+  'TRIAGE_STARTED'
+] as const;
 
 const toNumberOrNaN = (v: unknown) => {
   if (typeof v === 'number') return v;
@@ -75,15 +92,38 @@ const DestinationCell = ({ encounterId, fallbackDestination }: any) => {
   return <>{formatEnumString(String(destination))}</>;
 };
 
+const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const level = latest?.emergencyLevel ?? null;
+  if (!level) return <></>;
+
+  const key = String(level);
+  return (
+    <MyBadgeStatus
+      color={colorMap?.get?.(key) ?? '#98A2B4'}
+      contant={labelMap?.get?.(key) ?? formatEnumString(key)}
+    />
+  );
+};
+
 const ERTriage = () => {
-  const COMPLETE_TRIAGE_STATUS_KEY = '91109811181900';
-  const SENT_TO_ER_STATUS_KEY = '6742317684600328';
+  const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
+  const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isReceptionist = jobRole === 'RECEPTIONIST';
+  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
+  
 
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
     if (typeof value === 'number') {
-      // heuristics: seconds vs millis
       const ms = value < 1e12 ? value * 1000 : value;
       const d = new Date(ms);
       return isNaN(d.getTime()) ? null : d;
@@ -118,10 +158,7 @@ const ERTriage = () => {
 
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
 
-    const createdAt =
-      latest?.createdDate ??
-      fallbackCreatedAt ??
-      null;
+    const createdAt = latest?.createdDate ?? fallbackCreatedAt ?? null;
     if (!createdAt) return <></>;
     return <>{formatDateTime(createdAt)}</>;
   };
@@ -134,157 +171,117 @@ const ERTriage = () => {
 
     const arrival = toDateSafe(arrivalCreatedAt);
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(
-        latest?.createdDate ??
-        fallbackTriageCreatedAt
-    );
+    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
     if (!arrival || !triageStart) return <></>;
     return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
   };
 
   const TriageCompletedAtCell = ({
     encounterId,
-    statusKey,
+    statusCode,
     fallbackUpdatedAt,
     completedAt,
     completedDate
   }: any) => {
-    const isCompleted = statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
-    if (!isCompleted) return <></>;
-
     const id = toNumberOrNaN(encounterId);
     const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
       skip: Number.isNaN(id)
     });
 
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const v =
-      latest?.completedDate ??
-      fallbackUpdatedAt ??
-      completedAt ??
-      completedDate ??
-      null;
+    const v = latest?.completedDate ?? completedDate ?? completedAt ?? fallbackUpdatedAt ?? null;
     if (!v) return <></>;
     return <>{formatDateTime(v)}</>;
   };
 
   const TriageTimeCell = ({
     encounterId,
-    statusKey,
+    statusCode,
     fallbackTriageCreatedAt,
     fallbackUpdatedAt,
     rowUpdatedAt,
     completedAt,
     completedDate
   }: any) => {
-    const isCompleted = statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
-    if (!isCompleted) return <></>;
-
     const id = toNumberOrNaN(encounterId);
     const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
       skip: Number.isNaN(id)
     });
 
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(
-        latest?.createdDate ??
-        fallbackTriageCreatedAt
-    );
+    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
     const end = toDateSafe(
       latest?.completedDate ??
-        fallbackUpdatedAt ??
-        rowUpdatedAt ??
-        completedAt ??
-        completedDate ??
-        null
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      completedDate ??
+      null
     );
     if (!triageStart || !end) return <></>;
     return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
   };
 
-  const handlePrintWristband = async (encounterData: any) => {
-    try {
-      if (!encounterData || !encounterData.patientObject) return;
-
-      const p = encounterData.patientObject;
-
-      const fullName = p.fullName || '';
-      const mrn = p.patientMrn || '';
-      const dob = p.dob
-        ? new Date(p.dob).toLocaleDateString()
-        : '';
-      let admDate = '';
-
-      if (encounterData.createdAt) {
-        const d = new Date(encounterData.createdAt);
-        if (!isNaN(d.getTime())) {
-          admDate = d.toLocaleDateString();
-        }
-      }
-
-      if (!admDate && encounterData.plannedStartDate) {
-        admDate = encounterData.plannedStartDate;
-      }
-
-      const qrText = `MRN:${mrn};NAME:${fullName};DOB:${dob};VISIT:${encounterData.visitId || ''}`;
-      const qrDataUrl = await QRCode.toDataURL(qrText);
-
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [50, 120]
-      });
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text(fullName.toUpperCase(), 10, 15);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.text(`MRN: ${mrn}`, 10, 25);
-      doc.text(`ADM: ${admDate}`, 10, 33);
-      doc.text(`DOB: ${dob}`, 10, 41);
-
-      doc.setFont('helvetica', 'bold');
-
-      doc.addImage(qrDataUrl, 'PNG', 80, 10, 30, 30);
-
-      doc.save(`Wristband_${mrn}.pdf`);
-    } catch (e) {
-      console.error('Error while generating wristband pdf', e);
-    }
-  };
   const location = useLocation();
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
+  const [triggerWristband] = useLazyGetPatientWristbandQuery();
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-  const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const defaultEncounterStatusKeys = ['6742295599423814', '8890456518264959'];
-  const [encounterStatus, setEncounterStatus] = useState<{ keys: string[] }>({
-    keys: defaultEncounterStatusKeys
-  });
-  const [startEncounter] = useSaveEncounterChangesMutation();
+  const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>(() => ({
+    codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
+  }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
   const navigate = useNavigate();
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: true,
-    filters: [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'match',
-        value: 'EMERGENCY'
-      }
-    ]
-  });
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
-  // State to manage the date filters for the manual search
+  const handlePrintWristband = async (rowData: any) => {
+    try {
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
+
+      const fileURL = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
+    }
+  };
+  const selectedDepartment = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const departmentId = Number(selectedDepartment?.departmentId ?? selectedDepartment?.id ?? 0) || 0;
+
+  const lastWeekDefault = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }, []);
+
   const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(),
+    fromDate: lastWeekDefault,
     toDate: new Date()
   });
 
@@ -296,19 +293,19 @@ const ERTriage = () => {
   const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
 
-  // Keep refs to avoid "Search" reading stale state right after a picker change.
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentRow, setPaymentRow] = useState<any>(null);
+  const [payment, setPayment] = useState<any>({ ...newPatientPayments });
+  const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
+  const paymentInfoRef = useRef<PatientPaymentInfoHandle>(null);
+
   const dateFilterRef = useRef(dateFilter);
-  const emergencyLevelRef = useRef(emergencyLevel);
   const encounterStatusRef = useRef(encounterStatus);
   const selectedPatientRef = useRef<any>(selectedPatient);
 
   const setDateFilterSafe = (next: any) => {
     dateFilterRef.current = next;
     setDateFilter(next);
-  };
-  const setEmergencyLevelSafe = (next: any) => {
-    emergencyLevelRef.current = next;
-    setEmergencyLevel(next);
   };
   const setEncounterStatusSafe = (next: any) => {
     encounterStatusRef.current = next;
@@ -319,10 +316,8 @@ const ERTriage = () => {
     setSelectedPatient(next);
   };
 
-  // Create a JSX element to display as the page header content
   const divContent = 'ER Triage';
 
-  // IMPORTANT: don't dispatch during render (can cause infinite render loop / white screen).
   useEffect(() => {
     dispatch(setPageCode('ER_Triage'));
     dispatch(setDivContent(divContent));
@@ -334,18 +329,155 @@ const ERTriage = () => {
 
   const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(15);
+  const DEFAULT_SORT = 'id,desc';
+  const [searchTick, setSearchTick] = useState(1);
+  const [hasSearched, setHasSearched] = useState(true);
+
+  const filterParams = useMemo(() => {
+    if (!departmentId) return null;
+
+    const df = dateFilterRef.current;
+    const es = encounterStatusRef.current;
+    const sp = selectedPatientRef.current;
+
+    const fromDateObj = toDateSafe(df?.fromDate);
+    const toDateObj = toDateSafe(df?.toDate);
+    const fromDate = fromDateObj ? formatDate(fromDateObj) : undefined;
+    const toDate = toDateObj ? formatDate(toDateObj) : undefined;
+
+    const patientName =
+      sp?.firstName || sp?.lastName
+        ? `${sp.firstName ?? ''} ${sp.lastName ?? ''}`.trim()
+        : undefined;
+
+    const mrn = sp?.medicalRecordNumber || undefined;
+
+    const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
+      String(v ?? '').toUpperCase()
+    );
+    const statusesCsv = statuses.join(',');
+
+    return {
+      departmentId,
+      fromDate,
+      toDate,
+      statuses: statusesCsv,
+      patientName,
+      mrn,
+      page,
+      size: pageSize,
+      sort: DEFAULT_SORT,
+      timestamp: searchTick
+    };
+  }, [departmentId, page, pageSize, searchTick]);
+
   const {
-    data: encounterListResponse,
+    data: encountersPaged,
     isFetching,
-    refetch: refetchEncounter,
-    isLoading
-  } = useGetEREncountersListQuery(listRequest);
+    isLoading,
+    refetch: refetchEncounter
+  } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams || !hasSearched });
 
-  const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
-
-  const encounterStatusSelectData = useMemo(() => encounterStatusLov?.object ?? [], [encounterStatusLov]);
+  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus');
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
+
+  const encounterStatusLabelMap = useMemo(() => {
+    const m = new Map<string, string>();
+    encounterStatusEnumOptions.forEach((opt: any) => {
+      if (opt?.value == null) return;
+      m.set(String(opt.value), String(opt.label ?? opt.value));
+    });
+    return m;
+  }, [encounterStatusEnumOptions]);
+
+  const [getBulkPatientBasicInfo, { data: patientsBasicInfo }] =
+    useGetBulkPatientBasicInfoMutation();
+
+  const patientIdsForBulk = useMemo(() => {
+    const rows = (encountersPaged?.data ?? []) as any[];
+    const ids = rows
+      .map(row => row?.patient?.id)
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v));
+    return Array.from(new Set(ids));
+  }, [encountersPaged]);
+
+  useEffect(() => {
+    if (patientIdsForBulk.length === 0) return;
+    getBulkPatientBasicInfo(patientIdsForBulk as any)
+      .unwrap()
+      .catch(() => { });
+  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const patientByIdMap = useMemo(() => {
+    const byId = new Map<string, any>();
+    (patientsBasicInfo ?? []).forEach((patient: any) => {
+      const idKey = patient?.id ?? null;
+      if (idKey === null || idKey === undefined || String(idKey).trim() === '') return;
+      byId.set(String(idKey), patient);
+    });
+    return byId;
+  }, [patientsBasicInfo]);
+
+  const normalizedRows = useMemo(() => {
+    const rows = (encountersPaged?.data ?? []) as any[];
+
+    const buildPatientFullName = (p: any) => {
+      const v = String(p?.fullName ?? '').trim();
+      if (v) return v;
+      const parts = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName].filter(Boolean);
+      const joined = parts.join(' ').trim();
+      return joined || '-';
+    };
+
+    return rows.map((encounterRow: any) => {
+      const statusCode = String(encounterRow?.status ?? '').toUpperCase();
+      const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
+
+      const patientId = encounterRow?.patient?.id ?? null;
+      const patientFromMap = patientId != null ? patientByIdMap.get(String(patientId)) : null;
+
+      const patientFromEncounter = encounterRow?.patient ?? null;
+      const patientMerged = patientFromEncounter || patientFromMap || null;
+
+      const fullName = patientMerged ? buildPatientFullName(patientMerged) : '-';
+
+      const patientMrn = patientMerged?.medicalRecordNumber;
+
+      const dateOfBirth = patientMerged?.dateOfBirth ?? patientMerged?.dob ?? null;
+      const sexAtBirth = formatEnumString(patientMerged?.sexAtBirth) || '';
+
+      return {
+        ...encounterRow,
+        key: encounterRow?.id,
+        patientId,
+
+        patientObject: {
+          id: patientId,
+          medicalRecordNumber: patientMrn,
+          firstName: patientMerged?.firstName ?? '',
+          lastName: patientMerged?.lastName ?? '',
+          privatePatient: Boolean(patientMerged?.isPrivatePatient ?? false),
+          dateOfBirth,
+          sexAtBirth
+        },
+
+        patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
+        visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
+
+        encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
+        encounterStatus: encounterRow?.status ?? statusCode,
+
+        plannedStartDate: encounterRow?.encounterDate ?? null,
+        createdAt:
+          encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
+        updatedAt: null
+      };
+    });
+  }, [encountersPaged, patientByIdMap]);
 
   const emergencyLevelLabelMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -359,7 +491,7 @@ const ERTriage = () => {
   const emergencyLevelColorMap = useMemo(() => {
     const byValue: Record<string, string> = {
       RESUSCITATION: '#7f1d1d',
-      EMERGENT: '#dc2626', 
+      EMERGENT: '#dc2626',
       URGENT: '#f97316',
       LESS_URGENT: '#eab308',
       NON_URGENT: '#16a34a'
@@ -379,12 +511,16 @@ const ERTriage = () => {
   const priorityOrderMap = useMemo(() => {
     const rank = (value: string) => {
       const v = String(value ?? '').toUpperCase();
-      // Force urgent-like priorities to the top regardless of enum order
-      if (v.includes('URGENT') || v.includes('CRITICAL') || v.includes('STAT') || v.includes('EMERG')) return 0;
+      if (
+        v.includes('URGENT') ||
+        v.includes('CRITICAL') ||
+        v.includes('STAT') ||
+        v.includes('EMERG')
+      )
+        return 0;
       return null;
     };
     const m = new Map<string, number>();
-    // Put urgent-like priorities first, then the rest in enum order.
     encounterPriorityEnumOptions.forEach((opt, idx) => {
       if (opt?.value == null) return;
       const forced = rank(String(opt.value));
@@ -402,7 +538,6 @@ const ERTriage = () => {
   }, [encounterPriorityEnumOptions]);
 
   const priorityDotColor = useMemo(() => {
-    // Keep a simple, consistent palette (since enums don't come with colors).
     const palette = ['#16a34a', '#dc2626', '#f97316', '#eab308', '#7c3aed', '#0ea5e9'];
     const m = new Map<string, string>();
     encounterPriorityEnumOptions.forEach((v, idx) => {
@@ -412,26 +547,29 @@ const ERTriage = () => {
   }, [encounterPriorityEnumOptions]);
 
   const tableData = useMemo(() => {
-    const data = (encounterListResponse?.object ?? []) as any[];
-    const copied = [...data];
+    const copied = [...(normalizedRows ?? [])];
     copied.sort((a, b) => {
-      const aKey = a?.encounterPriorityLkey ? String(a.encounterPriorityLkey) : '';
-      const bKey = b?.encounterPriorityLkey ? String(b.encounterPriorityLkey) : '';
+      const aKey = a?.priorityLevel ? String(a.priorityLevel) : '';
+      const bKey = b?.priorityLevel ? String(b.priorityLevel) : '';
       const aOrder = aKey ? priorityOrderMap.get(aKey) ?? 999999 : 999999;
       const bOrder = bKey ? priorityOrderMap.get(bKey) ?? 999999 : 999999;
       if (aOrder !== bOrder) return aOrder - bOrder;
-      // fallback: oldest first within same priority (stable-ish)
-      const aDate = a?.plannedStartDate ? new Date(a.plannedStartDate).getTime() : 0;
-      const bDate = b?.plannedStartDate ? new Date(b.plannedStartDate).getTime() : 0;
+      const aDate = a?.encounterDate ? new Date(a.encounterDate).getTime() : 0;
+      const bDate = b?.encounterDate ? new Date(b.encounterDate).getTime() : 0;
       return aDate - bDate;
     });
     return copied;
-  }, [encounterListResponse, priorityOrderMap]);
+  }, [normalizedRows, priorityOrderMap]);
 
   const isSelected = (rowData: any) => {
-    if (rowData && encounter && rowData.key === encounter.key) {
+    if (
+      rowData &&
+      encounter &&
+      String(rowData?.id ?? rowData?.key) === String(encounter?.id ?? encounter?.key)
+    ) {
       return 'selected-row';
-    } else return '';
+    }
+    return '';
   };
 
   const handleGoToViewTriage = async (encounterData: any, patientData: any) => {
@@ -446,12 +584,11 @@ const ERTriage = () => {
     });
   };
 
-  // Search is applied only when user clicks Search (see `handleSearchClick`).
-
   const handleCancelEncounter = async () => {
     try {
-      if (encounter) {
-        await cancelEncounter(encounter).unwrap();
+      const id = encounter?.id ?? encounter?.key;
+      if (id) {
+        await cancelEncounter({ id }).unwrap();
         refetchEncounter();
         dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
         setOpen(false);
@@ -462,25 +599,96 @@ const ERTriage = () => {
     }
   };
 
-  const handleUpdateEncounterPriority = async (rowData: any, priorityKey: string): Promise<boolean> => {
+  const buildEncounterUpdateBody = (row: any, patch: Partial<any>) => {
+    const body: any = {
+      id: row?.id,
+      patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
+      encounterNumber: row?.encounterNumber ?? null,
+      facilityId: row?.facilityId,
+      departmentId: row?.departmentId,
+      practitionerId: row?.practitionerId ?? null,
+      encounterType: row?.encounterType,
+      encounterReason: row?.encounterReason,
+      followUpEncounterId: row?.followUpEncounterId ?? null,
+      priorityLevel: row?.priorityLevel,
+      originType: row?.originType ?? null,
+      originName: row?.originName ?? null,
+      notes: row?.notes ?? null,
+      departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
+      encounterDate: row?.encounterDate ?? null,
+      status: row?.status,
+      chiefComplaint: row?.chiefComplaint ?? null,
+      hasPrescription: row?.hasPrescription ?? false,
+      hasOrder: row?.hasOrder ?? false,
+      isObserved: row?.isObserved ?? false
+    };
+
+    Object.assign(body, patch ?? {});
+
+    const missing: string[] = [];
+    if (body.id == null) missing.push('id');
+    if (body.patientId == null) missing.push('patientId');
+    if (body.facilityId == null) missing.push('facilityId');
+    if (body.departmentId == null) missing.push('departmentId');
+    if (body.encounterType == null) missing.push('encounterType');
+    if (body.encounterReason == null) missing.push('encounterReason');
+    if (body.priorityLevel == null) missing.push('priorityLevel');
+    if (body.status == null) missing.push('status');
+    if (body.hasPrescription == null) missing.push('hasPrescription');
+    if (body.hasOrder == null) missing.push('hasOrder');
+    if (body.isObserved == null) missing.push('isObserved');
+
+    if (missing.length) {
+      throw new Error(`Cannot update encounter: missing required fields: ${missing.join(', ')}`);
+    }
+
+    return body;
+  };
+
+  const isPendingPaymentStatus = (rowData: any) =>
+    String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === 'PENDING_PAYMENT';
+
+  const handleAddPayment = async (rowData: any): Promise<boolean> => {
+    setPaymentRow(rowData);
+    setPayment({ ...newPatientPayments });
+    setPatientInsurance({ ...newPatientInsurance });
+    setPaymentModalOpen(true);
+    return true;
+  };
+
+  const handleUpdateEncounterPriority = async (
+    rowData: any,
+    priorityCode: string
+  ): Promise<boolean> => {
     try {
-      await startEncounter({
-        ...rowData,
-        encounterPriorityLkey: priorityKey
+      const encounterId = rowData?.id ?? null;
+      if (!encounterId) return false;
+
+      await updateEncounter({
+        id: encounterId,
+        body: buildEncounterUpdateBody(rowData, { priorityLevel: priorityCode })
       }).unwrap();
       dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
       refetchEncounter();
       return true;
     } catch (error) {
-      console.error('Priority update error:', error);
-      dispatch(notify({ msg: 'Failed to update priority', sev: 'error' }));
+      console.error('Priority update error:', error, { rowData });
+      dispatch(
+        notify({
+          msg:
+            (error as any)?.message ||
+            'Failed to update priority (missing required encounter fields?)',
+          sev: 'error'
+        })
+      );
       return false;
     }
   };
 
-  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
+  const EncounterPriorityAction = ({ rowData, isReceptionist }: { rowData: any; isReceptionist: boolean }) => {
     const whisperRef = useRef<any>(null);
     const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
+    const isPendingPayment = isPendingPaymentStatus(rowData);
 
     const prioritySpeaker = (
       <Popover title="Priority" className="er-priority-popover">
@@ -490,7 +698,7 @@ const ERTriage = () => {
               type="button"
               key={p?.value}
               className={
-                String(rowData?.encounterPriorityLkey ?? '') === String(p?.value ?? '')
+                String(rowData?.priorityLevel ?? '') === String(p?.value ?? '')
                   ? 'er-priority-item is-selected'
                   : 'er-priority-item'
               }
@@ -498,7 +706,6 @@ const ERTriage = () => {
                 e?.stopPropagation?.();
                 const ok = await handleUpdateEncounterPriority(rowData, String(p?.value ?? ''));
                 if (ok) {
-                  // Prevent immediate re-open when trigger includes hover and mouse stays on the button.
                   setLockHoverUntilLeave(true);
                   whisperRef.current?.close?.();
                 }
@@ -513,7 +720,7 @@ const ERTriage = () => {
                 />
                 <span className="er-priority-label">{p?.label ?? p?.value ?? ''}</span>
               </span>
-              {String(rowData?.encounterPriorityLkey ?? '') === String(p?.value ?? '') ? (
+              {String(rowData?.priorityLevel ?? '') === String(p?.value ?? '') ? (
                 <span className="er-priority-check">✓</span>
               ) : (
                 <span className="er-priority-check-placeholder" />
@@ -529,7 +736,13 @@ const ERTriage = () => {
         <div style={{ display: 'inline-flex', alignItems: 'center' }}>
           <Whisper
             ref={whisperRef}
-            trigger={lockHoverUntilLeave ? 'click' : (['hover', 'click'] as any)}
+            trigger={
+              isPendingPayment
+                ? 'click'
+                : lockHoverUntilLeave
+                  ? 'click'
+                  : (['hover', 'click'] as any)
+            }
             placement="leftStart"
             speaker={prioritySpeaker}
             enterable
@@ -539,7 +752,7 @@ const ERTriage = () => {
               style={{ display: 'inline-flex', alignItems: 'center' }}
               onMouseLeave={() => setLockHoverUntilLeave(false)}
             >
-              <MyButton size="small">
+              <MyButton size="small" disabled={isPendingPayment}>
                 <FontAwesomeIcon icon={faCircleExclamation} />
               </MyButton>
             </div>
@@ -551,33 +764,38 @@ const ERTriage = () => {
 
   const handleGoToVisit = async (encounterData: any, patientData: any) => {
     try {
-      await startEncounter({
-        ...encounterData,
-        encounterStatusLkey: '6742295599423814'
-      }).unwrap();
+      const encounterId = encounterData?.id;
+      const patientId = toNumberOrNaN(
+        patientData?.id ?? patientData?.patientId ?? patientData?.key
+      );
 
-      const toNumberOrNaN = (v: unknown) => {
-        if (typeof v === 'number') return v;
-        if (typeof v === 'string' && v.trim() !== '') return Number(v);
-        return Number.NaN;
-      };
+      const statusUpper = String(
+        encounterData?.status ?? encounterData?.encounterStatus ?? ''
+      ).toUpperCase();
 
-      const encounterId = toNumberOrNaN(encounterData?.id ?? encounterData?.encounterId ?? encounterData?.key);
-      const patientId = toNumberOrNaN(patientData?.id ?? patientData?.patientId ?? patientData?.key  );
+      if (
+        statusUpper !== 'TRIAGE_STARTED' &&
+        typeof encounterId === 'number' &&
+        !Number.isNaN(encounterId)
+      ) {
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
+        }).unwrap();
+      }
 
       const emergencyTriageNew =
-        !Number.isNaN(encounterId) && !Number.isNaN(patientId)
+        typeof encounterId === 'number' &&
+          !Number.isNaN(encounterId) &&
+          !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
           : null;
 
       const targetPath = '/ER-start-triage';
 
-      // Save source in sessionStorage before navigating
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
       if (!emergencyTriageNew) {
         console.warn(
-          '[ER Triage] Could not create/get new emergency triage record: missing numeric patientId/encounterId',
+          '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
           { patientId, encounterId, patientData, encounterData }
         );
       }
@@ -591,12 +809,31 @@ const ERTriage = () => {
           emergencyTriageNew
         }
       });
-    } catch (error) {
-      console.error('Start triage error:', error);
-      dispatch(notify({ msg: 'Failed to start triage', sev: 'error' }));
+    } catch (error: any) {
+      console.error('Start triage error:', error, { encounterData, patientData });
+
+      const errorKey =
+        error?.message ||
+        error?.data?.message ||
+        '';
+
+      let readableMessage = 'Failed to start triage';
+
+      if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
+        readableMessage =
+          'Cannot start a new triage because the patient already has an ongoing encounter.';
+      } else if (errorKey) {
+        readableMessage = errorKey.replaceAll('.', ' ');
+      }
+
+      dispatch(
+        notify({
+          msg: readableMessage,
+          sev: 'error'
+        })
+      );
     }
   };
-
 
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
@@ -609,12 +846,6 @@ const ERTriage = () => {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
-
-  useEffect(() => {
-    // Initial load: apply search once so the table is populated by default.
-    handleSearchClick();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (isLoading || isFetching) {
@@ -647,131 +878,59 @@ const ERTriage = () => {
     }
   }, [refetch, refetchEncounter, dispatch]);
 
-  const buildFilters = () => {
-    const df = dateFilterRef.current;
-    const el = emergencyLevelRef.current;
-    const es = encounterStatusRef.current;
-    const sp = selectedPatientRef.current;
-
-    const filters: any[] = [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'match',
-        value: 'EMERGENCY'
-      }
-    ];
-
-    if (df?.fromDate && df?.toDate) {
-      const formattedFromDate = formatDate(df.fromDate);
-      const formattedToDate = formatDate(df.toDate);
-      filters.push({
-        fieldName: 'planned_start_date',
-        operator: 'between',
-        value: `${formattedFromDate}_${formattedToDate}`
-      });
-    } else if (df?.fromDate) {
-      const formattedFromDate = formatDate(df.fromDate);
-      filters.push({
-        fieldName: 'planned_start_date',
-        operator: 'gte',
-        value: formattedFromDate
-      });
-    } else if (df?.toDate) {
-      const formattedToDate = formatDate(df.toDate);
-      filters.push({
-        fieldName: 'planned_start_date',
-        operator: 'lte',
-        value: formattedToDate
-      });
-    }
-
-    if (el?.key) {
-      filters.push({
-        fieldName: 'emergency_level_lkey',
-        operator: 'match',
-        value: el.key
-      });
-    }
-
-    if (es?.keys?.length) {
-      filters.push({
-        fieldName: 'encounter_status_lkey',
-        operator: 'in',
-        value: es.keys.map(key => `(${key})`).join(' ')
-      });
-    }
-
-    if (sp?.key) {
-      filters.push({
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: sp.key
-      });
-    }
-
-    return filters;
-  };
+  const triggerSearch = useCallback(() => {
+    setManualSearchTriggered(true);
+    setPage(0);
+    setHasSearched(true);
+    setSearchTick(t => t + 1);
+  }, []);
 
   const handleSearchClick = () => {
-    setManualSearchTriggered(true);
-    setListRequest(prev => ({
-      ...prev,
-      pageNumber: 1,
-      ignore: false,
-      filters: buildFilters()
-    }));
+    triggerSearch();
   };
 
   const handleClearClick = () => {
-    const nextDateFilter = { fromDate: new Date(), toDate: new Date() };
-    const nextEmergencyLevel = { key: '' };
-    const nextEncounterStatus = { keys: defaultEncounterStatusKeys };
+    const now = new Date();
+    const lastWeekDate = new Date(now);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+
+    const nextDateFilter = { fromDate: lastWeekDate, toDate: now };
+    const nextEncounterStatus = { codes: [...DEFAULT_ENCOUNTER_STATUS_CODES] };
 
     setDateFilterSafe(nextDateFilter);
-    setEmergencyLevelSafe(nextEmergencyLevel);
     setEncounterStatusSafe(nextEncounterStatus);
     setSelectedPatientSafe(null);
     setPatientSearchResetToken(v => v + 1);
 
-    // After clearing, re-apply the default search criteria (do not leave the list ignored/empty)
-    const filters: any[] = [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'match',
-        value: 'EMERGENCY'
-      }
-    ];
-
-    if (nextDateFilter.fromDate && nextDateFilter.toDate) {
-      const formattedFromDate = formatDate(nextDateFilter.fromDate);
-      const formattedToDate = formatDate(nextDateFilter.toDate);
-      filters.push({
-        fieldName: 'planned_start_date',
-        operator: 'between',
-        value: `${formattedFromDate}_${formattedToDate}`
-      });
-    }
-
-    if (nextEncounterStatus.keys?.length) {
-      filters.push({
-        fieldName: 'encounter_status_lkey',
-        operator: 'in',
-        value: nextEncounterStatus.keys.map(key => `(${key})`).join(' ')
-      });
-    }
-
-    setManualSearchTriggered(true);
-    setListRequest(prev => ({
-      ...prev,
-      pageNumber: 1,
-      ignore: false,
-      filters
-    }));
+    triggerSearch();
   };
 
-  // table Columns
+  useEffect(() => {
+    if (!departmentId) return;
+    if (hasSearched) return;
+    triggerSearch();
+  }, [departmentId, hasSearched, triggerSearch]);
+
+  const prevOpenCreatePatientRef = useRef(openCreatePatient);
+  const prevOpenQuickPatientRef = useRef(openQuickPatient);
+
+  useEffect(() => {
+    const wasOpen = prevOpenCreatePatientRef.current;
+    if (wasOpen && !openCreatePatient) {
+      triggerSearch();
+    }
+    prevOpenCreatePatientRef.current = openCreatePatient;
+  }, [openCreatePatient, triggerSearch]);
+
+  useEffect(() => {
+    const wasOpen = prevOpenQuickPatientRef.current;
+    if (wasOpen && !openQuickPatient) {
+      triggerSearch();
+    }
+    prevOpenQuickPatientRef.current = openQuickPatient;
+  }, [openQuickPatient, triggerSearch]);
+
   const tableColumns = [
-    // Expandable details (only visible when row is expanded)
     {
       key: 'encounterCreatedAt',
       title: <Translate>Time Encounter Created</Translate>,
@@ -784,8 +943,11 @@ const ERTriage = () => {
       expandable: true,
       render: (rowData: any) => {
         const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
-        const fallbackCreatedAt = rowData?.emergencyTriage?.createdAt ?? null;
-        return <TriageStartedAtCell encounterId={encounterId} fallbackCreatedAt={fallbackCreatedAt} />;
+        const fallbackCreatedAt =
+          rowData?.emergencyTriage?.createdDate ?? rowData?.emergencyTriage?.createdAt ?? null;
+        return (
+          <TriageStartedAtCell encounterId={encounterId} fallbackCreatedAt={fallbackCreatedAt} />
+        );
       }
     },
     {
@@ -798,7 +960,9 @@ const ERTriage = () => {
           <WaitingTimeCell
             encounterId={encounterId}
             arrivalCreatedAt={rowData?.createdAt}
-            fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdAt ?? null}
+            fallbackTriageCreatedAt={
+              rowData?.emergencyTriage?.createdDate ?? rowData?.emergencyTriage?.createdAt ?? null
+            }
           />
         );
       }
@@ -809,11 +973,10 @@ const ERTriage = () => {
       expandable: true,
       render: (rowData: any) => {
         const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
-        const statusKey = String(rowData?.encounterStatusLkey ?? '');
         return (
           <TriageCompletedAtCell
             encounterId={encounterId}
-            statusKey={statusKey}
+            statusCode={rowData?.status ?? rowData?.encounterStatus}
             fallbackUpdatedAt={rowData?.emergencyTriage?.updatedAt ?? null}
             rowUpdatedAt={rowData?.updatedAt ?? null}
             completedAt={rowData?.completedAt ?? null}
@@ -828,13 +991,14 @@ const ERTriage = () => {
       expandable: true,
       render: (rowData: any) => {
         const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
-        const statusKey = String(rowData?.encounterStatusLkey ?? '');
         return (
           <TriageTimeCell
             encounterId={encounterId}
-            statusKey={statusKey}
+            statusCode={rowData?.status ?? rowData?.encounterStatus}
             arrivalCreatedAt={rowData?.createdAt}
-            fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdAt ?? null}
+            fallbackTriageCreatedAt={
+              rowData?.emergencyTriage?.createdDate ?? rowData?.emergencyTriage?.createdAt ?? null
+            }
             fallbackUpdatedAt={rowData?.emergencyTriage?.updatedAt ?? null}
             rowUpdatedAt={rowData?.updatedAt ?? null}
             completedAt={rowData?.completedAt ?? null}
@@ -847,40 +1011,45 @@ const ERTriage = () => {
       key: 'queueNumber',
       title: <Translate>#</Translate>,
       dataKey: 'queueNumber',
-      render: (rowData: any) => rowData?.patientObject.patientMrn
+      render: (_rowData: any, rowIndex?: number) => {
+        const i = typeof rowIndex === 'number' ? rowIndex : 0;
+        return page * pageSize + i + 1;
+      }
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME </Translate>,
+      title: <Translate>PATIENT NAME</Translate>,
       fullText: true,
       render: (rowData: any) => {
         const tooltipSpeaker = (
           <Tooltip>
-            <div>MRN : {rowData?.patientObject?.patientMrn}</div>
-            <div>Age : {rowData?.patientAge}</div>
+            <div>MRN : {rowData?.patientObject?.medicalRecordNumber}</div>
             <div>
-              Gender :{' '}
-              {rowData?.patientObject?.genderLvalue
-                ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
-                : rowData?.patientObject?.genderLkey}
+              Age :{' '}
+              {rowData?.patientObject?.dateOfBirth
+                ? calculateAgeFormat(rowData?.patientObject?.dateOfBirth)
+                : ''}
             </div>
+            <div>Gender : {rowData?.patientObject?.sexAtBirth || ''}</div>
             <div>Visit ID : {rowData?.visitId}</div>
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.fullName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <>
-                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
-                </>
+                patientName
               )}
             </div>
           </Whisper>
@@ -888,35 +1057,26 @@ const ERTriage = () => {
       }
     },
     {
-      key: 'emergencyLevelLkey',
+      key: 'emergencyLevel',
       title: <Translate>ER Level</Translate>,
-      render: (rowData: any) =>
-        rowData?.emergencyLevelLkey ? (
-          <MyBadgeStatus
-            color={
-              emergencyLevelColorMap.get(String(rowData?.emergencyLevelLkey)) ??
-              '#98A2B4'
-            }
-            contant={
-              emergencyLevelLabelMap.get(String(rowData?.emergencyLevelLkey)) ??
-              String(rowData?.emergencyLevelLkey)
-            }
-          />
-        ) : (
-          ''
-        )
-    },
-    {
-      key: 'encounterPriorityLkey',
-      title: <Translate>Priority</Translate>,
       render: (rowData: any) => {
-        const key = rowData?.encounterPriorityLkey ? String(rowData.encounterPriorityLkey) : '';
+        const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
         return (
-          rowData?.encounterPriorityLvalue?.lovDisplayVale ??
-          (key ? priorityLabelMap.get(key) ?? key : '')
+          <EmergencyLevelCell
+            encounterId={encounterId}
+            labelMap={emergencyLevelLabelMap}
+            colorMap={emergencyLevelColorMap}
+          />
         );
       }
-
+    },
+    {
+      key: 'priorityLevel',
+      title: <Translate>Priority</Translate>,
+      render: (rowData: any) => {
+        const key = rowData?.priorityLevel ? String(rowData.priorityLevel) : '';
+        return key ? priorityLabelMap.get(key) ?? key : '';
+      }
     },
     {
       key: 'chiefComplaint',
@@ -933,8 +1093,11 @@ const ERTriage = () => {
       title: 'Destination',
       render: (row: any) => {
         const encounterId = row?.id ?? row?.encounterId ?? row?.key;
-        const fallbackDestination = row?.emergencyTriage?.destination ?? row?.emergencyTriage?.destinationLkey ?? null;
-        return <DestinationCell encounterId={encounterId} fallbackDestination={fallbackDestination} />;
+        const fallbackDestination =
+          row?.emergencyTriage?.destination ?? row?.emergencyTriage?.destinationLkey ?? null;
+        return (
+          <DestinationCell encounterId={encounterId} fallbackDestination={fallbackDestination} />
+        );
       }
     },
     {
@@ -942,11 +1105,11 @@ const ERTriage = () => {
       title: <Translate>STATUS</Translate>,
       render: (rowData: any) => (
         <MyBadgeStatus
-          color={rowData?.encounterStatusLvalue?.valueColor}
+          color="#98A2B4"
           contant={
-            rowData.encounterStatusLvalue
-              ? rowData.encounterStatusLvalue.lovDisplayVale
-              : rowData.encounterStatusLkey
+            encounterStatusLabelMap.get(
+              String(rowData?.status ?? rowData?.encounterStatus ?? '')
+            ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
           }
         />
       )
@@ -955,9 +1118,10 @@ const ERTriage = () => {
       key: 'actions',
       title: <Translate> </Translate>,
       render: (rowData: any) => {
+        const isPendingPayment = isPendingPaymentStatus(rowData);
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
-        const tooltipStart = !rowData?.encounterPriorityLkey ? (
+        const tooltipStart = !rowData?.priorityLevel ? (
           <Tooltip>Please set Priority first</Tooltip>
         ) : (
           <Tooltip>Start Triage</Tooltip>
@@ -965,9 +1129,18 @@ const ERTriage = () => {
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipSendTo = <Tooltip>Send to</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
+        const tooltipPaymentDisabled = (
+          <Tooltip>Payment is only available for pending payment encounters</Tooltip>
+        );
+        const tooltipBlockedByPayment = <Tooltip>Please add payment first</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltipEmr}>
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipEmr}
+            >
               <div
                 onClick={(e: any) => {
                   e?.stopPropagation?.();
@@ -977,20 +1150,19 @@ const ERTriage = () => {
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
+
                     if (patientData) {
                       dispatch(setPatient(patientData));
                     }
+
                     dispatch(setEncounter(rowData));
-                    navigate('/patient-EMR', {
-                      state: {
-                        patient: patientData,
-                        encounter: rowData,
-                        fromPage: 'ER_Triage',
-                        inModal: true
-                      }
-                    });
+
+                    setEmrPatient(patientData);
+                    setEmrEncounter(rowData);
+                    setOpenEMRModal(true);
                   }}
                 >
                   <FontAwesomeIcon icon={faFileLines} color="white" />
@@ -998,12 +1170,35 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            {/* Priority action should appear before Start */}
-            <EncounterPriorityAction rowData={rowData}  />
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={isPendingPayment ? tooltipPayment : tooltipPaymentDisabled}
+            >
+              <div
+                onClick={(e: any) => {
+                  e?.stopPropagation?.();
+                }}
+              >
+                <MyButton
+                  size="small"
+                  backgroundColor="green"
+                  disabled={!isPendingPayment}
+                  onClick={() => {
+                    void handleAddPayment(rowData);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faMoneyBillWave} />
+                </MyButton>
+              </div>
+            </Whisper>
 
-            {rowData?.encounterStatusLkey === '91109811181900' ||
-            rowData?.encounterStatusLkey === '6550164111662337' ||
-            rowData?.encounterStatusLkey === '6742317684600328' ? (
+            <EncounterPriorityAction rowData={rowData} isReceptionist={isReceptionist} />
+
+            {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+              COMPLETE_TRIAGE_STATUS_CODE ||
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+              SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
                   <MyButton
@@ -1013,13 +1208,18 @@ const ERTriage = () => {
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
                 </div>
               </Whisper>
             ) : (
-              <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipStart}
+              >
                 <div>
                   <MyButton
                     size="small"
@@ -1029,9 +1229,14 @@ const ERTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
-                      !rowData?.encounterPriorityLkey ||
-                      rowData?.encounterStatusLkey !== '8890456518264959' &&
-                      rowData?.encounterStatusLkey !== '6742295599423814'
+                      isReceptionist ||
+                      isPendingPayment ||
+                      !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
+                        String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
+                      ) ||
+                      (String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
+                        'TRIAGE_STARTED' &&
+                        !rowData?.priorityLevel)
                     }
                   >
                     <FontAwesomeIcon icon={faCirclePlay} />
@@ -1040,7 +1245,11 @@ const ERTriage = () => {
               </Whisper>
             )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipPrint}
+            >
               <div>
                 <MyButton
                   size="small"
@@ -1048,13 +1257,19 @@ const ERTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
               </div>
             </Whisper>
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipSendTo}>
+
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipSendTo}
+            >
               <div>
                 <MyButton
                   size="small"
@@ -1069,14 +1284,16 @@ const ERTriage = () => {
                     };
 
                     const patientData = rowData?.patientObject;
-                    const encounterId = toNumberOrNaN(rowData?.id ?? rowData?.encounterId ?? rowData?.key);
+                    const encounterId = toNumberOrNaN(
+                      rowData?.id ?? rowData?.encounterId ?? rowData?.key
+                    );
                     const patientId = toNumberOrNaN(
                       patientData?.id ??
-                        patientData?.patientId ??
-                        patientData?.key ??
-                        rowData?.patientId ??
-                        rowData?.patientKey ??
-                        rowData?.patient_key
+                      patientData?.patientId ??
+                      patientData?.key ??
+                      rowData?.patientId ??
+                      rowData?.patientKey ??
+                      rowData?.patient_key
                     );
 
                     try {
@@ -1092,31 +1309,36 @@ const ERTriage = () => {
 
                     setOpenSendToModal(true);
                   }}
-                  disabled={rowData?.encounterStatusLkey != '6742295599423814'}
+                  disabled={
+                    isReceptionist ||
+                    isPendingPayment ||
+                    String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
+                    'TRIAGE_STARTED'
+                  }
                 >
                   <FontAwesomeIcon icon={faPaperPlane} />
                 </MyButton>
               </div>
             </Whisper>
 
-            {(rowData?.encounterStatusLvalue?.valueCode === 'WAITING_TRIAGE' ||
-              rowData?.encounterStatusLvalue?.valueCode === 'NEW' ||
-              rowData?.encounterStatusLvalue?.valueCode === 'SENT_TO_ER' ||
-              rowData?.encounterStatusLvalue?.valueCode === 'WAITING_LIST') && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
+            ) && (
+                <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      onClick={() => {
+                        setLocalEncounter(rowData);
+                        setOpen(true);
+                      }}
+                      disabled={isReceptionist}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
           </Form>
         );
       },
@@ -1124,28 +1346,19 @@ const ERTriage = () => {
     }
   ];
 
-  const pageIndex = listRequest.pageNumber - 1;
+  const pageIndex = page;
+  const rowsPerPage = pageSize;
+  const totalCount = encountersPaged?.totalCount ?? 0;
 
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
-  const totalCount = encounterListResponse?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
     setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    setPage(newPage);
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const filters = () => {
@@ -1169,17 +1382,6 @@ const ERTriage = () => {
               record={dateFilter}
               setRecord={setDateFilterSafe}
             />
-            <MyInput
-              width={200}
-              fieldType="select"
-              fieldLabel="Emergency Level"
-              fieldName="key"
-              selectData={emergencyLevelEnumOptions}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={emergencyLevel}
-              setRecord={setEmergencyLevelSafe}
-            />
             <PatientSearch
               value={selectedPatient}
               onChange={setSelectedPatientSafe}
@@ -1190,10 +1392,10 @@ const ERTriage = () => {
               width="10vw"
               fieldType="checkPicker"
               fieldLabel="Encounter Status"
-              fieldName="keys"
-              selectData={encounterStatusSelectData}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="codes"
+              selectData={encounterStatusEnumOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={encounterStatus}
               setRecord={setEncounterStatusSafe}
             />
@@ -1201,7 +1403,7 @@ const ERTriage = () => {
         </Form>
         <AdvancedSearchFilters
           searchFilter={true}
-          showAdvanceButton={false}
+          showAdvancedButton={false}
           extraActions={
             <>
               <MyButton
@@ -1226,9 +1428,13 @@ const ERTriage = () => {
       </>
     );
   };
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       {patientSidebarOpen && (
         <div className="er-triage-patient-sidebar-overlay">
           <ProfileSidebarNew
@@ -1247,48 +1453,131 @@ const ERTriage = () => {
         </div>
       )}
 
-    <Panel>
-      <MyTable
-        filters={filters()}
-        height={600}
-        data={tableData}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
-        onRowClick={rowData => {
-          setLocalEncounter(rowData);
+      <Panel>
+        <MyTable
+          filters={filters()}
+          height={600}
+          data={tableData}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          loading={isLoading || (manualSearchTriggered && isFetching)}
+          onRowClick={rowData => {
+            setLocalEncounter(rowData);
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+        <SendToModal
+          open={openSendToModal}
+          setOpen={setOpenSendToModal}
+          encounter={encounter}
+          triage={sendToEmergencyTriageNew}
+          refetch={refetchEncounter}
+        />
+        <DeletionConfirmationModal
+          open={open}
+          setOpen={setOpen}
+          actionButtonFunction={handleCancelEncounter}
+          actionType="Deactivate"
+          confirmationQuestion="Do you want to cancel this Encounter ?"
+          actionButtonLabel="Cancel"
+          cancelButtonLabel="Close"
+        />
+        <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
+        <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
+      </Panel>
+
+      <Modal
+        size="80vw"
+        open={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setPaymentRow(null);
         }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+      >
+        <Modal.Header>
+          <Modal.Title>Add Payment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ maxHeight: '75vh', overflow: 'auto' }}>
+          <PatientPaymentInfo
+            ref={paymentInfoRef}
+            localPatient={paymentRow?.patientObject ?? null}
+            localEncounter={paymentRow ?? null}
+            isReadOnly={false}
+            showInternalButtons={false}
+            payment={payment}
+            setPayment={setPayment}
+            patientInsurance={patientInsurance}
+            setPatientInsurance={setPatientInsurance}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <MyButton
+            appearance="ghost"
+            onClick={() => {
+              setPaymentModalOpen(false);
+              setPaymentRow(null);
+            }}
+          >
+            Close
+          </MyButton>
+          <MyButton
+            appearance="primary"
+            onClick={async () => {
+              const ok = await paymentInfoRef.current?.confirm?.();
+              if (!ok) return;
+
+              try {
+                const encounterId = paymentRow?.id ?? null;
+                if (encounterId) {
+                  await updateEncounter({
+                    id: encounterId,
+                    body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
+                  }).unwrap();
+                }
+
+                dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
+                refetchEncounter();
+                setPaymentModalOpen(false);
+                setPaymentRow(null);
+              } catch (e: any) {
+                dispatch(
+                  notify({
+                    msg:
+                      e?.data?.message ||
+                      e?.message ||
+                      'Payment saved, but failed to update encounter status',
+                    sev: 'error'
+                  })
+                );
+              }
+            }}
+          >
+            Save
+          </MyButton>
+        </Modal.Footer>
+      </Modal>
+
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Electronic Medical Record"
+        size="90vw"
+        content={
+          emrPatient && emrEncounter ? (
+            <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+          ) : (
+            <div className="encounter-list__no-patient">No patient selected.</div>
+          )
+        }
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
+        cancelButtonLabel="Cancel"
       />
-      <SendToModal
-        open={openSendToModal}
-        setOpen={setOpenSendToModal}
-        encounter={encounter}
-        triage={sendToEmergencyTriageNew}
-        refetch={refetchEncounter}
-      />
-      <DeletionConfirmationModal
-        open={open}
-        setOpen={setOpen}
-        actionButtonFunction={handleCancelEncounter}
-        actionType="Deactivate"
-        confirmationQuestion="Do you want to cancel this Encounter ?"
-        actionButtonLabel="Cancel"
-        cancelButtonLabel="Close"
-      />
-      <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
-      <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
-    </Panel>
-    </>
+    </div>
   );
 };
 

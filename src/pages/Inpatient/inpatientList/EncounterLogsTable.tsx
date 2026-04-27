@@ -136,7 +136,12 @@ const EncounterLogsTable = () => {
 
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  return (
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+  return (<div dir={dir}>
     <MyTable
       data={paginatedData}
       columns={columns}
@@ -156,6 +161,7 @@ const EncounterLogsTable = () => {
         setPage(0);
       }}
     />
+  </div>
   );
 };
 

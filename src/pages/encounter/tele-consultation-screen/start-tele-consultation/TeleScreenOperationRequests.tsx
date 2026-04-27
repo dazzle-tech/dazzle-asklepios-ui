@@ -5,8 +5,13 @@ import { newApOperationRequests } from '@/types/model-types-constructor';
 
 const TeleScreenOperationRequests = ({ open, onClose, patient, encounter, refetch }) => {
   const [request, setRequest] = useState({ ...newApOperationRequests });
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <Details
       open={open}
       setOpen={onClose}
@@ -17,7 +22,7 @@ const TeleScreenOperationRequests = ({ open, onClose, patient, encounter, refetc
       refetch={refetch}
       refetchrequest={() => {}}
       user={{}}
-    />
+    /> </div>
   );
 };
 

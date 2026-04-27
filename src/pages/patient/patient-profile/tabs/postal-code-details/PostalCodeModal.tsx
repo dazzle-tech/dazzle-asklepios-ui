@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
@@ -14,7 +14,14 @@ const PostalCodeModal = ({ open, setOpen, onSelect }) => {
     </div>
   );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+    <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -30,6 +37,7 @@ const PostalCodeModal = ({ open, setOpen, onSelect }) => {
       actionButtonLabel="Select"
       content={ModalContent}
     />
+    </div>
   );
 };
 

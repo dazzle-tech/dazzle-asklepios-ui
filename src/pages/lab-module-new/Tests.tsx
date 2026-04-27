@@ -20,9 +20,7 @@ import {
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import {
-  DiagnosticOrderTestStatus
-} from '@/types/model-types-new';
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faComment, faPlusCircle, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
@@ -39,6 +37,8 @@ import ExternalLabAction from './ExternalLabAction';
 import SampleModal from './SampleModal';
 import './styles.less';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import PrintSampleLabelAction from './PrintSampleLabelAction';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 type Props = {
   order: any;
@@ -65,27 +65,16 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
-
-
 const Tests = forwardRef<any, Props>(
   (
-    {
-      order,
-      test,
-      setTest,
-      samplesList,
-      fecthSample,
-      refetchAllLabData,
-      onTestsLoaded,
-      loading
-    },
+    { order, test, setTest, samplesList, fecthSample, refetchAllLabData, onTestsLoaded, loading },
     ref
   ) => {
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
     const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
-    const [selectedRows, setSelectedRows] = useState<(number)[]>([]);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openSingleSampleModal, setOpenSingleSampleModal] = useState(false);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
@@ -95,15 +84,19 @@ const Tests = forwardRef<any, Props>(
     const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
     const [bulkRejectReason, setBulkRejectReason] = useState('');
 
+    // ✅ undo-accept modal state
+    const [openUndoAcceptModal, setOpenUndoAcceptModal] = useState(false);
+    const [undoAcceptTargetId, setUndoAcceptTargetId] = useState<number | null>(null);
+
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
-      sort: "testId,asc",
+      sort: 'testId,asc'
     });
 
-    const {
-      data: todayTestsResponse
-    } = useFilterDiagnosticOrderTestsQuery({
+    const [undoAcceptReason, setUndoAcceptReason] = useState('');
+
+    const { data: todayTestsResponse } = useFilterDiagnosticOrderTestsQuery({
       page: 0,
       size: 1000,
       orderType: 'LABORATORY',
@@ -141,10 +134,8 @@ const Tests = forwardRef<any, Props>(
         : skipToken
     );
 
-    const [
-      createNote,
-      { isLoading: isSendingNote }
-    ] = useCreateDiagnosticOrderTestTechnicianNoteMutation();
+    const [createNote, { isLoading: isSendingNote }] =
+      useCreateDiagnosticOrderTestTechnicianNoteMutation();
 
     const handleSendMessage = async (value: string) => {
       if (!test?.id || !order?.id) {
@@ -159,11 +150,7 @@ const Tests = forwardRef<any, Props>(
         }).unwrap();
 
         dispatch(notify({ msg: 'Note sent successfully', sev: 'success' }));
-
-        setLocalHasNoteIds(prev =>
-          prev.includes(test.id) ? prev : [...prev, test.id]
-        );
-
+        setLocalHasNoteIds(prev => (prev.includes(test.id) ? prev : [...prev, test.id]));
         refetchNotes();
       } catch (e) {
         dispatch(notify({ msg: 'Send failed', sev: 'error' }));
@@ -188,7 +175,6 @@ const Tests = forwardRef<any, Props>(
         }
         : skipToken
     );
-
 
     const orderTests = testsResponse?.data ?? [];
 
@@ -225,7 +211,6 @@ const Tests = forwardRef<any, Props>(
       return orderTests.map(orderTest => {
         const test = testsMap.get(orderTest.testId);
         const lab = labByTestIdMap.get(orderTest.testId);
-
         return {
           ...orderTest,
           test,
@@ -241,26 +226,55 @@ const Tests = forwardRef<any, Props>(
     ];
 
     const acceptedTests = useMemo(
-      () =>
-        normalizedOrderTests.filter(t =>
-          acceptedStatuses.includes(t.processingStatus)
-        ),
+      () => normalizedOrderTests.filter(t => acceptedStatuses.includes(t.processingStatus)),
       [normalizedOrderTests]
     );
 
-
     const pagedData = normalizedOrderTests;
+    const [
+      fetchIcdByIds,
+      {
+        data: icdDiagnosesByIds,
+        isLoading: isLoadingActiveIngredientsByIds,
+      },
+    ] = useLazyGetIcdDiagnosesByIdsQuery();
+
+    const icdIds = useMemo(() => {
+      const tests = normalizedOrderTests ?? [];
+
+      const ids = tests.map((item) => {
+
+        return item.icdDiagnosisId;
+      });
+
+
+      const filtered = ids.filter((id): id is number => id != null);
+
+
+      return filtered;
+    }, [normalizedOrderTests]);
+
+
+    useEffect(() => {
+      if (!icdIds.length) return;
+      fetchIcdByIds({
+        ids: icdIds
+      });
+    }, [icdIds, fetchIcdByIds]);
+    const icdDiagnosesMap = useMemo(() => {
+      return new Map(
+        (icdDiagnosesByIds ?? []).map((item) => [item.id, item])
+      );
+    }, [icdDiagnosesByIds]);
 
     const handleAcceptTest = async (rowData: any) => {
-      if (!samplesList?.length) {
+      if (rowData.processingStatus !== DiagnosticOrderTestStatus.SAMPLE_COLLECTED) {
         dispatch(notify({ msg: 'Collect a sample first.', sev: 'warning' }));
         return;
       }
-
       try {
         await acceptTest(rowData.id).unwrap();
         dispatch(notify({ msg: 'Accepted successfully', sev: 'success' }));
-
         await refetchAllLabData();
         await fetchTest();
         setTest(rowData);
@@ -274,66 +288,121 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
         return;
       }
-
       if (
         test.status === DiagnosticOrderTestStatus.REJECTED ||
         test.status === DiagnosticOrderTestStatus.RESULT_APPROVED
       ) {
-        dispatch(
-          notify({
-            msg: 'This test cannot be rejected',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'This test cannot be rejected', sev: 'warning' }));
         return;
       }
-
       try {
         await rejectTest({
           id: test.id,
-          body: {
-            rejectedReason: test.rejectedReason
-          }
+          body: { rejectedReason: test.rejectedReason }
         }).unwrap();
-
         dispatch(notify({ msg: 'Rejected successfully', sev: 'success' }));
         setOpenRejectedModal(false);
         await refetchAllLabData();
       } catch (e: any) {
-        const backendMessage =
+        const rawMessage =
           e?.data?.message ||
           e?.data?.detail ||
           e?.error ||
           'Reject failed';
 
-        dispatch(notify({ msg: backendMessage, sev: 'error' }));
+        const cleanMessage = rawMessage.replace(/^error\./i, '');
+
+        dispatch(
+          notify({
+            msg: cleanMessage,
+            sev: 'error'
+          })
+        );
       }
     };
 
-    const { data: ReasonLovQueryResponse } =
-      useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
+    const handleUndoAcceptClick = (rowData: any) => {
+      setUndoAcceptTargetId(rowData.id);
+      setTest(rowData);
+      setUndoAcceptReason('');
+      setOpenUndoAcceptModal(true);
+    };
+
+    const handleUndoAcceptConfirm = async () => {
+      if (!undoAcceptTargetId) return;
+
+      if (!undoAcceptReason?.trim()) {
+        dispatch(notify({ msg: 'Please enter undo accept reason', sev: 'warning' }));
+        return;
+      }
+
+      try {
+        await undoAcceptTest({
+          id: undoAcceptTargetId,
+          undoAcceptReason: undoAcceptReason
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Undo accept successful',
+            sev: 'success'
+          })
+        );
+
+        setOpenUndoAcceptModal(false);
+        setUndoAcceptReason('');
+        setUndoAcceptTargetId(null);
+
+        await refetchAllLabData();
+        await fetchTest();
+
+      } catch (e: any) {
+        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+        const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+        let msg = 'Undo accept failed';
+
+        if (
+          errorKey === 'billed_item_cannot_undo_accept' ||
+          errorMessage.includes('already billed')
+        ) {
+          msg = 'Cannot undo accept because this test is already billed';
+        } else if (
+          errorKey === 'invalid_transition' ||
+          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+        ) {
+          msg = 'Undo accept is allowed only for accepted tests';
+        } else if (errorMessage) {
+          msg = errorMessage;
+        }
+
+        dispatch(
+          notify({
+            msg,
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+    const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
     const { data: timeUnitLov } = useGetLovValuesByCodeQuery('TIME_UNITS');
 
     const resolveReasonLabel = (reasonKey?: string) =>
-      ReasonLovQueryResponse?.object?.find(
-        r => String(r.key) === String(reasonKey)
-      )?.lovDisplayVale ?? reasonKey ?? '';
+      ReasonLovQueryResponse?.object?.find(r => String(r.key) === String(reasonKey))
+        ?.lovDisplayVale ??
+      reasonKey ??
+      '';
 
     const resolveCategoryLabel = (key?: any) =>
-      labCatLovQueryResponse?.object?.find(
-        c => String(c.key) === String(key)
-      )?.lovDisplayVale;
+      labCatLovQueryResponse?.object?.find(c => String(c.key) === String(key))?.lovDisplayVale;
 
     const resolveTimeUnitLabel = (key?: any) =>
-      timeUnitLov?.object?.find(
-        u => String(u.key) === String(key)
-      )?.lovDisplayVale ?? '';
+      timeUnitLov?.object?.find(u => String(u.key) === String(key))?.lovDisplayVale ?? '';
 
     const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
-        prev.includes(rowId)
-          ? prev.filter(id => id !== rowId)
-          : [...prev, rowId]
+        prev.includes(rowId) ? prev.filter(id => id !== rowId) : [...prev, rowId]
       );
     };
 
@@ -351,25 +420,14 @@ const Tests = forwardRef<any, Props>(
         .map(t => t.id);
 
       if (!eligibleIds.length) {
-        dispatch(
-          notify({
-            msg: 'Cannot Accept This Test',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'Cannot Accept This Test', sev: 'warning' }));
         return;
       }
-
       try {
         await bulkAccept({ ids: eligibleIds }).unwrap();
-
         dispatch(
-          notify({
-            msg: `Accepted ${eligibleIds.length} tests successfully`,
-            sev: 'success'
-          })
+          notify({ msg: `Accepted ${eligibleIds.length} tests successfully`, sev: 'success' })
         );
-
         setSelectedRows([]);
         await refetchAllLabData();
       } catch (e) {
@@ -382,7 +440,6 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
         return;
       }
-
       const eligibleIds = normalizedOrderTests
         .filter(
           t =>
@@ -393,28 +450,14 @@ const Tests = forwardRef<any, Props>(
         .map(t => t.id);
 
       if (!eligibleIds.length) {
-        dispatch(
-          notify({
-            msg: 'No tests eligible for bulk reject',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'No tests eligible for bulk reject', sev: 'warning' }));
         return;
       }
-
       try {
-        await bulkReject({
-          ids: eligibleIds,
-          rejectedReason: bulkRejectReason
-        }).unwrap();
-
+        await bulkReject({ ids: eligibleIds, rejectedReason: bulkRejectReason }).unwrap();
         dispatch(
-          notify({
-            msg: `Rejected ${eligibleIds.length} tests successfully`,
-            sev: 'success'
-          })
+          notify({ msg: `Rejected ${eligibleIds.length} tests successfully`, sev: 'success' })
         );
-
         setSelectedRows([]);
         setBulkRejectReason('');
         setOpenBulkRejectModal(false);
@@ -432,27 +475,15 @@ const Tests = forwardRef<any, Props>(
       );
     }, [normalizedOrderTests, selectedRows]);
 
-    const allRowIds = useMemo(
-      () => pagedData.map(row => row.id),
-      [pagedData]
-    );
-
-    const isAllSelected =
-      allRowIds.length > 0 &&
-      allRowIds.every(id => selectedRows.includes(id));
-
-    const isSomeSelected =
-      allRowIds.some(id => selectedRows.includes(id)) && !isAllSelected;
+    const allRowIds = useMemo(() => pagedData.map(row => row.id), [pagedData]);
+    const isAllSelected = allRowIds.length > 0 && allRowIds.every(id => selectedRows.includes(id));
+    const isSomeSelected = allRowIds.some(id => selectedRows.includes(id)) && !isAllSelected;
 
     const handleSelectAll = (checked: boolean) => {
       if (checked) {
-        setSelectedRows(prev =>
-          Array.from(new Set([...prev, ...allRowIds]))
-        );
+        setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
       } else {
-        setSelectedRows(prev =>
-          prev.filter(id => !allRowIds.includes(id))
-        );
+        setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
       }
     };
 
@@ -469,42 +500,46 @@ const Tests = forwardRef<any, Props>(
         ),
         width: 60,
         align: 'center',
-        render: (rowData: any) => {
-          const rowId = rowData.id;
-
-          return (
-            <Checkbox
-              checked={selectedRows.includes(rowId)}
-              onChange={() => handleCheckboxChange(rowId)}
-              onClick={e => e.stopPropagation()}
-            />
-          );
-        }
+        render: (rowData: any) => (
+          <Checkbox
+            checked={selectedRows.includes(rowData.id)}
+            onChange={() => handleCheckboxChange(rowData.id)}
+            onClick={e => e.stopPropagation()}
+          />
+        )
       },
       {
         key: 'category',
         title: <Translate>TEST CATEGORY</Translate>,
         width: 120,
         align: 'center',
-        render: (rowData: any) =>
-          resolveCategoryLabel(rowData.lab?.category)
+        render: (rowData: any) => resolveCategoryLabel(rowData.lab?.category)
       },
       {
         key: 'testName',
         title: <Translate>TEST NAME</Translate>,
         width: 120,
         align: 'center',
-        render: (rowData: any) => {
-          return rowData.test?.name;
-        }
+        render: (rowData: any) => rowData.test?.name
       },
       {
         key: 'reason',
         title: <Translate>REASON</Translate>,
         width: 120,
         align: 'center',
-        render: rowData =>
-          resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
+        render: rowData => resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
+      },
+      {
+        key: 'icdDiagnosis',
+        title: <Translate>ICD DIAGNOSIS</Translate>,
+        width: 160,
+        align: 'center',
+        render: (rowData: any) => {
+          const diagnosis = icdDiagnosesMap.get(rowData.icdDiagnosisId);
+          return diagnosis
+            ? `${diagnosis.icdCode ?? ''} - ${diagnosis.icdShortDescription ?? ''}`.replace(/^ - | - $/, '')
+            : '—';
+        }
       },
       {
         key: 'physician',
@@ -515,9 +550,7 @@ const Tests = forwardRef<any, Props>(
           <>
             <span>{rowData.createdBy}</span>
             <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.createdAt)}
-            </span>
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
           </>
         )
       },
@@ -529,7 +562,6 @@ const Tests = forwardRef<any, Props>(
         render: (rowData: any) => {
           const duration = rowData.lab?.testDurationTime;
           const unit = resolveTimeUnitLabel(rowData.lab?.timeUnit);
-
           return (
             <span style={{ whiteSpace: 'nowrap' }}>
               {duration} {unit}
@@ -551,15 +583,12 @@ const Tests = forwardRef<any, Props>(
         width: 60,
         align: 'center',
         render: (rowData: any) => {
-          const hasNote =
-            rowData.hasNote === true ||
-            localHasNoteIds.includes(rowData.id);
-
+          const hasNote = rowData.hasNote === true || localHasNoteIds.includes(rowData.id);
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faComment}
-                className='icon-laboratory-size'
+                className="icon-laboratory-size"
                 style={{
                   fontSize: '1em',
                   cursor: 'pointer',
@@ -583,16 +612,12 @@ const Tests = forwardRef<any, Props>(
           const canCollectSample =
             rowData.status === DiagnosticOrderTestStatus.SUBMITTED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
-
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faVialCircleCheck}
-                className='icon-laboratory-size'
-                style={{
-                  fontSize: '1em',
-                  cursor: canCollectSample ? 'pointer' : 'not-allowed',
-                }}
+                className="icon-laboratory-size"
+                style={{ fontSize: '1em', cursor: canCollectSample ? 'pointer' : 'not-allowed' }}
                 onClick={() => {
                   if (!canCollectSample) {
                     dispatch(
@@ -603,7 +628,6 @@ const Tests = forwardRef<any, Props>(
                     );
                     return;
                   }
-
                   setTest(rowData);
                   setOpenSingleSampleModal(true);
                 }}
@@ -617,14 +641,7 @@ const Tests = forwardRef<any, Props>(
         title: <Translate>STATUS</Translate>,
         width: 80,
         align: 'center',
-        render: (rowData: any) => (
-          <>
-            {formatEnumString(
-              rowData.processingStatus ??
-              '—'
-            )}
-          </>
-        )
+        render: (rowData: any) => <>{formatEnumString(rowData.processingStatus ?? '—')}</>
       },
       {
         key: 'action',
@@ -633,17 +650,14 @@ const Tests = forwardRef<any, Props>(
         width: 140,
         align: 'center',
         render: (rowData: any) => {
-
-
-          const canAccept =
-            rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
-
+          const canAccept = rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
           const canReject =
-            rowData.status !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
-            rowData.status !== DiagnosticOrderTestStatus.REJECTED;
-
-          const canUndoAccept =
-            rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
+            ![
+              DiagnosticOrderTestStatus.RESULT_READY,
+              DiagnosticOrderTestStatus.RESULT_APPROVED,
+              DiagnosticOrderTestStatus.REJECTED
+            ].includes(rowData.processingStatus);
+          const canUndoAccept = rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
 
           return (
             <HStack spacing={10}>
@@ -654,7 +668,7 @@ const Tests = forwardRef<any, Props>(
                     setTest(rowData);
                     handleAcceptTest(rowData);
                   }}
-                  className='icon-laboratory-size'
+                  className="icon-laboratory-size"
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
@@ -663,36 +677,13 @@ const Tests = forwardRef<any, Props>(
                 />
               </Whisper>
 
+              {/* ✅ undo-accept: opens modal instead of direct action */}
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <ReloadIcon
-                  className='icon-laboratory-size'
-                  onClick={async () => {
-
+                  className="icon-laboratory-size"
+                  onClick={() => {
                     if (!canUndoAccept) return;
-
-                    try {
-                      await undoAcceptTest(rowData.id).unwrap();
-
-                      dispatch(
-                        notify({
-                          msg: 'Undo accept successful',
-                          sev: 'success'
-                        })
-                      );
-                      await refetchAllLabData();
-                      await fetchTest();
-                      setTest(rowData);
-                    } catch (e: any) {
-                      dispatch(
-                        notify({
-                          msg:
-                            e?.data?.message ||
-                            e?.data?.detail ||
-                            'Undo accept failed',
-                          sev: 'error'
-                        })
-                      );
-                    }
+                    handleUndoAcceptClick(rowData);
                   }}
                   style={{
                     fontSize: '1em',
@@ -703,9 +694,10 @@ const Tests = forwardRef<any, Props>(
                   }}
                 />
               </Whisper>
+
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
                 <WarningRoundIcon
-                  className='icon-laboratory-size'
+                  className="icon-laboratory-size"
                   onClick={() => {
                     if (!canReject) {
                       dispatch(
@@ -716,7 +708,6 @@ const Tests = forwardRef<any, Props>(
                       );
                       return;
                     }
-
                     setTest(rowData);
                     setOpenRejectedModal(true);
                   }}
@@ -726,55 +717,51 @@ const Tests = forwardRef<any, Props>(
                     cursor: canReject ? 'pointer' : 'not-allowed'
                   }}
                 />
-
               </Whisper>
 
               <ExternalLabAction
+                key={`${rowData.id}-${order?.id}`}
                 rowData={rowData}
                 onSuccess={async () => {
                   await refetchAllLabData();
                 }}
               />
-
-
             </HStack>
           );
         }
       },
       {
+        key: 'print',
+        title: <Translate>PRINT</Translate>,
+        width: 60,
+        align: 'center',
+        render: (rowData: any) => <PrintSampleLabelAction rowData={rowData} />
+      },
+      {
         key: 'acceptedatby',
         dataKey: '',
         title: <Translate>ACCEPTED AT/BY</Translate>,
-    
         expandable: true,
-        render: (rowData: any) => {
-          return (
-            <>
-              <span>{rowData.acceptedBy}</span>
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(rowData.acceptedAt)}
-              </span>
-            </>
-          );
-        }
+        render: (rowData: any) => (
+          <>
+            <span>{rowData.acceptedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
+          </>
+        )
       },
       {
         key: 'rejectedatby',
         dataKey: '',
         title: <Translate>REJECTED AT/BY</Translate>,
         expandable: true,
-        render: (rowData: any) => {
-          return (
-            <>
-              <span>{rowData.rejectedBy}</span>
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(rowData.rejectedAt)}
-              </span>
-            </>
-          );
-        }
+        render: (rowData: any) => (
+          <>
+            <span>{rowData.rejectedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
+          </>
+        )
       },
       {
         key: 'rejectedReason',
@@ -782,24 +769,40 @@ const Tests = forwardRef<any, Props>(
         title: <Translate>REJECTED REASON</Translate>,
         expandable: true
       },
+      // ✅ undo-accept columns
+      {
+        key: 'undoAcceptReason',
+        dataKey: 'undoAcceptReason',
+        title: <Translate>UNDO ACCEPT REASON</Translate>,
+        expandable: true,
+        render: (rowData: any) => rowData.undoAcceptReason ?? '—'
+      },
+      {
+        key: 'undoAcceptAtBy',
+        dataKey: '',
+        title: <Translate>UNDO ACCEPT AT/BY</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
+          <>
+            <span>{rowData.undoAcceptBy ?? '—'}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.undoAcceptDate ? formatDateWithoutSeconds(rowData.undoAcceptDate) : ''}
+            </span>
+          </>
+        )
+      },
       {
         key: 'attachment',
         dataKey: '',
         title: <Translate>ATTACHMENT</Translate>,
-
         expandable: true
       }
     ];
 
-
     const tablebuttons = (
       <HStack spacing={10} style={{ marginBottom: 10 }}>
-
-        <Whisper
-          placement="top"
-          trigger="hover"
-          speaker={<Tooltip>Add Result</Tooltip>}
-        >
+        <Whisper placement="top" trigger="hover" speaker={<Tooltip>Add Result</Tooltip>}>
           <span style={{ display: 'inline-block' }}>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faPlusCircle} />}
@@ -807,15 +810,10 @@ const Tests = forwardRef<any, Props>(
             >
               Add Result
             </MyButton>
-
           </span>
         </Whisper>
 
-        <Whisper
-          placement="top"
-          trigger="hover"
-          speaker={<Tooltip>Collect Sample</Tooltip>}
-        >
+        <Whisper placement="top" trigger="hover" speaker={<Tooltip>Collect Sample</Tooltip>}>
           <span style={{ display: 'inline-block' }}>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faVialCircleCheck} />}
@@ -826,7 +824,6 @@ const Tests = forwardRef<any, Props>(
             </MyButton>
           </span>
         </Whisper>
-
 
         <Whisper placement="top" speaker={<Tooltip>Accept</Tooltip>}>
           <span style={{ display: 'inline-block' }}>
@@ -840,7 +837,6 @@ const Tests = forwardRef<any, Props>(
           </span>
         </Whisper>
 
-
         <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
           <span style={{ display: 'inline-block' }}>
             <MyButton
@@ -853,21 +849,16 @@ const Tests = forwardRef<any, Props>(
             </MyButton>
           </span>
         </Whisper>
-
       </HStack>
     );
 
     const filters = () => (
       <Form>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
           <MyInput
             fieldType="select"
             fieldName="value"
-            fieldLabel='Category'
+            fieldLabel="Category"
             width={200}
             placeholder="Select Category"
             selectData={labCatLovQueryResponse?.object}
@@ -875,12 +866,9 @@ const Tests = forwardRef<any, Props>(
             selectDataValue="key"
             record={testKeyFilter}
             setRecord={setTestKeyFilter}
-
             searchable={false}
           />
-          <div className='test-table-buttons-main-container'>
-            {tablebuttons}
-          </div>
+          <div className="test-table-buttons-main-container">{tablebuttons}</div>
         </div>
       </Form>
     );
@@ -889,116 +877,123 @@ const Tests = forwardRef<any, Props>(
       setSelectedRows([]);
     }, [order?.id]);
 
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-      <Panel ref={ref} defaultExpanded>
+      <div dir={dir}>
+        <Panel ref={ref} defaultExpanded>
+          <div style={{ minHeight: 600 }}>
+            <MyTable
+              data={normalizedOrderTests}
+              totalCount={testsResponse?.totalCount ?? 0}
+              page={paginationParams.page}
+              filters={filters()}
+              rowsPerPage={paginationParams.size}
+              columns={columns}
+              onRowClick={rowData => {
+                setTest(rowData);
+              }}
+              rowClassName={rowData => (rowData.id === test?.id ? 'selected-row' : '')}
+              onPageChange={(_, newPage) =>
+                setPaginationParams(prev => ({ ...prev, page: newPage }))
+              }
+              onRowsPerPageChange={e =>
+                setPaginationParams(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))
+              }
+              
+              onSortChange={(column, type) => {
+                const invalidSortFields = ['action', 'check', 'collectsample', 'print'];
 
-        <div style={{ minHeight: 600 }}>
-          <MyTable
-            data={normalizedOrderTests}
-            totalCount={testsResponse?.totalCount ?? 0}
-            page={paginationParams.page}
-            filters={filters()}
-            rowsPerPage={paginationParams.size}
-            columns={columns}
-            onRowClick={(rowData) => {
-              setTest(rowData);
+                if (invalidSortFields.includes(column)) {
+                  return; // ignore
+                }
+
+                setPaginationParams(prev => ({
+                  ...prev,
+                  sort: `${column},${type}`,
+                  page: 0
+                }));
+              }}
+            />
+          </div>
+
+          <SampleModal
+            open={openSingleSampleModal}
+            setOpen={setOpenSingleSampleModal}
+            orderTest={test}
+            onSuccess={async () => {
+              setSelectedRows([]);
+              refetchAllLabData?.();
             }}
-            rowClassName={(rowData) =>
-              rowData.id === test?.id ? 'selected-row' : ''
-            }
-            onPageChange={(_, newPage) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                page: newPage
-              }))
-            }
-            onRowsPerPageChange={(e) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                size: Number(e.target.value),
-                page: 0
-              }))
-            }
-            onSortChange={(column, type) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                sort: `${column},${type}`,
-                page: 0
-              }))
-            }
           />
 
-        </div>
+          <CancellationModal
+            open={openRejectedModal}
+            setOpen={setOpenRejectedModal}
+            fieldName="rejectedReason"
+            handleCancle={handleRejectedTest}
+            object={test}
+            setObject={setTest}
+            fieldLabel="Reject Reason"
+            title="Reject"
+            required
+          />
 
-        <SampleModal
-          open={openSingleSampleModal}
-          setOpen={setOpenSingleSampleModal}
-          orderTest={test}
-          onSuccess={async () => {
-            setSelectedRows([]);
-            refetchAllLabData?.();
-          }}
-        />
+          <ChatModal
+            open={openNoteModal}
+            setOpen={setOpenNoteModal}
+            title="Technician Notes"
+            list={notesResponse?.data ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendMessage}
+            loading={isNotesFetching || isSendingNote}
+          />
 
-        <CancellationModal
-          open={openRejectedModal}
-          setOpen={setOpenRejectedModal}
-          fieldName="rejectedReason"
-          handleCancle={handleRejectedTest}
-          object={test}
-          setObject={setTest}
-          fieldLabel="Reject Reason"
-          title="Reject"
-        />
+          <BulkCollectSampleModal
+            open={openBulkSampleModal}
+            setOpen={setOpenBulkSampleModal}
+            orderId={order?.id}
+            selectedTests={normalizedOrderTests.filter(t => selectedRows.includes(t.id))}
+            onSuccess={() => {
+              setSelectedRows([]);
+              refetchAllLabData?.();
+            }}
+          />
 
-        <ChatModal
-          open={openNoteModal}
-          setOpen={setOpenNoteModal}
-          title="Technician Notes"
-          list={notesResponse?.data ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendMessage}
-          loading={isNotesFetching || isSendingNote}
-        />
+          <CancellationModal
+            open={openBulkRejectModal}
+            setOpen={setOpenBulkRejectModal}
+            fieldName="rejectedReason"
+            handleCancle={handleBulkReject}
+            object={{ rejectedReason: bulkRejectReason }}
+            setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title="Bulk Reject"
+          />
 
-        <BulkCollectSampleModal
-          open={openBulkSampleModal}
-          setOpen={setOpenBulkSampleModal}
-          orderId={order?.id}
-          selectedTests={normalizedOrderTests.filter(t =>
-            selectedRows.includes(t.id)
-          )}
-          onSuccess={() => {
-            setSelectedRows([]);
-            refetchAllLabData?.();
-          }}
-        />
+          <AddResultModal
+            open={openAddResultModal}
+            setOpen={setOpenAddResultModal}
+            acceptedTests={acceptedTests}
+            onSuccess={async () => {
+              await refetchAllLabData();
+            }}
+          />
 
-
-
-
-        <CancellationModal
-          open={openBulkRejectModal}
-          setOpen={setOpenBulkRejectModal}
-          fieldName="rejectedReason"
-          handleCancle={handleBulkReject}
-          object={{ rejectedReason: bulkRejectReason }}
-          setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title="Bulk Reject"
-        />
-
-        <AddResultModal
-          open={openAddResultModal}
-          setOpen={setOpenAddResultModal}
-          acceptedTests={acceptedTests}
-          onSuccess={async () => {
-            await refetchAllLabData();
-          }}
-        />
-
-      </Panel>
+          <CancellationModal
+            open={openUndoAcceptModal}
+            setOpen={setOpenUndoAcceptModal}
+            fieldName="undoAcceptReason"
+            handleCancle={handleUndoAcceptConfirm}
+            object={{ undoAcceptReason }}
+            setObject={(obj: any) => setUndoAcceptReason(obj.undoAcceptReason)}
+            fieldLabel="Undo Accept Reason"
+            title="Undo Accept"
+          />
+        </Panel>
+      </div>
     );
   }
 );

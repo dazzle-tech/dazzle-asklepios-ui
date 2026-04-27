@@ -213,13 +213,21 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={fluidOrder?.key ? 'Edit Fluid Order' : 'New Fluid Order'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={fluidOrder?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Fluid Order Info', icon: <FontAwesomeIcon icon={faSyringe} /> }]}

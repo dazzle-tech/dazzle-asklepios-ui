@@ -52,7 +52,7 @@ const handleCrudError = (err: any, dispatch: any) => {
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -68,7 +68,7 @@ const handleCrudError = (err: any, dispatch: any) => {
     dispatch(
       notify({
         msg: PROGRESS_NOTE_ERROR_MAP[errorKey] + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -77,7 +77,7 @@ const handleCrudError = (err: any, dispatch: any) => {
   dispatch(
     notify({
       msg: (data?.detail || data?.title || 'Unexpected error occurred') + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
@@ -98,17 +98,17 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
     } else {
       setFormData({
         ...newProgressNote,
-        patientId: patient?.key,
-        encounterId: encounter?.key
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
     }
-  }, [open, progressNote, patient?.key, encounter?.key]);
+  }, [open, progressNote, patient?.id, encounter?.id]);
 
   const handleClear = () => {
     setFormData({
       ...newProgressNote,
-      patientId: patient?.key,
-      encounterId: encounter?.key
+      patientId: patient?.id,
+      encounterId: encounter?.id
     });
   };
 
@@ -139,6 +139,14 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
     }
   };
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -160,7 +168,7 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
         }
       ]}
       content={
-        <Form fluid>
+        <Form fluid dir={dir}>
           <MyInput
             column
             width={400}

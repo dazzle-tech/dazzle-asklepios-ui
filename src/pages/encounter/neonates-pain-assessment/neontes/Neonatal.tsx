@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
 import NewNeonatal from './NewNeonatal';
 import '../style.less';
+import Translate from '@/components/Translate';
 
 const Neonatal = () => {
   const [neonatalData, setNeonatalData] = useState<any[]>([]);
@@ -48,24 +49,31 @@ const Neonatal = () => {
           setShowCanceled(!showCanceled);
         }}
       >
-        Show Cancelled
+        <Translate>Show Cancelled</Translate>
       </Checkbox>
       <div className="gap-5">
         <MyButton onClick={() => setOpenNeonatalModal(false)}>
           <FontAwesomeIcon icon={faBan} />
-          Cancel
+          <Translate>Cancel</Translate>
         </MyButton>
 
         <MyButton onClick={() => setOpenNeonatalModal(true)}>
           <FontAwesomeIcon icon={faPlus} />
-          Add
+          <Translate>Add</Translate>
         </MyButton>
       </div>
     </div>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={showCanceled ? neonatalData : neonatalData.filter(r => !r.cancelledBy)}
         columns={neonatalColumns}
@@ -80,7 +88,7 @@ const Neonatal = () => {
         edit={false}
         refetch={null}
       />
-    </>
+    </div>
   );
 };
 

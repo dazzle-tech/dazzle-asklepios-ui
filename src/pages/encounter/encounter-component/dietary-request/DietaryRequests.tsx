@@ -15,6 +15,7 @@ import { newApPatient } from '@/types/model-types-constructor';
 import './style.less';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 
 const initialForm = {
   dietOrderType: '',
@@ -596,7 +597,7 @@ const getRowClassName = rowData => {
     <>
       <div className="table-buttons-left-part-handle-positions">
         <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+        <Checkbox><Translate>Show Cancelled</Translate></Checkbox>
       </div>
       <div className="bt-right">
         <MyButton
@@ -644,8 +645,16 @@ useEffect(() => {
   return () => document.removeEventListener('mousedown', handleClickOutside);
 }, []);
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
     <div ref={tableRef}>
       <MyTable
         data={requests}
@@ -958,7 +967,7 @@ useEffect(() => {
         setOpen={setModalOpen}
         title="New Dietary Request"
         content={
-          <Form fluid className="fields-containers">
+          <Form fluid className="fields-containers" dir={dir}>
             {renderBasicFields()}
           </Form>
         }
@@ -972,7 +981,7 @@ useEffect(() => {
         attatchmentType={'APPOINTMENT_ATTACHMENT'}
         patientKey={localPatient?.key}
       />
-    </>
+    </div>
   );
 };
 

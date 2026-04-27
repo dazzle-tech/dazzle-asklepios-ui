@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Drawer } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 
-const PatientVisitHistory = ({
-  visitHistoryModel,
-  localPatient,
-  setVisitHistoryModel,
-  quickAppointmentModel,
-  setQuickAppointmentModel
-}) => {
+const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryModel }) => {
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="drawer-container">
       <Drawer
         size="md"
@@ -27,6 +30,7 @@ const PatientVisitHistory = ({
         </Drawer.Body>
       </Drawer>
     </div>
+  </div>
   );
 };
 

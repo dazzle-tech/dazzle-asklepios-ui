@@ -5,30 +5,72 @@ import SurgicalHistory from './SurgicalHistory';
 import SocialHistory from './SocialHistory';
 import { useLocation } from 'react-router-dom';
 import MyTab from '@/components/MyTab';
-const PatientHistory = ({ toShowData = false,
+const PatientHistory = ({
+  toShowData = false,
   patient: patientProp,
   encounter: encounterProp,
-  edit: editProp}) => {
+  edit: editProp
+}) => {
   const location = useLocation();
- 
+
   const state = location.state || {};
 
   const patient = patientProp ?? state.patient;
   const encounter = encounterProp ?? state.encounter;
   const edit = editProp ?? state.edit;
   const tabData = [
-    {title: "Medical History", content: <MedicalHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>},
-    {title: "Surgical History", content: <SurgicalHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>},
-    {title: "Social History", content: <SocialHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>}
+    {
+      title: 'Medical History',
+      content: (<div dir={dir}>
+        <MedicalHistory
+          patient={patient}
+          encounter={encounter}
+          edit={edit}
+          toShowData={toShowData}
+        />
+        </div>
+      )
+    },
+    {
+      title: 'Surgical History',
+      content: (<div dir={dir}>
+        <SurgicalHistory
+          patient={patient}
+          encounter={encounter}
+          edit={edit}
+          toShowData={toShowData}
+        />
+        </div>
+      )
+    },
+    {
+      title: 'Social History',
+      content: (<div dir={dir}>
+        <SocialHistory
+          patient={patient}
+          encounter={encounter}
+          edit={edit}
+          toShowData={toShowData}
+        />
+        </div>
+      )
+    }
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
-  
-  return (
-   <MyTab
-    data={tabData}
-   />
-  );
+return (
+  <MyTab
+    data={tabData.map(tab => ({
+      ...tab,
+      content: <div dir={dir}>{tab.content}</div>
+    }))}
+  />
+);
 };
 export default PatientHistory;

@@ -21,23 +21,21 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
   conjureOrderBasedOnKeyFromListOfValues,
   conjureValueBasedOnKeyFromListOfValues,
-  conjureValueBasedOnKeyFromList
+  conjureValueBasedOnIDFromList
 } from '@/utils';
 import './style.less';
 import {
   useCreateUserStickyNotesMutation,
   useDeleteUserStickyNotesMutation,
   useGetAlluserStickyNotesByUserIdQuery
-} from '@/services/setup/userStickyNotes/userStickyNotes';
-import { UserStickyNotesCreateVM } from '@/types/model-types-new';
+} from '@/services/userStickyNotes/userStickyNotes';
+import { Patient, UserStickyNotesCreateVM } from '@/types/model-types-new';
 import { newUserStickyNotesCreateVM } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
-import type { ApPatient } from '@/types/model-types';
 import ProfileSidebar from '@/pages/patient/patient-profile/ProfileSidebar-new';
-import { useGetPatientsQuery, useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { setPatient, setEncounter } from '@/reducers/patientSlice';
 import { useNavigate } from 'react-router-dom';
-import { ListRequest, initialListRequest } from '@/types/types';
+import { useGetPatientsByIdsQuery, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 
 interface StickyNote {
   id: number;
@@ -45,7 +43,7 @@ interface StickyNote {
   createdDate: string;
   priority?: string;
   color?: string;
-  patientId?: string;
+  patientId?: number;
   patientName?: string;
 }
 
@@ -81,7 +79,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<StickyNote | null>(null);
   const [patientSidebarExpand, setPatientSidebarExpand] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<ApPatient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [refetchPatientData, setRefetchPatientData] = useState(false);
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
 
@@ -92,43 +90,16 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
     () =>
       getUserStickyNotes
         ?.filter(note => note.patientId)
-        .map(note => String(note.patientId))
+        .map(note => note.patientId)
         .filter((id, index, self) => self.indexOf(id) === index) || [],
     [getUserStickyNotes]
   );
 
   // Fetch all patients in one query, filtered by sticky note patient IDs
-  const { data: allPatientsResponse } = useGetPatientsQuery(
-    {
-      ...initialListRequest,
-      pageSize: 10000,
-      filters:
-        uniquePatientIds.length > 0
-          ? [
-              {
-                fieldName: 'key',
-                operator: 'in',
-                value: uniquePatientIds.map(id => `(${id})`).join(' ')
-              }
-            ]
-          : []
-    },
-    {
-      skip: uniquePatientIds.length === 0
-    }
-  );
-
-  // Patients returned from query already filtered by IDs
-  const patientsList = useMemo(() => {
-    if (!allPatientsResponse?.object) {
-      return [];
-    }
-
-    return allPatientsResponse.object.map((patient: ApPatient) => ({
-      ...patient,
-      key: patient.key ? String(patient.key) : String(patient.key)
-    }));
-  }, [allPatientsResponse]);
+  const { data: allPatientsResponse } = useGetPatientsByIdsQuery(
+  { ids: uniquePatientIds },
+  { skip: uniquePatientIds.length === 0 }
+);
 
   const handleOpenEmrFromNote = async (note: any) => {
     if (!note.patientId) {
@@ -136,7 +107,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
     }
 
     try {
-      const patient = await fetchPatientById(String(note.patientId)).unwrap();
+      const patient = await fetchPatientById({id: note?.patientId}).unwrap();
       if (patient) {
         dispatch(setPatient(patient));
         dispatch(setEncounter(null));
@@ -191,11 +162,11 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
     }
   };
 
-  const handlePatientSelect = (patient: ApPatient) => {
+  const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
     setUserStickyNotesCreateVM({
       ...userStickyNotesCreateVM,
-      patientId: patient?.key || undefined
+      patientId: patient?.id || undefined
     });
     setPatientSidebarExpand(false);
   };
@@ -219,7 +190,8 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             backgroundColor: 'var(--rs-gray-50)',
             marginBottom: '8px'
           }}>
-            <span>{selectedPatient.fullName} - {selectedPatient.patientMrn}</span>
+            {/* <span>{selectedPatient.fullName} - {selectedPatient.patientMrn}</span> */}
+            <span>{selectedPatient.firstName} {selectedPatient.lastName}  - {selectedPatient.medicalRecordNumber}</span>
             <Button
               size="sm"
               onClick={() => {
@@ -319,7 +291,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             ...userStickyNotesCreateVM, 
             userId: user?.id, 
             priorityOrder: order_value,
-            patientId: selectedPatient?.key || userStickyNotesCreateVM.patientId || undefined
+            patientId: selectedPatient?.id || userStickyNotesCreateVM.patientId || undefined
           };
           createUserStickyNotes(toCreate)
             .unwrap()
@@ -350,10 +322,16 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             'lovDisplayVale'
           );
 
-          const patientIdStr = note.patientId ? String(note.patientId) : null;
-          const patientFullName = patientIdStr 
-            ? conjureValueBasedOnKeyFromList(patientsList, patientIdStr, 'fullName')
+          const patientId = note.patientId ? note.patientId : null;
+          const patientFirstName = patientId
+            ? conjureValueBasedOnIDFromList(allPatientsResponse, patientId, 'firstName')
             : null;
+
+            const patientLastName = patientId
+            ? conjureValueBasedOnIDFromList(allPatientsResponse, patientId, 'lastName')
+            : null;
+
+            const patientFullName = (patientFirstName != patientId && patientLastName != patientId) ? patientFirstName + " " + patientLastName : patientId;
 
           return (
             <div
@@ -363,7 +341,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             >
               <strong className="note-level">{priorityDisplayValue}</strong>
               <div>{note.note}</div>
-              {patientIdStr && (
+              {patientId && (
                 <div style={{ marginTop: '8px' }}>
                   <span
                     style={{
@@ -376,7 +354,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
                     onClick={() => handleOpenEmrFromNote(note)}
                     title="Click to open patient EMR"
                   >
-                    {patientFullName && patientFullName !== patientIdStr ? patientFullName : `Patient ID: ${patientIdStr}`}
+                    {patientFullName && patientFullName !== patientId ? patientFullName : `Patient ID: ${patientId}`}
                   </span>
                 </div>
               )}

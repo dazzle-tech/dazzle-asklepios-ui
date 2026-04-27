@@ -120,6 +120,10 @@ margin-bottom: 20px;
   }
 }
 
+/* Apply Template step 1: Rsuite adds 24px margin-bottom on each Form.Group (except last), which stacks with CSS grid and separates rows */
+.apply-template-step1-fields.rs-form:not(.rs-form-inline) .rs-form-group {
+  margin-bottom: 0 !important;
+}
 
 // Keep this as the last style in the file to override styles when dark mode is active
 .modal-dark{

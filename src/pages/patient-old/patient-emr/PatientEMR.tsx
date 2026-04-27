@@ -1,7 +1,7 @@
 import EMRCard from '@/components/EMRCard';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import PatientSide from '@/pages/lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { useGetEncountersQuery } from '@/services/encounterService';
@@ -206,8 +206,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
       patient: rowData.patientObject,
       encounter: rowData
     };
-
-    sessionStorage.setItem('encounterPageSource', inModal ? 'PatientEMRModal' : 'PatientEMR');
 
     navigate(targetPath, { state: stateData });
   };

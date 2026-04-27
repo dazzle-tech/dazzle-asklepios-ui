@@ -6,13 +6,13 @@ import ActiveAllergies from './ActiveAllergies/ActiveAllergies';
 import MedicalWarnings from './MedicalWarnings/MedicalWarnings';
 import RecentTestResults from './RecentTestResults/RecentTestResults';
 import PreviuosVisitData from './PreviuosVisitData';
-import BodyDiagram from './BodyDiagram/BodyDiagram';
+// import BodyDiagram from './BodyDiagram/BodyDiagram';
 import { useLocation } from 'react-router-dom';
 import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ChooseDashboardScreen from './ChooseDashboardSections';
-// import { ActionContext } from './ActionContext';
+import { ActionContext } from './ActionContext';
 import Last24HMedications from './Last24-hMedications';
 import IntakeOutputs from './IntakeOutputs';
 import ChiefComplainSummary from '../nursing-reports-summary/ChiefComplainSummary';
@@ -20,12 +20,14 @@ import PainAssessmentSummary from '../nursing-reports-summary/PainAssessmentSumm
 import GeneralAssessmentSummary from '../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAssessmentSummary';
 import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
+import PatientPlan from './PatientPlan';
+import PrimaryCareProviderTable from './PrimaryCareProviderTable/PrimaryCareProviderTable';
 // import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
 const PatientSummary = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
-  // const { setAction } = useContext(ActionContext);
+  const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));
   const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id);
@@ -39,7 +41,7 @@ const PatientSummary = () => {
     c6: false,
     c7: true,
     c8: true,
-    c9: false,
+    c9: true,
     c10: false,
     c11: false,
     c12: false,
@@ -50,7 +52,7 @@ const PatientSummary = () => {
 
   const [columns, setColumns] = useState({
     col1: [
-      { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
+      // { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
       {
         id: 'c2',
         content: <PreviuosVisitData patient={patient} encounter={encounter} />,
@@ -68,11 +70,12 @@ const PatientSummary = () => {
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-      // {
-      //   id: 'c9',
-      //   content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
-      //   display: false
-      // },
+
+      {
+        id: 'c9',
+        content: <PatientPlan patient={patient} />,
+        display: true
+      },
       // {
       //   id: 'c10',
       //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
@@ -82,6 +85,16 @@ const PatientSummary = () => {
     col3: [
       { id: 'c11', content: <Procedures patient={patient} />, display: false },
       { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
+      {
+        id: 'c13',
+        content: (
+          <PrimaryCareProviderTable
+            patient={patient}
+            encounter={encounter}
+          />
+        ),
+        display: false
+      }
       // { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
       // { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
       // {
@@ -112,10 +125,11 @@ const PatientSummary = () => {
     }
   }, [userDashboardComponents?.data]);
 
-  // useEffect(() => {
-  //   setAction(() => () => setOpenChooseScreen(true));
-  //   return () => setAction(() => () => {});
-  // }, [setAction]);
+  useEffect(() => {
+    setAction(() => () => setOpenChooseScreen(true));
+    return () => setAction(() => () => {});
+  }, [setAction]);
+
   useEffect(() => {
     const arr = userDashboardComponents?.data?.object ?? [];
     const newArr = arr.map(item => item.component_key);

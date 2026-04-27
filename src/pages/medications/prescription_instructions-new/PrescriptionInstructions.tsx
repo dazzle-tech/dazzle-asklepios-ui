@@ -81,8 +81,17 @@ const PrescriptionInstructions = () => {
 
   // Header page setUp
   const divContent = 'Prescription Instructions';
+
+
+  useEffect(() => {
   dispatch(setPageCode('Prescription_Instructions'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -323,19 +332,19 @@ const PrescriptionInstructions = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     setLink(prescriptionInstructionListResponse?.links);
   }, [prescriptionInstructionListResponse?.links]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         totalCount={isFiltered ? filteredTotal : totalCount}

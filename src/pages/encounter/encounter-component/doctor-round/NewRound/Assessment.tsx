@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest } from '@/types/types';
-import { Col, Dropdown, Form, Row } from 'rsuite';
+import { Col, Dropdown, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetIcdListQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
@@ -67,9 +67,17 @@ const Assessment = ({
     }
   }, [indicationsIcd.indications]);
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="assessment-container">
-      <Form className="assessment-container" fluid>
+    <div className="assessment-container" dir={dir}>
+      <div>
         <Row>
           <Col md={8}>
             <Icd10Search
@@ -194,7 +202,7 @@ const Assessment = ({
             />
           </Col>
         </Row>
-      </Form>
+      </div>
     </div>
   );
 };

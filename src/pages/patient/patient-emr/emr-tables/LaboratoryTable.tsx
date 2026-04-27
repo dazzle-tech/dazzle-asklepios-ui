@@ -1,502 +1,415 @@
-import ChatModal from '@/components/ChatModal';
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
-import {
-  useGetDiagnosticOrderTestResultQuery,
-  useGetOrderTestResultNotesByResultIdQuery,
-  useSaveDiagnosticOrderTestResultsNotesMutation
-} from '@/services/labService';
-import { useGenerateLabResultsPdfMutation } from '@/services/setup/resultReportApi';
-import {
-  useGetDiagnosticsTestLaboratoryListQuery,
-  useGetLovAllValuesQuery
-} from '@/services/setupService';
-import {
-  newApDiagnosticOrderTests,
-  newApDiagnosticOrderTestsResult,
-  newApDiagnosticOrderTestsResultNotes,
-  newApDiagnosticTestLaboratory
-} from '@/types/model-types-constructor';
-import { initialListRequest, initialListRequestAllValues, ListRequest } from '@/types/types';
-import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
-import {
-  faArrowDown,
-  faArrowUp,
-  faCircleExclamation,
-  faComment,
-  faPrint,
-  faTriangleExclamation
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
-import { Checkbox, Form, HStack, Tooltip, Whisper, Message, useToaster } from 'rsuite';
-import Laboratory from '@/pages/setup/diagnostics-tests-definition-new/Laboratory';
-import { useSelector } from 'react-redux';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import { formatDateWithoutSeconds } from '@/utils';
 
-interface ResultProps {
+import {
+  useFilterDiagnosticOrderTestResultsQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+
+import {
+  useFilterDiagnosticOrdersQuery,
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+
+import {
+  useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+
+import {
+  useGetBulkPatientBasicInfoMutation
+} from '@/services/patient/patientService';
+
+import {
+  useGetAllDiagnosticTestProfilesQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import {
+  useGetLovAllValuesQuery,
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+
+interface Props {
   patient: any;
- 
 }
 
-const LaboratoryTable: React.FC<ResultProps> = ({ patient}) => {
-  const dispatch = useAppDispatch();
-  const sliceauth = useSelector((state: any) => state.auth);
-  const toaster = useToaster();
-  const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
-  const [record, setRecord] = useState({});
-  const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
+const isLovProfile = (profile?: any) =>
+  profile?.resultType?.toUpperCase() === 'LOV';
 
-  const [listResultResponse, setListResultResponse] = useState<ListRequest>({
+const resolveLovDisplayValue = (
+  profile: any,
+  key: any,
+  lovDefinitions: any,
+  allLovValues: any
+) => {
+  if (
+    !profile?.listOfValueId ||
+    key == null ||
+    !lovDefinitions?.object ||
+    !allLovValues?.object
+  ) {
+    return key;
+  }
+
+  const normalizedKey = String(key);
+
+  const lovDef = lovDefinitions.object.find(
+    (d: any) => String(d.key) === String(profile.listOfValueId)
+  );
+
+  if (!lovDef?.lovCode) return key;
+
+  return (
+    allLovValues.object.find(
+      (v: any) =>
+        String(v.lovCode) === String(lovDef.lovCode) &&
+        String(v.key) === normalizedKey
+    )?.lovDisplayVale ?? key
+  );
+};
+
+const LaboratoryTable: React.FC<Props> = ({ patient }) => {
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
+  const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+  const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+
+  const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+  const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+
+  const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
+    page: 0,
+    size: 10000,
+    sort: 'id,asc'
+  });
+
+  const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 10000
+  });
+
+  const { data: labsResponse } = useGetAllLaboratoriesQuery({
+    page: 0,
+    size: 10000
+  });
+
+  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: labCatLovQueryResponse } =
+    useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+
+  const { data: allLovValues } = useGetLovAllValuesQuery({
+    ...initialListRequestAllValues
+  });
+
+  const { data: lovDefinitions } = useGetLovsQuery({
     ...initialListRequest,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
-      },
-      {
-        fieldName: 'review_at',
-        operator: 'notMatch',
-        value: 0
-      }
-    ]
+    pageSize: 1000
   });
 
-  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-  const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
-  const [generateLabResultsPdf, { isLoading: isGeneratingPdf }] = useGenerateLabResultsPdfMutation();
+  const profilesMap = useMemo(
+    () => new Map(profilesResponse?.data?.map((p: any) => [p.id, p]) ?? []),
+    [profilesResponse]
+  );
 
-  const {
-    data: resultsList,
-    refetch: resultFetch,
-    isLoading: resultLoding,
-    isFetching: featchingTest
-  } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+  const testsMap = useMemo(
+    () => new Map(allTestsResponse?.data?.map((t: any) => [t.id, t]) ?? []),
+    [allTestsResponse]
+  );
 
-  const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-  const { data: messagesResultList, refetch: fecthResultNotes } =
-    useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, {
-      skip: result.key == null
-    });
-  const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
-    ...initialListRequest
-  });
+  const labs = labsResponse?.data ?? [];
 
-  const isResultSelected = (rowData: any) => {
-    if (rowData && result && rowData.key === result.key) {
-      return 'selected-row';
-    } else return '';
+  const labByTestIdMap = useMemo(
+    () => new Map(labs.map((lab: any) => [lab.testId, lab])),
+    [labs]
+  );
+
+  const resolveCategoryLabel = (key?: any) =>
+    labCatLovQueryResponse?.object?.find(
+      (c: any) => String(c.key) === String(key)
+    )?.lovDisplayVale ?? key ?? '-';
+
+  const resolveUnitDisplay = (row: any) => {
+    const profile = row._profile;
+    if (!profile || isLovProfile(profile)) return null;
+
+    const unit = valueUnitLov?.object?.find(
+      (u: any) => String(u.key) === String(profile.resultUnit)
+    )?.lovDisplayVale;
+
+    return unit || null;
   };
 
-  useEffect(() => {
-    const cat = laboratoryList?.object?.find((item: any) => item.testKey === test.testKey);
-    setLabDetails(cat);
-  }, [test, laboratoryList]);
-
-  useEffect(() => {
-    setTest({ ...result?.test });
-  }, [result]);
-
-  
-
-
-
-  useEffect(() => {
-    
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'review_at',
-          operator: 'notMatch',
-          value: 0
-        }
-      ];
-      setListResultResponse(prev => ({
-        ...prev,
-        filters: updatedFilters
-      }));
-    
-    resultFetch();
-  }, [ patient?.key, resultFetch]);
-
-  useEffect(() => {
-    resultFetch();
-  }, [listResultResponse.filters, resultFetch]);
-
-  const joinValuesFromArray = (keys: string[]) => {
-    return keys
-      .map((key: string) => lovValues?.object?.find((lov: any) => lov.key === key))
-      .filter((obj: any) => obj !== undefined)
-      .map((obj: any) => obj.lovDisplayVale)
-      .join(', ');
-  };
-
-  const handleSendResultMessage = async (value: string) => {
-    try {
-      await saveResultNote({
-        ...newApDiagnosticOrderTestsResultNotes,
-        notes: value,
-        testKey: test.key,
-        orderKey: test.orderKey,
-        resultKey: result.key,
-        createdBy: sliceauth?.login
-      }).unwrap();
-      dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
-    } catch (error) {
-      dispatch(notify({ msg: 'Send Failed', sev: 'error' }));
-    }
-    await fecthResultNotes();
-  };
-
-  // Function to calculate age from date of birth
-  const calculateAgeFormat = (dob: string) => {
-    if (!dob) return 'N/A';
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  // Function to prepare data for PDF generation
-  const prepareResultsData = () => {
-    const results = resultsList?.object?.map((rowData: any) => {
-      let testName = '';
-      if (rowData.isProfile) {
-        testName = rowData.test?.profileList?.find((item: any) => item.key == rowData?.testProfileKey)?.testName || 'N/A';
-      } else {
-        testName = rowData.test?.test?.testName || 'N/A';
-      }
-
-      let resultValue = '';
-      let unit = '';
-      let normalRange = '';
-
-      if (rowData.normalRangeKey) {
-        if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
-          resultValue = rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey;
-          unit = labDetails?.resultUnitLvalue?.lovDisplayVale || '';
-          normalRange = joinValuesFromArray(rowData.normalRange?.lovList) + ' ' + unit;
-        } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
-          resultValue = String(rowData.resultValueNumber);
-          unit = labDetails?.resultUnitLvalue?.lovDisplayVale || '';
-
-          if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
-            normalRange = rowData.normalRange?.rangeFrom + '-' + rowData.normalRange?.rangeTo + ' ' + unit;
-          } else if (rowData.normalRange?.normalRangeTypeLkey == '6221162489019880') {
-            normalRange = 'Less Than ' + rowData.normalRange?.rangeFrom + ' ' + unit;
-          } else if (rowData.normalRange?.normalRangeTypeLkey == '6221175556193180') {
-            normalRange = 'More Than ' + rowData.normalRange?.rangeTo + ' ' + unit;
-          }
-        }
-      } else {
-        resultValue = rowData.resultText || 'N/A';
-        normalRange = 'Not Defined';
-      }
-
-      return {
-        orderId: rowData.test?.orderId || 'N/A',
-        approvedAt: rowData.approvedAt,
-        testName: testName,
-        resultValue: resultValue,
-        unit: unit,
-        normalRange: normalRange,
-        marker: rowData.marker,
-        reviewDate: rowData.reviewAt ? formatDateWithoutSeconds(rowData.reviewAt) : 'N/A',
-        reviewBy: rowData.reviewByUser?.fullName || 'N/A'
-      };
-    }) || [];
+  const ordersQueryParams = useMemo(() => {
+    if (!patient?.id) return skipToken;
 
     return {
-      patientInfo: {
-        name: patient?.fullName || 'N/A',
-        mrn: patient?.patientMrn || 'N/A',
-        dob: patient?.dob || 'N/A',
-        age: patient?.dob ? calculateAgeFormat(patient.dob) + ' years' : 'N/A',
-        gender: patient?.genderLvalue?.lovDisplayVale || 'Not specified'
-      },
-      results: results
+      patientId: patient.id,
+      page: 0,
+      size: 1000,
+      sort: 'id,desc'
     };
-  };
+  }, [patient?.id]);
 
-  // Function to generate and download PDF
-  const handleGeneratePdf = async () => {
-    try {
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(
+    ordersQueryParams
+  );
 
-      const data = prepareResultsData();
+  const orders = ordersResponse?.data ?? [];
 
-      const result = await generateLabResultsPdf(data).unwrap();
+  const orderIds = useMemo(
+    () => orders.map((o: any) => o.id).filter(Boolean),
+    [orders]
+  );
 
-      // Create blob URL and trigger download
-      const blob = new Blob([result], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Lab_Results_Report_${new Date().getTime()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+  const queryParams = useMemo(() => {
+    if (!orderIds.length) return skipToken;
 
-      // Show success message
-      toaster.push(
-        <Message showIcon type="success" closable>
-          Laboratory Results Report generated successfully!
-        </Message>,
-        { placement: 'topEnd', duration: 5000 }
-      );
+    return {
+      page,
+      size,
+      sort: 'id,desc',
+      processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+      orderIdIn: orderIds
+    };
+  }, [orderIds, page, size]);
 
-    } catch (error) {
+  const { data: resultsResponse, isFetching } =
+    useFilterDiagnosticOrderTestResultsQuery(queryParams);
 
-      // Show error message
-      toaster.push(
-        <Message showIcon type="error" closable>
-          Failed to generate Laboratory Results Report. Please try again.
-        </Message>,
-        { placement: 'topEnd', duration: 5000 }
-      );
-    }
-  };
+  const results = resultsResponse?.data ?? [];
+  const totalCount = resultsResponse?.totalCount ?? 0;
 
-  const tableColomns = [
-    {
-      key: 'orderId',
-      title: <Translate>ORDER ID</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.test?.orderId;
+  useEffect(() => {
+    results.forEach((r: any) => {
+      if (r.orderTestId && !orderTestsMap[String(r.orderTestId)]) {
+        fetchOrderTestById(r.orderTestId)
+          .unwrap()
+          .then((test) => {
+            setOrderTestsMap((prev) => ({
+              ...prev,
+              [String(test.id)]: test
+            }));
+          })
+          .catch(() => {});
       }
+    });
+  }, [results, orderTestsMap, fetchOrderTestById]);
+
+  useEffect(() => {
+    Object.values(orderTestsMap).forEach((test: any) => {
+      const orderId = test?.orderId;
+
+      if (orderId && !ordersMap[String(orderId)]) {
+        fetchOrderById(orderId)
+          .unwrap()
+          .then((order) => {
+            setOrdersMap((prev) => ({
+              ...prev,
+              [String(order.id)]: order
+            }));
+          })
+          .catch(() => {});
+      }
+    });
+  }, [orderTestsMap, ordersMap, fetchOrderById]);
+
+  const patientIds = useMemo(() => {
+    return Object.values(ordersMap)
+      .map((o: any) => o?.patientId)
+      .filter(Boolean)
+      .map(String)
+      .filter((id, i, arr) => arr.indexOf(id) === i);
+  }, [ordersMap]);
+
+  useEffect(() => {
+    if (!patientIds.length) return;
+
+    const numericIds = patientIds.map((id) => Number(id));
+
+    getBulkPatientBasicInfo(numericIds)
+      .unwrap()
+      .then((res: any[]) => {
+        const map: Record<string, any> = {};
+
+        res.forEach((p: any, index: number) => {
+          const originalId = numericIds[index];
+          map[String(originalId)] = p;
+        });
+
+        setPatientsMap(map);
+      })
+      .catch(() => {});
+  }, [patientIds, getBulkPatientBasicInfo]);
+
+  const normalizedResults = useMemo(() => {
+    return results.map((r: any) => {
+      const orderTest = orderTestsMap[String(r.orderTestId)];
+      const order = ordersMap[String(orderTest?.orderId)];
+      const patientInfo = patientsMap[String(order?.patientId)];
+      const profile = profilesMap.get(r.profileTestId);
+
+      const test = testsMap.get(Number(orderTest?.testId));
+      const lab = labByTestIdMap.get(Number(orderTest?.testId));
+
+      return {
+        ...r,
+        _patientName: patientInfo
+            ? [patientInfo.firstName, patientInfo.secondName, patientInfo.lastName].filter(Boolean).join(' ')
+            : '—',
+        _profile: profile,
+        _test: test,
+        _lab: lab,
+        _visitId: order?.encounterId
+      };
+    });
+  }, [
+    results,
+    orderTestsMap,
+    ordersMap,
+    patientsMap,
+    profilesMap,
+    testsMap,
+    labByTestIdMap
+  ]);
+
+  const columns: ColumnConfig[] = [
+    {
+      key: 'visitId',
+      title: <Translate>VISIT ID</Translate>,
+      width: 120,
+      render: (row: any) => row._visitId ?? '-'
     },
     {
-      key: 'approvedAt',
-      title: <Translate>Result Date</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return formatDateWithoutSeconds(rowData.approvedAt);
-      }
+      key: 'patient',
+      title: <Translate>PATIENT</Translate>,
+      render: (row: any) => row._patientName
+    },
+    {
+      key: 'created',
+      title: <Translate>CREATED BY / AT</Translate>,
+      render: (row: any) => (
+        <>
+          {row.createdBy}
+          <br />
+          <span style={{ fontSize: 11, color: '#777' }}>
+            {formatDateWithoutSeconds(row.createdDate)}
+          </span>
+        </>
+      )
+    },
+    {
+      key: 'resultDate',
+      title: <Translate>RESULT DATE</Translate>,
+      width: 150,
+      render: (row: any) => formatDateWithoutSeconds(row.approvedDate)
+    },
+    {
+      key: 'category',
+      title: <Translate>CATEGORY</Translate>,
+      width: 150,
+      render: (row: any) => resolveCategoryLabel(row._lab?.category)
     },
     {
       key: 'testName',
       title: <Translate>TEST NAME</Translate>,
-      flexGrow: 2,
-      fullText: true,
-      render: (rowData: any) => {
-        if (rowData.isProfile) {
-          return rowData.test?.profileList?.find((item: any) => item.key == rowData?.testProfileKey)
-            ?.testName;
-        } else {
-          return rowData.test?.test?.testName;
+      render: (row: any) => (
+        <>
+          {row._profile?.name ?? '-'}
+          <br />
+          <span style={{ fontSize: 10, color: '#666' }}>
+            {row._profile?.testName ?? ''}
+          </span>
+        </>
+      )
+    },
+    {
+      key: 'result',
+      title: <Translate>RESULT</Translate>,
+      render: (row: any) => {
+        const profile = row._profile;
+        const value = row.resultValueNumber ?? row.resultValueText ?? '';
+
+        if (isLovProfile(profile)) {
+          return resolveLovDisplayValue(
+            profile,
+            value,
+            lovDefinitions,
+            allLovValues
+          );
         }
+
+        const unit = resolveUnitDisplay(row);
+        const resultText = `${value ?? ''}${unit ? ` ${unit}` : ''}`;
+
+        return resultText || '-';
       }
     },
     {
-      key: 'testResultUnit',
-      title: <Translate>TEST RESULT,UNIT</Translate>,
-      flexGrow: 2,
-      fullText: true,
-      render: (rowData: any) => {
-        if (rowData.normalRangeKey) {
-          if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
-            return (
-              <span>
-                {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
-              </span>
+      key: 'normalRange',
+      title: <Translate>NORMAL RANGE</Translate>,
+      render: (row: any) => {
+        const profile = row._profile;
+
+        const hasViewRange =
+          row.viewNormalRange != null &&
+          String(row.viewNormalRange).trim() !== '';
+
+        const hasMinMaxRange =
+          row.minValue !== null &&
+          row.minValue !== undefined &&
+          row.maxValue !== null &&
+          row.maxValue !== undefined;
+
+        if (hasViewRange) {
+          if (isLovProfile(profile)) {
+            return resolveLovDisplayValue(
+              profile,
+              String(row.viewNormalRange),
+              lovDefinitions,
+              allLovValues
             );
-          } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
-            return <span>{rowData.resultValueNumber}</span>;
           }
-        } else {
-          return <span>{rowData.resultText}</span>;
-        }
-      }
-    },
-    {
-  key: 'normalRange',
-  title: <Translate>NORMAL RANGE</Translate>,
-  flexGrow: 2,
-  fullText: true,
-  render: (rowData: any) => {
-    const unit = labDetails?.resultUnitLvalue?.lovDisplayVale ?? '';
 
-    if (rowData.normalRangeKey) {
-      if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
-        return `${joinValuesFromArray(rowData.normalRange?.lovList)} ${unit}`.trim();
-      }
-
-      if (rowData.normalRange?.resultTypeLkey === '6209569237704618') {
-        if (rowData.normalRange?.normalRangeTypeLkey === '6221150241292558') {
-          return `${rowData.normalRange?.rangeFrom}_${rowData.normalRange?.rangeTo} ${unit}`.trim();
+          const unit = resolveUnitDisplay(row);
+          return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
         }
 
-        if (rowData.normalRange?.normalRangeTypeLkey === '6221162489019880') {
-          return `Less Than ${rowData.normalRange?.rangeFrom} ${unit}`.trim();
+        if (hasMinMaxRange) {
+          const unit = resolveUnitDisplay(row);
+          return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
         }
 
-        if (rowData.normalRange?.normalRangeTypeLkey === '6221175556193180') {
-          return `More Than ${rowData.normalRange?.rangeTo} ${unit}`.trim();
-        }
-      }
-    }
-
-    return 'Normal Range Not Defined';
-  }
-}
-,
-    {
-      key: 'marker',
-      title: <Translate>MARKER</Translate>,
-      flexGrow: 2,
-      fullText: true,
-      render: (rowData: any) => {
-        if (rowData.marker == '6730122218786367') {
-          return <FontAwesomeIcon icon={faCircleExclamation} style={{ fontSize: '1em' }} />;
-        } else if (rowData.marker == '6731498382453316') {
-          return 'Normal';
-        } else if (rowData.marker == '6730083474405013') {
-          return <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />;
-        } else if (rowData.marker == '6730094497387122') {
-          return <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />;
-        } else if (rowData.marker == '6730104027458969') {
-          return (
-            <HStack spacing={10}>
-              <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
-              <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
-            </HStack>
-          );
-        } else if (rowData.marker == '6730652890616978') {
-          return (
-            <HStack spacing={10}>
-              <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
-              <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
-            </HStack>
-          );
-        }
-      }
-    },
-    {
-      key: 'comments',
-      title: <Translate>COMMENTS</Translate>,
-      flexGrow: 1,
-      fullText: true,
-      render: (rowData: any) => {
-        return (
-          <HStack spacing={10}>
-            <FontAwesomeIcon
-              icon={faComment}
-              style={{
-                fontSize: '1em',
-                color: rowData.hasComments ? '#007bff' : 'gray',
-                cursor: 'pointer'
-              }}
-              onClick={() => {
-                setResult(rowData);
-                setOpenNoteResultModal(true);
-              }}
-            />
-          </HStack>
-        );
-      }
-    },
-    {
-      key: 'reviewAt',
-      title: <Translate>Review At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.reviewByUser?.fullName}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.reviewAt ? new Date(rowData.reviewAt).toLocaleString() : ''}
-            </span>
-          </>
-        );
+        return '-';
       }
     }
   ];
 
-  const pageIndex = listResultResponse.pageNumber - 1;
-  const rowsPerPage = listResultResponse.pageSize;
-  const totalCount = resultsList?.extraNumeric ?? 0;
-
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListResultResponse({ ...listResultResponse, pageNumber: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListResultResponse({
-      ...listResultResponse,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-
- 
-
-useEffect(() => {
-  setListResultResponse(prev => ({
-    ...prev!,
-    filters: [
-      { fieldName: "patient_key", operator: "match", value: patient?.key }
-    ],
-    pageNumber: 1,
-  }));
-}, [patient?.key]);
-
-
-
   return (
-    <>
-      <div className="results-actions-header">
-
-
-        {resultsList?.object?.length > 0 && (
-          <div className="results-count-badge">
-            <FontAwesomeIcon icon={faCircleExclamation} style={{ marginRight: '5px' }} />
-            <span>{resultsList.object.length} Results Available</span>
-          </div>
-        )}
-      </div>
-
-      <MyTable
-       
-        columns={tableColomns}
-        data={resultsList?.object || []}
-        loading={resultLoding || isGeneratingPdf}
-        onRowClick={(rowData: any) => {
-          setResult(rowData);
-        }}
-        rowClassName={isResultSelected}
-        height={250}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-      <ChatModal
-        open={openNoteResultModal}
-        setOpen={setOpenNoteResultModal}
-        handleSendMessage={handleSendResultMessage}
-        title={'Comments'}
-        list={messagesResultList?.object}
-        fieldShowName={'notes'}
-      />
-    </>
+    <MyTable
+      columns={columns}
+      data={normalizedResults}
+      loading={isFetching}
+      page={page}
+      rowsPerPage={size}
+      totalCount={totalCount}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={(e) => {
+        setSize(Number(e.target.value));
+        setPage(0);
+      }}
+      height={350}
+    />
   );
 };
 

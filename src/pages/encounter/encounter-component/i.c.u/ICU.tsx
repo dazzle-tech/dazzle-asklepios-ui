@@ -19,6 +19,7 @@ import './style.less';
 import ICUTabs from "./ICUTabs";
 import VitalsignGraphs from "./VitalsignGraphs";
 import ABGGraphs from "./ABGGraphs";
+import Translate from "@/components/Translate";
 
 
 const ICU: React.FC = () => {
@@ -52,14 +53,22 @@ const ICU: React.FC = () => {
   };
 
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (<div className="icu-main-container">
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    return (
+  <div className="icu-main-container" dir={dir}>
     <div className="icu-first-section-container">
       <SectionContainer
         title={
           <h5 className="h3-icu-screen-handle">
             <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+          <Translate>
             Admission Information
+          </Translate>
           </h5>
         } content={
           <Form>
@@ -145,7 +154,9 @@ const ICU: React.FC = () => {
         title={
           <h5 className="h3-icu-screen-handle">
             <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+          <Translate>
             Vital Signs
+          </Translate>
           </h5>
         }
         content={<>
@@ -169,7 +180,9 @@ const ICU: React.FC = () => {
             <SectionContainer
               title={<h5 className="h3-icu-screen-handle">
                 <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+              <Translate>
                 ABGS
+              </Translate>
               </h5>
               }
               content={<>        <div className="second-section-add-button">
@@ -195,7 +208,9 @@ const ICU: React.FC = () => {
         title={
           <h5 className="h3-icu-screen-handle">
             <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+          <Translate>
             Repositioning
+          </Translate>
           </h5>}
         content={<Repositioning
           edit={edit}

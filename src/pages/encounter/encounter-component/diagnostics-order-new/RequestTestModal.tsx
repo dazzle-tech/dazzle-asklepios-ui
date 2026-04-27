@@ -273,7 +273,7 @@ const RequestTestModal = ({
         },
         {
             key: 'indication',
-            title: <Translate>Indication</Translate>,
+            title: <Translate>Request Reason</Translate>,
         },
         {
             key: 'status',
@@ -394,8 +394,14 @@ const RequestTestModal = ({
         }
     }, [viewModalOpen]);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
+    <div dir={dir}>
         <MyModal
             open={open}
             setOpen={setOpen}
@@ -407,6 +413,7 @@ const RequestTestModal = ({
             isDisabledActionBtn={isLoading}
             content={() => (
                 <>
+                <div dir={dir}>
                     <Form fluid>
                         <div className='request-test-modal-main-inputs-container'>
                             <MyInput
@@ -438,7 +445,7 @@ const RequestTestModal = ({
                                 fieldType="textarea"
                                 record={record}
                                 setRecord={setRecord}
-                                fieldLabel="Indication"
+                                fieldLabel="Request Reason"
                                 placeholder="Enter clinical indication"
                                 width="100%"
                                 required
@@ -469,8 +476,7 @@ const RequestTestModal = ({
                         height={250}
                         onRowClick={handleRowClick}
                     />
-
-
+                    
                     <DeletionConfirmationModal
                         open={deleteModalOpen}
                         setOpen={setDeleteModalOpen}
@@ -485,9 +491,11 @@ const RequestTestModal = ({
                         setOpen={setViewModalOpen}
                         diagnosticTestId={selectedDiagnosticTestId}
                     />
+                </div>
                 </>
             )}
         />
+    </div>
     );
 };
 

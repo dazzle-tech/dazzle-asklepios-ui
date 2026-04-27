@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import { Col, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Translate from '@/components/Translate';
 const AddNewModal = ({
   open,
   setOpen,
@@ -154,11 +155,11 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
               record={hendrichFallRisk}
               setRecord={setHendrichFallRisk}
             />
-            <Text>Get-Up-and-Go Test (GUGT)</Text>
+            <Text><Translate>Get-Up-and-Go Test (GUGT)</Translate></Text>
             <RadioGroup value={GUGT} onChange={value => setGUGT(value)}>
-                <Radio value="RiseInSingleMovement ">Rise in single movement</Radio>
-                <Radio value="PushesUpIn1Attempt">Pushes up in 1 attempt</Radio>
-                <Radio value="MultipleAttemptsOrUnable">Multiple attempts or unable</Radio>
+                <Radio value="RiseInSingleMovement "><Translate>Rise in single movement</Translate></Radio>
+                <Radio value="PushesUpIn1Attempt"><Translate>Pushes up in 1 attempt</Translate></Radio>
+                <Radio value="MultipleAttemptsOrUnable"><Translate>Multiple attempts or unable</Translate></Radio>
             </RadioGroup>
             <br />
 <Row>
@@ -239,13 +240,20 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
     }
   }, [recordOfScore]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="New Assessment"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       steps={[{ title: 'Assessment', icon: <FontAwesomeIcon icon={faPersonFallingBurst} /> }]}

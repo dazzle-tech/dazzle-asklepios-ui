@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Checkbox, Message, useToaster } from 'rsuite';
 import { CiDiscount1 } from 'react-icons/ci';
 import { MdOutlinePriceChange } from 'react-icons/md';
@@ -15,7 +15,13 @@ import { calculateAgeFormat } from '@/utils';
 import type { BillingItem } from '@/types/model-types-new';
 
 
-const Billing = ({ data, patient, onCreateInvoice }) => {
+type BillingProps = {
+  data: BillingItem[];
+  patient: any;
+  onCreateInvoice: (selectedIds: string[]) => Promise<void>;
+};
+
+const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
   const toaster = useToaster();
   const [currentRecord, setCurrentRecord] = useState(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -27,6 +33,11 @@ const Billing = ({ data, patient, onCreateInvoice }) => {
 
   const [generateInvoicePdf, { isLoading: isGeneratingPdf }] =
     useGenerateInvoicePdfMutation();
+
+  useEffect(() => {
+    if (!patient?.id) return;
+  
+  }, [patient?.id, data]);
 
   const handleCheckboxChange = (key: string) => {
     setSelectedRows(prev => {
@@ -62,8 +73,7 @@ const Billing = ({ data, patient, onCreateInvoice }) => {
       return;
     }
 
-    // 🔹 يروح على Accounting → handleCreateInvoiceFromBilling
-    onCreateInvoice(selectedRows);
+    await onCreateInvoice(selectedRows);
 
     try {
       const selectedItems = data.filter(item => selectedRows.includes(item.id));
@@ -144,7 +154,6 @@ const Billing = ({ data, patient, onCreateInvoice }) => {
 
       setSelectedRows([]);
     } catch (error: any) {
-      console.error('Error generating invoice:', error);
       toaster.push(
         <Message showIcon type="error" closable>
           Failed to generate invoice: {error?.message || 'Unknown error'}
@@ -237,7 +246,7 @@ const Billing = ({ data, patient, onCreateInvoice }) => {
         data={data}
         columns={columns}
         onRowClick={(row) => {
-          setSelectedRows(row)
+          setCurrentRecord(row);
         }}
         loading={false}
         tableButtons={tableButtons}

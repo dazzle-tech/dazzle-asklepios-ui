@@ -16,6 +16,7 @@ import { formatEnumString } from '@/utils';
 import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 
 type PatientPrevTestsRef = {
   refetchPrevTests: () => void;
@@ -63,31 +64,45 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
     );
 
     /* ===================== QUERY ===================== */
-          //add new patient edits
-      const encounterId = patient?.encounterId;
+       const ordersQueryParams = useMemo(() => {
+         if (!patientId) return skipToken;
+     
+         return {
+           patientId,
+           page: 0,
+           size: 1000,
+           sort: 'id,desc'
+         };
+       }, [patientId]);
+     
+       const {
+         data: ordersResponse,
+         isFetching: isOrdersFetching
+       } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+     
+       const orders = ordersResponse?.data ?? [];
+     
+   const orderIds = useMemo(
+  () => orders.map((o: any) => o.id).filter(Boolean),
+  [orders]
+);
 
-      const {
-        data: orderTestResponse,
-        isLoading,
-        refetch
-      } = useFilterDiagnosticOrderTestsQuery(
-        //add new patient edits
-        patientId
-          ? showCancelled
-            ? {
-                patientId,
-                encounterId,
-                status: DiagnosticOrderTestStatus.CANCELLED,
-                ...cleanedFilters
-              }
-            : {
-                patientId,
-                encounterId,
-                excludeStatus: DiagnosticOrderTestStatus.CANCELLED,
-                ...cleanedFilters
-              }
-          : skipToken
-      );
+const queryParams =
+  !patientId || isOrdersFetching || !orderIds.length
+    ? skipToken
+    : {
+        orderIdIn: orderIds,
+        ...(showCancelled
+          ? {}
+          : { excludeStatus: DiagnosticOrderTestStatus.CANCELLED }),
+        ...cleanedFilters
+      };
+
+const {
+  data: orderTestResponse,
+  isLoading,
+  refetch
+} = useFilterDiagnosticOrderTestsQuery(queryParams);
 
 
     /* 🔥 expose refetch to parent */
@@ -220,13 +235,21 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
     );
 
     /* ===================== RENDER ===================== */
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
       <>
+      <div dir={dir}>
         <Checkbox
           checked={showCancelled}
           onChange={(_, checked) => setShowCancelled(checked)}
         >
-          Show Cancelled
+                <Translate>Show Cancelled</Translate>
         </Checkbox>
 
         <MyTable
@@ -235,6 +258,7 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
           columns={tableColumns}
           filters={tableFilters}
         />
+      </div>
       </>
     );
   }

@@ -15,6 +15,7 @@ import {
   showSystemLoader,
 } from "@/utils/uiReducerActions";
 import "./style.less";
+import Translate from "@/components/Translate/Translate";
 
 interface ReportResultTemplateModalProps {
   open: boolean;
@@ -118,23 +119,30 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     }
   };
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={
-        initialData
-          ? readOnly
-            ? "View Template"
-            : "Edit Template"
-          : "Add Template"
-      }
+      title={ <Translate>
+      {initialData
+        ? readOnly
+          ? "View Template"
+          : "Edit Template"
+        : "Add Template"}</Translate>}
       actionButtonLabel={readOnly ? undefined : "Save"}
       actionButtonFunction={readOnly ? undefined : handleSave}
       size="50vw"
       bodyheight="37vw"
       content={
         <Form fluid>
+          <div dir={dir}>
           <div className="test-name-my-input-handle">
             <MyInput
               width="100%"
@@ -148,7 +156,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
             />
           </div>
 
-          <div className="report-template-label">Report Template</div>
+          <div className="report-template-label"><Translate>Report Template</Translate></div>
 
           <div className="editor-template-label">
             <Editor
@@ -180,6 +188,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
               editorClassName="custom-editor"
               placeholder="Write your report here..."
             />
+          </div>
           </div>
         </Form>
       }

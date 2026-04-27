@@ -1,12 +1,10 @@
 import Translate from '@/components/Translate';
-import {
-  useDeactivateUserMutation,
-  useGetFacilitiesQuery,
-} from '@/services/setupService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetFacilitiesQuery } from '@/services/setupService';
+import { initialListRequest } from '@/types/types';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdOutlineMail, MdPersonOff } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
 import { Panel, Tooltip, Whisper, Form } from 'rsuite';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -17,11 +15,16 @@ import MyTab from '@/components/MyTab';
 import { Box } from '@mui/material';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAddUserMutation, useGetUsersBasicQuery, useUpdateUserMutation } from '@/services/userService';
+import {
+  useAddUserMutation,
+  useGetUsersBasicQuery,
+  useUpdateUserMutation,
+  useResendCreatePasswordEmailMutation,
+  useToggleUserActivationMutation,
+} from '@/services/userService';
 import { newApUser } from '@/types/model-types-constructor-new';
 import { ApUser } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
-import ReactDOMServer from 'react-dom/server';
 import AddEditUser from './AddEditUser';
 import AccessRole from './tabs/AccessRole';
 import LicensesTab from './tabs/LicensesTab';
@@ -29,31 +32,30 @@ import DepartmentsTab from './tabs/DepartmentsTab';
 import ResetPasswordTab from './tabs/ResetPasswordTab';
 
 import './styles.less';
+
 const Users = () => {
   const dispatch = useAppDispatch();
-  const [user, setUser] = useState<ApUser>({
-    ...newApUser
-    // isValid: true
-  });
 
+  const [user, setUser] = useState<ApUser>({ ...newApUser });
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [canProceed, setCanProceed] = useState(false);
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
-  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
+  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
   const [popupOpen, setPopupOpen] = useState(false);
+
   const [filters, setFilters] = useState({
     name: '',
     email: '',
     login: '',
   });
 
-  // Save user
-  const [saveUser, saveUserMutation] = useAddUserMutation();
-  // Fetch users list response
+  const [saveUser] = useAddUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [resendCreatePasswordEmail] = useResendCreatePasswordEmailMutation();
+  const [toggleUserActivation] = useToggleUserActivationMutation();
+
   const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(15);
-
-
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const {
     data: usersResponse,
@@ -68,339 +70,382 @@ const Users = () => {
     login: filters.login,
   });
 
-
-const [updateUser] = useUpdateUserMutation();
- 
-  // Fetch Facilities list response
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
-    pageSize: 1000
+    pageSize: 1000,
   });
-  // Deactivate/Activate user
-  const [deactivateActivateUser] = useDeactivateUserMutation();
 
-   // Pagination values
+  const users = usersResponse?.data ?? [];
+  const totalCount = usersResponse?.totalCount ?? 0;
 
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setPageIndex(newPage);
-    }
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPageIndex(0);
+  useEffect(() => {
+    dispatch(setPageCode('Users'));
+    dispatch(setDivContent('Users'));
 
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
     };
+  }, [dispatch]);
 
-const users = usersResponse ?? [];
-const totalCount = usersResponse?.length ?? 0;
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
 
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    // Available fields for filtering
-  const filterFields = [
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'User Name', value: 'login' },
-    { label: 'job Role', value: 'jobRoleLvalue' },
-    { label: 'Facility', value: 'organizationKey' },
-    { label: 'Access Role', value: 'accessRoleKey' }
-  ];
-  // Page header setup
-  const divContent = (
-    "Users"
-  );
-  dispatch(setPageCode('Users'));
-  dispatch(setDivContent(divContent));
-  // ClassName for selected row
+  useEffect(() => {
+    setCanProceed(!!(popupOpen && user?.id));
+  }, [popupOpen, user]);
+
   const isSelected = rowData => {
     if (rowData && user && rowData.id === user.id) {
       return 'selected-row';
-    } else return '';
+    }
+    return '';
   };
 
-  // Effects
-   useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
+  const formatErrorKey = (msg?: string) => {
+    if (!msg) return '';
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+    const key = msg.split('.').pop() || msg;
 
- 
-  // Handle Save User
+    return key
+      .replace(/exists/gi, ' already exists')
+      .replace(/user/gi, 'login name')
+      .replace(/email/gi, 'Email')
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^./, s => s.toUpperCase());
+  };
+
   const handleSave = async () => {
-    
     try {
       if (user.id !== undefined) {
+        const response = await updateUser({ ...user }).unwrap();
 
-    const  Response= await updateUser({ ...user } ).unwrap();
         dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-        setUser({...Response})
+        setUser({ ...response });
         refetch();
       } else {
-    
+        await saveUser({ ...user }).unwrap();
 
-      const Response=await saveUser({ ...user}).unwrap();
         dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
         refetch();
       }
-    
+
       refetchFacility();
       setCanProceed(true);
-      // setPopupOpen(false);
+    } catch (error: any) {
+      const apiError = error?.data;
+      const message = apiError?.message?.toLowerCase();
 
-    } 
-      catch (error) {
-        console.error("❌ Error saving user:", error);
+      const knownErrors: Record<string, string> = {
+        'error.emailexists': 'This email is already in use',
+        'error.userexists': 'This username is already in use',
+      };
 
-        let backendMessage = "Failed to save user";
+      const backendMessage =
+        (message && knownErrors[message]) ||
+        apiError?.fieldErrors?.[0]?.message ||
+        (message ? formatErrorKey(message) : '') ||
+        apiError?.detail ||
+        'Failed to save user';
 
-        const message = error?.data?.message?.toLowerCase();
-
-        if (message === "error.emailexists") {
-          backendMessage = "This email is already in use";
-        }
-
-        dispatch(
-          notify({
-            msg: backendMessage,
-            sev: "error",
-          })
-        );
-
-        return;
-      }
-  };
-
-  // Handle click on Add New button
-  const handleAddNew = () => {
-    setUser({ ...newApUser });
-    
-    setPopupOpen(true);
-  };
-  // Handle Deactivate/Activate
-  const handleDactivateUser = async data => {
-    const process = data.isValid ? 'Deactivated' : 'Activated';
-    try {
-      await deactivateActivateUser({
-        user: { ...data, isValid: !data.isValid }
-      })
-        .unwrap()
-        .then(() => {
-          setOpenConfirmDeleteUserModal(false);
-          dispatch(notify({ msg: 'The User was successfully ' + process, sev: 'success' }));
-          refetch();
-        });
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: backendMessage,
+          sev: 'warning',
+        })
+      );
     }
   };
- 
-  //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
-  const iconsForActions = (rowData: ApUser) => (
-    <div className="container-of-icons">
-      <MdModeEdit
-        className='icons-style'
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setPopupOpen(true);
-          setUser(rowData);
-        }}
-      />
-      {/* <FaMedal
-        className='icons-style'
-        title="Privilege"
-        fill="var(--primary-gray)"
-        size={24}
-      />
-      <FaAddressCard
-        className='icons-style'
-        title="Licenses & Certifications"
-        fill="var(--primary-gray)"
-        size={24}
-        onClick={() => setLicensePopupOpen(true)}
-      />
-      <RiLockPasswordFill
-        className='icons-style'
-        title="Reset Password"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => setResetPasswordPopupOpen(true)}
-      />
-      <FaBuilding
-        className='icons-style'
-        title="Departments"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setDepartmentsPopupOpen(true);
-        }}
-      /> */}
-      {/* {rowData?.isValid ? (
-        <MdDelete
-          className='icons-style'
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() =>{setStateOfDeleteUserModal("deactivate"); setOpenConfirmDeleteUserModal(true);}}
-        />
-      ) : (
-        <FaUndo
-          className='icons-style'
-          title="Activate"
+
+  const handleAddNew = () => {
+    setUser({ ...newApUser });
+    setPopupOpen(true);
+  };
+
+ const handleDactivateUser = async data => {
+  const isCurrentlyActive = data?.activated === true;
+  const process = isCurrentlyActive ? 'Deactivated' : 'Activated';
+
+  try {
+    await toggleUserActivation(data.login).unwrap();
+
+    const updatedUser = {
+      ...data,
+      activated: !isCurrentlyActive,
+      hasResetKey: isCurrentlyActive ? false : data?.hasResetKey,
+    };
+
+    setUser(updatedUser);
+    setOpenConfirmDeleteUserModal(false);
+
+    dispatch(
+      notify({
+        msg: 'The User was successfully ' + process,
+        sev: 'success',
+      })
+    );
+
+    refetch();
+  } catch (error) {
+    dispatch(
+      notify({
+        msg: 'Failed to ' + process + ' this User',
+        sev: 'error',
+      })
+    );
+  }
+};
+  const handleResendCreatePassword = async (login: string) => {
+    try {
+      await resendCreatePasswordEmail(login).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Create password email sent successfully',
+          sev: 'success',
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Failed to send create password email',
+          sev: 'error',
+        })
+      );
+    }
+  };
+
+  const getUserStatus = (rowData: ApUser) => {
+    const isPendingCreatePassword =
+      rowData?.activated === false && rowData?.hasResetKey === true;
+
+    const isDisabledByAdmin =
+      rowData?.activated === false && rowData?.hasResetKey !== true;
+
+    return {
+      isPendingCreatePassword,
+      isDisabledByAdmin,
+      isActive: rowData?.activated === true,
+    };
+  };
+
+  const iconsForActions = (rowData: ApUser) => {
+    const { isPendingCreatePassword, isDisabledByAdmin } = getUserStatus(rowData);
+
+    return (
+      <div
+        className="container-of-icons"
+        style={{ display: 'flex', gap: '10px', alignItems: 'center' }}
+      >
+        <MdModeEdit
+          className="icons-style"
+          title="Edit"
           size={24}
           fill="var(--primary-gray)"
-          onClick={() => {setStateOfDeleteUserModal("reactivate"); setOpenConfirmDeleteUserModal(true);}}
+          onClick={() => {
+            setPopupOpen(true);
+            setUser(rowData);
+          }}
         />
-      )} */}
-    </div>
-  );
-  //Table columns
+
+        {rowData?.activated ? (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>Deactivate account</Tooltip>}
+          >
+            <span style={{ display: 'inline-flex' }}>
+              <MdDelete
+                title="Deactivate"
+                size={24}
+                fill="var(--primary-pink)"
+                className="icons-style"
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  setUser(rowData);
+                  setStateOfDeleteUserModal('deactivate');
+                  setOpenConfirmDeleteUserModal(true);
+                }}
+              />
+            </span>
+          </Whisper>
+        ) : (
+          <>
+            {isPendingCreatePassword && (
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Account is not opened yet. Resend create password email</Tooltip>}
+              >
+                <span style={{ position: 'relative', display: 'inline-flex' }}>
+                  <MdOutlineMail
+                    className="icons-style"
+                    title="Resend Create Password"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleResendCreatePassword(rowData.login)}
+                  />
+
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -2,
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'red',
+                    }}
+                  />
+                </span>
+              </Whisper>
+            )}
+
+            {isDisabledByAdmin && (
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Reactivate inactive account</Tooltip>}
+              >
+                <span style={{ display: 'inline-flex' }}>
+                  <FaUndo
+                    title="Reactivate"
+                    size={22}
+                    fill="var(--primary-gray)"
+                    className="icons-style"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setUser(rowData);
+                      setStateOfDeleteUserModal('reactivate');
+                      setOpenConfirmDeleteUserModal(true);
+                    }}
+                  />
+                </span>
+              </Whisper>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   const tableColumns = [
     {
       key: 'fullName',
       title: <Translate>Full Name</Translate>,
       flexGrow: 4,
-      render: rowData => {
-        return (
-          <Whisper
-            placement="top"
-            trigger="hover"
-            speaker={
-              <Tooltip>
-                <p>Facilities:</p>
-                {(facilityListResponse?.object ?? []).map((item, index) => (
-                  <p key={index}>{item.facilityName}</p>
-                ))}{' '}
-              </Tooltip>
-            }
-          >
-            <p>{rowData?.firstName}  {rowData?.lastName}</p> 
-          </Whisper>
-        );
-      }
+      render: rowData => (
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={
+            <Tooltip>
+              <p>Facilities:</p>
+              {(facilityListResponse?.object ?? []).map((item, index) => (
+                <p key={index}>{item.facilityName}</p>
+              ))}
+            </Tooltip>
+          }
+        >
+          <p>
+            {rowData?.firstName} {rowData?.lastName}
+          </p>
+        </Whisper>
+      ),
     },
     {
       key: 'login',
       title: <Translate>User Name</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
     },
     {
       key: 'email',
       title: <Translate>Email</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
     },
     {
       key: 'phoneNumber',
       title: <Translate>Phone Number</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
     },
     {
       key: 'admin',
       title: <Translate>Admin</Translate>,
       flexGrow: 2,
-      render: rowData => {
-        return rowData?.admin ? 'True' : 'False';
-      }
+      render: rowData => (rowData?.admin ? 'True' : 'False'),
     },
-    // {
-    //   key: 'jobRoleLvalue',
-    //   title: <Translate>job Role</Translate>,
-    //   flexGrow: 4,
-    //   render: rowData => {
-    //     return (
-    //       <p>
-    //         {rowData.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey}
-    //       </p>
-    //     );
-    //   }
-    // },
-    // {
-    //   key: 'organizationKey',
-    //   title: <Translate>Facility</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         facilityListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'facilityName'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'accessRoleKey',
-    //   title: <Translate>Access Role</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         accessRoleListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'name'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'isValid',
-    //   title: <Translate>Is Valid</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (rowData.isValid ? 'Active' : 'InActive')
-    // },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      flexGrow: 3,
+      render: rowData => {
+        const { isPendingCreatePassword, isDisabledByAdmin, isActive } = getUserStatus(rowData);
+
+        if (isActive) {
+          return <span style={{ color: 'green' }}>Active</span>;
+        }
+
+        if (isPendingCreatePassword) {
+          return <span style={{ color: 'orange' }}>Pending Password</span>;
+        }
+
+        if (isDisabledByAdmin) {
+          return (
+            <span style={{ color: 'red', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MdPersonOff size={18} />
+              Inactive
+            </span>
+          );
+        }
+
+        return '-';
+      },
+    },
     {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
-    }
+      render: rowData => iconsForActions(rowData),
+    },
   ];
-  // Filter form rendered above the table
+
   const tableFilters = (
-  <Form fluid>
-    <div className='users-table-main-filter-container'>
-      <MyInput
-        fieldName="name"
-        fieldLabel='Name'
-        fieldType="text"
-        record={filters}
-        setRecord={setFilters}
-      />
+    <Form fluid>
+      <div className="users-table-main-filter-container">
+        <MyInput
+          fieldName="name"
+          fieldLabel="Name"
+          fieldType="text"
+          record={filters}
+          setRecord={setFilters}
+        />
 
-      <MyInput
-        fieldName="email"
-        fieldType="text"
-        fieldLabel='Email'
-        record={filters}
-        setRecord={setFilters}
-      />
+        <MyInput
+          fieldName="email"
+          fieldType="text"
+          fieldLabel="Email"
+          record={filters}
+          setRecord={setFilters}
+        />
 
-      <MyInput
-        fieldName="login"
-        fieldType="text"
-        fieldLabel='Username'
-        record={filters}
-        setRecord={setFilters}
-      />
-    </div>
-  </Form>
+        <MyInput
+          fieldName="login"
+          fieldType="text"
+          fieldLabel="Username"
+          record={filters}
+          setRecord={setFilters}
+        />
+      </div>
+    </Form>
   );
-  
-  useEffect(() => {
-    if (popupOpen && user?.id) {
-      setCanProceed(true);
-    } else {
-      setCanProceed(false);
-    }
-  }, [popupOpen, user]);
 
-  // Tabs for user-related actions (Privilege, Licenses, Reset Password, Departments)
   const tabData = [
     {
       title: 'Privilege',
@@ -409,80 +454,80 @@ const totalCount = usersResponse?.length ?? 0;
     },
     {
       title: 'Licenses & Certifications',
-      content: (
-        <LicensesTab user={user} />
-      ),
+      content: <LicensesTab user={user} />,
       disabled: !user?.id,
     },
     {
       title: 'Reset Password',
-      content: (
-        <ResetPasswordTab user={user} width={width} />
-      ),
-      disabled: !user?.id,
+      content: <ResetPasswordTab user={user} width={width} />,
+      disabled: !user?.id || !user?.activated, // Disable if user is inactive without pending create password
     },
     {
       title: 'Departments',
-      content: (
-        <DepartmentsTab user={user} width={width} />
-      ),
+      content: <DepartmentsTab user={user} width={width} />,
       disabled: !user?.id,
     },
   ];
 
-  const tabContent = () => (
-    <Box mt={3}>
-      <MyTab data={tabData} />
-    </Box>
-  );
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPageIndex(newPage);
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0);
+  };
 
   return (
-    <div>
-      <div>
-        <Panel>
+    <div dir={dir}>
+      <Panel>
+        <MyTable
+          data={users}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          onRowClick={rowData => setUser(rowData)}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          filters={tableFilters}
+          loading={isLoading}
+          tableButtons={
+            <div className="container-of-add-new-button">
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={handleAddNew}
+                width="109px"
+              >
+                Add New
+              </MyButton>
+            </div>
+          }
+        />
 
-          <MyTable
-            data={users}
-            columns={tableColumns}
-            rowClassName={isSelected}
-            onRowClick={rowData => setUser(rowData)}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            filters={tableFilters}
-            loading={isLoading}
-            tableButtons={
-              <div className="container-of-add-new-button">
-                <MyButton
-                  prefixIcon={() => <AddOutlineIcon />}
-                  color="var(--deep-blue)"
-                  onClick={handleAddNew}
-                  width="109px"
-                >
-                  Add New
-                </MyButton>
-              </div>
-            }
-          />
+        <AddEditUser
+          open={popupOpen}
+          setOpen={setPopupOpen}
+          user={user}
+          setUser={setUser}
+          handleSave={handleSave}
+          width={width}
+          canProceed={canProceed}
+          setCanProceed={setCanProceed}
+        />
+      </Panel>
 
-
-          <AddEditUser
-            open={popupOpen}
-            setOpen={setPopupOpen}
-            user={user}
-            setUser={setUser}
-            handleSave={handleSave}
-            width={width}
-            canProceed={canProceed}
-            setCanProceed={setCanProceed}
-          />
-        </Panel>
-      </div>
-
-      {/* User-related tabs (similar behavior to ProductSetup tabs) */}
-      {user?.id && tabContent()}
+      {user?.id && (
+        <Box mt={3}>
+          <MyTab data={tabData} />
+        </Box>
+      )}
 
       <DeletionConfirmationModal
         open={openConfirmDeleteUserModal}

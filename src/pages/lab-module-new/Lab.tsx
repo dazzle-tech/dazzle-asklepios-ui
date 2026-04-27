@@ -1,11 +1,7 @@
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import {
-  useGetCollectedSamplesByOrderTestIdQuery
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
-import {
-  DiagnosticOrderTestStatus
-} from '@/types/model-types-new';
+import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Col, Form, Row, Tabs } from 'rsuite';
@@ -15,12 +11,7 @@ import MyInput from '@/components/MyInput';
 import MyStepper from '@/components/MyStepper';
 import MyTab from '@/components/MyTab';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-import {
-  newApDiagnosticOrders,
-  newApDiagnosticOrderTests,
-  newApEncounter,
-  newApPatient
-} from '@/types/model-types-constructor';
+import { newApDiagnosticOrders, newApDiagnosticOrderTests } from '@/types/model-types-constructor';
 import {
   faCircleCheck,
   faClock,
@@ -29,36 +20,39 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
-import PatientSide from './PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import Result from './Result';
 import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import ReviewResults from './ReviewResults';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
     await fn();
-  } catch {
-  }
+  } catch { }
 };
-
 
 const Lab = () => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
+  const user = authSlice?.user;
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
-
+  const [mainActiveTab, setMainActiveTab] = useState('1');
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [patient, setPatient] = useState({ ...newPatient });
-  const [encounter] = useState({ ...newPatientEncounter });
+  const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
+const [activeKey, setActiveKey] = useState('1');
+  const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
 
-const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
-
-  const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
-
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+  const [getEncounterById] = useLazyGetEncounterByIdQuery();
+  const [activeKey2, setActiveKey2] = useState('1');
 
   useEffect(() => {
     dispatch(setPageCode('Lab'));
@@ -69,20 +63,14 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
-    toDate: today,
+    toDate: today
   });
 
-
-
-  const { data: samplesResponse, refetch: fecthSample } =
-    useGetCollectedSamplesByOrderTestIdQuery(
-      test?.id
-        ? { orderTestId: test.id, page: 0, size: 20 }
-        : skipToken
-    );
+  const { data: samplesResponse, refetch: fecthSample } = useGetCollectedSamplesByOrderTestIdQuery(
+    test?.id ? { orderTestId: test.id, page: 0, size: 20 } : skipToken
+  );
 
   const samplesList = samplesResponse?.data ?? [];
-
 
   const refetchAllLabData = async () => {
     setGlobalLoading(true);
@@ -90,22 +78,15 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
     try {
       await safeRefetch(OrdersRef.current?.refetchOrders);
 
-      // if (order?.id) {
-      //   await safeRefetch(fetchAllTests);
-      // }
-
       if (test?.id) {
         await safeRefetch(fecthSample);
       }
 
       await safeRefetch(TestsRef.current?.fetchTest);
-
     } finally {
       setGlobalLoading(false);
     }
   };
-
-
 
   const stepsData = [
     { key: DiagnosticOrderTestStatus.SAMPLE_COLLECTED, value: 'Sample Collected' },
@@ -150,9 +131,7 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   }, [stepsData, test?.processingStatus]);
 
   const isAcceptedLike = (status?: DiagnosticOrderTestStatus) =>
-    status === DiagnosticOrderTestStatus.ACCEPTED ||
-    status === DiagnosticOrderTestStatus.PARTIALLY;
-
+    status === DiagnosticOrderTestStatus.ACCEPTED || status === DiagnosticOrderTestStatus.PARTIALLY;
 
   const activeStep = stepsDataComputed.findIndex(s =>
     isAcceptedLike(test?.processingStatus)
@@ -160,10 +139,6 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
       : s.key === test?.processingStatus
   );
 
-
-
-
-    //add new patient edits
   useEffect(() => {
     if (!order?.patientId) {
       setPatient({ ...newPatient });
@@ -174,60 +149,7 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
       .unwrap()
       .then((res: any[]) => {
         if (res?.length > 0) {
-          const raw = res[0];
-
-          setPatient(raw);
-          console.log("RAW PATIENT", raw);
-
-} else {
-          setPatient({ ...newPatient });
-        }
-      })
-      .catch(() => {
-        setPatient({ ...newPatient });
-      });
-
-  }, [order?.patientId]);
-
-  const newTestsCount = useMemo(
-    () =>
-      visibleTests.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.NEW
-      ).length,
-    [visibleTests]
-  );
-
-  const sampleCollectedTestsCount = useMemo(
-    () =>
-      visibleTests.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
-      ).length,
-    [visibleTests]
-  );
-
-  const resultApprovedCount = useMemo(
-    () =>
-      visibleTests.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.RESULT_APPROVED
-      ).length,
-    [visibleTests]
-  );
-
-  const totalTestsCount = visibleTests.length;
-
-  useEffect(() => {
-    if (!order?.patientId) {
-      setPatient({ ...newPatient });
-      return;
-    }
-
-    getBulkPatientBasicInfo([Number(order.patientId)])
-      .unwrap()
-      .then((res: any[]) => {
-        if (res?.length > 0) {
-          const raw = res[0];
-
-          setPatient(raw);
+          setPatient(res[0]);
         } else {
           setPatient({ ...newPatient });
         }
@@ -235,152 +157,225 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
       .catch(() => {
         setPatient({ ...newPatient });
       });
-
   }, [order?.patientId]);
 
+  useEffect(() => {
+    if (!order?.encounterId) {
+      setEncounter({ ...newPatientEncounter });
+      return;
+    }
+
+    getEncounterById({ id: order.encounterId })
+      .unwrap()
+      .then((res: any) => {
+        setEncounter(res ?? { ...newPatientEncounter });
+      })
+      .catch(() => {
+        setEncounter({ ...newPatientEncounter });
+      });
+  }, [order?.encounterId]);
+
+  const newTestsCount = useMemo(
+    () => visibleTests.filter(t => t.processingStatus === DiagnosticOrderTestStatus.NEW).length,
+    [visibleTests]
+  );
+
+  const sampleCollectedTestsCount = useMemo(
+    () =>
+      visibleTests.filter(t => t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED)
+        .length,
+    [visibleTests]
+  );
+
+  const resultApprovedCount = useMemo(
+    () =>
+      visibleTests.filter(t => t.processingStatus === DiagnosticOrderTestStatus.RESULT_APPROVED)
+        .length,
+    [visibleTests]
+  );
+
+  const totalTestsCount = visibleTests.length;
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const innerTabsData = [
+    {
+      title: 'Tests',
+      content: (
+        <Tests
+          ref={TestsRef}
+          order={order}
+          setTest={setTest}
+          test={test}
+          samplesList={samplesList}
+          fecthSample={fecthSample}
+          loading={globalLoading}
+          refetchAllLabData={refetchAllLabData}
+          onTestsLoaded={setVisibleTests}
+        />
+      )
+    },
+    {
+      title: 'Results',
+      content: (
+        <Result
+          order={order}
+          setTest={setTest}
+          loading={globalLoading}
+          refetchAllLabData={refetchAllLabData}
+        />
+      )
+    }
+  ];
   const tabData = [
     {
       title: 'Laboratory',
-      content: (<>
+      content: (
         <>
-          <div className="count-div-on-top-of-page">
-            <DetailsCard
-              title="Result Approved"
-              number={resultApprovedCount}
-              icon={faCircleCheck}
-              color="--green-600"
-              backgroundClassName="result-ready-section"
-              width={'20vw'}
-            />
-            <DetailsCard
-              title="Sample Collected"
-              number={sampleCollectedTestsCount}
-              icon={faClock}
-              color="--primary-yellow"
-              backgroundClassName="sample-collected-section"
-              width={'20vw'}
-            />
-            <DetailsCard
-              title="New"
-              number={newTestsCount}
-              icon={faRectangleList}
-              color="--primary-blue"
-              backgroundClassName="new-section"
-              width={'20vw'}
-            />
-            <DetailsCard
-              title="Total Test"
-              number={totalTestsCount}
-              icon={faTriangleExclamation}
-              color="--gray-dark"
-              backgroundClassName="total-test-section"
-              width={'20vw'}
-            />
-          </div>
+          <>
+            <div className="count-div-on-top-of-page">
+              <DetailsCard
+                title="Result Approved"
+                number={resultApprovedCount}
+                icon={faCircleCheck}
+                color="--green-600"
+                backgroundClassName="result-ready-section"
+                width={'20vw'}
+              />
+              <DetailsCard
+                title="Sample Collected"
+                number={sampleCollectedTestsCount}
+                icon={faClock}
+                color="--primary-yellow"
+                backgroundClassName="sample-collected-section"
+                width={'20vw'}
+              />
+              <DetailsCard
+                title="New"
+                number={newTestsCount}
+                icon={faRectangleList}
+                color="--primary-blue"
+                backgroundClassName="new-section"
+                width={'20vw'}
+              />
+              <DetailsCard
+                title="Total Test"
+                number={totalTestsCount}
+                icon={faTriangleExclamation}
+                color="--gray-dark"
+                backgroundClassName="total-test-section"
+                width={'20vw'}
+              />
+            </div>
 
-          <div className="container">
-            <div className="left-boxs">
-              <Row>
-                <Col xs={14}>
-                  <Orders
-                    ref={OrdersRef}
-                    order={order}
-                    setOrder={setOrder}
-                    dateFilter={dateFilter}
-                    loading={globalLoading}
-                  />
-
-
-                </Col>
-                <Col xs={10}>
+            <div dir={dir}>
+              <div className="container">
+                <div className="left-boxs">
                   <Row>
-                    <Form fluid layout="inline">
-                      <MyInput
-                        width={230}
-                        placeholder="From Date"
-                        fieldType="date"
-                        fieldName="fromDate"
-                        record={dateFilter}
-                        setRecord={setDateFilter}
-                        showLabel={false}
+                    <Col xs={14}>
+                      <Orders
+                        ref={OrdersRef}
+                        order={order}
+                        setOrder={setOrder}
+                        dateFilter={dateFilter}
+                        loading={globalLoading}
+                        orderNumberFilter={orderNumberFilter}
                       />
-                      <MyInput
-                        width={230}
-                        placeholder="To Date"
-                        fieldType="date"
-                        fieldName="toDate"
-                        record={dateFilter}
-                        setRecord={setDateFilter}
-                        showLabel={false}
-                      />
-                    </Form>
+                    </Col>
+                    <Col xs={10}>
+                      <Form fluid layout="inline">
+                        <MyInput
+                          width={130}
+                          placeholder="From Date"
+                          fieldType="date"
+                          fieldName="fromDate"
+                          record={dateFilter}
+                          setRecord={setDateFilter}
+                          showLabel={false}
+                        />
+                        <MyInput
+                          width={130}
+                          placeholder="To Date"
+                          fieldType="date"
+                          fieldName="toDate"
+                          record={dateFilter}
+                          setRecord={setDateFilter}
+                          showLabel={false}
+                        />
+                        <MyInput
+                          width={130}
+                          placeholder="Order ID"
+                          fieldType="text"
+                          column
+                          fieldName="orderNumber"
+                          record={{ orderNumber: orderNumberFilter }}
+                          setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
+                          showLabel={false}
+                        />
+                      </Form>
+
+                      {test.id && (
+                        <Row>
+                          <Col md={24}>
+                            <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
+                          </Col>
+                        </Row>
+                      )}
+                      {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
+                    </Col>
                   </Row>
-
-                  {test.id && (
-                    <Row>
-                      <Col md={24}>
-                        <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
-                      </Col>
-                    </Row>
-                  )}
-                  {test.id && (
-                    <Row>
-                      Number of Samples Collected: {samplesList.length}
-                    </Row>
-                  )}
-                </Col>
-              </Row>
-
-              <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-                <Tabs.Tab eventKey="1" title="Tests">
-                  <Tests
-                    ref={TestsRef}
-                    order={order}
-                    setTest={setTest}
-                    test={test}
-                    samplesList={samplesList}
-                    fecthSample={fecthSample}
-                    loading={globalLoading}
-                    refetchAllLabData={refetchAllLabData}
-                    onTestsLoaded={setVisibleTests}
+                  <MyTab
+                    data={innerTabsData}
+                    activeTab={activeKey2}
+                    setActiveTab={setActiveKey2}
+                    lazy
                   />
+                </div>
 
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Results">
-                  <Result
-                    order={order}
-                    setTest={setTest}
-                    loading={globalLoading}
-                    // fetchAllTests={fetchAllTests}
-                    refetchAllLabData={refetchAllLabData}
-                    // fecthSample={fecthSample}
+                <div className="right-boxs">
+                  <PatientSide
+                    patient={patient}
+                    setPatient={setPatient}
+                    encounter={encounter}
+                    showDiagnosis={false}
+                    showVisitDetails={false}
+                    showBalance={false}
                   />
-                </Tabs.Tab>
-              </Tabs>
-
+                </div>
+              </div>
             </div>
-
-            <div className="right-boxs">
-              <PatientSide patient={patient} encounter={encounter} />
-            </div>
-          </div>
+          </>
         </>
-      </>)
+      )
     },
     {
       title: 'Requested Tests',
       content: <RequestedTest requestType="LABORATORY" />
     },
+    {
+      title: 'Reviewed Results',
+      content: (
+        <div dir={dir}>
+          <ReviewResults
+            setEncounter={setEncounter}
+            setPatient={setPatient}
+            user={user?.id}
+
+          />        </div>
+      )
+    }
   ];
-
-
-
 
   return (
     <>
-      <MyTab data={tabData} />
-
-
+      <MyTab
+        data={tabData}
+        activeTab={mainActiveTab}
+        setActiveTab={setMainActiveTab}
+        lazy
+      />
     </>
   );
 };

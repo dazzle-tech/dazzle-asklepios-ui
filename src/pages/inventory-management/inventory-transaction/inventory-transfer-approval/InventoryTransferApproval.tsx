@@ -285,16 +285,17 @@ const inventoryTransferApproval = () => {
   const dispatch = useDispatch();
   const divContent = 'Transfer Product';
   // page header setup
+
+useEffect(() => {
   dispatch(setPageCode('Inventory_Transfer'));
   dispatch(setDivContent(divContent));
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   const filters = (
     <>
       {' '}
@@ -341,8 +342,16 @@ const inventoryTransferApproval = () => {
       <AdvancedSearchFilters searchFilter={true} />
     </>
   );
+  
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={inventoryTransListResponse?.object ?? []}
         columns={columns}
@@ -357,7 +366,7 @@ const inventoryTransferApproval = () => {
         setTransfer={setTransfer}
         refetch={refetchTransProduct}
       />
-    </>
+    </div>
   );
 };
 

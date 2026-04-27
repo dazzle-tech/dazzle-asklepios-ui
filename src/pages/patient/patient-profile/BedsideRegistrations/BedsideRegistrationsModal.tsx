@@ -13,7 +13,6 @@ import { formatEnumString } from '@/utils';
 
 const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
   const [openMergePatient, setOpenMergePatient] = useState<boolean>(false);
-  const [patient, setPatient] = useState({});
 
   const { data: patientListResponse, isFetching } = useGetUnknownPatientsQuery({
     page: 0,
@@ -29,7 +28,6 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
           className="icons-style"
           onClick={() => {
             setOpenMergePatient(true);
-            setPatient(rowData);
           }}
         />
       </Whisper>
@@ -79,20 +77,29 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
           height={580}
           loading={isFetching}
         />
-        <MergePatient open={openMergePatient} setOpen={setOpenMergePatient} patient={patient} />
+        <MergePatient open={openMergePatient} setOpen={setOpenMergePatient} />
       </>
     );
   };
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+    <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Bedside Registrations"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       steps={[{ title: 'Bedside Registrations', icon: <GrScheduleNew /> }]}
     />
+    </div>
   );
 };
 export default BedsideRegistrationsModal;

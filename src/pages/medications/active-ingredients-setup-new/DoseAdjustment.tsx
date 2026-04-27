@@ -53,8 +53,16 @@ const DoseAdjustment = ({ activeIngredients }) => {
     }
   }, [activeIngredients]);
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <div className="container-of-buttons-pregnancy-lactation">
         <MyButton
           prefixIcon={() => <MdSave />}

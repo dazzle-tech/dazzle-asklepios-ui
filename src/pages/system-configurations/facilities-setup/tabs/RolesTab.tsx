@@ -14,8 +14,15 @@ type Role = { id: number; name: string; description: string };
 const RolesTab: React.FC<RolesTabProps> = ({ facility }) => {
   const [selected, setSelected] = useState<Role | null>(null);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Grid fluid className="role-management">
         <Row className="role-row">
           <Col xs={24} md={8} className="left-col">

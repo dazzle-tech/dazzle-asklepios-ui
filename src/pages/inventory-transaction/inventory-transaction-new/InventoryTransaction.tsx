@@ -475,12 +475,6 @@ const InventoryTransaction = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     handleManualSearch();
@@ -510,8 +504,17 @@ const InventoryTransaction = () => {
   }, [dateFilter]);
 
   const divContent = 'Inventory Transaction';
+
+
+useEffect(() => {
   dispatch(setPageCode('Inventory_Transaction'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const tablebuttons = (
     <div className="bt-right-group">
@@ -604,8 +607,14 @@ const InventoryTransaction = () => {
     </>
   );
 
+
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container-div">
+    <div className="container-div" dir={dir}>
       <MyTable
         data={pageData}
         columns={columns}

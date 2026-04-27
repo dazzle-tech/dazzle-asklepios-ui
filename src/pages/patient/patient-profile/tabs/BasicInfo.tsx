@@ -26,6 +26,7 @@ const BasicInfo = ({
         width={170}
         vr={validationResult}
         column
+        required
         fieldName="secondName"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -72,6 +73,8 @@ const BasicInfo = ({
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
+        disableFutureDates
+        showWarningIfBeforeYear1900
       />
       <MyInput
         vr={validationResult}
@@ -121,7 +124,7 @@ const BasicInfo = ({
           width={170}
         />
       ) : null}
-      <MyInput
+       <MyInput
         vr={validationResult}
         column
         fieldLabel="Private Patient"

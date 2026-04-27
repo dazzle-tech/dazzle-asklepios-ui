@@ -352,8 +352,15 @@ const FormTemplates = () => {
     }
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
+    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''} dir={dir}>
       <MyTable
         data={isFiltered ? templateList ?? [] : listResponse?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

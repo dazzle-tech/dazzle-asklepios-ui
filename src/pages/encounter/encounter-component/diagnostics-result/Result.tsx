@@ -22,9 +22,17 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
-  useGetNotesByResultIdQuery,
+  useGetNotesByResultIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
-import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+
+import {
+  useFilterDiagnosticOrderTestsQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+
+import {
+  useFilterDiagnosticOrdersQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+
 import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
@@ -39,7 +47,7 @@ import {
   initialListRequest,
   initialListRequestAllValues
 } from '@/types/types';
-
+import { useLazyGetLaboratoryReportPdfQuery } from '@/services/reports/laboratoryReportsService';
 
 type Props = {
   patient: any;
@@ -84,14 +92,14 @@ const renderMarker = (marker?: string) => {
   }
 };
 
-const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
-
+const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const toaster = useToaster();
+  const patientId = patient?.id;
 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-
+  const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
   const [dateFilter, setDateFilter] = useState<any>({
     fromDate: null,
@@ -100,24 +108,45 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
-  const [generatePdf, { isLoading: isGeneratingPdf }] =
-    useGenerateLabResultsPdfMutation();
+  const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
+      useLazyGetLaboratoryReportPdfQuery();
+  const ordersQueryParams = useMemo(() => {
+    if (!patientId) return skipToken;
 
-  /* ================= QUERY ================= */
-//add new patient edits
+    return {
+      patientId,
+      page: 0,
+      size: 1000,
+      sort: 'id,desc'
+    };
+  }, [patientId]);
+
+  const {
+    data: ordersResponse,
+    isFetching: isOrdersFetching
+  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+
+  const orders = ordersResponse?.data ?? [];
+
+  const orderIds = useMemo(
+    () => orders.map((o: any) => o.id).filter(Boolean),
+    [orders]
+  );
   const queryParams = useMemo(() => {
-    const patientId = patient?.id ?? patient?.key;
-    if (!patientId) return null;
+    if (!patientId) return skipToken;
+
+    if (isOrdersFetching) return skipToken;
+
+    if (!orderIds.length) return skipToken;
 
     const params: any = {
-      patientId,
+      orderIdIn: orderIds,
       page: pageIndex,
       size: rowsPerPage,
       processingStatus: 'RESULT_APPROVED',
-      sort: 'reviewDate,desc'
+      sort: 'reviewDate,desc',
+      reviewed: true
     };
-
-    params.reviewed = true;
 
     if (showAbnormal) {
       params.markerIn = [
@@ -130,47 +159,47 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     }
 
     if (dateFilter.fromDate) {
-      params.approvedDateFrom =
-        startOfDay(dateFilter.fromDate).toISOString();
+      params.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
     }
 
     if (dateFilter.toDate) {
-      params.approvedDateTo =
-        endOfDay(dateFilter.toDate).toISOString();
+      params.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
     }
 
     return params;
-  }, [patient, pageIndex, rowsPerPage, showAbnormal, dateFilter]);
-  const { data: response, isFetching } =
-    useFilterDiagnosticOrderTestResultsQuery(
-      queryParams ?? skipToken
-    );
+  }, [
+    patientId,
+    orderIds,
+    pageIndex,
+    rowsPerPage,
+    showAbnormal,
+    dateFilter,
+    isOrdersFetching
+  ]);
 
-  const { data: notesResponse, isFetching: isNotesFetching } =
-    useGetNotesByResultIdQuery(
-      openNotesModal && selectedResultId
-        ? selectedResultId
-        : skipToken
-    );
+  const {
+    data: response,
+    isFetching: isResultsFetching
+  } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
 
+  const { data: notesResponse } = useGetNotesByResultIdQuery(
+    openNotesModal && selectedResultId ? selectedResultId : skipToken
+  );
 
   const results = response?.data ?? [];
   const totalCount = response?.totalCount ?? 0;
 
-  const { data: profilesResponse } =
-    useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000
-    });
+  const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
+    page: 0,
+    size: 10000
+  });
 
   const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
+    () => new Map(profilesResponse?.data?.map((p: any) => [p.id, p]) ?? []),
     [profilesResponse]
   );
 
-
-  const { data: valueUnitLov } =
-    useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: allLovValues } =
     useGetLovAllValuesQuery({ ...initialListRequestAllValues });
@@ -178,16 +207,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   const { data: lovDefinitions } =
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
-
-  const isLovResult = (row: any) =>
-    !!row.resultValueText && row.resultValueNumber == null;
-
-  const resolveLovDisplayValue = (
-    lovId: any,
-    key: any
-  ) => {
-    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object)
+  const resolveLovDisplayValue = (lovId: any, key: any) => {
+    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
+    }
 
     const lovDef = lovDefinitions.object.find(
       (d: any) => String(d.key) === String(lovId)
@@ -204,88 +227,66 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     );
   };
 
-
-  /* ================= ORDER TESTS ================= */
-
   const orderTestIds = useMemo(
-    () => results.map(r => r.orderTestId).filter(Boolean),
+    () => results.map((r: any) => r.orderTestId).filter(Boolean),
     [results]
   );
 
-  const { data: orderTestsResponse } =
-    useFilterDiagnosticOrderTestsQuery(
-      orderTestIds.length
-        ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
-        : skipToken
-    );
+  const {
+    data: orderTestsResponse,
+    isFetching: isOrderTestsFetching
+  } = useFilterDiagnosticOrderTestsQuery(
+    patientId && orderTestIds.length
+      ? { orderTestIdIn: orderTestIds, page: 0, size: 1000 }
+      : skipToken
+  );
 
   const orderTests = orderTestsResponse?.data ?? [];
 
   const orderTestMap = useMemo(
-    () => new Map(orderTests.map(t => [t.id, t])),
+    () => new Map(orderTests.map((t: any) => [t.id, t])),
     [orderTests]
   );
 
-  /* ================= ALL TESTS ================= */
-
-  const { data: allTestsResponse } =
-    useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+  const {
+    data: allTestsResponse,
+    isFetching: isAllTestsFetching
+  } = useGetAllDiagnosticTestsQuery(
+    patientId ? { page: 0, size: 10000 } : skipToken
+  );
 
   const allTests = allTestsResponse?.data ?? [];
 
   const testMap = useMemo(
-    () => new Map(allTests.map(t => [t.id, t])),
+    () => new Map(allTests.map((t: any) => [t.id, t])),
     [allTests]
   );
 
 
-  /* ================= PDF ================= */
-
-  const handleGeneratePdf = async () => {
+  const handleGeneratePdf = async (result: any) => {
+   if (!result?.id) return;
     try {
-      //add new patient edits
-      const pdfData = {
-        patientInfo: {
-          name: patient?.fullName,
-          mrn: patient?.patientMrn,
-          dob: patient?.dob,
-          gender: patient?.gender
-        },
-        results
-      };
+      const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const file = await generatePdf(pdfData).unwrap();
-
-      const blob = new Blob([file], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `Lab_Results_${Date.now()}.pdf`;
+      link.href = fileURL;
+      link.download = `Result-${result.id}.pdf`;
+      document.body.appendChild(link);
       link.click();
-      window.URL.revokeObjectURL(url);
+      link.remove();
 
-      toaster.push(
-        <Message type="success" showIcon>
-          Report Generated Successfully
-        </Message>
-      );
-    } catch {
-      toaster.push(
-        <Message type="error" showIcon>
-          Failed To Generate Report
-        </Message>
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download report pdf', error);
     }
   };
-
-
   const normalizedResults = useMemo(() => {
-    if (!orderTests.length || !allTests.length) return [];
-
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
       const test = orderTest ? testMap.get(orderTest.testId) : null;
-
       const profile = profilesMap.get(r.profileTestId);
       const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
 
@@ -306,7 +307,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
       } else {
         value =
           r.resultValueNumber !== null &&
-            r.resultValueNumber !== undefined
+          r.resultValueNumber !== undefined
             ? String(r.resultValueNumber)
             : '';
 
@@ -332,14 +333,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     results,
     orderTestMap,
     testMap,
+    profilesMap,
     valueUnitLov,
     lovDefinitions,
     allLovValues
   ]);
-
-
-
-  console.log("normalizedResults", normalizedResults);
 
   const columns = [
     {
@@ -351,9 +349,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
       key: 'resultDate',
       title: <Translate>RESULT DATE</Translate>,
       render: (row: any) =>
-        row.reviewDate
-          ? formatDateWithoutSeconds(row.reviewDate)
-          : ' '
+        row.reviewDate ? formatDateWithoutSeconds(row.reviewDate) : ' '
     },
     {
       key: 'testName',
@@ -390,8 +386,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
       key: 'marker',
       title: <Translate>MARKER</Translate>,
       align: 'center',
-      render: (row: any) =>
-        renderMarker(row.marker ?? row.marker)
+      render: (row: any) => renderMarker(row.marker)
     },
     {
       key: 'comments',
@@ -414,28 +409,27 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     }
   ];
 
-  /* ================= FILTER UI ================= */
-
   const filters = (
     <Form fluid>
       <div className='diagnostics-result-filters-main-container'>
         <MyInput
           width={160}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
+          fieldType='date'
+          fieldLabel='From Date'
+          fieldName='fromDate'
           record={dateFilter}
           setRecord={setDateFilter}
         />
 
         <MyInput
           width={160}
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
+          fieldType='date'
+          fieldLabel='To Date'
+          fieldName='toDate'
           record={dateFilter}
           setRecord={setDateFilter}
         />
+
         <div className='diagnostics-result-filters-check-box'>
           <Checkbox
             checked={showAbnormal}
@@ -448,60 +442,66 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     </Form>
   );
 
-
-  const tableButtons = (<>
+  const tableButtons = (
     <MyButton
-      onClick={handleGeneratePdf}
-      loading={isGeneratingPdf}
-      disabled={!results.length}
+      onClick={() => handleGeneratePdf(selectedResult)}
+      loading={isGeneratingReport}
+      disabled={selectedResult == null || !selectedResult.id}
       appearance='ghost'
       prefixIcon={() => (
         <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
       )}
-      style={{ marginLeft: 'auto' }}>
+      style={{ marginLeft: 'auto' }}
+    >
       Generate Complete Report
-    </MyButton></>)
-  console.log("normalizedResults", normalizedResults);
-
+    </MyButton>
+  );
 
   useEffect(() => {
     setPageIndex(0);
-  }, [dateFilter, showAbnormal]);
+  }, [patientId, dateFilter, showAbnormal]);
+
+  if (!patientId) {
+    return null;
+  }
 
   return (
-    <Panel defaultExpanded>
+    <Panel defaultExpanded ref={ref}>
       <MyTable
         filters={filters}
         columns={columns}
         data={normalizedResults}
+        onRowClick={(row) => {
+          setSelectedResult(row);
+        }}
+        rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
-          isFetching ||
-          !orderTestsResponse ||
-          !allTestsResponse ||
-          isGeneratingPdf
+          isOrdersFetching ||
+          isResultsFetching ||
+          isOrderTestsFetching ||
+          isAllTestsFetching
         }
         page={pageIndex}
         tableButtons={tableButtons}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={(_, p) => setPageIndex(p)}
-        onRowsPerPageChange={e =>
-          setRowsPerPage(Number(e.target.value))
-        }
+        onRowsPerPageChange={(e) => setRowsPerPage(Number(e.target.value))}
       />
 
       <ChatModal
         open={openNotesModal}
         setOpen={setOpenNotesModal}
-        title="Comments"
+        title='Comments'
         list={openNotesModal ? notesResponse ?? [] : []}
-        fieldShowName="note"
+        fieldShowName='note'
         handleSendMessage={{}}
         disabled
       />
-
     </Panel>
   );
 });
+
+ReviewedResults.displayName = 'ReviewedResults';
 
 export default ReviewedResults;

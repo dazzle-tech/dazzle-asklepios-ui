@@ -136,15 +136,15 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     } else {
       setFormData({
         ...emptyFamilyHistory,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   /* SAVE */
 
@@ -160,13 +160,13 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     }
 
     if (errorMsg) {
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
     }
 
     const payload = {
       id: formData.id,
-      patientId: Number(patient.key),
+      patientId: Number(patient.id),
       condition: formData.condition,
       relation: formData.relation,
       inheritedDiseases: Boolean(formData.inheritedDiseases)
@@ -230,6 +230,13 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
   /* MODAL */
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -244,7 +251,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

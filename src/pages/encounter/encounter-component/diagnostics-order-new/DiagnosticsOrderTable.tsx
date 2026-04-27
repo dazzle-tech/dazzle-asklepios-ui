@@ -1,6 +1,6 @@
 import { faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 
@@ -8,7 +8,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
-
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
@@ -85,6 +85,29 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     return '';
   };
 
+  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+
+  const departmentIds = React.useMemo(() => {
+  const ids = normalizedOrderTestList
+    .map(r => r.receivedDepartmentId ?? r.receivedLabId)
+    .filter(Boolean);
+
+  return Array.from(new Set(ids));
+}, [normalizedOrderTestList]);
+const [departmentsMap, setDepartmentsMap] = useState<Map<number, any>>(new Map());
+
+useEffect(() => {
+  if (!departmentIds.length) return;
+
+  getDepartmentsBulk(departmentIds)
+    .unwrap()
+    .then(res => {
+      const map = new Map(res.map((d: any) => [d.id, d]));
+      setDepartmentsMap(map);
+    });
+}, [departmentIds]);
+const getDepartmentName = (id?: number) =>
+  departmentsMap.get(id)?.name ?? id;
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -123,7 +146,8 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       title: <Translate>TEST NAME</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: (rowData: any) => rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
+      render: (rowData: any) =>
+        rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
     },
     {
       key: 'internalCode',
@@ -144,10 +168,13 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     {
       key: 'receivedDepartmentId',
       dataKey: 'receivedDepartmentId',
-      title: <Translate>RECEIVED LAB</Translate>,
+      title: <Translate>RECEIVED Department</Translate>,
       fullText: true,
       flexGrow: 1,
-      render: (rowData: any) => rowData.receivedDepartmentId ?? rowData.receivedLabId ?? ''
+      render: (rowData: any) => {
+        const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
+        return getDepartmentName(deptId);
+      }
     },
     {
       key: 'reason',
@@ -227,7 +254,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       }
     },
     {
-      key: '',
+      key: 'createdAtBy',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
@@ -239,26 +266,30 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       )
     },
     {
-      key: '',
+      key: 'updatedAtBy',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
         <>
-          <span>{rowData.updatedBy}</span>
+          <span>{rowData.lastModifiedBy}</span>
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.updatedAt)}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
+          </span>
         </>
       )
     },
     {
-      key: '',
+      key: 'cancelledAtBy',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
         <>
-          <span>{rowData.deletedBy}</span>
+          <span>{rowData.cancelledBy}</span>
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData.cancelledDate)}
+          </span>
         </>
       )
     },
@@ -270,7 +301,15 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="table-row-margins">
       <div ref={tableContainerRef}>
         <MyTable
@@ -279,6 +318,10 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
           loading={loadTests}
           data={orderId ? normalizedOrderTestList : []}
           onRowClick={(rowData: any) => {
+            const rowId = Number(rowData.id);
+            if (rowData.status === 'NEW') {
+              handleCheckboxChange(rowId);
+            }
             setOrderTest(normalizeOrderTest(rowData));
             setTest(rowData.test ?? {});
             setPreviewDiagnosticsOrder(rowData);
@@ -295,6 +338,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
           patient} />
       </Panel>
     </div>
+  </div>
   );
 };
 

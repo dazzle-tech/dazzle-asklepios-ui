@@ -436,7 +436,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
                   }
                 }}
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
               <Checkbox
                 onChange={(value, checked) => {

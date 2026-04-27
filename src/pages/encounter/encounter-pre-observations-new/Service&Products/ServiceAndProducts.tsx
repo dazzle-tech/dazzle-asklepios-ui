@@ -1,43 +1,41 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import { useLocation } from 'react-router-dom';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetServicesQuery } from '@/services/setup/serviceService';
-import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useAppDispatch } from '@/hooks';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
-import { BrandMedication, InventoryProduct, PatientServiceAndProduct } from '@/types/model-types-new';
+import { PatientServiceAndProduct, ServiceSource } from '@/types/model-types-new';
 import {
   useDeletePatientServiceOrProductMutation,
   useGetPatientServicesAndProductsByEncounterQuery,
 } from '@/services/encounters/patientServicesAndProductsService';
 import { formatEnumString } from '@/utils';
 import { newPatientServiceAndProduct } from '@/types/model-types-constructor-new';
+
+import { useLazyGetServicesBulkByIdsQuery } from '@/services/setup/serviceService';
+import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
+import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const location = useLocation();
   const encounter = location.state?.encounter;
-
-  const authSlice = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
-   const [paginationParams, setPaginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
 
-  // Delete mutation for selected service/product row.
   const [deletePatientServiceProduct] = useDeletePatientServiceOrProductMutation();
 
-  // Main list for the current encounter.
   const { data: patientServiceProductListResponse, refetch, isLoading } =
     useGetPatientServicesAndProductsByEncounterQuery(
       {
@@ -56,32 +54,167 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const [popupOpen, setPopupOpen] = useState<boolean>(false);
   const [patientServiceAndProduct, setPatientServiceAndProduct] =
     useState<PatientServiceAndProduct>({ ...newPatientServiceAndProduct });
-    const [sortColumn, setSortColumn] = useState('id');
+  const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [lookupsLoading, setLookupsLoading] = useState(false);
 
-  // Master data used to resolve display names in the table.
-  const { data: serviceListResponse } = useGetServicesQuery({
-    facilityId: authSlice?.tenant?.selectedFacility?.id,
-  });
-  const { data: inventoryProductsResponse } = useGetInventoryProductsQuery({});
-  const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({});
-
-  const products: InventoryProduct[] = inventoryProductsResponse?.data ?? [];
-  const brands: BrandMedication[] = brandMedicationList?.data ?? [];
-  const services = serviceListResponse?.data ?? [];
-
-  const getProductById = (id?: number) => products.find((p) => p.Id === id);
-
+  const rows = patientServiceProductListResponse?.data ?? [];
   const totalCount = patientServiceProductListResponse?.totalCount ?? 0;
 
-   // Class name for selected row
+  const serviceIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(row => row.billingItemType === 'SERVICE' && row.serviceId != null)
+            .map(row => row.serviceId)
+        )
+      ),
+    [rows]
+  );
+
+  const medicationIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(row => row.billingItemType === 'MEDICATION' && row.brandMedicationId != null)
+            .map(row => row.brandMedicationId)
+        )
+      ),
+    [rows]
+  );
+
+  const diagnosticTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(
+              row =>
+                ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(row.billingItemType) &&
+                row.diagnosticTestId != null
+            )
+            .map(row => row.diagnosticTestId)
+        )
+      ),
+    [rows]
+  );
+
+  const procedureIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(row => row.billingItemType === 'PROCEDURE' && row.procedureId != null)
+            .map(row => row.procedureId)
+        )
+      ),
+    [rows]
+  );
+
+  const [fetchServicesBulk] = useLazyGetServicesBulkByIdsQuery();
+  const [fetchDiagnosticTestsBulk] = useLazyGetDiagnosticTestsByIdsQuery();
+  const [fetchBrandMedicationsBulk] = useLazyGetBrandMedicationsByIdsQuery();
+  const [fetchProcedureById] = useLazyGetProcedureByIdQuery();
+
+  const [servicesMap, setServicesMap] = useState<Record<number | string, any>>({});
+  const [medicationsMap, setMedicationsMap] = useState<Record<number | string, any>>({});
+  const [diagnosticTestsMap, setDiagnosticTestsMap] = useState<Record<number | string, any>>({});
+  const [proceduresMap, setProceduresMap] = useState<Record<number | string, any>>({});
+
+  useEffect(() => {
+    const loadLookups = async () => {
+      if (!rows.length) {
+        setServicesMap({});
+        setMedicationsMap({});
+        setDiagnosticTestsMap({});
+        setProceduresMap({});
+        setLookupsLoading(false);
+        return;
+      }
+
+      setLookupsLoading(true);
+
+      try {
+        const servicesPromise = serviceIds.length
+          ? fetchServicesBulk(serviceIds, true).unwrap()
+          : Promise.resolve([]);
+
+        const medicationsPromise = medicationIds.length
+          ? fetchBrandMedicationsBulk({ ids: medicationIds }, true).unwrap()
+          : Promise.resolve([]);
+
+        const diagnosticTestsPromise = diagnosticTestIds.length
+          ? fetchDiagnosticTestsBulk({ ids: diagnosticTestIds }, true).unwrap()
+          : Promise.resolve([]);
+
+        const proceduresPromise = procedureIds.length
+          ? Promise.all(
+            procedureIds.map(async id => {
+              const item = await fetchProcedureById({ id }, true).unwrap();
+              return item;
+            })
+          )
+          : Promise.resolve([]);
+
+        const [servicesData, medicationsData, diagnosticTestsData, proceduresData] =
+          await Promise.all([
+            servicesPromise,
+            medicationsPromise,
+            diagnosticTestsPromise,
+            proceduresPromise,
+          ]);
+
+        const medicationsList = Array.isArray(medicationsData)
+          ? medicationsData
+          : medicationsData?.data ?? [];
+
+        setServicesMap(
+          Object.fromEntries((servicesData ?? []).map((item: any) => [item.id, item]))
+        );
+
+        setMedicationsMap(
+          Object.fromEntries((medicationsList ?? []).map((item: any) => [item.id, item]))
+        );
+
+        setDiagnosticTestsMap(
+          Object.fromEntries((diagnosticTestsData ?? []).map((item: any) => [item.id, item]))
+        );
+
+        setProceduresMap(
+          Object.fromEntries((proceduresData ?? []).map((item: any) => [item.id, item]))
+        );
+      } catch (error) {
+        setServicesMap({});
+        setMedicationsMap({});
+        setDiagnosticTestsMap({});
+        setProceduresMap({});
+      } finally {
+        setLookupsLoading(false);
+      }
+    };
+
+    loadLookups();
+  }, [
+    rows,
+    serviceIds,
+    medicationIds,
+    diagnosticTestIds,
+    procedureIds,
+    fetchServicesBulk,
+    fetchBrandMedicationsBulk,
+    fetchDiagnosticTestsBulk,
+    fetchProcedureById,
+  ]);
+
   const isSelected = (rowData: PatientServiceAndProduct) => {
     if (rowData && patientServiceAndProduct && rowData.id === patientServiceAndProduct.id) {
       return 'selected-row';
-    } else return '';
+    }
+    return '';
   };
 
-  // Delete the currently selected row after user confirmation.
   const handleDelete = async () => {
     if (patientServiceAndProduct?.id === undefined) return;
 
@@ -89,9 +222,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       await deletePatientServiceProduct({
         id: patientServiceAndProduct?.id,
       }).unwrap();
+
       dispatch(
-        notify({ msg: 'Patient Service/Product Deleted Successfully', sev: 'success' })
+        notify({ msg: 'Deleted Successfully', sev: 'success' })
       );
+
       setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
       refetch();
       setOpenModal(false);
@@ -119,68 +254,83 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     });
   };
 
-  // Table columns.
+  const getDisplayName = (rowData: PatientServiceAndProduct) => {
+    switch (rowData.billingItemType) {
+      case 'SERVICE':
+        return servicesMap[rowData.serviceId!]?.name ?? '-';
+
+      case 'MEDICATION':
+        return medicationsMap[rowData.brandMedicationId!]?.name ?? '-';
+
+      case 'LABORATORY':
+      case 'RADIOLOGY':
+      case 'PATHOLOGY':
+        return diagnosticTestsMap[rowData.diagnosticTestId!]?.name ?? '-';
+
+      case 'PROCEDURE':
+        return proceduresMap[rowData.procedureId!]?.name ?? '-';
+
+      default:
+        return '-';
+    }
+  };
+
   const columns = [
     {
-      key: 'category',
+      key: 'billingItemType',
       title: 'Category',
-      render: (rowData: any) => <span>{formatEnumString(rowData.category)}</span>,
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{formatEnumString(rowData.billingItemType)}</span>
+      ),
+    },
+    {
+      key: 'serviceSource',
+      title: 'service Source',
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{formatEnumString(rowData.serviceSource)} Page</span>
+      ),
     },
     {
       key: 'name',
       title: 'Name',
       isLink: true,
-      render: (rowData) => {
-        // Product name
-        if (rowData.productId) {
-          const product = products.find((p) => p.Id === rowData.productId);
-          if (!product) return '-';
-          return <span>{product?.name}</span>;
-        }
-
-        // Service name lookup.
-        if (rowData.serviceId) {
-          const service = services.find((s) => String(s.id) === String(rowData.serviceId));
-          return <span>{service?.name ?? rowData.name}</span>;
-        }
-
-        // Fallback when data is incomplete.
-        return <span>-</span>;
-      },
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{getDisplayName(rowData)}</span>
+      ),
     },
     {
-      key: 'type',
-      title: 'Type',
-      render: (rowData) => {
-        if (rowData.category === 'SERVICE') {
-          return '-';
-        }
+      key: 'unitPrice',
+      title: 'Price',
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{rowData.unitPrice != null ? Number(rowData.unitPrice).toFixed(2) : '-'}</span>
+      ),
+    },
 
-        if (rowData.category === 'PRODUCT') {
-          const product = getProductById(rowData.productId);
-          if (product) return <span>{formatEnumString(product?.type)}</span>;
-          return '-';
-        }
-
-        return '-';
-      },
+    {
+      key: 'currency',
+      title: 'Currency',
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{rowData.currency ?? '-'}</span>
+      ),
     },
     { key: 'quantity', title: 'Quantity' },
     {
-      key: '',
+      key: 'actions',
       title: '',
-      render: (rowData) => (
+      render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          <MdModeEdit
+          {(!rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
             className="icons-style"
             onClick={() => {
+              setPatientServiceAndProduct(rowData);
               setPopupOpen(true);
             }}
-          />
-          <MdDelete
+          />}
+
+          {(!rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"
@@ -189,15 +339,24 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               setPatientServiceAndProduct(rowData);
               setOpenModal(true);
             }}
-          />
+          />}
         </div>
       ),
     },
   ];
 
+  useEffect(() => {
+    dispatch(setPageCode('serviceandproducts'));
+    dispatch(setDivContent('Service and Products'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
   return (
     <div>
-      {/* Add new row entry */}
       <div className="bt-div">
         <div className="bt-right">
           <MyButton
@@ -213,34 +372,32 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         </div>
       </div>
 
-      {/* Current encounter services/products list */}
       <MyTable
-        data={patientServiceProductListResponse?.data ?? []}
+        data={lookupsLoading ? [] : rows}
         columns={columns}
         rowClassName={isSelected}
         onRowClick={(rowData) => {
           setPatientServiceAndProduct(rowData);
         }}
-         totalCount={totalCount}
-          loading={isLoading}
-          page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={e => {
-            const newSize = Number(e.target.value);
-            setPaginationParams({
-              ...paginationParams,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now()
-            });
-          }}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
+        totalCount={totalCount}
+        loading={isLoading || lookupsLoading}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+          setPaginationParams({
+            ...paginationParams,
+            size: newSize,
+            page: 0,
+            timestamp: Date.now()
+          });
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
       />
 
-      {/* Add/Edit modal */}
       <AddEditPatientServiceAndProduct
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -248,14 +405,13 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setPatientServiceAndProduct={setPatientServiceAndProduct}
       />
 
-      {/* Delete confirmation modal */}
       <DeletionConfirmationModal
         open={openModal}
         setOpen={setOpenModal}
-        itemToDelete={'product/service'}
+        itemToDelete={'billing item'}
         actionButtonFunction={handleDelete}
         actionType="delete"
-        confirmationQuestion="Are you sure you want to delete this product/service?"
+        confirmationQuestion="Are you sure you want to delete this billing item?"
         actionButtonLabel="Delete"
         cancelButtonLabel="Cancel"
       />

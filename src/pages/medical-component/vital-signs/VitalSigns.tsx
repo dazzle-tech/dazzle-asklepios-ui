@@ -3,11 +3,12 @@ import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import {
   useCreateVitalSignsMutation,
   useGetLatestVitalSignsByEncounterIdQuery,
   useGetLatestTriageVitalSignsByEncounterIdQuery
-} from '@/services/medicalSheets/observations/vitalSignsService';
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newVitalSigns } from '@/types/model-types-constructor-new';
 import type { VitalSigns as VitalSignsModelObject } from '@/types/model-types-new';
@@ -27,6 +28,7 @@ type VitalSignsProps = {
    * - force isTriage to be true on save
    */
   isTriage?: boolean;
+  encounter?: any;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
@@ -36,6 +38,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   patientId,
   encounterId,
   isTriage = false,
+  encounter,
   disabled = false,
   width = '100%',
   title = 'Vital Signs'
@@ -48,6 +51,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
   // === API ===
   const [createVitalSigns] = useCreateVitalSignsMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
 
   // Non-triage latest
   const { data: latestVitalSignsByEncounterId } = useGetLatestVitalSignsByEncounterIdQuery(
@@ -56,10 +60,11 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   );
 
   // Triage latest
-  const { data: latestTriageVitalSignsByEncounterId } = useGetLatestTriageVitalSignsByEncounterIdQuery(
-    { encounterId },
-    { skip: !encounterId || !isTriage }
-  );
+  const { data: latestTriageVitalSignsByEncounterId } =
+    useGetLatestTriageVitalSignsByEncounterIdQuery(
+      { encounterId },
+      { skip: !encounterId || !isTriage }
+    );
 
   // === Local state ===
   const [meanArterialPressureValue, setMeanArterialPressureValue] = useState<string | null>(null);
@@ -71,7 +76,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     isTriage
   });
 
-
   useEffect(() => {
     const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
     if (!source) return;
@@ -82,11 +86,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       id: undefined,
       patientId,
       encounterId,
-      isTriage, 
-      isActive:
-        typeof (source as any)?.isActive === 'boolean'
-          ? (source as any).isActive
-          : true
+      isTriage,
+      isActive: typeof (source as any)?.isActive === 'boolean' ? (source as any).isActive : true
     }));
   }, [
     isTriage,
@@ -95,7 +96,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     patientId,
     encounterId
   ]);
-
 
   useEffect(() => {
     const diastolicValue = Number(vitalSigns?.bloodPressureDiastolic);
@@ -121,12 +121,11 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       temperature: vitalSigns.temperature ?? null,
       oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
       respiratoryRate: vitalSigns.respiratoryRate ?? null,
-      isTriage, 
+      isTriage,
       isActive: typeof vitalSigns.isActive === 'boolean' ? vitalSigns.isActive : true,
       notes: vitalSigns.notes ?? null
     };
   }, [vitalSigns, patientId, encounterId, isTriage]);
-
 
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
@@ -173,14 +172,16 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Vital signs payload is required.',
@@ -198,7 +199,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
   const handleSaveVitalSigns = async () => {
@@ -212,6 +213,30 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       return;
     }
 
+    const missingFields: string[] = [];
+    if (!vitalSigns.bloodPressureSystolic && vitalSigns.bloodPressureSystolic !== 0)
+      missingFields.push('Blood Pressure Systolic');
+    if (!vitalSigns.bloodPressureDiastolic && vitalSigns.bloodPressureDiastolic !== 0)
+      missingFields.push('Blood Pressure Diastolic');
+    if (!vitalSigns.heartRate && vitalSigns.heartRate !== 0) missingFields.push('Heart Rate');
+    if (!vitalSigns.temperature && vitalSigns.temperature !== 0) missingFields.push('Temperature');
+    if (!vitalSigns.oxygenSaturation && vitalSigns.oxygenSaturation !== 0)
+      missingFields.push('Oxygen Saturation');
+    if (!vitalSigns.respiratoryRate && vitalSigns.respiratoryRate !== 0)
+      missingFields.push('Respiratory Rate');
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill in the required fields:\n${missingFields
+            .map(f => `• ${f}`)
+            .join('\n')}`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     try {
       const createResponse = await createVitalSigns(vitalSignsCreatePayload as any).unwrap();
 
@@ -220,8 +245,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
         ...createResponse,
         patientId,
         encounterId,
-        isTriage, 
-        id: undefined 
+        isTriage,
+        id: undefined
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
@@ -229,7 +254,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       showApiError(error);
     }
   };
-
   const handleClearVitalSigns = () => {
     setVitalSigns({
       ...newVitalSigns,
@@ -244,125 +268,131 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClearVitalSigns} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
+        <Form fluid>
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                width="100%"
-                fieldType="number"
-                fieldName="bloodPressureSystolic"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                required
-              />
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              width="100%"
+              fieldType="number"
+              fieldName="bloodPressureSystolic"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              required
+            />
 
-              <div className="gap-betwen-blood-pressures">/</div>
-
-              <MyInput
-                width="100%"
-                fieldType="number"
-                fieldName="bloodPressureDiastolic"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                required
-              />
-
-              <div className="container-Column">
-                <MyLabel label="MAP" />
-                <div>
-                  <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
-                  <text>{meanArterialPressureValue}</text>
-                </div>
-              </div>
-            </div>
-
-            <div className="margin-bot-10">
-              <MyInput
-                width="100%"
-                fieldType="select"
-                fieldLabel="Measurment Site"
-                fieldName="measurementSite"
-                selectData={bloodPressureMeasurementSiteLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                searchable={false}
-              />
-            </div>
-
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                width="100%"
-                fieldType="number"
-                fieldName="heartRate"
-                rightAddon="bpm"
-                rightAddonwidth={45}
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-              />
-
-              <MyInput
-                width="100%"
-                fieldType="number"
-                rightAddon="C"
-                fieldName="temperature"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                required
-              />
-            </div>
-
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                width="100%"
-                fieldType="number"
-                rightAddon=" % "
-                fieldName="oxygenSaturation"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-              />
-
-              <MyInput
-                width="100%"
-                fieldType="number"
-                rightAddon="bpm"
-                rightAddonwidth={45}
-                fieldName="respiratoryRate"
-                fieldLabel="R.R"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-              />
-            </div>
+            <div className="gap-betwen-blood-pressures">/</div>
 
             <MyInput
-              fieldLabel="Note"
               width="100%"
-              fieldName="notes"
-              fieldType="textarea"
+              fieldType="number"
+              fieldName="bloodPressureDiastolic"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              required
+            />
+
+            <div className="container-Column">
+              <MyLabel label="MAP" />
+              <div>
+                <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
+                <span>{meanArterialPressureValue}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="margin-bot-10">
+            <MyInput
+              required={isTriage}
+              width={isTriage ? '42%' : '100%'}
+              fieldType="select"
+              fieldLabel="Measurment Site"
+              fieldName="measurementSite"
+              selectData={bloodPressureMeasurementSiteLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              searchable={false}
+            />
+          </div>
+
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              fieldName="heartRate"
+              rightAddon="bpm"
+              rightAddonwidth={45}
               record={vitalSigns}
               setRecord={setVitalSigns}
               disabled={disabled}
             />
-          </Form>
+
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon="C"
+              fieldName="temperature"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              allowDecimal
+            />
+          </div>
+
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon=" % "
+              fieldName="oxygenSaturation"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              allowDecimal
+            />
+
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon="bpm"
+              rightAddonwidth={45}
+              fieldName="respiratoryRate"
+              fieldLabel="R.R"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+            />
+          </div>
+
+          <MyInput
+            fieldLabel="Note"
+            width="100%"
+            fieldName="notes"
+            fieldType="textarea"
+            record={vitalSigns}
+            setRecord={setVitalSigns}
+            disabled={disabled}
+          />
         </div>
+        </Form>
       }
     />
   );

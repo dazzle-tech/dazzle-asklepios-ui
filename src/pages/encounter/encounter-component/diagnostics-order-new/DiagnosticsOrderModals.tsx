@@ -86,6 +86,8 @@ type Props = {
   setSelectedRows: (v: number[]) => void;
 
   handleRecallFavoriteTest: (t: any) => Promise<void> | void;
+
+  handleLoadMore: () => void;
 };
 
 const DiagnosticsOrderModals: React.FC<Props> = props => {
@@ -154,12 +156,18 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
 
     orderTestRefetch,
     setSelectedRows,
-
+    handleLoadMore,
     handleRecallFavoriteTest
   } = props;
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <DetailsModal
         order={orders}
         test={test}
@@ -169,8 +177,9 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOrderTest={setOrderTest}
         handleSaveTest={handleSaveTest}
         edit={edit}
+        patient={encounter?.patient}
+        facilityId={encounter?.facilityId}
       />
-
 
       <CancellationModal
         open={openConfirmDeleteModel}
@@ -181,12 +190,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         fieldName="cancellationReason"
         fieldLabel={'Cancellation Reason'}
         title={'Cancellation'}
+        required={true}
       />
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${test?.test?.testName ?? test?.testName ?? ''}`}
+        title={`Attachments - ${test?.testName ?? test?.name ?? ''}`}
         size="lg"
         hideActionBtn
         content={
@@ -195,7 +205,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
             source="DIAGNOSTIC_ORDER_ATTACHMENT"
             sourceId={test?.id ? Number(test.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
@@ -207,18 +217,21 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         actionButtonFunction={handleSaveTests}
         size="50vw"
         content={
-          <TransferList
-            open={openTestsModal}
-            leftItems={leftItems}
-            rightItems={rightItems}
-            setLeftItems={setLeftItems}
-            setRightItems={setRightItems}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            searchType={searchType}
-            setSearchType={setSearchType}
-            isFetching={isFetching}
-          />
+          <div dir={dir}>
+            <TransferList
+              open={openTestsModal}
+              leftItems={leftItems}
+              rightItems={rightItems}
+              setLeftItems={setLeftItems}
+              setRightItems={setRightItems}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              searchType={searchType}
+              setSearchType={setSearchType}
+              isFetching={isFetching}
+              onLoadMore={handleLoadMore}
+            />
+          </div>
         }
       />
 
@@ -239,7 +252,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenRequestTestModal}
         fromDepartmentId={resolveFromDepartmentId()}
         fromFacilityId={selectedDepartment?.facilityId}
-        onSuccess={() => { }}
+        onSuccess={() => {}}
       />
 
       <MyModal
@@ -248,8 +261,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         title="Test Card"
         size="42vw"
         position="center"
+        hideActionBtn={true}
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
-        content={<TestCardModal orderTest={orderTest} test={test} />}
+        content={
+          <div dir={dir}>
+            <TestCardModal orderTest={orderTest} test={test} />
+          </div>
+        }
       />
 
       <BulkAssignDepartmentModal
@@ -261,6 +279,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
           orderTestRefetch();
           setSelectedRows([]);
         }}
+        facilityId={encounter?.facilityId}
       />
 
       <RecallFavoriteDiagnosticOrdersModal
@@ -272,7 +291,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
           Promise.all(tests.map((t: any) => handleRecallFavoriteTest(t)));
         }}
       />
-    </>
+    </div>
   );
 };
 

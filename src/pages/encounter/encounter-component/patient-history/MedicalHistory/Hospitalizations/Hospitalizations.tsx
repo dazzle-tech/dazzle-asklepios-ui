@@ -17,6 +17,7 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
 import '../styles.less';
+import Translate from '@/components/Translate';
 
 const Hospitalizations = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -25,16 +26,12 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
 
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
-
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
 
   /*  API  */
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
   const { data, isFetching } = useGetHospitalizationsQuery(
@@ -56,18 +53,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteHospitalization({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
 
   /*  TABLE  */
 
@@ -99,7 +84,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'lengthOfStayDays',
-      title: 'LENGTH OF STAY (DAYS)',
+      title:<span><Translate>LENGTH OF STAY</Translate><Translate>(Days)</Translate></span>,
       flexGrow: 2,
       dataKey: 'lengthOfStayDays'
     },
@@ -129,15 +114,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleEdit(row)}
                 />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -158,8 +134,15 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
 
   /*  RENDER  */
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Hospitalizations"
         action={
@@ -200,13 +183,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
               patient={patient}
             />
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Hospitalization"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
           </>
         }
       />

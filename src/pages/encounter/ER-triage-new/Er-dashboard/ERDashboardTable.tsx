@@ -376,8 +376,14 @@ const ERDashboardTable = () => {
     </>
   );
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="first-middle-table-er-dashboard">
+    <div className="first-middle-table-er-dashboard" dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

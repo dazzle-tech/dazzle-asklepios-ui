@@ -10,8 +10,8 @@ const MyCard = ({
   leftArrow = true,
   showArrow = false,
   showMore = false,
-  arrowClick = () => {},
-  moreClick = () => {},
+  arrowClick = () => { },
+  moreClick = () => { },
   width = null,
   avatar = null,
   height = null,
@@ -19,14 +19,24 @@ const MyCard = ({
   footerContant: footerContant = null,
   title: title = null,
   variant = 'basic',
+  isSelected = false,
+
   ...props
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   return (
     <Card
       width={width}
-      style={{ minHeight: '45px', height: height, margin: props.margin ? props.margin : '0px' }}
+      style={{
+        minHeight: '45px', height: height, margin: props.margin ? props.margin : '0px',
+        backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : undefined,
+        border: isSelected ? '1px solid #007bff' : undefined,
+        cursor: 'pointer'
+
+
+      }}
       shaded
+
       className={`my-card ${mode === 'light' ? 'light' : 'dark'}`}
     >
       {(avatar || showMore) && (
@@ -43,6 +53,7 @@ const MyCard = ({
                 color="var(--primary-gray)"
                 onClick={moreClick}
                 radius="8px"
+                
               >
                 <FontAwesomeIcon icon={faEllipsis} />
               </MyButton>

@@ -4,6 +4,7 @@ import { Col, Row } from 'rsuite';
 import DrugFoodInteractions from './DrugFoodInteractions';
 import DrugDrugInteractions from './DrugDrugInteractions';
 import Section from '@/components/Section';
+import Translate from '@/components/Translate';
 const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -18,7 +19,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
       <Row>
         <Col md={14}>
           <Section
-            title="Drug-Drug Interactions"
+            title={<Translate>Drug-Drug Interactions</Translate>}
             content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -27,7 +28,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         </Col>
         <Col md={10}>
           <Section
-            title="Drug-Food Interactions"
+            title={<Translate>Drug-Food Interactions</Translate>}
             content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -40,7 +41,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
     return (
       <div>
         <Section
-          title="Drug-Drug Interactions"
+          title={<Translate>Drug-Drug Interactions</Translate>}
           content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""
@@ -48,7 +49,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         />
         <br />
         <Section
-          title="Drug-Food Interactions"
+          title={<Translate>Drug-Food Interactions</Translate>}
           content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""

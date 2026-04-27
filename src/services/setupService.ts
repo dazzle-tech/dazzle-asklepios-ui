@@ -180,6 +180,23 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 0
     }),
+    getLovValuesByKey: builder.query({
+  query: (lovKey: string) => ({
+    url: `/setup/lov-value-list/by-key?key=${lovKey}`
+  }),
+  
+  onQueryStarted: onQueryStarted,
+  keepUnusedDataFor: 0
+}),
+getLovValuesBulkByKeys: builder.query({
+  query: (lovKeys: string[]) => ({
+    url: `/setup/lov-value-list/bulk-by-keys?${lovKeys
+      .map(key => `lov_keys=${key}`)
+      .join("&")}`
+  }),
+  onQueryStarted: onQueryStarted,
+  keepUnusedDataFor: 0
+}),
     saveLovValue: builder.mutation({
       query: (lovValue: ApLovValues) => ({
         url: `/setup/save-lov-value`,
@@ -1226,8 +1243,8 @@ export const setupService = createApi({
         },
         url: `/reference-data/get-lov-defult-value`
       }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      // onQueryStarted: onQueryStarted,
+      // keepUnusedDataFor: 5
 
     }),   
      saveRoom: builder.mutation({
@@ -1601,6 +1618,7 @@ export const {
   useGetRoomListQuery,
   useDeactiveActivRoomMutation,
   useGetBedListQuery,
+  useLazyGetBedListQuery,
   useSaveBedMutation,
   useDeactiveActivBedMutation,
   useSaveRoomServicesMutation,
@@ -1631,5 +1649,8 @@ export const {
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
   useLazyGetCandidatesByDepartmentKeyQuery,
- useGetIcdByIdQuery
+ useGetIcdByIdQuery,
+ useGetLovValuesByKeyQuery,
+ useGetLovValuesBulkByKeysQuery,
+ useLazyGetLovValuesBulkByKeysQuery,
 } = setupService;

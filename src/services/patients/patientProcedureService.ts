@@ -81,6 +81,32 @@ export const patientProcedureService = createApi({
       },
 
       providesTags: ['PatientProcedure']
+    }),
+
+    findProcduresByPatient: builder.query<
+      PagedResult<PatientProcedure>,
+      {
+        patientId: number;
+        page?: number;
+        size?: number;
+        includeCancelled?: boolean;
+      }
+    >({
+      query: ({ patientId, page = 0, size = 20, includeCancelled = false }) => ({
+        url: `/api/patient/procedure/by-patient/${patientId}`,
+        params: { page, size, includeCancelled }
+      }),
+
+      transformResponse: (response: PatientProcedure[], meta): PagedResult<PatientProcedure> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+
+        return {
+          data: response ?? [],
+          totalCount
+        };
+      },
+
+      providesTags: ['PatientProcedure']
     })
   })
 });
@@ -89,5 +115,6 @@ export const {
   useCreateProcdureMutation,
   useUpdateProcdureMutation,
   useCancelProcdureMutation,
-  useFindProcdureByEncounterQuery
+  useFindProcdureByEncounterQuery,
+  useFindProcduresByPatientQuery
 } = patientProcedureService;

@@ -14,9 +14,60 @@ import {
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { newSocialHistory } from '@/types/model-types-constructor-new';
-import { SocialHistory } from '@/types/model-types-new';
 import './style.less';
+import Translate from '@/components/Translate';
+
+type SocialHistory = {
+  id?: number | null;
+  patientId?: number | null;
+
+  isCurrentSmoker?: boolean;
+  smokeStartDate?: any;
+  cigaretteAmount?: number | null;
+  cigaretteType?: string;
+
+  isPreviousSmoker?: boolean;
+  smokeQuitDate?: any;
+
+  exposureToSecondHandSmoke?: boolean;
+
+  alcoholConsumption?: boolean;
+  typeOfAlcohol?: string;
+  alcoholSinceWhen?: any;
+
+  substanceUse?: boolean;
+  route?: any;
+  frequency?: any;
+
+  physicalLimitation?: any;
+  diagnosedEatingDisorders?: any;
+};
+
+const newSocialHistory: SocialHistory = {
+  id: null,
+  patientId: null,
+
+  isCurrentSmoker: false,
+  smokeStartDate: null,
+  cigaretteAmount: null,
+  cigaretteType: '',
+
+  isPreviousSmoker: false,
+  smokeQuitDate: null,
+
+  exposureToSecondHandSmoke: false,
+
+  alcoholConsumption: false,
+  typeOfAlcohol: '',
+  alcoholSinceWhen: null,
+
+  substanceUse: false,
+  route: null,
+  frequency: null,
+
+  physicalLimitation: null,
+  diagnosedEatingDisorders: null
+};
 
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? {};
@@ -36,7 +87,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -53,7 +104,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
         data?.title ||
         data?.message ||
         'Unexpected error' + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
@@ -76,11 +127,21 @@ const SOCIAL_HISTORY_ERROR_MAP: Record<string, string> = {
   notfound: 'Social history not found.'
 };
 
+const toNoonTimestamp = (value: any): number | null => {
+  if (!value) return null;
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(12, 0, 0, 0);
+  return d.getTime();
+};
+
 const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
-  const [record, setRecord] = useState<SocialHistory>(newSocialHistory);
-
+  const [record, setRecord] = useState<SocialHistory>(() => ({
+    ...newSocialHistory,
+    patientId: patient?.id
+  }));
   const { data: routeLov } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: freqLov } = useGetLovValuesByCodeQuery('FREQUENT_USE');
   const { data: physicalLov } = useGetLovValuesByCodeQuery('PHYSICAL_LIMITATION');
@@ -97,7 +158,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const resetAll = () => {
     setRecord({
       ...newSocialHistory,
-      patientId: Number(patient?.key)
+      patientId: patient?.id
     });
   };
 
@@ -107,7 +168,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData?.id) {
       setRecord({
         id: initialData.id,
-        patientId: Number(patient?.key),
+        patientId: patient?.id,
 
         isCurrentSmoker: initialData.isCurrentSmoker || false,
         smokeStartDate: initialData.smokeStartDate || null,
@@ -133,29 +194,96 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     } else {
       resetAll();
     }
-  }, [open, initialData, patient?.key]);
+  }, [open, initialData, patient?.id]);
+
+  const validateBeforeSave = (): string[] => {
+    const errors: string[] = [];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (record.isCurrentSmoker && record.isPreviousSmoker) {
+      errors.push('Cannot be both a current smoker and a previous smoker.');
+    }
+
+    if (record.isCurrentSmoker) {
+      if (!record.smokeStartDate) {
+        errors.push('Smoke start date is required for current smokers.');
+      } else if (new Date(record.smokeStartDate) > today) {
+        errors.push('Smoke start date cannot be in the future.');
+      }
+      if (!record.cigaretteAmount || record.cigaretteAmount <= 0) {
+        errors.push('Cigarette amount is required and must be greater than 0 for current smokers.');
+      }
+    }
+
+    if (record.isPreviousSmoker) {
+      if (!record.smokeQuitDate) {
+        errors.push('Smoke quit date is required for previous smokers.');
+      } else if (new Date(record.smokeQuitDate) > today) {
+        errors.push('Smoke quit date cannot be in the future.');
+      }
+    }
+
+    if (record.alcoholConsumption) {
+      if (!record.alcoholSinceWhen) {
+        errors.push('"Since when" date is required when alcohol consumption is enabled.');
+      } else if (new Date(record.alcoholSinceWhen) > today) {
+        errors.push('Alcohol since-when date cannot be in the future.');
+      }
+    }
+
+    return errors;
+  };
 
   const handleSave = async () => {
-    const payload = {
-      ...record,
-      patientId: Number(patient?.key),
+    const errors = validateBeforeSave();
+    if (errors.length) {
+      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
+      return;
+    }
 
+    const payload: any = {
+      patientId: Number(patient?.id),
+
+      isCurrentSmoker: record.isCurrentSmoker ?? false,
       smokeStartDate:
         record.isCurrentSmoker && record.smokeStartDate
-          ? new Date(record.smokeStartDate).toISOString()
+          ? toNoonTimestamp(record.smokeStartDate)
           : null,
+      cigaretteAmount: record.isCurrentSmoker ? (record.cigaretteAmount ?? null) : null,
+      cigaretteType: record.isCurrentSmoker
+        ? (record.cigaretteType?.trim() || null)
+        : null,
 
+      isPreviousSmoker: record.isPreviousSmoker ?? false,
       smokeQuitDate:
         record.isPreviousSmoker && record.smokeQuitDate
-          ? new Date(record.smokeQuitDate).toISOString()
+          ? toNoonTimestamp(record.smokeQuitDate)
           : null,
 
+      exposureToSecondHandSmoke: record.exposureToSecondHandSmoke ?? false,
+
+      alcoholConsumption: record.alcoholConsumption ?? false,
+      typeOfAlcohol: record.alcoholConsumption
+        ? (record.typeOfAlcohol?.trim() || null)
+        : null,
       alcoholSinceWhen:
         record.alcoholConsumption && record.alcoholSinceWhen
-          ? new Date(record.alcoholSinceWhen).toISOString()
-          : null
+          ? toNoonTimestamp(record.alcoholSinceWhen)
+          : null,
+
+      substanceUse: record.substanceUse ?? false,
+      route: record.substanceUse ? (record.route || null) : null,
+      frequency: record.substanceUse ? (record.frequency || null) : null,
+
+      physicalLimitation: record.physicalLimitation || null,
+      diagnosedEatingDisorders: record.diagnosedEatingDisorders || null
     };
-    console.log('Payload to save ==> ', payload);
+
+    if (record.id) {
+      payload.id = record.id;
+    }
+
     try {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();
@@ -173,12 +301,12 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <div className="padding-8">
       <CollapsibleSection
-        title="Smoking History"
+        title={<Translate>Smoking History</Translate>}
         icon={faSmoking}
         color="#415be7"
         isOpen={smokingExpanded}
         onToggle={() => setSmokingExpanded(!smokingExpanded)}
-        badge={record.isCurrentSmoker ? 'Active' : record.isPreviousSmoker ? 'Former' : null}
+        badge={record?.isCurrentSmoker ? 'Active' : record?.isPreviousSmoker ? 'Former' : null}
       >
         <Form fluid layout="inline" className="fields-container">
           <div className="full-row">
@@ -190,10 +318,10 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isCurrentSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record.isPreviousSmoker}
+              disabled={record?.isPreviousSmoker}
             />
           </div>
-          {record.isCurrentSmoker && (
+          {record?.isCurrentSmoker && (
             <>
               <MyInput
                 width={180}
@@ -237,10 +365,10 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isPreviousSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record.isCurrentSmoker}
+              disabled={record?.isCurrentSmoker}
             />
           </div>
-          {record.isPreviousSmoker && (
+          {record?.isPreviousSmoker && (
             <div className="full-row">
               <MyInput
                 width={180}
@@ -268,7 +396,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Alcohol Consumption"
+        title={<Translate>Alcohol Consumption</Translate>}
         icon={faWineGlass}
         color="#415be7"
         isOpen={alcoholExpanded}
@@ -287,7 +415,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               setRecord={setRecord}
             />
           </div>
-          {record.alcoholConsumption && (
+          {record?.alcoholConsumption && (
             <>
               <MyInput
                 width={180}
@@ -314,7 +442,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Substance Use"
+        title={<Translate>Substance Use</Translate>}
         icon={faPills}
         color="#415be7"
         isOpen={substanceExpanded}
@@ -327,13 +455,13 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               width={180}
               column
               fieldType="checkbox"
-              fieldLabel="Substance Use"
+              fieldLabel={<Translate>Substance Use</Translate>}
               fieldName="substanceUse"
               record={record}
               setRecord={setRecord}
             />
           </div>
-          {record.substanceUse && (
+          {record?.substanceUse && (
             <>
               <MyInput
                 width={180}
@@ -367,7 +495,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Health Conditions"
+        title={<Translate>Health Conditions</Translate>}
         icon={faHeartbeat}
         color="#415be7"
         isOpen={healthExpanded}
@@ -406,19 +534,26 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     </div>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
-      setOpen={() => {
-        setOpen(false);
-        resetAll();
+      setOpen={value => {
+        if (!value) resetAll();
+        setOpen(value);
       }}
-      title={record.id ? 'Edit Social History' : 'Add Social History'}
+      title={record?.id ? 'Edit Social History' : 'Add Social History'}
       steps={[{ title: 'Social History', icon: <FontAwesomeIcon icon={faSmoking} /> }]}
       actionButtonFunction={handleSave}
       position="right"
       size="38vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

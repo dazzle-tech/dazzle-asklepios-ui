@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { Col, Form } from 'rsuite';
+import { Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetPractitionersQuery } from '@/services/setupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -28,8 +28,16 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
   // Fetch shifts lov response
   const { data: shiftsLovQueryResponse } = useGetLovValuesByCodeQuery('SHIFTS');
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid layout="inline" className="container-of-round-info">
+    <div className="container-of-round-info" dir={dir}>
       <div>
         <Col xs={32}>
           <MyInput
@@ -39,7 +47,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             fieldType="datetime"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -53,7 +61,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -67,7 +75,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
         <Col xs={32} className={props?.view ? "hidden-class" : ""}>
@@ -76,7 +84,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
               prefixIcon={() => <CheckIcon />}
               color="var(--deep-blue)"
               onClick={handleStartNewRound}
-              disabled={doctorRound?.key}
+              disabled={!!doctorRound?.key}
             >
               Start New Round
             </MyButton>
@@ -84,7 +92,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
         </Col>
       </div>
       <div className={props?.view ? "hidden-class" : ""}>{saveAndComplete()}</div>
-    </Form>
+    </div>
   );
 };
 export default RoundInfo;

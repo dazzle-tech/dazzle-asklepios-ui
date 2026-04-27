@@ -10,9 +10,9 @@ import {
   useAddHospitalizationMutation,
   useUpdateHospitalizationMutation
 } from '@/services/patients/hospitalizationsService';
-import { newHospitalization } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import Translate from '@/components/Translate';
 
 /*  ERROR HANDLER  */
 
@@ -106,7 +106,16 @@ const PATIENT_ADMISSION_ERROR_MAP: Record<string, string> = {
 
 const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<any>(newHospitalization);
+  const [formData, setFormData] = useState<any>({
+    facility: '',
+    reason: '',
+    admissionType: '',
+    dateOfAdmission: null,
+    lengthOfStayDays: null,
+    outcomes: '',
+    medicalInterventionsPerformed: '',
+    patientId: null
+  });
 
   /*  LOAD  */
 
@@ -114,15 +123,21 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     } else {
       setFormData({
-        ...newHospitalization,
-        patientId: Number(patient?.key)
+        facility: '',
+        reason: '',
+        admissionType: '',
+        dateOfAdmission: null,
+        lengthOfStayDays: null,
+        outcomes: '',
+        medicalInterventionsPerformed: '',
+        patientId: Number(patient?.id)
       });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   /*  MUTATIONS  */
 
@@ -141,15 +156,19 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       errorMsg = errorMsg
         ? `${errorMsg}, Date of admission can’t be empty`
         : 'Date of admission can’t be empty';
+    if (!formData.admissionType)
+      errorMsg = errorMsg
+        ? `${errorMsg}, Admission Type can’t be empty`
+        : 'Admission Type can’t be empty';
 
     if (errorMsg) {
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
     }
 
     const payload = {
       id: formData.id,
-      patientId: Number(patient.key),
+      patientId: Number(patient.id),
       facility: formData.facility,
       reason: formData.reason,
       admissionType: formData.admissionType,
@@ -204,6 +223,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="admissionType"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
@@ -214,13 +234,19 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="dateOfAdmission"
         record={formData}
         setRecord={setFormData}
+        disableFutureDates
         required
       />
 
       <MyInput
         width={200}
         column
-        fieldLabel="Length of stay (days)"
+        fieldLabel={
+          <span>
+            <Translate>Length of stay</Translate>
+            <Translate>(Days)</Translate>
+          </span>
+        }
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}
@@ -248,7 +274,10 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
-  /*  MODAL  */
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -259,7 +288,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

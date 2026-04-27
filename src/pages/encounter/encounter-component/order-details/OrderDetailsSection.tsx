@@ -7,6 +7,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import OrderModal from './OrderModal';
 import { Checkbox } from 'rsuite';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -67,8 +68,15 @@ const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
     }
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="margin-section">
+    <div className="margin-section" dir={dir}>
       <SectionContainer
         title={<h6>Order Details</h6>}
         content={
@@ -96,7 +104,7 @@ const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
                     checked={showCancelled}
                     onChange={() => setShowCancelled(!showCancelled)}
                   >
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                   </Checkbox>
                 </div>
                 <div className="flex-8">

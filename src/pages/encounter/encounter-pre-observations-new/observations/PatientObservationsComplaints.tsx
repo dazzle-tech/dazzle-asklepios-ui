@@ -4,25 +4,29 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
 
 import './styles.less';
 
-import type { PatientObservationsComplaints as PatientObservationsComplaintsModel } from '@/types/model-types-new';
+import type {
+  PatientEncounter,
+  PatientObservationsComplaints as PatientObservationsComplaintsModel
+} from '@/types/model-types-new';
 import { newPatientObservationsComplaints } from '@/types/model-types-constructor-new';
 
 import {
   useCreatePatientObservationsComplaintsMutation,
   useGetLatestPatientObservationsComplaintsByEncounterIdQuery
-} from '@/services/medicalSheets/observations/patientObservationsComplaintsService';
+} from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 
 type PatientObservationsComplaintsProps = {
   patientId: number;
   encounterId: number;
+  encounter: PatientEncounter;
+  setEncounter: (e: PatientEncounter) => void;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
@@ -31,36 +35,37 @@ type PatientObservationsComplaintsProps = {
 const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
   patientId,
   encounterId,
+  encounter,
+  setEncounter,
   disabled = false,
   width = '100%',
   title = 'Patient Observations & Complaints'
 }) => {
   const dispatch = useAppDispatch();
 
-  // Enums / LOVs
   const patientConditions = useEnumOptions('Condition');
-  console.log('patientConditions options:', patientConditions);
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const encounterPriority = useEnumOptions('EncounterPriority');
 
-  // === API ===
   const [createPatientObservationsComplaints] = useCreatePatientObservationsComplaintsMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
 
   const { data: latestByEncounter } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId }
   );
 
-  // === Local state ===
   const [record, setRecord] = useState<PatientObservationsComplaintsModel>({
     ...newPatientObservationsComplaints,
     patientId,
     encounterId
   });
 
+  const [clearKey, setClearKey] = useState(0);
+
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord((prev) => ({
+    setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -73,9 +78,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     }));
   }, [latestByEncounter, patientId, encounterId]);
 
-  /**
-   * CREATE payload only (no id / audit fields).
-   */
   const createPayload = useMemo(() => {
     return {
       patientId,
@@ -88,10 +90,35 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     };
   }, [record, patientId, encounterId]);
 
+  const toEncounterPayload = (enc: any): PatientEncounter => ({
+    id: Number(enc?.id),
+    patientId: Number(enc?.patientId ?? enc?.patient?.id),
+    encounterNumber: enc?.encounterNumber ?? null,
+    facilityId: Number(enc?.facilityId),
+    departmentId: Number(enc?.departmentId),
+    practitionerId: enc?.practitionerId ?? null,
+    paymentDate: enc?.paymentDate,
+    amount: enc?.amount,
+    encounterType: enc?.encounterType,
+    encounterReason: enc?.encounterReason,
+    followUpEncounterId: enc?.followUpEncounterId ?? enc?.followUpEncounter?.id ?? null,
+    priorityLevel: enc?.priorityLevel,
+    originType: enc?.originType ?? null,
+    originName: enc?.originName ?? null,
+    notes: enc?.notes ?? null,
+    departmentDailySequenceNumber: enc?.departmentDailySequenceNumber ?? null,
+    encounterDate: enc?.encounterDate ?? null,
+    status: enc?.status,
+    chiefComplaint: enc?.chiefComplaint ?? null,
+    hasPrescription: Boolean(enc?.hasPrescription),
+    hasOrder: Boolean(enc?.hasOrder),
+    isObserved: Boolean(enc?.isObserved)
+  });
+
   const normalizeFieldErrorMessage = (message: string) => {
     const m = (message || '').toLowerCase();
-    if (m.includes('must not be null')) return 'is required';
-    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('must not be null')) return 'must not be empty';
+    if (m.includes('must not be blank')) return 'must not be empty';
     if (m.includes('size must be between')) return 'length is out of range';
     if (m.includes('must be greater')) return 'value is too small';
     if (m.includes('must be less')) return 'value is too large';
@@ -117,7 +144,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         patientConditions: 'Patient Conditions',
         cognitiveCheck: 'Cognitive Check',
         isActive: 'Active',
-        id: 'Id'
+        id: 'Id',
+        priorityLevel: 'Priority'
       };
 
       const lines = data.fieldErrors.map((fe: any) => {
@@ -128,7 +156,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -140,7 +168,10 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     const keyMap: Record<string, string> = {
       'payload.required': 'Patient observations & complaints payload is required.',
       'patient.required': 'Patient id is required.',
+      'patient.notfound': 'Patient not found.',
       'encounter.required': 'Encounter id is required.',
+      'db.constraint': 'Database constraint violated while saving.',
+      'patient.invalid': 'Invalid patient id.',
       notfound: 'No patient observations & complaints found.'
     };
 
@@ -151,7 +182,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
 
   const handleSave = async () => {
@@ -159,21 +190,39 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
       return;
     }
+
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       return;
     }
 
+    const missing: string[] = [];
+    if (!record.reasonOfVisit?.trim()) missing.push('• Reason Of Visit: must not be empty');
+    if (!encounter.priorityLevel) missing.push('• Priority: must not be empty');
+
+    if (missing.length > 0) {
+      dispatch(
+        notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
+      );
+      return;
+    }
+
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
-
-      setRecord((prev) => ({
+      setRecord(prev => ({
         ...prev,
         ...created,
         patientId,
         encounterId,
         id: undefined
       }));
+
+      const encounterPayload = toEncounterPayload(encounter);
+      const updatedEncounter = await updateEncounter({
+        id: encounter.id,
+        body: encounterPayload
+      }).unwrap();
+      setEncounter(updatedEncounter);
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (err: any) {
@@ -185,90 +234,98 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     setRecord({
       ...newPatientObservationsComplaints,
       patientId,
-      encounterId
-    } as any);
+      encounterId,
+      patientConditions: '' as any
+    });
+
+    setEncounter({
+      ...encounter,
+      priorityLevel: null as any
+    });
+
+    setClearKey(prev => prev + 1);
   };
 
   return (
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSave} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            <MyInput
-              required
-              width="100%"
-              fieldName="reasonOfVisit"
-              fieldType="textarea"
-              record={record}
-              setRecord={setRecord}
-              disabled={disabled}
-            />
+          <MyInput
+            required
+            width="100%"
+            fieldName="reasonOfVisit"
+            fieldType="textarea"
+            record={record}
+            setRecord={setRecord}
+            disabled={disabled}
+          />
 
-            <div className="functional-cognitive-row">
-              <div className="functional-cognitive-col">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Functional Status"
-                  fieldName="functionalStatus"
-                  fieldType="textarea"
-                  record={record}
-                  setRecord={setRecord}
-                  disabled={disabled}
-                />
-              </div>
-
-              <div className="functional-cognitive-col">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Cognitive Check"
-                  fieldName="cognitiveCheck"
-                  fieldType="textarea"
-                  record={record}
-                  setRecord={setRecord}
-                  disabled={disabled}
-                />
-              </div>
+          <div className="functional-cognitive-row">
+            <div className="functional-cognitive-col">
+              <MyInput
+                width="100%"
+                fieldLabel="Functional Status"
+                fieldName="functionalStatus"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                disabled={disabled}
+              />
             </div>
 
-            <MultiSelectAppender
-              label="Patient Conditions"
-              options={(patientConditions as any) ?? []}
-              optionLabel="label"
-              optionValue="value"
-              object={(record as any).patientConditions ?? ''}
-              setObject={(value: string) =>
-                setRecord((prev) => ({
-                  ...(prev as any),
-                  patientConditions: value
-                }))
-              }
-            />
+            <div className="functional-cognitive-col">
+              <MyInput
+                width="100%"
+                fieldLabel="Cognitive Check"
+                fieldName="cognitiveCheck"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                disabled={disabled}
+              />
+            </div>
+          </div>
 
-            <MyInput
-              width="100%"
-              fieldLabel="Priority"
-              fieldType="select"
-              fieldName="priorityLkey"
-              selectData={encounterPriorityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
-              disabled={disabled}
-              searchable={false}
-            />
-          </Form>
+          <MultiSelectAppender
+            key={clearKey}
+            label="Patient Conditions"
+            options={patientConditions ?? []}
+            optionLabel="label"
+            optionValue="value"
+            object={record.patientConditions ?? ''}
+            setObject={(value: string) =>
+              setRecord(prev => ({
+                ...prev,
+                patientConditions: value
+              }))
+            }
+          />
+
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Priority"
+            fieldType="select"
+            fieldName="priorityLevel"
+            selectData={encounterPriority ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={encounter}
+            setRecord={setEncounter}
+            disabled={disabled}
+            searchable={false}
+          />
         </div>
       }
     />

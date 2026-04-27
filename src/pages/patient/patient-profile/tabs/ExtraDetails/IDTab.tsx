@@ -133,7 +133,6 @@ const IDTab = ({ localPatient }) => {
       .join(' ');
   };
 
-
   const columns = [
     {
       key: 'country',
@@ -282,7 +281,7 @@ const IDTab = ({ localPatient }) => {
           disabled={!localPatient?.id}
           prefixIcon={() => <PlusRound />}
         >
-          New Document
+          <Translate>New Document</Translate>
         </MyButton>
       </div>
 

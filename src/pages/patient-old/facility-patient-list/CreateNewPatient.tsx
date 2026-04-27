@@ -269,6 +269,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
+              fieldType='textnumber'
               fieldName="phoneNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
@@ -538,6 +539,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   }, [open]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -578,7 +584,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         handleSave();
         goToPatientProfile();
       }}
-      content={conjureFormContent}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
     />
   );
 };

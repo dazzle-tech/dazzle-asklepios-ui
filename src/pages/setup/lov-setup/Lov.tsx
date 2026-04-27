@@ -55,8 +55,16 @@ const Lov = () => {
   const divContent = (
     "LOVs"
   );
-  dispatch(setPageCode('Lovs'));
+ 
+  useEffect(() => {
+ dispatch(setPageCode('Lovs'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';
@@ -88,12 +96,7 @@ const Lov = () => {
     }
   }, [saveLovMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // handle click on Add New button 
   const handleLovNew = () => {
@@ -257,13 +260,20 @@ const Lov = () => {
     }
   ];
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Carousel
     className='container-of-lov'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel>
+      <Panel dir={dir}>
         <MyTable
           height={450}
           data={lovListResponse?.object ?? []}

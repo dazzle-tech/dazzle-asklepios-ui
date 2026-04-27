@@ -2,6 +2,7 @@ import React from 'react';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './style.less';
+import Translate from '@/components/Translate';
 // Dummy data for the tables
 const dischargeInfo = [
   {
@@ -116,13 +117,19 @@ const approvalStatusColumns = [
       />
     )
   },
-  { key: 'expireIn', title: 'Expire In (Timer)', width: 50 }
+  { key: 'expireIn', title: <span><Translate>Expire In </Translate>(<Translate>Timer</Translate>)</span>, width: 50 }
 ];
 
 // Main modal component
 const DischargeTrackingModal = ({ open, setOpen }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-<div className='discharge-tracking-modal-main-container'>
+<div className='discharge-tracking-modal-main-container'dir={dir}>
 <MyTable
   data={dischargeInfo}
   columns={dischargeColumns}

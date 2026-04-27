@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdModeEdit } from 'react-icons/md';
@@ -29,7 +29,6 @@ import ProgressNoteLogsModal from './ProgressNoteLogsModal';
 
 const ProgressNotes: React.FC = () => {
   const dispatch = useAppDispatch();
-  const auth = useAppSelector(state => state.auth);
 
   const location = useLocation();
   const { patient, encounter, edit } = (location.state || {}) as {
@@ -64,10 +63,10 @@ const ProgressNotes: React.FC = () => {
 
   const { data, isLoading, refetch } = queryHook(
     {
-      encounterId: encounter?.key
+      encounterId: encounter?.id
     },
     {
-      skip: !encounter?.key
+      skip: !encounter?.id
     }
   );
 
@@ -80,8 +79,7 @@ const ProgressNotes: React.FC = () => {
     try {
       await cancelNote({
         id: selectedNote.id,
-        cancellationReason: selectedNote.cancellationReason!,
-        cancelledBy: auth.user?.id
+        cancellationReason: selectedNote.cancellationReason!
       }).unwrap();
 
       dispatch(
@@ -111,7 +109,7 @@ const ProgressNotes: React.FC = () => {
       },
       {
         key: 'created',
-        title: 'CREATED AT / BY',
+        title: <Translate>CREATED AT / BY</Translate>,
         render: (row: ProgressNote) =>
           row.createdDate ? (
             <>
@@ -162,35 +160,62 @@ const ProgressNotes: React.FC = () => {
         key: 'edit',
         title: 'ACTIONS',
         width: 120,
-        render: (row: ProgressNote) => (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <MdModeEdit
-              size={22}
-              onClick={() => {
-                setSelectedNote(row);
-                setOpenAddModal(true);
-              }}
-              style={{ cursor: 'pointer', color: 'gray' }}
-            />
+        render: (row: ProgressNote) => {
+          const isEdited = row.lastModifiedDate && row.createdDate !== row.lastModifiedDate;
 
-            <MdHistory
-              size={22}
-              title="View History"
-              onClick={() => {
-                setLogNoteId(row.id);
-                setOpenLogsModal(true);
-              }}
-              style={{ cursor: 'pointer', color: '#4C6EF5' }}
-            />
-          </div>
-        )
+          return (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <MdModeEdit
+                size={22}
+                onClick={() => {
+                  if (row.cancelledDate) return;
+
+                  setSelectedNote(row);
+                  setOpenAddModal(true);
+                }}
+                style={{
+                  cursor: row.cancelledDate ? 'not-allowed' : 'pointer',
+                  color: row.cancelledDate ? '#ccc' : 'gray',
+                  opacity: row.cancelledDate ? 0.5 : 1
+                }}
+              />
+
+              <MdHistory
+                size={22}
+                title="View History"
+                onClick={() => {
+                  setLogNoteId(row.id);
+                  setOpenLogsModal(true);
+                }}
+                style={{ cursor: 'pointer', color: '#4C6EF5' }}
+              />
+
+              {isEdited && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: '#f59e0b'
+                  }}
+                />
+              )}
+            </div>
+          );
+        }
       }
     ],
     []
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div>
+    <div dir={dir}>
       <AddProgressNotes
         open={openAddModal}
         setOpen={setOpenAddModal}
@@ -214,7 +239,7 @@ const ProgressNotes: React.FC = () => {
           <MyInput
             column
             width={220}
-            fieldLabel="Show Cancelled"
+            fieldLabel={<Translate>Show Cancelled</Translate>}
             fieldType="check"
             showLabel={false}
             fieldName="showCancelled"

@@ -10,6 +10,7 @@ import { initialListRequest } from '@/types/types';
 import { ApUser } from '@/types/model-types-new';
 import { newApUser } from '@/types/model-types-constructor-new';
 import { useSaveAccountMutation } from '@/services/userService';
+import MyModal from '@/components/MyModal/MyModal';
 
 interface EditProfileProps {
     open: boolean;
@@ -21,12 +22,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
     const dispatch = useDispatch();
 
      const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-    const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-    const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest, pageSize: 1000 });
-    const { data: accessRoleListResponse } = useGetAccessRolesQuery({ ...initialListRequest, pageSize: 1000 });
 
      const [user, setUser] = useState<ApUser>({ ...newApUser });
-    const [readyUser, setReadyUser] = useState<Partial<ApUser>>({});
 
      useEffect(() => {
         if (authSlice.user) {
@@ -103,22 +100,23 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
     }
 
     return (
-        <Modal size={'md'} open={open} backdrop="static" onClose={onClose}>
-            <Modal.Header>
-                <Modal.Title>Edit Profile</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {InputForms(true)}
-            </Modal.Body>
-            <Modal.Footer>
-                <Button appearance="primary" onClick={handleSubmit}>
-                    Save
-                </Button>
-                <Button appearance="subtle" onClick={onClose}>
-                    Cancel
-                </Button>
-            </Modal.Footer>
-        </Modal>
+        <MyModal
+        open={open}
+        setOpen={onClose}
+        title="Edit Profile"
+        size="md"
+        position="center"
+        bodyheight="auto"
+        actionButtonFunction={handleSubmit}
+        actionButtonLabel="Save"
+        cancelButtonLabel="Cancel"
+        isDisabledActionBtn={false}
+        content={
+            <div>
+            {InputForms(true)}
+            </div>
+        }
+        />
     );
 };
 

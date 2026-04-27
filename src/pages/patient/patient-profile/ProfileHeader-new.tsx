@@ -6,34 +6,34 @@ import {
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import type { ApAttachment } from '@/types/model-types';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBars,
   faBolt,
   faBroom,
   faCalendarCheck,
-  faCalendarDay,
   faCheckDouble,
   faEllipsisVertical,
   faHandHoldingDollar,
   faPersonCircleQuestion,
   faPrint,
-  faThumbsUp,
+  faShareNodes,
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
+import { useLazyGetPatientInformationReportQuery } from '@/services/patient/patientService';
+import { printPatientInformationReport } from '@/utils/printPatientInformationReport';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -47,6 +47,9 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
+  setOpenReferralRequestModal: (value: boolean) => void;
+  eligibilityChecked: boolean;
+  setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -60,37 +63,65 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenBedsideRegistrations,
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
-  setLocalPatient
+  setLocalPatient,
+  setOpenReferralRequestModal
 }) => {
-  const profileImageFileInputRef = useRef(null);
-  const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-  const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const { data: relationshipLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
 
+  const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+
   const {
     data: profilePictureTicket,
-    refetch: refetchProfilePicture,
     isError
   } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+
+
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      const res = await triggerPatientInformationReport({
+        patientId: localPatient.id
+      }).unwrap();
+
+      await printPatientInformationReport(
+        res,
+        countryLovQueryResponse?.object || [],
+        relationshipLovQueryResponse?.object || []
+      );
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const contentOfMoreIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
           onClick={() => {
-            if (!(localPatient.id === undefined)) {
+            if (localPatient.id !== undefined) {
               setOpenMoreMenu(false);
               setVisitHistoryModel(true);
             }
@@ -101,24 +132,40 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Visit History</Translate>
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenReferralRequestModal(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faShareNodes} />
+            <Translate>Referral Requests</Translate>
+          </div>
+        </Dropdown.Item>
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faThumbsUp} />
             <Translate>Approvals</Translate>
           </div>
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        </Dropdown.Item> */}
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faCalendarDay} />
             <Translate>Appointments</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
             <Translate>View Price List</Translate>
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -130,6 +177,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Warnings Summary</Translate>
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -141,6 +189,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Bedside Registration</Translate>
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -152,25 +201,32 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Bulk Registration</Translate>
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faBars} />
             <Translate>Encounter Transactions</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );
 
   const contentOfPrintIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item
+          disabled={!localPatient?.id}
+          onClick={async () => {
+            setOpenPrintMenu(false);
+            await handlePrintInformation();
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <Translate>Print Information</Translate>
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
           <div className="container-of-icon-and-key1">
             <Translate>Print Patient Label</Translate>
           </div>
@@ -180,24 +236,25 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
   const handleImageClick = () => {
-    if (localPatient.id) profileImageFileInputRef.current.click();
+    if (localPatient.id) profileImageFileInputRef.current?.click();
   };
 
-  const handleFileChange = async event => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!localPatient || !patientId) return;
 
-    const selectedFile = event.target.files[0];
+    const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       try {
         await uploadAttachments({
-          patientId: patientId,
+          patientId,
           file: selectedFile,
           type: undefined,
           details: 'Profile Picture',
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        refetchProfilePicture();
+        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
+        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
@@ -211,12 +268,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setQuickAppointmentModel(true);
   };
 
-  const handleScanDocumentClick = () => {
-    setOpenScanDocumentModal(true);
-  };
-
   const handleIdParsed = (parsedData: any) => {
-
     const updatedPatient: Partial<Patient> = {
       ...localPatient
     };
@@ -227,8 +279,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (parsedData.thirdName) updatedPatient.thirdName = parsedData.thirdName;
     if (parsedData.dateOfBirth) updatedPatient.dateOfBirth = parsedData.dateOfBirth;
     if (parsedData.nationality) updatedPatient.nationality = parsedData.nationality;
-    if (parsedData.gender || parsedData.sexAtBirth)
+    if (parsedData.gender || parsedData.sexAtBirth) {
       updatedPatient.sexAtBirth = parsedData.gender || parsedData.sexAtBirth;
+    }
 
     setLocalPatient(updatedPatient as Patient);
 
@@ -240,34 +293,62 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  const closeMenus = useCallback(() => {
-    setOpenMoreMenu(false);
-    setOpenPrintMenu(false);
-  }, []);
-
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
       setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
       return;
     }
 
     if (profilePictureTicket && profilePictureTicket.url && !isError) {
       setPatientImageUrl(profilePictureTicket.url);
-      setPatientImage({ url: profilePictureTicket.url } as any);
       return;
     }
 
     setPatientImageUrl('');
-    setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
+
+useEffect(() => {
+  if (location.state?.eligibilityDone) {
+    setEligibilityChecked(true);
+  }
+}, [location.state]);
+
+
+const whisperRef = useRef<any>(null);
+
+useEffect(() => {
+  if (quickPatientModalOpen || openScanDocumentModal) {
+    whisperRef.current?.close?.();
+  }
+}, [quickPatientModalOpen, openScanDocumentModal]);
+
+useEffect(() => {
+  const handleClick = (e: any) => {
+    if (e.target.closest('.rs-popover')) return;
+
+    setOpenMoreMenu(false);
+  };
+
+  document.addEventListener('mousedown', handleClick);
+
+  return () => {
+    document.removeEventListener('mousedown', handleClick);
+  };
+}, []);
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
-          <Form layout="inline" fluid className="profile-header">
+          <Form fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
               <input
                 type="file"
@@ -276,6 +357,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 onChange={handleFileChange}
                 accept="image/*"
               />
+
               <Avatar
                 size="lg"
                 circle
@@ -289,12 +371,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 alt={localPatient?.firstName}
                 className="avatar-image"
               />
+
               <div className="avatar-container">
                 <span className="patient-name">
                   {localPatient?.firstName} {localPatient?.lastName}
                 </span>
+
                 <div className="patient-info">
-                  {localPatient.id != undefined && <FaUser />}
+                  {localPatient.id !== undefined && <FaUser />}
                   {
                     genderLovQueryResponse?.object?.find(
                       item => item.key === localPatient.sexAtBirth
@@ -306,11 +390,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   {localPatient.dateOfBirth &&
                     `${calculateAgeFormat(localPatient.dateOfBirth)} old`}{' '}
                 </div>
+
                 <span className="patient-mrn">
-                  {localPatient.id != undefined && `# `}
+                  {localPatient.id !== undefined && `# `}
                   {localPatient?.medicalRecordNumber}
                 </span>
               </div>
+
               <div className="status-icons-container">
                 {localPatient.id && (
                   <Whisper
@@ -329,6 +415,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                   </Whisper>
                 )}
+
                 {localPatient.id && (
                   <Whisper
                     placement="bottom"
@@ -351,78 +438,103 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </AvatarGroup>
 
-            <div className="button-group-left-align">
-              <Form fluid layout="inline" className="registration-header-buttons-section">
-                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleSave}
-                >
-                  {localPatient?.id ? 'Edit' : 'Save'}
-                </MyButton>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <AvatarGroup spacing={6}></AvatarGroup>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                justifyContent: 'flex-end'
+              }}
+            >
+              {/* <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton> */}
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                  onClick={handleClear}
-                >
-                  Clear
-                </MyButton>
-                <MyButton
-                  appearance="ghost"
-                  onClick={() => setQuickPatientModalOpen(true)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
-                >
-                  Quick Patient
-                </MyButton>
-                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                  Quick Appointment
-                </MyButton>
+              <MyButton
+                onClick={() => {
+                  setEligibilityChecked(true);
+                  navigate(`/patient-profile/${localPatient?.id}`);
+                }}
+              >
+                <Translate>Eligibility Check</Translate>
+              </MyButton>
 
-                <AdministrativeWarningsModal
-                  localPatient={localPatient}
-                  validationResult={validationResult}
-                />
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleSave}
+              >
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
+              </MyButton>
 
-                <Whisper
-                  open={openMoreMenu}
-                  onClose={() => setOpenMoreMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfMoreIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+              >
+                <Translate>Clear</Translate>
+              </MyButton>
 
-                <Whisper
-                  open={openPrintMenu}
-                  onClose={() => setOpenPrintMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfPrintIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                      <FontAwesomeIcon icon={faPrint} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <MyButton
+                appearance="ghost"
+                onClick={() => setQuickPatientModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+              >
+                <Translate>Quick Patient</Translate>
+              </MyButton>
 
-                {(openMoreMenu || openPrintMenu) && (
-                  <div
-                    onClick={closeMenus}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      zIndex: 1
-                    }}
-                  />
-                )}
-              </Form>
+              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+                <Translate>Quick Appointment</Translate>
+              </MyButton>
+
+              <AdministrativeWarningsModal
+                localPatient={localPatient}
+                validationResult={validationResult}
+              />
+
+              <Whisper
+                ref={whisperRef}
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                preventOverflow
+                rootClose
+                open={openMoreMenu}
+                onOpen={() => setOpenMoreMenu(true)}
+                onClose={() => setOpenMoreMenu(false)}
+                speaker={contentOfMoreIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton
+                    size="small"
+                    onClick={() => setOpenMoreMenu(prev => !prev)}
+                  >
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
+
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfPrintIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
             </div>
           </Form>
         </Stack.Item>
@@ -443,7 +555,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }}
         onIdParsed={handleIdParsed}
       />
-    </>
+    </div>
   );
 };
 

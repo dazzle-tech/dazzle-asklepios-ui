@@ -1,4 +1,5 @@
 import { BaseQuery } from "@/newApi";
+import { DiagnosticTest } from "@/types/model-types-new";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
@@ -16,22 +17,11 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-type DiagnosticTest = {
-  id: string;
-  name: string;
-  type: string;
-  internalCode?: string;
-  price?: number;
-  currency?: string;
-  specialNotes?: string;
-};
-
 export const diagnosticTestService = createApi({
   reducerPath: "newDiagnosticTestApi",
   baseQuery: BaseQuery,
   tagTypes: ["DiagnosticTest"],
   endpoints: (builder) => ({
-    // 🔹 Get all diagnostic tests (paginated)
     getAllDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/diagnostic-test",
@@ -49,7 +39,7 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-     getAllActiveDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
+    getAllActiveDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/diagnostic-test/active",
         method: "GET",
@@ -65,7 +55,8 @@ export const diagnosticTestService = createApi({
       },
       providesTags: ["DiagnosticTest"],
     }),
-      getAllActiveAppointableDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
+
+    getAllActiveAppointableDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/diagnostic-test/active-appointable",
         method: "GET",
@@ -81,6 +72,7 @@ export const diagnosticTestService = createApi({
       },
       providesTags: ["DiagnosticTest"],
     }),
+
     getAllDiagnosticTestsByNameAndType: builder.query({
       query: ({ type, name, ...params }) => ({
         url: `/api/setup/diagnostic-test/by-type-and-name?type=${type}&name=${name}`,
@@ -98,7 +90,6 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    // 🔹 Get diagnostic tests by type
     getDiagnosticTestsByType: builder.query({
       query: ({ type, ...params }) => ({
         url: `/api/setup/diagnostic-test/by-type/${type}`,
@@ -116,7 +107,24 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    // 🔹 Get diagnostic tests by name
+    // ✅ new: get active diagnostic tests by type
+    getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
+      query: ({ type, page, size, sort = "id,asc" }) => ({
+        url: `/api/setup/diagnostic-test/active/by-type/${type}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
     getDiagnosticTestsByName: builder.query({
       query: ({ name, ...params }) => ({
         url: `/api/setup/diagnostic-test/by-name/${name}`,
@@ -134,11 +142,7 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    // 🔹 Get single diagnostic test
-    getDiagnosticTestById: builder.query<
-      { data: DiagnosticTest },
-      string
-    >({
+    getDiagnosticTestById: builder.query<{ data: DiagnosticTest }, string>({
       query: (id) => ({
         url: `/api/setup/diagnostic-test/${id}`,
         method: "GET",
@@ -151,7 +155,6 @@ export const diagnosticTestService = createApi({
       providesTags: (result, error, id) => [{ type: "DiagnosticTest", id }],
     }),
 
-    // 🔹 Create diagnostic test
     createDiagnosticTest: builder.mutation({
       query: (body) => ({
         url: "/api/setup/diagnostic-test",
@@ -161,7 +164,6 @@ export const diagnosticTestService = createApi({
       invalidatesTags: ["DiagnosticTest"],
     }),
 
-    // 🔹 Update diagnostic test
     updateDiagnosticTest: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/setup/diagnostic-test/${id}`,
@@ -185,9 +187,6 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-
-
-    // 🔹 Toggle active status
     toggleDiagnosticTestActive: builder.mutation({
       query: (id) => ({
         url: `/api/setup/diagnostic-test/${id}/toggle-active`,
@@ -211,5 +210,10 @@ export const {
   useGetAllDiagnosticTestsByNameAndTypeQuery,
   useLazyGetDiagnosticTestByIdQuery,
   useGetDiagnosticTestsByIdsQuery,
-  useGetAllActiveAppointableDiagnosticTestsQuery
+  useLazyGetDiagnosticTestsByIdsQuery,
+  useGetAllActiveAppointableDiagnosticTestsQuery,
+  useLazyGetAllActiveAppointableDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
+  useGetActiveDiagnosticTestsByTypeQuery,
+  useLazyGetActiveDiagnosticTestsByTypeQuery,
 } = diagnosticTestService;

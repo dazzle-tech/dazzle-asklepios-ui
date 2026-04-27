@@ -1,7 +1,6 @@
-import { useLoadTenantQuery } from '@/services/authService';
 import { Icon } from '@rsuite/icons';
-import { BlockUI } from 'primereact/blockui';
-import React, { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
@@ -9,17 +8,15 @@ import { useSelector } from 'react-redux';
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CustomProvider } from 'rsuite';
 import enGB from 'rsuite/locales/en_GB';
-import config from '../app-config';
 import Frame from './components/Frame';
 import SystemLoader from './components/Loaders/SystemLoader';
 import MyToast from './components/MyToast/MyToast';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import Translate from './components/Translate';
-import { useAppDispatch, useAppSelector } from './hooks';
+import { useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
 import locales from './locales';
-import Resources from './pages/appointment/resources';
 import Error403Page from './pages/authentication/403';
 import Error404Page from './pages/authentication/404';
 import Error500Page from './pages/authentication/500';
@@ -29,6 +26,7 @@ import SignInPage from './pages/authentication/sign-in';
 import Dashboard from './pages/dashboard';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
+import DentalProcedures from './pages/encounter/dental-procedures/DentalProcedures';
 import Dental from './pages/encounter/dental-screen';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
@@ -69,9 +67,13 @@ import PhysiotherapyPlan from './pages/encounter/encounter-component/physiothera
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
 import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
-import Procedure from './pages/encounter/encounter-component/procedure';
 import ProcedureNew from './pages/encounter/encounter-component/procedure-new/Procedure';
 
+import { MODULES } from '@/config/modules-config';
+import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTemplateList';
+import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
+import Accounting from './pages/billing-module';
+import CreatePassword from './pages/create-password/CreatePassword';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -83,52 +85,49 @@ import EncounterList from './pages/encounter/encounter-list';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import Allergies from './pages/encounter/encounter-pre-observations-new/AllergiesNurse';
 import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
-import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
-import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
-import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations-new/warning';
+import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';
 import ERDashboardsNew from './pages/encounter/ER-triage-new/Er-dashboard/ERDashboard';
-import ERStartTriageNew from './pages/encounter/ER-triage-new/Triage/ERStartTriage';
 import ERTabsDepartmentAndWaitingListNew from './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList';
+import ERStartTriageNew from './pages/encounter/ER-triage-new/Triage/ERStartTriage';
 import ERTriageNew from './pages/encounter/ER-triage-new/Triage/ERTriage';
 import QuickVisitNew from './pages/encounter/ER-triage-new/Triage/QuickVisit';
 import ViewTriageNew from './pages/encounter/ER-triage-new/Triage/ViewTriage';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
 import InpatientList from './pages/Inpatient/inpatientList';
 import InpatientWaitingLists from './pages/Inpatient/waitingList/InpatientWaitingLists';
+import ProductSetup from './pages/inventory-management/product-setup/ProductSetup';
 import InventoryTransactionNew from './pages/inventory-transaction/inventory-transaction-new';
-import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
+import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module-new';
 import ListOfRequisition from './pages/list-of-requisition';
-import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
+import GenericMedications from './pages/medications/generic-medications-new';
 import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
 import Operation from './pages/operation-module';
-import Accounting from './pages/billing-module';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
-import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
-import PatientChart from './pages/patient/patient-chart';
-import PatientEMR from './pages/patient/patient-emr';
-import PatientList from './pages/patient/patient-list';
-import PatientMergeFiles from './pages/patient/patient-merge-files';
-import PatientProfile from './pages/patient/patient-profile';
-import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
-import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
-import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
-import PatientProfileLegacy from './pages/patient-old/patient-profile';
 import PatientOldFacilityPatientList from './pages/patient-old/facility-patient-list';
 import PatientChartLegacy from './pages/patient-old/patient-chart';
 import PatientEMRLegacy from './pages/patient-old/patient-emr';
 import PatientListLegacy from './pages/patient-old/patient-list';
 import PatientMergeFilesLegacy from './pages/patient-old/patient-merge-files';
+import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
+import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
+import PatientChart from './pages/patient/patient-chart';
+import PatientEMR from './pages/patient/patient-emr';
+import PatientList from './pages/patient/patient-list';
+import PatientMergeFiles from './pages/patient/patient-merge-files';
+import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
+import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
@@ -139,9 +138,6 @@ import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import Rad from './pages/rad-module/RadiologyMain';
 import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
-import CreatePassword from './pages/create-password/CreatePassword';
-import ReviewResults from './pages/review-results/ReviewResults';
-import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
@@ -150,10 +146,9 @@ import Catalog from './pages/setup/catalog-setup-new';
 import CDTSetup from './pages/setup/cdt-setup';
 import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
-import Departments from './pages/setup/departments-setup';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
 import DVM from './pages/setup/dvm-setup';
-import Facilities from './pages/system-configurations/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
 import Lov from './pages/setup/lov-setup';
@@ -163,12 +158,9 @@ import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
-import StimulsoftReportViewer from './StimulsoftReportViewer';
-import ReportDesigner from './StimulsoftDesigner';
-import Practitioners from './pages/setup/practioners-setup-new';
 import PotintialDuplicate from './pages/setup/potential-duplicate - new';
+import Practitioners from './pages/setup/practioners-setup-new';
 import ProcedureSetup from './pages/setup/procedure-setup';
-import ProductSetup from './pages/inventory-management/product-setup/ProductSetup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
 import ReportResultTemplate from './pages/setup/report-result-template';
 import ServiceSetup from './pages/setup/service-setup';
@@ -176,90 +168,184 @@ import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import UOMGroup from './pages/setup/uom-group-new';
-import UsersNew from './pages/system-configurations/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
-import { useLoadNavigationMapQuery } from './services/uiService';
-import { setScreenKey } from './utils/uiReducerActions';
-import NewDepartments from './pages/setup/departments-setup/Departments-new';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { MODULES } from '@/config/modules-config';
-import RoleManegment from './pages/setup/role-managemen';
-import { useGetMenuQuery } from './services/security/UserRoleService';
-import CallOverlay from './components/Overlay/CallOverlay';
-import LanguagesSetup from './pages/setup/language-setup/Language';
-import Pediatric from './pages/encounter/encounter-component/pediatric';
-import IncidentPortal from './pages/Incident/IncidentPortal';
-import Enums from './pages/setup/Enums';
-import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
-import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
-import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
-import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
-import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
-import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
-import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
-import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
-import PriceLists from './pages/billing-module/priceList/PriceLists';
+import Facilities from './pages/system-configurations/facilities-setup';
+import UsersNew from './pages/system-configurations/users-setup-new';
+
+import 'survey-core/survey-core.min.css';
+import 'survey-creator-core/survey-creator-core.min.css';
+import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
 import MyConsultations from './components/MyConsultations/MyConsultations';
-import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
-import PayerSetup from './pages/setup/payer-setup';
-import CountrySetup from './pages/setup/country-setup/CountrySetup';
-import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
+import CallOverlay from './components/Overlay/CallOverlay';
+import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
+import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import Claimscreen from './pages/billing-module/billingClaims/Claims';
-import OrganizationDefinition from './pages/system-configurations/organization-definition';
+import PriceLists from './pages/billing-module/priceList/PriceLists';
+import Pediatric from './pages/encounter/encounter-component/pediatric';
+import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
+import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
+import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
+import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
+import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
+import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
+import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
+import UrgentCareViewTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
+import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
 import FormTemplates from './pages/form-template/FormTemplate';
 import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
-import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
+import IncidentPortal from './pages/Incident/IncidentPortal';
+import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
+import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
+import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
+import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
+import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
+import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
+import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
+import FavoriteTests from './pages/review-results';
 import AvailabilityTemplatePage from './pages/setup/availability_template';
-import "survey-core/survey-core.min.css";
-import "survey-creator-core/survey-creator-core.min.css";
-import Logo from './images/Logo_BLUE_New.svg';
-
-type BackendMenuItem = { screen?: string | null };
-
+import CountrySetup from './pages/setup/country-setup/CountrySetup';
+import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
+import Enums from './pages/setup/Enums';
+import LanguagesSetup from './pages/setup/language-setup/Language';
+import PayerSetup from './pages/setup/payer-setup';
+import PolicyDefinitions from './pages/setup/policy-definition';
+import OrganizationDefinition from './pages/system-configurations/organization-definition';
+import OrganizationHolidays from './pages/system-configurations/organization-holidays';
+import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
   '/error-403',
   '/error-404',
   '/error-500',
-  '/error-503'
+  '/error-503',
+  '/error-department-type'
 ]);
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
+type BackendMenuItem = {
+  module?: string | null;
+  label?: string | null;
+  screen?: string | null;
+};
+
 function ParentPermissionGuard() {
   const location = useLocation();
-  const authSlice = useAppSelector((s) => s.auth);
+  const authSlice = useAppSelector(s => s.auth);
 
   const path = location.pathname || '/';
+  const cleanPath = norm(path.split('?')[0]);
+  const selectedDepartment = authSlice.selectedDepartment;
+  const selectedDepartmentId = selectedDepartment?.departmentId;
 
-  if (PUBLIC_PATHS.has(path)) return <Outlet />;
+  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
+    useLazyGetDepartmentByIdQuery();
 
-  if (!authSlice?.menu) return <Outlet />;
-
-  const parent = norm(path.split('?')[0]).split('/')[0]; 
-  if (!parent) return <Outlet />; 
-
-  const parentToCode = new Map<string, string>();
-  MODULES.forEach((m: any) => {
-    (m.screens ?? []).forEach((s: any) => {
-      if (s?.navPath && s?.code) parentToCode.set(norm(s.navPath), String(s.code));
-    });
-  });
-
-  const requiredCode = parentToCode.get(parent);
-  if (!requiredCode) return <Outlet />;
-
-  const allowedCodes = new Set(
-    (authSlice.menu as BackendMenuItem[]).map((x) => String(x.screen ?? '').toUpperCase())
+  const matchedModule = MODULES.find((m: any) =>
+    (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
   );
 
-  const hasPermission = allowedCodes.has(requiredCode.toUpperCase());
+  const matchedScreen = matchedModule?.screens?.find((s: any) => norm(s.navPath) === cleanPath);
 
-  if (!hasPermission) return <Navigate to="/error-403" replace state={{ from: path }} />;
+  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
+  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
+
+  const allowedCodes = useMemo(
+    () =>
+      new Set(
+        ((authSlice.menu ?? []) as BackendMenuItem[]).map(x => String(x.screen ?? '').toUpperCase())
+      ),
+    [authSlice.menu]
+  );
+
+  useEffect(() => {
+    if (!requiresDepartmentTypeValidation) return;
+    if (!selectedDepartmentId) return;
+
+    getDepartmentById(selectedDepartmentId, true);
+  }, [requiresDepartmentTypeValidation, selectedDepartmentId, getDepartmentById]);
+
+  if (PUBLIC_PATHS.has(path)) return <Outlet />;
+  if (!authSlice?.menu) return <Outlet />;
+  if (!cleanPath) return <Outlet />;
+  if (!matchedModule || !matchedScreen) return <Outlet />;
+
+  const requiredCode = matchedScreen.code;
+
+  if (requiredCode) {
+    const hasPermission = allowedCodes.has(String(requiredCode).toUpperCase());
+
+    if (!hasPermission) {
+      return <Navigate to="/error-403" replace state={{ from: path }} />;
+    }
+  }
+
+  if (!requiresDepartmentTypeValidation) {
+    return <Outlet />;
+  }
+
+  if (!selectedDepartmentId) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Please select a department first.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
+    );
+  }
+
+  if (isLoading || isFetching) {
+    return <Outlet />;
+  }
+
+  if (error) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Unable to validate current department type.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
+    );
+  }
+
+  const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
+  const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) => String(x).toUpperCase());
+
+  if (!currentDepartmentType) {
+    return <Outlet />;
+  }
+
+  const isCompatible = allowedDepartmentTypes.includes(currentDepartmentType);
+
+  if (!isCompatible) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Current Department type is not compatible with this module.',
+          currentType: currentDepartmentType,
+          allowedTypes: allowedDepartmentTypes
+        }}
+      />
+    );
+  }
 
   return <Outlet />;
 }
@@ -268,31 +354,24 @@ const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-  const dispatch = useAppDispatch();
-  const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
   const navigate = useNavigate();
 
-  
-useEffect(() => {
-  const onPageShow = (e: PageTransitionEvent) => {
-    if (e.persisted) {
-      const token = localStorage.getItem('token');
-      if (!token) navigate('/login', { replace: true });
-    }
-  };
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        const token = localStorage.getItem('token');
+        if (!token) navigate('/login', { replace: true });
+      }
+    };
 
-  window.addEventListener('pageshow', onPageShow);
-  return () => window.removeEventListener('pageshow', onPageShow);
-}, [navigate]);
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, [navigate]);
 
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
-
 
   const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
@@ -300,7 +379,7 @@ useEffect(() => {
 
     for (const m of menuItems ?? []) {
       const nLabel = m.label;
-      const nScreen = (m.screen ?? '');
+      const nScreen = m.screen ?? '';
       const nModule = m.module;
 
       if (nLabel) globalAllowed.add(nLabel);
@@ -355,13 +434,13 @@ useEffect(() => {
       to: '/'
     });
 
-    // Always show Availability Templates (bypass permissions)
-    navsTemp.push({
-      eventKey: 'nav:availability-templates',
-      icon: <Icon as={icons.FaCalendarDays} />,
-      title: 'Availability Templates',
-      to: '/availability-template'
-    });
+    // // Always show Availability Templates (bypass permissions)
+    // navsTemp.push({
+    //   eventKey: 'nav:availability-templates',
+    //   icon: <Icon as={icons.FaCalendarDays} />,
+    //   title: 'Availability Templates',
+    //   to: '/availability-template'
+    // });
 
     const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
 
@@ -405,16 +484,15 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+      {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
         <img
           style={{ height: '40px', width: '110px' }}
           src={Logo}
 
         />
        
-      </div>
+      </div> */}
 
-   
       <div
         id="blocker-error"
         style={{
@@ -437,7 +515,6 @@ useEffect(() => {
       </div>
 
       <MyToast />
-      <SystemLoader />
       <SessionExpiredBackdrop />
       <CustomProvider locale={enGB}>
         <Routes>
@@ -445,24 +522,29 @@ useEffect(() => {
             element={
               <AuthGuard>
                 <ProtectedRoute>
-                  <BlockUI
-                    template={
-                      <h3
-                        style={{
-                          textAlign: 'center',
-                          color: 'white',
+                  <Box sx={{ position: 'relative', minHeight: '100vh' }}>
 
-                          top: '10%',
-                          position: 'absolute'
+                    {/* Overlay Loader */}
+                    {uiSlice.loading && (
+                      <Box
+                        sx={{
+                          position: 'fixed',
+                          inset: 0,
+                          zIndex: 9999,
+                          bgcolor: 'rgba(0, 0, 0, 0.45)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        <Translate>Loading</Translate>...
-                      </h3>
-                    }
-                    blocked={uiSlice.loading}
-                  >
-                    <ParentPermissionGuard  />
-                  </BlockUI>
+                        <SystemLoader open />
+                      </Box>
+                    )}
+
+                    {/* Main Content */}
+                    <ParentPermissionGuard />
+
+                  </Box>
                 </ProtectedRoute>
               </AuthGuard>
             }
@@ -473,8 +555,10 @@ useEffect(() => {
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />
-              <Route path="patient-quick-appointment" element={<PatientQuickAppointment {...({} as any)} />} />
+              <Route
+                path="patient-quick-appointment"
+                element={<PatientQuickAppointment {...({} as any)} />}
+              />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
@@ -483,24 +567,32 @@ useEffect(() => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
-              <Route path="patient-old/facility-patient-list" element={<PatientOldFacilityPatientList />} />
+              <Route
+                path="patient-old/facility-patient-list"
+                element={<PatientOldFacilityPatientList />}
+              />
               <Route path="patient-old/patient-chart" element={<PatientChartLegacy />} />
               <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
+              <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareListMain />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
-              <Route path="/patient-report" element={<StimulsoftReportViewer />} />
-  <Route path="/patient-report-designer" element={<ReportDesigner />} />
+              <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="encounter" element={<Encounter />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
                 <Route
@@ -515,10 +607,12 @@ useEffect(() => {
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -533,11 +627,12 @@ useEffect(() => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
+                <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
-                
+
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
@@ -563,7 +658,11 @@ useEffect(() => {
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
-
+                <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
+                <Route
+                  path="service-and-products"
+                  element={<ServiceAndProductsTab {...({} as any)} />}
+                />
               </Route>
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -575,14 +674,19 @@ useEffect(() => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
-              <Route path="nurse-station" element={<EncounterPreObservationsNew />} >
-                 <Route path="progress-notes" element={<ProgressNotes />} />
+              <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
+                <Route path="progress-notes" element={<ProgressNotes />} />
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                    <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
+                <Route
+                  path="service-and-products"
+                  element={<ServiceAndProductsTab {...({} as any)} />}
+                />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -590,11 +694,12 @@ useEffect(() => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<Observations />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations   />} />
+                <Route path="observations" element={<Observations />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -640,7 +745,7 @@ useEffect(() => {
                 <Route path="sliding-scale" element={<SlidingScale />} />
               </Route>
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
-              <Route path="review-results" element={<ReviewResults />} />
+              <Route path="review-results" element={<FavoriteTests />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
@@ -664,15 +769,15 @@ useEffect(() => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<NewDepartments />} />
-              <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
+              <Route path="policy-definition" element={<PolicyDefinitions />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
-              <Route path="billing-claims" element={<Claimscreen/>} />
+              <Route path="billing-claims" element={<Claimscreen />} />
 
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
@@ -695,8 +800,10 @@ useEffect(() => {
               <Route path="error-403" element={<Error403Page />} />
               <Route path="error-500" element={<Error500Page />} />
               <Route path="error-503" element={<Error503Page />} />
+              <Route path="error-department-type" element={<ErrorDepartmentTypePage />} />
               <Route path="playground" element={<Playground />} />
               <Route path="schedual-screen" element={<ScheduleScreen />} />
+              <Route path="apply-template" element={<ApplyTemplateList />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
@@ -716,23 +823,50 @@ useEffect(() => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums/> }/>
+              <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums />} />
-              <Route path='payor-setup' element={<PayerSetup/>} />
-              <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
-              <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
-              <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
-              <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
-              <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
-              <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
-              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
-              <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
+              <Route path="enums" element={<Enums />} />
+              <Route path="payor-setup" element={<PayerSetup />} />
+              <Route
+                path="inventory-management-product-setup"
+                element={<InventoryManagementProductSetup />}
+              />
+              <Route
+                path="inventory-management-transaction"
+                element={<InventoryManagementTransaction />}
+              />
+              <Route
+                path="inventory-management-transfer"
+                element={<InventoryManagementTransfer />}
+              />
+              <Route
+                path="inventory-management-transfer-approval"
+                element={<InventoryManagementTransferApproval />}
+              />
+              <Route
+                path="inventory-management-product-catalog"
+                element={<InventoryManagementProductCatalog />}
+              />
+              <Route
+                path="inventory-management-warehouse-setup"
+                element={<InventoryManagementWarehouseSetup />}
+              />
+              <Route
+                path="inventory-management-warehouse-items-setup"
+                element={<InventoryManagementWarehouseItemsSetup />}
+              />
+              <Route
+                path="inventory-management-department-stock"
+                element={<InventoryManagementDepartmentStock />}
+              />
               <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
               <Route path="form-template" element={<FormTemplates />} />
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
+              <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
+              <Route path="nurse-assessment" element={<NurseAssessment />} />
+              <Route path="physician-assessment" element={<PhysicianAssessment />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

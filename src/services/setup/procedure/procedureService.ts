@@ -22,7 +22,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 };
 
 export const procedureSetupService = createApi({
-  reducerPath: 'newProcedureApi',
+  reducerPath: 'procedureSetupService',
   baseQuery: BaseQuery,
   tagTypes: ['Procedure'],
   endpoints: builder => ({
@@ -126,6 +126,31 @@ export const procedureSetupService = createApi({
         params: { ids }
       }),
       providesTags: ['Procedure']
+    }),
+    getActiveProceduresByFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: Id } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/procedure/active/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure']
+    }),
+
+    getActiveProceduresByFacilityAndCategory: builder.query<
+      PagedResult<any>,
+      { facilityId: Id; category: Id } & PagedParams
+    >({
+      query: ({ facilityId, category, page, size, sort = 'name,asc' }) => ({
+        url: `/api/setup/procedure/active/by-facility/${encodeURIComponent(
+          String(facilityId)
+        )}/by-category`,
+        params: { page, size, sort, category }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure']
     })
   })
 });
@@ -146,5 +171,9 @@ export const {
   useGetActiveAppointableProceduresQuery,
   useGetProcedureByIdQuery,
   useLazyGetProcedureByIdQuery,
-  useGetProceduresByIdsQuery
+  useGetProceduresByIdsQuery,
+  useGetActiveProceduresByFacilityQuery,
+  useLazyGetActiveProceduresByFacilityQuery,
+  useGetActiveProceduresByFacilityAndCategoryQuery,
+  useLazyGetActiveProceduresByFacilityAndCategoryQuery
 } = procedureSetupService;

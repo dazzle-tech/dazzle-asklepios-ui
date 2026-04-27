@@ -3,7 +3,6 @@ import { Form, Tooltip, Whisper } from 'rsuite';
 import ReloadIcon from '@rsuite/icons/Reload';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
-import { skipToken } from '@reduxjs/toolkit/query';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -30,27 +29,14 @@ type Props = {
   onSuccess?: () => void;
 };
 
-/* =======================
-   Component
-======================= */
-
 const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
   const dispatch = useAppDispatch();
 
-  /* =======================
-     Guards
-  ======================= */
 
   const orderTestId = rowData?.id;
 
-  if (!orderTestId) {
+  if (!orderTestId) return null;
 
-    return null;
-  }
-
-  /* =======================
-     State
-  ======================= */
 
   const [open, setOpen] = useState(false);
 
@@ -62,17 +48,18 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
       reason: ''
     });
 
-  /* =======================
-     Queries
-  ======================= */
 
-  const { data: externalTest, isFetching } =
-    useGetExternalTestByTestIdQuery(orderTestId ?? skipToken);
+  const {
+    data: externalTest,
+    isFetching,
+    isError,
+    error
+  } = useGetExternalTestByTestIdQuery(orderTestId, {
+    refetchOnMountOrArgChange: true
+  });
 
-  const [
-    createExternalTest,
-    { isLoading }
-  ] = useCreateExternalTestMutation();
+  const [createExternalTest, { isLoading }] =
+    useCreateExternalTestMutation();
 
   const {
     data: facilityListResponse,
@@ -84,58 +71,62 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
 
   const facilities = facilityListResponse ?? [];
 
-  /* =======================
-     Sync external test
-  ======================= */
 
   useEffect(() => {
-    if (!orderTestId || isFetching) return;
+    if (!orderTestId) return;
+    if (isError) {
+      const msg =
+        (error as any)?.data?.message ||
+        (error as any)?.error ||
+        '';
 
-    if (externalTest?.facilityName) {
+      if (msg.includes('not found')) {
+        setExternalTestState({
+          id: null,
+          testId: orderTestId,
+          facilityName: '',
+          reason: ''
+        });
+        return;
+      }
+    }
+
+    if (externalTest?.id) {
       setExternalTestState({
-        id: externalTest.id ?? null,
+        id: externalTest.id,
         testId: externalTest.testId ?? orderTestId,
         facilityName: externalTest.facilityName ?? '',
         reason: externalTest.reason ?? ''
       });
     } else {
       setExternalTestState({
-        id:  null,
+        id: null,
         testId: orderTestId,
         facilityName: '',
         reason: ''
       });
     }
-  }, [orderTestId, externalTest, isFetching]);
+  }, [externalTest, isError, error, orderTestId]);
 
-  /* =======================
-     Flags
-  ======================= */
 
   const canSendToExternal =
     rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED ||
     rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
 
+  const isAlreadyExternal = !!externalTest?.id;
 
-  const isAlreadyExternal = !!externalTestState.id;
-
-
-  const isDisabled =
-    !canSendToExternal || isFetching;
+  const isDisabled = !canSendToExternal || isFetching;
 
   const iconColor = isFetching
     ? '#999'
     : isAlreadyExternal
-      ? '#1675e0'
-      : 'var(--primary-gray)';
+    ? '#1675e0'
+    : 'var(--primary-gray)';
 
-  /* =======================
-     Submit
-  ======================= */
 
   const handleSubmit = async () => {
     if (!externalTestState.testId) {
-      dispatch(notify({ msg: 'Test ID is missing', sev: 'error' }));
+      dispatch(notify({ msg: 'Test ID missing', sev: 'error' }));
       return;
     }
 
@@ -158,7 +149,7 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
 
       dispatch(
         notify({
-          msg: 'Test sent to external lab successfully',
+          msg: 'Sent to external lab successfully',
           sev: 'success'
         })
       );
@@ -171,56 +162,50 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
           msg:
             e?.data?.message ||
             e?.data?.detail ||
-            'Send to external lab failed',
+            'Send failed',
           sev: 'error'
         })
       );
     }
   };
 
+  /* ======================= */
+  /* Direction */
+  /* ======================= */
 
-  /* =======================
-     Render
-  ======================= */
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
+
+  /* ======================= */
+  /* Render */
+  /* ======================= */
 
   return (
-    <>
-      {/* ========= Icon ========= */}
+    <div dir={dir}>
       <Whisper
         placement="top"
         trigger="hover"
         speaker={
           <Tooltip>
             {isFetching
-              ? 'Loading external test...'
+              ? 'Loading...'
               : isAlreadyExternal
-                ? 'Already sent to external lab'
-                : 'Send to External Lab'}
+              ? 'Already sent to external lab'
+              : 'Send to External Lab'}
           </Tooltip>
         }
       >
         <span>
           {isFetching ? (
-            <ReloadIcon
-              spin
-              style={{
-                fontSize: '1em',
-                marginRight: 10,
-                color: '#999',
-                cursor: 'not-allowed',
-                opacity: 0.6
-              }}
-            />
+            <ReloadIcon spin />
           ) : (
             <FontAwesomeIcon
               icon={faRightFromBracket}
               style={{
-                marginRight: 10,
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 color: iconColor,
                 opacity: isDisabled ? 0.4 : 1
               }}
-              className='icon-laboratory-size'
               onClick={() => {
                 if (isDisabled) return;
                 setOpen(true);
@@ -230,7 +215,6 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
         </span>
       </Whisper>
 
-      {/* ========= Modal ========= */}
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -239,12 +223,10 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
         bodyheight="40vh"
         actionButtonLabel="Send"
         actionButtonFunction={handleSubmit}
-        isDisabledActionBtn={
-          isLoading || isAlreadyExternal
-        }
+        isDisabledActionBtn={isLoading || isAlreadyExternal}
         content={
-          <Form fluid>
-            <div className="external-lab-modal-inputs-handle">
+          <div dir={dir}>
+            <Form fluid>
               <MyInput
                 fieldType="select"
                 fieldName="facilityName"
@@ -271,11 +253,11 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
                 width="100%"
                 disabled={isAlreadyExternal}
               />
-            </div>
-          </Form>
+            </Form>
+          </div>
         }
       />
-    </>
+    </div>
   );
 };
 

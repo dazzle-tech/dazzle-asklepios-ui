@@ -17,7 +17,7 @@ import { notify } from '@/utils/uiReducerActions';
 
 import { useCreateMutation, useUpdateMutation } from '@/services/consultation/consultationService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
 import { newConsultation } from '@/types/model-types-constructor-new';
@@ -94,7 +94,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -115,7 +115,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
         dispatch(
           notify({
             msg: `${fieldLabel} is required` + suffix,
-            sev: 'error'
+            sev: 'warning'
           })
         );
         return;
@@ -158,7 +158,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     dispatch(
       notify({
         msg: `Please fix the following fields:\n• ${normalizedItems.join('\n• ')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -173,7 +173,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     data?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
 const CONSULTATION_ERROR_MAP: Record<string, string> = {
@@ -222,7 +222,7 @@ const Details = ({
 
   const { data: consultantSpecialtyLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
@@ -247,27 +247,26 @@ const Details = ({
   const hasPractitioners = practitionersResult?.data?.data?.totalElements
     ? practitionersResult.data.data.totalElements > allPractitioners.length
     : false;
-
   useEffect(() => {
     if (!open) return;
 
     if (consultationOrders?.id) {
       setFormData({
         ...consultationOrders,
-        patientId: patient?.key,
-        encounterId: encounter?.key
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
     } else {
       setFormData({
         ...newConsultation,
-        patientId: patient?.key,
-        encounterId: encounter?.key,
+        patientId: patient?.id,
+        encounterId: encounter?.id,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.key, encounter?.key]);
+  }, [open, consultationOrders, patient?.id, encounter?.id]);
 
   useEffect(() => {
     if (!open) {
@@ -291,7 +290,7 @@ const Details = ({
 
     setLocalAiSummary(null);
     getSpecialtyConsultation({
-      request_id: `req-${patient?.key ?? ''}-${encounter?.key ?? ''}`,
+      request_id: `req-${patient?.id ?? ''}-${encounter?.id ?? ''}`,
       specialty: specialtyApi
     })
       .unwrap()
@@ -301,7 +300,7 @@ const Details = ({
       .catch(error => {
         setLocalAiSummary(null);
       });
-  }, [specialtyName, getSpecialtyConsultation, patient?.key, encounter?.key, open]);
+  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id, open]);
 
   useEffect(() => {
     setShowAiPanel(false);
@@ -342,8 +341,8 @@ const Details = ({
   const handleClear = () => {
     setFormData({
       ...newConsultation,
-      patientId: patient?.key,
-      encounterId: encounter?.key,
+      patientId: patient?.id,
+      encounterId: encounter?.id,
       destinationType: 'DEPARTMENT',
       toFacilityId: null,
       toDepartmentId: null,
@@ -354,44 +353,79 @@ const Details = ({
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!formData.toFacilityId) {
+      fieldErrors.push({ field: 'toFacilityId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'DEPARTMENT' && !formData.toDepartmentId) {
+      fieldErrors.push({ field: 'toDepartmentId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'CONSULTANT') {
+      if (!formData.consultantSpeciality) {
+        fieldErrors.push({ field: 'consultantSpeciality', message: 'must not be null' });
+      }
+      if (!formData.practitionerId) {
+        fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+      }
+    }
+
+    if (!formData.consultationMethod) {
+      fieldErrors.push({ field: 'consultationMethod', message: 'must not be null' });
+    }
+
+    if (!formData.consultationType) {
+      fieldErrors.push({ field: 'consultationType', message: 'must not be null' });
+    }
+
+    if (!formData.consultationLevel) {
+      fieldErrors.push({ field: 'consultationLevel', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+          data: {
+            fieldErrors
+          },
+          status: 400
+        }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, CONSULTATION_ERROR_MAP);
+      return; 
+    }
+
     try {
       if (formData.id) {
-        const updatePayload: ConsultationUpdatePayload = {
-          id: formData.id,
+        await updateConsultation({
+          ...formData
+        }).unwrap();
 
-          destinationType: formData.destinationType,
-          toFacilityId: formData.toFacilityId,
-          toDepartmentId: formData.toDepartmentId,
-
-          consultantSpeciality: formData.consultantSpeciality,
-          practitionerId: formData.practitionerId,
-
-          consultationMethod: formData.consultationMethod,
-          consultationType: formData.consultationType,
-          consultationLevel: formData.consultationLevel,
-
-          consultationContent: formData.consultationContent,
-
-          notes: formData.notes,
-          extraDocument: formData.extraDocument,
-          approvalNumber: formData.approvalNumber
-        };
-
-        await updateConsultation(updatePayload).unwrap();
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
         await createConsultation({
           ...formData,
-          status: 'REQUESTED',
-          fromFacilityId: selectedDepartment.facilityId,
-          fromDepartmentId: selectedDepartment.departmentId
+          status: 'REQUESTED'
         }).unwrap();
+
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
 
       setOpen(false);
       handleClear();
+      refetchCon?.();
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
     }
@@ -420,8 +454,14 @@ const Details = ({
     }
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -594,7 +634,7 @@ const Details = ({
                                 dispatch(
                                   notify({
                                     msg: 'Please select Consultant Specialty first.',
-                                    sev: 'error'
+                                    sev: 'warning'
                                   })
                                 );
                                 return;
@@ -614,7 +654,7 @@ const Details = ({
                                   dispatch(
                                     notify({
                                       msg: 'Specialty name not found. Please re-select Consultant Specialty.',
-                                      sev: 'error'
+                                      sev: 'warning'
                                     })
                                   );
                                   return;
@@ -758,7 +798,7 @@ const Details = ({
                     />
                     <MyInput
                       width={'12vw'}
-                      fieldType="number"
+                      fieldType="textnumber"
                       fieldLabel="Approval Number"
                       fieldName="approvalNumber"
                       record={formData}
@@ -806,7 +846,7 @@ const Details = ({
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

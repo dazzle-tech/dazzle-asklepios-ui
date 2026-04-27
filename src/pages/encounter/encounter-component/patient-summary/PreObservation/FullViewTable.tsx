@@ -1,85 +1,113 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import React, { useState } from 'react';
+import React from 'react';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-const FullViewTable = ({ open, setOpen, list }) => {
-  const columns = [
-    {
-      key: 'visitKey',
-      title: <Translate>Visit Date</Translate>,
-      render: (rowData: any) => {
-        return rowData?.encounter?.plannedStartDate || '';
+import { useGetBodyMeasurementsBetweenDatesByPatientIdQuery } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import "./styles.less";
+const FullViewTable = ({ open, setOpen, vitalSignsList, patient, formatDateTime, vitalLoading, vitalFetching }) => {
+  const {
+    data: bodyPage,
+    isLoading: bodyLoading,
+    isFetching: bodyFetching,
+  } = useGetBodyMeasurementsBetweenDatesByPatientIdQuery(
+    patient?.id
+      ? {
+        patientId: patient?.id,
       }
-    },
-    {
-      key: 'latestbp',
-      title: <Translate>BP</Translate>,
-      render: (rowData: any) => {
-        const systolic = rowData?.latestbpSystolic;
-        const diastolic = rowData?.latestbpDiastolic;
+      : (undefined as any),
+    { skip: !patient?.id }
+  );
 
-        return systolic && diastolic ? `${systolic}/${diastolic} mmHg` : '';
+  const bodyColumns = [
+    {
+      key: 'createdAt',
+      title: 'CREATED AT',
+      render: (row: any) => {
+        const v = row?.createdAt ?? row?.createdDate;
+        return v ? formatDateTime(new Date(v)) : '';
+      },
+    },
+    {
+      key: 'weight',
+      title: 'WEIGHT(kg)',
+    },
+    {
+      key: 'height',
+      title: 'HEIGHT(cm)',
+    },
+  ];
+
+  const vitalColumns = [
+    {
+      key: 'createdAt',
+      title: 'CREATED AT',
+      render: (row: any) => {
+        const v = row?.createdAt ?? row?.createdDate;
+        return v ? formatDateTime(new Date(v)) : '';
+      },
+    },
+
+    {
+      key: 'bloodPressure',
+      title: <Translate>BP(mmHg)</Translate>,
+      render: (rowData: any) => {
+        const systolic = rowData?.bloodPressureSystolic;
+        const diastolic = rowData?.bloodPressureDiastolic;
+
+        return systolic && diastolic ? `${systolic}/${diastolic}` : '';
       }
     },
     {
-      key: 'latestheartrate',
-      title: <Translate>Pulse</Translate>,
+      key: 'temperature',
+      title: <Translate>Temp(°C)</Translate>,
       render: (rowData: any) => {
-        return rowData?.latestheartrate ? `${rowData.latestheartrate} bpm` : '';
+        return rowData?.temperature ? `${rowData.temperature}` : '';
       }
     },
     {
-      key: 'latestoxygensaturation',
-      title: <Translate>SpO2</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestoxygensaturation ? `${rowData.latestoxygensaturation}%` : '';
-      }
+      key: 'pulseRate',
+      title: <Translate>Heart Rate(bpm)</Translate>,
     },
     {
-      key: 'latestnotes',
-      title: <Translate>Note</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestnotes || '';
-      }
+      key: 'oxygenSaturation',
+      title: 'OXYGEN SATURATION(%)',
     },
-    {
-      key: 'latestheadcircumference',
-      title: <Translate>Head circumference</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestheadcircumference ? `${rowData.latestheadcircumference} cm` : '';
-      }
-    },
-    {
-      key: 'latestpainlevelLkey',
-      title: <Translate>Pain Degree</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestpainlevelLvalue?.lovDisplayVale || '';
-      }
-    },
-    {
-      key: 'latestpaindescription',
-      title: <Translate>Pain Description</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestpaindescription || '';
-      }
-    }
   ];
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      size="60vw"
+      size="70vw"
       hideBack
       hideActionBtn
       title="Observation"
       steps={[{ title: 'Observation', icon: <FontAwesomeIcon icon={faBedPulse} /> }]}
       content={
-        <>
-          <MyTable data={list ?? []} columns={columns} height={300} />
-        </>
+          <div className="pm-grid margin-top-20">
+            <div className="pm-col">
+              <h4 className="font-size-14">Body Measurements</h4>
+              <MyTable
+                height={280}
+                data={bodyPage ?? []}
+                columns={bodyColumns}
+                loading={bodyLoading || bodyFetching}
+
+              />
+            </div>
+
+            <div className="pm-col">
+              <h4 className="font-size-14">Vital Signs</h4>
+              <MyTable
+                height={280}
+                data={vitalSignsList}
+                columns={vitalColumns}
+                loading={vitalLoading || vitalFetching}
+              />
+            </div>
+          </div>
       }
     />
   );

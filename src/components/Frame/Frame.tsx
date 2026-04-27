@@ -15,7 +15,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/Logo_BLUE_New.svg';
+import Logo from '../../images/Logo_BLUE_New.png';
 import DLogo from '../../images/Logo_Dark.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
@@ -44,20 +44,13 @@ import {
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import MyButton from '../MyButton/MyButton';
-import { setSelectedDepartment } from '@/reducers/authSlice';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import {
-  useGetActiveUserDepartmentsByUserQuery,
-  useGetDefaultUserDepartmentByUserQuery
-} from '@/services/security/userDepartmentsService';
-import { conjureValueBasedOnIDFromList } from '@/utils';
-import { UserDepartment } from '@/types/model-types-new';
+
 import Translate from '../Translate';
+import DepartmentSwitcher from '@/components/DepartmentSwitcher/DepartmentSwitcher';
+
 
 const { getHeight, on } = DOMHelper;
 
-// Navigation item interface
 export interface NavItemData {
   eventKey: string;
   title: string;
@@ -67,268 +60,59 @@ export interface NavItemData {
   children?: NavItemData[];
 }
 
-// Frame props interface
 export interface FrameProps {
   navs: NavItemData[];
   children?: React.ReactNode;
   mode: string;
 }
-// open drawer width
+
+type SyncedDepartment = {
+  departmentId?: string | number | null;
+  facilityId?: string | number | null;
+  departmentName?: string | null;
+  facilityName?: string | null;
+};
+
+
+
 const drawerWidth = 240;
-// closed drawer width
 const collapsedWidth = 60;
 
 const Frame = (props: FrameProps) => {
   const { navs, mode } = props;
   const direction = localStorage.getItem('direction');
+  const authAlice = useAppSelector(state => state.auth);
+    const selectedDepartment = authAlice.selectedDepartment;
 
-  // State variables
-  const [expand, setExpand] = useState(false); // sidebar expanded or not
-  const [submenuOpen, setSubmenuOpen] = useState<string | null>(null); // collapse state of submenu
-  const [windowHeight, setWindowHeight] = useState(getHeight(window)); // window height
-  const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' }); // search input
-  const [width, setWidth] = useState<number>(window.innerWidth); // window width
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // menu anchor element
-  const [activeMenu, setActiveMenu] = useState<string | null>(null); // active menu for popover
+  const [expand, setExpand] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
+  const [windowHeight, setWindowHeight] = useState(getHeight(window));
+  const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [expandAllSubmenus, setExpandAllSubmenus] = useState(false);
   const [departmentPopoverOpen, setDepartmentPopoverOpen] = useState(false);
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
-  const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel
+  const [expandNotes, setExpandNotes] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const departmentTriggerRef = React.useRef<WhisperInstance>(null);
 
-  const { data: departmentsResponse, isLoading } = useGetDepartmentsQuery({ page: 0, size: 10000 });
-  const departments = departmentsResponse?.data ?? [];
-  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
-  const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
-  const userId = authSlice.user?.id;
-  type UserDepartmentWithNames = UserDepartment & {
-    departmentName?: string | null;
-    facilityName?: string | null;
-  };
-
-  const selectedDepartment = authSlice.selectedDepartment;
-  const selectedFacilityId =
-    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-
-  const facilityKey = selectedFacilityId ?? 'no-facility';
-
-  const {
-    data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments,
-    isFetching: isFetchingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(
-    { userId: userId as number, facilityId: facilityKey },
-    {
-      skip: !userId,
-      refetchOnMountOrArgChange: true
-    }
-  );
-
-  const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
-  const departmentsReady = !isLoadingDepartments && !isFetchingDepartments;
-  const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
-  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
   const drawerOffset = expand ? drawerWidth : collapsedWidth;
 
-  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
-    userId as number,
-    {
-      skip: !shouldFetchDefault
-    }
-  );
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
-  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-  const resolveFacilityName = useCallback(
-    (facilityId?: string | number | null) => {
-      if (facilityId != null) {
-        const resolved =
-          conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
-          (facilityId ? `Facility #${facilityId}` : undefined);
-        if (resolved) {
-          return resolved;
-        }
-      }
-      const tenantFacility = authSlice?.tenant?.selectedFacility;
-      return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
-    },
-    [facilities, authSlice?.tenant?.selectedFacility]
-  );
-
-  const resolveDepartmentName = useCallback(
-    (departmentId?: string | number | null) => {
-      if (departmentId == null) return undefined;
-      return (
-        conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
-        (departmentId ? `Department #${departmentId}` : undefined)
-      );
-    },
-    [departments]
-  );
-
-  const departmentHeaderFacilityName = useMemo(
-    () =>
-      selectedDepartment?.facilityName ??
-      authSlice?.tenant?.selectedFacility?.name ??
-      authSlice?.tenant?.selectedFacility?.facilityName,
-    [selectedDepartment?.facilityName, authSlice?.tenant?.selectedFacility]
-  );
-
-  const renderDepartmentsSpeaker = useCallback(
-    ({ onClose, left, top, className }: any, ref) => (
-      <Popover ref={ref} className={className} style={{ left, top, width: 320 }} full>
-        <div
-          style={{
-            padding: '8px 12px',
-            fontWeight: 600,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4
-          }}
-        >
-          <span>My Departments</span>
-          {departmentHeaderFacilityName && (
-            <span style={{ fontSize: '12px', color: '#6c757d' }}>
-              {departmentHeaderFacilityName}
-            </span>
-          )}
-        </div>
-        <Divider style={{ margin: 0 }} />
-
-        {isLoadingDepartments && isFetchingDepartments && isLoading ? (
-          <div style={{ padding: '12px' }}>Loading departments…</div>
-        ) : activeDepartments.length === 0 ? (
-          <div style={{ padding: '12px' }}>No active departments found.</div>
-        ) : (
-          <div
-            style={{
-              maxHeight: 240,
-              overflowY: 'auto',
-              margin: '8px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8
-            }}
-          >
-            {activeDepartments.map(dept => {
-              const isDefault =
-                defaultDepartmentEntity?.id != null
-                  ? defaultDepartmentEntity.id === dept.id
-                  : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
-              const isActive =
-                selectedDepartment?.departmentId === dept.departmentId &&
-                selectedDepartment?.facilityId === dept.facilityId;
-              return (
-                <div
-                  key={dept.id ?? `${dept.userId}-${dept.departmentId}`}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    border: '1px solid var(--border-color-light, #e5e7eb)',
-                    borderRadius: 8,
-                    padding: '8px 12px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      type="button"
-                      style={{
-                        fontWeight: 600,
-                        border: 'none',
-                        background: 'transparent',
-                        padding: 0,
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        flex: '1 1 auto'
-                      }}
-                      onClick={() => {
-                        const resolvedDepartmentName = resolveDepartmentName(dept.departmentId);
-                        const resolvedFacilityName = resolveFacilityName(dept.facilityId);
-                        dispatch(
-                          setSelectedDepartment({
-                            departmentId: dept.departmentId,
-                            facilityId: dept.facilityId,
-                            departmentName: resolvedDepartmentName,
-                            facilityName: resolvedFacilityName
-                          })
-                        );
-                        setDepartmentPopoverOpen(false);
-                        onClose?.();
-                        window.location.reload();
-                      }}
-                    >
-                      {resolveDepartmentName(dept.departmentId)}
-                    </button>
-                    {isActive && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: '#facc15',
-                          color: '#1f2937',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Current
-                      </span>
-                    )}
-                    {isDefault && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: 'var(--deep-blue)',
-                          color: 'var(--white)',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Default
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Popover>
-    ),
-    [
-      activeDepartments,
-      defaultDepartmentEntity,
-      departmentHeaderFacilityName,
-      dispatch,
-      isLoadingDepartments,
-      resolveDepartmentName,
-      resolveFacilityName,
-      selectedDepartment
-    ]
-  );
-
-  const selectedFacilityName =
-    authSlice?.tenant?.selectedFacility?.name ??
-    authSlice?.tenant?.selectedFacility?.facilityName ??
-    'Facility';
-  const selectedDepartmentName =
-    authSlice?.selectedDepartment?.departmentName ?? 'No Department Selected';
-
-  // Effects - window resize listeners
   useEffect(() => {
     setWindowHeight(getHeight(window));
     const resizeListenner = on(window, 'resize', () => setWindowHeight(getHeight(window)));
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
+
     return () => {
       resizeListenner.off();
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  // Close sidebar if window width is small
   useEffect(() => {
     if (width < 950) {
       setExpand(false);
@@ -336,15 +120,13 @@ const Frame = (props: FrameProps) => {
   }, [width]);
 
   const containerClasses = classNames('page-container', {
-    'container-full': !expand // full width if sidebar closed
+    'container-full': !expand
   });
-
-  // Toggle submenu collapse
+ 
   const handleSubmenuToggle = (menu: string) => {
     setSubmenuOpen(submenuOpen === menu ? null : menu);
   };
 
-  // Open popover menu when sidebar is collapsed
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, key: string) => {
     setAnchorEl(event.currentTarget);
     setActiveMenu(key);
@@ -356,18 +138,18 @@ const Frame = (props: FrameProps) => {
   };
 
   const screenExist = (module: NavItemData) => {
-    if (!recordOfSearchedScreenName['screen']) return true;
+    if (!recordOfSearchedScreenName.screen) return true;
 
     if (
       module.children &&
       module.children.some(screen =>
-        screen.title.toLowerCase().includes(recordOfSearchedScreenName['screen'].toLowerCase())
+        screen.title.toLowerCase().includes(recordOfSearchedScreenName.screen.toLowerCase())
       )
     ) {
       return true;
     }
 
-    return module.title.toLowerCase().includes(recordOfSearchedScreenName['screen'].toLowerCase());
+    return module.title.toLowerCase().includes(recordOfSearchedScreenName.screen.toLowerCase());
   };
 
   const isCodingModule = (nav: NavItemData) =>
@@ -376,36 +158,6 @@ const Frame = (props: FrameProps) => {
   return (
     <Container className={`frame ${mode === 'light' ? 'light' : 'dark'}`}>
       <Box sx={{ display: 'flex', flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}>
-        {/* <Container className={containerClasses}>
-          <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} expandNotes={expandNotes} />
-          <Content>
-            <Stack
-              id="fixedInfoBar"
-              className={classNames({
-                'fixed-info-bar-visible': patientSlice.patient,
-                'fixed-info-bar-semi-transparent': !patientSlice.patient
-              })}
-              divider={<Divider vertical />}
-            ></Stack>
-
-            <div className="content-with-sticky">
-              <div className="main-content-area">
-                <Outlet />
-              </div>
-
-              {expandNotes && (
-                <div className="sticky-sidebar-area">
-                  <UserStickyNotes
-                    expand={expandNotes}
-                    setExpand={setExpandNotes}
-                  />
-                </div>
-              )}
-            </div>
-          </Content>
-        </Container> */}
-
-        {/* Sidebar toggle button */}
         <IconButton
           color="inherit"
           aria-label="toggle drawer"
@@ -415,7 +167,6 @@ const Frame = (props: FrameProps) => {
             position: 'fixed',
             top: 12,
             [direction === 'LTR' ? 'left' : 'right']: expand ? `${drawerWidth - 28}px` : '22px',
-            // right: expand ? `${drawerWidth - 28}px` : '22px', // adjust margin-left when closed
             zIndex: 5,
             background: 'transparent',
             padding: '6px',
@@ -432,13 +183,12 @@ const Frame = (props: FrameProps) => {
                     : 'rotate(0deg)'
                   : expand
                     ? 'rotate(0deg)'
-                    : 'rotate(180deg)', // arrow rotation
+                    : 'rotate(180deg)',
               transition: 'transform 0.3s ease'
             }}
           />
         </IconButton>
 
-        {/* Sidebar Drawer */}
         <Drawer
           variant="permanent"
           anchor={direction === 'LTR' ? 'left' : 'right'}
@@ -455,7 +205,6 @@ const Frame = (props: FrameProps) => {
             }
           }}
         >
-          {/* Logo */}
           {expand && (
             <img
               onClick={() => {
@@ -472,6 +221,7 @@ const Frame = (props: FrameProps) => {
               }
             />
           )}
+
           {!expand && <Toolbar />}
           <MuiDivider />
 
@@ -481,42 +231,58 @@ const Frame = (props: FrameProps) => {
               'scroll-container-collapsed': !expand
             })}
           >
-            {/* Organization info */}
             {expand && (
-              <Whisper
-                ref={departmentTriggerRef}
-                placement="bottomStart"
-                trigger="click"
-                open={departmentPopoverOpen}
-                onOpen={() => setDepartmentPopoverOpen(true)}
-                onClose={() => setDepartmentPopoverOpen(false)}
-                speaker={renderDepartmentsSpeaker}
-              >
-                <div
-                  className="container-of-organization-info"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setDepartmentPopoverOpen(open => !open)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setDepartmentPopoverOpen(open => !open);
-                    }
-                  }}
-                  style={{ cursor: 'pointer', flexDirection: direction === "LTR" ? "row" : "row-reverse" }}
+              <React.Suspense fallback={null}>
+                <DepartmentSwitcher
+                  placement="bottomStart"
+                  controlled
+                  open={departmentPopoverOpen}
+                  onOpen={() => setDepartmentPopoverOpen(true)}
+                  onClose={() => setDepartmentPopoverOpen(false)}
+                  afterSelect={() => setDepartmentPopoverOpen(false)}
+                  reloadOnSelect
                 >
-                  <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
-                  <div>
-                    <div className="name"><Translate>{selectedFacilityName}</Translate></div>
-                    <div className="location"><Translate>{selectedDepartmentName}</Translate></div>
-                  </div>
-                </div>
-              </Whisper>
-            )}
+                  <div
+                    className="container-of-organization-info"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setDepartmentPopoverOpen(open => !open)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setDepartmentPopoverOpen(open => !open);
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      flexDirection: direction === 'LTR' ? 'row' : 'row-reverse'
+                    }}
+                  >
+                    <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
 
-            {/* Search input */}
+                    <div>
+                      <div className="name">
+                        <Translate>
+                          {selectedDepartment?.facilityName ?? '-'}
+                        </Translate>
+                      </div>
+
+                      <div className="location">
+                        <Translate>
+                          {selectedDepartment?.departmentName ?? '-'}
+                        </Translate>
+                      </div>
+                    </div>
+                  </div>
+                </DepartmentSwitcher>
+              </React.Suspense>
+            )}
             {expand && (
-              <Form className="search-field search-form" fluid style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
+              <Form
+                className="search-field search-form"
+                fluid
+                style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+              >
                 <div className="search-input-wrapper">
                   <MyInput
                     fieldName="screen"
@@ -534,18 +300,20 @@ const Frame = (props: FrameProps) => {
                       sx={{
                         transform:
                           direction === 'LTR'
-                            ? (expand ? 'rotate(180deg)' : 'rotate(0deg)')
-                            : (expand ? 'rotate(0deg)' : 'rotate(180deg)'),
+                            ? expand
+                              ? 'rotate(180deg)'
+                              : 'rotate(0deg)'
+                            : expand
+                              ? 'rotate(0deg)'
+                              : 'rotate(180deg)',
                         transition: 'transform 0.3s ease'
                       }}
                     />
-
                   )}
-                ></MyButton>
+                />
               </Form>
             )}
 
-            {/* Navigation list */}
             <List>
               {navs
                 .filter(item => screenExist(item))
@@ -556,12 +324,12 @@ const Frame = (props: FrameProps) => {
                         onClick={e => {
                           if (item.children) {
                             if (!expand) {
-                              handleOpenMenu(e, item.eventKey); // open popover if collapsed
+                              handleOpenMenu(e, item.eventKey);
                             } else {
-                              handleSubmenuToggle(item.eventKey); // toggle collapse
+                              handleSubmenuToggle(item.eventKey);
                             }
                           } else {
-                            navigate(item.to || '/'); // navigate directly
+                            navigate(item.to || '/');
                           }
                         }}
                         sx={{
@@ -569,38 +337,27 @@ const Frame = (props: FrameProps) => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: expand ? 'flex-start' : 'center',
-
                           flexDirection: direction === 'RTL' ? 'row-reverse' : 'row',
-
                           paddingInline: theme => theme.spacing(2.5),
                           gap: theme => theme.spacing(1.5),
-
                           '& .MuiListItemIcon-root': {
                             minWidth: 0,
                             marginInlineEnd: theme => theme.spacing(1)
                           },
-
                           '& .MuiListItemText-root': {
                             whiteSpace: 'nowrap'
                           },
-
                           '& .MuiListItemText-primary': {
                             fontSize: '0.73rem',
                             fontWeight: 'bold',
-                            textAlign: direction === "LTR" ? 'left' : 'right'
+                            textAlign: direction === 'LTR' ? 'left' : 'right'
                           },
-
                           '& .MuiSvgIcon-root': {
                             transform: direction === 'RTL' ? 'scaleX(-1)' : 'none'
                           }
                         }}
                       >
-                        <Tooltip
-                          title={item.title}
-                          placement="right"
-                          arrow
-                          disableHoverListener={expand}
-                        >
+                        <Tooltip title={item.title} placement="right" arrow disableHoverListener={expand}>
                           <ListItemIcon
                             sx={{
                               minWidth: 0,
@@ -622,6 +379,7 @@ const Frame = (props: FrameProps) => {
                             )}
                           </ListItemIcon>
                         </Tooltip>
+
                         {expand && <ListItemText primary={<Translate>{item.title}</Translate>} />}
                         {expand &&
                           item.children &&
@@ -629,7 +387,6 @@ const Frame = (props: FrameProps) => {
                       </ListItemButton>
                     </ListItem>
 
-                    {/* Submenu collapse */}
                     {item.children && expand && (
                       <Collapse
                         in={expandAllSubmenus || submenuOpen === item.eventKey}
@@ -641,7 +398,7 @@ const Frame = (props: FrameProps) => {
                             .filter(child =>
                               child.title
                                 .toLowerCase()
-                                .includes(recordOfSearchedScreenName['screen'].toLowerCase())
+                                .includes(recordOfSearchedScreenName.screen.toLowerCase())
                             )
                             .map(child => (
                               <ListItemButton
@@ -653,7 +410,10 @@ const Frame = (props: FrameProps) => {
                                   justifyContent: expand ? 'flex-start' : 'center',
                                   flexDirection: direction === 'RTL' ? 'row-reverse' : 'row',
                                   gap: 1.5,
-                                  '& .MuiListItemText-primary': { fontSize: '0.65rem', textAlign: direction === "LTR" ? 'left' : 'right' },
+                                  '& .MuiListItemText-primary': {
+                                    fontSize: '0.65rem',
+                                    textAlign: direction === 'LTR' ? 'left' : 'right'
+                                  },
                                   '& svg': {
                                     fontSize: '16px',
                                     marginRight: '6px',
@@ -679,7 +439,9 @@ const Frame = (props: FrameProps) => {
                                 {expand && (
                                   <ListItemText
                                     primary={
-                                      isCodingModule(item) ? child.title.toUpperCase() : <Translate>{child.title}</Translate>
+                                      isCodingModule(item)
+                                        ? child.title.toUpperCase()
+                                        : <Translate>{child.title}</Translate>
                                     }
                                   />
                                 )}
@@ -689,7 +451,6 @@ const Frame = (props: FrameProps) => {
                       </Collapse>
                     )}
 
-                    {/* Popover menu for collapsed sidebar */}
                     {item.children && (
                       <Menu
                         anchorEl={anchorEl}
@@ -703,7 +464,6 @@ const Frame = (props: FrameProps) => {
                           vertical: 'top',
                           horizontal: 'left'
                         }}
-                        getContentAnchorEl={null}
                         PaperProps={{
                           sx: {
                             '& .MuiMenuItem-root': {
@@ -726,7 +486,6 @@ const Frame = (props: FrameProps) => {
                           }
                         }}
                       >
-                        {/* Main title of the list */}
                         <MenuItem disabled className="menu-item-disabled">
                           {item.icon ? (
                             React.isValidElement(item.icon) ? (
@@ -742,7 +501,6 @@ const Frame = (props: FrameProps) => {
                           {item.title}
                         </MenuItem>
 
-                        {/* Sub-elements */}
                         {item.children.map(child => (
                           <MenuItem
                             key={child.eventKey}
@@ -758,10 +516,7 @@ const Frame = (props: FrameProps) => {
                               ) : typeof child.icon === 'function' ? (
                                 React.createElement(child.icon)
                               ) : (
-                                <FontAwesomeIcon
-                                  icon={faHospital}
-                                  className="menu-item-icon-small"
-                                />
+                                <FontAwesomeIcon icon={faHospital} className="menu-item-icon-small" />
                               )
                             ) : (
                               <FontAwesomeIcon icon={faHospital} className="menu-item-icon-small" />
@@ -777,7 +532,6 @@ const Frame = (props: FrameProps) => {
           </div>
         </Drawer>
 
-        {/* Main content area */}
         <Container className={containerClasses}>
           <Header
             expand={expand}
@@ -804,7 +558,7 @@ const Frame = (props: FrameProps) => {
 
               {expandNotes && (
                 <div className="sticky-sidebar-area">
-                  <UserStickyNotes expand={expandNotes} setExpand={setExpandNotes} />
+                  <UserStickyNotes expand={expandNotes} setExpand={setExpandNotes} windowHeight={windowHeight} />
                 </div>
               )}
             </div>

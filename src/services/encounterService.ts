@@ -55,7 +55,13 @@ type ParentResponse<T> = {
   object: T;
   msg?: string;
 };
-
+export type EncounterLocationResponse = {
+  encounterId: string;
+  bedKey: string | null;
+  bedName: string | null;
+  roomKey: string | null;
+  roomName: string | null;
+};
 export type PatientSummaryResponse = {
   age: any;
   gender: string;
@@ -405,85 +411,6 @@ export const encounterService = createApi({
         url: `/encounter/save-drug-order-medic`,
         method: 'POST',
         body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-
-    getDiagnosticOrder: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/diagnostic-order-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrder: builder.mutation({
-      query: (order: ApDiagnosticOrders) => ({
-        url: `/encounter/save-diagnostic-order`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getDiagnosticOrderTest: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/diagnostic-order-test-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTest: builder.mutation({
-      query: (order: ApDiagnosticOrderTests) => ({
-        url: `/encounter/save-diagnostic-order-tests`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestNotesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          'test-id': testid
-        },
-        url: `/encounter/diagnostic-order-test-notes-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTestNotes: builder.mutation({
-      query: (note: ApDiagnosticOrderTestsNotes) => ({
-        url: `/encounter/save-diagnostic-order-tests-notes`,
-        method: 'POST',
-        body: note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestSamplesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          'test-id': testid
-        },
-        url: `/encounter/diagnostic-order-test-samples-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTestSamples: builder.mutation({
-      query: (note: ApDiagnosticOrderTestsSamples) => ({
-        url: `/encounter/save-diagnostic-order-tests-sample`,
-        method: 'POST',
-        body: note
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -871,6 +798,16 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getEncounterAssignToBed: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/encounter-assign-to-bed-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
     saveAssignToBed: builder.mutation({
       query: (encounterAssignToBed: ApEncounterAssignToBed) => ({
         url: `/encounter/save-assign-to-bed`,
@@ -1216,6 +1153,19 @@ export const encounterService = createApi({
         };
       }
     }),
+getEncounterLocations: builder.query<EncounterLocationResponse[], string[]>({
+  query: (encounterIds: string[]) => ({
+    url: `/encounter/encounter-locations`,
+    method: 'GET',
+    params: {
+      encounterIds
+    }
+  }),
+  transformResponse: (response: ParentResponse<EncounterLocationResponse[]>) => {
+    return response?.object ?? [];
+  },
+  keepUnusedDataFor: 0
+}),
     getMiniSummary: builder.query({
       query: ({ patientKey, encounterKey, lang = 'en' }) => ({
         url: `/encounter/mini-summary`,
@@ -1268,14 +1218,6 @@ export const {
   useSaveDrugOrderMutation,
   useGetDrugOrderMedicationQuery,
   useSaveDrugOrderMedicationMutation,
-  useGetDiagnosticOrderQuery,
-  useGetDiagnosticOrderTestQuery,
-  useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation,
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation,
   useSavePsychologicalExamsMutation,
   useGetPsychologicalExamsQuery,
   useSaveAudiometryPuretoneMutation,
@@ -1318,6 +1260,8 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
+  useGetEncounterAssignToBedQuery,
+  useLazyGetEncounterAssignToBedQuery,
   useSaveAssignToBedMutation,
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
@@ -1350,5 +1294,6 @@ export const {
   useDeleteUserDashboardComponentsMutation,
   useGetClinicalSummaryQuery,
   useGetPatientSummaryQuery,
-  useGetMiniSummaryQuery
+  useGetMiniSummaryQuery,
+  useGetEncounterLocationsQuery,
 } = encounterService;

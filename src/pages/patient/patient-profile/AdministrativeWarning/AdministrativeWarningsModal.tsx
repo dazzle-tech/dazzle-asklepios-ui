@@ -1,25 +1,21 @@
 import ChildModal from '@/components/ChildModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
-  useDeletePatientAdministrativeWarningsMutation,
-  useGetPatientAdministrativeWarningsQuery,
-  useSavePatientAdministrativeWarningsMutation,
-  useUpdatePatientAdministrativeWarningsMutation
-} from '@/services/patientService';
+  useCreatePatientAdministrativeWarningMutation,
+  useDeletePatientAdministrativeWarningMutation,
+  useGetWarningsByPatientIdQuery,
+  useResolvePatientAdministrativeWarningMutation,
+  useSearchWarningsByPatientIdQuery,
+  useUndoResolvePatientAdministrativeWarningMutation
+} from '@/services/patient/patientAdministrativeWarningsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { type ApPatientAdministrativeWarnings } from '@/types/model-types';
-import { newApPatientAdministrativeWarnings } from '@/types/model-types-constructor';
 import { Patient } from '@/types/model-types-new';
-import { initialListRequest, type ListRequest } from '@/types/types';
-import { fromCamelCaseToDBName } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faCalendarCheck,
-  faCalendarDay,
-  faCalendarXmark,
   faCircleCheck,
   faPlus,
   faRotateLeft,
@@ -28,212 +24,140 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useState } from 'react';
-import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
+import React, { useMemo, useState } from 'react';
+import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
+
 interface AdministrativeWarningsModalProps {
   localPatient: Patient;
   validationResult: any;
 }
+
 const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = ({
   localPatient,
   validationResult
 }) => {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
-
-  const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState({ Details: '' });
-  const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
-    useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
   const [openChildModal, setOpenChildModal] = useState(false);
-  // Fetch LOV data for various fields
-  const { data: administrativeWarningsLovQueryResponse, isLoading } =
-    useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
+  const [searchText, setSearchText] = useState('');
 
-  // Mutations
-  const [savePatientAdministrativeWarnings] = useSavePatientAdministrativeWarningsMutation();
-  const [updatePatientAdministrativeWarnings] = useUpdatePatientAdministrativeWarningsMutation();
-  const [deletePatientAdministrativeWarnings] = useDeletePatientAdministrativeWarningsMutation();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [warningToDelete, setWarningToDelete] = useState<any>(null);
+  const [warningType, setWarningType] = useState<string | null>(null);
 
-  // Initialize patient Warning list request with default filters
-  const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    });
+  const [description, setDescription] = useState('');
 
-  // Fetch patient Warnings
-  const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
-    warningsAdmistritiveListRequest
+  const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
+
+  const filteredLovData = useMemo(() => {
+    return lovData?.object?.filter((lov: any) => lov.valueCode !== 'ADWR_DNR') ?? [];
+  }, [lovData]);
+
+  const { data: warnings, isLoading } = useGetWarningsByPatientIdQuery(
+    { patientId: localPatient.id! },
+    { skip: !localPatient.id }
   );
 
-  // Handle filter change
-  const handleFilterChangeInWarning = (fieldName, value) => {
-    if (value) {
-      setWarningsAdmistritiveListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'containsIgnoreCase',
-          String(value),
-          warningsAdmistritiveListRequest
-        )
-      );
-    } else {
-      setWarningsAdmistritiveListRequest({
-        ...warningsAdmistritiveListRequest,
-        filters: [
-          {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: localPatient.key || undefined
-          },
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ]
-      });
+  const { data: searchedWarnings } = useSearchWarningsByPatientIdQuery(
+    { patientId: localPatient.id!, searchText },
+    { skip: !localPatient.id || !searchText }
+  );
+
+  const [createWarning] = useCreatePatientAdministrativeWarningMutation();
+  const [resolveWarning] = useResolvePatientAdministrativeWarningMutation();
+  const [undoResolveWarning] = useUndoResolvePatientAdministrativeWarningMutation();
+  const [deleteWarning] = useDeletePatientAdministrativeWarningMutation();
+
+  const warningsList = searchText ? searchedWarnings : warnings;
+  const activeCount = warnings ? warnings.filter(w => !w.resolved).length : 0;
+
+  const handleAddNew = () => {
+    setWarningType(null);
+    setDescription('');
+    setOpenChildModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!warningType) return;
+
+    try {
+      await createWarning({
+        patientId: localPatient.id!,
+        warningType: warningType!,
+        description
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+      setOpenChildModal(false);
+    } catch {
+      dispatch(notify({ msg: 'Failed To Save', sev: 'error' }));
     }
   };
 
-  // Helper function for filter
-  const addFilterToListRequest = (fieldName, operator, value, listRequest) => {
-    const newFilters = listRequest.filters.filter(
-      filter =>
-        filter.fieldName !== fieldName &&
-        filter.fieldName !== 'patient_key' &&
-        filter.fieldName !== 'deleted_at'
-    );
+  const handleResolve = async (warning: any) => {
+    try {
+      await resolveWarning({
+        id: warning.id
+      }).unwrap();
 
-    return {
-      ...listRequest,
-      filters: [
-        ...newFilters,
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        {
-          fieldName,
-          operator,
-          value
-        }
-      ]
-    };
-  };
-  // Handle new Add Patient warning
-  const AddNewAdministrativeWarning = () => {
-    setPatientAdministrativeWarnings({
-      ...newApPatientAdministrativeWarnings,
-      warningTypeLkey: null
-    });
-    setAdministrativeWarningDetails({ Details: '' });
-    setOpenChildModal(true);
-  };
-  // Handle save Patient warning
-  const handleSavePatientAdministrativeWarnings = () => {
-    savePatientAdministrativeWarnings({
-      ...patientAdministrativeWarnings,
-      description: administrativeWarningDetails?.Details,
-      patientKey: localPatient.key
-    })
-      .unwrap()
-      .then(() => {
-        setPatientAdministrativeWarnings({
-          ...patientAdministrativeWarnings,
-          description: '',
-          warningTypeLkey: undefined
-        });
-        setAdministrativeWarningDetails({ Details: '' });
-        warningsRefetch();
-        dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-        setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
-        setOpenChildModal(false);
-      });
+      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Resolve Failed', sev: 'error' }));
+    }
   };
 
-  // Handle resolve Patient warning
-  const handleUpdateAdministrativeWarningsResolved = warning => {
-    updatePatientAdministrativeWarnings({
-      ...warning,
-      dateResolved: new Date().toISOString(),
-      resolvedBy: 'keyForCurrentUser',
-      isValid: false
-    })
-      .unwrap()
-      .then(() => {
-        warningsRefetch();
-        dispatch(notify('Resolved Successfully'));
-      });
-  };
-  // Handle undo resolve Patient warning 
-  const handleUpdateAdministrativeWarningsUnDoResolved = (warning) => {
-    updatePatientAdministrativeWarnings({
-      ...warning,
-      resolutionUndoDate: new Date().toISOString(),
-      resolvedUndoBy: 'keyForCurrentUser',
-      isValid: true
-    })
-      .unwrap()
-      .then(() => {
-        warningsRefetch();
-        dispatch(notify('Activated Successfully'));
-      });
+  const handleUndoResolve = async (warning: any) => {
+    try {
+      await undoResolveWarning({
+        id: warning.id
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Undo Resolve Successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Undo Failed', sev: 'error' }));
+    }
   };
 
-  // Handle delete Patient warning
-  const handleDeletePatientAdministrativeWarnings = warning => {
-    deletePatientAdministrativeWarnings({
-      ...warning
-    })
-      .unwrap()
-      .then(() => {
-        warningsRefetch();
-        dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
-      });
+  const handleDelete = async () => {
+    if (!warningToDelete) return;
+
+    try {
+      await deleteWarning({
+        id: warningToDelete.id,
+        patientId: localPatient.id
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
+      setDeleteModalOpen(false);
+      setWarningToDelete(null);
+    } catch {
+      dispatch(notify({ msg: 'Delete Failed', sev: 'error' }));
+    }
   };
-  // Main Modal Content
+
   const mainContent = (
     <div>
       <div className="search-in-list-cards">
         <InputGroup inside>
-          <Input placeholder="Search" />
+          <Input placeholder="Search" value={searchText} onChange={value => setSearchText(value)} />
           <InputGroup.Button>
             <SearchIcon />
           </InputGroup.Button>
         </InputGroup>
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-          onClick={AddNewAdministrativeWarning}
-        >
+
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew}>
           Add
         </MyButton>
       </div>
+
       {isLoading ? (
         <div className="loader-card-container">
           <span className="loader">Loading...</span>
         </div>
       ) : (
         <div className="patient-warning-list">
-          {warnings?.object.map(warning => (
+          {warningsList?.map((warning: any) => (
             <div className="main-card-container" key={warning.id}>
               <div className="left-side-card">
                 <div className="card-content">
@@ -242,89 +166,93 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                       <Translate>Type</Translate>
                     </span>
                     <span className="custom-type-card-content">
-                      {warning.warningTypeLvalue
-                        ? warning.warningTypeLvalue.lovDisplayVale
-                        : warning.warningTypeLkey}
+                      {lovData?.object?.find((lov: any) => lov.key === warning.warningType)
+                        ?.lovDisplayVale || warning.warningType}
                     </span>
                   </div>
                   <div className="status-card-content">
-                    {warning?.isValid ? (
+                    {!warning.resolved ? (
                       <Badge content="Active" className="status-active" />
                     ) : (
                       <Badge content="Resolved" className="status-resolved" />
                     )}
                   </div>
                 </div>
+
                 <div className="card-content">
                   <div className="description-card-content">
                     <span className="title-type-card-content">
                       <Translate>Description</Translate>
                     </span>
-                    <span className="custom-description-card-content">{warning?.description}</span>
+                    <span>{warning.description}</span>
                   </div>
                 </div>
-                <div className="card-content">
-                  <div className="card-action-by-at">
-                    <span className="title-type-card-content">
-                      <FontAwesomeIcon icon={faCalendarDay} className="title-type-card-content" />
+
+                <div className="meta-section">
+                  <div className="meta-item">
+                    <span className="meta-label">
                       <Translate>ADDITION BY/DATE</Translate>
                     </span>
-                    <span className="custom-description-card-content">
-                      {warning?.createdBy ? warning?.createdBy : 'By User'}
-                    </span>
-                    <span className="custom-date-card-content">
-                      {warning?.createdAt
-                        ? new Date(warning.createdAt).toLocaleDateString('en-CA')
-                        : ''}
+                    <span className="meta-value">{warning.createdBy || 'By User'}</span>
+                    <span className="meta-date">
+                      {warning.createdDate
+                        ? new Date(warning.createdDate).toLocaleDateString('en-CA')
+                        : '-'}
                     </span>
                   </div>
-                  <div className="card-action-by-at">
-                    <span className="title-type-card-content">
-                      <FontAwesomeIcon icon={faCalendarCheck} className="title-type-card-content" />
+
+                  <div className="meta-item">
+                    <span className="meta-label">
                       <Translate>RESOLVED BY/DATE</Translate>
                     </span>
-                    <span className="custom-description-card-content">{warning?.resolvedBy}</span>
-                    <span className="custom-date-card-content">{warning?.dateResolved}</span>
+                    <span className="meta-value">{warning.resolvedBy || '-'}</span>
+                    <span className="meta-date">
+                      {warning.resolvedDate
+                        ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
+                        : '-'}
+                    </span>
                   </div>
-                  <div className="card-action-by-at">
-                    <span className="title-type-card-content">
-                      <FontAwesomeIcon icon={faCalendarXmark} className="title-type-card-content" />{' '}
+
+                  <div className="meta-item">
+                    <span className="meta-label">
                       <Translate>RESOLUTION UNDO BY/DATE</Translate>
                     </span>
-                    <span className="custom-description-card-content">
-                      {warning?.resolvedUndoBy}
+                    <span className="meta-value">{warning.undoResolvedBy || '-'}</span>
+                    <span className="meta-date">
+                      {warning.undoResolvedDate
+                        ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
+                        : '-'}
                     </span>
-                    <span className="custom-date-card-content">{warning?.resolutionUndoDate}</span>
                   </div>
                 </div>
               </div>
+
               <div className="right-side-card">
-                <Button
-                  className="custom-btn-action"
-                  disabled={!warning.isValid}
-                  onClick={() => {
-                    handleUpdateAdministrativeWarningsResolved(warning);
-                  }}
+                <button
+                  className="action-btn accept-btn"
+                  disabled={warning.resolved}
+                  onClick={() => handleResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faCircleCheck} />
-                </Button>
-                <Button
-                  className="custom-btn-action"
-                  disabled={warning.isValid == undefined || warning.isValid}
-                  onClick={() => {
-                    handleUpdateAdministrativeWarningsUnDoResolved(warning);
-                  }}
+                </button>
+
+                <button
+                  className="action-btn undo-btn"
+                  disabled={!warning.resolved}
+                  onClick={() => handleUndoResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faRotateLeft} />
-                </Button>
-                <Button
-                  className="custom-btn-action"
+                </button>
+
+                <button
+                  className="action-btn delete-btn"
                   onClick={() => {
-                    handleDeletePatientAdministrativeWarnings(warning);
+                    setWarningToDelete(warning);
+                    setDeleteModalOpen(true);
                   }}
                 >
                   <FontAwesomeIcon icon={faTrashCan} />
-                </Button>
+                </button>
               </div>
             </div>
           ))}
@@ -333,7 +261,6 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </div>
   );
 
-  // const Child Content
   const childContent = (
     <Form fluid>
       <MyInput
@@ -341,58 +268,45 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         required
         fieldLabel="Warning Type"
         fieldType="select"
-        fieldName="warningTypeLkey"
-        selectData={administrativeWarningsLovQueryResponse?.object ?? []}
+        fieldName="warningType"
+        selectData={filteredLovData ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
-        record={patientAdministrativeWarnings}
-        setRecord={setPatientAdministrativeWarnings}
+        record={{ warningType }}
+        setRecord={(val: any) => setWarningType(val.warningType)}
         width={350}
       />
+
       <MyInput
         vr={validationResult}
         fieldLabel="Description"
         fieldType="textarea"
-        fieldName="Details"
-        selectData={administrativeWarningsLovQueryResponse?.object ?? []}
-        record={administrativeWarningDetails}
-        setRecord={setAdministrativeWarningDetails}
+        fieldName="description"
+        record={{ description }}
+        setRecord={(val: any) => setDescription(val.description)}
         width={350}
         height={100}
       />
     </Form>
   );
 
-  // Update filters when patient changes
-  React.useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: localPatient.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ];
-    setWarningsAdmistritiveListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [localPatient.key]);
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <MyButton
         appearance="ghost"
-        disabled={!localPatient.key}
+        disabled={!localPatient.id}
         onClick={() => setOpen(true)}
-        color={warnings?.extraNumeric > 0 ? 'orange' : 'var(--primary-blue)'}
+        color={activeCount > 0 ? 'orange' : 'var(--primary-blue)'}
       >
         Administrative Warnings
       </MyButton>
+
       <ChildModal
         open={open}
         setOpen={setOpen}
@@ -401,7 +315,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         title="Administrative Warnings"
         mainContent={mainContent}
         childTitle="Add New"
-        childContent={childContent}
+        childContent={<div dir={dir}>{childContent}</div>}
         childStep={[
           {
             title: 'Administrative Warning',
@@ -411,9 +325,17 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         mainSize="sm"
         childSize="xs"
         hideActionBtn={true}
-        actionChildButtonFunction={handleSavePatientAdministrativeWarnings}
+        actionChildButtonFunction={handleSave}
       />
-    </>
+
+      <DeletionConfirmationModal
+        open={deleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        itemToDelete="warning"
+        actionType="delete"
+        actionButtonFunction={handleDelete}
+      />
+    </div>
   );
 };
 

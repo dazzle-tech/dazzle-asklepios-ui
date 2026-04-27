@@ -31,13 +31,20 @@ const AddEditDentalAction = ({ open, setOpen, width, dentalAction, setDentalActi
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={dentalAction?.key ? 'Edit Dental Action' : 'New Dental Action'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={dentalAction?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Dental Action Info', icon: <FaTooth /> }]}

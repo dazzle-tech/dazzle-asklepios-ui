@@ -59,6 +59,8 @@ export interface Module {
   icon: string;
   viewOrder: number;
   screens: Screen[];
+  departmentTypes?: string[];
+
 }
 
 export interface MedicalSheet {
@@ -101,6 +103,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
   { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
   { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
+  { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
   { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes' },
@@ -123,7 +126,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
   { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
-  { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
+  // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
   { name: "Physical Examination", code: "PHYSICAL_EXAMINATION", icon: <FontAwesomeIcon icon={faHeartbeat} className="icon" />, path: "/physical-examination" },
   { name: "Pain Assessment", code: "PAIN_ASSESSMENT", icon: <FontAwesomeIcon icon={faThermometerHalf} className="icon" />, path: "/pain-assessment" },
@@ -134,7 +137,23 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
-  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' }
+  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  {
+    name: 'Nurse Assessment',
+    code: 'NURSE_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
+    path: '/nurse-assessment'
+  },
+  {
+    name: 'Physician Assessment',
+    code: 'PHYSICIAN_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+    path: '/physician-assessment'
+  },
+
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
+  
 ];
 
 
@@ -148,18 +167,13 @@ export const MODULES: Module[] =
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
-        { name: "Configurations", code: "CONFIGURATIONS", description: "", icon: "FaSliders", viewOrder: 2, navPath: "configurations" },
-        // { name: "Integration setup", code: "INTEGRATION_SETUP", description: "", icon: "FaPlug", viewOrder: 3, navPath: "integration-setup" },
-        { name: "Serial Setup", code: "SERIAL_SETUP", description: "", icon: "FaHashtag", viewOrder: 4, navPath: "serial-setup" },
-        { name: "Notification Management", code: "NOTIFICATION_MANAGEMENT", description: "", icon: "FaBell", viewOrder: 5, navPath: "notification-management" },
-        { name: "Email Management", code: "EMAIL_MANAGEMENT", description: "", icon: "FaEnvelope", viewOrder: 6, navPath: "email-management" },
-        { name: "Password Management", code: "PASSWORD_MANAGEMENT", description: "", icon: "FaLock", viewOrder: 7, navPath: "password-management" },
-        { name: "Data validation Management", code: "DATA_VALIDATION_MANAGEMENT", description: "", icon: "FaDatabase", viewOrder: 8, navPath: "data-validation-management" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
+        { name: "Organization Holidays", code: "ORGANIZATION_HOLIDAY", description: "", icon: "FaBuilding", viewOrder: 11, navPath: "organization-holidays" },
       ],
     },
-    {name: "System Setup",
+    {
+      name: "System Setup",
       description: "",
       icon: "FaWrench",
       viewOrder: 1,
@@ -178,7 +192,6 @@ export const MODULES: Module[] =
         { name: "Practitioners", code: "PRACTITIONERS", description: "", icon: "FaBriefcaseMedical", viewOrder: 5, navPath: "practitioners" },
         { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
         { name: "Metadata", code: "METADATA", description: "", icon: "FaTags", viewOrder: 0, navPath: "metadata" },
-        { name: "Resources", code: "RESOURCES", description: "Resources setup", icon: "FaBilibili", viewOrder: 6, navPath: "resources" },
         { name: "Dental Actions", code: "DENTAL_ACTIONS", description: "", icon: "FaTeeth", viewOrder: 9, navPath: "dental-actions" },
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "users" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
@@ -203,17 +216,20 @@ export const MODULES: Module[] =
         { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
+        { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
         { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
-        {name: "Price Lists",
+        {
+          name: "Price Lists",
           code: "PRICE_LISTS",
           description: "",
           icon: "FaMoneyBill",
           viewOrder: 0,
           navPath: "price-list",
         },
+        { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
       ],
     },
-    
+
     {
       name: "Coding Module",
       description: "Coding Module",
@@ -232,6 +248,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaRegIdBadge",
       viewOrder: 2,
+      departmentTypes: ["REGISTRATION"],
       screens: [
 
         { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
@@ -301,6 +318,8 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaCalendarDay",
       viewOrder: 3,
+      departmentTypes: ["REGISTRATION"],
+
       screens: [
         {
           name: "Scheduling Screen",
@@ -310,6 +329,21 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "schedual-screen",
         },
+        {
+          name: "Availability Templates",
+          code: "AVAILABILITY_TEMPLATES_NEW",
+          description: "",
+          icon: "FaCalendarDays",
+          viewOrder: 1,
+          navPath: "availability-templates",
+        },{
+          name: "Apply Template",
+          code: "APPLY_TEMPLATE",
+          description: "",
+          icon: "FaCalendarCheck",
+          viewOrder: 1,
+          navPath: "apply-template",
+        }
       ],
     },
     {
@@ -331,6 +365,8 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaFileWaveform",
       viewOrder: 4,
+      departmentTypes: ["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
+
       screens: [
         {
           name: "Electronic Medical Records",
@@ -346,6 +382,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaStethoscope",
       viewOrder: 4,
+      departmentTypes: ["OUTPATIENT_CLINIC"],
       screens: [
 
         {
@@ -354,7 +391,7 @@ export const MODULES: Module[] =
           description: "", icon: "FaList",
           viewOrder: 1, navPath: "encounter-list"
         },
-        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
       ],
     },
@@ -394,6 +431,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaExplosion",
       viewOrder: 6,
+      departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         {
           name: "ER Triage",
@@ -404,6 +442,17 @@ export const MODULES: Module[] =
         { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
         { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
 
+      ],
+    },
+    {
+      name: "Urgent Care",
+      description: "",
+      icon: "FaNotesMedical",
+      viewOrder: 6,
+      departmentTypes: ["EMERGENCY_ROOM"],
+      screens: [
+        { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
+        { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },
     {
@@ -440,11 +489,14 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaFlask",
       viewOrder: 9,
+      departmentTypes: ["LABORATORY"],
       screens: [{
         name: "Clinical Laboratory",
         code: "CLINICAL_LABORATORY",
         description: "", icon: "FaFlaskVial",
-        viewOrder: 0, navPath: "lab-module"
+        viewOrder: 0, navPath: "lab-module",
+
+
       }],
     },
     {
@@ -452,11 +504,13 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaXRay",
       viewOrder: 10,
+      departmentTypes: ["RADIOLOGY"],
       screens: [{
         name: "Imaging Radiology",
         code: "IMAGING_RADIOLOGY",
         description: "",
-        icon: "FaSkull", viewOrder: 0, navPath: "rad-module"
+        icon: "FaSkull", viewOrder: 0, navPath: "rad-module",
+
       }],
     },
     {
@@ -611,6 +665,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaMoneyBill1",
       viewOrder: 12,
+      departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Ledger Account",
@@ -619,9 +674,9 @@ export const MODULES: Module[] =
           icon: "FaMobileRetro",
           viewOrder: 1,
           navPath: "billing-accounting",
-        
+
         },
-          {
+        {
           name: "Claims",
           code: "CLAIMS",
           description: "",

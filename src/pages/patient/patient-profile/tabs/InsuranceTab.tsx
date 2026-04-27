@@ -12,7 +12,8 @@ import { Badge } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
 import './styles.less';
-
+import { Tooltip, Whisper } from 'rsuite';
+import { useRef } from 'react';
 import { newPatientInsurance } from '@/types/model-types-constructor-new';
 import { PatientInsurance } from '@/types/model-types-new';
 
@@ -51,15 +52,22 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
   const [coveragesCount, setCoveragesCount] = useState<number>(0);
 
+  const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
-  const patientInsuranceResponse = useGetInsurancesByPatientQuery({
-    patientId: localPatient.id,
+const patientId = Number(localPatient?.id);
+
+const patientInsuranceResponse = useGetInsurancesByPatientQuery(
+  {
+    patientId,
     page: 0,
     size: 100,
     sort: 'id,desc'
-  });
-
+  },
+  {
+    skip: !Number.isFinite(patientId) || patientId <= 0
+  }
+);
   const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
     page: 0,
     size: 1000,
@@ -245,45 +253,85 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
       title: <Translate>ACTIONS</Translate>,
       flexGrow: 4,
       render: (rowData: PatientInsurance) => (
-        <div className="container-of-icons">
-          <MyButton
-            className="icons-style"
-            appearance="subtle"
-            onClick={() => handleEditModal(rowData)}
-          >
-            <FontAwesomeIcon className="icons-style" color="var(--primary-gray)" icon={faUserPen} />
-          </MyButton>
+        <div className="container-of-icons insurance-tooltip-wrapper">
+          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Insurance</Tooltip>}>
+            <span className="insurance-tooltip-trigger">
+              <MyButton
+                className="icons-style"
+                appearance="subtle"
+                onClick={() => handleEditModal(rowData)}
+              >
+                <FontAwesomeIcon
+                  className="icons-style"
+                  color="var(--primary-gray)"
+                  icon={faUserPen}
+                />
+              </MyButton>
+            </span>
+          </Whisper>
 
-          <MyButton
-            className="icons-style"
-            appearance="subtle"
-            onClick={() => handleOpenSpecificCoverage(rowData)}
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>Manage Specific Coverages</Tooltip>}
           >
-            <FontAwesomeIcon icon={faLock} />
-          </MyButton>
+            <span className="insurance-tooltip-trigger">
+              <MyButton
+                className="icons-style"
+                appearance="subtle"
+                onClick={() => handleOpenSpecificCoverage(rowData)}
+              >
+                <FontAwesomeIcon
+                  className="icons-style"
+                  color="var(--primary-gray)"
+                  icon={faLock}
+                />
+              </MyButton>
+            </span>
+          </Whisper>
 
-          <MyButton
-            className="icons-style"
-            appearance="subtle"
-            onClick={() => handleDeleteInsurance(rowData)}
-          >
-            <FontAwesomeIcon className="icons-style" color="var(--primary-pink)" icon={faTrash} />
-          </MyButton>
+          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Delete Insurance</Tooltip>}>
+            <span className="insurance-tooltip-trigger">
+              <MyButton
+                className="icons-style"
+                appearance="subtle"
+                onClick={() => handleDeleteInsurance(rowData)}
+              >
+                <FontAwesomeIcon
+                  className="icons-style"
+                  color="var(--primary-pink)"
+                  icon={faTrash}
+                />
+              </MyButton>
+            </span>
+          </Whisper>
 
-          <MyButton
-            className="icons-style"
-            appearance="subtle"
-            onClick={() => handleShowInsuranceDetails(rowData)}
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>View Insurance Details</Tooltip>}
           >
-            <FontAwesomeIcon icon={faEllipsis} />
-          </MyButton>
+            <span className="insurance-tooltip-trigger">
+              <MyButton
+                className="icons-style"
+                appearance="subtle"
+                onClick={() => handleShowInsuranceDetails(rowData)}
+              >
+                <FontAwesomeIcon
+                  className="icons-style"
+                  color="var(--primary-gray)"
+                  icon={faEllipsis}
+                />
+              </MyButton>
+            </span>
+          </Whisper>
         </div>
       )
     }
   ];
 
   return (
-    <div className="tab-main-container">
+    <div ref={tooltipContainerRef} className="tab-main-container">
       <div className="tab-content-btns">
         <MyButton
           onClick={() => {
@@ -298,25 +346,22 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
           New Insurance
         </MyButton>
       </div>
-
       <InsuranceModal
         relations={[]}
         editing={selectedInsurance}
         refetchInsurance={patientInsuranceResponse.refetch}
-        patientKey={localPatient}
+        patientKey={Number.isFinite(patientId) && patientId > 0 ? patientId : undefined}
         open={InsuranceModalOpen}
         setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}
         onClose={() => setInsuranceModalOpen(false)}
         hideSaveBtn={hideSaveBtn}
       />
-
       <SpecificCoverageModa
         insurance={selectedInsurance?.id}
         open={specificCoverageModalOpen}
         setOpen={setSpecificCoverageModalOpen}
       />
-
       <MyTable
         data={paginatedData ?? []}
         columns={columns}
@@ -331,14 +376,12 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
         }}
         loading={patientInsuranceResponse.isFetching || payorFetching}
       />
-
       <DeletionConfirmationModal
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
         itemToDelete="Insurance"
         actionButtonFunction={confirmDeleteInsurance}
       />
-
       <DeletionConfirmationModal
         open={openDeleteWithCoveragesModal}
         setOpen={setOpenDeleteWithCoveragesModal}

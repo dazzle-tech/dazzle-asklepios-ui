@@ -2,14 +2,10 @@ import React, { useEffect, useState, useMemo } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form, Tag } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-// import {
-//   useGetResourcesAvailabilityTimeQuery
-// } from '@/services/appointmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import {
   useGetAppointableDepartmentsQuery,
   useGetAppointableDepartmentByTypeQuery,
@@ -156,16 +152,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   // });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   // Fetches the list of active resources based on the selected resource type from the new ResourceService
-  const { data: resourcesByTypeResponse } = useGetActiveResourcesByTypeQuery(
-    {
-      resourceType: localEncounter?.resourceTypeLkey,
-      page: 0,
-      size: 100
-    },
-    {
-      skip: !localEncounter?.resourceTypeLkey
-    }
-  );
+  const { data: resourcesByTypeResponse } = { data: { data: [] as unknown[] } };
 
   // Fetch all practitioners for lookup
   const { data: practitionersResponse } = useGetAllPractitionersQuery({
