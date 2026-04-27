@@ -228,16 +228,16 @@ const AddEditPractitioner = ({
   };
 
   useEffect(() => {
- 
-   if (!practitioner?.appointable) {
-     
-       setPractitioner(prev => ({
-         ...prev,
-         defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
-       }));
-     
-   }
- }, [practitioner?.appointable]);
+
+    if (!practitioner?.appointable) {
+
+      setPractitioner(prev => ({
+        ...prev,
+        defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+      }));
+
+    }
+  }, [practitioner?.appointable]);
 
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -268,6 +268,29 @@ const AddEditPractitioner = ({
       ...prev,
       workingDays: nextWorkingDays,
     }));
+  };
+
+  const handleUnlinkUser = () => {
+    setPractitioner((prev) => ({
+      ...prev,
+      userId: null,
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      gender: undefined,
+      dateOfBirth: undefined,
+      userLogin: undefined,
+    }));
+
+    setRecordOfSearch({ searchKeyword: '' });
+
+    dispatch(
+      notify({
+        msg: 'User unlinked successfully',
+        sev: 'success',
+      })
+    );
   };
   // Main modal content
   const conjureFormContentOfMainModal = (stepNumber) => {
@@ -323,6 +346,13 @@ const AddEditPractitioner = ({
                       />
                     }
                   />
+                  {practitioner?.userId && (
+                    <div style={{ marginBottom: 12 }}>
+                      <MyButton color="red" size="xs" onClick={handleUnlinkUser}>
+                        Unlink User
+                      </MyButton>
+                    </div>
+                  )}
                   <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                     <MyInput
                       column
@@ -515,28 +545,28 @@ const AddEditPractitioner = ({
                       )}
                     </Row>
                     {practitioner?.appointable && (
-                    <Row>
-                      <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="defaultBufferBeforeMinutes"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required={practitioner.appointable}
-                        />
-                      </Col>
-                      <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="defaultBufferAfterMinutes"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required={practitioner.appointable}
-                        />
-                      </Col>
-                    </Row>
+                      <Row>
+                        <Col md={12}>
+                          <MyInput
+                            fieldType="number"
+                            fieldName="defaultBufferBeforeMinutes"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width="100%"
+                            required={practitioner.appointable}
+                          />
+                        </Col>
+                        <Col md={12}>
+                          <MyInput
+                            fieldType="number"
+                            fieldName="defaultBufferAfterMinutes"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width="100%"
+                            required={practitioner.appointable}
+                          />
+                        </Col>
+                      </Row>
                     )}
                   </>
                 }
@@ -684,6 +714,7 @@ const AddEditPractitioner = ({
             email: rowData?.email,
             phoneNumber: rowData?.phoneNumber,
             userId: rowData?.id,
+            userLogin: rowData?.login,
             gender: rowData?.gender,
             dateOfBirth: rowData?.birthDate,
           });
