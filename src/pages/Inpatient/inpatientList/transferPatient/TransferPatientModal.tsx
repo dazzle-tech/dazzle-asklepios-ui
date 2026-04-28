@@ -9,10 +9,9 @@ import {
   newApRoom,
   newApTransferPatient
 } from '@/types/model-types-constructor';
-import {
-  useFetchBedCountByDepartmentKeyQuery,
-  useGetPractitionersQuery
-} from '@/services/setupService';
+import { useFetchBedCountByDepartmentKeyQuery } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import { Form } from 'rsuite';
 import { ApBed, ApPatient, ApRoom, ApTransferPatient } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -52,8 +51,10 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     pageSize: 1000
   });
   // Fetch the list of practitioners (physicians) based on the request
-  const { data: practitionerListResponse } = useGetPractitionersQuery(physicanListRequest);
-  // Fetch the bed count for the selected department key
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  ); // Fetch the bed count for the selected department key
   const { data: bedCountResponse, isFetching } = useFetchBedCountByDepartmentKeyQuery(
     { department_key: transferPatient?.toInpatientDepartmentKey },
     {
@@ -259,7 +260,7 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
         fieldLabel="Responsible physician"
         fieldType="select"
         fieldName="physicianKey"
-        selectData={practitionerListResponse?.object ?? []}
+        selectData={practitionerListResponse?.data ?? []}
         selectDataLabel="practitionerFullName"
         selectDataValue="key"
         record={admitToInpatient}
@@ -338,11 +339,11 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     }
   }, [isFetching, bedCountResponse, transferPatient?.toInpatientDepartmentKey]);
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <AdvancedModal
       open={open}

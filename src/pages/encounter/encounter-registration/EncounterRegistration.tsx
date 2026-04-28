@@ -42,9 +42,10 @@ import {
   useGetDepartmentsQuery,
   useGetFacilitiesQuery,
   useGetLovValuesByCodeAndParentQuery,
-  useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -127,7 +128,10 @@ const EncounterRegistration = () => {
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: bookingstatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
-  const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
   const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
   const [selectedCriterion, setSelectedCriterion] = useState('');
@@ -330,9 +334,7 @@ const EncounterRegistration = () => {
   }, [record]);
 
   useEffect(() => {
-    const header = (
-      "Patient Registration"
-    );
+    const header = 'Patient Registration';
     dispatch(setPageCode('Patient_Registration'));
     dispatch(setDivContent(header));
     return () => {
@@ -885,7 +887,7 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldLabel="Physician"
                     fieldName="physicianKey"
-                    selectData={practitionerListResponse?.object ?? []}
+                    selectData={practitionerListResponse?.data ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
                     record={localEncounter}

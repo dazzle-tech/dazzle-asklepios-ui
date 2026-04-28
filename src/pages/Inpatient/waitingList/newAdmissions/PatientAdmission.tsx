@@ -5,7 +5,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
-import { useGetPractitionersQuery } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useSavePatientAdmissionMutation } from '@/services/encounterService';
 import { useGetRoomListQuery } from '@/services/setupService';
 import { Form, Row, Col } from 'rsuite';
@@ -86,8 +86,10 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     ],
     pageSize: 1000
   });
-  const { data: practitionerListResponse } = useGetPractitionersQuery(physicanListRequest);
-
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
   // handle save To admit outpatient to inpatient function
   const handleSave = async () => {
     try {
@@ -230,7 +232,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             fieldLabel="Responsible physician"
             fieldType="select"
             fieldName="physicianKey"
-            selectData={practitionerListResponse?.object ?? []}
+            selectData={practitionerListResponse?.data ?? []}
             selectDataLabel="practitionerFullName"
             selectDataValue="key"
             record={admitToInpatient}
@@ -244,7 +246,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             fieldLabel="Resident"
             fieldType="select"
             fieldName="residentKey"
-            selectData={practitionerListResponse?.object ?? []}
+            selectData={practitionerListResponse?.data ?? []}
             selectDataLabel="practitionerFullName"
             selectDataValue="key"
             record={admitToInpatient}
@@ -257,7 +259,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             fieldLabel="Secondary Physicians"
             fieldType="multiselect"
             fieldName="secondaryPhysicianKeys"
-            selectData={practitionerListResponse?.object ?? []}
+            selectData={practitionerListResponse?.data ?? []}
             selectDataLabel="practitionerFullName"
             selectDataValue="key"
             record={admitToInpatient}
@@ -482,7 +484,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         fieldLabel="Responsible physician"
         fieldType="select"
         fieldName="physicianKey"
-        selectData={practitionerListResponse?.object ?? []}
+        selectData={practitionerListResponse?.data ?? []}
         selectDataLabel="practitionerFullName"
         selectDataValue="key"
         record={admitToInpatient}
@@ -501,11 +503,11 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
       />
     </Form>
   );
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <>

@@ -15,9 +15,10 @@ import {
   useGetBedListQuery,
   useGetDepartmentsQuery,
   useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery,
   useGetRoomListQuery
 } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import { ApPatient, ApPatientInsurance } from '@/types/model-types';
 import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -50,8 +51,10 @@ const InformationDesk: React.FC = () => {
   const { data: roomListResponseLoading } = useGetRoomListQuery(listRequest);
   const { data: bedListResponse } = useGetBedListQuery(bedListRequest);
   const { data: bedStatusLovQueryResponse } = useGetLovValuesByCodeQuery('BED_STATUS');
-  const { data: practitionerListResponse } = useGetPractitionersQuery(initialListRequest);
-
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
   const [record, setRecord] = useState<any>({});
 
   const [searchPatient, setSearchPatient] = useState<ApPatient>({
@@ -75,9 +78,7 @@ const InformationDesk: React.FC = () => {
 
   // Header (moved to useEffect)
   useEffect(() => {
-    const divContent = (
-        "Information Desk"
-    );
+    const divContent = 'Information Desk';
     dispatch(setPageCode('P_Facility'));
     dispatch(setDivContent(divContent));
 
@@ -332,7 +333,7 @@ const InformationDesk: React.FC = () => {
           fieldLabel="Responsible Physician"
           fieldType="checkPicker"
           fieldName="responsiblePhysicians"
-          selectData={practitionerListResponse?.object ?? []}
+          selectData={practitionerListResponse?.data ?? []}
           selectDataLabel="practitionerFullName"
           selectDataValue="key"
           record={{ responsiblePhysicians }}
