@@ -41,115 +41,125 @@ const PatientArrivalModal = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-  <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      // loading={isLoading}
-      title="Patient Arrived"
-      size={width}
-      bodyheight="60vh"
-      steps={[
-        { title: 'Arrived', icon: <FontAwesomeIcon icon={faHospitalUser} /> }
-      ]}
-      actionButtonFunction={async () => {
-        if (!test?.id) {
-          dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
-          return;
-        }
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        // loading={isLoading}
+        title="Patient Arrived"
+        size={width}
+        bodyheight="60vh"
+        steps={[
+          { title: 'Arrived', icon: <FontAwesomeIcon icon={faHospitalUser} /> }
+        ]}
+        actionButtonFunction={async () => {
+          if (!test?.id) {
+            dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
+            return;
+          }
 
-        if (!test?.patientArrivedDate) {
-          dispatch(
-            notify({
-              msg: 'Arrival date & time is required',
-              sev: 'warning'
-            })
-          );
-          return;
-        }
+          if (!test?.patientArrivedDate) {
+            dispatch(
+              notify({
+                msg: 'Arrival date & time is required',
+                sev: 'warning'
+              })
+            );
+            return;
+          }
 
-        try {
-          console.log("inpatienrt arrival test", test)
-          const response = await patientArrived({
-            id: test.id,
-            body: {
-              patientArrivedDate: new Date(
-                test.patientArrivedDate
-              ).toISOString(),
-              patientArrivedNoteRad: test.patientArrivedNoteRad
-            }
-          }).unwrap();
-          dispatch(
-            notify({ msg: 'Patient arrived saved', sev: 'success' })
-          );
+          try {
 
-          setTest(prev => ({
-            ...prev,
-            ...response
-          }));
+            const response = await patientArrived({
+              id: test.id,
+              body: {
+                patientArrivedDate: new Date(
+                  test.patientArrivedDate
+                ).toISOString(),
+                patientArrivedNoteRad: test.patientArrivedNoteRad
+              }
+            }).unwrap();
+            dispatch(
+              notify({ msg: 'Patient arrived saved', sev: 'success' })
+            );
 
-          setOpen(false);
-        } catch (e: any) {
-          dispatch(
-            notify({
-              msg:
+            setTest(prev => ({
+              ...prev,
+              ...response
+            }));
+
+            setOpen(false);
+          }
+          catch (e: any) {
+            let errorMessage = 'Patient arrival failed';
+
+            if (e?.data?.fieldErrors?.length) {
+              errorMessage = e.data.fieldErrors
+                .map((err: any) => err.message)
+                .join(', ');
+            } else {
+              errorMessage =
                 e?.data?.message ||
                 e?.data?.detail ||
-                'Patient arrival failed',
-              sev: 'error'
-            })
-          );
-          return;
-        }
-        try {
-          await fetchTest();
-          await fetchAllTests();
-        } catch (e) {
-          console.warn('Refetch after patientArrived failed', e);
-        }
-      }}
-      content={
-        <Form fluid>
-          <Col md={24}>
-            <Row>
-              <Col md={24}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Patient Arrival Note"
-                  fieldName="patientArrivedNoteRad"
-                  fieldType="textarea"
-                  record={test}
-                  setRecord={setTest}
-                />
-              </Col>
-            </Row>
+                errorMessage;
+            }
 
-            <Row>
-              <Col md={24}>
-                <MyInput
-                  required
-                  width="100%"
-                  fieldLabel="Arrival Date & Time"
-                  fieldName="patientArrivedDate"
-                  fieldType="datetime"
-                  record={test}
-                  setRecord={setTest}
-                />
-              </Col>
-            </Row>
-          </Col>
-        </Form>
-      }
-    />
-  </div>
+            dispatch(
+              notify({
+                msg: errorMessage,
+                sev: 'warning'
+              })
+            );
+          }
+          try {
+            await fetchTest();
+            await fetchAllTests();
+          } catch (e) {
+            console.warn('Refetch after patientArrived failed', e);
+          }
+        }}
+        content={
+          <Form fluid>
+            <Col md={24}>
+              <Row>
+                <Col md={24}>
+                  <MyInput
+                    width="100%"
+                    fieldLabel="Patient Arrival Note"
+                    fieldName="patientArrivedNoteRad"
+                    fieldType="textarea"
+                    record={test}
+                    setRecord={setTest}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={24}>
+                  <MyInput
+                    required
+                    width="100%"
+                    fieldLabel="Arrival Date & Time"
+                    fieldName="patientArrivedDate"
+                    fieldType="datetime"
+                    record={test}
+                    setRecord={setTest}
+                  />
+                </Col>
+              </Row>
+            </Col>
+          </Form>
+        }
+      />
+    </div>
   );
 };
 
