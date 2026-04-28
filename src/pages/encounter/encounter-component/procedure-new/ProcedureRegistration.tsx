@@ -2,17 +2,18 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
 import {
-    useDeleteProceduresStaffMutation,
-    useGetProceduresStaffQuery,
-    useSaveProceduresRegistrationMutation,
-    useSaveProceduresStaffMutation
+  useDeleteProceduresStaffMutation,
+  useGetProceduresStaffQuery,
+  useSaveProceduresRegistrationMutation,
+  useSaveProceduresStaffMutation
 } from '@/services/procedureService';
 import {
-    useGetDepartmentsQuery,
-    useGetLovValuesByCodeQuery,
-    useGetPractitionersQuery,
-    useGetUserRecordQuery
+  useGetDepartmentsQuery,
+  useGetLovValuesByCodeQuery,
+  useGetUserRecordQuery
 } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import { newApProcedureRegistration, newApProcedureStaff } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -38,7 +39,10 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
     ]
   });
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
 
   const [saveRegis] = useSaveProceduresRegistrationMutation();
 
@@ -103,7 +107,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                 width="100%"
                 fieldName="practitionersKey"
                 fieldType="select"
-                selectData={practitionerListResponse?.object ?? []}
+                selectData={practitionerListResponse?.data ?? []}
                 selectDataLabel="practitionerFirstName"
                 selectDataValue="key"
                 record={proReg}
