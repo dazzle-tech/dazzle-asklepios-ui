@@ -23,6 +23,8 @@ import {
   useToggleDepartmentIsActiveMutation,
   useUpdateDepartmentMutation,
 } from '@/services/security/departmentService';
+import { MedicalSheets } from '@/config/modules-config';
+import { useBulkSaveMedicalSheetsMutation, useBulkSaveNurseMedicalSheetsMutation } from '@/services/MedicalSheetsService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
@@ -85,6 +87,8 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [addDefaultMedicalSheets, setAddDefaultMedicalSheets] = useState(false);
+  const [addDefaultNurseMedicalSheets, setAddDefaultNurseMedicalSheets] = useState(false);
   const [linksState, setLinksState] = useState<{
     next?: string | null;
     prev?: string | null;
@@ -142,7 +146,8 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
   const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
-
+  const [bulkSaveMedicalSheets] = useBulkSaveMedicalSheetsMutation();
+  const [bulkSaveNurseMedicalSheets] = useBulkSaveNurseMedicalSheetsMutation();
   // Enums
   const depTypeOptions = useEnumOptions('DepartmentType');
   const encTypesEnum = useEnumOptions('EncounterType');
@@ -253,56 +258,84 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   };
 
   const handleAdd = () => {
-    if (!validateRequiredFields()) {
-      return;
-    }
+  if (!validateRequiredFields()) {
+    return;
+  }
 
-    if (!facilityId) {
-      dispatch(notify({ msg: 'Facility is required to add a department', sev: 'warning' }));
-      return;
-    }
+  if (!facilityId) {
+    dispatch(notify({ msg: 'Facility is required to add a department', sev: 'warning' }));
+    return;
+  }
 
-    setOpenForm(false);
-    setLoad(true);
-    // Backend expects a CREATE payload (no id / no server-managed audit fields)
-    const payload = stripUndefined({
-      facilityId: Number(facilityId),
-      name: (department?.name ?? '').trim(),
-      departmentType: department?.departmentType,
-      departmentCode: department?.departmentCode,
-      appointable: Boolean(department?.appointable),
-      encounterType: department?.encounterType || undefined,
-      phoneNumber: department?.phoneNumber || undefined,
-      email: department?.email || undefined,
-      isActive: department?.isActive ?? true,
-      hasMedicalSheets: Boolean(department?.hasMedicalSheets),
-      hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
-      parallelCapacityValue: department.parallelCapacityValue ?? 1,
-      defaultDurationMinutes: department?.defaultDurationMinutes,
-      defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
-      defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
-      parallelCapacityEnabled: department?.parallelCapacityEnabled,
-      requirePractitioner: department?.requirePractitioner,
-      requireBilling: department?.requireBilling,
-      requirePreAssessment: department?.requirePreAssessment,
-      workingDays: buildWorkingDaysPayload(department?.workingDays)
-    });
+  setOpenForm(false);
+  setLoad(true);
 
-    addDepartment(payload)
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
-        const newCode = generateFiveDigitCode();
-        setNextDepartmentCode(newCode);
-        refetchDepartments();
-      })
-      .catch((err: any) => {
-        const msg = extractApiErrorMessage(err);
-        console.error('addDepartment failed:', { payload, err });
-        dispatch(notify({ msg, sev: 'error' }));
-      })
-      .finally(() => setLoad(false));
-  };
+  const payload = stripUndefined({
+    facilityId: Number(facilityId),
+    name: (department?.name ?? '').trim(),
+    departmentType: department?.departmentType,
+    departmentCode: department?.departmentCode,
+    appointable: Boolean(department?.appointable),
+    encounterType: department?.encounterType || undefined,
+    phoneNumber: department?.phoneNumber || undefined,
+    email: department?.email || undefined,
+    isActive: department?.isActive ?? true,
+    hasMedicalSheets: Boolean(department?.hasMedicalSheets),
+    hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
+    parallelCapacityValue: department.parallelCapacityValue ?? 1,
+    defaultDurationMinutes: department?.defaultDurationMinutes,
+    defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
+    defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
+    parallelCapacityEnabled: department?.parallelCapacityEnabled,
+    requirePractitioner: department?.requirePractitioner,
+    requireBilling: department?.requireBilling,
+    requirePreAssessment: department?.requirePreAssessment,
+    workingDays: buildWorkingDaysPayload(department?.workingDays),
+  });
+
+  addDepartment(payload)
+    .unwrap()
+    .then(async (addedDepartment) => {
+      dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
+
+      const departmentId = addedDepartment?.id ?? addedDepartment?.data?.id;
+
+      if (addDefaultMedicalSheets && departmentId) {
+        const defaultSheetsPayload = MedicalSheets
+          .filter(sheet => sheet.isDefaultMedicalSheet)
+          .map(sheet => ({
+            departmentId: departmentId,
+            medicalSheet: sheet.code.toUpperCase(),
+          }));
+
+        if (defaultSheetsPayload.length) {
+          await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+        }
+      }
+      if (addDefaultNurseMedicalSheets && departmentId) {
+        const defaultNurseSheetsPayload = MedicalSheets .filter(sheet => sheet.isDefaultNurseMedicalSheet)
+          .map(sheet => ({
+            departmentId: departmentId,
+            medicalSheet: sheet.code.toUpperCase(),
+          }));
+        if (defaultNurseSheetsPayload.length) {
+          await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+        }
+      }
+
+      const newCode = generateFiveDigitCode();
+      setNextDepartmentCode(newCode);
+      setAddDefaultMedicalSheets(false);
+      setAddDefaultNurseMedicalSheets(false);
+      refetchDepartments();
+    })
+    .catch((err: any) => {
+      const msg = extractApiErrorMessage(err);
+      console.error('addDepartment failed:', { payload, err });
+      dispatch(notify({ msg, sev: 'error' }));
+    })
+    .finally(() => setLoad(false));
+};
 
   const handleUpdate = () => {
     if (!validateRequiredFields()) {
@@ -631,10 +664,16 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           setRecordOfDepartmentCode={setRecordOfDepartmentCode}
           depTypeOptions={depTypeOptions ?? []}
           encTypesEnum={encTypesEnum ?? []}
+          addDefaultMedicalSheets={addDefaultMedicalSheets}
+          setAddDefaultMedicalSheets={setAddDefaultMedicalSheets}
+          addDefaultNurseMedicalSheets={addDefaultNurseMedicalSheets}
+          setAddDefaultNurseMedicalSheets={setAddDefaultNurseMedicalSheets}
           onSave={department?.id ? handleUpdate : handleAdd}
           onCancel={() => {
             setOpenForm(false);
             setDepartment({ ...newDepartment });
+            setAddDefaultMedicalSheets(false);
+            setAddDefaultNurseMedicalSheets(false);
           }}
         />
       )}
