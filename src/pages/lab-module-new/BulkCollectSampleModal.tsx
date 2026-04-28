@@ -18,7 +18,35 @@ type BulkCollectSampleModalProps = {
   selectedTests: any[];
   onSuccess?: () => void;
 };
+const getApiErrorMessage = (
+  e: any,
+  fallback = 'Unable to collect sample due to server validation.'
+) => {
+  const text =
+    e?.data?.detail ||
+    e?.data?.message ||
+    e?.error ||
+    e?.message ||
+    String(e ?? '');
 
+  const interpolatedMessage = String(text).match(
+    /interpolatedMessage='([^']+)'/
+  )?.[1];
+
+  if (interpolatedMessage) {
+    return interpolatedMessage;
+  }
+
+  const messageTemplate = String(text).match(
+    /messageTemplate='([^']+)'/
+  )?.[1];
+
+  if (messageTemplate) {
+    return messageTemplate;
+  }
+
+  return String(text || fallback);
+};
 const BulkCollectSampleModal = ({
   open,
   setOpen,
@@ -117,11 +145,14 @@ const BulkCollectSampleModal = ({
 
       setOpen(false);
       onSuccess?.();
-    } catch (e: any) {
+    } 
+    catch (e: any) {
+      console.log("My error message:", getApiErrorMessage(e));
+      const errorMessage = getApiErrorMessage(e) ?? 'Unable to collect sample.';
       dispatch(
         notify({
-          msg: 'Unable to collect sample due to server validation.',
-          sev: 'error'
+          msg: errorMessage,
+          sev: 'warning'
         })
       );
     }

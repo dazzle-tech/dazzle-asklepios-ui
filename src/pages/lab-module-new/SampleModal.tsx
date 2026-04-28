@@ -22,7 +22,25 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApDiagnosticOrderTestsSamples } from '@/types/model-types-constructor';
 
 import './styles.less';
+const getApiErrorMessage = (
+  e: any,
+  fallback = 'Unable to collect sample.'
+) => {
+  const text =
+    e?.data?.detail ||
+    e?.data?.message ||
+    e?.error ||
+    e?.message ||
+    String(e ?? '');
 
+  const interpolated = String(text).match(/interpolatedMessage='([^']+)'/)?.[1];
+  if (interpolated) return interpolated;
+
+  const template = String(text).match(/messageTemplate='([^']+)'/)?.[1];
+  if (template) return template;
+
+  return String(text || fallback);
+};
 type SampleModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -166,12 +184,12 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
       setOpen(false);
 
     } catch (e: any) {
-      const backendMsg =
-        e?.data?.message ||
-        e?.data?.detail ||
-        'Unable to collect sample.';
-
-      dispatch(notify({ msg: backendMsg, sev: 'error' }));
+      dispatch(
+        notify({
+          msg: getApiErrorMessage(e, 'Unable to collect sample.'),
+          sev: 'warning'
+        })
+      );
     }
   };
 
