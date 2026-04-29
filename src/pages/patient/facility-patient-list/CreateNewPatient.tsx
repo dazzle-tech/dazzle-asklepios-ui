@@ -986,26 +986,41 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  const validateMandatoryPatientFields = (): boolean => {
-    const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
-      const value = (localPatient as any)?.[key];
-      if (value === null || value === undefined) return true;
-      if (typeof value === 'string' && value.trim() === '') return true;
-      return false;
-    }).map(({ label }) => label);
 
-    if (missingFields.length > 0) {
-      dispatch(
-        notify({
-          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
-          sev: 'warning'
-        })
-      );
-      return false;
+const isPhoneValid = (phone: any) => {
+  if (!phone) return false;
+
+  const digits = String(phone).replace(/\D/g, '');
+
+  return digits.length > 3;
+};
+
+const validateMandatoryPatientFields = (): boolean => {
+  const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+    const value = (localPatient as any)?.[key];
+
+    if (key === 'primaryMobileNumber') {
+      return !isPhoneValid(value);
     }
 
-    return true;
-  };
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+
+    return false;
+  }).map(({ label }) => label);
+
+  if (missingFields.length > 0) {
+    dispatch(
+      notify({
+        msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+        sev: 'warning'
+      })
+    );
+    return false;
+  }
+
+  return true;
+};
 
   const handleSave = async (): Promise<Patient | null> => {
     if (!validateMandatoryPatientFields()) {
