@@ -386,13 +386,7 @@ const EncounterPriorityAction = ({
       trigger="click"
       placement="leftStart"
       enterable
-      speaker={
-        isPendingPayment ? (
-          <Tooltip>Please add payment first</Tooltip>
-        ) : (
-          prioritySpeaker
-        )
-      }
+      speaker={isPendingPayment ? <Tooltip>Please add payment first</Tooltip> : prioritySpeaker}
     >
       <div
         onClick={(e: any) => {
@@ -430,12 +424,11 @@ const UrgentCareTriage = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
-    const authSlice = useAppSelector(state => state.auth);
-    const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-    const isReceptionist = jobRole === 'RECEPTIONIST';
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isReceptionist = jobRole === 'RECEPTIONIST';
 
-
- const handlePrintWristband = async (rowData: any) => {
+  const handlePrintWristband = async (rowData: any) => {
     try {
       const blob = await triggerGetPatientWristbandPdf({
         patientId: rowData.patientId
@@ -938,9 +931,7 @@ const UrgentCareTriage = () => {
       }
 
       const emergencyTriageNew =
-        typeof encounterId === 'number' &&
-        !Number.isNaN(encounterId) &&
-        !Number.isNaN(patientId)
+        typeof encounterId === 'number' && !Number.isNaN(encounterId) && !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
           : null;
 
@@ -1006,11 +997,7 @@ const UrgentCareTriage = () => {
     return () => {
       dispatch(hideSystemLoader());
     };
-  }, [
-    isLoading,
-    isFetching,
-    dispatch
-  ]);
+  }, [isLoading, isFetching, dispatch]);
 
   useEffect(() => {
     if (refetch) {
@@ -1186,7 +1173,13 @@ const UrgentCareTriage = () => {
 
         const patientName = (
           <span className="patient-name-text">
-            {[rowData?.patientObject?.firstName, rowData?.patientObject?.secondName, rowData?.patientObject?.lastName].filter(Boolean).join(' ')}
+            {[
+              rowData?.patientObject?.firstName,
+              rowData?.patientObject?.secondName,
+              rowData?.patientObject?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ')}
           </span>
         );
 
@@ -1240,16 +1233,25 @@ const UrgentCareTriage = () => {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: (rowData: any) => (
-        <MyBadgeStatus
-          color="#98A2B4"
-          contant={
-            encounterStatusLabelMap.get(
-              String(rowData?.status ?? rowData?.encounterStatus ?? '')
-            ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
-          }
-        />
-      )
+      render: (rowData: any) => {
+        const statusCode = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
+        const statusColorMap: Record<string, string> = {
+          PENDING_PAYMENT: '#fd7e14',
+          WAITING_TRIAGE: '#b8860b',
+          TRIAGE_STARTED: '#6f42c1'
+        };
+        const color = statusColorMap[statusCode] ?? '#969fb0';
+        return (
+          <MyBadgeStatus
+            color={color}
+            contant={
+              encounterStatusLabelMap.get(
+                String(rowData?.status ?? rowData?.encounterStatus ?? '')
+              ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
+            }
+          />
+        );
+      }
     },
     {
       key: 'actions',
@@ -1264,7 +1266,9 @@ const UrgentCareTriage = () => {
           <Tooltip>Start Triage</Tooltip>
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>;
+        const tooltipCancel = (
+          <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
+        );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1423,7 +1427,7 @@ const UrgentCareTriage = () => {
                 <div>
                   <MyButton
                     size="small"
-                    disabled={isReceptionist }
+                    disabled={isReceptionist}
                     onClick={() => {
                       setLocalEncounter(rowData);
                       setOpen(true);
@@ -1555,9 +1559,7 @@ const UrgentCareTriage = () => {
           data={tableData}
           columns={tableColumns}
           rowClassName={isSelected}
-          loading={
-            isLoading || (manualSearchTriggered && isFetching)
-          }
+          loading={isLoading || (manualSearchTriggered && isFetching)}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
           }}

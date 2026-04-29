@@ -3991,6 +3991,7 @@ export interface PatientObservationsComplaints {
   isActive: boolean;
   functionalStatus?: string | null;
   cognitiveCheck?: string | null;
+  bloodGroup?: string | null;
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }

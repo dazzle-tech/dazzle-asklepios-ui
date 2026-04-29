@@ -50,8 +50,10 @@ import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
-import { skipToken } from '@tanstack/react-query';
-import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
+import {
+  useSearchAppointmentsQuery,
+  useGetAppointmentLogsQuery
+} from '@/services/appointment/appointmentService';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -158,6 +160,59 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
     'Unexpected error';
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
+};
+
+const safeFormatDateModule = (value: any) => {
+  if (!value) return '';
+  try {
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    const formattedDate = date.toLocaleDateString('en-GB');
+    const formattedTime = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    return `${formattedDate} ${formattedTime}`;
+  } catch {
+    return '';
+  }
+};
+
+type AppointmentTimeKind = 'appointment' | 'confirm' | 'checkin';
+
+const AppointmentLogTimeCell: React.FC<{
+  appointmentId: number | string | null | undefined;
+  kind: AppointmentTimeKind;
+}> = ({ appointmentId, kind }) => {
+  const { data: logs } = useGetAppointmentLogsQuery(
+    { appointmentId: appointmentId as number },
+    { skip: !appointmentId }
+  );
+
+  if (!appointmentId) return <>-</>;
+  if (!logs || logs.length === 0) return <>-</>;
+
+  const ascending = [...logs].reverse();
+
+  if (kind === 'appointment') {
+    return <>{safeFormatDateModule(ascending[0]?.startDatetime) || '-'}</>;
+  }
+
+  if (kind === 'confirm') {
+    const log = ascending.find(
+      (l: any) => String(l?.status ?? '').toUpperCase() === 'CONFIRMED'
+    );
+    return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
+  }
+
+  if (kind === 'checkin') {
+    const log = ascending.find(
+      (l: any) => String(l?.status ?? '').toUpperCase() === 'CHECKED_IN'
+    );
+    return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
+  }
+
+  return <>-</>;
 };
 
 const EncounterList = () => {
@@ -540,16 +595,13 @@ const startEncounterSafe = async (row: any) => {
     const handleClearFilters = () => {
       const now = new Date();
 
-      // 🔥 فرق وقت عشان نكسر caching تبع DatePicker
       const clearedDateFilter = {
         fromDate: new Date(now.getTime()),
         toDate: new Date(now.getTime() + 1000)
       };
 
-      // 🔥 reset inputs
-      setRecord({ chiefComplain: '' });
+      setRecord({ chiefComplaint: '' });
 
-      // 🔥 مهم: خلي reference جديد 100%
       setDateFilter({ ...clearedDateFilter });
 
       setStatusIn([...DEFAULT_STATUS]);
@@ -569,7 +621,6 @@ const startEncounterSafe = async (row: any) => {
 
       setPage(0);
 
-      // 🔥 update API filters
       setAppliedFilters({
         departmentId,
         fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
@@ -590,7 +641,6 @@ const startEncounterSafe = async (row: any) => {
       setFiltersKey(prev => prev + 1);
     };
 
-  // Auto-refetch when returning from nurse station after completing a visit
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {
     if (location.state?.shouldRefetch && !didAutoRefetchRef.current && departmentId) {
@@ -617,7 +667,6 @@ const startEncounterSafe = async (row: any) => {
 
       if (isNaN(date.getTime())) return '';
 
-      // 🟢 format Date + Time
       const formattedDate = date.toLocaleDateString('en-GB'); // 12/04/2026
       const formattedTime = date.toLocaleTimeString('en-GB', {
         hour: '2-digit',
@@ -868,22 +917,46 @@ const startEncounterSafe = async (row: any) => {
       key: 'appointmentTime',
       title: 'APPOINTMENT TIME',
       expandable: true,
-      render: (row: any) =>
-        safeFormatDate(appointmentsMap[row?.patient?.id]?.startDatetime)
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ??
+            row?.appointmentId ??
+            appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="appointment"
+        />
+      )
     },
     {
       key: 'confirmTime',
       title: 'CONFIRM TIME',
       expandable: true,
-      render: (row: any) =>
-        safeFormatDate(appointmentsMap[row?.patient?.id]?.confirmedAt)
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ??
+            row?.appointmentId ??
+            appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="confirm"
+        />
+      )
     },
     {
       key: 'checkInTime',
       title: 'CHECK-IN TIME',
       expandable: true,
-      render: (row: any) =>
-        safeFormatDate(appointmentsMap[row?.patient?.id]?.checkedInAt)
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ??
+            row?.appointmentId ??
+            appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="checkin"
+        />
+      )
     },
     {
       key: 'seenByPhysicianTime',
