@@ -616,7 +616,7 @@ const AddResourceModal = ({
     });
   }, [open, parentTemplateAllowedServices]);
 
- 
+
 
   useEffect(() => {
     if (!record?.resourceId) {
@@ -653,7 +653,7 @@ const AddResourceModal = ({
 
           if (isEditingRecord && justOpenedRef.current) {
             applyWorkingDays(editRecordWorkingDays);
-            justOpenedRef.current = false; 
+            justOpenedRef.current = false;
           } else {
             applyWorkingDays(finalWorkingDays);
           }
@@ -1025,18 +1025,6 @@ const AddResourceModal = ({
                   <Row>
                     <Col md={12}>
                       <MyInput
-                        fieldName="versionNo"
-                        fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
-                        width="100%"
-                        disabled
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={12}>
-                      <MyInput
                         fieldName="defaultBufferBeforeMinutes"
                         fieldLabel='Slot Befor'
                         fieldType="number"
@@ -1053,6 +1041,28 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={setRecord}
                         width="100%"
+                      />
+                    </Col>
+                  </Row>
+                   <Row>
+                    <Col md={12}>
+                      <MyInput
+                        fieldName="versionNo"
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                        disabled
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        width="100%"
+                        fieldType="check"
+                        fieldName="requireConfirmation"
+                        record={record}
+                        setRecord={setRecord}
+                        showLabel={false}
                       />
                     </Col>
                   </Row>

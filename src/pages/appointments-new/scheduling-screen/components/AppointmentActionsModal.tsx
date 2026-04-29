@@ -155,6 +155,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       localAppointmentData?.status ||
       localAppointmentData?.appointmentStatus;
     const currentStatus = normalizeStatus(statusValue);
+    const requireConfirmation = Boolean(
+      appointment?.appointmentData?.requireConfirmation ??
+      localAppointmentData?.requireConfirmation
+    );
     const isDirectReasonStatus =
       currentStatus === 'CANCELED' ||
       currentStatus === 'CANCELLED' ||
@@ -164,6 +168,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       currentStatus === 'COMPLETED' ||
       currentStatus === 'INSERVICE' ||
       currentStatus === 'CHECKEDIN';
+    const isCheckInEligibleStatus =
+      currentStatus === 'BOOKED' ||
+      currentStatus === 'CONFIRMED';
+    const canCheckIn =
+      !isViewOnlyActionsStatus &&
+      isCheckInEligibleStatus &&
+      (!requireConfirmation || currentStatus === 'CONFIRMED');
     const isReasonViewOnly =
       Boolean(resonType) && (isDirectReasonStatus || isViewOnlyActionsStatus);
 
@@ -173,12 +184,16 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
         return;
       }
-      if (currentStatus == 'BOOKED') {
-        dispatch(notify({ msg: 'Please confirm the appointment before check-in', sev: 'warning' }));
-        return;
-      }
       if (currentStatus == 'CHECKEDIN') {
         dispatch(notify({ msg: 'Appointment already checked in', sev: 'warning' }));
+        return;
+      }
+      if (!isCheckInEligibleStatus) {
+        dispatch(notify({ msg: 'Only booked or confirmed appointments can be checked in', sev: 'warning' }));
+        return;
+      }
+      if (requireConfirmation && currentStatus !== 'CONFIRMED') {
+        dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
         return;
       }
 
@@ -470,7 +485,7 @@ const handleCancel = async () => {
         <Form fluid layout="inline">
             <MyButton
               width="250px"
-              disabled={currentStatus !== "CONFIRMED" || isViewOnlyActionsStatus}
+              disabled={!canCheckIn}
               onClick={handleCheckIn}
               color="cyan"
               appearance="primary"

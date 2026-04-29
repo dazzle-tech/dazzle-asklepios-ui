@@ -734,6 +734,16 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             disabled
                           />
                         </Col>
+                        <Col md={12}>
+                          <MyInput
+                            width="100%"
+                            fieldType="check"
+                            fieldName="requireConfirmation"
+                            record={record}
+                            setRecord={setRecord}
+                            showLabel={false}
+                          />
+                        </Col>
                       </Row>
                     </Form>
                   }
