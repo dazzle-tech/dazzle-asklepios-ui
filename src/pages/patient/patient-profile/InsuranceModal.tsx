@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetActivePlansByPayorQuery, useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
@@ -132,19 +132,21 @@ const InsuranceModal = ({
     sort: 'name,asc'
   });
 
-  const {
-    data: plansResponse,
-    isLoading: plansLoading,
-    isFetching: plansFetching
-  } = useGetAllActivePlansQuery(
-    {
-      payorId: Number(patientInsurance?.payorId) || 0,
-      page: planPage,
-      size: 20,
-      sort: 'name,asc'
-    },
-    { skip: !patientInsurance?.payorId }
-  );
+    const {
+      data: plansResponse,
+      isLoading: plansLoading,
+      isFetching: plansFetching
+    } = useGetActivePlansByPayorQuery(
+      {
+        payorId: Number(patientInsurance?.payorId),
+        page: planPage,
+        size: 20,
+        sort: 'name,asc'
+      },
+      {
+        skip: !patientInsurance?.payorId
+      }
+    );
 
   const {
     data: relativesResponse,
@@ -165,18 +167,21 @@ const InsuranceModal = ({
   }, [payorSearchKeyword]);
 
   useEffect(() => {
-    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
+    const currentPayorId = patientInsurance?.payorId
+      ? Number(patientInsurance.payorId)
+      : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
     setPlanPage(0);
 
-    if (prevPayorId !== undefined) {
-      setPatientInsurance(prevInsurance => ({ ...prevInsurance, planId: null }));
-    }
+    setPatientInsurance(prev => ({
+      ...prev,
+      planId: null
+    }));
 
     setPrevPayorId(currentPayorId);
-  }, [patientInsurance?.payorId, prevPayorId]);
+  }, [patientInsurance?.payorId]);
 
   useEffect(() => {
     if (!open) {

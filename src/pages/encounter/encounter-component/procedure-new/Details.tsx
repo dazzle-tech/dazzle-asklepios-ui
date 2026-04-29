@@ -459,7 +459,7 @@ const Details = ({
   return (
     <>
       <AdvancedModal
-        size="60vw"
+        size="80vw"
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
         actionButtonFunction={handleSave}

@@ -26,7 +26,7 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
+import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -288,9 +288,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
               </Col>
 
               <Col xs={10}>
-                <Form fluid layout="inline">
+                <Form fluid className="filter-form-radiology-filters">
                   <MyInput
-                    width={130}
+                    width={"100%"}
                     placeholder="From Date"
                     fieldType="date"
                     fieldName="fromDate"
@@ -299,7 +299,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={130}
+                    width={"100%"}
                     placeholder="To Date"
                     fieldType="date"
                     fieldName="toDate"
@@ -308,7 +308,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={130}
+                    width={"100%"}
                     placeholder="Order ID"
                     fieldType="text"
                     fieldName="orderNumber"

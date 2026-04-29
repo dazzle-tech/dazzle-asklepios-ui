@@ -217,7 +217,7 @@ useEffect(() => {
       setOpen={setOpen}
       title={
         <Translate>
-          {editRow ? 'Edit Medication' : 'Add Medication'}
+          {editRow ? 'Edit UCC medication order' : 'Add UCC medication order'}
         </Translate>
       }
       actionButtonLabel="Save"
@@ -290,11 +290,10 @@ useEffect(() => {
 
             {/* Custom */}
             {selectedOption === 'CUSTOM_INSTRUCTIONS' && (
-              <div style={{ marginTop: 10 }}>
-                <Row gutter={16}>
+              <div className="custom-instruction-container">
 
-                  <Col md={6}>
                     <MyInput
+                      width="100%"
                       fieldType="number"
                       fieldName="dose"
                       fieldLabel="Dose"
@@ -302,10 +301,9 @@ useEffect(() => {
                       setRecord={setRecord}
                       required
                     />
-                  </Col>
 
-                  <Col md={6}>
                     <MyInput
+                      width="100%"
                       fieldType="select"
                       fieldLabel="Unit"
                       selectData={unitLov?.object || []}
@@ -316,10 +314,9 @@ useEffect(() => {
                       setRecord={setRecord}
                       required
                     />
-                  </Col>
 
-                  <Col md={6}>
                     <MyInput
+                      width="100%"
                       fieldType="select"
                       fieldLabel="Frequency"
                       selectData={frequencyLov?.object || []}
@@ -330,11 +327,10 @@ useEffect(() => {
                       setRecord={setRecord}
                       required
                     />
-                  </Col>
 
-                  <Col md={6}>
                     <MyInput
-                      fieldType="select" // 🔥 بدل text خليها select زي النظام
+                      width="100%"
+                      fieldType="select"
                       fieldLabel="ROA"
                       selectData={roaOptions}
                       selectDataLabel="label"
@@ -344,8 +340,6 @@ useEffect(() => {
                       setRecord={setRecord}
                       required
                     />
-                  </Col>
-                </Row>
               </div>
             )}
           </Form>

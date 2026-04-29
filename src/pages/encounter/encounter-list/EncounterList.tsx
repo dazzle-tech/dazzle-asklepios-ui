@@ -71,10 +71,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw)
@@ -94,7 +94,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'patient.department.date.duplicate':
-    'Patient already has same department encounter Today',
+    'This patient already has an encounter for this department on this date.',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
   'db.constraint': 'Database constraint violated while saving patient encounter.'
@@ -199,16 +199,12 @@ const AppointmentLogTimeCell: React.FC<{
   }
 
   if (kind === 'confirm') {
-    const log = ascending.find(
-      (l: any) => String(l?.status ?? '').toUpperCase() === 'CONFIRMED'
-    );
+    const log = ascending.find((l: any) => String(l?.status ?? '').toUpperCase() === 'CONFIRMED');
     return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
   }
 
   if (kind === 'checkin') {
-    const log = ascending.find(
-      (l: any) => String(l?.status ?? '').toUpperCase() === 'CHECKED_IN'
-    );
+    const log = ascending.find((l: any) => String(l?.status ?? '').toUpperCase() === 'CHECKED_IN');
     return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
   }
 
@@ -247,7 +243,6 @@ const EncounterList = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
-
 
   const [filtersKey, setFiltersKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
@@ -298,20 +293,19 @@ const EncounterList = () => {
   });
   const [record, setRecord] = useState<any>({});
 
-    const handlePatientSearchClick = useCallback(() => {
-      setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
-      setPage(0);
-    }, [patientSearchDraft]);
+  const handlePatientSearchClick = useCallback(() => {
+    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+    setPage(0);
+  }, [patientSearchDraft]);
 
-    const {
-      data: encountersPaged,
-      isFetching: isEncountersFetching,
-      isLoading: isEncountersLoading,
-      refetch: refetchEncounters
-    } = useFilterEncountersQuery(appliedFilters as any, {
-      skip: !appliedFilters
-    });
-
+  const {
+    data: encountersPaged,
+    isFetching: isEncountersFetching,
+    isLoading: isEncountersLoading,
+    refetch: refetchEncounters
+  } = useFilterEncountersQuery(appliedFilters as any, {
+    skip: !appliedFilters
+  });
 
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
@@ -325,15 +319,12 @@ const EncounterList = () => {
 
   const appointmentsMap = useMemo(() => {
     const map: any = {};
-
     (appointmentsData?.data ?? []).forEach((appt: any) => {
       const patientId = appt?.patient?.id;
-
       if (patientId) {
         map[patientId] = appt;
       }
     });
-
     return map;
   }, [appointmentsData]);
 
@@ -369,9 +360,9 @@ const EncounterList = () => {
       .map(v => String(v));
     return Array.from(new Set(ids));
   }, [tableData]);
+
   useEffect(() => {
     const pid = encounter?.patient?.id;
-
     if (pid) triggerGetPatientById({ id: pid });
   }, [encounter?.patient?.id]);
 
@@ -380,7 +371,7 @@ const EncounterList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -406,7 +397,7 @@ const EncounterList = () => {
       const thirdName = String(patientFromMap?.thirdName ?? row?.patient?.thirdName ?? '').trim();
       const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
       const fullName =
-        [firstName, secondName, lastName].filter(Boolean).join(' ').trim() || '-';
+        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
@@ -417,7 +408,6 @@ const EncounterList = () => {
       return {
         ...row,
         key: row?.id,
-
         patientObject: {
           id: patientId,
           fullName,
@@ -428,43 +418,41 @@ const EncounterList = () => {
           sexAtBirth,
           isPrivatePatient: isPrivate
         },
-
         patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
   }, [tableData, patientMap]);
 
-
   const getEncounterId = (row: any) => row?.id ?? null;
 
- const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
+  const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
-const startEncounterSafe = async (row: any) => {
-  const encounterId = getEncounterId(row);
-  if (!encounterId) return false;
+  const startEncounterSafe = async (row: any) => {
+    const encounterId = getEncounterId(row);
+    if (!encounterId) return false;
 
-  const statusUpper = String(row?.status ?? '').toUpperCase();
+    const statusUpper = String(row?.status ?? '').toUpperCase();
 
-  if (statusUpper === 'ONGOING') {
-    return true; 
-  }
+    if (statusUpper === 'ONGOING') {
+      return true;
+    }
 
-  if (startingEncounterIdsRef.current.has(encounterId)) {
-    return false;
-  }
+    if (startingEncounterIdsRef.current.has(encounterId)) {
+      return false;
+    }
 
-  startingEncounterIdsRef.current.add(encounterId);
+    startingEncounterIdsRef.current.add(encounterId);
 
-  try {
-    await startEncounter({ id: encounterId }).unwrap();
-    return true;
-  } catch (error: any) {
-    handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-    return false;
-  } finally {
-    startingEncounterIdsRef.current.delete(encounterId);
-  }
-};
+    try {
+      await startEncounter({ id: encounterId }).unwrap();
+      return true;
+    } catch (error: any) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+      return false;
+    } finally {
+      startingEncounterIdsRef.current.delete(encounterId);
+    }
+  };
 
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
@@ -487,11 +475,10 @@ const startEncounterSafe = async (row: any) => {
       return false;
     }
   };
+
   const fetchPatientForEncounter = async (enc: any) => {
     const pid = enc?.patient?.id ?? null;
-
     if (!pid) return null;
-
     try {
       const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
       return fullPatient;
@@ -500,6 +487,7 @@ const startEncounterSafe = async (row: any) => {
       return null;
     }
   };
+
   const handleGoToVisit = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
@@ -524,10 +512,12 @@ const startEncounterSafe = async (row: any) => {
         encounter: encounterData
       }
     });
-
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
+
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -559,26 +549,24 @@ const startEncounterSafe = async (row: any) => {
     setOpen(false);
   };
 
-  const handleRowsPerPageChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newSize = parseInt(event.target.value, 10);
-      setPageSize(newSize);
-      setPage(0);
+  const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = parseInt(event.target.value, 10);
+    setPageSize(newSize);
+    setPage(0);
 
-      setAppliedFilters((prev: any) =>
-        prev
-          ? {
-              ...prev,
-              page: 0,
-              size: newSize
-            }
-          : prev
-      );
-    },
-    []
-  );
+    setAppliedFilters((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            page: 0,
+            size: newSize
+          }
+        : prev
+    );
+  }, []);
 
-    const handlePageChange = useCallback((_: unknown, newPage: number) => {
+  const handlePageChange = useCallback(
+    (_: unknown, newPage: number) => {
       setPage(newPage);
 
       setAppliedFilters((prev: any) =>
@@ -590,65 +578,56 @@ const startEncounterSafe = async (row: any) => {
             }
           : prev
       );
-    }, [pageSize]);
+    },
+    [pageSize]
+  );
 
-    const handleClearFilters = () => {
-      const now = new Date();
+  const handleClearFilters = () => {
+    const now = new Date();
 
-      const clearedDateFilter = {
-        fromDate: new Date(now.getTime()),
-        toDate: new Date(now.getTime() + 1000)
-      };
-
-      setRecord({ chiefComplaint: '' });
-
-      setDateFilter({ ...clearedDateFilter });
-
-      setStatusIn([...DEFAULT_STATUS]);
-      setEncounterReasons([]);
-      setPriorities([]);
-      setHasPrescription(undefined);
-      setHasOrder(undefined);
-      setIsObserved(undefined);
-
-      const clearedSearch = {
-        searchByField: 'fullName',
-        patientName: ''
-      };
-
-      setPatientSearchDraft({ ...clearedSearch });
-      setPatientSearchApplied({ ...clearedSearch });
-
-      setPage(0);
-
-      setAppliedFilters({
-        departmentId,
-        fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
-        toDate: toISODate(clearedDateFilter.toDate) ?? todayStr,
-        statusIn: [...DEFAULT_STATUS],
-        patientName: undefined,
-        mrn: undefined,
-        encounterReasons: undefined,
-        chiefComplaint: undefined,
-        priorities: undefined,
-        hasPrescription: undefined,
-        hasOrder: undefined,
-        isObserved: undefined,
-        page: 0,
-        size: pageSize,
-        sort: DEFAULT_SORT
-      });
-      setFiltersKey(prev => prev + 1);
+    const clearedDateFilter = {
+      fromDate: new Date(now.getTime()),
+      toDate: new Date(now.getTime() + 1000)
     };
 
-  const didAutoRefetchRef = useRef(false);
-  useEffect(() => {
-    if (location.state?.shouldRefetch && !didAutoRefetchRef.current && departmentId) {
-      didAutoRefetchRef.current = true;
-      handleClearFilters();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setRecord({ chiefComplain: '' });
+    setDateFilter({ ...clearedDateFilter });
+    setStatusIn([...DEFAULT_STATUS]);
+    setEncounterReasons([]);
+    setPriorities([]);
+    setHasPrescription(undefined);
+    setHasOrder(undefined);
+    setIsObserved(undefined);
+
+    const clearedSearch = {
+      searchByField: 'fullName',
+      patientName: ''
+    };
+
+    setPatientSearchDraft({ ...clearedSearch });
+    setPatientSearchApplied({ ...clearedSearch });
+
+    setPage(0);
+
+    setAppliedFilters({
+      departmentId,
+      fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
+      toDate: toISODate(clearedDateFilter.toDate) ?? todayStr,
+      statusIn: [...DEFAULT_STATUS],
+      patientName: undefined,
+      mrn: undefined,
+      encounterReasons: undefined,
+      chiefComplaint: undefined,
+      priorities: undefined,
+      hasPrescription: undefined,
+      hasOrder: undefined,
+      isObserved: undefined,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+    setFiltersKey(prev => prev + 1);
+  };
 
   const isAdmin = !!authSlice.user?.admin;
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
@@ -661,24 +640,19 @@ const startEncounterSafe = async (row: any) => {
 
   const safeFormatDate = (value: any) => {
     if (!value) return '';
-
     try {
       const date = value instanceof Date ? value : new Date(value);
-
       if (isNaN(date.getTime())) return '';
-
-      const formattedDate = date.toLocaleDateString('en-GB'); // 12/04/2026
+      const formattedDate = date.toLocaleDateString('en-GB');
       const formattedTime = date.toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit'
       });
-
       return `${formattedDate} ${formattedTime}`;
     } catch {
       return '';
     }
   };
-
 
   const tableColumns = [
     {
@@ -920,9 +894,7 @@ const startEncounterSafe = async (row: any) => {
       render: (row: any) => (
         <AppointmentLogTimeCell
           appointmentId={
-            row?.appointment?.id ??
-            row?.appointmentId ??
-            appointmentsMap[row?.patient?.id]?.id
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
           }
           kind="appointment"
         />
@@ -935,9 +907,7 @@ const startEncounterSafe = async (row: any) => {
       render: (row: any) => (
         <AppointmentLogTimeCell
           appointmentId={
-            row?.appointment?.id ??
-            row?.appointmentId ??
-            appointmentsMap[row?.patient?.id]?.id
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
           }
           kind="confirm"
         />
@@ -950,9 +920,7 @@ const startEncounterSafe = async (row: any) => {
       render: (row: any) => (
         <AppointmentLogTimeCell
           appointmentId={
-            row?.appointment?.id ??
-            row?.appointmentId ??
-            appointmentsMap[row?.patient?.id]?.id
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
           }
           kind="checkin"
         />
@@ -962,66 +930,66 @@ const startEncounterSafe = async (row: any) => {
       key: 'seenByPhysicianTime',
       title: 'SEEN BY PHYSICIAN',
       expandable: true,
-      render: (row: any) =>
-        safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
+      render: (row: any) => safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
 
   const filters = () => (
     <>
-    <div key={filtersKey}>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
+      <div key={filtersKey}>
+        <Form layout="inline" fluid className="date-filter-form">
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
 
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
 
-        <SearchPatientCriteria
-          record={patientSearchDraft}
-          setRecord={setPatientSearchDraft}
-          onSearchClick={handlePatientSearchClick}
-        />
+          <SearchPatientCriteria
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
+          />
 
-        <MyInput
-          column
-          width={260}
-          fieldType="checkPicker"
-          fieldLabel="Encounter Status"
-          fieldName="statusIn"
-          selectData={EncounterStatusEnum}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={{ statusIn }}
-          setRecord={(v: any) => {
-            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
-            setPage(0);
-          }}
-        />
-      </Form>
-    </div>
+          <MyInput
+            column
+            width={260}
+            fieldType="checkPicker"
+            fieldLabel="Encounter Status"
+            fieldName="statusIn"
+            selectData={EncounterStatusEnum}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ statusIn }}
+            setRecord={(v: any) => {
+              setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+              setPage(0);
+            }}
+          />
+        </Form>
+      </div>
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
         searchOnClick={() => {
           const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
           const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-          const chiefComplaint =
-            record?.chiefComplain?.trim() ? record.chiefComplain.trim() : undefined;
+          const chiefComplaint = record?.chiefComplain?.trim()
+            ? record.chiefComplain.trim()
+            : undefined;
           const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
           const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
           const normalizedPriorities =
@@ -1111,7 +1079,6 @@ const startEncounterSafe = async (row: any) => {
     };
   }, [dispatch, tableLoading]);
 
-
   useEffect(() => {
     if (!departmentId || appliedFilters) return;
 
@@ -1135,7 +1102,24 @@ const startEncounterSafe = async (row: any) => {
       size: pageSize,
       sort: DEFAULT_SORT
     });
-  }, [departmentId, appliedFilters, dateFilter.fromDate, dateFilter.toDate, todayStr, DEFAULT_STATUS, pageSize]);
+  }, [
+    departmentId,
+    appliedFilters,
+    dateFilter.fromDate,
+    dateFilter.toDate,
+    todayStr,
+    DEFAULT_STATUS,
+    pageSize
+  ]);
+
+  const didAutoRefetchRef = useRef(false);
+  useEffect(() => {
+    if (location.state?.shouldRefetch && !didAutoRefetchRef.current && departmentId) {
+      didAutoRefetchRef.current = true;
+      handleClearFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';

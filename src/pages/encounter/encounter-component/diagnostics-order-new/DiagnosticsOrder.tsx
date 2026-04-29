@@ -7,13 +7,18 @@ import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
+import clsx from 'clsx';
 
 const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
   //add new patient edits
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+
+  const viewMode = location.state?.viewMode;
+  const edit =
+    viewMode === 'readOnly' ||
+    (props.edit ?? location.state?.edit ?? false);
 
   const vm = useDiagnosticsOrder({ patient, encounter, edit });
 
@@ -67,7 +72,10 @@ const DiagnosticsOrder = (props: any) => {
 
 
   return (
-    <div dir={dir}>
+      <div
+    dir={dir}
+    className={clsx({ 'disabled-panel': edit })}
+  >
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}

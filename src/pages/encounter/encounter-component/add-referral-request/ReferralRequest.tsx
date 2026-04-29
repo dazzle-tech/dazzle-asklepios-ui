@@ -91,6 +91,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 const ReferralRequest = () => {
   const { state } = useLocation();
   const { patient, encounter } = state || {};
+  const viewMode = state?.viewMode;
+  const edit = viewMode === 'readOnly';
+
 
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
@@ -452,6 +455,7 @@ const ReferralRequest = () => {
     const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir} className={edit ? 'disabled-panel' : ''}>
     <Panel dir={dir}>
       <div style={{ position: 'relative' }}>
         {listsLoading && (
@@ -529,6 +533,7 @@ const ReferralRequest = () => {
         fieldName="cancelReason"
       />
     </Panel>
+  </div>
   );
 };
 

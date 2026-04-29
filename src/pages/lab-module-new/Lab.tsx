@@ -26,7 +26,7 @@ import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import ReviewResults from './ReviewResults';
-
+import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -285,7 +285,7 @@ const [activeKey, setActiveKey] = useState('1');
                       />
                     </Col>
                     <Col xs={10}>
-                      <Form fluid layout="inline">
+                      <Form fluid className="filter-form-lab-filters">
                         <MyInput
                           width={130}
                           placeholder="From Date"
@@ -308,7 +308,6 @@ const [activeKey, setActiveKey] = useState('1');
                           width={130}
                           placeholder="Order ID"
                           fieldType="text"
-                          column
                           fieldName="orderNumber"
                           record={{ orderNumber: orderNumberFilter }}
                           setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}

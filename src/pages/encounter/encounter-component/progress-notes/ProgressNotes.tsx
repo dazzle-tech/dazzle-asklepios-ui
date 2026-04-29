@@ -31,11 +31,10 @@ const ProgressNotes: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const location = useLocation();
-  const { patient, encounter, edit } = (location.state || {}) as {
-    patient?: any;
-    encounter?: any;
-    edit?: boolean;
-  };
+const { patient, encounter } = (location.state || {})
+
+const viewMode = location.state?.viewMode
+const edit = viewMode === 'readOnly'
 
   const [openAddModal, setOpenAddModal] = useState(false);
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
@@ -215,7 +214,10 @@ const ProgressNotes: React.FC = () => {
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div dir={dir}>
+    <div
+      dir={dir}
+      className={edit ? 'disabled-panel' : ''}>
+        
       <AddProgressNotes
         open={openAddModal}
         setOpen={setOpenAddModal}

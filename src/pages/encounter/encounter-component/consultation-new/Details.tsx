@@ -84,8 +84,8 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       const normalized = message.includes('must not be null')
         ? 'is required'
         : message.includes('must not be blank')
-        ? 'must not be blank'
-        : message;
+          ? 'must not be blank'
+          : message;
 
       violations.push(`• ${fieldLabel}: ${normalized}`);
     }
@@ -172,6 +172,12 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     data?.title ||
     data?.message ||
     'Unexpected error';
+     console.error('Error details:', {
+        status: err?.status,
+        errorKey,
+        messageProp,
+        data
+      });
 
   dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
@@ -391,11 +397,11 @@ const Details = ({
 
     return fieldErrors.length > 0
       ? {
-          data: {
-            fieldErrors
-          },
-          status: 400
-        }
+        data: {
+          fieldErrors
+        },
+        status: 400
+      }
       : null;
   };
 
@@ -404,19 +410,32 @@ const Details = ({
 
     if (validationError) {
       handleCrudError(validationError, dispatch, CONSULTATION_ERROR_MAP);
-      return; 
+      return;
     }
 
     try {
       if (formData.id) {
         await updateConsultation({
-          ...formData
+          id: formData.id,
+          destinationType: formData.destinationType,
+          toFacilityId: formData.toFacilityId,
+          toDepartmentId: formData.toDepartmentId,
+          consultantSpeciality: formData.consultantSpeciality,
+          practitionerId: formData.practitionerId,
+          consultationMethod: formData.consultationMethod,
+          consultationType: formData.consultationType,
+          consultationLevel: formData.consultationLevel,
+          consultationContent: formData.consultationContent,
+          notes: formData.notes,
+          extraDocument: formData.extraDocument,
+          approvalNumber: formData.approvalNumber
         }).unwrap();
-
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
         await createConsultation({
           ...formData,
+          fromFacilityId: selectedDepartment.facilityId,
+          fromDepartmentId: selectedDepartment.departmentId,
           status: 'REQUESTED'
         }).unwrap();
 
@@ -842,7 +861,7 @@ const Details = ({
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />

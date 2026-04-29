@@ -11,17 +11,35 @@ const DiagnosticsResult = props => {
   //add new patient edits
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
-  const tabData = [
-    { title: 'Results', content: <Result patient={patient} /> },
-    {
-      title: 'Reports',
-      content: <Reports patient={patient} />
-    },
-    {
-      title: 'Laboratory Result Comparison',
-      content: <LaboratoryResultComparison patient={patient} />
-    }
-  ];
+  const viewMode = location.state?.viewMode;
+  const edit = viewMode === 'readOnly';
+    
+const tabData = [
+  {
+    title: 'Results',
+    content: (
+      <div className={edit ? 'disabled-panel' : ''}>
+        <Result patient={patient} />
+      </div>
+    )
+  },
+  {
+    title: 'Reports',
+    content: (
+      <div className={edit ? 'disabled-panel' : ''}>
+        <Reports patient={patient} />
+      </div>
+    )
+  },
+  {
+    title: 'Laboratory Result Comparison',
+    content: (
+      <div className={edit ? 'disabled-panel' : ''}>
+        <LaboratoryResultComparison patient={patient} />
+      </div>
+    )
+  }
+];
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';

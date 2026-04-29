@@ -1,96 +1,140 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
+import { formatDateWithoutSeconds } from '@/utils';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleAppointments = [];
+import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
+import { useAppSelector } from '@/hooks';
 
-const columns: ColumnConfig[] = [
-  {
-    key: 'dateTime',
-    title: <Translate>Date & Time</Translate>,
-    dataKey: 'dateTime',
-    render: (row: any) =>
-      row?.dateTime ? (
-        <span className="date-table-style">{formatDateWithoutSeconds(row.dateTime)}</span>
-      ) : (
-        '-'
-      )
-  },
-  {
-    key: 'provider',
-    title: <Translate>Provider</Translate>,
-    dataKey: 'provider'
-  },
-  {
-    key: 'department',
-    title: <Translate>Department</Translate>,
-    dataKey: 'department'
-  },
-  {
-    key: 'status',
-    title: <Translate>Status</Translate>,
-    dataKey: 'status',
-    width: 100,
-    render: (row: any) => (
-      <MyBadgeStatus
-        backgroundColor={
-          row.status === 'Completed'
-            ? 'var(--light-green)'
-            : row.status === 'Scheduled'
-            ? 'var(--light-yellow)'
-            : 'var(--primary-pink)'
-        }
-        color={
-          row.status === 'Completed'
-            ? 'var(--primary-green)'
-            : row.status === 'Scheduled'
-            ? 'var(--primary-yellow)'
-            : 'var(--primary-pink)'
-        }
-        contant={row.status}
-      />
-    )
-  }
-];
+const AppointmentsTable = ({ patient }: any) => {
 
-const AppointmentsTable = () => {
-  const [sortColumn, setSortColumn] = useState('dateTime');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+
+  const facility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
+  const department = useAppSelector(state => state.auth?.selectedDepartment);
+
+  console.log('Selected department:', department);
+
+  const departmentId = department?.departmentId;
+
+  const facilityId = facility?.id;
+
+
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData] = useState(sampleAppointments);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+
+  const filter: any = {
+    patientId: patient?.id,
+    facility: facilityId
+  };
+
+  if (departmentId) {
+    filter.department = departmentId;
+  }
+
+  const { data, isLoading } = useSearchAppointmentsQuery(
+    {
+      filter,
+      page,
+      size: rowsPerPage,
+      sort: 'startDatetime,desc'
+    },
+    {
+      skip: !patient?.id || !facilityId
+    }
+  );
+
+  const tableData = data?.data ?? [];
+  const totalCount = data?.totalCount ?? 0;
+
+  const columns: ColumnConfig[] = [
+    {
+      key: 'department',
+      title: <Translate>Department</Translate>,
+      render: row =>
+        department?.departmentName ||
+        `Dept #${row?.departmentId}` ||
+        '-'
+    },
+    {
+      key: 'resourceType',
+      title: <Translate>Resource Type</Translate>,
+      render: row => row?.resourceType || '-'
+    },
+    {
+      key: 'resource',
+      title: <Translate>Resource</Translate>,
+      render: row =>
+        row?.resourceName ||
+        row?.defaultPractitionerName ||
+        `Res #${row?.resourceId}` ||   // fallback
+        '-'
+    },
+    {
+      key: 'scheduleDate',
+      title: <Translate>Schedule Date</Translate>,
+      render: row =>
+        row?.startDatetime ? (
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(row.startDatetime)}
+          </span>
+        ) : '-'
+    },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: row => {
+        const status = row?.status || '-';
+
+        let bg = 'var(--light-gray)';
+        let color = 'var(--dark-gray)';
+
+        if (status === 'CONFIRMED' || status === 'COMPLETED') {
+          bg = 'var(--light-green)';
+          color = 'var(--primary-green)';
+        } else if (status === 'BOOKED' || status === 'SCHEDULED') {
+          bg = 'var(--light-yellow)';
+          color = 'var(--primary-yellow)';
+        } else if (status === 'CANCELLED') {
+          bg = 'var(--light-red)';
+          color = 'var(--primary-red)';
+        }
+
+        return (
+          <MyBadgeStatus
+            backgroundColor={bg}
+            color={color}
+            contant={status}
+          />
+        );
+      }
+    }
+  ];
+
+  console.log('REQUEST:', {
+    patientId: patient?.id,
+    page,
+    size: rowsPerPage
   });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  console.log('tableData:', tableData);
 
   return (
     <MyTable
-      data={paginatedData}
+      data={tableData}
       columns={columns}
-      loading={false}
-      sortColumn={sortColumn}
-      sortType={sortType}
-      onSortChange={(col, type) => {
-        setSortColumn(col);
-        setSortType(type);
-      }}
+      loading={isLoading}
       page={page}
       rowsPerPage={rowsPerPage}
-      totalCount={tableData.length}
+      totalCount={totalCount}
       onPageChange={(_, newPage) => setPage(newPage)}
       onRowsPerPageChange={e => {
         setRowsPerPage(parseInt(e.target.value, 10));
         setPage(0);
       }}
+      height={500}
     />
   );
 };

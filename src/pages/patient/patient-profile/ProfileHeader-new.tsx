@@ -32,7 +32,7 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import { useLazyGetPatientInformationReportQuery } from '@/services/patient/patientService';
+import { useLazyGetPatientInformationReportQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
 import { printPatientInformationReport } from '@/utils/printPatientInformationReport';
 
 interface ProfileHeaderProps {
@@ -81,7 +81,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
-
+   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+ 
   const {
     data: profilePictureTicket,
     isError
@@ -114,7 +115,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       );
     }
   };
+ const handlePrintPatientLabel = async (rowData: any) => {
+  console.log('Printing patient label for:', rowData);
+    try {
+      const blob = await triggerGetPatientLabelPdf({
+        patientId: rowData.id
+      }).unwrap();
 
+      const fileURL = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `label-${rowData.medicalRecordNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download label pdf', error);
+    }
+  };
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -218,7 +241,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <Dropdown.Item
           disabled={!localPatient?.id}
           onClick={async () => {
-            setOpenPrintMenu(false);
+            // setOpenPrintMenu(false);
             await handlePrintInformation();
           }}
         >
@@ -226,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Print Information</Translate>
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
+        <Dropdown.Item onClick={() => handlePrintPatientLabel(localPatient)}>
           <div className="container-of-icon-and-key1">
             <Translate>Print Patient Label</Translate>
           </div>
