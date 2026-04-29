@@ -24,12 +24,15 @@ import {
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { formatEnumString } from '@/utils';
+import clsx from 'clsx';
 import './styles.less';
 
 const UccMedicationOrder = (props: any) => {
   const location = useLocation();
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
+  const viewMode = location.state?.viewMode;
+  const edit = viewMode === 'readOnly';
   const dispatch = useAppDispatch();
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -118,8 +121,6 @@ const UccMedicationOrder = (props: any) => {
         );
       } else {
         await createOrder(data).unwrap();
-
-        // 🔥 هذا الناقص
         dispatch(
           notify({
             msg: 'Medication Added Successfully',
@@ -353,7 +354,7 @@ const UccMedicationOrder = (props: any) => {
   ];
 
   return (
-    <div>
+      <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
       <MyTable
         height={450}
         data={rows}

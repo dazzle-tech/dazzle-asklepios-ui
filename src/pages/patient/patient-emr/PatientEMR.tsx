@@ -12,6 +12,7 @@ import { Patient } from '@/types/model-types-new';
 import {
   faBarsProgress,
   faBed,
+  faCalendar,
   faConciergeBell,
   faFileInvoice,
   faHouseChimneyMedical,
@@ -50,6 +51,9 @@ import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
+import DiagnosisTable from './emr-tables/DiagnosisTable';
+import PreviousMeasurementsMain from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
+import DentalProcedures from './emr-tables/DentalProcedures';
 
 const { getHeight } = DOMHelper;
 
@@ -302,7 +306,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           {activeSectionCard === 'visits' && (
             <div className="emr-main-row-handle">
               <div className="animation-emr-card-patient-emr">
-                {/* <EMRCard
+                <EMRCard
                   number={4}
                   footerText="Appointments"
                   icon={faCalendar}
@@ -313,7 +317,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                     setActiveCard(activeCard === 'appointments' ? null : 'appointments')
                   }
                   active={activeCard === 'appointments'}
-                /> */}
+                />
               </div>
 
               <div className="animation-emr-card-patient-emr">
@@ -414,6 +418,32 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'procedures' ? null : 'procedures')}
                   active={activeCard === 'procedures'}
+                />
+              </div>
+
+              <div className="animation-emr-card-patient-emr">
+                <EMRCard
+                  number={3}
+                  footerText="Diagnosis"
+                  icon={faUserInjured}
+                  backgroundColor="var(--card-green)"
+                  width={150}
+                  height={100}
+                  onClick={() => setActiveCard(activeCard === 'diagnosis' ? null : 'diagnosis')}
+                  active={activeCard === 'diagnosis'}
+                />
+              </div>
+
+              <div className="animation-emr-card-patient-emr">
+                <EMRCard
+                  number={3}
+                  footerText="Dental Procedures"
+                  icon={faUserInjured}
+                  backgroundColor="var(--card-green)"
+                  width={150}
+                  height={100}
+                  onClick={() => setActiveCard(activeCard === 'dentalprocedures' ? null : 'dentalprocedures')}
+                  active={activeCard === 'dentalprocedures'}
                 />
               </div>
 
@@ -599,7 +629,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               {/* ================= VISITS ================= */}
               <SectionContainer
                 title={<Translate>Appointments</Translate>}
-                content={<AppointmentsTable />}
+                content={<AppointmentsTable patient={localPatient} />}
               />
 
               <SectionContainer
@@ -631,8 +661,23 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               />
 
               <SectionContainer
+                title={<Translate>Nurse Assessments</Translate>}
+                content={<PreviousMeasurementsMain patient={localPatient} />}
+              />
+
+              <SectionContainer
                 title={<Translate>Procedures</Translate>}
                 content={<ProceduresTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Diagnosis</Translate>}
+                content={<DiagnosisTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Dental Procedures</Translate>}
+                content={<DentalProcedures patient={localPatient} />}
               />
 
               <SectionContainer
@@ -674,7 +719,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               />
 
               {/* ================= SERVICES ================= */}
-              <SectionContainer
+              {/* <SectionContainer
                 title={<Translate>Applied Services</Translate>}
                 content={<AppliedServicesTable patient={localPatient} />}
               />
@@ -687,7 +732,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               <SectionContainer
                 title={<Translate>Ledger Account</Translate>}
                 content={<LedgerAccountTable />}
-              />
+              /> */}
 
             </div>
           </div>
@@ -698,7 +743,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
 
         {/* Active Tables */}
-        {activeCard === 'appointments' && <AppointmentsTable />}
+        {activeCard === 'appointments' && (<AppointmentsTable patient={localPatient} />)}
 
         {activeCard === 'clinicvisits' && (
           <VisitHistoryTable
@@ -714,8 +759,10 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
             departmentType="EMERGENCY_ROOM"
           />
         )}
-        {activeCard === 'nurseassessments' && (<NurseAssessmentsTable patient={localPatient} />)}
+        {activeCard === 'nurseassessments' && (<PreviousMeasurementsMain patient={localPatient} />)}
         {activeCard === 'procedures' && <ProceduresTable patient={localPatient} />}
+        {activeCard === 'diagnosis' && <DiagnosisTable patient={localPatient} />}
+        {activeCard === 'dentalprocedures' && <DentalProcedures patient={localPatient} />}
         {activeCard === 'operations' && <OperationsTable />}
         {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
         {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}

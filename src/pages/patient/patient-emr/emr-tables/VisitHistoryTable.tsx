@@ -1,7 +1,7 @@
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-
+import './styles.less';
 import {
   useCancelEncounterMutation,
   useGetEncountersByPatientQuery
@@ -17,8 +17,12 @@ import type { Department, Practitioner } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import PatientQuickAppointment from '../../patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
-
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip, Whisper, Form } from 'rsuite';
+import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
 
 type Props = {
   localPatient: any;
@@ -36,9 +40,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
 
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
-    {}
-  );
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>({});
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
@@ -47,11 +49,11 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     localPatient?.id
       ? {
-        patientId: localPatient.id,
-        page: 0,
-        size: 50,
-        sort: 'createdDate,desc'
-      }
+          patientId: localPatient.id,
+          page: 0,
+          size: 50,
+          sort: 'createdDate,desc'
+        }
       : skipToken
   );
 
@@ -67,6 +69,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   }, [encountersRaw, departmentsMap, departmentType]);
 
   const [cancelEncounter] = useCancelEncounterMutation();
+
   const handleCancel = async () => {
     if (!selectedVisit) return;
 
@@ -76,15 +79,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       setOpenCancelModal(false);
       refetch();
     } catch (err: any) {
-      const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
-        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
-      };
-
-      const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
-
-      dispatch(notify({ msg, sev: 'error' }));
+      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
   };
 
@@ -92,13 +87,40 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
     await refetch();
   };
 
+  const handleViewDoctorVisit = (row: any) => {
+    navigate('/encounter', {
+      state: {
+        patient: localPatient,
+        encounter: row,
+        fromPage: 'PatientEMR',
+        viewMode: 'readOnly'
+      }
+    });
+  };
+
+  const handleViewNurseStation = (row: any) => {
+    navigate('/nurse-station', {
+      state: {
+        patient: localPatient,
+        encounter: row,
+        fromPage: 'PatientEMR',
+        viewMode: 'readOnly'
+      }
+    });
+  };
+
+  const handleViewTriage = (row: any) => {
+    navigate('/urgent-care-view-triage', {
+      state: {
+        patient: localPatient,
+        encounter: row,
+        fromPage: 'PatientEMR'
+      }
+    });
+  };
+
   useEffect(() => {
     const loadPractitioners = async () => {
-      if (!encountersRaw.length) {
-        setPractitionersMap({});
-        return;
-      }
-
       const uniqueIds = Array.from(
         new Set(encountersRaw.map(e => e.practitionerId).filter(id => id != null))
       );
@@ -108,7 +130,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       try {
         const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
         setPractitionersMap(Object.fromEntries(practitioners.map(p => [p.id, p])));
-      } catch { }
+      } catch {}
     };
 
     loadPractitioners();
@@ -116,11 +138,6 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
 
   useEffect(() => {
     const loadDepartments = async () => {
-      if (!encountersRaw.length) {
-        setDepartmentsMap({});
-        return;
-      }
-
       const uniqueIds = Array.from(
         new Set(encountersRaw.map(e => e.departmentId).filter(id => id != null))
       );
@@ -130,12 +147,11 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
         setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
-      } catch { }
+      } catch {}
     };
 
     loadDepartments();
   }, [encountersRaw]);
-
 
   const columns = [
     {
@@ -143,29 +159,9 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       title: <Translate>Key</Translate>,
       render: (row: any) => (
         <a
-          className="visit-history__encounter-link"
           style={{ cursor: 'pointer', color: '#1677ff', fontWeight: 500 }}
           onClick={() => {
-
-            const dept = departmentsMap[row.departmentId];
-
-            const isEmergency =
-              dept?.type?.toUpperCase() === 'EMERGENCY' ||
-              dept?.name?.toUpperCase() === 'EMERGENCY';
-
-            if (isEmergency) {
-              navigate('/view-triage', {
-                state: {
-                  patient: localPatient,
-                  encounter: row
-                }
-              });
-              return;
-            }
-
-            // normal encounter
             setSelectedVisit(row);
-            setQuickInitialStep(0);
             setQuickAppointmentModel(true);
           }}
         >
@@ -188,8 +184,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       title: <Translate>Practitioner</Translate>,
       render: (row: any) => {
         const p = practitionersMap[row.practitionerId];
-        if (!p) return '';
-        return `${p.firstName} ${p.lastName ?? ''}`.trim();
+        return p ? `${p.firstName} ${p.lastName ?? ''}` : '';
       }
     },
     {
@@ -206,11 +201,63 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       key: 'status',
       title: <Translate>Status</Translate>,
       render: (row: any) => formatEnumString(row.status)
+    },
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      render: (row: any) => {
+        const isUrgentCare = departmentType === 'EMERGENCY_ROOM';
+
+        return (
+      <Form layout="inline">
+<div className="visit-history-actions-icons">
+        {/* View Triage */}
+        {isUrgentCare && (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>View Triage</Tooltip>}>
+            <div>
+              <MyButton
+                size="small"
+                onClick={() => handleViewTriage(row)}
+              >
+                <FontAwesomeIcon icon={faCommentMedical} />
+              </MyButton>
+            </div>
+          </Whisper>
+        )}
+
+        {/* Nurse */}
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Nurse Station</Tooltip>}>
+          <div>
+            <MyButton
+              size="small"
+              backgroundColor="black"
+              onClick={() => handleViewNurseStation(row)}
+            >
+              <FontAwesomeIcon icon={faUserNurse} />
+            </MyButton>
+          </div>
+        </Whisper>
+
+        {/* Doctor */}
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Doctor Visit</Tooltip>}>
+          <div>
+            <MyButton
+              size="small"
+              onClick={() => handleViewDoctorVisit(row)}
+            >
+              <FontAwesomeIcon icon={faUserDoctor} />
+            </MyButton>
+          </div>
+        </Whisper>
+</div>
+      </Form>
+        );
+      }
     }
   ];
 
   return (
-    <div ref={tooltipContainerRef} className="visit-history__wrapper">
+    <div ref={tooltipContainerRef}>
       <MyTable data={encounters} columns={columns} loading={isFetching} height={580} />
 
       <DeletionConfirmationModal

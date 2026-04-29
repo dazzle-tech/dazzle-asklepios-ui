@@ -198,14 +198,16 @@ const TransferTestList = ({
     </Paper>
   );
 
-  const filteredCatalogs = useMemo(() => {
-    if (!searchType?.type) return catalogs;
+const filteredCatalogs = useMemo(() => {
+  if (!searchType?.type) return catalogs;
 
-    return catalogs.filter(
-      (catalog: any) => catalog.type === searchType.type
-    );
-  }, [catalogs, searchType?.type]);
+  return catalogs.filter((catalog: any) => {
+    return String(catalog.type).toUpperCase() === String(searchType.type).toUpperCase();
+  });
+}, [catalogs, searchType?.type]);
 
+console.log('catalogs:', catalogs);
+console.log('selected type:', searchType.type);
 
   useEffect(() => {
     setSearchType(prev => ({
@@ -250,7 +252,7 @@ const TransferTestList = ({
                 width="20vw"
                 record={searchType}
                 setRecord={setSearchType}
-                disabled={!!isFetching}
+                disabled={!searchType?.type || !!isFetching}
               />
 
             </div>

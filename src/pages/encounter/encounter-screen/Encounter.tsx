@@ -48,7 +48,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state || {};
-
+    
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
   const encounterId = propsData?.encounter?.id;
@@ -84,7 +84,9 @@ const Encounter = () => {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(() => {
+    return propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
+  });
   const [fromPage, setFromPage] = useState(propsData?.fromPage || '');
   const [patientSideRefreshKey, setPatientSideRefreshKey] = useState(0);
 
@@ -186,6 +188,10 @@ const Encounter = () => {
     }
   }, [location.state]);
 
+useEffect(() => {
+  setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
+}, [propsData?.viewMode, propsData?.readOnly]);
+
   useEffect(() => {
     if (
       localEncounter?.encounterType == 'INPATIENT' &&
@@ -204,9 +210,10 @@ const Encounter = () => {
       patient: propsData?.patient,
       encounter: propsData?.encounter,
       edit,
-      fromPage: currentFromPage
+      fromPage: currentFromPage,
+      viewMode: propsData?.viewMode
     }),
-    [propsData?.patient, propsData?.encounter, edit, currentFromPage]
+    [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
   );
 
   const handleGoBack = () => {
