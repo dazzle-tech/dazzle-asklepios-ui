@@ -10,7 +10,7 @@ import {
   useLazyGetLatestVitalSignsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import {
-  useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery
+  useGetLatestBodyMeasurementsByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import {
   useLazyExistsPatientDiagnosisByEncounterIdQuery,
@@ -129,8 +129,13 @@ const PatientSide = ({
     );
 
   const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
-  const [latestBodyMeasurements, setLatestBodyMeasurements] = useState<any>(null);
-  const [triggerGetBodyMeasurementsList] = useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery();
+  const {
+    data: latestBodyMeasurements,
+    refetch: refetchLatestBodyMeasurements
+  } = useGetLatestBodyMeasurementsByPatientIdQuery(
+    { patientId: patient?.id },
+    { skip: !patient?.id }
+  );
   const [triggerExistsPrimaryDiagnosis] = useLazyExistsPatientDiagnosisByEncounterIdQuery();
   const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
   const {
@@ -251,27 +256,6 @@ const PatientSide = ({
     }
   }, [fetchPatientImageResponse]);
 
-  const loadLatestBodyMeasurements = async (patientId: number | null) => {
-    if (!patientId) {
-      setLatestBodyMeasurements(null);
-      return;
-    }
-
-    try {
-      const response = await triggerGetBodyMeasurementsList({
-        patientId,
-        page: 0,
-        size: 1,
-        sort: 'createdDate,desc'
-      }).unwrap();
-
-      const latest = response?.content?.[0] ?? null;
-      setLatestBodyMeasurements(latest);
-    } catch {
-      setLatestBodyMeasurements(null);
-    }
-  };
-
   const loadPrimaryDiagnosis = async (encounterId: number | null) => {
     if (!encounterId) {
       setPrimaryDiagnosis(null);
@@ -311,14 +295,10 @@ const PatientSide = ({
   }, [encounterIdNumber]);
 
   useEffect(() => {
-    loadLatestBodyMeasurements(patient?.id ? Number(patient.id) : null);
-  }, [patient?.id]);
-
-  useEffect(() => {
     if (refetchList) {
       if (patient?.id) {
         triggerGetPrimaryDocument(patient?.id);
-        loadLatestBodyMeasurements(Number(patient.id));
+        refetchLatestBodyMeasurements();
       }
 
       if (encounter?.id) {
@@ -348,7 +328,7 @@ const PatientSide = ({
         loadPrimaryDiagnosis(Number(encounter.id));
       }
       if (patient?.id) {
-        loadLatestBodyMeasurements(Number(patient.id));
+        refetchLatestBodyMeasurements();
       }
 
       dispatch(resetRefetchPatientSide());
@@ -373,7 +353,7 @@ const PatientSide = ({
           refetchAllergies(),
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
-          patient?.id ? loadLatestBodyMeasurements(Number(patient.id)) : Promise.resolve(),
+          patient?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
           encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
           encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
         ]);
@@ -471,6 +451,22 @@ const PatientSide = ({
   const weight = toNumber(latestBodyMeasurements?.weight);
   const height = toNumber(latestBodyMeasurements?.height);
   const headCircumference = toNumber(latestBodyMeasurements?.headCircumference);
+
+  const BLOOD_GROUP_LABELS: Record<string, string> = {
+    A_POSITIVE: 'A+',
+    A_NEGATIVE: 'A-',
+    B_POSITIVE: 'B+',
+    B_NEGATIVE: 'B-',
+    AB_POSITIVE: 'AB+',
+    AB_NEGATIVE: 'AB-',
+    O_POSITIVE: 'O+',
+    O_NEGATIVE: 'O-',
+    UNKNOWN: 'Unknown'
+  };
+  const bloodGroupRaw = (latestPatientObservationsComplaints as any)?.bloodGroup ?? '';
+  const bloodGroupLabel = bloodGroupRaw
+    ? BLOOD_GROUP_LABELS[String(bloodGroupRaw)] ?? String(bloodGroupRaw)
+    : '';
 
   const bmi =
     weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
@@ -611,6 +607,15 @@ const PatientSide = ({
               <Text className="info-value">
                 <Translate>{textOr(formatEnumString(patient?.sexAtBirth), '')}</Translate>
               </Text>
+            </div>
+          </div>
+
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Blood Group</Translate>
+              </Text>
+              <Text className="info-value">{textOr(bloodGroupLabel, '')}</Text>
             </div>
           </div>
 

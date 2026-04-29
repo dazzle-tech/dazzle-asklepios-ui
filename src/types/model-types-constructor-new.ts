@@ -2718,6 +2718,7 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   isActive: true,
   functionalStatus: null,
   cognitiveCheck: null,
+  bloodGroup: null,
   createdDate: null,
   lastModifiedDate: null
 };

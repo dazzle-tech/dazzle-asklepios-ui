@@ -46,6 +46,20 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   const patientConditions = useEnumOptions('Condition');
   const encounterPriority = useEnumOptions('EncounterPriority');
 
+  const bloodGroupOptions = useEnumOptions('BloodGroup', {
+    labelOverrides: {
+      A_POSITIVE: 'A+',
+      A_NEGATIVE: 'A-',
+      B_POSITIVE: 'B+',
+      B_NEGATIVE: 'B-',
+      AB_POSITIVE: 'AB+',
+      AB_NEGATIVE: 'AB-',
+      O_POSITIVE: 'O+',
+      O_NEGATIVE: 'O-',
+      UNKNOWN: 'Unknown'
+    }
+  });
+
   const [createPatientObservationsComplaints] = useCreatePatientObservationsComplaintsMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
 
@@ -86,6 +100,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       functionalStatus: record.functionalStatus ?? null,
       patientConditions: (record as any).patientConditions ?? null,
       cognitiveCheck: record.cognitiveCheck ?? null,
+      bloodGroup: record.bloodGroup ?? null,
       isActive: typeof record.isActive === 'boolean' ? record.isActive : true
     };
   }, [record, patientId, encounterId]);
@@ -310,6 +325,20 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
                 patientConditions: value
               }))
             }
+          />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Blood Group"
+            fieldType="select"
+            fieldName="bloodGroup"
+            selectData={bloodGroupOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={record}
+            setRecord={setRecord}
+            disabled={disabled}
+            searchable={false}
           />
 
           <MyInput
