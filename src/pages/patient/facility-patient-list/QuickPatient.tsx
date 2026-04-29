@@ -333,13 +333,29 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
     }
   }, [open]);
 
+  const isPhoneValid = (phone: any) => {
+    if (!phone) return false;
+
+    const value = String(phone).trim();
+
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return false;
+
+    return true;
+  };
+
   const validateMandatoryFields = () => {
     if (isUnknown) return true;
 
     const missingFields = QUICK_PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
       const value = (localPatient as any)?.[key];
+      if (key === 'primaryMobileNumber') {
+        return !isPhoneValid(value);
+      }
+
       if (value === null || value === undefined) return true;
       if (typeof value === 'string' && value.trim() === '') return true;
+
       return false;
     }).map(({ label }) => label);
 

@@ -448,26 +448,30 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
           <br />
           <br />
 
-          <Row className="btm-sections">
-            <Col md={12}>
-              <SectionContainer
-                title={<Translate>Visit history</Translate>}
-                content={
-                  <PatientVisitHistoryTable
-                    localPatient={localPatient}
-                    encounterRefetchTrigger={encounterRefetchTrigger}
-                  />
-                }
-              />
-            </Col>
+      {localPatient?.id && (
+        <Row className="btm-sections">
+          <Col md={12}>
+            <SectionContainer
+              title={<Translate>Visit history</Translate>}
+              content={
+                <PatientVisitHistoryTable
+                  key={localPatient?.id || 'empty'}
+                  localPatient={localPatient}
+                  encounterRefetchTrigger={encounterRefetchTrigger}
+                />
+              }
+            />
+          </Col>
 
-            <Col md={12}>
-              <SectionContainer
-                title={<Translate>Appointments</Translate>}
-                content={<PatientAppointments patient={localPatient} />}
-              />
-            </Col>
-          </Row>
+          <Col md={12}>
+            <SectionContainer
+              title={<Translate>Appointments</Translate>}
+              content={<PatientAppointments patient={localPatient} />}
+            />
+          </Col>
+        </Row>
+      )}
+      
         </Panel>
 
         <ProfileSidebar
