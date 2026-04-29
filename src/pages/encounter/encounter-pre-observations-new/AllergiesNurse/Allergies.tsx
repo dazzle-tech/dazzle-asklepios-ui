@@ -26,6 +26,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AllergyDetailsSection from './AllergyDetailsSection';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import clsx from 'clsx';
 
 interface AllergiesProps {
   patient?: any;
@@ -49,8 +50,12 @@ const Allergies = (props: AllergiesProps) => {
   const authSlice = useAppSelector(state => state.auth);
   const patient = props.patient ?? location.state?.patient ?? {};
   const encounter = props.encounter ?? location.state?.encounter ?? {};
-  const edit = props.edit ?? location.state?.edit ?? false;
 
+  
+  const viewMode = location.state?.viewMode;
+
+  const edit = viewMode === 'readOnly' || props.edit;
+  
   const [allerges, setAllerges] = useState<PatientAllergiesResponseVM>({ ...patientAllergiesResponseVM });
   const [showCanceled, setShowCanceled] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
@@ -320,8 +325,12 @@ const Allergies = (props: AllergiesProps) => {
 
 
   return (
-    <div dir={dir}>
-      <div className="bt-div-2">
+    <div
+            dir={dir}
+            className={clsx({ 'disabled-panel': edit })}
+            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          >
+          <div className="bt-div-2">
         <div className="bt-left-2">
           <MyButton
             prefixIcon={() => <CloseOutlineIcon />}

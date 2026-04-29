@@ -35,8 +35,23 @@ const SOAP = props => {
 
   const patient = props.patient || location.state?.patient || outletContext?.patient;
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? outletContext?.edit ?? false;
-  const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
+
+const viewMode =
+  props.viewMode ??
+  location.state?.viewMode ??
+  outletContext?.viewMode;
+
+  const edit =
+    viewMode === 'readOnly' ||
+    (props.edit ??
+      location.state?.edit ??
+      outletContext?.edit ??
+      false);
+
+
+
+    const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
+
 
   const encounterId = encounterFromNav?.id || location.state?.encounter?.id;
 
@@ -144,8 +159,11 @@ const SOAP = props => {
     {
       title: 'Visit Details',
       content: (
-        <div className={clsx('column-container', { 'disabled-panel': edit })}>
-          <div className="top-section">
+        <div
+            className={clsx('column-container', { 'disabled-panel': edit })}
+            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          >
+            <div className="top-section">
             <SectionContainer
               title={<Translate>Chief Complaint </Translate>}
               content={
@@ -203,7 +221,10 @@ const SOAP = props => {
     },
     {
       title: 'Physical Examination & Findings',
-      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} setEncounter={setLocalEncounter} />
+      content:         <div
+            className={clsx('column-container', { 'disabled-panel': edit })}
+            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          ><ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} /></div>
     }
   ];
 

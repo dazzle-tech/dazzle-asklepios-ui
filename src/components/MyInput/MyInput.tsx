@@ -892,6 +892,24 @@ const calculatePlacement = () => {
               let normalized = value.replace(',', '.');
               normalized = normalized.replace(/[^0-9.]/g, '');
 
+              const digitsOnly = normalized.replace('.', '');
+              if (digitsOnly.length > 10) {
+                const trimmed = digitsOnly.slice(0, 10);
+
+                normalized = normalized.includes('.')
+                  ? trimmed.slice(0, normalized.indexOf('.')) +
+                    '.' +
+                    trimmed.slice(normalized.indexOf('.'))
+                  : trimmed;
+
+                dispatch(
+                  notify({
+                    msg: 'Maximum allowed is 10 digits',
+                    sev: 'warning'
+                  })
+                );
+              }
+
               const firstDotIndex = normalized.indexOf('.');
               if (firstDotIndex !== -1) {
                 normalized =
@@ -946,7 +964,22 @@ const calculatePlacement = () => {
                 return;
               }
 
-              const numericValue = typeof value === 'number' ? value : Number(value);
+              let numericValue = typeof value === 'number' ? value : Number(value);
+
+              if (!Number.isNaN(numericValue)) {
+                const stringValue = String(Math.trunc(numericValue));
+
+                if (stringValue.length > 10) {
+                  numericValue = Number(stringValue.slice(0, 10));
+
+                  dispatch(
+                    notify({
+                      msg: 'Maximum allowed is 10 digits',
+                      sev: 'warning'
+                    })
+                  );
+                }
+              }
 
               setRecord?.({
                 ...record,

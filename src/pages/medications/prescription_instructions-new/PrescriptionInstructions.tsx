@@ -4,7 +4,7 @@ import { MdModeEdit } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { formatEnumString } from '@/utils';
+import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
@@ -23,6 +23,7 @@ import {
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { notify } from '@/utils/uiReducerActions';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 const PrescriptionInstructions = () => {
   const dispatch = useAppDispatch();
   const [prescriptionInstructions, setPrescriptionInstructions] =
@@ -62,7 +63,9 @@ const PrescriptionInstructions = () => {
   const categoryEnumList = useEnumOptions('AgeGroupType');
   const uomEnumList = useEnumOptions('UOM');
   const routEnumList = useEnumOptions('MedRoa');
-  const frequencyEnumList = useEnumOptions('MedFrequency');
+
+
+  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   // Pagination values
   const pageIndex = paginationParams.page;
@@ -197,9 +200,9 @@ const PrescriptionInstructions = () => {
         <MyInput
           fieldName="value"
           fieldType="select"
-          selectData={frequencyEnumList ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
+          selectData={frequencyLov?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           showLabel={false}
@@ -303,7 +306,12 @@ const PrescriptionInstructions = () => {
     {
       key: 'frequency',
       title: 'Frequency',
-      render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '')
+      render: (row: any) =>
+        conjureValueBasedOnKeyFromList(
+          frequencyLov?.object ?? [],
+          row.frequency,
+          'lovDisplayVale'
+        ) ?? '-'
     },
     {
       key: 'icons',
