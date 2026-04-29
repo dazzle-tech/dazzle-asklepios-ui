@@ -1501,18 +1501,18 @@ const CreateNewPatient = ({ open, setOpen }) => {
         return (
           <Form layout="inline">
             <span className="custom-text">Contact Information</span>
-
-            <MyInput
-              width={200}
+             <PhoneNumberInput
               column
-              fieldLabel="Secondary Mobile Number"
               fieldName="secondMobileNumber"
+              fieldLabel="Secondary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
               width={200}
               column
+              fieldType="textnumber"
               fieldName="homePhone"
               record={localPatient}
               setRecord={setLocalPatient}
