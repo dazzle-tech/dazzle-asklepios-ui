@@ -1014,7 +1014,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requireBilling: false,
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
-  requireConfirmation: false,
+  requireConfirmation: true,
   financialDetails: 'BOTH', 
   isActive: true,
   workingDays: [],
