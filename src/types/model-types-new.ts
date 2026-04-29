@@ -429,6 +429,7 @@ export interface AppointmentFromTemplate {
   id?: number | null;
   patientId?: number | null;
   availabilityTemplateId?: number | null;
+  requireConfirmation?: boolean | null;
   encounterReason?: EncounterReason | null;
   status?: AppointmentStatus | null;
   appointmentDateTime?: string | null;
