@@ -21,10 +21,7 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import { useEnumOptions } from '@/services/enumsApi';
-import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
+import { useLazyGetNurseSummaryReportPdfQuery } from '@/services/observationServiceNew';
 import './styles.less';
 import clsx from 'clsx';
 
@@ -42,48 +39,23 @@ const NurseStation = () => {
     ...propsData?.encounter
   });
 
+  const viewMode = location.state?.viewMode;
+  const isFromEMR =
+    location.state?.fromPage === 'PatientEMR' ||
+    location.pathname.includes('emr');
 
-const viewMode = location.state?.viewMode;
-const isFromEMR =
-  location.state?.fromPage === 'PatientEMR' ||
-  location.pathname.includes('emr');
-
-const edit =
-  isFromEMR ||
-  viewMode === 'readOnly' ||
-  location.state?.edit ||
-  localEncounter?.status === 'CLOSED';
+  const edit =
+    isFromEMR ||
+    viewMode === 'readOnly' ||
+    location.state?.edit ||
+    localEncounter?.status === 'CLOSED';
 
   const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
-
-  const { data: bloodPressureMeasurementSiteLov } =
-    useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-
-  const patientConditions = useEnumOptions('Condition');
-  const encounterTypeOptions = useEnumOptions('EncounterType');
-  const EncounterReasonEnum = useEnumOptions('EncounterReason');
-  const ageGroupOptions = useEnumOptions('AgeGroupType');
-  const genderEnum = useEnumOptions('Gender');
-
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
-    exclude: [
-      'DISCHARGED',
-      'IN_OPERATION',
-      'CONFIRM_RETURN',
-      'TEMP_DC',
-      'TRIAGE_STARTED',
-      'SENT_TO_ER',
-      'WAITING_TRIAGE',
-      'WAITING_LIST',
-      'PENDING_PAYMENT'
-    ]
-  });
 
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [triggerNurseSummaryReport] = useLazyGetNurseSummaryReportQuery();
+  const [triggerNurseSummaryReportPdf] = useLazyGetNurseSummaryReportPdfQuery();
 
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId
@@ -192,40 +164,25 @@ const edit =
   };
 
   const handleGenerateReport = async (): Promise<void> => {
+    const encounterId = localEncounter?.id ?? localEncounter?.key;
+
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
+    }
+
     try {
-      const encounterId = localEncounter?.id ?? localEncounter?.key;
-
-      if (!encounterId) {
-        dispatch(
-          notify({
-            msg: 'Encounter id is missing',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const res = await triggerNurseSummaryReport({ encounterId }).unwrap();
-
-      await printNurseSummaryReport(
-        res,
-        bloodPressureMeasurementSiteLov?.object || [],
-        patientConditions || [],
-        encounterPriorityLovQueryResponse?.object,
-        EncounterReasonEnum,
-        encounterTypeOptions,
-        ageGroupOptions,
-        EncounterStatusEnum,
-        genderEnum
-      );
+      const blob = await triggerNurseSummaryReportPdf({ encounterId }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `nurse-summary-${encounterId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
     } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.message || 'Error while generating report',
-          sev: 'error'
-        })
-      );
-      throw error;
+      dispatch(notify({ msg: error?.data?.message || 'Error while generating report', sev: 'error' }));
     }
   };
 

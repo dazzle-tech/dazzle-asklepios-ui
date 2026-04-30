@@ -54,6 +54,7 @@ import {
   useSearchAppointmentsQuery,
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
+import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -249,6 +250,7 @@ const EncounterList = () => {
 
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
 
   const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
     exclude: [
@@ -654,6 +656,27 @@ const EncounterList = () => {
     }
   };
 
+  const handlePrintVisitReport = async (row: any) => {
+    const encounterId = row?.id ?? null;
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
+    }
+    try {
+      const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `visit-report-${encounterId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
+    } catch (error: any) {
+      dispatch(notify({ msg: error?.data?.message || 'Error while downloading visit report', sev: 'error' }));
+    }
+  };
+
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -875,7 +898,10 @@ const EncounterList = () => {
                   <MyButton
                     size="small"
                     backgroundColor="light-blue"
-                    onClick={() => setLocalEncounter(row)}
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handlePrintVisitReport(row);
+                    }}
                   >
                     <FontAwesomeIcon icon={faPrint} />
                   </MyButton>

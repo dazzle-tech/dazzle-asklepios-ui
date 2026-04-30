@@ -284,6 +284,13 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+    getPatientInformationPdf: builder.query<Blob, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/information/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    }),
   })
 });
 
@@ -319,6 +326,7 @@ export const {
   useLazyGetPatientInformationReportQuery,
   useLazyGetPatientWristbandQuery,
   useLazyGetPatientWristbandPdfQuery,
-  useLazyGetPatientLabelPdfQuery
+  useLazyGetPatientLabelPdfQuery,
+  useLazyGetPatientInformationPdfQuery
 
 } = newPatientService;
