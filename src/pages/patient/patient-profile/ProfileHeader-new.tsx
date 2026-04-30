@@ -32,8 +32,7 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import { useLazyGetPatientInformationReportQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
-import { printPatientInformationReport } from '@/utils/printPatientInformationReport';
+import { useLazyGetPatientInformationPdfQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -76,10 +75,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: relationshipLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-
-  const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
+  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
    const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
  
@@ -97,15 +93,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!localPatient?.id) return;
 
     try {
-      const res = await triggerPatientInformationReport({
+      const blob = await triggerGetPatientInformationPdf({
         patientId: localPatient.id
       }).unwrap();
 
-      await printPatientInformationReport(
-        res,
-        countryLovQueryResponse?.object || [],
-        relationshipLovQueryResponse?.object || []
-      );
+      const fileURL = window.URL.createObjectURL(blob);
+      const win = window.open(fileURL, '_blank');
+      if (win) {
+        win.focus();
+      }
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
     } catch (err: any) {
       dispatch(
         notify({

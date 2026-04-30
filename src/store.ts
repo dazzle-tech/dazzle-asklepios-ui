@@ -218,37 +218,25 @@ import { uccMedicationOrderService } from './services/medicalsheetsEncounter/ucc
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 
+
 const rtkDispatchLoopGuard: Middleware = () => {
-  let depth = 0;
-  let lastType = '';
-  let sameTypeCount = 0;
-
+  let inCascade = false;
+  const queued: any[] = [];
   return next => action => {
-    const type = typeof (action as any)?.type === 'string' ? (action as any).type : '<non-string>';
-    if (type === lastType) {
-      sameTypeCount += 1;
-    } else {
-      lastType = type;
-      sameTypeCount = 1;
-    }
+    const type = typeof (action as any)?.type === 'string' ? (action as any).type : '';
+    if (!type.endsWith('/config/middlewareRegistered')) return next(action);
 
-    depth += 1;
-    // Defensive guard: prevents runaway sync dispatch recursion from crashing the app.
-    if (depth > 300 || sameTypeCount > 300) {
-      // eslint-disable-next-line no-console
-      console.error('[RTK loop guard] blocked recursive dispatch', {
-        type,
-        depth,
-        sameTypeCount
-      });
-      depth -= 1;
+    if (inCascade) {
+      queued.push(action);
       return action;
     }
-
+    inCascade = true;
     try {
-      return next(action);
+      const result = next(action);
+      while (queued.length) next(queued.shift());
+      return result;
     } finally {
-      depth -= 1;
+      inCascade = false;
     }
   };
 };
@@ -309,7 +297,6 @@ export const store = configureStore({
     // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-  
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
@@ -570,41 +557,27 @@ export const store = configureStore({
 
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
-      // The app has a very large reducer tree; these dev checks are too expensive/noisy here.
+      // Reducer tree is huge — these dev checks are too expensive here.
       immutableCheck: false,
       serializableCheck: false
     })
       .prepend(rtkDispatchLoopGuard)
       .concat(
-      ...[
-        // ai
         idParsingService.middleware,
         summarizationService.middleware,
-
-        // ui
         uiService.middleware,
-
-        // auth / account
         authService.middleware,
         authServiceApi.middleware,
         accountApi.middleware,
-
-        // patient
         patientService.middleware,
         newPatientService.middleware,
         addressService.middleware,
         hipaaService.middleware,
         patientPreferredHealthProfessionalService.middleware,
         patientDocumentsService.middleware,
-
-        // inventory
         inventoryService.middleware,
         inventoryProductsService.middleware,
-
-        // setup
         setupService.middleware,
-
-        // medication / active ingredients
         medicationsSetupService.middleware,
         activeIngredientSynonymsService.middleware,
         activeIngredientAdverseEffectService.middleware,
@@ -615,31 +588,20 @@ export const store = configureStore({
         activeIngredientDrugInteractionService.middleware,
         activeIngredientFoodInteractionService.middleware,
         activeIngredientsService.middleware,
-
-        //  clinical
-  
         dvmService.middleware,
         encounterService.middleware,
         dentalService.middleware,
         observationService.middleware,
-
-        // attachments
         attachmentService.middleware,
         patientAttachmentService.middleware,
         encounterAttachmentsService.middleware,
         inventoryTransferAttachmentService.middleware,
         inventoryTransactionAttachmentService.middleware,
-
-        // lab / rad / procedure / operation
         procedureService.middleware,
         operationService.middleware,
-
-        // recovery / user
         recoveryService.middleware,
         userService.middleware,
         potintialService.middleware,
-
-        // enums / security
         enumsApi.middleware,
         facilityService.middleware,
         departmentService.middleware,
@@ -648,30 +610,20 @@ export const store = configureStore({
         userRoleService.middleware,
         enumService.middleware,
         userDepartmentService.middleware,
-
-        // medical sheets
         MedicalsheetsService.middleware,
         vitalSignsService.middleware,
-
-        // services / language / translation
         serviceService.middleware,
         MedicationCategoriesService.middleware,
         MedicationCategoriesClassService.middleware,
         languageService.middleware,
         translationService.middleware,
-
-        // practitioner
         formTemplateService.middleware,
         FormEntriesService.middleware,
         PractitionerService.middleware,
         PractitionerDepartmentService.middleware,
-
-        // misc setup
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,
-
-        // diagnostic tests
         diagnosticTestService.middleware,
         cdtCodeService.middleware,
         loincCodeService.middleware,
@@ -682,71 +634,40 @@ export const store = configureStore({
         radiologyService.middleware,
         diagnosticTestNormalRangeService.middleware,
         diagnosticTestCodingService.middleware,
-
-        // dental actions
         dentalActionService.middleware,
         CdtDentalActionService.middleware,
-
-        // vaccines
         vaccineService.middleware,
         vaccineBrandsService.middleware,
         vaccineDosesService.middleware,
         vaccineDosesIntervalService.middleware,
-
-        // brand medications
         BrandMedicationService.middleware,
         BrandMedicationSubstituteService.middleware,
         BrandMedicationActiveIngredientService.middleware,
-
-        // prescription instruction
         prescriptionInstructionService.middleware,
-
-        // uom
         uomGroupService.middleware,
-
-        // geo
         countryService.middleware,
         countryDistrictService.middleware,
         districtCommunityService.middleware,
         communityAreaService.middleware,
-
-        // discharge
         dischargePService.middleware,
         DischargePlanningService.middleware,
-
-        // reporting
         resultReportApi.middleware,
         invoiceReportApi.middleware,
-
-        // visit duration
         visitDurationService.middleware,
-
-        // catalog
         catalogService.middleware,
         catalogDiagnosticTestService.middleware,
-
-        // billing / price list
         BillingService.middleware,
         PriceListService.middleware,
         PriceListItemService.middleware,
         patientBillingInvoiceService.middleware,
         patientBillingInvoiceItemService.middleware,
         appointmentRequestService.middleware,
-
-        // report templates
         ReportTemplateService.middleware,
         DiagnosticTestTemplateService.middleware,
-
-        // sticky notes
         userStickyNotesService.middleware,
-
-        // referral
         referralRequestService.middleware,
-
-        // payer
         PayorService.middleware,
         PayorPlanService.middleware,
-
         PatientRelationService.middleware,
         patientInsurancesService.middleware,
         patientInsuranceCoveragesService.middleware,
@@ -782,8 +703,6 @@ export const store = configureStore({
         portalService.middleware,
         telephonicConsultationService.middleware,
         ICDTreeService.middleware,
-
-        // er-triage
         generalAssessmentService.middleware,
         chiefComplainService.middleware,
         emergencyTriageService.middleware,
@@ -822,8 +741,7 @@ export const store = configureStore({
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware
-      ]
-    ) as any
+      ) as any
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
