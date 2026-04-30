@@ -116,6 +116,13 @@ const Allergies = (props: AllergiesProps) => {
       key: 'allergen',
       title: <Translate>Allergen</Translate>,
       render: (rowData: PatientAllergiesResponseVM) => {
+
+        // ✅ NEW → OTHER TYPE
+        if (rowData?.allergenType === 'OTHER') {
+          return <p>{rowData?.allergenName ?? '-'}</p>;
+        }
+
+        // existing logic
         if (rowData?.allergenId && allergensListResponse?.data) {
           const allergen = allergensListResponse.data.find(
             (item: any) => item.id === rowData.allergenId
@@ -155,6 +162,7 @@ const Allergies = (props: AllergiesProps) => {
       key: 'actions',
       title: <Translate>Actions</Translate>,
       render: rowData => {
+        console.log('🧪 Rendering rows for:', rowData);
         const createdDate = new Date(rowData.createdDate);
         const today = new Date();
 
