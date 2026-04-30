@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery, onQueryStarted } from '../../../newApi';
+import { BaseQuery } from '../../../newApi';
 import type {
   AvailabilityTemplateIntervalCreateDTO,
   AvailabilityTemplateIntervalResponseVM,
@@ -22,9 +22,6 @@ export const availabilityTemplateIntervalService = createApi({
         method: 'POST',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplateInterval']
     }),
 
@@ -37,9 +34,6 @@ export const availabilityTemplateIntervalService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplateInterval']
     }),
 
@@ -48,9 +42,6 @@ export const availabilityTemplateIntervalService = createApi({
         url: `/api/patient/availability-template-intervals/${id}`,
         method: 'GET'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplateInterval']
     }),
 
@@ -63,9 +54,6 @@ export const availabilityTemplateIntervalService = createApi({
         method: 'GET',
         params: { templateId, dayOfWeek }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplateInterval']
     }),
 
@@ -74,9 +62,6 @@ export const availabilityTemplateIntervalService = createApi({
         url: `/api/patient/availability-template-intervals/${id}`,
         method: 'DELETE'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplateInterval']
     })
   })

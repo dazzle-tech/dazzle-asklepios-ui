@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery, onQueryStarted } from '../../newApi';
+import { BaseQuery } from '../../newApi';
 import type {
   AvailabilityTemplateCreateDTO,
   AvailabilityTemplateResponseVM,
@@ -59,9 +59,6 @@ export const availabilityTemplateService = createApi({
         method: 'POST',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplate']
     }),
 
@@ -74,9 +71,6 @@ export const availabilityTemplateService = createApi({
         method: 'PUT',
         body: { id, ...body }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplate']
     }),
 
@@ -85,9 +79,6 @@ export const availabilityTemplateService = createApi({
         url: `/api/patient/availability-templates/${id}`,
         method: 'GET'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -97,9 +88,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: params?.departmentId ? { departmentId: params.departmentId } : undefined
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -108,9 +96,6 @@ export const availabilityTemplateService = createApi({
         url: `/api/patient/availability-templates/${id}/toggle-active`,
         method: 'PUT'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplate']
     }),
 
@@ -119,9 +104,6 @@ export const availabilityTemplateService = createApi({
         url: `/api/patient/availability-templates/${id}`,
         method: 'DELETE'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AvailabilityTemplate']
     }),
 
@@ -134,9 +116,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { templateType }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -149,9 +128,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { templateName }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -164,9 +140,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { parentTemplateId }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -179,9 +152,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { departmentId }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -191,9 +161,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { status }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -206,9 +173,6 @@ export const availabilityTemplateService = createApi({
         method: 'GET',
         params: { status }
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     }),
 
@@ -217,9 +181,6 @@ export const availabilityTemplateService = createApi({
         url: `/api/patient/availability-templates/${templateId}/logs`,
         method: 'GET'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       providesTags: ['AvailabilityTemplate']
     })
   })
