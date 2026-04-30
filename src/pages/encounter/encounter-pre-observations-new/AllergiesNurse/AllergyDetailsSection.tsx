@@ -84,48 +84,60 @@ const AllergyDetailsSection = ({
                                 disabled
                             />
                             {allerges?.allergenType === "MEDICATION" ? (
-                                <>
-                                    <MyInput
-                                        fieldType="select"
-                                        fieldLabel="Medication Class"
-                                        selectData={medicationClassesListResponse ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='medicationClassId'
-                                        record={allerges}
-                                        setRecord={setAllerges}
-                                        required
-                                        disabled
-                                    />
-                                    <MyInput
-                                        fieldType="checkPicker"
-                                        fieldLabel="Active Ingredient"
-                                        selectData={activeIngredientsAll?.data ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='activeIngredients'
-                                        record={activeIngredientsObject}
-                                        setRecord={setActiveIngredientsObject}
-                                        // disabled
-                                        disabledItemValues
-                                    />
-                                </>
-                            ) :
-                                (
-                                    <MyInput
-                                        fieldType="select"
-                                        fieldLabel="Allergen"
-                                        selectData={allergensListResponse ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='allergenId'
-                                        record={allerges}
-                                        setRecord={setAllerges}
-                                        searchable={false}
-                                        required
-                                        disabled
-                                    />
-                                )}
+                            <>
+                                <MyInput
+                                fieldType="select"
+                                fieldLabel="Medication Class"
+                                selectData={medicationClassesListResponse ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='medicationClassId'
+                                record={allerges}
+                                setRecord={setAllerges}
+                                required
+                                disabled
+                                />
+
+                                <MyInput
+                                fieldType="checkPicker"
+                                fieldLabel="Active Ingredient"
+                                selectData={activeIngredientsAll?.data ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='activeIngredients'
+                                record={activeIngredientsObject}
+                                setRecord={setActiveIngredientsObject}
+                                disabledItemValues
+                                />
+                            </>
+                            ) : allerges?.allergenType === "OTHER" ? (
+
+                            <MyInput
+                                fieldType="text"
+                                fieldLabel="Allergen"
+                                fieldName="allergenName"
+                                record={allerges}
+                                setRecord={setAllerges}
+                                disabled
+                            />
+
+                            ) : (
+
+                            <MyInput
+                                fieldType="select"
+                                fieldLabel="Allergen"
+                                selectData={allergensListResponse ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='allergenId'
+                                record={allerges}
+                                setRecord={setAllerges}
+                                searchable={false}
+                                required
+                                disabled
+                            />
+
+                            )}
                             <MyInput
                                 fieldType="select"
                                 fieldLabel="Severity"

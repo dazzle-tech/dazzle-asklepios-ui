@@ -2822,6 +2822,7 @@ export interface PatientAllergiesResponseVM {
 
   allergenType?: string;
   allergenId?: number;
+  allergenName?: string;
   severity?: string;
 
   medicationClassId?: number;
@@ -2975,6 +2976,7 @@ export interface PatientAllergiesCreateDTO {
   encounterId: number;
   allergenType?: string;
   allergenId?: number;
+  allergenName?: string;
   severity?: string;
 
   medicationClassId?: number;
@@ -3000,6 +3002,7 @@ export type PatientAllergiesUpdateDTO = {
   id: number;
   allergenType: string; // FOOD, MEDICATION, ...
   allergenId?: number;
+  allergenName?: string;
   severity: string; // HIGH, LOW, MEDIUM
   medicationClassId?: number;
   criticality?: string;

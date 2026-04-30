@@ -1957,6 +1957,7 @@ export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM =
 
   allergenType: '',
   allergenId: undefined,
+  allergenName: '',
   severity: '',
 
   medicationClassId: undefined,
