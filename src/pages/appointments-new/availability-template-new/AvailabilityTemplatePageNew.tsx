@@ -40,7 +40,7 @@ const AvailabilityTemplatePageNew = () => {
   const [filteredList, setFilteredList] = useState<any[]>([]);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5
+    size: 20
   });
   const [openModal, setOpenModal] = useState(false);
   const [openAvailabilityTemplateLogModal, setOpenAvailabilityTemplateLogModal] = useState<boolean>(false);
