@@ -41,7 +41,26 @@ gap: 1vw;
 flex-wrap: wrap;
 box-sizing: border-box;}
 
-.filter-form-radiology-filters{display: flex;
-flex-direction: row;
-gap: 1vw;
-box-sizing: border-box;}
+.filter-form-radiology-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2vw;
+}
+
+.filter-form-radiology-filters > * {
+  flex: 1 1 30%;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .filter-form-radiology-filters {
+    flex-direction: column;
+  }
+
+  .filter-form-radiology-filters > * {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}
+
+

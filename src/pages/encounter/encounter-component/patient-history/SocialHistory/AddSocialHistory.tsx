@@ -311,7 +311,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
         <Form fluid layout="inline" className="fields-container">
           <div className="full-row">
             <MyInput
-              width={180}
+              width={'100%'}
               column
               fieldType="checkbox"
               fieldLabel="Current Smoker"
@@ -324,7 +324,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           {record?.isCurrentSmoker && (
             <>
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 required
                 fieldType="date"
@@ -334,7 +334,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={110}
+                width={'100%'}
                 column
                 required
                 fieldType="number"
@@ -346,7 +346,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 rightAddonwidth={80}
               />
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 fieldLabel="Cigarette Type"
                 fieldName="cigaretteType"
@@ -358,7 +358,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
 
           <div className="full-row">
             <MyInput
-              width={180}
+              width={'100%'}
               column
               fieldType="checkbox"
               fieldLabel="Previous Smoker"
@@ -371,7 +371,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           {record?.isPreviousSmoker && (
             <div className="full-row">
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 required
                 fieldType="date"
@@ -384,7 +384,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           )}
 
           <MyInput
-            width={180}
+            width={'100%'}
             column
             fieldType="checkbox"
             fieldLabel="Exposure to second-hand smoke"
@@ -406,7 +406,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
         <Form fluid layout="inline" className="fields-container">
           <div className="full-row">
             <MyInput
-              width={180}
+              width={'100%'}
               column
               fieldType="checkbox"
               fieldLabel="Alcohol Consumption"
@@ -418,7 +418,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           {record?.alcoholConsumption && (
             <>
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 required
                 fieldType="date"
@@ -429,7 +429,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               />
 
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 fieldLabel="Type of alcohol"
                 fieldName="typeOfAlcohol"
@@ -452,7 +452,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
         <Form fluid layout="inline" className="fields-container">
           <div className="full-row">
             <MyInput
-              width={180}
+              width={'100%'}
               column
               fieldType="checkbox"
               fieldLabel={<Translate>Substance Use</Translate>}
@@ -464,7 +464,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           {record?.substanceUse && (
             <>
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 fieldLabel="Route"
                 fieldName="route"
@@ -477,7 +477,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               />
 
               <MyInput
-                width={180}
+                width={'100%'}
                 column
                 fieldLabel="Frequency"
                 fieldName="frequency"
@@ -503,7 +503,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       >
         <Form fluid layout="inline" className="fields-container">
           <MyInput
-            width={180}
+            width={'100%'}
             column
             fieldLabel="Physical limitations"
             fieldName="physicalLimitation"
@@ -517,7 +517,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           />
 
           <MyInput
-            width={180}
+            width={'100%'}
             column
             fieldLabel="Diagnosed eating disorders"
             fieldName="diagnosedEatingDisorders"

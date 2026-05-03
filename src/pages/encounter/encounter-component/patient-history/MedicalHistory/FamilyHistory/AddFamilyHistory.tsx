@@ -192,7 +192,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Condition"
         fieldName="condition"
@@ -202,7 +202,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Relation"
         fieldType="select"
@@ -217,7 +217,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Inherited Diseases"
         fieldType="checkbox"

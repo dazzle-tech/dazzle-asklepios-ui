@@ -267,7 +267,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
         <Form fluid layout="vertical" className="visit-duration-modal-form" dir={dir}>
           <div className="top-row">
             <MyInput
-              width="13vw"
+              width="100%"
               fieldName="visitType"
               fieldType="select"
               selectData={visitType}
@@ -280,7 +280,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
             />
 
             <MyInput
-              width="10vw"
+              width="100%"
               fieldName="duration"
               fieldType="number"
               record={formRecord}
@@ -292,7 +292,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
             />
 
             <MyInput
-              width="13vw"
+              width="100%"
               fieldName="resourceSpecific"
               fieldType="check"
               record={formRecord}

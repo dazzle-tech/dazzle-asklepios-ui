@@ -756,8 +756,8 @@ const AddEditPractitioner = ({
       ]}
       childTitle="User List - Search Results"
       childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      mainSize={width > 1200 ? '40vw' : '75vw'}
-      childSize="55vw"
+      mainSize={"45vw"}
+      childSize="40vw"
     />
   );
 };

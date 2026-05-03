@@ -790,11 +790,11 @@ const DetailsModal = ({
         setOpen={setOpen}
         actionButtonFunction={() => handleSaveMedication(false)}
         actionButtonLabel={
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span>
             <CheckIcon /> Save
           </span>
         }
-        size="70vw"
+        size="80vw"
         leftTitle={
           <Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>
         }
@@ -983,7 +983,7 @@ const DetailsModal = ({
                         <div className="prescription-inputs-inline">
                           <MyInput
                             disabled={preKey != null ? editDuration : true}
-                            width={120}
+                            width={'100%'}
                             fieldType="number"
                             fieldLabel="Duration"
                             fieldName={'duration'}
@@ -992,7 +992,7 @@ const DetailsModal = ({
                           />
                           <MyInput
                             disabled={preKey != null ? editDuration : true}
-                            width={142}
+                            width={'100%'}
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}

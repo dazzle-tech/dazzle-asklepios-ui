@@ -636,7 +636,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
           {conjureFormContent(stepNumber)}
         </div>
       )}
-      mainSize="sm"
+      mainSize="40vw"
     />
   );
 };
