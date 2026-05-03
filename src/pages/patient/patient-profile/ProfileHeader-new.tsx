@@ -78,7 +78,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
    const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
- 
+ const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+
   const {
     data: profilePictureTicket,
     isError
@@ -89,52 +90,70 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
 
 
-  const handlePrintInformation = async () => {
-    if (!localPatient?.id) return;
+const handlePrintInformation = async () => {
+  if (!localPatient?.id) return;
 
-    try {
-      const blob = await triggerGetPatientInformationPdf({
-        patientId: localPatient.id
-      }).unwrap();
+  try {
+    setPrintingType('information');
 
-      const fileURL = window.URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
-      if (win) {
-        win.focus();
-      }
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
-    } catch (err: any) {
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Print failed',
-          sev: 'error'
-        })
-      );
+    const blob = await triggerGetPatientInformationPdf({
+      patientId: localPatient.id
+    }).unwrap();
+
+    const fileURL = window.URL.createObjectURL(blob);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
     }
-  };
- const handlePrintPatientLabel = async (rowData: any) => {
-  console.log('Printing patient label for:', rowData);
-    try {
-      const blob = await triggerGetPatientLabelPdf({
-        patientId: rowData.id
-      }).unwrap();
 
-      const fileURL = window.URL.createObjectURL(blob);
+    setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
+  } catch (err: any) {
+    dispatch(
+      notify({
+        msg: err?.data?.message || 'Print failed',
+        sev: 'error'
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `label-${rowData.medicalRecordNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+const handlePrintPatientLabel = async (rowData: any) => {
+  if (!rowData?.id) return;
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download label pdf', error);
-    }
-  };
+  try {
+    setPrintingType('label');
+
+    const blob = await triggerGetPatientLabelPdf({
+      patientId: rowData.id
+    }).unwrap();
+
+    const fileURL = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = `label-${rowData.medicalRecordNumber}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileURL);
+    }, 1000);
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Failed to download label pdf',
+        sev: 'error'
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -232,28 +251,37 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  const contentOfPrintIconMenu = (
-    <Popover>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          disabled={!localPatient?.id}
-          onClick={async () => {
-            // setOpenPrintMenu(false);
-            await handlePrintInformation();
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Information</Translate>
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => handlePrintPatientLabel(localPatient)}>
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Patient Label</Translate>
-          </div>
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Popover>
-  );
+ const contentOfPrintIconMenu = (
+  <Popover>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintInformation();
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
+
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintPatientLabel(localPatient);
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  </Popover>
+);
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
