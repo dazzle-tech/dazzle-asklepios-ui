@@ -222,13 +222,13 @@ const Details = ({
   useEffect(() => {
     const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
 
-    if (facilityId && procedure.categoryKey) {
+    if (facilityId && procedure.categoryId) {
       if (procedurePage === 0) {
         setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
       }
       getProcedureByFacility({
         facilityId,
-        category: procedure.categoryKey,
+        category: procedure.categoryId,
         page: procedurePage,
         size: 20,
         sort: 'name,asc'
@@ -239,7 +239,7 @@ const Details = ({
   }, [
     procedure?.toFacilityId,
     authSlice?.selectedDepartment?.facilityId,
-    procedure.categoryKey,
+    procedure.categoryId,
     procedurePage,
     getProcedureByFacility
   ]);
@@ -296,11 +296,10 @@ const Details = ({
     loadDepartments({ facilityId: procedure.toFacilityId, page: 0 });
   }, [procedure?.toFacilityId]);
 
-  // ✅ تصفير الـ page والـ options لما يتغير الـ category أو الـ facility
   useEffect(() => {
     setProcedurePage(0);
     setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
-  }, [procedure?.categoryKey, procedure?.toFacilityId]);
+  }, [procedure?.categoryId, procedure?.toFacilityId]);
 
   const hasMoreProcedures = procedureByFacility?.links?.next != null;
 
@@ -325,7 +324,7 @@ const Details = ({
       priority: null,
       procedureLevel: 'MINOR',
       toDepartmentId: null,
-      categoryKey: null,
+      categoryId: null,
       procedureId: null,
       procedureObj: null,
       procedureName: null,
@@ -515,7 +514,7 @@ const Details = ({
                         selectData={CategoryLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName="categoryKey"
+                        fieldName="categoryId"
                         record={procedure}
                         setRecord={updatedProcedure => {
                           setProcedure({
@@ -529,7 +528,7 @@ const Details = ({
                         required
                       />
 
-                      {procedure?.categoryKey && (
+                      {procedure?.categoryId && (
                         <MyInput
                           column
                           width="100%"
@@ -551,7 +550,7 @@ const Details = ({
                         />
                       )}
 
-                      {procedure?.categoryKey && (
+                      {procedure?.categoryId && (
                         <MyInput
                           width="100%"
                           fieldLabel="Department"

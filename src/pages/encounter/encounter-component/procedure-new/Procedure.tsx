@@ -68,7 +68,7 @@ const Referrals = (props: any) => {
   const edit = props.edit ?? location.state?.edit ?? false;
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-   const isNurse = jobRole === 'NURSE';
+  const isNurse = jobRole === 'NURSE';
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -104,12 +104,12 @@ const Referrals = (props: any) => {
     isLoading: procedureLoding
   } = useFindProcdureByEncounterQuery(
     {
-      encounterId: encounter?.id || encounter?.key,
+      encounterId: encounter?.id,
       page,
       size: pageSize,
       includeCancelled: showCanceled
     },
-    { skip: !encounter?.id && !encounter?.key }
+    { skip: !encounter?.id }
   );
 
   const procedures = proceduresData?.data ?? [];
@@ -147,8 +147,8 @@ const Referrals = (props: any) => {
 
   const handleClear = useCallback(() => {
     setProcedure({
-      encounterId: encounter?.id || encounter?.key,
-      patientId: patient?.id || patient?.key,
+      encounterId: encounter?.id,
+      patientId: patient?.id,
       currentDepartment: true,
       indicationId: null,
       bodyPart: '',
@@ -157,7 +157,7 @@ const Referrals = (props: any) => {
       priority: 'NORMAL',
       procedureLevel: 'MINOR',
       toDepartmentId: null,
-      categoryKey: null,
+      categoryId: null,
       procedureId: null,
       procedureObj: null,
       procedureName: null,
@@ -167,7 +167,7 @@ const Referrals = (props: any) => {
     });
     setShowPreview(false);
     setEditing(false);
-  }, [encounter?.key, encounter?.id, patient?.key, patient?.id]);
+  }, [encounter?.id, patient?.id]);
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
@@ -207,8 +207,8 @@ const Referrals = (props: any) => {
       const procedureData = {
         ...procedure,
         indications: indicationsDescription,
-        encounterId: encounter?.id || encounter?.key,
-        patientId: patient?.id || patient?.key
+        encounterId: encounter?.id,
+        patientId: patient?.id
       };
 
       if (procedure?.id) {
@@ -438,7 +438,10 @@ const Referrals = (props: any) => {
               size={24}
               fill={isCancelled ? '#ccc' : 'var(--primary-gray)'}
               className={isCancelled ? 'edit-icon disabled' : 'edit-icon'}
-              style={{ cursor: isCancelled ? 'not-allowed' : 'pointer', opacity: isCancelled ? 0.5 : 1 }}
+              style={{
+                cursor: isCancelled ? 'not-allowed' : 'pointer',
+                opacity: isCancelled ? 0.5 : 1
+              }}
               onClick={async e => {
                 e.stopPropagation();
 
@@ -467,8 +470,8 @@ const Referrals = (props: any) => {
                     procedureId: procedureRes.id,
                     procedureObj: procedureRes,
                     procedureName: procedureRes.name,
-                    categoryKey:
-                      procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                    categoryId:
+                      procedureRes.categoryType || procedureRes.category || rowData.categoryId,
 
                     toDepartmentId:
                       rowData.toDepartmentId ||
@@ -480,7 +483,7 @@ const Referrals = (props: any) => {
                       rowData.procedureLevel ||
                       procedureRes.procedureLevel ||
                       procedureRes.level ||
-                      procedureRes.procedureLevelKey
+                      procedureRes.procedureLevelId
                   };
 
                   setProcedure(updatedProcedure);
@@ -571,16 +574,15 @@ const Referrals = (props: any) => {
     }
   }, [openDetailsModal, procedure?.toFacilityId, getDepartmentsByFacility]);
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
-      <div ref={tableContainerRef} >
+      <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
           data={procedures}
@@ -593,8 +595,8 @@ const Referrals = (props: any) => {
 
                 const updatedProcedure = {
                   ...rowData,
-                  categoryKey:
-                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                  categoryId:
+                    procedureRes.categoryType || procedureRes.category || rowData.categoryId,
                   procedureId: procedureRes.id
                 };
 
@@ -624,7 +626,10 @@ const Referrals = (props: any) => {
               <div className="bt-left-2">
                 <MyButton
                   onClick={() => setOpenCancellationReasonModel(true)}
-                  disabled={isNurse || (edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true)}
+                  disabled={
+                    isNurse ||
+                    (edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true)
+                  }
                   prefixIcon={() => <BlockIcon />}
                 >
                   Cancel
@@ -661,15 +666,17 @@ const Referrals = (props: any) => {
         title="Perform Details"
         actionButtonFunction={handleSave}
         size="full"
-        content={<div dir={dir}>
-          <Perform
-            proRefetch={proRefetch}
-            encounter={encounter}
-            patient={patient}
-            procedure={procedure}
-            setProcedure={setProcedure}
-            edit={edit}
-          /></div>
+        content={
+          <div dir={dir}>
+            <Perform
+              proRefetch={proRefetch}
+              encounter={encounter}
+              patient={patient}
+              procedure={procedure}
+              setProcedure={setProcedure}
+              edit={edit}
+            />
+          </div>
         }
       />
 
@@ -702,14 +709,16 @@ const Referrals = (props: any) => {
         title={`Attachments - ${procedure?.procedureName || 'Procedure'}`}
         size="lg"
         hideActionBtn={true}
-        content={<div dir={dir}>
-          <EncounterAttachment
-            localEncounter={encounter}
-            source="PROCEDURE_REQUEST_ATTACHMENT"
-            sourceId={procedure?.id ? Number(procedure.id) : undefined}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
-          /> </div>
+        content={
+          <div dir={dir}>
+            <EncounterAttachment
+              localEncounter={encounter}
+              source="PROCEDURE_REQUEST_ATTACHMENT"
+              sourceId={procedure?.id ? Number(procedure.id) : undefined}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => {}}
+            />
+          </div>
         }
       />
     </div>
