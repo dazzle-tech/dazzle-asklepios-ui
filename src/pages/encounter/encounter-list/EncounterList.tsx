@@ -72,10 +72,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw)
@@ -251,6 +251,7 @@ const EncounterList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
+  const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
   const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
     exclude: [
@@ -373,7 +374,7 @@ const EncounterList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -559,10 +560,10 @@ const EncounterList = () => {
     setAppliedFilters((prev: any) =>
       prev
         ? {
-            ...prev,
-            page: 0,
-            size: newSize
-          }
+          ...prev,
+          page: 0,
+          size: newSize
+        }
         : prev
     );
   }, []);
@@ -574,10 +575,10 @@ const EncounterList = () => {
       setAppliedFilters((prev: any) =>
         prev
           ? {
-              ...prev,
-              page: newPage,
-              size: pageSize
-            }
+            ...prev,
+            page: newPage,
+            size: pageSize
+          }
           : prev
       );
     },
@@ -658,22 +659,37 @@ const EncounterList = () => {
 
   const handlePrintVisitReport = async (row: any) => {
     const encounterId = row?.id ?? null;
+
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
       return;
     }
+
     try {
+      setPrintingVisitReportId(encounterId);
+
       const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+
       const fileURL = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
+
       link.href = fileURL;
       link.download = `visit-report-${encounterId}.pdf`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.message || 'Error while downloading visit report', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Error while downloading visit report',
+          sev: 'error',
+        })
+      );
+    } finally {
+      setPrintingVisitReportId(null);
     }
   };
 
@@ -898,7 +914,10 @@ const EncounterList = () => {
                   <MyButton
                     size="small"
                     backgroundColor="light-blue"
+                    disabled={printingVisitReportId === row?.id}
+                    loading={printingVisitReportId === row?.id}
                     onClick={() => {
+                      if (printingVisitReportId === row?.id) return; 
                       setLocalEncounter(row);
                       handlePrintVisitReport(row);
                     }}
