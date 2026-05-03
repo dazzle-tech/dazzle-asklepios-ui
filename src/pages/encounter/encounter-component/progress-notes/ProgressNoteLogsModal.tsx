@@ -34,23 +34,19 @@ const UserFullName = ({ login }: { login: string }) => {
     return map;
   }, [usersResponse]);
 
-  console.log('👤 Login:', login);
 
   if (authUser && authUser.login === login) {
     const fullName = `${authUser.firstName} ${authUser.lastName}`;
-    console.log('✅ Auth user:', fullName);
     return <span>{fullName}</span>;
   }
 
   const fullName = userMap.get(login);
 
-  console.log('🧠 From Map:', login, fullName);
 
   return <span>{fullName || login}</span>;
 };
 
 const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId }) => {
-  console.log('🔥 Modal Props:', { open, progressNoteId });
 
   const {
     data: logs = [],
@@ -60,11 +56,9 @@ const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId 
     skip: !progressNoteId
   });
 
-  console.log('🔥 Logs Response:', logs);
 
   useEffect(() => {
     if (open && progressNoteId) {
-      console.log('🔥 Refetching logs...');
       refetch();
     }
   }, [open, progressNoteId, refetch]);
