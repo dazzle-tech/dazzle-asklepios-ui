@@ -208,6 +208,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
+      const fallback = "—"; 
+
+    
     if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
     }
@@ -223,7 +226,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         (v: any) =>
           String(v.lovCode) === String(lovDef.lovCode) &&
           String(v.key) === String(key)
-      )?.lovDisplayVale ?? key
+      )?.lovDisplayVale ?? fallback
     );
   };
 
@@ -323,7 +326,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       return {
         ...r,
         orderId: orderTest?.orderId ?? ' ',
-        testName: test?.name ?? ' ',
+        testName: profile?.name ?? ' ',
         resultValue: value,
         unit,
         normalRange: normalRangeValue
