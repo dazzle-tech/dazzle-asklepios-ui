@@ -212,8 +212,8 @@ const DentalProcedures = props => {
     if (formMode === 'add') {
       try {
         const createPayload = {
-          patientId: { id: patient?.id ?? patient?.key },
-          encounterId: { id: encounter?.id ?? encounter?.key },
+          patientId: patient?.id,
+          encounterId: encounter?.id,
           toothNumber: form.toothNumber,
           surface: form.surface,
           anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
