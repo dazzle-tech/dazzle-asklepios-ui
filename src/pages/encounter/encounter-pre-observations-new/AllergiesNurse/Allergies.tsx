@@ -162,6 +162,7 @@ const Allergies = (props: AllergiesProps) => {
       key: 'actions',
       title: <Translate>Actions</Translate>,
       render: rowData => {
+        console.log('🧪 Rendering rows for:', rowData);
         const createdDate = new Date(rowData.createdDate);
         const today = new Date();
 
