@@ -4,7 +4,7 @@ import { Col, Dropdown, Input, InputGroup, Row, Text } from 'rsuite';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import {
   useLazyGetCdtByKeywordQuery,
-  useLazyGetCdtByIdQuery,
+  useLazyGetCdtByIdQuery
 } from '@/services/setup/cdtCodeService';
 import './styles.less';
 
@@ -33,7 +33,7 @@ const CdtCodeSearch: React.FC<Props> = ({
   setCdtCodeId,
   label = 'CDT Code',
   disabled = false,
-  pageSize = 15,
+  pageSize = 15
 }) => {
   const [keyword, setKeyword] = useState('');
   const [open, setOpen] = useState(false);
@@ -80,10 +80,17 @@ const CdtCodeSearch: React.FC<Props> = ({
     }
 
     try {
-      const resp = await searchCdt({ keyword: trimmed, page: 0, size: pageSize, timestamp: Date.now() }).unwrap();
+      const resp = await searchCdt({
+        keyword: trimmed,
+        page: 0,
+        size: pageSize,
+        timestamp: Date.now()
+      }).unwrap();
       const pr = resp as unknown as PagedResult<CdtItem>;
       const obj: Record<string, CdtItem> = {};
-      (pr.data ?? []).forEach(item => { obj[String(item.id)] = item; });
+      (pr.data ?? []).forEach(item => {
+        obj[String(item.id)] = item;
+      });
       setAccum(obj);
       setLinks({ next: pr.links?.next ?? null });
       setOpen(true);
@@ -98,11 +105,18 @@ const CdtCodeSearch: React.FC<Props> = ({
     const { page: nextPage, size } = extractPaginationFromLink(nextLink);
     setIsAppending(true);
     try {
-      const resp = await searchCdt({ keyword: lastKeywordRef.current, page: nextPage, size: size || pageSize, timestamp: Date.now() }).unwrap();
+      const resp = await searchCdt({
+        keyword: lastKeywordRef.current,
+        page: nextPage,
+        size: size || pageSize,
+        timestamp: Date.now()
+      }).unwrap();
       const pr = resp as unknown as PagedResult<CdtItem>;
       setAccum(prev => {
         const updated = { ...prev };
-        (pr.data ?? []).forEach(item => { updated[String(item.id)] = item; });
+        (pr.data ?? []).forEach(item => {
+          updated[String(item.id)] = item;
+        });
         return updated;
       });
       setLinks({ next: pr.links?.next ?? null });
@@ -112,8 +126,14 @@ const CdtCodeSearch: React.FC<Props> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') { e.preventDefault(); loadFirstPage(keyword); }
-    if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      loadFirstPage(keyword);
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -132,7 +152,9 @@ const CdtCodeSearch: React.FC<Props> = ({
         setDisplay({ code: '', desc: '' });
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [cdtCodeId]);
 
   const canLoadMore = Boolean(links?.next);
@@ -147,10 +169,15 @@ const CdtCodeSearch: React.FC<Props> = ({
               <Input
                 placeholder="Search CDT (min 2 chars) - Press Enter"
                 value={keyword}
-                onChange={v => { setKeyword(v); if (!v) setOpen(false); }}
+                onChange={v => {
+                  setKeyword(v);
+                  if (!v) setOpen(false);
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={disabled}
-                onFocus={() => { if (Object.keys(accum).length > 0) setOpen(true); }}
+                onFocus={() => {
+                  if (Object.keys(accum).length > 0) setOpen(true);
+                }}
                 className="cdt-search__input"
               />
               <InputGroup.Button
