@@ -197,7 +197,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Facility"
         fieldName="facility"
@@ -207,7 +207,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Reason"
         fieldName="reason"
@@ -217,7 +217,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Admission Type"
         fieldName="admissionType"
@@ -227,7 +227,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Date of admission"
         fieldType="date"
@@ -239,7 +239,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel={
           <span>
@@ -254,7 +254,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Outcomes"
         fieldName="outcomes"
@@ -263,7 +263,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={300}
+        width={'100%'}
         column
         fieldLabel="Medical Interventions Performed"
         fieldType="textarea"

@@ -626,7 +626,7 @@ const ProcedureModule: React.FC = () => {
 
   const filters = () => (
     <>
-      <Form fluid layout='inline' className='procedure-module-table-filters-handle-position'>
+      <Form fluid className='procedure-module-table-filters-handle-position'>
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -634,7 +634,6 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
-          column
         />
         <MyInput
           fieldType="date"
@@ -643,7 +642,6 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
-          column
         />
         <MyInput
           selectDataValue="value"
@@ -658,7 +656,6 @@ const ProcedureModule: React.FC = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          className="margin-21"
         />
         <MyInput
           fieldName="value"
@@ -667,7 +664,6 @@ const ProcedureModule: React.FC = () => {
           setRecord={setRecord}
           showLabel={false}
           placeholder="Search"
-          className="margin-21"
         />
 
 

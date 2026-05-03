@@ -909,7 +909,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
       }
       childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      mainSize="sm"
+      mainSize="45vw"
     />
   );
 };

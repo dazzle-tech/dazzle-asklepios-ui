@@ -47,7 +47,7 @@ const Lab = () => {
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
-const [activeKey, setActiveKey] = useState('1');
+  const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
 
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();

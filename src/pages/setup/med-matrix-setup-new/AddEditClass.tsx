@@ -49,7 +49,7 @@ const AddEditClass = ({
         <Form layout="inline" fluid>
           <div className="container-of-two-fields-vaccine">
             <MyInput
-              width={250}
+              width={"100%"}
               column
               fieldLabel="Name"
               fieldName="name"
@@ -75,7 +75,7 @@ const AddEditClass = ({
         open={open}
         setOpen={setOpen}
         title="New/Edit Medication Class"
-        size="sm"
+        size="33vw"
         bodyheight="65vh"
         content={<div dir={dir}>{conjureFormContentOfModal()}</div>}
         hideCancel={false}

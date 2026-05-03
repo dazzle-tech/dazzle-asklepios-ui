@@ -245,7 +245,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'100%'}
         column
         required
         fieldLabel="Surgery"
@@ -254,7 +254,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'100%'}
         column
         required
         fieldLabel="Date of surgery"
@@ -264,7 +264,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'100%'}
         column
         required
         fieldLabel="Facility"
@@ -274,7 +274,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         required
         fieldLabel="Anesthesia Type"
@@ -288,7 +288,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Complications"
         fieldType="select"
@@ -301,7 +301,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Adverse Reactions"
         fieldType="checkPicker"
@@ -314,7 +314,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Implants or Devices"
         fieldType="checkbox"
@@ -324,7 +324,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Implants/Devices Description"
         fieldName="implantsOrDevicesDescription"
