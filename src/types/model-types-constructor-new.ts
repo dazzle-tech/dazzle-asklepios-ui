@@ -730,7 +730,7 @@ export const newCdtDentalAction: modelTypes.CdtDentalAction = {
 export const newBrandMedicationActiveIngredient: modelTypes.BrandMedicationActiveIngredient = {
   id: undefined,
   brandId: undefined,
-  activeIngredientId: undefined,
+  activeIngredientId: null,
   strength: undefined,
   unit: ''
 };

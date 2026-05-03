@@ -312,7 +312,7 @@ const Lov = () => {
           setLov={setLov}
           handleSave={handleLovSave}
           width={width}
-          lovListResponse={lovListResponse}
+
         />
       </Panel>
       <LovValues
