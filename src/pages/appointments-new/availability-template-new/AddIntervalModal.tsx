@@ -273,7 +273,18 @@ const AddIntervalModal = ({
                         </div>
 
 
-
+                        {!isEditMode && (
+                            <div style={{ marginTop: 12 }}>
+                                <MyInput
+                                    fieldName="applyToAllWorkingDays"
+                                    fieldType="check"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    label="Apply to all working days in this template"
+                                    disabled={props?.readOnly}
+                                />
+                            </div>
+                        )}
                         <Divider />
 
                     </Form>
@@ -297,10 +308,22 @@ const AddIntervalModal = ({
         return hours * 3600 + minutes * 60 + seconds;
     };
 
+    const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
     const handleSave = async () => {
 
         const errors = [];
-      
+
         if (!record?.startTime) {
             errors.push('Start Time is required');
         }
@@ -377,7 +400,7 @@ const AddIntervalModal = ({
                     setOpen(false);
                 })
                 .catch(() => {
-                    dispatch(notify({ msg: 'Failed to update', sev: 'warning' }));
+                    dispatch(notify({ msg: 'Could not update interval. Please check for overlapping times or invalid input.', sev: 'warning' }));
                 });
 
             return;
@@ -387,7 +410,8 @@ const AddIntervalModal = ({
             ...(record as AvailabilityTemplateIntervalCreateDTO),
             templateId: resource?.id ?? (record as AvailabilityTemplateIntervalCreateDTO).templateId,
             dayOfWeek: day,
-            slotDurationMinutes: Number(record?.slotDurationMinutes)
+            slotDurationMinutes: Number(record?.slotDurationMinutes),
+            applyToAllWorkingDays: Boolean((record as any)?.applyToAllWorkingDays)
         };
         await createAvailabilityTemplateInterval(payload)
             .unwrap()
@@ -395,10 +419,10 @@ const AddIntervalModal = ({
                 dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
                 setOpen(false);
             })
-            .catch(() => {
-                dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+            .catch((error) => {
+                const errorMsg = extractErrorMessage(error) || 'Could not save interval. Please check for overlapping times or invalid input.';
+                dispatch(notify({ msg: errorMsg, sev: 'warning' }));
             });
-        setOpen(false);
     };
 
 
