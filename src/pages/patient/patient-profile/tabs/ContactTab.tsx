@@ -23,10 +23,19 @@ const ContactTab: React.FC<ContactTabProps> = ({
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
+  const normalizePhoneE164 = (raw: string): string => {
+    const s = raw.trim();
+    if (!s) return '';
+    if (s.startsWith('+')) return s;
+    if (s.startsWith('00')) return '+' + s.slice(2);
+    return '+' + s;
+  };
+
   const parsePhoneWithPrefix = (phoneValue: unknown): string => {
     if (!phoneValue) return '';
-    if (typeof phoneValue === 'string') return phoneValue;
-    if (typeof phoneValue !== 'object') return String(phoneValue);
+
+    if (typeof phoneValue === 'string') return normalizePhoneE164(phoneValue);
+    if (typeof phoneValue !== 'object') return normalizePhoneE164(String(phoneValue));
 
     const valueObject = phoneValue as Record<string, unknown>;
     const directPhone =
@@ -37,14 +46,11 @@ const ContactTab: React.FC<ContactTabProps> = ({
       valueObject.number;
 
     if (typeof directPhone === 'string' && directPhone.trim()) {
-      return directPhone.trim();
+      return normalizePhoneE164(directPhone);
     }
 
     const rawPrefix =
-      valueObject.prefix ??
-      valueObject.countryCode ??
-      valueObject.dialCode ??
-      valueObject.code;
+      valueObject.prefix ?? valueObject.countryCode ?? valueObject.dialCode ?? valueObject.code;
     const rawNumber =
       valueObject.localNumber ??
       valueObject.nationalNumber ??
@@ -70,6 +76,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         value={parsePhoneWithPrefix(localPatient?.primaryMobileNumber)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
@@ -89,6 +96,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         value={parsePhoneWithPrefix(localPatient?.secondMobileNumber)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
@@ -185,6 +193,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         value={parsePhoneWithPrefix(localPatient?.emergencyContactPhone)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
