@@ -965,6 +965,7 @@ export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTe
   endTime: '',
   slotStrategy: '',
   slotDurationMinutes: 0,
+  applyToAllWorkingDays: false,
   allowedServices: []
 };
 

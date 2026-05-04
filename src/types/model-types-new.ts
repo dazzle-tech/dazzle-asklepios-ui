@@ -286,6 +286,7 @@ export interface AvailabilityTemplateIntervalCreateDTO {
   endTime: string;
   slotStrategy: string;
   slotDurationMinutes: number;
+  applyToAllWorkingDays?: boolean | null;
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
