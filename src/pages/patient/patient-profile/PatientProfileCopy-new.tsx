@@ -481,6 +481,7 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
           setLocalPatient={setLocalPatient}
           refetchData={refetchData}
           setRefetchData={setRefetchData}
+          searchRef={searchRef}
         />
       </div>
 

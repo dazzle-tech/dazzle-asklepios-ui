@@ -54,9 +54,7 @@ const PatientProfile = () => {
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
-  const divContent = (
-        "Patient Registration" 
-  );
+  const divContent = 'Patient Registration';
 
   const handleSave = async () => {
     try {
@@ -68,8 +66,7 @@ const PatientProfile = () => {
 
       setRefetchData(true);
       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const handleClear = () => {
@@ -101,7 +98,6 @@ const PatientProfile = () => {
     dispatch(setEncounter(null));
   };
 
-
   // Effects
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
@@ -131,16 +127,22 @@ const PatientProfile = () => {
   }, [savePatientMutation]);
 
   useEffect(() => {
-    const divContent = (
-        "Patient Registration"
-    );
+    const divContent = 'Patient Registration';
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(divContent));
+    dispatch(setPatient({ ...newApPatient }));
 
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, location.pathname]);
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
