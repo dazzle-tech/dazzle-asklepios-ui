@@ -65,62 +65,60 @@ useEffect(() => {
   };
 
   return (
-    <div className="main-screen-bar-filters-header-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
-      {(width > 800 || !displaySearch) && width > 600 && (
-        <div>
-          <div className="display-flex">
-            <h5>
-              <Translate>{divElement}</Translate>
-            </h5>
-          </div>
-        </div>
-      )}
+    <div
+      className="main-screen-bar-filters-header-main-container"
+      style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+    >
+      <div className="header-title">
+        <h5>
+          <Translate>{divElement}</Translate>
+        </h5>
+      </div>
 
-      <div className="main-screen-bar-filters-header" >
+      <div className="main-screen-bar-filters-header">
         <Form fluid>
-          <div className="main-screen-bar-buttons-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
-            {width > 800 || displaySearch ? (
-              <>
-                <MyInput
-                  fieldName="eventKey"
-                  selectData={childrenNavs}
-                  selectDataLabel='title'
-                  selectDataValue='eventKey'
-                  fieldType="select"
-                  placeholder="Search"
-                  width={
-                    width < 800 && width > 500 && displaySearch
-                      ? '150px'
-                      : width < 500 && displaySearch
-                      ? '200px'
-                      : '10vw'
-                  }
-                  record={record}
-                  setRecord={setRecord}
-                  showLabel={false}
-                />
-                <IoMdClose
-                  size={24}
-                  style={{
+          <div
+            className="main-screen-bar-buttons-main-container"
+            style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+          >
+            {/* 🔥 Search */}
+            <div className={`search-container ${displaySearch ? 'open' : ''}`}>
+              <MyInput
+                fieldName="eventKey"
+                selectData={childrenNavs}
+                selectDataLabel="title"
+                selectDataValue="eventKey"
+                fieldType="select"
+                placeholder="Search"
+                width="100%"
+                record={record}
+                setRecord={setRecord}
+                showLabel={false}
+                searchable
+              />
+
+              {/* <IoMdClose
+                className="close-btn"
+                size={20}
+                                  style={{
                     background: 'var(--rs-border-primary)',
-                    padding: '6px',
                     borderRadius: '5px',
                     cursor: 'pointer',
                     transition: 'background 0.2s ease, transform 0.2s ease',
-                    display: width > 800 ? 'none' : 'inline',
                   }}
-                  onClick={() => setDisplaySearch(false)}
-                />
-              </>
-            ) : (
+                onClick={() => setDisplaySearch(false)}
+              /> */}
+            </div>
+
+            {!displaySearch && (
               <SearchIcon
-                title="search"
+                className="search-icon"
                 style={{ margin: '10px', fontWeight: 'bold' }}
                 onClick={() => setDisplaySearch(true)}
               />
             )}
 
-            {(width > 800 || !displaySearch) && width > 600 && (
+            <div className="theme-container">
               <MyInput
                 fieldType="checkbox"
                 checkedLabel="Light"
@@ -130,7 +128,7 @@ useEffect(() => {
                 setRecord={handleThemeToggle}
                 showLabel={false}
               />
-            )}
+            </div>
           </div>
         </Form>
       </div>

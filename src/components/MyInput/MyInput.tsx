@@ -21,7 +21,7 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
-
+import { InputPicker } from 'rsuite';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -155,6 +155,7 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [localSearch, setLocalSearch] = useState('');
 
   useEffect(() => {
     const handleScroll = event => {
@@ -458,6 +459,7 @@ const MyInput = ({
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? ''];
+
         const primaryLabelKey = labelKeys[0] ?? '';
         const valueKey = props?.selectDataValue ?? '';
         const dataList = props?.selectData ?? [];
@@ -469,7 +471,34 @@ const MyInput = ({
               className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
               block
               disabled={props.disabled}
-              accepter={SelectPicker}
+
+              // 🔥🔥🔥 المهم
+              accepter={InputPicker}
+
+              // 🔥 يخليك تكتب داخل نفس الحقل
+              searchable={props.searchable ?? true}
+
+              data={dataList}
+
+              labelKey={primaryLabelKey}
+              valueKey={valueKey}
+              value={record ? record[fieldName] : ''}
+
+              onSearch={(searchText) => {
+                props.setSearchKeyWard?.(searchText); // لو عندك API
+              }}
+
+              onChange={(value) => {
+                handleValueChange(value);
+
+                if (props.onSelectItem) {
+                  const selectedItem =
+                    dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ?? null;
+
+                  props.onSelectItem(selectedItem);
+                }
+              }}
+
               renderMenuItem={
                 props.renderMenuItem ??
                 (isArrayLabel
@@ -478,45 +507,7 @@ const MyInput = ({
                   ? (label: any) => formatEnumString(String(label))
                   : undefined)
               }
-              searchBy={props.searchBy}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              searchable={props.searchable !== undefined ? props.searchable : true}
-              cleanable={props.cleanable !== undefined ? props.cleanable : true}
-              readOnly={props.readOnly !== undefined ? props.readOnly : false}
-              name={fieldName}
-              data={dataList}
-              labelKey={primaryLabelKey}
-              valueKey={valueKey}
-              value={record ? record[fieldName] : ''}
-              onChange={value => {
-                handleValueChange(value);
 
-                if (props.onSelectItem) {
-                  if (value === null || value === undefined || value === '') {
-                    props.onSelectItem(null);
-                    return;
-                  }
-
-                  const selectedItem =
-                    dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ?? null;
-
-                  props.onSelectItem(selectedItem);
-                }
-              }}
-              defaultValue={props.defaultSelectValue}
-              placeholder={props.placeholder}
-              menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
-              onKeyDown={focusNextField}
-              loading={props?.loading ?? false}
-              open={isSelectOpen}
-              onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsSelectOpen(true);
-              }}
-              onClose={() => setIsSelectOpen(false)}
-              virtualized={props?.virtualized ?? true}
               renderValue={
                 isArrayLabel
                   ? (value, item, selectedElement) => {
@@ -531,9 +522,21 @@ const MyInput = ({
                     }
                   : undefined
               }
-              disabledItemValues={
-                props.disabledItemValues ? dataList.map(item => item[valueKey]) : []
-              }
+
+              placeholder={props.placeholder}
+              cleanable
+              loading={props?.loading ?? false}
+
+              open={isSelectOpen}
+              onOpen={() => {
+                setPlacement(calculatePlacement());
+                setIsSelectOpen(true);
+              }}
+              onClose={() => setIsSelectOpen(false)}
+
+              placement={placement}
+              preventOverflow={pickerPreventOverflow}
+              container={resolveContainer()}
             />
           </div>
         );
@@ -544,6 +547,7 @@ const MyInput = ({
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? 'name'];
+
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
         const pickerValue = record?.[fieldName] ?? '';
@@ -557,10 +561,11 @@ const MyInput = ({
               className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
               block
               disabled={props.disabled}
-              accepter={SelectPicker}
-              onSearch={searchText => {
-                props.setSearchKeyWard?.(searchText);
-              }}
+
+              // 🔥🔥🔥 نفس الحل
+              accepter={InputPicker}
+              searchable={true}
+
               data={[
                 ...dataList,
                 ...(props.hasMore
@@ -573,9 +578,15 @@ const MyInput = ({
                     ]
                   : [])
               ]}
+
               labelKey={labelKey}
               valueKey={valueKey}
               value={pickerValue}
+
+              onSearch={(searchText) => {
+                props.setSearchKeyWard?.(searchText);
+              }}
+
               onChange={(value, item, event) => {
                 if (item?.isLoadMore || value === '__load_more__') {
                   event?.preventDefault?.();
@@ -585,11 +596,9 @@ const MyInput = ({
                   return;
                 }
 
-                if (value === null || value === '' || value === undefined) {
+                if (!value) {
                   handleValueChange(null);
-                  if (props.onSelectItem) {
-                    props.onSelectItem(null);
-                  }
+                  props.onSelectItem?.(null);
                   return;
                 }
 
@@ -597,87 +606,13 @@ const MyInput = ({
                   dataList.find((x: any) => x[valueKey] === value) ?? item ?? null;
 
                 handleValueChange(value);
-
-                if (props.onSelectItem && selectedItem) {
-                  props.onSelectItem(selectedItem);
-                }
+                props.onSelectItem?.(selectedItem);
               }}
-              renderValue={(value, item, selectedElement) => {
-                // ✅ الحل: لما item يكون null (القيمة مش في الصفحة الحالية من الـ pagination)
-                // نبحث عنها في الـ data أو نستخدم renderOptionLabel أو نرجع القيمة نفسها
-                const resolvedItem =
-                  item ??
-                  dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ??
-                  null;
 
-                if (resolvedItem?.isLoadMore) return selectedElement;
-
-                if (props.renderOptionLabel) {
-                  if (resolvedItem) {
-                    const base = props.renderOptionLabel(resolvedItem);
-                    return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                  }
-                  // ✅ حتى لو ما لقينا الـ item في الـ data، نمرر object وهمي بالـ value
-                  // عشان renderOptionLabel يقدر يتعامل معه
-                  const fallbackBase = props.renderOptionLabel({ [valueKey]: value });
-                  if (fallbackBase) {
-                    return (
-                      <span>
-                        {props.isEnum ? formatEnumString(String(fallbackBase)) : fallbackBase}
-                      </span>
-                    );
-                  }
-                }
-
-                if (resolvedItem) {
-                  if (isArrayLabel) {
-                    const base = buildCombinedLabel(resolvedItem, labelKeys, selectedElement);
-                    return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                  }
-                  const base = resolvedItem[labelKey];
-                  return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                }
-
-                // ✅ آخر fallback: نعرض القيمة كما هي بدل ما نعرض فراغ
-                return <span>{selectedElement || String(value ?? '')}</span>;
-              }}
-              renderMenuItem={(label, item) => {
-                if (item?.isLoadMore) {
-                  return (
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                      onClick={e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        props.onFetchMore?.();
-                      }}
-                    >
-                      {item[labelKey]}
-                    </div>
-                  );
-                }
-
-                if (props.renderOptionLabel) {
-                  const base = props.renderOptionLabel(item);
-                  return props.isEnum ? formatEnumString(String(base)) : base;
-                }
-
-                if (isArrayLabel) {
-                  const base = buildCombinedLabel(item, labelKeys, label);
-                  return props.isEnum ? formatEnumString(String(base)) : base;
-                }
-
-                return props.isEnum ? formatEnumString(String(label)) : label;
-              }}
               placeholder={props.placeholder ?? 'Select...'}
-              searchable
               cleanable
               loading={props.loading ?? false}
-              menuMaxHeight={props.menuMaxHeight ?? 240}
+
               open={isSelectOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
@@ -691,17 +626,15 @@ const MyInput = ({
                 }
                 setIsSelectOpen(false);
               }}
+
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               container={resolveContainer()}
-              disabledItemValues={
-                props.disabledItemValues ? dataList.map(item => item[props?.selectDataValue]) : []
-              }
             />
           </div>
         );
       }
-
+      
       case 'multyPicker':
         return (
           <div ref={pickerRef}>

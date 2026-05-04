@@ -153,7 +153,7 @@ const Dashboard = () => {
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
-            header={<Translate>Top Visit Reasons</Translate>}
+            header={<span className="responsive-title"><Translate>Top Visit Reasons</Translate></span>}
             className="margin-bottom-10"
           >
             {isLoadingEncounters ? (
@@ -200,7 +200,7 @@ const Dashboard = () => {
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
-            header={<Translate>Patient Distribution by Department</Translate>}
+            header={<span className="responsive-title"><Translate>Patient Distribution by Department</Translate></span>}
             className="margin-bottom-10"
           >
             <DynamicPieChart
@@ -219,11 +219,13 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faStethoscope} />}
-                  text={<Translate>Top Diagnoses</Translate>}
+                  text={<span className="responsive-title"><Translate>Top Diagnoses</Translate></span>}
                   iconColor="#8f98ab"
                 />
               }
-              subtitle={<Translate>Most common diagnoses this month</Translate>}
+              subtitle={<span className="responsive-subtitle">
+                        <Translate>Most common diagnoses this month</Translate>
+                        </span>}
               data={[
                 { name: 'Hypertension', value: 289, percentage: '27.1%', trend: 'up' },
                 { name: 'Type 2 Diabetes', value: 234, percentage: '21.9%', trend: 'down' },
@@ -247,11 +249,17 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faPills} />}
-                  text={<Translate>Top Medications</Translate>} 
-                  iconColor="#8f98ab"
+                  text={
+                    <span className="responsive-title">
+                      <Translate>Top Diagnoses</Translate>
+                    </span>
+                  }  
+                    iconColor="#8f98ab"
                 />
               }
-              subtitle={<Translate>Most prescribed medications this month</Translate>}
+              subtitle={<span className="responsive-subtitle">
+                <Translate>Most prescribed medications this month</Translate>
+              </span>}
               data={[
                 { name: 'Metformin', value: 342, percentage: '23.0%', trend: 'up' },
                 { name: 'Lisinopril', value: 298, percentage: '20.1%', trend: 'down' },
@@ -277,11 +285,13 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faVial} />}
-                  text={<Translate>Top Lab Findings</Translate>}
+                  text={<span className="responsive-title"><Translate>Top Lab Findings</Translate></span>}
                   iconColor="#8f98ab"
                 />
               }
-              subtitle={<Translate>Most frequent lab test findings</Translate>}
+              subtitle={<span className="responsive-subtitle">
+                <Translate>Most frequent lab test findings</Translate>
+              </span>}
               data={[
                 { name: 'Elevated Glucose', value: 156, percentage: '16.6%', trend: 'up' },
                 { name: 'High Cholesterol', value: 234, percentage: '24.8%', trend: 'up' },

@@ -429,6 +429,7 @@ useEffect(() => {
       />
 
       <MyInput
+        key={EncounterTypeEnum?.length || 0}
         required
         vr={validationResult}
         column
@@ -456,7 +457,7 @@ useEffect(() => {
         selectDataValue="id"
         record={localEncounter}
         setRecord={setLocalEncounter}
-        searchable
+        searchable={true}
         disabled={
           isReadOnly ||
           !Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0) ||
