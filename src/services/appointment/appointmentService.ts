@@ -85,9 +85,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -231,9 +228,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -243,9 +237,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -254,9 +245,6 @@ export const appointmentFromTemplateService = createApi({
         url: `${APPOINTMENT_BASE_URL}/${id}/confirm`,
         method: 'PUT'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -265,9 +253,6 @@ export const appointmentFromTemplateService = createApi({
         url: `${APPOINTMENT_BASE_URL}/${id}/check-in`,
         method: 'PUT'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
