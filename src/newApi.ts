@@ -1,59 +1,75 @@
 // src/newApi.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { notify } from '@/utils/uiReducerActions';
 import config from '../app-config';
-import { RootState } from './store'; 
 
-// Create a base query instance with JWT token injection
 const baseFetchBaseQuery = fetchBaseQuery({
-  baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080',
-  prepareHeaders: (headers: Headers, { getState }) => {
-    const state = getState() as RootState;
+  baseUrl: config.backendBaseURL
+    ? config.backendBaseURL
+    : 'http://localhost:8080',
 
-    // Read JWT token from localStorage (id_token or token)
-    const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
+  prepareHeaders: (headers: Headers) => {
+    const jwt =
+      localStorage.getItem('id_token') ||
+      localStorage.getItem('token');
+
     if (jwt) {
-      headers.set('Authorization', `Bearer ${jwt}`); // Attach token to Authorization header
+      headers.set('Authorization', `Bearer ${jwt}`);
     }
 
     return headers;
-  }
+  },
 });
 
-// Export BaseQuery
 export const BaseQuery = baseFetchBaseQuery;
 
-/**
- * Generic `onQueryStarted` handler for error handling & notifications
- */
-export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: any) => {
+const normalizeApiErrorMessage = (err: any) => {
+  const rawMessage =
+    err?.error?.data?.properties?.message || 
+    err?.error?.data?.message ||
+    err?.error?.data?.detail ||
+    err?.error?.data?.msg ||
+    err?.error?.message;
+
+  if (typeof rawMessage === 'string' && rawMessage.trim()) {
+    const cleaned = rawMessage
+      .replace(/^error\./i, '')
+      .replace(/_/g, ' ')
+      .trim();
+
+    if (
+      cleaned &&
+      cleaned.toLowerCase() !== 'internal server error' &&
+      cleaned.toLowerCase() !== 'bad request'
+    ) {
+      return cleaned;
+    }
+  }
+
+  if (err?.error?.status === 422) return 'Unprocessable Entity';
+  if (err?.error?.status === 400) return 'Bad Request';
+
+  return 'Internal Server Error';
+};
+
+export const onQueryStarted = async (
+  body: any,
+  { dispatch, queryFulfilled }: any,
+) => {
   try {
-    // Wait for the query to be fulfilled
     const { data } = await queryFulfilled;
 
-    // If API response contains a message, notify the user
     if (data && data._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {
-    console.error('API Error:', err);
-    // Handle errors
-    if (err?.error?.status == 422) {
-      // Validation error (Unprocessable Entity)
-      dispatch(
-        notify({
-          msg: err.error?.data?.message || 'Unprocessable Entity',
-          sev: 'error',
-        })
-      );
-    } else {
-      // Generic server error
-      dispatch(
-        notify({
-          msg: err.error?.data?.msg || 'Internal Server Error',
-          sev: 'error',
-        })
-      );
-    }
+    const msg = normalizeApiErrorMessage(err);
+
+    dispatch(
+      notify({
+        msg,
+        sev: msg === 'Internal Server Error' ? 'error' : 'warning',
+      }),
+    );
   }
 };

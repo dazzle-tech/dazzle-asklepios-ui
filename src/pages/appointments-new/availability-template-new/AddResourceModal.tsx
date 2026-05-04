@@ -1,801 +1,1609 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Row, Col } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import './AddResourceModal.less';
-import MyModal from '@/components/MyModal/MyModal';
-import Translate from '@/components/Translate';
-import SectionContainer from '@/components/SectionsoContainer';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Form, Row, Col } from "rsuite";
+
+import MyInput from "@/components/MyInput";
+import MyModal from "@/components/MyModal/MyModal";
+import Translate from "@/components/Translate";
+import SectionContainer from "@/components/SectionsoContainer";
+
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+import { formatEnumString } from "@/utils";
+import { extractPaginationFromLink } from "@/utils/paginationHelper";
+
+import { useEnumOptions } from "@/services/enumsApi";
+import { useGetActiveFacilitiesQuery } from "@/services/security/facilityService";
 import {
   useLazyGetAppointableServicesByLoggedInFacilityQuery,
   useLazyGetServicesByDepartmentQuery,
   useLazyGetServiceByIdQuery,
-  useLazyGetServiceItemByIdQuery
-} from '@/services/setup/serviceService';
+} from "@/services/setup/serviceService";
 import {
-  useLazyGetAppointablePractitionerByLoggedInFacilityQuery,
   useLazyGetPractitionerByDepartmentQuery,
-  useLazyGetPractitionerByIdQuery
-} from '@/services/setup/practitioner/PractitionerService';
-import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
-import { useCreateAvailabilityTemplateMutation, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
-import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
-import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
+  useLazyGetPractitionerByIdQuery,
+} from "@/services/setup/practitioner/PractitionerService";
 import {
   useLazyGetAllActiveAppointableDiagnosticTestsQuery,
-  useLazyGetDiagnosticTestByIdQuery
-} from '@/services/setup/diagnosticTest/diagnosticTestService';
+  useLazyGetDiagnosticTestByIdQuery,
+} from "@/services/setup/diagnosticTest/diagnosticTestService";
 import {
   useLazyGetAppointableCatalogsByLoggedInFacilityQuery,
-  useLazyGetCatalogByIdQuery
-} from '@/services/setup/catalog/catalogService';
-import { formatEnumString } from '@/utils';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
+  useLazyGetCatalogByIdQuery,
+} from "@/services/setup/catalog/catalogService";
+import {
+  useLazyGetActiveAppointableRoomsByDepartmentIdQuery,
+  useLazyGetRoomByIdQuery,
+} from "@/services/setup/room/roomService";
+import {
+  useCreateAvailabilityTemplateMutation,
+  useUpdateAvailabilityTemplateMutation,
+} from "@/services/appointment/availabilityTemplateService";
 
+import { newAvailabilityTemplateCreateDTO } from "@/types/model-types-constructor-new";
 
+import "./AddResourceModal.less";
 
-const AddResourceModal = ({
+type AddResourceModalProps = {
+  mainTemplate: any;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  editRecord?: any;
+  selectedFacility: any;
+  readOnly?: boolean;
+};
+
+type AllowedService = {
+  id: string | number | null;
+  service: string | null;
+};
+
+type WorkingDay = {
+  dayOfWeek: string | number;
+  isWorking: boolean;
+};
+
+type PaginationState = {
+  items: any[];
+  hasMore: boolean;
+  nextLink: string | null;
+};
+
+type LoadPageParams = {
+  page?: number;
+  append?: boolean;
+};
+
+const PAGE_SIZE = 20;
+const DEFAULT_TEMPLATE_COLOR = "#6982F0";
+
+const DEPARTMENT_TEMPLATE_TYPE = "DEPARTMENT";
+const PRACTITIONER_TEMPLATE_TYPE = "PRACTITIONER";
+const SERVICE_TEMPLATE_TYPE = "SERVICE";
+const CATALOG_TEMPLATE_TYPE = "CATALOG";
+const DIAGNOSTIC_TEST_TEMPLATE_TYPE = "DIAGNOSTIC_TEST";
+const ROOM_TEMPLATE_TYPE = "ROOM";
+
+const createEmptyPaginationState = (): PaginationState => ({
+  items: [],
+  hasMore: false,
+  nextLink: null,
+});
+
+const FormContainer = Form as unknown as React.FC<any>;
+
+const toSafeNumber = (value: unknown, fallback = 0) => {
+  if (value === undefined || value === null || value === "") return fallback;
+
+  const numericValue = Number(value);
+  return Number.isNaN(numericValue) ? fallback : numericValue;
+};
+
+const createInitialResourceRecord = () => ({
+  ...newAvailabilityTemplateCreateDTO,
+  templateName: newAvailabilityTemplateCreateDTO?.templateName ?? "",
+  durationMinutes: toSafeNumber(
+    newAvailabilityTemplateCreateDTO?.durationMinutes,
+    0,
+  ),
+  defaultBufferBeforeMinutes: toSafeNumber(
+    newAvailabilityTemplateCreateDTO?.defaultBufferBeforeMinutes,
+    0,
+  ),
+  defaultBufferAfterMinutes: toSafeNumber(
+    newAvailabilityTemplateCreateDTO?.defaultBufferAfterMinutes,
+    0,
+  ),
+  parallelCapacityValue: toSafeNumber(
+    newAvailabilityTemplateCreateDTO?.parallelCapacityValue,
+    1,
+  ),
+  numberOfResourcesExpected: toSafeNumber(
+    newAvailabilityTemplateCreateDTO?.numberOfResourcesExpected,
+    0,
+  ),
+  versionNo: toSafeNumber(newAvailabilityTemplateCreateDTO?.versionNo, 0),
+  requirePractitioner: Boolean(
+    newAvailabilityTemplateCreateDTO?.requirePractitioner,
+  ),
+  requirePreAssessment: Boolean(
+    newAvailabilityTemplateCreateDTO?.requirePreAssessment,
+  ),
+  allowedServices: Array.isArray(newAvailabilityTemplateCreateDTO?.allowedServices)
+    ? newAvailabilityTemplateCreateDTO.allowedServices
+    : [],
+  workingDays: Array.isArray(newAvailabilityTemplateCreateDTO?.workingDays)
+    ? newAvailabilityTemplateCreateDTO.workingDays
+    : [],
+});
+
+const scheduleUiStateUpdate = (callback: () => void) => {
+  if (typeof window !== "undefined" && window.requestAnimationFrame) {
+    window.requestAnimationFrame(callback);
+    return;
+  }
+
+  callback();
+};
+
+const AddResourceModal: React.FC<AddResourceModalProps> = ({
   mainTemplate,
   open,
   setOpen,
   editRecord,
   selectedFacility,
-  ...props
-}: {
-  mainTemplate: any;
-  open: boolean;
-  setOpen: any;
-  editRecord?: any;
-  selectedFacility: any;
-  readOnly?: boolean;
+  readOnly = false,
 }) => {
   const dispatch = useAppDispatch();
-  const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
-  const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
-  const justOpenedRef = useRef(false);
-
-
-  // ─── Diagnostic Tests Pagination State ────────────────────────────────────
-  const diagnosticTestSize = 20;
-  const [allDiagnosticTests, setAllDiagnosticTests] = useState<any[]>([]);
-  const [diagnosticTestHasMore, setDiagnosticTestHasMore] = useState(false);
-  const [diagnosticTestNextLink, setDiagnosticTestNextLink] = useState<string | null>(null);
-
-  const [triggerDiagnosticTests, { isFetching: isDiagnosticTestLoading }] =
-    useLazyGetAllActiveAppointableDiagnosticTestsQuery();
-
-  // ─── Catalogs Pagination State ─────────────────────────────────────────────
-  const catalogSize = 20;
-  const [allCatalogs, setAllCatalogs] = useState<any[]>([]);
-  const [catalogHasMore, setCatalogHasMore] = useState(false);
-  const [catalogNextLink, setCatalogNextLink] = useState<string | null>(null);
-
-  const [triggerCatalogs, { isFetching: isCatalogLoading }] =
-    useLazyGetAppointableCatalogsByLoggedInFacilityQuery();
-
-  const roomSize = 20;
-  const [roomPage, setRoomPage] = useState(0);
-  const [allRooms, setAllRooms] = useState<any[]>([]);
-  const [roomHasMore, setRoomHasMore] = useState(false);
-  const [roomNextLink, setRoomNextLink] = useState<string | null>(null);
-
-  const [triggerRooms, { isFetching: isRoomLoading }] =
-    useLazyGetActiveAppointableRoomsByDepartmentIdQuery();
-
-  // ─── Services (appointable by facility) Pagination State ──────────────────
-  const servicesFacilitySize = 20;
-  const [allServicesFacility, setAllServicesFacility] = useState<any[]>([]);
-  const [servicesFacilityHasMore, setServicesFacilityHasMore] = useState(false);
-  const [servicesFacilityNextLink, setServicesFacilityNextLink] = useState<string | null>(null);
-
-  const [triggerServicesFacility, { isFetching: isServicesFacilityLoading }] =
-    useLazyGetAppointableServicesByLoggedInFacilityQuery();
-
-  // ─── Services (by department) Pagination State ────────────────────────────
-  const servicesDeptSize = 20;
-  const [allServicesDept, setAllServicesDept] = useState<any[]>([]);
-  const [servicesDeptHasMore, setServicesDeptHasMore] = useState(false);
-  const [servicesDeptNextLink, setServicesDeptNextLink] = useState<string | null>(null);
-
-  const [triggerServicesDept, { isFetching: isServicesDeptLoading }] =
-    useLazyGetServicesByDepartmentQuery();
-
-  // ─── Practitioners (by department) Pagination State ───────────────────────
-  const practitionerDeptSize = 20;
-  const [allPractitionersDept, setAllPractitionersDept] = useState<any[]>([]);
-  const [practitionerDeptHasMore, setPractitionerDeptHasMore] = useState(false);
-  const [practitionerDeptNextLink, setPractitionerDeptNextLink] = useState<string | null>(null);
-
-  const [triggerPractitionersDept, { isFetching: isPractitionerDeptLoading }] =
-    useLazyGetPractitionerByDepartmentQuery();
-
-
-  const diagnosticTestOptions = allDiagnosticTests.map(d => ({
-    label: d.name,
-    value: d.id
-  }));
-
-  const catalogOptions = allCatalogs.map(c => ({
-    label: c.name,
-    value: c.id
-  }));
-
-  const servicesFacilityOptions = allServicesFacility.map(s => ({
-    label: s.name,
-    value: s.id
-  }));
-
-  const servicesDeptOptions = allServicesDept.map(s => ({
-    label: s.name,
-    value: s.id
-  }));
-
-  const practitionerDeptOptions = allPractitionersDept.map(p => ({
-    label: `${p.firstName} ${p.lastName}`,
-    value: p.id
-  }));
-
-  const roomOptions = allRooms.map(r => ({
-    label: r.name,
-    value: r.id
-  }));
-
-  const getEditTimingValues = (source: any) => ({
-    durationMinutes: Number(
-      source?.durationMinutes ??
-      source?.slotDurationMinutes ??
-      0
-    ),
-    defaultBufferBeforeMinutes: Number(
-      source?.defaultBufferBeforeMinutes ??
-      source?.slotBeforeMinutes ??
-      0
-    ),
-    defaultBufferAfterMinutes: Number(
-      source?.defaultBufferAfterMinutes ??
-      source?.slotAfterMinutes ??
-      0
-    ),
-    parallelCapacityValue: Number(
-      source?.parallelCapacityValue ??
-      1
-    )
-  });
-
-
-  const loadDiagnosticTests = async ({ page = 0, append = false }) => {
-    try {
-      const res = await triggerDiagnosticTests({
-        page,
-        size: diagnosticTestSize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setDiagnosticTestHasMore(Boolean(nextLink));
-      setDiagnosticTestNextLink(nextLink);
-
-      if (append) {
-        setAllDiagnosticTests(prev => {
-          const seen = new Set(prev.map(d => d.id));
-          return [...prev, ...rows.filter(d => !seen.has(d.id))];
-        });
-      } else {
-        setAllDiagnosticTests(rows);
-      }
-    } catch (e) {
-      setAllDiagnosticTests([]);
-    }
-  };
-
-  const loadCatalogs = async ({ page = 0, append = false }) => {
-    try {
-      const res = await triggerCatalogs({
-        page,
-        size: catalogSize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setCatalogHasMore(Boolean(nextLink));
-      setCatalogNextLink(nextLink);
-
-      if (append) {
-        setAllCatalogs(prev => {
-          const seen = new Set(prev.map(c => c.id));
-          return [...prev, ...rows.filter(c => !seen.has(c.id))];
-        });
-      } else {
-        setAllCatalogs(rows);
-      }
-    } catch (e) {
-      setAllCatalogs([]);
-    }
-  };
-
-  const loadRooms = async ({ page = 0, append = false }) => {
-    if (!record?.departmentId) return;
-
-    try {
-      const res = await triggerRooms({
-        departmentId: record.departmentId,
-        page,
-        size: roomSize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setRoomHasMore(Boolean(nextLink));
-      setRoomNextLink(nextLink);
-
-      if (append) {
-        setAllRooms(prev => {
-          const seen = new Set(prev.map(r => r.id));
-          return [...prev, ...rows.filter(r => !seen.has(r.id))];
-        });
-      } else {
-        setAllRooms(rows);
-      }
-
-    } catch (e) {
-      setAllRooms([]);
-    }
-  };
-
-  const loadServicesFacility = async ({ page = 0, append = false }) => {
-    try {
-      const res = await triggerServicesFacility({
-        page,
-        size: servicesFacilitySize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setServicesFacilityHasMore(Boolean(nextLink));
-      setServicesFacilityNextLink(nextLink);
-
-      if (append) {
-        setAllServicesFacility(prev => {
-          const seen = new Set(prev.map(s => s.id));
-          return [...prev, ...rows.filter(s => !seen.has(s.id))];
-        });
-      } else {
-        setAllServicesFacility(rows);
-      }
-    } catch (e) {
-      setAllServicesFacility([]);
-    }
-  };
-
-  const loadServicesDept = async ({ page = 0, append = false }) => {
-    if (!record?.departmentId) return;
-    try {
-      const res = await triggerServicesDept({
-        sourceId: record.departmentId,
-        page,
-        size: servicesDeptSize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setServicesDeptHasMore(Boolean(nextLink));
-      setServicesDeptNextLink(nextLink);
-
-      if (append) {
-        setAllServicesDept(prev => {
-          const seen = new Set(prev.map(s => s.id));
-          return [...prev, ...rows.filter(s => !seen.has(s.id))];
-        });
-      } else {
-        setAllServicesDept(rows);
-      }
-    } catch (e) {
-      setAllServicesDept([]);
-    }
-  };
-
-  const loadPractitionersDept = async ({ page = 0, append = false }) => {
-    if (!record?.departmentId) return;
-    try {
-      const res = await triggerPractitionersDept({
-        departmentId: record.departmentId,
-        page,
-        size: practitionerDeptSize,
-        sort: 'id,asc'
-      }).unwrap();
-
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setPractitionerDeptHasMore(Boolean(nextLink));
-      setPractitionerDeptNextLink(nextLink);
-
-      if (append) {
-        setAllPractitionersDept(prev => {
-          const seen = new Set(prev.map(p => p.id));
-          return [...prev, ...rows.filter(p => !seen.has(p.id))];
-        });
-      } else {
-        setAllPractitionersDept(rows);
-      }
-    } catch (e) {
-      setAllPractitionersDept([]);
-    }
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    loadDiagnosticTests({ page: 0 });
-    loadCatalogs({ page: 0 });
-    loadServicesFacility({ page: 0 });
-  }, [open]);
-
-  useEffect(() => {
-    if (!record?.departmentId) return;
-    setAllServicesDept([]);
-    loadServicesDept({ page: 0 });
-
-    setAllPractitionersDept([]);
-    loadPractitionersDept({ page: 0 });
-
-    setAllRooms([]);
-    setRoomPage(0);
-    loadRooms({ page: 0 });
-  }, [record?.departmentId]);
-
-
-
-  useEffect(() => {
-    if (!open) return;
-
-    justOpenedRef.current = true;
-
-    if (editRecord?.id) {
-      const rawAllowed = editRecord?.allowedServices;
-      const normalizedAllowedServices = Array.isArray(rawAllowed)
-        ? rawAllowed
-          .map((s: any) => {
-            if (typeof s === 'string') return { id: null, service: s };
-            if (s && typeof s === 'object' && 'service' in s) {
-              return { id: s.id ?? null, service: s.service ?? null };
-            }
-            return null;
-          })
-          .filter(Boolean)
-        : [];
-      setRecord({
-        ...editRecord,
-        resourceId: editRecord?.resourceId,
-        allowedServices: normalizedAllowedServices,
-        facilityId: selectedFacility?.id ?? editRecord?.facilityId,
-        departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
-        workingDays: editRecordWorkingDays,
-        ...getEditTimingValues(editRecord)
-      });
-      workingDaysTouchedRef.current = false;
-      return;
-    }
-    setRecord({
-      ...newAvailabilityTemplateCreateDTO,
-      parentTemplateId: mainTemplate?.id,
-      facilityId: selectedFacility?.id,
-      departmentId: mainTemplate?.departmentId,
-      workingDays: mainTemplate?.workingDays ?? [],
-      parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1)
-    });
-    applyWorkingDays(mainTemplate?.workingDays ?? []);
-  }, [
-    open,
-    editRecord,
-    mainTemplate?.id,
-    mainTemplate?.departmentId,
-    selectedFacility?.id
-  ]);
-
-  const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
-  useEffect(() => {
-    if (!open) return;
-    if (editRecord?.id) {
-      setCurrentColor(editRecord?.templateColor ?? mainTemplate?.color ?? '#6982F0');
-    } else {
-      setCurrentColor(mainTemplate?.color ?? '#6982F0');
-    }
-  }, [open, editRecord?.id, editRecord?.templateColor, mainTemplate?.color]);
-
-  const statusEnum = useEnumOptions('TemplateStatus');
-  const templateTypeEnum = useEnumOptions('TemplateType');
-  const filteredtemplateTypeEnum = templateTypeEnum?.filter(
-    option => option.value !== "DEPARTMENT"
+  const [resourceRecord, setResourceRecord] = useState<any>(
+    createInitialResourceRecord,
   );
 
-  const {
-    data: facilityListResponse,
-    isLoading: isGettingFacilities,
-    isFetching: isFetchingFacilities
-  } = useGetActiveFacilitiesQuery({});
-  const [getPractitioner] = useLazyGetPractitionerByIdQuery();
-  const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
-  const [getCatalog] = useLazyGetCatalogByIdQuery();
-  const [getService] = useLazyGetServiceByIdQuery();
-  const [getRoom] = useLazyGetRoomByIdQuery();
+  const [selectedTemplateColor, setSelectedTemplateColor] = useState(
+    DEFAULT_TEMPLATE_COLOR,
+  );
+  const [isSaving, setIsSaving] = useState(false);
 
-
-
-  const { data: departmentServices = [] } =
-    useGetDepartmentServicesQuery(
-      { departmentId: record?.departmentId },
-      { skip: !record?.departmentId }
-    );
-
+  const isModalJustOpenedRef = useRef(false);
   const allowedServicesTouchedRef = useRef(false);
-  const dayOptions = useEnumOptions('DayOfWeek');
-  const dayOptionsKey = useMemo(
-    () => (dayOptions ?? []).map(d => `${d.value}:${d.label}`).join('|'),
-    [dayOptions]
-  );
   const workingDaysTouchedRef = useRef(false);
-  useEffect(() => {
-    allowedServicesTouchedRef.current = false;
-  }, [record?.departmentId]);
+  const timingFieldsTouchedRef = useRef(false);
+  const initializedRecordKeyRef = useRef<string | null>(null);
+  const lastDepartmentLoadKeyRef = useRef<string | null>(null);
+  const lastAppliedResourceDefaultsKeyRef = useRef<string | null>(null);
+  const lastClearedResourceDefaultsKeyRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    workingDaysTouchedRef.current = false;
-  }, [record?.facilityId]);
+  const [diagnosticTestsPagination, setDiagnosticTestsPagination] =
+    useState<PaginationState>(createEmptyPaginationState);
+  const [catalogsPagination, setCatalogsPagination] =
+    useState<PaginationState>(createEmptyPaginationState);
+  const [roomsPagination, setRoomsPagination] =
+    useState<PaginationState>(createEmptyPaginationState);
+  const [facilityServicesPagination, setFacilityServicesPagination] =
+    useState<PaginationState>(createEmptyPaginationState);
+  const [departmentServicesPagination, setDepartmentServicesPagination] =
+    useState<PaginationState>(createEmptyPaginationState);
+  const [
+    departmentPractitionersPagination,
+    setDepartmentPractitionersPagination,
+  ] = useState<PaginationState>(createEmptyPaginationState);
 
-  useEffect(() => {
-    if (!open) return;
-    allowedServicesTouchedRef.current = false;
-    workingDaysTouchedRef.current = false;
-    if (editRecord?.id) {
-      applyWorkingDays(editRecord?.workingDays ?? []);
-    } else {
-      applyWorkingDays(mainTemplate?.workingDays ?? []);
-    }
-  }, [open]);
-
-  const workingDaysRecord = useMemo(() => {
-    const map: Record<string, boolean> = {};
-    if (!dayOptions || dayOptions.length === 0) return map;
-
-    dayOptions.forEach(day => {
-      map[day.value] = false;
-    });
-
-    (record?.workingDays ?? []).forEach(day => {
-      if (day?.dayOfWeek !== undefined && day?.dayOfWeek !== null) {
-        map[day.dayOfWeek] = day.isWorking !== false;
-      }
-    });
-
-    return map;
-  }, [record?.workingDays, dayOptionsKey]);
-
-  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
-    if (!dayOptions || dayOptions.length === 0) return;
-
-    const nextWorkingDays = dayOptions.map(day => ({
-      dayOfWeek: day.value,
-      isWorking: !!nextRecord[day.value],
-    }));
-
-    workingDaysTouchedRef.current = true;
-    setRecord(prev => ({
-      ...prev,
-      workingDays: nextWorkingDays,
-    }));
-  };
-
-  const normalizeWorkingDays = (sourceWorkingDays: any[] = []) => {
-    if (!dayOptions || dayOptions.length === 0) return [];
-
-    return dayOptions.map(day => {
-      const found = sourceWorkingDays.find(
-        (d: any) => String(d?.dayOfWeek) === String(day.value)
-      );
-
-      return {
-        dayOfWeek: day.value,
-        isWorking: found ? found.isWorking !== false : false,
-      };
-    });
-  };
-
-  const applyWorkingDays = (sourceWorkingDays: any[] = []) => {
-    if (!dayOptions || dayOptions.length === 0) return;
-
-    const normalizedWorkingDays = normalizeWorkingDays(sourceWorkingDays);
-
-    workingDaysTouchedRef.current = false;
-    setRecord(prev => {
-      const prevDays = prev?.workingDays ?? [];
-      const same =
-        prevDays.length === normalizedWorkingDays.length &&
-        prevDays.every((d, i) =>
-          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
-          d.isWorking === normalizedWorkingDays[i].isWorking
-        );
-      if (same) return prev;
-      return {
-        ...prev,
-        workingDays: normalizedWorkingDays,
-      };
-    });
-  };
-
-  const isEditingRecord = Boolean(editRecord?.id);
-  const editRecordWorkingDays = useMemo(
-    () => (Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : []),
-    [editRecord?.workingDays]
+  const statusOptions = useEnumOptions("TemplateStatus");
+  const filteredTemplateTypeOptions = useEnumOptions("TemplateType", {
+    exclude: [DEPARTMENT_TEMPLATE_TYPE],
+  });
+  const dayOptions = useEnumOptions("DayOfWeek");
+  const dayOptionsKey = useMemo(
+    () => (dayOptions ?? []).map((day: any) => `${day.value}:${day.label}`).join("|"),
+    [dayOptions],
   );
 
-  const normalizeAllowedServices = (input: any) => {
-    if (!Array.isArray(input)) return [];
-    return input
-      .map((s: any) => {
-        if (typeof s === 'string') return { id: null, service: s };
-        if (s && typeof s === 'object' && 'service' in s) {
-          return { id: s.id ?? null, service: s.service ?? null };
-        }
-        return null;
-      })
-      .filter(Boolean);
-  };
+  const { data: facilityList = [] } = useGetActiveFacilitiesQuery({});
+
+  const [loadDiagnosticTestsQuery, { isFetching: isDiagnosticTestLoading }] =
+    useLazyGetAllActiveAppointableDiagnosticTestsQuery();
+  const [loadCatalogsQuery, { isFetching: isCatalogLoading }] =
+    useLazyGetAppointableCatalogsByLoggedInFacilityQuery();
+  const [loadRoomsQuery, { isFetching: isRoomLoading }] =
+    useLazyGetActiveAppointableRoomsByDepartmentIdQuery();
+  const [loadFacilityServicesQuery, { isFetching: isFacilityServiceLoading }] =
+    useLazyGetAppointableServicesByLoggedInFacilityQuery();
+  const [
+    loadDepartmentServicesQuery,
+    { isFetching: isDepartmentServiceLoading },
+  ] = useLazyGetServicesByDepartmentQuery();
+  const [
+    loadDepartmentPractitionersQuery,
+    { isFetching: isDepartmentPractitionerLoading },
+  ] = useLazyGetPractitionerByDepartmentQuery();
+
+  const [getPractitionerById] = useLazyGetPractitionerByIdQuery();
+  const [getDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [getCatalogById] = useLazyGetCatalogByIdQuery();
+  const [getServiceById] = useLazyGetServiceByIdQuery();
+  const [getRoomById] = useLazyGetRoomByIdQuery();
+
+  const [createAvailabilityTemplate] = useCreateAvailabilityTemplateMutation();
+  const [updateAvailabilityTemplate] = useUpdateAvailabilityTemplateMutation();
+
+  const isEditMode = Boolean(resourceRecord?.id);
+  const isEditingExistingRecord = Boolean(editRecord?.id);
+  const isReadOnly = Boolean(readOnly);
+
+  const mainTemplateWorkingDays = useMemo(
+    () =>
+      Array.isArray(mainTemplate?.workingDays) ? mainTemplate.workingDays : [],
+    [mainTemplate?.workingDays],
+  );
+
+  const mainTemplateWorkingDaysKey = useMemo(
+    () =>
+      mainTemplateWorkingDays
+        .map((workingDay: any) => `${workingDay?.dayOfWeek}:${workingDay?.isWorking}`)
+        .join("|"),
+    [mainTemplateWorkingDays],
+  );
+
+  const editRecordWorkingDays = useMemo(
+    () =>
+      Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : [],
+    [editRecord?.workingDays],
+  );
+
+  const editRecordWorkingDaysKey = useMemo(
+    () =>
+      editRecordWorkingDays
+        .map((workingDay: any) => `${workingDay?.dayOfWeek}:${workingDay?.isWorking}`)
+        .join("|"),
+    [editRecordWorkingDays],
+  );
+
+  const safeResourceRecord = useMemo(
+    () => ({
+      ...resourceRecord,
+      templateName: resourceRecord?.templateName ?? "",
+      status: resourceRecord?.status ?? "",
+      templateType: resourceRecord?.templateType ?? "",
+      resourceId: resourceRecord?.resourceId ?? "",
+      facilityId: resourceRecord?.facilityId ?? "",
+      departmentId: resourceRecord?.departmentId ?? "",
+      defaultServiceId: resourceRecord?.defaultServiceId ?? "",
+      defaultPractitionerId: resourceRecord?.defaultPractitionerId ?? "",
+      durationMinutes: toSafeNumber(resourceRecord?.durationMinutes, 0),
+      defaultBufferBeforeMinutes: toSafeNumber(
+        resourceRecord?.defaultBufferBeforeMinutes,
+        0,
+      ),
+      defaultBufferAfterMinutes: toSafeNumber(
+        resourceRecord?.defaultBufferAfterMinutes,
+        0,
+      ),
+      parallelCapacityValue: toSafeNumber(
+        resourceRecord?.parallelCapacityValue,
+        1,
+      ),
+      numberOfResourcesExpected: toSafeNumber(
+        resourceRecord?.numberOfResourcesExpected,
+        0,
+      ),
+      versionNo: toSafeNumber(resourceRecord?.versionNo, 0),
+      requirePractitioner: Boolean(resourceRecord?.requirePractitioner),
+      requirePreAssessment: Boolean(resourceRecord?.requirePreAssessment),
+      allowedServices: Array.isArray(resourceRecord?.allowedServices)
+        ? resourceRecord.allowedServices
+        : [],
+      workingDays: Array.isArray(resourceRecord?.workingDays)
+        ? resourceRecord.workingDays
+        : [],
+    }),
+    [resourceRecord],
+  );
+
+  const setResourceRecordAndTrackTiming = useCallback((nextRecord: any) => {
+    setResourceRecord((previousRecord: any) => {
+      const resolvedRecord =
+        typeof nextRecord === "function" ? nextRecord(previousRecord) : nextRecord;
+
+      if (resolvedRecord === previousRecord) {
+        return previousRecord;
+      }
+
+      if (
+        resolvedRecord?.durationMinutes !== previousRecord?.durationMinutes ||
+        resolvedRecord?.defaultBufferBeforeMinutes !==
+          previousRecord?.defaultBufferBeforeMinutes ||
+        resolvedRecord?.defaultBufferAfterMinutes !==
+          previousRecord?.defaultBufferAfterMinutes ||
+        resolvedRecord?.parallelCapacityValue !==
+          previousRecord?.parallelCapacityValue
+      ) {
+        timingFieldsTouchedRef.current = true;
+      }
+
+      return resolvedRecord;
+    });
+  }, []);
+
+  const appendUniqueById = useCallback(
+    (currentItems: any[], newItems: any[]) => {
+      const existingIds = new Set(currentItems.map((item) => item.id));
+      return [
+        ...currentItems,
+        ...newItems.filter((item) => !existingIds.has(item.id)),
+      ];
+    },
+    [],
+  );
+
+  const normalizeAllowedServices = useCallback(
+    (input: unknown): AllowedService[] => {
+      if (!Array.isArray(input)) return [];
+
+      return input
+        .map((allowedService: any) => {
+          if (typeof allowedService === "string") {
+            return { id: null, service: allowedService };
+          }
+
+          if (
+            allowedService &&
+            typeof allowedService === "object" &&
+            "service" in allowedService
+          ) {
+            return {
+              id: allowedService.id ?? null,
+              service: allowedService.service ?? null,
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean) as AllowedService[];
+    },
+    [],
+  );
 
   const parentTemplateAllowedServices = useMemo(
     () => normalizeAllowedServices(mainTemplate?.allowedServices),
-    [mainTemplate?.allowedServices]
+    [mainTemplate?.allowedServices, normalizeAllowedServices],
   );
 
-  const isEditMode = Boolean(record?.id);
+  const areAllowedServicesEqual = useCallback(
+    (firstAllowedServices: any[] = [], secondAllowedServices: any[] = []) => {
+      if (firstAllowedServices.length !== secondAllowedServices.length)
+        return false;
 
-  const departmentServiceValues = useMemo(() => {
-    if (!Array.isArray(departmentServices)) return [];
-    return departmentServices
-      .map((s: any) => s?.service)
-      .filter((v: any) => typeof v === 'string' && v.length > 0);
-  }, [departmentServices]);
-
-  const departmentServiceValuesKey = useMemo(
-    () => departmentServiceValues.join('|'),
-    [departmentServiceValues]
+      return firstAllowedServices.every(
+        (allowedService, index) =>
+          allowedService?.id === secondAllowedServices[index]?.id &&
+          allowedService?.service === secondAllowedServices[index]?.service,
+      );
+    },
+    [],
   );
 
-  useEffect(() => {
-    if (allowedServicesTouchedRef.current) return;
-    if (!isEditMode) {
-      if (parentTemplateAllowedServices.length === 0) return;
-      setRecord(prev => {
-        const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
-        if (prevAllowed.length > 0) return prev;
+  const selectedAllowedServiceValues = useMemo(() => {
+    if (!Array.isArray(resourceRecord?.allowedServices)) return [];
+
+    return resourceRecord.allowedServices
+      .map((allowedService: AllowedService) => allowedService?.service)
+      .filter(
+        (service: unknown): service is string =>
+          typeof service === "string" && service.length > 0,
+      );
+  }, [resourceRecord?.allowedServices]);
+
+  const getTimingValues = useCallback(
+    (source: any) => ({
+      durationMinutes: toSafeNumber(
+        source?.durationMinutes ??
+          source?.defaultDurationMinutes ??
+          source?.slotDurationMinutes,
+        0,
+      ),
+      defaultBufferBeforeMinutes: toSafeNumber(
+        source?.defaultBufferBeforeMinutes ??
+          source?.defaultSlotBeforeMinutes ??
+          source?.slotBeforeMinutes,
+        0,
+      ),
+      defaultBufferAfterMinutes: toSafeNumber(
+        source?.defaultBufferAfterMinutes ??
+          source?.defaultSlotAfterMinutes ??
+          source?.slotAfterMinutes,
+        0,
+      ),
+      parallelCapacityValue: toSafeNumber(source?.parallelCapacityValue, 1),
+    }),
+    [],
+  );
+
+  const areWorkingDaysEqual = useCallback(
+    (firstWorkingDays: any[] = [], secondWorkingDays: any[] = []) => {
+      if (firstWorkingDays.length !== secondWorkingDays.length) return false;
+
+      return firstWorkingDays.every(
+        (workingDay, index) =>
+          String(workingDay?.dayOfWeek) ===
+            String(secondWorkingDays[index]?.dayOfWeek) &&
+          Boolean(workingDay?.isWorking) ===
+            Boolean(secondWorkingDays[index]?.isWorking),
+      );
+    },
+    [],
+  );
+
+  const normalizeWorkingDays = useCallback(
+    (sourceWorkingDays: any[] = []): WorkingDay[] => {
+      if (!dayOptions.length) return [];
+
+      return dayOptions.map((dayOption) => {
+        const matchedWorkingDay = sourceWorkingDays.find(
+          (workingDay: any) =>
+            String(workingDay?.dayOfWeek) === String(dayOption.value),
+        );
+
         return {
-          ...prev,
-          allowedServices: parentTemplateAllowedServices,
+          dayOfWeek: dayOption.value,
+          isWorking: matchedWorkingDay
+            ? matchedWorkingDay.isWorking !== false
+            : false,
         };
       });
-      return;
+    },
+    [dayOptionsKey],
+  );
+
+  const applyWorkingDays = useCallback(
+    (sourceWorkingDays: any[] = []) => {
+      if (!dayOptions.length) return;
+
+      const normalizedWorkingDays = normalizeWorkingDays(sourceWorkingDays);
+      workingDaysTouchedRef.current = false;
+
+      setResourceRecord((previousRecord: any) => {
+        const previousWorkingDays = previousRecord?.workingDays ?? [];
+        if (areWorkingDaysEqual(previousWorkingDays, normalizedWorkingDays))
+          return previousRecord;
+
+        return {
+          ...previousRecord,
+          workingDays: normalizedWorkingDays,
+        };
+      });
+    },
+    [areWorkingDaysEqual, normalizeWorkingDays, dayOptions.length],
+  );
+
+  const workingDaysRecord = useMemo(() => {
+    const workingDaysMap: Record<string, boolean> = {};
+
+    if (!dayOptions.length) return workingDaysMap;
+
+    dayOptions.forEach((dayOption) => {
+      workingDaysMap[dayOption.value] = false;
+    });
+
+    (resourceRecord?.workingDays ?? []).forEach((workingDay: WorkingDay) => {
+      if (
+        workingDay?.dayOfWeek !== undefined &&
+        workingDay?.dayOfWeek !== null
+      ) {
+        workingDaysMap[workingDay.dayOfWeek] = workingDay.isWorking !== false;
+      }
+    });
+
+    return workingDaysMap;
+  }, [resourceRecord?.workingDays, dayOptionsKey]);
+
+  const updatePaginationState = useCallback(
+    (
+      setPaginationState: React.Dispatch<React.SetStateAction<PaginationState>>,
+      rows: any[],
+      nextLink: string | null,
+      append: boolean,
+    ) => {
+      setPaginationState((previousState) => ({
+        items: append ? appendUniqueById(previousState.items, rows) : rows,
+        hasMore: Boolean(nextLink),
+        nextLink,
+      }));
+    },
+    [appendUniqueById],
+  );
+
+  const clearPaginationState = useCallback(
+    (
+      setPaginationState: React.Dispatch<React.SetStateAction<PaginationState>>,
+      append: boolean,
+    ) => {
+      if (append) return;
+      setPaginationState(createEmptyPaginationState());
+    },
+    [],
+  );
+
+  const loadDiagnosticTests = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      try {
+        const response = await loadDiagnosticTestsQuery({
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+        updatePaginationState(
+          setDiagnosticTestsPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+      } catch {
+        clearPaginationState(setDiagnosticTestsPagination, append);
+      }
+    },
+    [clearPaginationState, loadDiagnosticTestsQuery, updatePaginationState],
+  );
+
+  const loadCatalogs = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      try {
+        const response = await loadCatalogsQuery({
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+        updatePaginationState(
+          setCatalogsPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+      } catch {
+        clearPaginationState(setCatalogsPagination, append);
+      }
+    },
+    [clearPaginationState, loadCatalogsQuery, updatePaginationState],
+  );
+
+  const loadRooms = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      if (!safeResourceRecord?.departmentId) return;
+
+      try {
+        const response = await loadRoomsQuery({
+          departmentId: safeResourceRecord.departmentId,
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+
+        updatePaginationState(
+          setRoomsPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+      } catch {
+        clearPaginationState(setRoomsPagination, append);
+      }
+    },
+    [
+      clearPaginationState,
+      loadRoomsQuery,
+      safeResourceRecord?.departmentId,
+      updatePaginationState,
+    ],
+  );
+
+  const loadFacilityServices = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      try {
+        const response = await loadFacilityServicesQuery({
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+        updatePaginationState(
+          setFacilityServicesPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+        console.log("Facility Services Response:", response);
+      } catch {
+        clearPaginationState(setFacilityServicesPagination, append);
+      }
+    },
+    [clearPaginationState, loadFacilityServicesQuery, updatePaginationState],
+  );
+
+  const loadDepartmentServices = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      if (!safeResourceRecord?.departmentId) return;
+
+      try {
+        const response = await loadDepartmentServicesQuery({
+          sourceId: safeResourceRecord.departmentId,
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+
+        updatePaginationState(
+          setDepartmentServicesPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+      } catch {
+        clearPaginationState(setDepartmentServicesPagination, append);
+      }
+    },
+    [
+      clearPaginationState,
+      loadDepartmentServicesQuery,
+      safeResourceRecord?.departmentId,
+      updatePaginationState,
+    ],
+  );
+
+  const loadDepartmentPractitioners = useCallback(
+    async ({ page = 0, append = false }: LoadPageParams = {}) => {
+      if (!safeResourceRecord?.departmentId) return;
+
+      try {
+        const response = await loadDepartmentPractitionersQuery({
+          departmentId: safeResourceRecord.departmentId,
+          page,
+          size: PAGE_SIZE,
+          sort: "id,asc",
+        }).unwrap();
+
+        updatePaginationState(
+          setDepartmentPractitionersPagination,
+          response?.data ?? [],
+          response?.links?.next ?? null,
+          append,
+        );
+      } catch {
+        clearPaginationState(setDepartmentPractitionersPagination, append);
+      }
+    },
+    [
+      clearPaginationState,
+      loadDepartmentPractitionersQuery,
+      safeResourceRecord?.departmentId,
+      updatePaginationState,
+    ],
+  );
+
+  const loadNextPage = useCallback(
+    async (
+      nextLink: string | null,
+      loader: (params: LoadPageParams) => Promise<void>,
+    ) => {
+      if (!nextLink) return;
+
+      const { page } = extractPaginationFromLink(nextLink);
+      await loader({ page, append: true });
+    },
+    [],
+  );
+
+  const setWorkingDaysRecord = useCallback(
+    (nextWorkingDaysRecord: Record<string, boolean>) => {
+      if (!dayOptions.length) return;
+
+      const nextWorkingDays = dayOptions.map((dayOption) => ({
+        dayOfWeek: dayOption.value,
+        isWorking: Boolean(nextWorkingDaysRecord[dayOption.value]),
+      }));
+
+      workingDaysTouchedRef.current = true;
+
+      scheduleUiStateUpdate(() => {
+        setResourceRecord((previousRecord: any) => {
+          if (
+            areWorkingDaysEqual(
+              previousRecord?.workingDays ?? [],
+              nextWorkingDays,
+            )
+          ) {
+            return previousRecord;
+          }
+
+          return {
+            ...previousRecord,
+            workingDays: nextWorkingDays,
+          };
+        });
+      });
+    },
+    [areWorkingDaysEqual, dayOptionsKey],
+  );
+
+  const handleTemplateTypeChange = useCallback(
+    (nextRecord: any) => {
+      const nextTemplateType = nextRecord?.templateType;
+
+      workingDaysTouchedRef.current = false;
+      timingFieldsTouchedRef.current = false;
+      isModalJustOpenedRef.current = false;
+      lastAppliedResourceDefaultsKeyRef.current = null;
+      lastClearedResourceDefaultsKeyRef.current = null;
+
+      setResourceRecord((previousRecord: any) => ({
+        ...previousRecord,
+        ...nextRecord,
+        resourceId: undefined,
+        defaultPractitionerId: undefined,
+        workingDays: normalizeWorkingDays(mainTemplateWorkingDays),
+        requirePractitioner: nextTemplateType === PRACTITIONER_TEMPLATE_TYPE,
+      }));
+    },
+    [mainTemplateWorkingDays, normalizeWorkingDays],
+  );
+
+  const handleAllowedServiceChange = useCallback(
+    (serviceValue: string, fieldName: string, nextRecord: any) => {
+      const isChecked = Boolean(nextRecord[fieldName]);
+      allowedServicesTouchedRef.current = true;
+
+      scheduleUiStateUpdate(() => {
+        setResourceRecord((previousRecord: any) => {
+          const previousAllowedServices = Array.isArray(
+            previousRecord?.allowedServices,
+          )
+            ? previousRecord.allowedServices
+            : [];
+
+          const previousServiceValues = previousAllowedServices
+            .map((allowedService: AllowedService) => allowedService?.service)
+            .filter(
+              (service: unknown): service is string =>
+                typeof service === "string" && service.length > 0,
+            );
+
+          if (isChecked) {
+            if (previousServiceValues.includes(serviceValue))
+              return previousRecord;
+
+            return {
+              ...previousRecord,
+              allowedServices: [
+                ...previousAllowedServices,
+                { id: null, service: serviceValue },
+              ],
+            };
+          }
+
+          if (!previousServiceValues.includes(serviceValue)) {
+            return previousRecord;
+          }
+
+          return {
+            ...previousRecord,
+            allowedServices: previousAllowedServices.filter(
+              (allowedService: AllowedService) =>
+                allowedService?.service !== serviceValue,
+            ),
+          };
+        });
+      });
+    },
+    [],
+  );
+
+  const extractErrorMessage = useCallback((error: any): string => {
+    const normalizeMessage = (message?: unknown) => {
+      if (typeof message !== "string" || !message.trim()) return "";
+
+      return message
+        .replace(/^error\./i, "")
+        .replace(/_/g, " ")
+        .trim();
+    };
+
+    const possibleMessages = [
+      error?.data?.properties?.message,
+      error?.data?.message,
+      error?.data?.detail,
+      error?.data?.title,
+      error?.error?.data?.properties?.message,
+      error?.error?.data?.message,
+      error?.error?.data?.detail,
+      error?.error?.data?.title,
+      error?.message,
+    ];
+
+    for (const message of possibleMessages) {
+      const normalizedMessage = normalizeMessage(message);
+      const lowerMessage = normalizedMessage.toLowerCase();
+
+      if (
+        normalizedMessage &&
+        lowerMessage !== "internal server error" &&
+        lowerMessage !== "bad request"
+      ) {
+        return normalizedMessage;
+      }
     }
 
-    if (!departmentServiceValues || departmentServiceValues.length === 0) return;
-    setRecord(prev => {
-      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
-      if (prevAllowed.length > 0) return prev;
-      return {
-        ...prev,
-        allowedServices: departmentServiceValues.map((service: string) => ({
-          id: null,
-          service
-        })),
-      };
-    });
-  }, [departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
+    return "Save Failed";
+  }, []);
+
+  const validateRecordBeforeSave = useCallback(() => {
+    if (!safeResourceRecord?.templateName?.trim()) {
+      dispatch(notify({ msg: "Template Name is required", sev: "warning" }));
+      return false;
+    }
+
+    if (!safeResourceRecord?.facilityId) {
+      dispatch(notify({ msg: "Facility is required", sev: "warning" }));
+      return false;
+    }
+
+    if (!safeResourceRecord?.templateType) {
+      dispatch(notify({ msg: "Template Type is required", sev: "warning" }));
+      return false;
+    }
+
+    if (!safeResourceRecord?.departmentId) {
+      dispatch(notify({ msg: "Department is required", sev: "warning" }));
+      return false;
+    }
+
+    if (!safeResourceRecord?.resourceId) {
+      dispatch(notify({ msg: "Resource is required", sev: "warning" }));
+      return false;
+    }
+
+    if (
+      safeResourceRecord?.requirePractitioner &&
+      !safeResourceRecord?.defaultPractitionerId
+    ) {
+      dispatch(
+        notify({ msg: "Default Practitioner is required", sev: "warning" }),
+      );
+      return false;
+    }
+
+    return true;
+  }, [dispatch, safeResourceRecord]);
+
+  const handleSaveMainInfo = useCallback(async () => {
+    if (isSaving) return;
+    if (!validateRecordBeforeSave()) return;
+
+    setIsSaving(true);
+
+    const payload = {
+      ...resourceRecord,
+      numberOfResourcesExpected: toSafeNumber(
+        resourceRecord?.numberOfResourcesExpected,
+        0,
+      ),
+      durationMinutes: toSafeNumber(resourceRecord?.durationMinutes, 0),
+      defaultBufferBeforeMinutes: toSafeNumber(
+        resourceRecord?.defaultBufferBeforeMinutes,
+        0,
+      ),
+      defaultBufferAfterMinutes: toSafeNumber(
+        resourceRecord?.defaultBufferAfterMinutes,
+        0,
+      ),
+      parallelCapacityValue: toSafeNumber(
+        resourceRecord?.parallelCapacityValue,
+        1,
+      ),
+      allowedServices: Array.isArray(resourceRecord?.allowedServices)
+        ? resourceRecord.allowedServices
+        : [],
+      workingDays: Array.isArray(resourceRecord?.workingDays)
+        ? resourceRecord.workingDays
+        : [],
+    };
+
+    try {
+      if (isEditMode) {
+        await updateAvailabilityTemplate({
+          id: resourceRecord?.id,
+          ...payload,
+        }).unwrap();
+      } else {
+        await createAvailabilityTemplate(payload).unwrap();
+      }
+
+      dispatch(
+        notify({
+          msg: isEditMode ? "Updated Successfully" : "Saved Successfully",
+          sev: "success",
+        }),
+      );
+      setResourceRecord(createInitialResourceRecord());
+      setSelectedTemplateColor(DEFAULT_TEMPLATE_COLOR);
+      setOpen(false);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      dispatch(notify({ msg: errorMessage, sev: "warning" }));
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    createAvailabilityTemplate,
+    dispatch,
+    extractErrorMessage,
+    isEditMode,
+    isSaving,
+    resourceRecord,
+    setOpen,
+    updateAvailabilityTemplate,
+    validateRecordBeforeSave,
+  ]);
+
+  const applyResourceDefaults = useCallback(
+    (resourceDetails: any, sourceWorkingDays?: any[]) => {
+      const shouldApplyResourceDefaults = !isEditingExistingRecord;
+
+      if (isEditingExistingRecord && isModalJustOpenedRef.current) {
+        applyWorkingDays(editRecordWorkingDays);
+        isModalJustOpenedRef.current = false;
+        return;
+      }
+
+      if (sourceWorkingDays && !workingDaysTouchedRef.current) {
+        applyWorkingDays(sourceWorkingDays);
+      }
+
+      if (!shouldApplyResourceDefaults || timingFieldsTouchedRef.current) {
+        isModalJustOpenedRef.current = false;
+        return;
+      }
+
+      setResourceRecord((previousRecord: any) => {
+        const timingValues = getTimingValues(resourceDetails);
+        const nextDefaultPractitionerId =
+          previousRecord?.templateType === PRACTITIONER_TEMPLATE_TYPE
+            ? resourceDetails?.id
+            : previousRecord?.defaultPractitionerId;
+
+        if (
+          previousRecord?.durationMinutes === timingValues.durationMinutes &&
+          previousRecord?.defaultBufferBeforeMinutes ===
+            timingValues.defaultBufferBeforeMinutes &&
+          previousRecord?.defaultBufferAfterMinutes ===
+            timingValues.defaultBufferAfterMinutes &&
+          previousRecord?.parallelCapacityValue ===
+            timingValues.parallelCapacityValue &&
+          previousRecord?.defaultPractitionerId === nextDefaultPractitionerId
+        ) {
+          return previousRecord;
+        }
+
+        return {
+          ...previousRecord,
+          ...timingValues,
+          defaultPractitionerId: nextDefaultPractitionerId,
+        };
+      });
+
+      isModalJustOpenedRef.current = false;
+    },
+    [
+      applyWorkingDays,
+      editRecordWorkingDays,
+      getTimingValues,
+      isEditingExistingRecord,
+    ],
+  );
 
   useEffect(() => {
     if (!open) return;
-    if (parentTemplateAllowedServices.length === 0) return;
-    setRecord(prev => {
-      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
-      if (prevAllowed.length > 0) return prev;
-      return {
-        ...prev,
-        allowedServices: parentTemplateAllowedServices,
-      };
-    });
-  }, [open, parentTemplateAllowedServices]);
 
- 
+    loadDiagnosticTests({ page: 0 });
+    loadCatalogs({ page: 0 });
+    loadFacilityServices({ page: 0 });
+  }, [loadCatalogs, loadDiagnosticTests, loadFacilityServices, open]);
 
   useEffect(() => {
-    if (!record?.resourceId) {
-      if (isEditingRecord) {
-        return;
-      }
-      setRecord(prev => ({
-        ...prev,
-        durationMinutes: 0,
-        defaultBufferBeforeMinutes: 0,
-        defaultBufferAfterMinutes: 0,
-        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
-        defaultPractitionerId: undefined
-      }));
-
-      if (!isEditingRecord) {
-        applyWorkingDays(mainTemplate?.workingDays ?? []);
-      }
-
+    if (!safeResourceRecord?.departmentId) {
+      lastDepartmentLoadKeyRef.current = null;
       return;
     }
 
-    if (record?.templateType === "PRACTITIONER") {
-      getPractitioner(record.resourceId)
+    const departmentLoadKey = String(safeResourceRecord.departmentId);
+    if (lastDepartmentLoadKeyRef.current === departmentLoadKey) return;
+    lastDepartmentLoadKeyRef.current = departmentLoadKey;
+
+    setDepartmentServicesPagination(createEmptyPaginationState());
+    setDepartmentPractitionersPagination(createEmptyPaginationState());
+    setRoomsPagination(createEmptyPaginationState());
+
+    loadDepartmentServices({ page: 0 });
+    loadDepartmentPractitioners({ page: 0 });
+    loadRooms({ page: 0 });
+  }, [
+    loadDepartmentPractitioners,
+    loadDepartmentServices,
+    loadRooms,
+    safeResourceRecord?.departmentId,
+  ]);
+
+  useEffect(() => {
+    if (!open) {
+      initializedRecordKeyRef.current = null;
+      lastDepartmentLoadKeyRef.current = null;
+      lastAppliedResourceDefaultsKeyRef.current = null;
+      lastClearedResourceDefaultsKeyRef.current = null;
+      isModalJustOpenedRef.current = false;
+      allowedServicesTouchedRef.current = false;
+      workingDaysTouchedRef.current = false;
+      timingFieldsTouchedRef.current = false;
+      setSelectedTemplateColor(DEFAULT_TEMPLATE_COLOR);
+      setResourceRecord(createInitialResourceRecord());
+      return;
+    }
+
+    const initializeKey = `${editRecord?.id ?? "new"}:${
+      mainTemplate?.id ?? ""
+    }:${selectedFacility?.id ?? ""}:${dayOptions.length}`;
+
+    if (initializedRecordKeyRef.current === initializeKey) return;
+    initializedRecordKeyRef.current = initializeKey;
+
+    isModalJustOpenedRef.current = true;
+    allowedServicesTouchedRef.current = false;
+    workingDaysTouchedRef.current = false;
+    timingFieldsTouchedRef.current = false;
+    lastAppliedResourceDefaultsKeyRef.current = null;
+    lastClearedResourceDefaultsKeyRef.current = null;
+
+    if (editRecord?.id) {
+      const nextRecord = {
+        ...editRecord,
+        templateName: editRecord?.templateName ?? "",
+        resourceId: editRecord?.resourceId,
+        allowedServices: normalizeAllowedServices(editRecord?.allowedServices),
+        facilityId: selectedFacility?.id ?? editRecord?.facilityId,
+        departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
+        workingDays: normalizeWorkingDays(editRecordWorkingDays),
+        requirePractitioner: Boolean(editRecord?.requirePractitioner),
+        requirePreAssessment: Boolean(editRecord?.requirePreAssessment),
+        numberOfResourcesExpected: toSafeNumber(
+          editRecord?.numberOfResourcesExpected,
+          0,
+        ),
+        versionNo: toSafeNumber(editRecord?.versionNo, 0),
+        ...getTimingValues(editRecord),
+      };
+
+      setResourceRecord((previousRecord: any) => {
+        if (
+          previousRecord?.id === nextRecord.id &&
+          previousRecord?.resourceId === nextRecord.resourceId &&
+          previousRecord?.facilityId === nextRecord.facilityId &&
+          previousRecord?.departmentId === nextRecord.departmentId &&
+          areWorkingDaysEqual(
+            previousRecord?.workingDays ?? [],
+            nextRecord.workingDays,
+          ) &&
+          areAllowedServicesEqual(
+            previousRecord?.allowedServices ?? [],
+            nextRecord.allowedServices ?? [],
+          )
+        ) {
+          return previousRecord;
+        }
+
+        return nextRecord;
+      });
+
+      const nextTemplateColor =
+        editRecord?.templateColor ??
+        mainTemplate?.color ??
+        DEFAULT_TEMPLATE_COLOR;
+
+      setSelectedTemplateColor((previousColor) =>
+        previousColor === nextTemplateColor ? previousColor : nextTemplateColor,
+      );
+      return;
+    }
+
+    const nextRecord = {
+      ...newAvailabilityTemplateCreateDTO,
+      templateName: newAvailabilityTemplateCreateDTO?.templateName ?? "",
+      parentTemplateId: mainTemplate?.id,
+      facilityId: selectedFacility?.id,
+      departmentId: mainTemplate?.departmentId,
+      workingDays: normalizeWorkingDays(mainTemplateWorkingDays),
+      durationMinutes: toSafeNumber(
+        newAvailabilityTemplateCreateDTO?.durationMinutes,
+        0,
+      ),
+      defaultBufferBeforeMinutes: toSafeNumber(
+        newAvailabilityTemplateCreateDTO?.defaultBufferBeforeMinutes,
+        0,
+      ),
+      defaultBufferAfterMinutes: toSafeNumber(
+        newAvailabilityTemplateCreateDTO?.defaultBufferAfterMinutes,
+        0,
+      ),
+      parallelCapacityValue: toSafeNumber(mainTemplate?.parallelCapacityValue, 1),
+      numberOfResourcesExpected: toSafeNumber(
+        newAvailabilityTemplateCreateDTO?.numberOfResourcesExpected,
+        0,
+      ),
+      versionNo: toSafeNumber(newAvailabilityTemplateCreateDTO?.versionNo, 0),
+      requirePractitioner: Boolean(
+        newAvailabilityTemplateCreateDTO?.requirePractitioner,
+      ),
+      requirePreAssessment: Boolean(
+        newAvailabilityTemplateCreateDTO?.requirePreAssessment,
+      ),
+      allowedServices: parentTemplateAllowedServices,
+    };
+
+    setResourceRecord(nextRecord);
+
+    const nextTemplateColor = mainTemplate?.color ?? DEFAULT_TEMPLATE_COLOR;
+    setSelectedTemplateColor((previousColor) =>
+      previousColor === nextTemplateColor ? previousColor : nextTemplateColor,
+    );
+  }, [
+    areAllowedServicesEqual,
+    areWorkingDaysEqual,
+    dayOptions.length,
+    editRecord,
+    editRecordWorkingDays,
+    editRecordWorkingDaysKey,
+    getTimingValues,
+    mainTemplate?.color,
+    mainTemplate?.departmentId,
+    mainTemplate?.id,
+    mainTemplate?.parallelCapacityValue,
+    mainTemplateWorkingDays,
+    mainTemplateWorkingDaysKey,
+    normalizeAllowedServices,
+    normalizeWorkingDays,
+    open,
+    parentTemplateAllowedServices,
+    selectedFacility?.id,
+  ]);
+
+  useEffect(() => {
+    allowedServicesTouchedRef.current = false;
+  }, [safeResourceRecord?.departmentId]);
+
+  useEffect(() => {
+    workingDaysTouchedRef.current = false;
+  }, [safeResourceRecord?.facilityId]);
+
+  useEffect(() => {
+    if (!open || isEditMode || allowedServicesTouchedRef.current) return;
+    if (parentTemplateAllowedServices.length === 0) return;
+
+    setResourceRecord((previousRecord: any) => {
+      const previousAllowedServices = Array.isArray(
+        previousRecord?.allowedServices,
+      )
+        ? previousRecord.allowedServices
+        : [];
+
+      if (previousAllowedServices.length > 0) return previousRecord;
+
+      return {
+        ...previousRecord,
+        allowedServices: parentTemplateAllowedServices,
+      };
+    });
+  }, [isEditMode, open, parentTemplateAllowedServices]);
+
+  useEffect(() => {
+    const resourceDefaultsKey = `${safeResourceRecord?.templateType ?? ""}:${
+      safeResourceRecord?.resourceId ?? ""
+    }`;
+
+    if (!safeResourceRecord?.resourceId) {
+      lastAppliedResourceDefaultsKeyRef.current = null;
+
+      if (isEditingExistingRecord) return;
+      if (lastClearedResourceDefaultsKeyRef.current === resourceDefaultsKey)
+        return;
+
+      lastClearedResourceDefaultsKeyRef.current = resourceDefaultsKey;
+
+      setResourceRecord((previousRecord: any) => {
+        const nextRecord = {
+          ...previousRecord,
+          durationMinutes: 0,
+          defaultBufferBeforeMinutes: 0,
+          defaultBufferAfterMinutes: 0,
+          parallelCapacityValue: toSafeNumber(
+            mainTemplate?.parallelCapacityValue,
+            1,
+          ),
+          defaultPractitionerId: undefined,
+        };
+
+        if (
+          previousRecord?.durationMinutes === nextRecord.durationMinutes &&
+          previousRecord?.defaultBufferBeforeMinutes ===
+            nextRecord.defaultBufferBeforeMinutes &&
+          previousRecord?.defaultBufferAfterMinutes ===
+            nextRecord.defaultBufferAfterMinutes &&
+          previousRecord?.parallelCapacityValue ===
+            nextRecord.parallelCapacityValue &&
+          previousRecord?.defaultPractitionerId ===
+            nextRecord.defaultPractitionerId
+        ) {
+          return previousRecord;
+        }
+
+        return nextRecord;
+      });
+
+      if (!workingDaysTouchedRef.current) {
+        applyWorkingDays(mainTemplateWorkingDays);
+      }
+      return;
+    }
+
+    lastClearedResourceDefaultsKeyRef.current = null;
+
+    if (lastAppliedResourceDefaultsKeyRef.current === resourceDefaultsKey) {
+      return;
+    }
+
+    lastAppliedResourceDefaultsKeyRef.current = resourceDefaultsKey;
+
+    if (safeResourceRecord?.templateType === PRACTITIONER_TEMPLATE_TYPE) {
+      getPractitionerById(safeResourceRecord.resourceId)
         .unwrap()
-        .then(res => {
-          const practitionerDays = res?.workingDays ?? [];
-          const hasWorkingDays = practitionerDays.some((d: any) => d?.isWorking);
+        .then((practitionerDetails) => {
+          const practitionerWorkingDays =
+            practitionerDetails?.workingDays ?? [];
+          const hasPractitionerWorkingDays = practitionerWorkingDays.some(
+            (workingDay: any) => workingDay?.isWorking,
+          );
+          const finalWorkingDays = hasPractitionerWorkingDays
+            ? practitionerWorkingDays
+            : mainTemplateWorkingDays;
 
-          const finalWorkingDays = hasWorkingDays
-            ? practitionerDays
-            : (mainTemplate?.workingDays ?? []);
-          const shouldApplyResourceDefaults = !isEditingRecord;
-
-          if (isEditingRecord && justOpenedRef.current) {
-            applyWorkingDays(editRecordWorkingDays);
-            justOpenedRef.current = false; 
-          } else {
-            applyWorkingDays(finalWorkingDays);
-          }
-
-          if (shouldApplyResourceDefaults) {
-            setRecord(prev => ({
-              ...prev,
-              durationMinutes: res?.defaultDurationMinutes,
-              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
-              defaultPractitionerId: res?.id
-            }));
-          }
+          applyResourceDefaults(practitionerDetails, finalWorkingDays);
         })
         .catch(() => {
-          if (!isEditingRecord) {
-            applyWorkingDays(mainTemplate?.workingDays ?? []);
-          }
-          justOpenedRef.current = false;
+          lastAppliedResourceDefaultsKeyRef.current = null;
+          if (!isEditingExistingRecord)
+            applyWorkingDays(mainTemplateWorkingDays);
+          isModalJustOpenedRef.current = false;
         });
+      return;
     }
 
-    else if (record?.templateType === 'SERVICE') {
-      getService(record.resourceId)
+    if (safeResourceRecord?.templateType === SERVICE_TEMPLATE_TYPE) {
+      getServiceById(safeResourceRecord.resourceId)
         .unwrap()
-        .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord;
-
-          if (shouldApplyResourceDefaults) {
-            setRecord(prev => ({
-              ...prev,
-              durationMinutes: res?.defaultDurationMinutes,
-              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-            }));
-          }
-
-          if (!isEditingRecord) {
-            applyWorkingDays(mainTemplate?.workingDays ?? []);
-          }
-
-          justOpenedRef.current = false;
+        .then((serviceDetails) => {
+          applyResourceDefaults(
+            serviceDetails,
+            !isEditingExistingRecord ? mainTemplateWorkingDays : undefined,
+          );
+        })
+        .catch(() => {
+          lastAppliedResourceDefaultsKeyRef.current = null;
         });
+      return;
     }
 
-    else if (record?.templateType === 'ROOM') {
-      getRoom({ id: record.resourceId })
+    if (safeResourceRecord?.templateType === ROOM_TEMPLATE_TYPE) {
+      getRoomById({ id: safeResourceRecord.resourceId })
         .unwrap()
-        .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord;
-
-          if (shouldApplyResourceDefaults) {
-            setRecord(prev => ({
-              ...prev,
-              durationMinutes: res?.defaultDurationMinutes,
-              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-            }));
-          }
-
-          if (!isEditingRecord) {
-            applyWorkingDays(mainTemplate?.workingDays ?? []);
-          }
-
-          justOpenedRef.current = false;
+        .then((roomDetails) => {
+          applyResourceDefaults(
+            roomDetails,
+            !isEditingExistingRecord ? mainTemplateWorkingDays : undefined,
+          );
+        })
+        .catch(() => {
+          lastAppliedResourceDefaultsKeyRef.current = null;
         });
+      return;
     }
-    else if (record?.templateType === 'DIAGNOSTIC_TEST') {
-      getDiagnosticTest(String(record.resourceId))
+
+    if (safeResourceRecord?.templateType === DIAGNOSTIC_TEST_TEMPLATE_TYPE) {
+      getDiagnosticTestById(String(safeResourceRecord.resourceId))
         .unwrap()
-        .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord;
-
-          if (shouldApplyResourceDefaults) {
-            setRecord(prev => ({
-              ...prev,
-              durationMinutes: res?.data?.defaultDurationMinutes,
-              defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
-              defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
-              parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
-            }));
-          }
-
-          if (!isEditingRecord) {
-            applyWorkingDays(mainTemplate?.workingDays ?? []);
-          }
-
-          justOpenedRef.current = false;
+        .then((diagnosticTestResponse) => {
+          applyResourceDefaults(
+            diagnosticTestResponse?.data,
+            !isEditingExistingRecord ? mainTemplateWorkingDays : undefined,
+          );
+        })
+        .catch(() => {
+          lastAppliedResourceDefaultsKeyRef.current = null;
         });
+      return;
     }
-    else if (record?.templateType === 'CATALOG') {
-      getCatalog(record.resourceId)
+
+    if (safeResourceRecord?.templateType === CATALOG_TEMPLATE_TYPE) {
+      getCatalogById(safeResourceRecord.resourceId)
         .unwrap()
-        .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord;
-
-          if (shouldApplyResourceDefaults) {
-            setRecord(prev => ({
-              ...prev,
-              durationMinutes: res?.defaultDurationMinutes,
-              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-            }));
-          }
-
-          if (!isEditingRecord) {
-            applyWorkingDays(mainTemplate?.workingDays ?? []);
-          }
-
-          justOpenedRef.current = false;
+        .then((catalogDetails) => {
+          applyResourceDefaults(
+            catalogDetails,
+            !isEditingExistingRecord ? mainTemplateWorkingDays : undefined,
+          );
+        })
+        .catch(() => {
+          lastAppliedResourceDefaultsKeyRef.current = null;
         });
     }
   }, [
-    record?.resourceId,
-    record?.templateType,
-    isEditingRecord,
-    editRecordWorkingDays
+    applyResourceDefaults,
+    applyWorkingDays,
+    getCatalogById,
+    getDiagnosticTestById,
+    getPractitionerById,
+    getRoomById,
+    getServiceById,
+    isEditingExistingRecord,
+    mainTemplate?.parallelCapacityValue,
+    mainTemplateWorkingDaysKey,
+    safeResourceRecord?.resourceId,
+    safeResourceRecord?.templateType,
   ]);
 
-  const conjureFormContent = () => (
-    <Form fluid>
+  const renderResourceField = useCallback(() => {
+    const commonProps = {
+      width: "100%",
+      fieldName: "resourceId",
+      fieldType: "selectPagination" as const,
+      selectDataLabel: "label",
+      selectDataValue: "value",
+      record: safeResourceRecord,
+      setRecord: setResourceRecord,
+      menuMaxHeight: 200,
+      required: true,
+      disabled: isReadOnly,
+    };
+
+    switch (safeResourceRecord?.templateType) {
+      case PRACTITIONER_TEMPLATE_TYPE:
+        return (
+          <Col md={12}>
+            <MyInput
+              {...commonProps}
+              fieldLabel="Practitioner"
+              selectData={departmentPractitionersPagination.items}
+              selectDataLabel={["firstName", "lastName"]}
+              selectDataValue="id"
+              loading={isDepartmentPractitionerLoading}
+              hasMore={departmentPractitionersPagination.hasMore}
+              onFetchMore={() =>
+                loadNextPage(
+                  departmentPractitionersPagination.nextLink,
+                  loadDepartmentPractitioners,
+                )
+              }
+            />
+          </Col>
+        );
+
+      case SERVICE_TEMPLATE_TYPE:
+        return (
+          <Col md={12}>
+            <MyInput
+              {...commonProps}
+              fieldLabel="Service"
+              selectData={facilityServicesPagination.items}
+              selectDataLabel="name"
+              selectDataValue="id"
+              loading={isFacilityServiceLoading}
+              hasMore={facilityServicesPagination.hasMore}
+              onFetchMore={() =>
+                loadNextPage(
+                  facilityServicesPagination.nextLink,
+                  loadFacilityServices,
+                )
+              }
+            />
+          </Col>
+        );
+
+      case CATALOG_TEMPLATE_TYPE:
+        return (
+          <Col md={12}>
+            <MyInput
+              {...commonProps}
+              fieldLabel="Catalog"
+              selectData={catalogsPagination.items}
+              selectDataLabel="name"
+              selectDataValue="id"
+              loading={isCatalogLoading}
+              hasMore={catalogsPagination.hasMore}
+              onFetchMore={() =>
+                loadNextPage(catalogsPagination.nextLink, loadCatalogs)
+              }
+            />
+          </Col>
+        );
+
+      case DIAGNOSTIC_TEST_TEMPLATE_TYPE:
+        return (
+          <Col md={12}>
+            <MyInput
+              {...commonProps}
+              fieldLabel="Diagnostic Test"
+              selectData={diagnosticTestsPagination.items}
+              selectDataLabel="name"
+              selectDataValue="id"
+              loading={isDiagnosticTestLoading}
+              hasMore={diagnosticTestsPagination.hasMore}
+              onFetchMore={() =>
+                loadNextPage(
+                  diagnosticTestsPagination.nextLink,
+                  loadDiagnosticTests,
+                )
+              }
+            />
+          </Col>
+        );
+
+      case ROOM_TEMPLATE_TYPE:
+        return (
+          <Col md={12}>
+            <MyInput
+              {...commonProps}
+              fieldLabel="Room"
+              selectData={roomsPagination.items}
+              selectDataLabel="name"
+              selectDataValue="id"
+              loading={isRoomLoading}
+              hasMore={roomsPagination.hasMore}
+              onFetchMore={() =>
+                loadNextPage(roomsPagination.nextLink, loadRooms)
+              }
+            />
+          </Col>
+        );
+
+      default:
+        return null;
+    }
+  }, [
+    catalogsPagination.items,
+    catalogsPagination.hasMore,
+    catalogsPagination.nextLink,
+    departmentPractitionersPagination.items,
+    departmentPractitionersPagination.hasMore,
+    departmentPractitionersPagination.nextLink,
+    diagnosticTestsPagination.items,
+    diagnosticTestsPagination.hasMore,
+    diagnosticTestsPagination.nextLink,
+    facilityServicesPagination.items,
+    facilityServicesPagination.hasMore,
+    facilityServicesPagination.nextLink,
+    isCatalogLoading,
+    isDepartmentPractitionerLoading,
+    isDiagnosticTestLoading,
+    isFacilityServiceLoading,
+    isReadOnly,
+    isRoomLoading,
+    loadCatalogs,
+    loadDepartmentPractitioners,
+    loadDiagnosticTests,
+    loadFacilityServices,
+    loadNextPage,
+    loadRooms,
+    roomsPagination.items,
+    roomsPagination.hasMore,
+    roomsPagination.nextLink,
+    safeResourceRecord,
+  ]);
+
+  const renderAllowedServiceInputs = useMemo(
+    () =>
+      parentTemplateAllowedServices.map((allowedService) => {
+        const serviceValue = allowedService?.service ?? "";
+        const fieldName = `service_${serviceValue}`;
+        const isChecked = selectedAllowedServiceValues.includes(serviceValue);
+
+        return (
+          <Col md={8} key={serviceValue}>
+            <MyInput
+              width="100%"
+              fieldType="check"
+              fieldName={fieldName}
+              record={{ [fieldName]: Boolean(isChecked) }}
+              setRecord={(nextRecord: any) =>
+                handleAllowedServiceChange(serviceValue, fieldName, nextRecord)
+              }
+              showLabel={false}
+              label={formatEnumString(serviceValue)}
+              disabled={isReadOnly}
+            />
+          </Col>
+        );
+      }),
+    [
+      handleAllowedServiceChange,
+      isReadOnly,
+      parentTemplateAllowedServices,
+      selectedAllowedServiceValues,
+    ],
+  );
+
+  const renderWorkingDayInputs = useMemo(
+    () =>
+      dayOptions.map((dayOption) => (
+        <MyInput
+          key={dayOption.value}
+          width="13vw"
+          fieldName={dayOption.value}
+          fieldType="check"
+          record={workingDaysRecord}
+          setRecord={setWorkingDaysRecord}
+          label={dayOption.label}
+          showLabel={false}
+          disabled={isReadOnly}
+        />
+      )),
+    [dayOptions, isReadOnly, setWorkingDaysRecord, workingDaysRecord],
+  );
+
+  const servicesAllowedSection = useMemo(
+    () => (
       <Row>
-        <Col md={12}>
+        <Col md={24}>
           <SectionContainer
-            title="Basic Information "
-            content={
-              <>
-                <Form fluid>
+            title="Services Allowed"
+            content={<Row>{renderAllowedServiceInputs}</Row>}
+          />
+        </Col>
+      </Row>
+    ),
+    [renderAllowedServiceInputs],
+  );
+
+  const workingDaysSection = useMemo(
+    () => (
+      <SectionContainer
+        title="Days"
+        content={
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {renderWorkingDayInputs}
+          </div>
+        }
+      />
+    ),
+    [renderWorkingDayInputs],
+  );
+
+  const renderFormContent = useCallback(
+    () => (
+      <FormContainer fluid>
+        <Row>
+          <Col md={12}>
+            <SectionContainer
+              title="Basic Information"
+              content={
+                <>
                   <Row>
                     <Col md={12}>
                       <MyInput
                         fieldName="templateName"
                         fieldType="text"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecord}
                         width="100%"
                         required
-                        disabled={props?.readOnly}
+                        disabled={isReadOnly}
                       />
                     </Col>
                     <Col md={12}>
@@ -803,165 +1611,34 @@ const AddResourceModal = ({
                         fieldName="status"
                         fieldType="select"
                         fieldLabel="Status"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecord}
                         width="100%"
                         isEnum
-                        selectData={statusEnum ?? []}
+                        selectData={statusOptions ?? []}
                         selectDataLabel="label"
                         selectDataValue="value"
-                        disabled
+                        disabled={true}
                       />
                     </Col>
                   </Row>
+
                   <Row>
                     <Col md={12}>
                       <MyInput
                         fieldName="templateType"
-                        record={record}
-                        setRecord={(next) => {
-                          workingDaysTouchedRef.current = false;
-                          justOpenedRef.current = false;
-
-                          setRecord(prev => ({
-                            ...prev,
-                            ...next,
-                            resourceId: undefined,
-                            defaultPractitionerId: undefined,
-                            workingDays: normalizeWorkingDays(mainTemplate?.workingDays ?? []),
-                            requirePractitioner: next?.templateType === 'PRACTITIONER'
-                          }));
-                        }}
-                        fieldType='select'
-                        selectData={filteredtemplateTypeEnum ?? []}
+                        record={safeResourceRecord}
+                        setRecord={handleTemplateTypeChange}
+                        fieldType="select"
+                        selectData={filteredTemplateTypeOptions ?? []}
                         selectDataLabel="label"
-                        selectDataValue='value'
+                        selectDataValue="value"
                         width="100%"
-                        disabled={props?.readOnly}
+                        disabled={isReadOnly}
                         required
                       />
                     </Col>
-                    {record.templateType === 'PRACTITIONER' ? (
-                      <Col md={12}>
-                        <MyInput
-                          width="100%"
-                          fieldType="selectPagination"
-                          fieldName="resourceId"
-                          fieldLabel="Practitioner"
-                          selectData={practitionerDeptOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isPractitionerDeptLoading}
-                          hasMore={practitionerDeptHasMore}
-                          onFetchMore={async () => {
-                            if (!practitionerDeptNextLink) return;
-                            const { page } = extractPaginationFromLink(practitionerDeptNextLink);
-                            await loadPractitionersDept({ page, append: true });
-                          }}
-                          menuMaxHeight={200}
-                          disabled={props?.readOnly}
-                          required
-                        />
-                      </Col>
-                    ) : record.templateType === 'SERVICE' ? (
-                      <Col md={12}>
-                        <MyInput
-                          width="100%"
-                          fieldName="resourceId"
-                          fieldLabel="Service"
-                          fieldType="selectPagination"
-                          selectData={servicesFacilityOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isServicesFacilityLoading}
-                          hasMore={servicesFacilityHasMore}
-                          onFetchMore={async () => {
-                            if (!servicesFacilityNextLink) return;
-                            const { page } = extractPaginationFromLink(servicesFacilityNextLink);
-                            await loadServicesFacility({ page, append: true });
-                          }}
-                          menuMaxHeight={200}
-                          required
-                          disabled={props?.readOnly}
-                        />
-                      </Col>
-                    ) : record.templateType === 'CATALOG' ? (
-                      <Col md={12}>
-                        <MyInput
-                          width="100%"
-                          fieldName="resourceId"
-                          fieldLabel="Catalog"
-                          fieldType="selectPagination"
-                          selectData={catalogOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isCatalogLoading}
-                          hasMore={catalogHasMore}
-                          onFetchMore={async () => {
-                            if (!catalogNextLink) return;
-                            const { page } = extractPaginationFromLink(catalogNextLink);
-                            await loadCatalogs({ page, append: true });
-                          }}
-                          menuMaxHeight={200}
-                          required
-                          disabled={props?.readOnly}
-                        />
-                      </Col>
-                    ) : record.templateType === 'DIAGNOSTIC_TEST' ? (
-                      <Col md={12}>
-                        <MyInput
-                          width="100%"
-                          fieldName="resourceId"
-                          fieldLabel="Diagnostic Test"
-                          fieldType="selectPagination"
-                          selectData={diagnosticTestOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isDiagnosticTestLoading}
-                          hasMore={diagnosticTestHasMore}
-                          onFetchMore={async () => {
-                            if (!diagnosticTestNextLink) return;
-                            const { page } = extractPaginationFromLink(diagnosticTestNextLink);
-                            await loadDiagnosticTests({ page, append: true });
-                          }}
-                          menuMaxHeight={200}
-                          required
-                          disabled={props?.readOnly}
-                        />
-                      </Col>
-                    ) : record.templateType === 'ROOM' ? (
-                      <Col md={12}>
-                        <MyInput
-                          width="100%"
-                          fieldType="selectPagination"
-                          fieldLabel="Room"
-                          fieldName="resourceId"
-                          selectData={roomOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isRoomLoading}
-                          hasMore={roomHasMore}
-                          onFetchMore={async () => {
-                            if (!roomNextLink) return;
-                            const { page } = extractPaginationFromLink(roomNextLink);
-                            setRoomPage(page);
-                            await loadRooms({ page, append: true });
-                          }}
-                        />
-                      </Col>
-                    ) : (
-                      <></>
-                    )}
+                    {renderResourceField()}
                   </Row>
 
                   <Row>
@@ -969,16 +1646,16 @@ const AddResourceModal = ({
                       <MyInput
                         column
                         fieldLabel="Facility"
-                        selectData={facilityListResponse ?? []}
+                        selectData={facilityList ?? []}
                         fieldType="select"
                         selectDataLabel="name"
                         selectDataValue="id"
                         fieldName="facilityId"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecord}
                         width="100%"
                         required
-                        disabled
+                        disabled={true}
                       />
                     </Col>
                     <div className="block">
@@ -986,27 +1663,32 @@ const AddResourceModal = ({
                       <div className="color-picker-row">
                         <input
                           type="color"
-                          value={currentColor}
-                          onChange={e => {
-                            const nextColor = e.target.value;
-                            setCurrentColor(nextColor);
-                            setRecord(prev => ({ ...prev, templateColor: nextColor }));
+                          value={selectedTemplateColor ?? DEFAULT_TEMPLATE_COLOR}
+                          disabled={isReadOnly}
+                          onChange={(event) => {
+                            const nextColor = event.target.value;
+                            setSelectedTemplateColor(nextColor);
+                            setResourceRecord((previousRecord: any) => ({
+                              ...previousRecord,
+                              templateColor: nextColor,
+                            }));
                           }}
                         />
                       </div>
                     </div>
                   </Row>
+
                   <Row>
                     <Col md={12}>
                       <MyInput
                         fieldName="durationMinutes"
-                        fieldLabel='duration'
+                        fieldLabel="duration"
                         fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecordAndTrackTiming}
                         width="100%"
                         rightAddon="min"
-                        disabled={props?.readOnly}
+                        disabled={isReadOnly}
                       />
                     </Col>
                     <Col md={12}>
@@ -1014,311 +1696,205 @@ const AddResourceModal = ({
                         fieldName="parallelCapacityValue"
                         fieldLabel="Parallel Capacity Value"
                         fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecordAndTrackTiming}
                         width="100%"
                         min={1}
-                        disabled={props?.readOnly}
+                        disabled={isReadOnly}
                       />
                     </Col>
                   </Row>
+
                   <Row>
                     <Col md={12}>
                       <MyInput
                         fieldName="versionNo"
                         fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecord}
                         width="100%"
-                        disabled
+                        disabled={true}
                       />
                     </Col>
                   </Row>
+
                   <Row>
                     <Col md={12}>
                       <MyInput
                         fieldName="defaultBufferBeforeMinutes"
-                        fieldLabel='Slot Befor'
+                        fieldLabel="Slot Before"
                         fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
+                        record={resourceRecord}
+                        setRecord={setResourceRecordAndTrackTiming}
                         width="100%"
+                        disabled={isReadOnly}
                       />
                     </Col>
                     <Col md={12}>
                       <MyInput
-                        fieldLabel='Slot After'
+                        fieldLabel="Slot After"
                         fieldName="defaultBufferAfterMinutes"
                         fieldType="number"
-                        record={record}
-                        setRecord={setRecord}
+                        record={resourceRecord}
+                        setRecord={setResourceRecordAndTrackTiming}
                         width="100%"
+                        disabled={isReadOnly}
                       />
                     </Col>
                   </Row>
-                </Form>
-              </>
-            }
-          />
-        </Col>
-        <Col md={12}>
-          <SectionContainer
-            title="Department Details"
-            content={
-              <>
-                <Form fluid>
+                </>
+              }
+            />
+          </Col>
+
+          <Col md={12}>
+            <SectionContainer
+              title="Department Details"
+              content={
+                <>
                   <MyInput
-                    key={`service-dept-${record?.departmentId}`}
+                    key={`service-dept-${safeResourceRecord?.departmentId}`}
                     width="100%"
                     fieldType="selectPagination"
                     fieldName="defaultServiceId"
-                    selectData={servicesDeptOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={record}
-                    setRecord={setRecord}
-                    loading={isServicesDeptLoading}
-                    hasMore={servicesDeptHasMore}
-                    onFetchMore={async () => {
-                      if (!servicesDeptNextLink) return;
-                      const { page } = extractPaginationFromLink(servicesDeptNextLink);
-                      await loadServicesDept({ page, append: true });
-                    }}
-                    disabled={props?.readOnly}
+                    selectData={departmentServicesPagination.items}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    record={safeResourceRecord}
+                    setRecord={setResourceRecord}
+                    loading={isDepartmentServiceLoading}
+                    hasMore={departmentServicesPagination.hasMore}
+                    onFetchMore={() =>
+                      loadNextPage(
+                        departmentServicesPagination.nextLink,
+                        loadDepartmentServices,
+                      )
+                    }
+                    disabled={isReadOnly}
                   />
+
                   <MyInput
                     width="100%"
                     fieldType="number"
                     fieldLabel="Number Of Resources"
                     fieldName="numberOfResourcesExpected"
-                    record={record}
-                    setRecord={setRecord}
-                    disabled={props?.readOnly}
+                    record={safeResourceRecord}
+                    setRecord={setResourceRecord}
+                    disabled={isReadOnly}
                   />
+
                   <Row>
                     <Col md={12}>
                       <MyInput
                         width="100%"
                         fieldType="check"
                         fieldName="requirePractitioner"
-                        record={record}
-                        setRecord={setRecord}
+                        record={safeResourceRecord}
+                        setRecord={setResourceRecord}
                         showLabel={false}
-                        disabled={props?.readOnly || record?.templateType === 'PRACTITIONER'}
+                        disabled={Boolean(
+                          isReadOnly ||
+                            safeResourceRecord?.templateType ===
+                              PRACTITIONER_TEMPLATE_TYPE,
+                        )}
                       />
                     </Col>
-                    {record['requirePractitioner'] && (
+
+                    {safeResourceRecord?.requirePractitioner && (
                       <Col md={12}>
                         <MyInput
-                          key={`practitioner-dept-${record?.departmentId}`}
+                          key={`practitioner-dept-${safeResourceRecord?.departmentId}`}
                           width="100%"
                           fieldType="selectPagination"
                           fieldName="defaultPractitionerId"
-                          fieldLabel='Default Practitioner'
-                          selectData={practitionerDeptOptions}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={record}
-                          setRecord={setRecord}
-                          loading={isPractitionerDeptLoading}
-                          hasMore={practitionerDeptHasMore}
-                          onFetchMore={async () => {
-                            if (!practitionerDeptNextLink) return;
-                            const { page } = extractPaginationFromLink(practitionerDeptNextLink);
-                            await loadPractitionersDept({ page, append: true });
-                          }}
-                          disabled={props?.readOnly || record?.templateType === 'PRACTITIONER'}
+                          fieldLabel="Default Practitioner"
+                          selectData={departmentPractitionersPagination.items}
+                          selectDataLabel={["firstName", "lastName"]}
+                          selectDataValue="id"
+                          record={safeResourceRecord}
+                          setRecord={setResourceRecord}
+                          loading={isDepartmentPractitionerLoading}
+                          hasMore={departmentPractitionersPagination.hasMore}
+                          onFetchMore={() =>
+                            loadNextPage(
+                              departmentPractitionersPagination.nextLink,
+                              loadDepartmentPractitioners,
+                            )
+                          }
+                          disabled={Boolean(
+                            isReadOnly ||
+                              safeResourceRecord?.templateType ===
+                                PRACTITIONER_TEMPLATE_TYPE,
+                          )}
                           required
                         />
                       </Col>
                     )}
                   </Row>
+
                   <MyInput
                     width="100%"
                     fieldType="check"
                     fieldName="requirePreAssessment"
-                    record={record}
-                    setRecord={setRecord}
+                    record={safeResourceRecord}
+                    setRecord={setResourceRecord}
                     showLabel={false}
-                    disabled={props?.readOnly}
+                    disabled={isReadOnly}
                   />
-                </Form>
-              </>
-            }
-          />
-        </Col>
-      </Row>
+                </>
+              }
+            />
+          </Col>
+        </Row>
 
-      <Row>
-        <Col md={24}>
-          <SectionContainer
-            title="Services Allowed"
-            content={
-              <Form fluid>
-                <Row>
-                  {parentTemplateAllowedServices.map((service: any) => {
-                    const serviceValue = service?.service ?? '';
-                    const fieldName = `service_${serviceValue}`;
-                    const selectedServiceValues = Array.isArray(record?.allowedServices)
-                      ? record.allowedServices
-                        .map((s: any) => s?.service)
-                        .filter((v: any) => typeof v === 'string' && v.length > 0)
-                      : [];
-                    const isChecked = selectedServiceValues.includes(serviceValue);
-                    return (
-                      <Col md={8} key={serviceValue}>
-                        <MyInput
-                          width="100%"
-                          fieldType="check"
-                          fieldName={fieldName}
-                          record={{ [fieldName]: isChecked }}
-                          setRecord={(next: any) => {
-                            const checked = Boolean(next[fieldName]);
-                            allowedServicesTouchedRef.current = true;
-                            setRecord(prev => {
-                              const prevAllowed = Array.isArray(prev?.allowedServices)
-                                ? prev.allowedServices
-                                : [];
-                              const prevValues = prevAllowed
-                                .map((s: any) => s?.service)
-                                .filter((v: any) => typeof v === 'string' && v.length > 0);
-                              if (checked) {
-                                if (prevValues.includes(serviceValue)) return prev;
-                                return {
-                                  ...prev,
-                                  allowedServices: [
-                                    ...prevAllowed,
-                                    { id: null, service: serviceValue }
-                                  ]
-                                };
-                              }
-                              return {
-                                ...prev,
-                                allowedServices: prevAllowed.filter(
-                                  (s: any) => s?.service !== serviceValue
-                                ),
-                              };
-                            });
-                          }}
-                          showLabel={false}
-                          label={formatEnumString(serviceValue)}
-                          disabled={props?.readOnly}
-                        />
-                      </Col>
-                    );
-                  })}
-                </Row>
-              </Form>
-            }
-          />
-        </Col>
-      </Row>
+        {servicesAllowedSection}
 
-      <SectionContainer
-        title="Days"
-        content={
-          <Form fluid layout='inline'>
-            {dayOptions?.map(day => (
-              <MyInput
-                key={day.value}
-                width="13vw"
-                fieldName={day.value}
-                fieldType="check"
-                record={workingDaysRecord}
-                setRecord={setWorkingDaysRecord}
-                label={day.label}
-                showLabel={false}
-                disabled={props?.readOnly}
-              />
-            ))}
-          </Form>
-        }
-      />
-    </Form>
+        {workingDaysSection}
+      </FormContainer>
+    ),
+    [
+      departmentPractitionersPagination.items,
+      departmentPractitionersPagination.hasMore,
+      departmentPractitionersPagination.nextLink,
+      departmentServicesPagination.items,
+      departmentServicesPagination.hasMore,
+      departmentServicesPagination.nextLink,
+      facilityList,
+      filteredTemplateTypeOptions,
+      handleTemplateTypeChange,
+      isDepartmentPractitionerLoading,
+      isDepartmentServiceLoading,
+      isReadOnly,
+      loadDepartmentPractitioners,
+      loadDepartmentServices,
+      loadNextPage,
+      renderResourceField,
+      servicesAllowedSection,
+      workingDaysSection,
+      safeResourceRecord,
+      setResourceRecordAndTrackTiming,
+      selectedTemplateColor,
+      statusOptions,
+    ],
   );
-
-  const [create] = useCreateAvailabilityTemplateMutation();
-  const [update] = useUpdateAvailabilityTemplateMutation();
-
-  const extractErrorMessage = (response: any): string => {
-    try {
-      const msg = response?.data?.message;
-      if (typeof msg === 'string') {
-        return msg.replace(/^error\./i, '');
-      }
-      return '';
-    } catch {
-      return '';
-    }
-  };
-
-  const handleSaveMainInfo = () => {
-    if (!record?.templateName?.trim()) {
-      dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.facilityId) {
-      dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.templateType) {
-      dispatch(notify({ msg: 'Template Type is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.departmentId) {
-      dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.resourceId) {
-      dispatch(notify({ msg: 'Resource is required', sev: 'warning' }));
-      return;
-    }
-    if (record?.requirePractitioner && !record?.defaultPractitionerId) {
-      dispatch(notify({ msg: 'Default Practitioner is required', sev: 'warning' }));
-      return;
-    }
-
-    const payload = {
-      ...record,
-      numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
-      durationMinutes: Number(record?.durationMinutes),
-      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
-      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
-      parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
-      allowedServices: Array.isArray(record?.allowedServices)
-        ? record.allowedServices
-        : []
-    };
-    const mutation = isEditMode
-      ? update({ id: record?.id, ...payload })
-      : create(payload);
-    mutation
-      .unwrap()
-      .then(() => {
-        dispatch(
-          notify({
-            msg: isEditMode ? 'Updated Successfully' : 'Saved Successfully',
-            sev: 'success'
-          })
-        );
-        setOpen(false);
-      })
-      .catch((e) => {
-        const errorMsg = extractErrorMessage(e) || 'Save Failed';
-        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
-      });
-  };
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={props?.readOnly ? 'View Resource' : isEditMode ? "Edit Resource" : "Add Resource"}
+      title={
+        isReadOnly
+          ? "View Resource"
+          : isEditMode
+            ? "Edit Resource"
+            : "Add Resource"
+      }
       size="md"
-      content={conjureFormContent}
+      content={renderFormContent}
       actionButtonFunction={handleSaveMainInfo}
       actionButtonLabel={isEditMode ? "Save" : "Add"}
-      hideActionBtn={props?.readOnly}
+      hideActionBtn={isReadOnly}
+      actionButtonDisabled={isSaving}
     />
   );
 };

@@ -4,9 +4,9 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
 import { Department } from '@/types/model-types-new';
-import { newDepartment } from '@/types/model-types-constructor-new';
 import Translate from '@/components/Translate';
 import { useEnumOptions } from '@/services/enumsApi';
+import './styles.less';
 
 interface AddEditDepartmentInlineProps {
   width: number;
@@ -31,11 +31,10 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   onSave,
   onCancel,
 }) => {
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
+
   const DayOfWeek = useEnumOptions('DayOfWeek');
 
   const workingDaysRecord = useMemo(() => {
@@ -76,28 +75,38 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         defaultDurationMinutes: undefined,
         defaultBufferAfterMinutes: 0,
         defaultBufferBeforeMinutes: 0,
-        encounterType: ''
+        encounterType: '',
+        requirePractitioner: false,
+        requireBilling: false,
+        requirePreAssessment: false,
+        parallelCapacityEnabled: false,
+        parallelCapacityValue: 1,
       }));
     }
+  }, [department?.appointable, setDepartment]);
 
-  }, [department?.appointable]);
+  useEffect(() => {
+    if (!department?.parallelCapacityEnabled) {
+      setDepartment(prev => ({
+        ...prev,
+        parallelCapacityValue: 1,
+      }));
+      return;
+    }
+
+    if (!department?.parallelCapacityValue) {
+      setDepartment(prev => ({
+        ...prev,
+        parallelCapacityValue: 1,
+      }));
+    }
+  }, [department?.parallelCapacityEnabled, department?.parallelCapacityValue, setDepartment]);
 
   return (
-    <Form
-      fluid
-      layout="inline"
-      style={{
-        marginBottom: '20px',
-        padding: '20px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-      }}
-      dir={dir}
-    >
-      {/* First row – three fields, aligned like LicensesTab */}
+    <Form fluid layout="inline" className="add-edit-department-inline-form" dir={dir}>
       <MyInput
         column
-        width={350}
+        width={250}
         fieldLabel="Department Type"
         fieldName="departmentType"
         fieldType="select"
@@ -109,6 +118,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         required
         menuMaxHeight={200}
       />
+
       <MyInput
         column
         width={350}
@@ -118,6 +128,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         setRecord={setDepartment}
         required
       />
+
       <MyInput
         column
         width={350}
@@ -128,7 +139,6 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         disabled
       />
 
-      {/* Second row – contact info */}
       <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
         <MyInput
           column
@@ -138,6 +148,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           record={department}
           setRecord={setDepartment}
         />
+
         <MyInput
           column
           width={350}
@@ -148,17 +159,114 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         />
       </div>
 
+      <div className="appointable-section">
+        <div className="appointable-fields-container">
+          <MyInput
+            column
+            fieldLabel="Appointable"
+            fieldType="checkbox"
+            fieldName="appointable"
+            record={department}
+            setRecord={setDepartment}
+          />
 
-      {/* Fourth row – checkboxes */}
+
+
+          {department?.appointable && (
+            <>
+              <MyInput
+                column
+                width={250}
+                fieldLabel="Encounter Type"
+                fieldName="encounterType"
+                fieldType="select"
+                selectData={encTypesEnum ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={department}
+                setRecord={setDepartment}
+                required
+              />
+              <MyInput
+                column
+                fieldType="checkbox"
+                fieldName="parallelCapacityEnabled"
+                record={department}
+                setRecord={setDepartment}
+              />
+
+              {department?.parallelCapacityEnabled && (
+                <MyInput
+                  column
+                  width={220}
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={department}
+                  setRecord={setDepartment}
+                  required
+                />
+              )}
+              <MyInput
+                column
+                width={250}
+                fieldType="number"
+                fieldName="defaultDurationMinutes"
+                record={department}
+                setRecord={setDepartment}
+                required
+              />
+
+
+
+              <MyInput
+                column
+                width={220}
+                fieldType="number"
+                fieldName="defaultBufferBeforeMinutes"
+                record={department}
+                setRecord={setDepartment}
+                required
+              />
+
+              <MyInput
+                column
+                width={220}
+                fieldType="number"
+                fieldName="defaultBufferAfterMinutes"
+                record={department}
+                setRecord={setDepartment}
+                required
+              />
+
+              <MyInput
+                column
+                fieldType="checkbox"
+                fieldName="requirePractitioner"
+                record={department}
+                setRecord={setDepartment}
+              />
+
+              <MyInput
+                column
+                fieldType="checkbox"
+                fieldName="requireBilling"
+                record={department}
+                setRecord={setDepartment}
+              />
+
+              <MyInput
+                column
+                fieldType="checkbox"
+                fieldName="requirePreAssessment"
+                record={department}
+                setRecord={setDepartment}
+              />
+            </>
+          )}
+        </div>
+      </div>
+
       <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
-        <MyInput
-          column
-          fieldLabel="Appointable"
-          fieldType="checkbox"
-          fieldName="appointable"
-          record={department}
-          setRecord={setDepartment}
-        />
         <MyInput
           column
           fieldLabel="Has Medical Sheets"
@@ -167,6 +275,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           record={department}
           setRecord={setDepartment}
         />
+
         <MyInput
           column
           fieldLabel="Has Nurse Medical Sheets"
@@ -175,98 +284,11 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           record={department}
           setRecord={setDepartment}
         />
-
       </div>
-      {/* Third row – encounter type (conditional) */}
-      {department?.appointable && (
-        <MyInput
-          column
-          width={350}
-          fieldLabel="Encounter Type"
-          fieldName="encounterType"
-          fieldType="select"
-          selectData={encTypesEnum ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={department}
-          setRecord={setDepartment}
-          required
-        />
-      )}
-      <MyInput
-        column
-        fieldType="number"
-        fieldName="parallelCapacityValue"
-        record={department}
-        setRecord={setDepartment}
-        width="100%"
-        required
-      />
-      {department?.appointable && (
-        <>
-          <MyInput
-            column
-            fieldType="number"
-            fieldName="defaultDurationMinutes"
-            record={department}
-            setRecord={setDepartment}
-            width="100%"
-            required={department?.appointable}
-          />
-          <MyInput
-            column
-            fieldType="number"
-            fieldName="defaultBufferBeforeMinutes"
-            record={department}
-            setRecord={setDepartment}
-            width="100%"
-            required={department?.appointable}
-          />
-          <MyInput
-            column
-            fieldType="number"
-            fieldName="defaultBufferAfterMinutes"
-            record={department}
-            setRecord={setDepartment}
-            width="100%"
-            required={department?.appointable}
-          />
-        </>
-      )}
-      <MyInput
-        column
-        fieldType="checkbox"
-        fieldName="parallelCapacityEnabled"
-        record={department}
-        setRecord={setDepartment}
-      />
-      {department?.appointable && (
-        <>
-          <MyInput
-            column
-            fieldType="checkbox"
-            fieldName="requirePractitioner"
-            record={department}
-            setRecord={setDepartment}
-          />
-          <MyInput
-            column
-            fieldType="checkbox"
-            fieldName="requireBilling"
-            record={department}
-            setRecord={setDepartment}
-          />
-          <MyInput
-            column
-            fieldType="checkbox"
-            fieldName="requirePreAssessment"
-            record={department}
-            setRecord={setDepartment}
-          />
-        </>
-      )}
-      <div style={{ width: '100%', marginTop: '12px' }}>
+
+      <div className="working-days-section">
         <Translate>Working Days</Translate>
+
         <div className="facility-working-days">
           {DayOfWeek?.map(day => (
             <MyInput
@@ -281,16 +303,13 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           ))}
         </div>
       </div>
-      {/* Actions */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '10px', marginTop: '20px' }}>
+
+      <div className={clsx('department-actions', { rtl: isRTL })}>
         <MyButton onClick={onSave} appearance="primary">
           {department?.id ? 'Update' : 'Save'}
         </MyButton>
-        <MyButton
-          onClick={onCancel}
-          appearance="subtle"
-          style={{ marginLeft: '10px' }}
-        >
+
+        <MyButton onClick={onCancel} appearance="subtle" className="department-cancel-button">
           Cancel
         </MyButton>
       </div>
@@ -299,5 +318,3 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
 };
 
 export default AddEditDepartmentInline;
-
-
