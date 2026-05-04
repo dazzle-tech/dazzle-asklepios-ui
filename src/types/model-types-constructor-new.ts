@@ -1098,6 +1098,7 @@ export const newAppointmentFromTemplate: modelTypes.AppointmentFromTemplate = {
   patientId: null,
   availabilityTemplateId: null,
   requireConfirmation: true,
+  requirePractitioner: false,
   encounterReason: null,
   status: null,
   appointmentDateTime: null,

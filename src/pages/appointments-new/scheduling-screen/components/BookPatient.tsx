@@ -599,7 +599,10 @@ const BookPatient = ({
       dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
       return
     }
-
+    if(appointmentData.requirePractitioner && !record.defaultPractitioner){
+      dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+      return
+    }
     if (record.service === 'FOLLOW_UP') {
       if (!appointmentDepartmentId) {
         dispatch(
@@ -867,6 +870,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
+                            required={appointmentData?.requirePractitioner}
                           />
                           <MyInput
                             fieldType="select"
