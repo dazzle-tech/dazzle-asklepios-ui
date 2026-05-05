@@ -114,6 +114,11 @@ const appointmentStatusFromRecord = (appointmentData: any): string =>
     appointmentData?.status
   );
 
+const isOpenSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return status === 'NEW' || status === 'RESCHEDULE' || status === 'RESCHEDULED';
+};
+
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
   if (s.includes('cancel')) return 'cancel';
@@ -622,9 +627,7 @@ const ScheduleScreen = () => {
     }
 
     // NEW / template slots: confirm, then approve request (if any) and open booking editor.
-    const isNewUnbooked =
-      status === 'NEW';
-    if (isNewUnbooked) {
+    if (isOpenSlotStatus(status)) {
       const apptStart =
         freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
       if (
@@ -1423,7 +1426,7 @@ const ScheduleScreen = () => {
   const rightPanelAppointmentRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
-      if (s.includes('BOOK')) return '#059669';
+      if (s.includes('BOOK') || s.includes('RESCHEDULE')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
@@ -1494,7 +1497,7 @@ const ScheduleScreen = () => {
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
-    if (status === 'NEW') {
+    if (isOpenSlotStatus(status)) {
       const startLabel =
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1584,7 +1587,7 @@ const ScheduleScreen = () => {
     };
 
     const status = String(event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? '');
-    if (normalize(status) === 'new') {
+    if (isOpenSlotStatus(status)) {
       return {
         style: {
           backgroundColor: 'transparent',
