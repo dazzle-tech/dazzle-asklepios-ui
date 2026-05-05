@@ -341,7 +341,7 @@ const RoomSection = () => {
   };
 
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         width="180px"
         fieldName="criteria"

@@ -88,7 +88,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
-
+  const [selectedProfile, setSelectedProfile] = useState<any>(null); // 🔥
   const extractErrorMessage = (error: any): string => {
     const data = error?.data;
 
@@ -596,11 +596,12 @@ useEffect(() => {
           <DefaultProfileIndicator
             testId={rowData.id}
             testType={rowData.type}
-            onClick={() => {
+            onClick={(profile) => {
               if (disabled) return;
+
               setDiagnosticsTest(rowData);
+              setSelectedProfile(profile);
               setOpenNormalRangesDirectly(true);
-              setOpenProfileModal(true);
             }}
           />
         )}
@@ -644,7 +645,7 @@ useEffect(() => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -758,6 +759,14 @@ useEffect(() => {
       }));
     }
   }, [testRequest?.type]);
+
+
+  useEffect(() => {
+  if (selectedProfile) {
+    setOpenProfileModal(true);
+  }
+}, [selectedProfile]);
+
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -880,6 +889,7 @@ useEffect(() => {
         open={openProfileModal}
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
+        selectedProfile={selectedProfile}
         openNormalRanges={openNormalRangesDirectly}
       />
 

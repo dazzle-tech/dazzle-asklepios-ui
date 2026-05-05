@@ -37,7 +37,13 @@ import { useEnumOptions } from '@/services/enumsApi';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetLovsQuery } from '@/services/setupService';
 
-const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
+const Profile = ({
+  open,
+  setOpen,
+  diagnosticsTest,
+  openNormalRanges,
+  selectedProfile
+}) => {
   const dispatch = useAppDispatch();
   const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
     ...newDiagnosticTestProfile
@@ -636,12 +642,11 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
     }
   };
 
-  useEffect(() => {
-    if (open && diagnosticsTest?.id) {
-      refetchDiagnosticsTestProfile();
-      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
-    }
-  }, [diagnosticsTest]);
+useEffect(() => {
+  if (open && diagnosticsTest?.id) {
+    refetchDiagnosticsTestProfile();
+  }
+}, [open, diagnosticsTest?.id]);
 
   useEffect(() => {
     if (!diagnosticsTestProfile?.listOfValueId) return;
@@ -655,6 +660,12 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
     }
   }, [open, openNormalRanges]);
 
+
+  useEffect(() => {
+  if (open && selectedProfile) {
+    setDiagnosticsTestProfile(selectedProfile); 
+  }
+}, [open, selectedProfile]);
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
