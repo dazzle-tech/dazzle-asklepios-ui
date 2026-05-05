@@ -119,6 +119,11 @@ const isOpenSlotStatus = (rawStatus: unknown): boolean => {
   return status === 'NEW' || status === 'RESCHEDULE';
 };
 
+const shouldOpenBookPatientDirectly = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return isOpenSlotStatus(status) || status === 'RESCHEDULED';
+};
+
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
   if (s.includes('cancel')) return 'cancel';
@@ -627,7 +632,7 @@ const ScheduleScreen = () => {
     }
 
     // NEW / template slots: confirm, then approve request (if any) and open booking editor.
-    if (isOpenSlotStatus(status)) {
+    if (shouldOpenBookPatientDirectly(status)) {
       const apptStart =
         freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
       if (
