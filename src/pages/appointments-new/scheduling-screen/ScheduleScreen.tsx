@@ -116,7 +116,7 @@ const appointmentStatusFromRecord = (appointmentData: any): string =>
 
 const isOpenSlotStatus = (rawStatus: unknown): boolean => {
   const status = normalizeAppointmentStatusKey(rawStatus);
-  return status === 'NEW' || status === 'RESCHEDULE' || status === 'RESCHEDULED';
+  return status === 'NEW' || status === 'RESCHEDULE';
 };
 
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
