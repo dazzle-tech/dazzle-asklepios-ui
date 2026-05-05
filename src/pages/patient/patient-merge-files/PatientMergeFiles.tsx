@@ -72,10 +72,13 @@ const PatientMergeFiles: React.FC = () => {
               <PatientInfoCard patient={fromPatient} />
 
               <div className="merge-controls" style={{ textAlign: 'center', margin: '20px 0' }}>
-                <FontAwesomeIcon
-                  icon={faRepeat}
-                  style={{ fontSize: 100, transform: 'rotate(90deg)' }}
-                />
+                <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: 18, borderRadius: 18, background: '#eef3ff' }}>
+                  <FontAwesomeIcon
+                    icon={faCodeMerge}
+                    style={{ fontSize: 60, color: '#3751ff' }}
+                  />
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#21325e' }}>Merge</div>
+                </div>
               </div>
 
               <h6>Merge To</h6>
