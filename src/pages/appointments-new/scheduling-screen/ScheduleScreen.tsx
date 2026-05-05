@@ -93,6 +93,7 @@ const SCHEDULE_LEGEND_ITEMS: {
     { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
     { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
     { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+    { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
     { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
     { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
     { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
@@ -116,6 +117,7 @@ const appointmentStatusFromRecord = (appointmentData: any): string =>
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
   if (s.includes('cancel')) return 'cancel';
+  if (s.includes('reschedule')) return 'reschedule';
   if (s.includes('no show')) return 'no show';
   if (s.includes('checked in') || s.includes('check in')) return 'checked in';
   if (s.includes('book')) return 'booked';
@@ -1558,6 +1560,7 @@ const ScheduleScreen = () => {
     const normalizeStatusForLegend = (status: string) => {
       const s = normalize(status);
       if (s?.includes('cancel')) return 'cancel';
+      if (s?.includes('reschedule')) return 'reschedule';
       if (s?.includes('no show')) return 'no show';
       if (s?.includes('checked in') || s?.includes('check in')) return 'checked in';
       if (s?.includes('book')) return 'booked';
