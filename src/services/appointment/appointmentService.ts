@@ -8,6 +8,7 @@ import type {
   AppointmentFromTemplateQuickAppointmentResponseVM,
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
+  AppointmentFromTemplateRescheduleDTO,
   AppointmentFromTemplateSearchFilterDTO
 } from '@/types/model-types-new';
 
@@ -100,6 +101,21 @@ export const appointmentFromTemplateService = createApi({
         method: 'POST',
         body
       }),
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    rescheduleAppointment: builder.mutation<
+      AppointmentFromTemplate,
+      AppointmentFromTemplateRescheduleDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/reschedule`,
+        method: 'POST',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -287,6 +303,7 @@ export const appointmentFromTemplateService = createApi({
 export const {
   useBookPatientAppointmentMutation,
   useCreateQuickAppointmentMutation,
+  useRescheduleAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useGetAppointmentsByBatchIdQuery,

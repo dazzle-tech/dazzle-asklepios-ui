@@ -39,6 +39,7 @@ import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutati
 import ScheduleFiltersPanel from './components/ScheduleFiltersPanel';
 import ScheduleSummaryBar from './components/ScheduleSummaryBar';
 import ScheduleContentGrid from './components/ScheduleContentGrid';
+import RescheduleAppointmentModal from './components/RescheduleAppointmentModal';
 
 const getAppointmentPatientId = (appointment: any): number | null => {
   const raw =
@@ -134,6 +135,8 @@ const ScheduleScreen = () => {
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
   const [followUpDraftData, setFollowUpDraftData] = useState<any>(null);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState<any>(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
@@ -1138,22 +1141,19 @@ const ScheduleScreen = () => {
     return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
   }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
-  const handleChangeAppointment = () => {
-    const dataToEdit = selectedEvent?.appointmentData;
-    if (dataToEdit) {
-      if (isFollowUpAppointment(dataToEdit)) {
-        setFollowUpDraftData(dataToEdit);
-        setFollowUpModalOpen(true);
-        setActionsModalOpen(false);
-        return;
-      }
-      setViewAppointmentData(dataToEdit);
-      setShowAppointmentOnly(false);
-      setSelectedSlot(null);
-      setBookPatientReadOnly(false);
-      setBookPatientModalOpen(true);
-    }
+  const handleRescheduleAppointment = (appointmentDataToEdit = null) => {
+    const dataToEdit = appointmentDataToEdit || selectedEvent?.appointmentData;
+    if (!dataToEdit) return;
+    setAppointmentToReschedule(dataToEdit);
     setActionsModalOpen(false);
+    setRescheduleModalOpen(true);
+  };
+
+  const handleRescheduleSuccess = () => {
+    setRescheduleModalOpen(false);
+    setAppointmentToReschedule(null);
+    setSelectedEvent(null);
+    void handleSearchAppointmentsByCriteria();
   };
 
   const handleViewAppointment = (appointmentDataToView = null) => {
@@ -1907,7 +1907,7 @@ const ScheduleScreen = () => {
       />
       <AppointmentActionsModal
         viewAppointment={appointmentData => handleViewAppointment(appointmentData)}
-        editAppointment={() => handleChangeAppointment()}
+        editAppointment={appointmentData => handleRescheduleAppointment(appointmentData)}
         onStatusChange={handleSearchAppointmentsByCriteria}
         isActionsModalOpen={ActionsModalOpen}
         onActionsModalClose={() => {
@@ -1917,6 +1917,17 @@ const ScheduleScreen = () => {
           setActionsModalOpen(false);
         }}
         appointment={selectedEvent}
+      />
+      <RescheduleAppointmentModal
+        open={rescheduleModalOpen}
+        setOpen={nextOpen => {
+          setRescheduleModalOpen(nextOpen);
+          if (!nextOpen) {
+            setAppointmentToReschedule(null);
+          }
+        }}
+        appointment={appointmentToReschedule}
+        onRescheduled={handleRescheduleSuccess}
       />
 
       <Modal

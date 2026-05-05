@@ -1150,6 +1150,12 @@ export const newAppointmentFromTemplateNoShowDTO: modelTypes.AppointmentFromTemp
   noShowReason: ''
 };
 
+export const newAppointmentFromTemplateRescheduleDTO: modelTypes.AppointmentFromTemplateRescheduleDTO = {
+  oldAppointmentId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
+};
+
 export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
   facility: null,
   department: null,
