@@ -10,3 +10,20 @@
   top: 0;
   z-index: 1051;
 }
+
+.right-modal,
+.child-right-modal,
+.sub-child-right-modal {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+}
+
+/* 🔥 fallback mobile */
+@media (max-width: 1200px) {
+  .child-right-modal,
+  .sub-child-right-modal {
+    right: 0 !important;
+    width: 100% !important;
+  }
+}
