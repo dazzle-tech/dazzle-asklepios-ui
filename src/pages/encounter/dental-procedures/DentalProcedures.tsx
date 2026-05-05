@@ -36,6 +36,18 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
+const getApiErrorMessage = (error: any, fallback: string) => {
+  const message =
+    error?.data?.message ||
+    error?.error?.data?.message ||
+    error?.data?.detail ||
+    error?.error?.data?.detail;
+
+  if (!message) return fallback;
+
+  return String(message).replace(/^error\./, '');
+};
+
 type FormMode = 'add' | 'edit';
 
 const emptyForm = {
@@ -69,22 +81,23 @@ const DentalProcedures = props => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
 
-  // ─── LOVs ────────────────────────────────────────────────────────────────
   const { data: toothSurfData } = useGetLovValuesByCodeQuery('TOOTH_SURF');
   const { data: valueUnitData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+
   const { data: serviceList } = useGetServicesByCategoryQuery({
     page: 0,
     size: 1000,
     category: 'DENTAL'
   });
+
   const { data: procedureList } = useGetProceduresByCategoryQuery({
     categoryType: '10636199250201941',
     page: 0,
     size: 1000
   });
+
   const ToothEnum = useEnumOptions('ToothNumber');
 
-  // ─── Data ─────────────────────────────────────────────────────────────────
   const { data: proceduresData, isLoading } = useGetDentalProceduresByPatientQuery(
     { patientId: patient?.id ?? patient?.key, showCancelled, page, size },
     { skip: !patient?.id && !patient?.key }
@@ -100,12 +113,14 @@ const DentalProcedures = props => {
   const cdtIds = useMemo(() => {
     const ids: number[] = [];
     const seen = new Set<number>();
+
     for (const row of rows) {
       if (row.cdtCodeId && typeof row.cdtCodeId === 'number' && !seen.has(row.cdtCodeId)) {
         seen.add(row.cdtCodeId);
         ids.push(row.cdtCodeId);
       }
     }
+
     return ids;
   }, [rows]);
 
@@ -126,7 +141,6 @@ const DentalProcedures = props => {
     [rows]
   );
 
-  // ─── Effects ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (saveMutation.isSuccess) {
       dispatch(notify({ msg: 'Dental procedure saved successfully', sev: 'success' }));
@@ -134,10 +148,7 @@ const DentalProcedures = props => {
       setForm({ ...emptyForm });
       setModalKey(prev => prev + 1);
     }
-    if (saveMutation.isError) {
-      dispatch(notify({ msg: 'Failed to save dental procedure', sev: 'warning' }));
-    }
-  }, [saveMutation.isSuccess, saveMutation.isError]);
+  }, [saveMutation.isSuccess]);
 
   useEffect(() => {
     if (updateMutation.isSuccess) {
@@ -145,10 +156,7 @@ const DentalProcedures = props => {
       setFormModalOpen(false);
       setForm({ ...emptyForm });
     }
-    if (updateMutation.isError) {
-      dispatch(notify({ msg: 'Failed to update dental procedure', sev: 'warning' }));
-    }
-  }, [updateMutation.isSuccess, updateMutation.isError]);
+  }, [updateMutation.isSuccess]);
 
   useEffect(() => {
     if (cancelMutation.isSuccess) {
@@ -157,17 +165,12 @@ const DentalProcedures = props => {
       setSelectedRow(null);
       setCancelForm({ cancellationReason: '' });
     }
-    if (cancelMutation.isError) {
-      dispatch(notify({ msg: 'Failed to cancel dental procedure', sev: 'warning' }));
-      setCancelModalOpen(false);
-    }
-  }, [cancelMutation.isSuccess, cancelMutation.isError]);
+  }, [cancelMutation.isSuccess]);
 
   useEffect(() => {
     setPage(0);
   }, [showCancelled]);
 
-  // ─── Deselect on outside click ────────────────────────────────────────────
   const handleClearSelection = useCallback(() => {
     setSelectedRow(null);
   }, []);
@@ -175,16 +178,19 @@ const DentalProcedures = props => {
   useEffect(() => {
     const handlePointer = (e: PointerEvent) => {
       if (cancelModalOpen || formModalOpen || attachmentsModalOpen) return;
+
       const target = e.target as HTMLElement;
+
       if (!tableContainerRef.current?.contains(target)) {
         handleClearSelection();
       }
     };
+
     document.addEventListener('pointerdown', handlePointer, true);
+
     return () => document.removeEventListener('pointerdown', handlePointer, true);
   }, [handleClearSelection, cancelModalOpen, formModalOpen, attachmentsModalOpen]);
 
-  // ─── Modal openers ────────────────────────────────────────────────────────
   const openAddModal = () => {
     setForm({ ...emptyForm });
     setFormMode('add');
@@ -202,12 +208,12 @@ const DentalProcedures = props => {
       fillingMaterial: row.fillingMaterial ?? '',
       notes: row.notes ?? ''
     });
+
     setFormMode('edit');
     setModalKey(prev => prev + 1);
     setFormModalOpen(true);
   };
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (formMode === 'add') {
       try {
@@ -225,12 +231,19 @@ const DentalProcedures = props => {
           cdtCodeId: form.cdtCodeId || null,
           notes: form.notes?.trim() || null
         };
+
         await saveProcedure(createPayload).unwrap();
-      } catch {
-        dispatch(notify({ msg: 'Failed to save dental procedure', sev: 'warning' }));
+      } catch (error) {
+        dispatch(
+          notify({
+            msg: getApiErrorMessage(error, 'Failed to save dental procedure'),
+            sev: 'warning'
+          })
+        );
       }
     } else {
       if (!form?.id) return;
+
       try {
         const body = {
           id: form.id,
@@ -245,19 +258,32 @@ const DentalProcedures = props => {
           cdtCodeId: form.cdtCodeId || null,
           notes: form.notes?.trim() || null
         };
+
         await updateProcedure({ id: form.id, body }).unwrap();
-      } catch {
-        dispatch(notify({ msg: 'Failed to update dental procedure', sev: 'warning' }));
+      } catch (error) {
+        dispatch(
+          notify({
+            msg: getApiErrorMessage(error, 'Failed to update dental procedure'),
+            sev: 'warning'
+          })
+        );
       }
     }
   };
 
   const handleCancel = async () => {
     if (!selectedRow?.id) return;
+
     try {
       await cancelProcedure({ id: selectedRow.id }).unwrap();
-    } catch {
-      dispatch(notify({ msg: 'Failed to cancel dental procedure', sev: 'warning' }));
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: getApiErrorMessage(error, 'Failed to cancel dental procedure'),
+          sev: 'warning'
+        })
+      );
+
       setCancelModalOpen(false);
     }
   };
@@ -267,7 +293,6 @@ const DentalProcedures = props => {
 
   const isMutating = formMode === 'add' ? saveMutation.isLoading : updateMutation.isLoading;
 
-  // ─── Columns ──────────────────────────────────────────────────────────────
   const tableColumns = useMemo(
     () => [
       {
@@ -296,6 +321,7 @@ const DentalProcedures = props => {
           const procedure = (procedureList?.data ?? []).find(
             (p: any) => p.id === (row as any).procedureId
           );
+
           return procedure?.name ?? '-';
         }
       },
@@ -305,6 +331,7 @@ const DentalProcedures = props => {
         flexGrow: 2,
         render: (row: DentalProcedureResponseVM) => {
           const service = (serviceList?.data ?? []).find((s: any) => s.id === row.serviceId);
+
           return service?.name ?? '-';
         }
       },
@@ -326,6 +353,7 @@ const DentalProcedures = props => {
         flexGrow: 2,
         render: (row: DentalProcedureResponseVM) => {
           const cdt = row.cdtCodeId ? cdtMap[row.cdtCodeId] : null;
+
           return cdt ? `${cdt.code} – ${cdt.description}` : '-';
         }
       },
@@ -350,6 +378,7 @@ const DentalProcedures = props => {
             ) ??
             row.unit ??
             '';
+
           return row.dose != null ? `${row.dose}${unit ? ' ' + unit : ''}` : '-';
         }
       },
@@ -403,7 +432,6 @@ const DentalProcedures = props => {
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div dir={dir}>
       <div ref={tableContainerRef}>
@@ -462,7 +490,6 @@ const DentalProcedures = props => {
         />
       </div>
 
-      {/* ── Add / Edit Modal ── */}
       <MyModal
         key={modalKey}
         open={formModalOpen}
@@ -626,7 +653,6 @@ const DentalProcedures = props => {
         )}
       />
 
-      {/* ── Cancel Modal ── */}
       <CancellationModal
         title="Cancel Dental Procedure"
         fieldLabel="Cancellation Reason"
@@ -639,7 +665,6 @@ const DentalProcedures = props => {
         required={false}
       />
 
-      {/* ── Attachments Modal ── */}
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
