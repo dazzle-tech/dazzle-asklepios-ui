@@ -39,6 +39,7 @@ import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutati
 import ScheduleFiltersPanel from './components/ScheduleFiltersPanel';
 import ScheduleSummaryBar from './components/ScheduleSummaryBar';
 import ScheduleContentGrid from './components/ScheduleContentGrid';
+import RescheduleAppointmentModal from './components/RescheduleAppointmentModal';
 
 const getAppointmentPatientId = (appointment: any): number | null => {
   const raw =
@@ -92,6 +93,7 @@ const SCHEDULE_LEGEND_ITEMS: {
     { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
     { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
     { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+    { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
     { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
     { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
     { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
@@ -112,9 +114,20 @@ const appointmentStatusFromRecord = (appointmentData: any): string =>
     appointmentData?.status
   );
 
+const isOpenSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return status === 'NEW' || status === 'RESCHEDULE';
+};
+
+const shouldOpenBookPatientDirectly = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return isOpenSlotStatus(status) || status === 'RESCHEDULED';
+};
+
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
   if (s.includes('cancel')) return 'cancel';
+  if (s.includes('reschedule')) return 'reschedule';
   if (s.includes('no show')) return 'no show';
   if (s.includes('checked in') || s.includes('check in')) return 'checked in';
   if (s.includes('book')) return 'booked';
@@ -134,6 +147,8 @@ const ScheduleScreen = () => {
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
   const [followUpDraftData, setFollowUpDraftData] = useState<any>(null);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState<any>(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
@@ -617,9 +632,7 @@ const ScheduleScreen = () => {
     }
 
     // NEW / template slots: confirm, then approve request (if any) and open booking editor.
-    const isNewUnbooked =
-      status === 'NEW';
-    if (isNewUnbooked) {
+    if (shouldOpenBookPatientDirectly(status)) {
       const apptStart =
         freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
       if (
@@ -1138,22 +1151,19 @@ const ScheduleScreen = () => {
     return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
   }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
-  const handleChangeAppointment = () => {
-    const dataToEdit = selectedEvent?.appointmentData;
-    if (dataToEdit) {
-      if (isFollowUpAppointment(dataToEdit)) {
-        setFollowUpDraftData(dataToEdit);
-        setFollowUpModalOpen(true);
-        setActionsModalOpen(false);
-        return;
-      }
-      setViewAppointmentData(dataToEdit);
-      setShowAppointmentOnly(false);
-      setSelectedSlot(null);
-      setBookPatientReadOnly(false);
-      setBookPatientModalOpen(true);
-    }
+  const handleRescheduleAppointment = (appointmentDataToEdit = null) => {
+    const dataToEdit = appointmentDataToEdit || selectedEvent?.appointmentData;
+    if (!dataToEdit) return;
+    setAppointmentToReschedule(dataToEdit);
     setActionsModalOpen(false);
+    setRescheduleModalOpen(true);
+  };
+
+  const handleRescheduleSuccess = () => {
+    setRescheduleModalOpen(false);
+    setAppointmentToReschedule(null);
+    setSelectedEvent(null);
+    void handleSearchAppointmentsByCriteria();
   };
 
   const handleViewAppointment = (appointmentDataToView = null) => {
@@ -1394,6 +1404,8 @@ const ScheduleScreen = () => {
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
+      const statusKey = normalizeAppointmentStatusKey(status);
+      if (statusKey === 'RESCHEDULED') return '#7e22ce';
       if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
@@ -1421,6 +1433,8 @@ const ScheduleScreen = () => {
   const rightPanelAppointmentRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
+      const statusKey = normalizeAppointmentStatusKey(status);
+      if (statusKey === 'RESCHEDULED') return '#7e22ce';
       if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
@@ -1460,6 +1474,7 @@ const ScheduleScreen = () => {
     const status = String(
       event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? ''
     ).toUpperCase();
+    const statusKey = normalizeAppointmentStatusKey(status);
     const appointment = event?.appointmentData ?? {};
     const patient = appointment?.patient ?? {};
     const pid = getAppointmentPatientId(appointment);
@@ -1492,7 +1507,8 @@ const ScheduleScreen = () => {
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
-    if (status === 'NEW') {
+    if (isOpenSlotStatus(status) || statusKey === 'RESCHEDULED') {
+      const isRescheduledSlot = statusKey === 'RESCHEDULED';
       const startLabel =
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1503,10 +1519,30 @@ const ScheduleScreen = () => {
           : '--:--';
       const resourceText = getTooltipResourceDisplay(event) || 'Unknown Resource';
       return (
-        <div className="available-slot-card" title={getTooltipContent(event)}>
+        <div
+          className={isRescheduledSlot ? '' : 'available-slot-card'}
+          title={getTooltipContent(event)}
+          style={
+            isRescheduledSlot
+              ? {
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 3,
+                padding: '4px 8px',
+                boxSizing: 'border-box'
+              }
+              : undefined
+          }
+        >
           <div className="available-slot-title">{startLabel} - {endLabel}</div>
           <div className="available-slot-status-row">
-            <span className="available-slot-dot" />
+            <span
+              className="available-slot-dot"
+              style={isRescheduledSlot ? { background: '#7e22ce' } : undefined}
+            />
             <span>
               {resourceText}
             </span>
@@ -1558,6 +1594,7 @@ const ScheduleScreen = () => {
     const normalizeStatusForLegend = (status: string) => {
       const s = normalize(status);
       if (s?.includes('cancel')) return 'cancel';
+      if (s?.includes('reschedule')) return 'reschedule';
       if (s?.includes('no show')) return 'no show';
       if (s?.includes('checked in') || s?.includes('check in')) return 'checked in';
       if (s?.includes('book')) return 'booked';
@@ -1581,7 +1618,7 @@ const ScheduleScreen = () => {
     };
 
     const status = String(event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? '');
-    if (normalize(status) === 'new') {
+    if (isOpenSlotStatus(status)) {
       return {
         style: {
           backgroundColor: 'transparent',
@@ -1907,7 +1944,7 @@ const ScheduleScreen = () => {
       />
       <AppointmentActionsModal
         viewAppointment={appointmentData => handleViewAppointment(appointmentData)}
-        editAppointment={() => handleChangeAppointment()}
+        editAppointment={appointmentData => handleRescheduleAppointment(appointmentData)}
         onStatusChange={handleSearchAppointmentsByCriteria}
         isActionsModalOpen={ActionsModalOpen}
         onActionsModalClose={() => {
@@ -1917,6 +1954,17 @@ const ScheduleScreen = () => {
           setActionsModalOpen(false);
         }}
         appointment={selectedEvent}
+      />
+      <RescheduleAppointmentModal
+        open={rescheduleModalOpen}
+        setOpen={nextOpen => {
+          setRescheduleModalOpen(nextOpen);
+          if (!nextOpen) {
+            setAppointmentToReschedule(null);
+          }
+        }}
+        appointment={appointmentToReschedule}
+        onRescheduled={handleRescheduleSuccess}
       />
 
       <Modal

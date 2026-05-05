@@ -99,6 +99,14 @@ export const availabilityTemplateService = createApi({
       invalidatesTags: ['AvailabilityTemplate']
     }),
 
+    cloneAvailabilityTemplate: builder.mutation<AvailabilityTemplateResponseVM, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/availability-templates/${id}/clone`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['AvailabilityTemplate']
+    }),
+
     deleteAvailabilityTemplate: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/availability-templates/${id}`,
@@ -194,6 +202,7 @@ export const {
   useGetAvailabilityTemplatesQuery,
   useLazyGetAvailabilityTemplatesQuery,
   useToggleAvailabilityTemplateActiveMutation,
+  useCloneAvailabilityTemplateMutation,
   useDeleteAvailabilityTemplateMutation,
   useGetAvailabilityTemplatesByTemplateTypeQuery,
   useLazyGetAvailabilityTemplatesByTemplateTypeQuery,

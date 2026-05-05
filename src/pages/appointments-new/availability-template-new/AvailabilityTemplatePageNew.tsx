@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
+import { MdContentCopy } from 'react-icons/md';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -8,6 +9,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {
   useGetAvailabilityTemplatesByTemplateTypeQuery,
+  useCloneAvailabilityTemplateMutation,
   useToggleAvailabilityTemplateActiveMutation,
   useUpdateAvailabilityTemplateMutation
 } from '@/services/appointment/availabilityTemplateService';
@@ -59,6 +61,7 @@ const AvailabilityTemplatePageNew = () => {
       { skip: !selectedFacility?.id }
     );
   const [toggleTemplateActive] = useToggleAvailabilityTemplateActiveMutation();
+  const [cloneTemplate] = useCloneAvailabilityTemplateMutation();
   const [updateTemplate] = useUpdateAvailabilityTemplateMutation();
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
@@ -187,6 +190,27 @@ const AvailabilityTemplatePageNew = () => {
     }
   };
 
+  const handleCloneTemplate = async (rowData: AvailabilityTemplateResponseVM) => {
+    if (!rowData?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      const clonedTemplate = await cloneTemplate({ id: rowData.id }).unwrap();
+      dispatch(
+        notify({
+          msg: 'Template cloned successfully',
+          sev: 'success'
+        })
+      );
+      setSelectedTemplate(clonedTemplate);
+      refetch();
+    } catch (error) {
+      const errorMsg = extractErrorMessage(error) || 'Clone failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
   const columns = [
     {
       key: 'templateName',
@@ -272,6 +296,13 @@ const AvailabilityTemplatePageNew = () => {
               />
             </>
           )}
+          <MdContentCopy
+            title="Clone"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => handleCloneTemplate(rowData)}
+          />
           <RiFolderHistoryLine
             title="Log"
             size={24}

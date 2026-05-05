@@ -485,6 +485,12 @@ export interface AppointmentFromTemplateNoShowDTO {
   noShowReason: string;
 }
 
+export interface AppointmentFromTemplateRescheduleDTO {
+  oldAppointmentId: number;
+  newAppointmentId: number;
+  rescheduleReason: string;
+}
+
 export interface AppointmentFromTemplateSearchFilterDTO {
   facility?: number | null;
   department?: number | null;

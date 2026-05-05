@@ -501,8 +501,14 @@ const handleCancel = async () => {
             >
                 Confirm
             </MyButton>
-            <MyButton width="250px" disabled={true} onClick={() => editAppointment()} color="violet" appearance="primary">
-                Change
+            <MyButton
+              width="250px"
+              disabled={!(currentStatus === 'BOOKED' || currentStatus === 'CONFIRMED')}
+              onClick={() => editAppointment(appointment?.appointmentData || localAppointmentData)}
+              color="violet"
+              appearance="primary"
+            >
+                Reschedule
             </MyButton>
             <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
