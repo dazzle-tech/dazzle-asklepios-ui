@@ -29,7 +29,14 @@ const FormTemplateBuilderPage = () => {
 
   const params = useParams();
   const templateId = params.id ? Number(params.id) : null;
- const [creator, setCreator] = useState<SurveyCreator | null>(null);
+
+  useEffect(() => {
+    if (params.id && isNaN(Number(params.id))) {
+      navigate('/error-403', { replace: true });
+    }
+  }, [params.id]);
+
+  const [creator, setCreator] = useState<SurveyCreator | null>(null);
   const [template, setTemplate] = useState<FormTemplate>({ ...newFormTemplate });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
