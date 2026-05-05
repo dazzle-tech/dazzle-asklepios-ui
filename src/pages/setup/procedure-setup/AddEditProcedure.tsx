@@ -7,17 +7,15 @@ import { FaStar } from 'react-icons/fa';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useEnumCapitalized } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 
 import {
   useAddProcedureMutation,
   useUpdateProcedureMutation,
 } from '@/services/setup/procedure/procedureService';
-
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 type AddEditProcedureProps = {
   open: boolean;
@@ -49,7 +47,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
   const facilityListRequest: ListRequest = { ...initialListRequest };
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');
 
   const isLoading = isAdding || isUpdating || actionLoading;
@@ -217,7 +215,6 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
       setOpen(true);
     }
   };
-console.log("procedure;::----->", procedure);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -257,9 +254,9 @@ console.log("procedure;::----->", procedure);
                   fieldLabel="Category"
                   fieldType="select"
                   fieldName="categoryType"
-                  selectData={CategoryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={categoryOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={procedure}
                   setRecord={setProcedure}
                 />

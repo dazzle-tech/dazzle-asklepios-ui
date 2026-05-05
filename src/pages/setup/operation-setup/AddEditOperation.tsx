@@ -8,6 +8,7 @@ import { FaProcedures } from 'react-icons/fa';
 import MyInput from "@/components/MyInput";
 import { Dropdown, Form } from "rsuite";
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { useEnumOptions } from "@/services/enumsApi";
 import { ApOperationCoding, ApOperationPriceList } from "@/types/model-types";
 import { newApOperationCoding, newApOperationPriceList, newApOperationSetup } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
@@ -85,8 +86,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
     });
     // Fetch currency list response
     const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
-    // Fetch category list response
-    const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+    const categoryOptions = useEnumOptions('ProcedureCategory');
     // Fetch code type list response
     const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
 
@@ -296,9 +296,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                                     width="100%"
                                     fieldType="select"
                                     fieldLabel="Category Type"
-                                    selectData={CategoryLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    selectData={categoryOptions ?? []}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     fieldName={'categoryLkey'}
                                     record={operation}
                                     setRecord={setOperation}

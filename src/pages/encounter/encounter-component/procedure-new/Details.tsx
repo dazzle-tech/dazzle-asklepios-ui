@@ -167,8 +167,7 @@ const Details = ({
 
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
@@ -511,9 +510,9 @@ const Details = ({
                         width="100%"
                         fieldType="select"
                         fieldLabel="Category Type"
-                        selectData={CategoryLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
+                        selectData={categoryOptions ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
                         fieldName="categoryId"
                         record={procedure}
                         setRecord={updatedProcedure => {

@@ -91,7 +91,7 @@ const DentalProcedures = props => {
   });
 
   const { data: procedureList } = useGetProceduresByCategoryQuery({
-    categoryType: '10636199250201941',
+    categoryType: 'DENTAL_PROCEDURE',
     page: 0,
     size: 1000
   });
