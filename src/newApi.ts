@@ -28,32 +28,25 @@ export const BaseQuery = baseFetchBaseQuery;
  */
 export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: any) => {
   try {
-    // Wait for the query to be fulfilled
     const { data } = await queryFulfilled;
 
-    // If API response contains a message, notify the user
     if (data && data._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {
     console.error('API Error:', err);
-    // Handle errors
-    if (err?.error?.status == 422) {
-      // Validation error (Unprocessable Entity)
-      dispatch(
-        notify({
-          msg: err.error?.data?.message || 'Unprocessable Entity',
-          sev: 'error',
-        })
-      );
-    } else {
-      // Generic server error
-      dispatch(
-        notify({
-          msg: err.error?.data?.msg || 'Internal Server Error',
-          sev: 'error',
-        })
-      );
+
+    const status = err?.error?.status;
+
+    if (status && status < 500) {
+      return;
     }
+
+    dispatch(
+      notify({
+        msg: err?.error?.data?.message || err?.error?.data?.msg || 'Internal Server Error',
+        sev: 'error'
+      })
+    );
   }
 };
