@@ -1404,6 +1404,8 @@ const ScheduleScreen = () => {
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
+      const statusKey = normalizeAppointmentStatusKey(status);
+      if (statusKey === 'RESCHEDULED') return '#7e22ce';
       if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
@@ -1431,7 +1433,9 @@ const ScheduleScreen = () => {
   const rightPanelAppointmentRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
-      if (s.includes('BOOK') || s.includes('RESCHEDULE')) return '#059669';
+      const statusKey = normalizeAppointmentStatusKey(status);
+      if (statusKey === 'RESCHEDULED') return '#7e22ce';
+      if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
