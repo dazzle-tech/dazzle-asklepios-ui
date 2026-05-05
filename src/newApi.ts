@@ -34,19 +34,38 @@ export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: an
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {
-    console.error('API Error:', err);
+  console.error('API Error:', err);
 
-    const status = err?.error?.status;
+  const status = err?.error?.status;
 
-    if (status && status < 500) {
-      return;
-    }
+  const message =
+    err?.error?.data?.message ||
+    err?.error?.data?.msg ||
+    err?.error?.data?.detail;
 
+  const cleanMessage = message
+    ? String(message).replace(/^error\./, '')
+    : 'Something went wrong';
+
+  if (status === 422) {
     dispatch(
       notify({
-        msg: err?.error?.data?.message || err?.error?.data?.msg || 'Internal Server Error',
-        sev: 'error'
+        msg: cleanMessage || 'Unprocessable Entity',
+        sev: 'error',
       })
     );
+    return;
   }
+
+  if (status && status < 500) {
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: cleanMessage || 'Internal Server Error',
+      sev: 'error'
+    })
+  );
+}
 };
