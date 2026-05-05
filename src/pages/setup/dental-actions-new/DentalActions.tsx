@@ -251,7 +251,7 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
   const actiontype = useEnumOptions('DentalActionType');
 
 const filters = () => (
-  <Form layout="inline" fluid>
+  <Form fluid className="form-of-filters-set-up">
     <MyInput
       selectDataValue="value"
       selectDataLabel="label"

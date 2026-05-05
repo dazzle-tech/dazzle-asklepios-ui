@@ -486,7 +486,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     };
 
     const filters = () => (
-      <Form layout="inline" fluid>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           fieldName="filter"
           fieldType="select"

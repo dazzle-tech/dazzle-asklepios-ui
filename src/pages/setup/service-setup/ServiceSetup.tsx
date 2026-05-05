@@ -686,7 +686,7 @@ const ServiceSetup: React.FC = () => {
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"

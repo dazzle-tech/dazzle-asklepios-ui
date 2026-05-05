@@ -64,6 +64,7 @@ useEffect(() => {
     }
   };
 
+  console.log('FIELDS:', fields);
   return (
     <div
       className="main-screen-bar-filters-header-main-container"

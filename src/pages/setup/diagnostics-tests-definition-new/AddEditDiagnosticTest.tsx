@@ -322,8 +322,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
 
   useEffect(() => {
     if (open && !diagnosticsTest?.id) {
-      console.log('Facility data in useEffect:', facility);
-
       setDiagnosticsTest(prev => ({
         ...prev,
         currency: facility?.defaultCurrency ?? null

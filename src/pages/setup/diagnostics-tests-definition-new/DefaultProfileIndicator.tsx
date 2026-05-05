@@ -9,7 +9,7 @@ import { Tooltip, Whisper } from 'rsuite';
 type Props = {
   testId?: number;
   testType?: string;
-  onClick?: () => void;
+  onClick?: (profile: any) => void;
 };
 
 const DefaultProfileIndicator: React.FC<Props> = ({
@@ -18,24 +18,31 @@ const DefaultProfileIndicator: React.FC<Props> = ({
   onClick
 }) => {
 
-  const { data } = useGetDiagnosticTestProfilesByTestIdQuery(
+const { data, isFetching, isLoading } =
+  useGetDiagnosticTestProfilesByTestIdQuery(
     testId && testType === 'LABORATORY'
       ? { testId, page: 0, size: 2 }
       : undefined,
-    { skip: !testId || testType !== 'LABORATORY' }
+    {
+      skip: !testId || testType !== 'LABORATORY',
+      refetchOnMountOrArgChange: true
+    }
   );
 
-  const profiles = data?.data ?? [];
-  const activeProfiles = profiles.filter(p => p.isActive === true);
-  const defaultActiveProfiles = activeProfiles.filter(
-    p => p.isDefault === true
-  );
-  const isDefaultOnly =
-    defaultActiveProfiles.length === 1 &&
-    activeProfiles.length === 1;
-  if (!isDefaultOnly) return null;
+const profiles = data?.data ?? [];
+const activeProfiles = profiles.filter(p => p.isActive === true);
+const defaultActiveProfiles = activeProfiles.filter(p => p.isDefault === true);
 
-            // Direction handling for RTL/LTR
+const isDefaultOnly =
+  defaultActiveProfiles.length === 1 && activeProfiles.length === 1;
+
+if (!isDefaultOnly) return null;
+
+const isReady =
+  !isFetching && !isLoading && defaultActiveProfiles.length > 0;
+
+
+  // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
@@ -47,9 +54,15 @@ const DefaultProfileIndicator: React.FC<Props> = ({
       <span
         onClick={e => {
           e.stopPropagation();
-          onClick?.();
+
+          if (!isReady) return;
+
+          onClick?.(defaultActiveProfiles[0]);
         }}
-        style={{ cursor: 'pointer' }}
+        style={{
+          cursor: isReady ? 'pointer' : 'not-allowed',
+          opacity: isReady ? 1 : 0.5
+        }}
         dir={dir}
       >
         <FaChartLine
