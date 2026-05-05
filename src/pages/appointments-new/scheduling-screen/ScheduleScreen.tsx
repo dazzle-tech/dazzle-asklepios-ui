@@ -1474,6 +1474,7 @@ const ScheduleScreen = () => {
     const status = String(
       event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? ''
     ).toUpperCase();
+    const statusKey = normalizeAppointmentStatusKey(status);
     const appointment = event?.appointmentData ?? {};
     const patient = appointment?.patient ?? {};
     const pid = getAppointmentPatientId(appointment);
@@ -1506,7 +1507,8 @@ const ScheduleScreen = () => {
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
-    if (isOpenSlotStatus(status)) {
+    if (isOpenSlotStatus(status) || statusKey === 'RESCHEDULED') {
+      const isRescheduledSlot = statusKey === 'RESCHEDULED';
       const startLabel =
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1517,10 +1519,30 @@ const ScheduleScreen = () => {
           : '--:--';
       const resourceText = getTooltipResourceDisplay(event) || 'Unknown Resource';
       return (
-        <div className="available-slot-card" title={getTooltipContent(event)}>
+        <div
+          className={isRescheduledSlot ? '' : 'available-slot-card'}
+          title={getTooltipContent(event)}
+          style={
+            isRescheduledSlot
+              ? {
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 3,
+                padding: '4px 8px',
+                boxSizing: 'border-box'
+              }
+              : undefined
+          }
+        >
           <div className="available-slot-title">{startLabel} - {endLabel}</div>
           <div className="available-slot-status-row">
-            <span className="available-slot-dot" />
+            <span
+              className="available-slot-dot"
+              style={isRescheduledSlot ? { background: '#7e22ce' } : undefined}
+            />
             <span>
               {resourceText}
             </span>
