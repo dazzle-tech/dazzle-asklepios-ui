@@ -31,22 +31,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
   useEffect(() => {
+    if (!open) return;
     if (!facilityListResponse || !service?.facilityId) return;
 
     const selectedFacility = facilityListResponse.find(
       (f: any) => Number(f.id) === Number(service.facilityId)
     );
 
-    if (
-      selectedFacility?.defaultCurrency &&
-      selectedFacility.defaultCurrency !== service.currency
-    ) {
-      setService({
-        ...service,
+    if (selectedFacility?.defaultCurrency) {
+      setService((prev: any) => ({
+        ...prev,
         currency: selectedFacility.defaultCurrency
-      });
+      }));
     }
-  }, [service?.facilityId, facilityListResponse]);
+  }, [open, service?.facilityId, facilityListResponse]);
 
    useEffect(() => {
    
