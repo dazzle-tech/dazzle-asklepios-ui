@@ -1,11 +1,9 @@
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
 import React, { useMemo } from "react";
 const FullViewTable = ({open,setOpen,procedures, proceduresByIds, procedureIds, proceduresMap, icdMap, icdDiagnoses, indicationIds, TableLoader}) => {
-   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
     const tableColumns =  [
           
           {
@@ -41,11 +39,7 @@ const FullViewTable = ({open,setOpen,procedures, proceduresByIds, procedureIds, 
     
               const proc = proceduresMap.get(Number(rowData.procedureId));
     
-              const category = CategoryLovQueryResponse?.object?.find(
-                (item: any) => item.key === proc?.categoryType
-              );
-    
-              return category?.lovDisplayVale || '';
+              return formatEnumString(proc?.categoryType) || '';
             }
           },
           {

@@ -15,6 +15,7 @@ import {
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
+import { useEnumOptions } from '@/services/enumsApi';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
@@ -41,9 +42,9 @@ const Details = ({
   const [editing, setEditing] = useState(false);
   const dispatch = useAppDispatch();
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
@@ -260,9 +261,9 @@ const Details = ({
                           width="100%"
                           fieldType="select"
                           fieldLabel="Category Type"
-                          selectData={CategoryLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
+                          selectData={categoryOptions ?? []}
+                          selectDataLabel="label"
+                          selectDataValue="value"
                           fieldName="categoryKey"
                           record={procedure}
                           setRecord={setProcedure}

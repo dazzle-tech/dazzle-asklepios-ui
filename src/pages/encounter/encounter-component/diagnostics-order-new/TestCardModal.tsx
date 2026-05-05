@@ -5,6 +5,7 @@ import { Form } from 'rsuite';
 
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { formatEnumString } from '@/utils';
 
 import { useGetPathologyByTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import { useGetLaboratoryByTestIdQuery } from '@/services/setup/diagnosticTest/laboratoryService';
@@ -67,8 +68,6 @@ const TestCardModal = ({ test }: any) => {
     useGetLovValuesByCodeQuery('MED_CATEGORY');
   const { data: specimenTypeLov } =
     useGetLovValuesByCodeQuery('LAB_SPECIMENS');
-  const { data: analysisProcedureLov } =
-    useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
   const lovLabelSmart = (lov?: any[], value?: any) => {
     if (!lov || value == null) return ' ';
@@ -153,12 +152,7 @@ const TestCardModal = ({ test }: any) => {
         path?.specimenType
       ),
 
-      analysisProcedure: path?.analysisProcedure
-        ? lovLabel(
-          analysisProcedureLov?.object,
-          path.analysisProcedure
-        )
-        : "",
+      analysisProcedure: path?.analysisProcedure ? formatEnumString(path.analysisProcedure) : "",
 
       timeUnit: lovLabel(
         timeUnitsLov?.object,
@@ -169,7 +163,6 @@ const TestCardModal = ({ test }: any) => {
     path,
     pathologyCategoriesLov,
     specimenTypeLov,
-    analysisProcedureLov,
     timeUnitsLov,
   ]);
 

@@ -87,7 +87,6 @@ const Referrals = (props: any) => {
     currentDepartment: true
   });
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
@@ -343,11 +342,7 @@ const Referrals = (props: any) => {
 
           const proc = proceduresMap.get(Number(rowData.procedureId));
 
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === proc?.categoryType
-          );
-
-          return category?.lovDisplayVale || '';
+          return formatEnumString(proc?.categoryType) || '';
         }
       },
       {
@@ -547,7 +542,6 @@ const Referrals = (props: any) => {
       }
     ],
     [
-      CategoryLovQueryResponse,
       proceduresMap,
       dispatch,
       getProcedureById,

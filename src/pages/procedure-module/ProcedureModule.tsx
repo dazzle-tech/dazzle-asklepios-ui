@@ -7,6 +7,8 @@ import { useGetEncounterByIdQuery } from '@/services/encounterService';
 import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { useGetProceduresQuery } from '@/services/procedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds, fromCamelCaseToDBName } from '@/utils';
@@ -76,7 +78,7 @@ const ProcedureModule: React.FC = () => {
     skip: !procedure?.encounterKey
   });
   const [openPerformModal, setOpenPerformModal] = useState(false);
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
 
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.key === procedure.key ? 'selected-row' : '';
@@ -115,7 +117,6 @@ const ProcedureModule: React.FC = () => {
   const [trigger] = useLazyGetPatientByIdQuery();
 
   const { data: procedureStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_STATUS');
-  const { data: procedureCatStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const { data: procedurePrioStatusLovQueryResponse } =
     useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: procedureLevelStatusLovQueryResponse } =
@@ -327,10 +328,7 @@ const ProcedureModule: React.FC = () => {
         title: <Translate>CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData.categoryKey
-          );
-          return category?.lovDisplayVale || ' ';
+          return formatEnumString(rowData.categoryKey) || ' ';
         }
       },
       {
@@ -555,7 +553,7 @@ const ProcedureModule: React.FC = () => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse, patients]
+    [patients]
   );
 
   const pageIndex = (listRequest.pageNumber || 1) - 1;
@@ -580,9 +578,9 @@ const ProcedureModule: React.FC = () => {
         <MyInput
           fieldType="select"
           fieldName="Category"
-          selectData={procedureCatStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={categoryOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={record}
           setRecord={setRecord}
           showLabel={false}
