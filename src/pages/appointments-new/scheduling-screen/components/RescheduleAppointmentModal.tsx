@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DatePicker, Form, Radio, RadioGroup } from 'rsuite';
+import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
 import {
   useLazySearchAppointmentsQuery,
   useRescheduleAppointmentMutation
@@ -29,7 +30,9 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
   const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
   const [rescheduleAppointment, { isLoading: isRescheduling }] = useRescheduleAppointmentMutation();
   const [reason, setReason] = useState<{ reason: string }>({ reason: '' });
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDateRecord, setSelectedDateRecord] = useState<{ selectedDate: string | null }>({
+    selectedDate: new Date().toISOString().slice(0, 10)
+  });
   const [slots, setSlots] = useState<any[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
 
@@ -70,7 +73,8 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
     setSelectedSlotId('');
     const startRaw = appointment?.startDatetime ?? appointment?.appointmentStart ?? null;
     const startDate = startRaw ? new Date(startRaw) : new Date();
-    setSelectedDate(Number.isNaN(startDate.getTime()) ? new Date() : startDate);
+    const normalized = Number.isNaN(startDate.getTime()) ? new Date() : startDate;
+    setSelectedDateRecord({ selectedDate: normalized.toISOString().slice(0, 10) });
   }, [open, appointment]);
 
   useEffect(() => {
@@ -111,7 +115,10 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
             const startRaw = row?.startDatetime ?? row?.appointmentStart ?? row?.appointment_start;
             const start = startRaw ? new Date(startRaw) : null;
             if (!start || Number.isNaN(start.getTime())) return false;
-            return isSameDay(start, selectedDate);
+            const targetDate = selectedDateRecord.selectedDate
+              ? new Date(selectedDateRecord.selectedDate)
+              : new Date();
+            return isSameDay(start, targetDate);
           })
           .sort((a: any, b: any) => {
             const as = new Date(a?.startDatetime ?? a?.appointmentStart ?? 0).getTime();
@@ -135,12 +142,56 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
     resourceId,
     bookingMode,
     appointmentId,
-    selectedDate
+    selectedDateRecord.selectedDate
   ]);
 
   const selectedSlot = useMemo(
     () => slots.find((slot: any) => String(slot?.id ?? slot?.key) === String(selectedSlotId)),
     [slots, selectedSlotId]
+  );
+
+  const tableColumns = useMemo(
+    () => [
+      {
+        key: 'selection',
+        title: 'Select',
+        width: 80,
+        render: (rowData: any) => (
+          <input type="radio" readOnly checked={selectedSlotId === String(rowData.slotKey)} />
+        )
+      },
+      {
+        key: 'date',
+        title: 'Date',
+        flexGrow: 1,
+        render: (rowData: any) => rowData.dateLabel
+      },
+      {
+        key: 'time',
+        title: 'Time',
+        flexGrow: 1,
+        render: (rowData: any) => rowData.timeLabel
+      }
+    ],
+    [selectedSlotId]
+  );
+
+  const tableRows = useMemo(
+    () =>
+      slots.map((slot: any) => {
+        const slotKey = String(slot?.id ?? slot?.key ?? '');
+        const start = new Date(slot?.startDatetime ?? slot?.appointmentStart ?? 0);
+        const end = new Date(slot?.endDatetime ?? slot?.appointmentEnd ?? 0);
+        return {
+          slotKey,
+          dateLabel: Number.isNaN(start.getTime()) ? '-' : start.toLocaleDateString(),
+          timeLabel:
+            Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())
+              ? '-'
+              : `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+        };
+      }),
+    [slots]
   );
 
   return (
@@ -173,15 +224,20 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
         }
 
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <DatePicker
-              oneTap
-              value={selectedDate}
-              onChange={d => setSelectedDate(d ?? new Date())}
-              format="yyyy-MM-dd"
-              style={{ width: 180 }}
-            />
-            <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, padding: 12, minHeight: 360 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Form fluid layout="vertical">
+              <MyInput
+                fieldType="date"
+                fieldName="selectedDate"
+                fieldLabel="Date"
+                record={selectedDateRecord}
+                setRecord={setSelectedDateRecord}
+                disablePastDates
+                width={220}
+                column
+              />
+            </Form>
+            <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, padding: 12, minHeight: 420 }}>
               {isFetching ? (
                 <div style={{ color: '#64748b', fontSize: 13 }}>Loading free appointments...</div>
               ) : slots.length === 0 ? (
@@ -189,38 +245,16 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
                   No free appointments found for the same appointment configuration.
                 </div>
               ) : (
-                <RadioGroup
-                  name="reschedule-slot"
-                  value={selectedSlotId}
-                  onChange={(nextValue: string | number) => setSelectedSlotId(String(nextValue))}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {slots.map((slot: any) => {
-                      const slotKey = String(slot?.id ?? slot?.key);
-                      const start = new Date(slot?.startDatetime ?? slot?.appointmentStart ?? 0);
-                      const end = new Date(slot?.endDatetime ?? slot?.appointmentEnd ?? 0);
-                      const timeLabel = `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                      return (
-                        <label
-                          key={slotKey}
-                          style={{
-                            border: '1px solid #e2e8f0',
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}
-                        >
-                          <Radio value={slotKey}>
-                            {start.toLocaleDateString()} | {timeLabel}
-                          </Radio>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </RadioGroup>
+                <MyTable
+                  columns={tableColumns as any}
+                  data={tableRows}
+                  loading={isFetching}
+                  height={380}
+                  onRowClick={(rowData: any) => setSelectedSlotId(String(rowData.slotKey))}
+                  rowClassName={(rowData: any) =>
+                    selectedSlotId === String(rowData.slotKey) ? 'selected-row' : ''
+                  }
+                />
               )}
             </div>
           </div>
