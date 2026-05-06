@@ -9,6 +9,7 @@ import type {
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
   AppointmentFromTemplateRescheduleDTO,
+  DiagnosticTestAppointmentRescheduleDTO,
   AppointmentFromTemplateSearchFilterDTO
 } from '@/types/model-types-new';
 
@@ -107,6 +108,21 @@ export const appointmentFromTemplateService = createApi({
     >({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/reschedule`,
+        method: 'POST',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    rescheduleDiagnosticTestAppointment: builder.mutation<
+      AppointmentFromTemplate,
+      DiagnosticTestAppointmentRescheduleDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/reschedule-diagnostic-test`,
         method: 'POST',
         body
       }),
@@ -289,6 +305,7 @@ export const {
   useBookPatientAppointmentMutation,
   useCreateQuickAppointmentMutation,
   useRescheduleAppointmentMutation,
+  useRescheduleDiagnosticTestAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useGetAppointmentsByBatchIdQuery,

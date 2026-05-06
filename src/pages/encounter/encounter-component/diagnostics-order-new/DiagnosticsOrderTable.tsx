@@ -1,4 +1,4 @@
-import { faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
@@ -39,6 +39,7 @@ type Props = {
   setTestCardModal: (v: boolean) => void;
 
   handleEdit: (row: any) => void;
+  onRescheduleAppointment?: (row: any) => void;
   resolveReasonLabel: (k?: string) => string;
 
   // preview
@@ -70,6 +71,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     setOrderTest,
     setTestCardModal,
     handleEdit,
+    onRescheduleAppointment,
     resolveReasonLabel,
 
     previewDiagnosticsOrder,
@@ -102,7 +104,7 @@ useEffect(() => {
   getDepartmentsBulk(departmentIds)
     .unwrap()
     .then(res => {
-      const map = new Map(res.map((d: any) => [d.id, d]));
+      const map = new Map<number, any>(res.map((d: any) => [Number(d.id), d]));
       setDepartmentsMap(map);
     });
 }, [departmentIds]);
@@ -248,6 +250,16 @@ const getDepartmentName = (id?: number) =>
                   style={{ cursor: 'pointer' }}
                 />
               </HStack>
+            </Whisper>
+
+            <Whisper placement="top" speaker={<Tooltip>Reschedule appointment</Tooltip>}>
+              <FontAwesomeIcon
+                icon={faCalendarCheck}
+                className="icons-styles"
+                color="var(--primary-gray)"
+                onClick={() => onRescheduleAppointment?.(rowData)}
+                style={{ cursor: 'pointer' }}
+              />
             </Whisper>
           </div>
         );
