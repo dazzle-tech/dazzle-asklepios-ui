@@ -157,6 +157,9 @@ const MyInput = ({
   const [showPassword, setShowPassword] = useState(false);
   const [localSearch, setLocalSearch] = useState('');
 
+
+  const allowEnterNewLine = props.allowEnterNewLine ?? true;
+
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
@@ -344,7 +347,7 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  if (props.allowEnterNewLine) {
+                  if (allowEnterNewLine) {
                     return;
                   }
                   focusNextField(e);

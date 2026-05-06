@@ -513,6 +513,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     width={220}
+                    required
                   />
                   <MyInput
                     fieldName="code"
@@ -522,6 +523,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                     record={countryForEdit}
                     setRecord={setCountryForEdit}
                     width={120}
+                    required
                   />
                   <div className="margin-top-37">
                     <MyButton
