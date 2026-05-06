@@ -224,6 +224,8 @@ const getDepartmentName = (id?: number) =>
       flexGrow: 2,
       fullText: true,
       render: (rowData: any) => {
+        const rowStatus = String(rowData?.status ?? '').toUpperCase();
+        const isRescheduled = rowStatus.includes('RESCHEDULE');
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Whisper placement="top" speaker={<Tooltip>Edit</Tooltip>}>
@@ -256,9 +258,12 @@ const getDepartmentName = (id?: number) =>
               <FontAwesomeIcon
                 icon={faCalendarCheck}
                 className="icons-styles"
-                color="var(--primary-gray)"
-                onClick={() => onRescheduleAppointment?.(rowData)}
-                style={{ cursor: 'pointer' }}
+                color={isRescheduled ? '#b9c0cc' : 'var(--primary-gray)'}
+                onClick={() => {
+                  if (isRescheduled) return;
+                  onRescheduleAppointment?.(rowData);
+                }}
+                style={{ cursor: isRescheduled ? 'not-allowed' : 'pointer' }}
               />
             </Whisper>
           </div>

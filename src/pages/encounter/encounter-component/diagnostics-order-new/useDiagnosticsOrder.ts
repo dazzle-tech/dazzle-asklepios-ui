@@ -260,6 +260,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const orderTestList = orderTestsResponse?.data ?? [];
 
+  useEffect(() => {
+    if (!orderId) return;
+    const refreshTimer = setInterval(() => {
+      void orderTestRefetch();
+    }, 15000);
+    return () => clearInterval(refreshTimer);
+  }, [orderId, orderTestRefetch]);
+
   // Favorites
   const userId = authSlice?.user?.id;
 

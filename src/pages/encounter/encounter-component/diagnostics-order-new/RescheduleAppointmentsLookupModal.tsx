@@ -184,8 +184,20 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
       title="Reschedule Appointment"
       size="62vw"
       bodyheight="70vh"
+      steps={[{ title: 'Reason for reschedule' }, { title: 'Select new schedule' }]}
+      onBeforeNext={() => {
+        const reason = String(rescheduleDto.rescheduleReason ?? '').trim();
+        if (reason) return true;
+        dispatch(
+          notify({
+            msg: 'Please provide a reschedule reason before continuing.',
+            sev: 'warning'
+          })
+        );
+        return false;
+      }}
       actionButtonLabel="Save"
-      isDisabledActionBtn={!selectedSlot || !String(rescheduleDto.rescheduleReason ?? '').trim() || isSubmitting}
+      isDisabledActionBtn={!selectedSlot || isSubmitting}
       actionButtonFunction={async () => {
         const orderTestId = Number(orderTest?.id ?? orderTest?.orderTestId ?? 0);
         const newAppointmentId = Number(selectedSlot?.id ?? selectedSlot?.key ?? 0);
@@ -212,51 +224,60 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
           dispatch(notify({ msg: 'Failed to reschedule diagnostic test appointment.', sev: 'error' }));
         }
       }}
-      content={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Form fluid layout="vertical">
-            <MyInput
-              fieldType="textarea"
-              fieldName="rescheduleReason"
-              fieldLabel="Reschedule reason"
-              record={rescheduleDto}
-              setRecord={setRescheduleDto}
-              rows={3}
-              width="100%"
-              column
-            />
-            <MyInput
-              fieldType="date"
-              fieldName="selectedDate"
-              fieldLabel="Date"
-              record={selectedDateRecord}
-              setRecord={setSelectedDateRecord}
-              disablePastDates
-              width={220}
-              column
-            />
-          </Form>
-
-          <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, minHeight: 420, padding: 12 }}>
-            {!isFetching && daySlots.length === 0 ? (
-              <div style={{ color: '#94a3b8', fontSize: 13 }}>
-                No available slot appointments found for this diagnostic test.
-              </div>
-            ) : (
-              <MyTable
-                columns={tableColumns as any}
-                data={tableRows}
-                loading={isFetching}
-                height={380}
-                onRowClick={(rowData: any) => setSelectedSlotId(String(rowData.slotKey))}
-                rowClassName={(rowData: any) =>
-                  selectedSlotId === String(rowData.slotKey) ? 'selected-row' : ''
-                }
+      content={(activeStep: number) => {
+        if (activeStep === 0) {
+          return (
+            <Form fluid layout="vertical">
+              <MyInput
+                fieldType="textarea"
+                fieldName="rescheduleReason"
+                fieldLabel="Reschedule reason"
+                record={rescheduleDto}
+                setRecord={setRescheduleDto}
+                rows={4}
+                width="100%"
+                column
               />
-            )}
+            </Form>
+          );
+        }
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Form fluid layout="vertical">
+              <MyInput
+                fieldType="date"
+                fieldName="selectedDate"
+                fieldLabel="Date"
+                record={selectedDateRecord}
+                setRecord={setSelectedDateRecord}
+                disablePastDates
+                width={220}
+                column
+              />
+            </Form>
+
+            <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, minHeight: 420, padding: 12 }}>
+              {!isFetching && daySlots.length === 0 ? (
+                <div style={{ color: '#94a3b8', fontSize: 13 }}>
+                  No available slot appointments found for this diagnostic test.
+                </div>
+              ) : (
+                <MyTable
+                  columns={tableColumns as any}
+                  data={tableRows}
+                  loading={isFetching}
+                  height={380}
+                  onRowClick={(rowData: any) => setSelectedSlotId(String(rowData.slotKey))}
+                  rowClassName={(rowData: any) =>
+                    selectedSlotId === String(rowData.slotKey) ? 'selected-row' : ''
+                  }
+                />
+              )}
+            </div>
           </div>
-        </div>
-      }
+        );
+      }}
     />
   );
 };
