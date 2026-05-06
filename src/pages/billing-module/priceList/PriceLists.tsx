@@ -315,7 +315,7 @@ const PriceLists = () => {
   };
 
   const filters = () => (
-    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldName="filter"
         fieldType="select"
