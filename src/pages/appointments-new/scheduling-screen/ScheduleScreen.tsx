@@ -1121,6 +1121,35 @@ const ScheduleScreen = () => {
     }
   }, [visibleAppointments, attachments]);
 
+  useEffect(() => {
+    if (!ActionsModalOpen) return;
+    const selectedId = selectedEvent?.id;
+    if (!selectedId) return;
+    const freshSelectedEvent = (finalAppointments ?? []).find(
+      (event: any) => String(event?.id) === String(selectedId)
+    );
+    if (!freshSelectedEvent) return;
+
+    const prevStatus = String(
+      selectedEvent?.appointmentData?.appointmentStatus ?? selectedEvent?.appointmentData?.status ?? ''
+    ).toUpperCase();
+    const nextStatus = String(
+      freshSelectedEvent?.appointmentData?.appointmentStatus ??
+      freshSelectedEvent?.appointmentData?.status ??
+      ''
+    ).toUpperCase();
+
+    if (prevStatus !== nextStatus) {
+      setSelectedEvent(freshSelectedEvent);
+      setActionsModalOpen(true);
+    }
+  }, [ActionsModalOpen, selectedEvent, finalAppointments]);
+
+  const handleActionsStatusRefresh = useCallback(async () => {
+    await handleSearchAppointmentsByCriteria();
+    setActionsModalOpen(true);
+  }, [handleSearchAppointmentsByCriteria]);
+
   const appointmentResourceKeys = useMemo(() => {
     return new Set((finalAppointments ?? []).map(e => e.resourceId).filter(Boolean));
   }, [finalAppointments]);
@@ -1945,7 +1974,7 @@ const ScheduleScreen = () => {
       <AppointmentActionsModal
         viewAppointment={appointmentData => handleViewAppointment(appointmentData)}
         editAppointment={appointmentData => handleRescheduleAppointment(appointmentData)}
-        onStatusChange={handleSearchAppointmentsByCriteria}
+        onStatusChange={handleActionsStatusRefresh}
         isActionsModalOpen={ActionsModalOpen}
         onActionsModalClose={() => {
           if (!isOpeningViewModalRef.current) {

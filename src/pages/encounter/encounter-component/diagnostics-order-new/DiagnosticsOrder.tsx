@@ -5,6 +5,7 @@ import './styles.less';
 
 import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
+import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
@@ -121,6 +122,7 @@ const DiagnosticsOrder = (props: any) => {
         setOrderTest={vm.setOrderTest}
         setTestCardModal={vm.setTestCardModal}
         handleEdit={vm.handleEdit}
+        onRescheduleAppointment={vm.handleOpenRescheduleAppointments}
         resolveReasonLabel={vm.resolveReasonLabel}
         previewDiagnosticsOrder={vm.previewDiagnosticsOrder}
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
@@ -176,6 +178,14 @@ const DiagnosticsOrder = (props: any) => {
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
         handleLoadMore={vm.handleLoadMore}
+      />
+
+      <RescheduleAppointmentsLookupModal
+        open={vm.rescheduleAppointmentsModalOpen}
+        setOpen={vm.setRescheduleAppointmentsModalOpen}
+        orderTest={vm.selectedOrderTestForReschedule}
+        facilityId={vm.selectedDepartment?.facilityId}
+        onClose={() => vm.setSelectedOrderTestForReschedule(null)}
       />
     </div>
   );
