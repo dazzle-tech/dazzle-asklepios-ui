@@ -1010,6 +1010,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
+    const hasServices = servicesRows.length > 0;
+
     return (
       <Form fluid layout="inline" className="fields-container" dir={dir}>
         <MyInput
@@ -1090,7 +1092,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
             setPayment(nextPayment);
           }}
-          disabled={isReadOnly || isLocked}
+          disabled={isReadOnly || isLocked || !hasServices}
           required
           searchable={false}
           isEnum
@@ -1127,7 +1129,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
             setPayment(nextPayment);
           }}
-          disabled={isReadOnly || isLocked}
+          disabled={isReadOnly || isLocked || !hasServices}
           required
           searchable={false}
           isEnum
@@ -1404,7 +1406,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             fieldName="amount"
             record={payment}
             setRecord={setPayment}
-            disabled={isReadOnly || isLocked}
+            disabled={isReadOnly || isLocked || !hasServices}
             required
           />
 
@@ -1424,7 +1426,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
                 nextPayment.currency = nextPayment.facilityDefaultCurrency;
               setPayment(nextPayment);
             }}
-            disabled={isReadOnly || isLocked}
+            disabled={isReadOnly || isLocked || !hasServices}
             required
             searchable
           />
