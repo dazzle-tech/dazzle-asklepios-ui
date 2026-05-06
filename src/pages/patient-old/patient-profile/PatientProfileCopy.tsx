@@ -54,7 +54,7 @@ const PatientProfile = () => {
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
-  const divContent = 'Patient Registration';
+  const divContent = 'Patient Registrationn';
 
   const handleSave = async () => {
     try {
