@@ -20,15 +20,19 @@ const PatientAppointments = ({ patient }) => {
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   const [resourceNames, setResourceNames] = useState<Record<number, string>>({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const { data: appointmentsData } = useSearchAppointmentsQuery({
+  const { data: appointmentsData, isFetching } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedFacility?.id,
       patientId: patient?.id
     },
-    page: 0,
-    size: 50,
+    page,
+    size: rowsPerPage,
     sort: 'id,desc'
+  }, {
+    skip: !patient?.id
   });
   const [getPractitioner] = useLazyGetPractitionerByIdQuery();
   const [getService] = useLazyGetServiceByIdQuery();
@@ -143,6 +147,20 @@ const PatientAppointments = ({ patient }) => {
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
+  const totalCount = appointmentsData?.totalCount ?? 0;
+
+  const handlePageChange = (_event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(Number(event.target.value));
+    setPage(0);
+  };
+
+  useEffect(() => {
+    setPage(0);
+  }, [patient?.id, selectedFacility?.id]);
 
   // Effects
   useEffect(() => {
@@ -196,6 +214,12 @@ const PatientAppointments = ({ patient }) => {
         data={patient?.id ? appointmentsData?.data : []}
         columns={tableColumns}
         height={400}
+        loading={isFetching}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
     </div>
   );
