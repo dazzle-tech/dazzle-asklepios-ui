@@ -87,7 +87,7 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
             department: departmentId,
             resourceType,
             resourceId: Number.isFinite(resourceId) && resourceId > 0 ? resourceId : null,
-            status: null,
+            status: 'NEW',
             bookingMode: bookingMode ? [bookingMode] : null,
             patientId: null
           },
