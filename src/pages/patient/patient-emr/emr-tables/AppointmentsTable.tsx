@@ -14,7 +14,6 @@ const AppointmentsTable = ({ patient }: any) => {
   const facility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const department = useAppSelector(state => state.auth?.selectedDepartment);
 
-  console.log('Selected department:', department);
 
   const departmentId = department?.departmentId;
 
@@ -112,15 +111,6 @@ const AppointmentsTable = ({ patient }: any) => {
       }
     }
   ];
-
-  console.log('REQUEST:', {
-    patientId: patient?.id,
-    page,
-    size: rowsPerPage
-  });
-
-  console.log('tableData:', tableData);
-
   return (
     <MyTable
       data={tableData}

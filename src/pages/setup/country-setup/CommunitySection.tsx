@@ -503,7 +503,7 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
           <>
             <div className="inputs-dis-flex">
               <div className="geo-inline-form">
-                <Form fluid layout="inline">
+                <Form fluid layout="inline" className="form-of-filters-set-up">
                   <MyInput
                     fieldName="name"
                     fieldType="text"
@@ -512,6 +512,7 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
                     record={communityForEdit}
                     setRecord={setCommunityForEdit}
                     width={220}
+                    required
                   />
                   <div className="margin-top-37">
                     <MyButton
