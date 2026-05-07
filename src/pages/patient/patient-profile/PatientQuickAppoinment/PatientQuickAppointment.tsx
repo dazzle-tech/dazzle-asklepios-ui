@@ -264,8 +264,8 @@ const PatientQuickAppointment = ({
       const list: any[] = Array.isArray(result?.data)
         ? result.data
         : Array.isArray(result)
-        ? result
-        : [];
+          ? result
+          : [];
 
       return list.some((e: any) => {
         const sameDept =
@@ -279,7 +279,19 @@ const PatientQuickAppointment = ({
       return false;
     }
   };
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message ?? response?.message;
 
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+
+      return '';
+    } catch {
+      return '';
+    }
+  };
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
 
@@ -317,7 +329,7 @@ const PatientQuickAppointment = ({
           ? Number((localEncounter as any).defaultServiceId)
           : null,
         defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
-        reason: (localEncounter as any)?.chiefComplaint  as string | null,
+        reason: (localEncounter as any)?.chiefComplaint as string | null,
         note: (localEncounter?.notes ?? null) as string | null,
         followUpEncounterId:
           localEncounter?.encounterReason === 'FOLLOW_UP' && localEncounter?.followUpEncounterId
@@ -360,6 +372,18 @@ const PatientQuickAppointment = ({
       if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {
       setValidationResult(err?.data ?? err);
+      const backendMsg = extractErrorMessage(err);
+
+      if (backendMsg) {
+        dispatch(
+          notify({
+            msg: backendMsg,
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
       handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
     }
   };
@@ -446,7 +470,7 @@ const PatientQuickAppointment = ({
             setPayment={setPaymentDraft}
             patientInsurance={patientInsuranceDraft}
             setPatientInsurance={setPatientInsuranceDraft}
-            onPaymentSaved={onEncounterSaved} 
+            onPaymentSaved={onEncounterSaved}
           />
         );
       default:
@@ -454,11 +478,11 @@ const PatientQuickAppointment = ({
     }
   };
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (<div dir={dir}>
@@ -520,7 +544,7 @@ const PatientQuickAppointment = ({
       hideActionBtn={true}
       initialStep={initialStep}
     />
-    </div>
+  </div>
   );
 };
 
