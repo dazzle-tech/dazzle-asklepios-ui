@@ -22,7 +22,11 @@ import {
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 
 import { notify } from '@/utils/uiReducerActions';
-import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import {
+  conjureValueBasedOnKeyFromList,
+  formatDateWithoutSeconds,
+  formatEnumString
+} from '@/utils';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
@@ -115,7 +119,10 @@ const Prescription = (props: Props) => {
     if (Array.isArray(x.content)) return x.content;
     return [];
   };
-  const isCanceledStatus = (status: any) => String(status ?? '').toUpperCase().includes('CANCEL');
+  const isCanceledStatus = (status: any) =>
+    String(status ?? '')
+      .toUpperCase()
+      .includes('CANCEL');
 
   // Brand medications (for names in table/preview)
   const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
@@ -125,12 +132,16 @@ const Prescription = (props: Props) => {
   });
 
   // Patient / encounter ids (prefer numeric id; fallback to key)
-  const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
+  const patientId = patient?.id
+    ? Number(patient.id)
+    : patient?.key
+    ? Number(patient.key)
+    : undefined;
   const encounterId = encounter?.id
     ? Number(encounter.id)
     : encounter?.key
-      ? Number(encounter.key)
-      : undefined;
+    ? Number(encounter.key)
+    : undefined;
 
   // List prescriptions
   const {
@@ -176,7 +187,8 @@ const Prescription = (props: Props) => {
           if (!isNaN(objId) && objId === targetPatientId) return true;
         }
         if (patientObj.key != null) {
-          const objKey = typeof patientObj.key === 'string' ? Number(patientObj.key) : patientObj.key;
+          const objKey =
+            typeof patientObj.key === 'string' ? Number(patientObj.key) : patientObj.key;
           if (!isNaN(objKey) && objKey === targetPatientId) return true;
         }
       }
@@ -184,7 +196,8 @@ const Prescription = (props: Props) => {
       // Additional fallback: if encounterId matches and we have encounterId, include it
       // This is a safety measure in case patientId is not populated but encounterId is
       if (encounterId != null && p.encounterId != null) {
-        const pEncounterId = typeof p.encounterId === 'string' ? Number(p.encounterId) : p.encounterId;
+        const pEncounterId =
+          typeof p.encounterId === 'string' ? Number(p.encounterId) : p.encounterId;
         const targetEncounterId = Number(encounterId);
         if (!isNaN(pEncounterId) && pEncounterId === targetEncounterId) return true;
       }
@@ -262,7 +275,8 @@ const Prescription = (props: Props) => {
       setCurrentPrescription(null);
       return;
     }
-    const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
+    const selected =
+      (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
       (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
     if (selected) setCurrentPrescription(selected);
   }, [preKeyRecord.preKey, patientPrescriptions, prescriptions]);
@@ -285,30 +299,23 @@ const Prescription = (props: Props) => {
       : (undefined as any),
     { skip: !currentPrescription?.id }
   );
-  const [
-    getActiveIngredientsByIds,
-    {
-      data: activeIngredientsByIds,
-    },
-  ] = useGetActiveIngredientsByIdsMutation();
+  const [getActiveIngredientsByIds, { data: activeIngredientsByIds }] =
+    useGetActiveIngredientsByIdsMutation();
 
   const activeIngredientIds = useMemo(() => {
     const medications = patientPrescriptionMedicationsRaw?.data ?? [];
 
-    const ids = medications.map((item) => item.activeIngredientId);
+    const ids = medications.map(item => item.activeIngredientId);
     const filtered = ids.filter((id): id is number => id != null);
     return filtered;
   }, [patientPrescriptionMedicationsRaw]);
-
 
   useEffect(() => {
     if (!activeIngredientIds.length) return;
     getActiveIngredientsByIds(activeIngredientIds);
   }, [activeIngredientIds, getActiveIngredientsByIds]);
   const activeIngredientsMap = useMemo(() => {
-    return new Map(
-      (activeIngredientsByIds ?? []).map((item) => [item.id, item])
-    );
+    return new Map((activeIngredientsByIds ?? []).map(item => [item.id, item]));
   }, [activeIngredientsByIds]);
 
   const patientPrescriptionMedications = asArray(
@@ -412,21 +419,22 @@ const Prescription = (props: Props) => {
       // Try reading from medication object first (new API)
       if (row?.dose != null || row?.doesUnit || row?.frequency || row?.rout) {
         // Get LOV arrays - handle both object and direct array formats
-        const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
-        const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+        const unitLovArray = Array.isArray(unitLovQueryResponse)
+          ? unitLovQueryResponse
+          : unitLovQueryResponse?.object ?? [];
+        const freqLovArray = Array.isArray(frequencyLov)
+          ? frequencyLov
+          : frequencyLov?.object ?? [];
 
-        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) ||
+        const unitDisplay =
+          getLovDisplay(unitLovArray, row?.doesUnit) ||
           formatEnumString(row?.doesUnit) ||
           (row?.doesUnit ? String(row.doesUnit) : '');
-        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) ||
+        const freqDisplay =
+          getLovDisplay(freqLovArray, row?.frequency) ||
           formatEnumString(row?.frequency) ||
           (row?.frequency ? String(row.frequency) : '');
-        return [
-          toStr(row?.dose),
-          unitDisplay,
-          formatEnumString(row?.rout),
-          freqDisplay
-        ]
+        return [toStr(row?.dose), unitDisplay, formatEnumString(row?.rout), freqDisplay]
           .map(s => s.trim())
           .filter(Boolean)
           .join(', ');
@@ -479,7 +487,11 @@ const Prescription = (props: Props) => {
       const medId = row?.medicationsId ?? row?.genericMedicationsId;
       const medicationName = getMedicationName(brandMedicationsForNames, medId);
       const activeIngredientsText = formatActiveIngredientsLikeUI(medId);
-      const instructionsText = formatInstructionsLikeTable(row, predefinedInstructions, customInstructions);
+      const instructionsText = formatInstructionsLikeTable(
+        row,
+        predefinedInstructions,
+        customInstructions
+      );
 
       const parts = [
         `Medication Name: ${toStr(medicationName)}`,
@@ -579,7 +591,11 @@ const Prescription = (props: Props) => {
   }, []);
 
   const isSelected = (rowData: any) => {
-    if (rowData && patientPrescriptionMedicationObject && String(rowData.id) === String(patientPrescriptionMedicationObject.id)) {
+    if (
+      rowData &&
+      patientPrescriptionMedicationObject &&
+      String(rowData.id) === String(patientPrescriptionMedicationObject.id)
+    ) {
       return 'selected-row';
     }
     return '';
@@ -603,8 +619,8 @@ const Prescription = (props: Props) => {
     const rowsToCancel = selectedRows.length
       ? selectedRows
       : patientPrescriptionMedicationObject?.id
-        ? [patientPrescriptionMedicationObject]
-        : [];
+      ? [patientPrescriptionMedicationObject]
+      : [];
 
     if (!rowsToCancel.length) {
       dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
@@ -613,12 +629,12 @@ const Prescription = (props: Props) => {
 
     try {
       await Promise.all(
-        rowsToCancel
-          .filter(r => r?.id != null)
-          .map(r => deleteMedication(Number(r.id)).unwrap())
+        rowsToCancel.filter(r => r?.id != null).map(r => deleteMedication(Number(r.id)).unwrap())
       );
 
-      dispatch(notify({ msg: 'Selected medications deleted successfully', type: 'success' } as any));
+      dispatch(
+        notify({ msg: 'Selected medications deleted successfully', type: 'success' } as any)
+      );
       setOpenCancellation(false);
       setSelectedRows([]);
       await medicRefetch();
@@ -627,10 +643,9 @@ const Prescription = (props: Props) => {
     }
   };
 
-
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
   const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
-   const handlePrintPrescriptionPdf = async (rowData: any) => {
+  const handlePrintPrescriptionPdf = async (rowData: any) => {
     try {
       const blob = await triggerGetPrescriptionPdf({
         prescriptionId: rowData.id
@@ -655,16 +670,21 @@ const Prescription = (props: Props) => {
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
 
+    const nonCancelledMeds = patientPrescriptionMedications.filter(
+      m => !isCanceledStatus((m as any)?.status)
+    );
+    if (nonCancelledMeds.length === 0) {
+      dispatch(
+        notify({ msg: 'Cannot submit: all medications are cancelled', type: 'warning' } as any)
+      );
+      return;
+    }
 
     try {
-
-
-
       await submitPrescription({
-        id: currentPrescription.id,
+        id: currentPrescription.id
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
-
 
       setSummaryModalOpen(false);
       await preRefetch();
@@ -724,34 +744,16 @@ const Prescription = (props: Props) => {
     setOpenToAdd(true);
   };
 
- 
-
   // Table columns
   const tableColumns: any[] = [
     {
-      key: '#',
-      title: <Translate> #</Translate>,
-      flexGrow: 1,
-      render: (rowData: PatientPrescriptionMedication) => (
-        <Checkbox
-          className="check-box"
-          key={rowData.id}
-          checked={selectedRows.some(x => String(x.id) === String(rowData.id))}
-          onChange={() => handleCheckboxChange(rowData)}
-          disabled={edit}
-        />
-      )
-    },
-    {
       key: 'activeIngredientId',
-
       title: 'Active Ingredients',
       flexGrow: 1,
       render: (rowData: any) => {
-        const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        const ingredient = activeIngredientsMap.get(rowData.activeIngredientId);
         return ingredient?.name ? String(ingredient.name) : '-';
       }
-
     },
     {
       key: 'medicationName',
@@ -760,7 +762,9 @@ const Prescription = (props: Props) => {
       flexGrow: 2,
       render: (rowData: any) => {
         const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        return genericMedicationListResponse?.data?.find((item: any) => String(item.id) === String(medId))?.name;
+        return genericMedicationListResponse?.data?.find(
+          (item: any) => String(item.id) === String(medId)
+        )?.name;
       }
     },
     {
@@ -798,13 +802,19 @@ const Prescription = (props: Props) => {
           // Try reading from medication object first (new API)
           if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
             // Get LOV arrays - handle both object and direct array formats
-            const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
-            const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+            const unitLovArray = Array.isArray(unitLovQueryResponse)
+              ? unitLovQueryResponse
+              : unitLovQueryResponse?.object ?? [];
+            const freqLovArray = Array.isArray(frequencyLov)
+              ? frequencyLov
+              : frequencyLov?.object ?? [];
 
-            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
+            const unitDisplay =
+              getLovDisplay(unitLovArray, rowData?.doesUnit) ||
               formatEnumString(rowData?.doesUnit) ||
               (rowData?.doesUnit ? String(rowData.doesUnit) : '');
-            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
+            const freqDisplay =
+              getLovDisplay(freqLovArray, rowData?.frequency) ||
               formatEnumString(rowData?.frequency) ||
               (rowData?.frequency ? String(rowData.frequency) : '');
             return cleanJoin([
@@ -835,7 +845,8 @@ const Prescription = (props: Props) => {
       key: 'instructionsType',
       title: 'Instructions Type',
       flexGrow: 2,
-      render: (rowData: any) => rowData.instructionsType ? formatEnumString(rowData.instructionsType) : ''
+      render: (rowData: any) =>
+        rowData.instructionsType ? formatEnumString(rowData.instructionsType) : ''
     },
     { key: 'validUtil', dataKey: 'validUtil', title: 'Valid Util', flexGrow: 2 },
     {
@@ -863,12 +874,11 @@ const Prescription = (props: Props) => {
               title="Edit"
               size={20}
               className={'font-aws'}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (edit) return;
-                // Ensure we have all necessary fields for editing
                 setPatientPrescriptionMedicationObject({
                   ...rowData,
-                  // Ensure key and id are set for proper identification
                   key: rowData.key ?? rowData.id,
                   id: rowData.id ?? rowData.key
                 });
@@ -888,7 +898,8 @@ const Prescription = (props: Props) => {
         <MdAttachFile
           size={20}
           fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             if (rowData?.id) {
               setSelectedMedicationForAttachments(rowData);
               setAttachmentsModalOpen(true);
@@ -919,7 +930,9 @@ const Prescription = (props: Props) => {
         <>
           <span>{rowData.lastModifiedBy}</span>
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.lastModifiedDate)}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
+          </span>
         </>
       )
     }
@@ -930,7 +943,6 @@ const Prescription = (props: Props) => {
   const isRTL = direction === 'RTL';
 
   const dir = isRTL ? 'rtl' : 'ltr';
-
 
   return (
     <div dir={dir}>
@@ -974,7 +986,7 @@ const Prescription = (props: Props) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
@@ -983,14 +995,17 @@ const Prescription = (props: Props) => {
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <UrgencyButton />
 
-          <MyButton loading={isLoadingPrescriptions}><Translate>Validate with Gallon Reasoner</Translate></MyButton>
+          <MyButton loading={isLoadingPrescriptions}>
+            <Translate>Validate with Gallon Reasoner</Translate>
+          </MyButton>
 
           <MyButton
             onClick={handleNewPrescriptionAndAddMedication}
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
             disabled={
-              edit || isNurse ||
+              edit ||
+              isNurse ||
               !currentPrescription?.id ||
               String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
             }
@@ -1043,9 +1058,22 @@ const Prescription = (props: Props) => {
           columns={tableColumns}
           data={visiblePatientPrescriptionMedications ?? []}
           onRowClick={(rowData: any) => {
-            setSelectedPreviewMedication(rowData);
-            setPatientPrescriptionMedicationObject(rowData);
-            setOpenToAdd(false);
+            const isSameRow =
+              String(patientPrescriptionMedicationObject?.id) === String(rowData?.id);
+
+            if (isSameRow && selectedPreviewMedication) {
+              // Deselect
+              setSelectedPreviewMedication(null);
+              setPatientPrescriptionMedicationObject({
+                ...newPatientPrescriptionMedication,
+                prescriptionHeaderId: currentPrescription?.id ?? null
+              } as any);
+            } else {
+              // Select
+              setSelectedPreviewMedication(rowData);
+              setPatientPrescriptionMedicationObject(rowData);
+              setOpenToAdd(false);
+            }
           }}
           loading={isLoadingPrescriptionMedications}
           rowClassName={isSelected}
@@ -1054,9 +1082,7 @@ const Prescription = (props: Props) => {
 
       {selectedPreviewMedication && (
         <div className="mt-4">
-          <PrescriptionPreview
-            orderMedication={selectedPreviewMedication as any}
-          />
+          <PrescriptionPreview orderMedication={selectedPreviewMedication as any} />
         </div>
       )}
 
@@ -1071,9 +1097,10 @@ const Prescription = (props: Props) => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => { }}
+        setOrderMedication={() => {}}
         drugKey={null}
         editing={false}
+        existingMedications={patientPrescriptionMedications}
       />
 
       <CancellationModal
@@ -1084,6 +1111,8 @@ const Prescription = (props: Props) => {
         handleCancle={handleCancle}
         withReason={false}
         title={'Cancellation'}
+        size="30vw"
+        bodyheight="30vh"
       />
 
       <PatientHistorySummaryModal
@@ -1096,21 +1125,21 @@ const Prescription = (props: Props) => {
         medicationValidationPayload={payload}
       />
 
-
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments
+        title={`Attachments - ${
+          selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-              (item: any) =>
-                String(item.id) ===
-                String(
-                  (selectedMedicationForAttachments as any)?.medicationsId ??
-                  (selectedMedicationForAttachments as any)?.genericMedicationsId
-                )
-            )?.name || 'Medication'
+                (item: any) =>
+                  String(item.id) ===
+                  String(
+                    (selectedMedicationForAttachments as any)?.medicationsId ??
+                      (selectedMedicationForAttachments as any)?.genericMedicationsId
+                  )
+              )?.name || 'Medication'
             : 'Medication'
-          }`}
+        }`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1119,7 +1148,7 @@ const Prescription = (props: Props) => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />

@@ -2394,7 +2394,6 @@ export type PatientProcedure = {
   status?: ProcStatus;
 
   cancelledDate?: string | null;
-  // ✅ String بدل number
   cancelledBy?: string | null;
   cancellationReason?: string | null;
 };
@@ -3151,7 +3150,6 @@ export type PatientProcedureUpdateVM = {
 export type PatientProcedureCancelVM = {
   id: number;
   cancellationReason: string;
-  // ✅ شيلنا cancelledBy - بيتاخد من SecurityUtils
 };
 
 export interface DiagnosticOrder extends AuditingEntity {
@@ -3838,7 +3836,6 @@ export interface TelephonicConsultationUpdateVM {
 
 export interface TelephonicConsultationCancelVM {
   reason: string;
-  // ✅ شيلنا cancelledBy
 }
 export type NextOfKin = {
   id: number;

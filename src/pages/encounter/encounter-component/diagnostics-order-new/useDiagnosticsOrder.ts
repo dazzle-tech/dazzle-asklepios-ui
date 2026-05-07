@@ -650,7 +650,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       if (added.length) {
         dispatch(
           notify({
-            msg: `✅ ${added.join(', ')} added successfully`,
+            msg: ` ${added.join(', ')} added successfully`,
             sev: 'success'
           })
         );
