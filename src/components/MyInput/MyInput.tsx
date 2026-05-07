@@ -49,20 +49,20 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check'
-    | 'textnumber';
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check'
+  | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -247,9 +247,6 @@ const MyInput = ({
     setRecord({ ...record, [fieldName]: value });
   };
 
-  const inputWidth = props?.width ?? 145;
-  const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
-
   const pickerPlacement = props.placement ?? 'autoVerticalStart';
   const pickerPreventOverflow = props.preventOverflow ?? true;
 
@@ -426,10 +423,10 @@ const MyInput = ({
             value={
               record[fieldName]
                 ? (() => {
-                    const [h, m, s] = record[fieldName].split(':').map(Number);
-                    const d = new Date(1970, 0, 1, h, m, s ?? 0);
-                    return d;
-                  })()
+                  const [h, m, s] = record[fieldName].split(':').map(Number);
+                  const d = new Date(1970, 0, 1, h, m, s ?? 0);
+                  return d;
+                })()
                 : null
             }
             onChange={(value: Date | null) => {
@@ -460,87 +457,266 @@ const MyInput = ({
 
       case 'select': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
+
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
-          : [props.selectDataLabel ?? ''];
+          : [props.selectDataLabel ?? 'label'];
 
-        const primaryLabelKey = labelKeys[0] ?? '';
-        const valueKey = props?.selectDataValue ?? '';
+        const primaryLabelKey = labelKeys[0] ?? 'label';
+
+        const valueKey = props?.selectDataValue ?? 'value';
+
         const dataList = props?.selectData ?? [];
 
+        const filteredData = !localSearch
+          ? dataList
+          : dataList.filter(item => {
+            const text = isArrayLabel
+              ? buildCombinedLabel(item, labelKeys, '')
+              : String(item?.[primaryLabelKey] ?? '');
+
+            return text
+              .toLowerCase()
+              .includes(localSearch.toLowerCase());
+          });
+
+        // 🔥 calculate popup width
+        const longestLabel = dataList.reduce(
+          (longest, item) => {
+            const text = isArrayLabel
+              ? buildCombinedLabel(
+                item,
+                labelKeys,
+                ''
+              )
+              : String(
+                item?.[primaryLabelKey] ?? ''
+              );
+
+            return text.length > longest.length
+              ? text
+              : longest;
+          },
+          ''
+        );
+
+        const popupWidth = Math.max(
+          typeof props?.width === 'number'
+            ? props.width
+            : 145,
+          longestLabel.length * 9 + 120
+        );
+
         return (
-          <div ref={pickerRef}>
+          <div
+            ref={pickerRef}
+          >
             <Form.Control
-              style={{ width: styleWidth, height: props?.height ?? 30 }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
-              block
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30
+              }}
+              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
+                }`}
+              block={props?.width === '100%'}
               disabled={props.disabled}
+              accepter={SelectPicker}
+              searchable={false}
 
-              // 🔥🔥🔥 المهم
-              accepter={InputPicker}
-
-              // 🔥 يخليك تكتب داخل نفس الحقل
-              searchable={props.searchable ?? true}
-
-              data={dataList}
+              data={filteredData}
 
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              value={record ? record[fieldName] : ''}
 
-              onSearch={(searchText) => {
-                props.setSearchKeyWard?.(searchText); // لو عندك API
-              }}
+              value={
+                record?.[fieldName] !== undefined &&
+                  record?.[fieldName] !== null
+                  ? record[fieldName]
+                  : null
+              }
 
-              onChange={(value) => {
+              onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
                   const selectedItem =
-                    dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ?? null;
+                    dataList.find(
+                      (x: any) =>
+                        String(x?.[valueKey]) ===
+                        String(value)
+                    ) ?? null;
 
-                  props.onSelectItem(selectedItem);
+                  props.onSelectItem(
+                    selectedItem
+                  );
+                }
+              }}
+              onKeyDown={(event: any) => {
+                const key = event?.key;
+
+                if (!key) return;
+
+                const ignoredKeys = [
+                  'Shift',
+                  'Tab',
+                  'Enter',
+                  'Escape',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'Control',
+                  'Alt',
+                  'Meta'
+                ];
+
+                if (
+                  ignoredKeys.includes(key)
+                ) {
+                  return;
+                }
+
+                if (key === 'Backspace') {
+                  setLocalSearch(prev =>
+                    prev.slice(0, -1)
+                  );
+
+                  return;
+                }
+
+                if (key.length === 1) {
+                  setLocalSearch(
+                    prev => prev + key
+                  );
                 }
               }}
 
               renderMenuItem={
                 props.renderMenuItem ??
                 (isArrayLabel
-                  ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
+                  ? (
+                    label: any,
+                    item: any
+                  ) =>
+                    buildCombinedLabel(
+                      item,
+                      labelKeys,
+                      label
+                    )
                   : props.isEnum
-                  ? (label: any) => formatEnumString(String(label))
-                  : undefined)
+                    ? (label: any) =>
+                      formatEnumString(
+                        String(label)
+                      )
+                    : undefined)
               }
 
               renderValue={
                 isArrayLabel
-                  ? (value, item, selectedElement) => {
-                      if (!item) return selectedElement;
-                      return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                    }
+                  ? (
+                    value,
+                    item,
+                    selectedElement
+                  ) => {
+                    if (!item)
+                      return selectedElement;
+
+                    return (
+                      <span>
+                        {buildCombinedLabel(
+                          item,
+                          labelKeys,
+                          selectedElement
+                        )}
+                      </span>
+                    );
+                  }
                   : props.isEnum
-                  ? (value, item, selectedElement) => {
+                    ? (
+                      value,
+                      item,
+                      selectedElement
+                    ) => {
                       const base =
-                        (item && item[primaryLabelKey]) || selectedElement || value || '';
-                      return <span>{formatEnumString(String(base))}</span>;
+                        (item &&
+                          item[
+                          primaryLabelKey
+                          ]) ||
+                        selectedElement ||
+                        value ||
+                        '';
+
+                      return (
+                        <span>
+                          {formatEnumString(
+                            String(base)
+                          )}
+                        </span>
+                      );
                     }
-                  : undefined
+                    : undefined
               }
 
-              placeholder={props.placeholder}
-              cleanable
-              loading={props?.loading ?? false}
+              placeholder={
+                localSearch
+                  ? `Search: ${localSearch}`
+                  : props.placeholder
+              }
+
+              cleanable={
+                props.cleanable !== undefined
+                  ? props.cleanable
+                  : true
+              }
+
+              loading={
+                props?.loading ?? false
+              }
 
               open={isSelectOpen}
+
               onOpen={() => {
-                setPlacement(calculatePlacement());
+                setPlacement(
+                  calculatePlacement()
+                );
+
                 setIsSelectOpen(true);
               }}
-              onClose={() => setIsSelectOpen(false)}
+
+              onClose={() => {
+                setIsSelectOpen(false);
+
+                setLocalSearch('');
+              }}
 
               placement={placement}
-              preventOverflow={pickerPreventOverflow}
+
+              preventOverflow={
+                pickerPreventOverflow
+              }
+
               container={resolveContainer()}
+
+              menuMaxHeight={getDynamicMenuMaxHeight(
+                filteredData
+              )}
+
+              menuStyle={{
+                width: popupWidth
+              }}
+
+              virtualized={
+                props?.virtualized ?? true
+              }
+
+              disabledItemValues={
+                props.disabledItemValues
+                  ? dataList.map(
+                    item =>
+                      item[valueKey]
+                  )
+                  : []
+              }
             />
           </div>
         );
@@ -561,25 +737,36 @@ const MyInput = ({
           <div ref={pickerRef}>
             <Form.Control
               name={fieldName}
-              style={{ width: styleWidth, height: props?.height ?? 30 }}
+              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
               className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
               block
               disabled={props.disabled}
 
               // 🔥🔥🔥 نفس الحل
-              accepter={InputPicker}
+              accepter={SelectPicker}
               searchable={true}
+              searchBy={(keyword, label, item) => {
+                if (!keyword) return true;
+
+                const text = isArrayLabel
+                  ? buildCombinedLabel(item, labelKeys, '')
+                  : String(item?.[primaryLabelKey] ?? '');
+
+                return text
+                  .toLowerCase()
+                  .includes(keyword.toLowerCase());
+              }}
 
               data={[
                 ...dataList,
                 ...(props.hasMore
                   ? [
-                      {
-                        [valueKey]: '__load_more__',
-                        [labelKey]: 'Load more...',
-                        isLoadMore: true
-                      }
-                    ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                   : [])
               ]}
 
@@ -638,7 +825,7 @@ const MyInput = ({
           </div>
         );
       }
-      
+
       case 'multyPicker':
         return (
           <div ref={pickerRef}>
@@ -823,8 +1010,8 @@ const MyInput = ({
               ? '0'
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-            ? String(record[fieldName])
-            : '';
+              ? String(record[fieldName])
+              : '';
 
         const inputControl = props.allowDecimal ? (
           <Form.Control
@@ -858,8 +1045,8 @@ const MyInput = ({
                 const trimmed = digitsOnly.slice(0, 10);
                 normalized = normalized.includes('.')
                   ? trimmed.slice(0, normalized.indexOf('.')) +
-                    '.' +
-                    trimmed.slice(normalized.indexOf('.'))
+                  '.' +
+                  trimmed.slice(normalized.indexOf('.'))
                   : trimmed;
 
                 dispatch(notify({ msg: 'Maximum allowed is 10 digits', sev: 'warning' }));
