@@ -18,6 +18,8 @@ const CancellationModal = ({
     statusKey = "CANCELLED",
     withReason = true,
     required = false,
+    size = "30vw",
+    bodyheight = "55vh"
 }) => {
 
     const isEmpty = required && !object?.[fieldName];
@@ -25,7 +27,9 @@ const CancellationModal = ({
     return (
         <MyModal
             open={open}
+            size={size}
             setOpen={setOpen}
+            bodyheight={bodyheight}
             title={`Confirm ${title}`}
             actionButtonLabel="Confirm"
             actionButtonFunction={handleCancle}
@@ -55,8 +59,6 @@ const CancellationModal = ({
                     <></>
                 )
             }
-            size="30vw"
-            bodyheight="55vh"
             cancelButtonLabel="Close"
         />
     );

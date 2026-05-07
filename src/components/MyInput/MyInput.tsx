@@ -903,7 +903,7 @@ const MyInput = ({
             min={props.min ?? 0}
             step={props.step ?? 1}
             accepter={InputNumber}
-            value={record?.[fieldName] ?? null}
+            value={value}
             onChange={value => {
               if (value === '' || value === null || value === undefined) {
                 setRecord?.({ ...record, [fieldName]: null });

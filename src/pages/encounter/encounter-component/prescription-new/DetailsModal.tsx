@@ -27,8 +27,6 @@ import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setup
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -38,10 +36,7 @@ import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
-import {
-  useCheckCurrentMedicationExistsQuery,
-  useLazyCheckCurrentMedicationExistsQuery
-} from '@/services/patients/currentMedicationService';
+import { useCheckCurrentMedicationExistsQuery } from '@/services/patients/currentMedicationService';
 
 const DetailsModal = ({
   edit,
@@ -56,7 +51,8 @@ const DetailsModal = ({
   openToAdd,
   setOrderMedication,
   drugKey,
-  editing
+  editing,
+  existingMedications = []
 }) => {
   const dispatch = useAppDispatch();
 
@@ -66,6 +62,7 @@ const DetailsModal = ({
   const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [tags, setTags] = React.useState<any[]>([]);
+  const [tagsLoaded, setTagsLoaded] = useState(false); 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const searchWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -114,9 +111,7 @@ const DetailsModal = ({
       size: 1000,
       sort: 'id,asc'
     },
-    {
-      skip: shouldSkipActiveIngredientSearch
-    }
+    { skip: shouldSkipActiveIngredientSearch }
   );
 
   const activeIngredientData = activeIngredientListResponse?.data ?? [];
@@ -136,15 +131,15 @@ const DetailsModal = ({
   const { data: Brand } = useGetBrandMedicationByIdQuery(medIdForBrand, {
     skip: !medIdForBrand
   });
-  const { data: exists, isFetching } = useCheckCurrentMedicationExistsQuery(
+
+  const { data: exists } = useCheckCurrentMedicationExistsQuery(
     {
       patientId: patient?.id,
       activeIngredientId: selectedActiveIngredient?.id
     },
-    {
-      skip: !selectedActiveIngredient?.id || !patient?.id
-    }
+    { skip: !selectedActiveIngredient?.id || !patient?.id }
   );
+
   const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
     ...initialListRequest
   });
@@ -160,10 +155,7 @@ const DetailsModal = ({
     ]
   });
 
-  const { data: diagnosticTestsResult } = useGetAllDiagnosticTestsQuery({
-    page: 0,
-    size: 9999
-  });
+  const { data: diagnosticTestsResult } = useGetAllDiagnosticTestsQuery({ page: 0, size: 9999 });
   const diagnosticTests = diagnosticTestsResult?.data ?? [];
 
   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
@@ -172,6 +164,7 @@ const DetailsModal = ({
     useCreatePatientPrescriptionMedicationMutation();
   const [updatePrescriptionMedication, { isLoading: isUpdatingPrescriptionMedication }] =
     useUpdatePatientPrescriptionMedicationMutation();
+
   useEffect(() => {
     if (exists === true) {
       dispatch(
@@ -182,10 +175,12 @@ const DetailsModal = ({
       );
     }
   }, [exists]);
+
   useEffect(() => {
     if (!open) {
       setSearchKeyword('');
       setActiveIngredientKeyword('');
+      setTagsLoaded(false);
       return;
     }
     setEditingKey(prescriptionMedication?.id ?? null);
@@ -227,7 +222,20 @@ const DetailsModal = ({
         }));
       }
 
-      setTags(prescriptionMedication?.parametersToMonitor?.split(',') ?? []);
+      if (!tagsLoaded) {
+        const rawTags = prescriptionMedication?.parametersToMonitor;
+        if (rawTags && typeof rawTags === 'string' && rawTags.trim() !== '') {
+          const parsedTags = rawTags
+            .split(',')
+            .map((t: string) => t.trim())
+            .filter((t: string) => t.length > 0);
+          setTags(parsedTags);
+        } else {
+          setTags([]);
+        }
+        setTagsLoaded(true);
+      }
+
       setindicationsDescription(prescriptionMedication?.indicationIcd ?? '');
 
       if (prescriptionMedication?.instructionsType === 'CUSTOM_INSTRUCTIONS') {
@@ -260,14 +268,13 @@ const DetailsModal = ({
     Brand,
     customeInstructions,
     indicationLovQueryResponse,
-    setPrescriptionMedications
+    setPrescriptionMedications,
+    tagsLoaded
   ]);
 
   useEffect(() => {
     const hasMedication = prescriptionMedication?.key != null || prescriptionMedication?.id != null;
-    if (!hasMedication || !administrationInstructionsLovQueryResponse?.object) {
-      return;
-    }
+    if (!hasMedication || !administrationInstructionsLovQueryResponse?.object) return;
 
     const adminInstr = prescriptionMedication?.administrationInstructions;
     const sampleLovKey = administrationInstructionsLovQueryResponse?.object?.[0]?.key;
@@ -279,13 +286,11 @@ const DetailsModal = ({
         .map(v => {
           const trimmed = v.trim();
           if (!trimmed) return null;
-
           if (keysAreStrings) return trimmed;
           const num = Number(trimmed);
           return !isNaN(num) ? num : trimmed;
         })
         .filter(v => v !== null && v !== '');
-
       setAdminInstructions({ administrationInstructions: arr });
     } else if (Array.isArray(adminInstr)) {
       const arr = adminInstr
@@ -298,7 +303,6 @@ const DetailsModal = ({
           return v;
         })
         .filter(v => v !== null && v !== '');
-
       setAdminInstructions({ administrationInstructions: arr });
     } else if (adminInstr == null || adminInstr === '') {
       setAdminInstructions({ administrationInstructions: [] });
@@ -316,16 +320,8 @@ const DetailsModal = ({
         ...initialListRequest,
         filterLogic: 'or',
         filters: [
-          {
-            fieldName: 'icd_code',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          },
-          {
-            fieldName: 'description',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          }
+          { fieldName: 'icd_code', operator: 'containsIgnoreCase', value: searchKeywordicd },
+          { fieldName: 'description', operator: 'containsIgnoreCase', value: searchKeywordicd }
         ]
       });
     }
@@ -348,7 +344,6 @@ const DetailsModal = ({
     (async () => {
       try {
         const results: Record<string, any[]> = {};
-
         await Promise.all(
           aiList
             .filter((ai: any) => ai?.id != null)
@@ -358,7 +353,6 @@ const DetailsModal = ({
               results[String(aiId)] = Array.isArray(res) ? res : [];
             })
         );
-
         setTestsByAiId(results);
       } catch {
         setTestsByAiId({});
@@ -366,14 +360,15 @@ const DetailsModal = ({
     })();
   }, [open, selectedGeneric, selectedActiveIngredient, fetchPreRequestedTests]);
 
+  const isChronicMedication = !!prescriptionMedication?.chronicMedication;
   useEffect(() => {
-    setEditDuration(prescriptionMedication?.chronicMedication);
+    setEditDuration(isChronicMedication);
     setPrescriptionMedications(prev => ({
       ...prev,
       duration: null,
       durationTypeLkey: null
     }));
-  }, [prescriptionMedication?.chronicMedication, setPrescriptionMedications]);
+  }, [isChronicMedication]);
 
   useEffect(() => {
     if (indicationsIcd.indicationIcd) {
@@ -381,9 +376,7 @@ const DetailsModal = ({
         const currentIcd = icdListResponseLoading?.object?.find(
           item => item.key === indicationsIcd.indicationIcd
         );
-
         if (!currentIcd) return prevadminInstructions;
-
         const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
         return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
       });
@@ -399,26 +392,20 @@ const DetailsModal = ({
         setShowActiveIngredientDropdown(false);
       }
     };
-
     if (showActiveIngredientDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showActiveIngredientDropdown]);
 
   useEffect(() => {
-    if (attachmentsModalOpen) {
-    } else {
+    if (!attachmentsModalOpen) {
       setCapturedSourceId(0);
     }
   }, [attachmentsModalOpen]);
 
   useEffect(() => {
     if (!open) return;
-
     if (!prescriptionMedication?.id && !prescriptionMedication?.indicationIcd) {
       handleCleare();
     }
@@ -431,14 +418,10 @@ const DetailsModal = ({
         setShowMedicationDropdown(false);
       }
     };
-
     if (showMedicationDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMedicationDropdown]);
 
   const joinValuesFromArray = values => {
@@ -450,22 +433,16 @@ const DetailsModal = ({
       dispatch(notify({ msg: 'Prescription not linked. Try again', sev: 'warning' }));
       return;
     }
-
     if (!selectedActiveIngredient) {
       dispatch(notify({ msg: 'Please select active ingredient', sev: 'warning' }));
       return;
     }
-
     if (selectedActiveIngredient?.isLookAlikeSoundAlike && !selectedGeneric) {
       dispatch(
-        notify({
-          msg: 'This active ingredient is LASA, please select brand',
-          sev: 'warning'
-        })
+        notify({ msg: 'This active ingredient is LASA, please select brand', sev: 'warning' })
       );
       return;
     }
-
     if (!selectedOption && !prescriptionMedication?.instructionsType) {
       dispatch(notify({ msg: 'Please Select Instruction type', sev: 'warning' }));
       return;
@@ -530,6 +507,23 @@ const DetailsModal = ({
     if (!isChronic && !hasDuration) {
       dispatch(notify({ msg: 'Set Duration for the medication', sev: 'warning' }));
       return;
+    }
+
+    if (isChronic) {
+      const currentId = prescriptionMedication?.id;
+      const anotherChronicExists = (existingMedications as any[]).some(m => {
+        if (currentId != null && String(m?.id) === String(currentId)) return false;
+        return Boolean(m?.chronicMedication);
+      });
+      if (anotherChronicExists) {
+        dispatch(
+          notify({
+            msg: 'A chronic medication already exists for this prescription. Only one chronic medication is allowed.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
     }
 
     const indicationIcd = prescriptionMedication?.indicationIcd;
@@ -661,7 +655,20 @@ const DetailsModal = ({
       }
     } catch (error: any) {
       console.log('Save prescription medication error:', error);
-      if (error?.originalStatus === 409) {
+      if (error?.originalStatus === 409) return;
+
+      const isChronicConflict =
+        (error?.status === 400 || error?.originalStatus === 400) &&
+        error?.data?.message === 'error.validate' &&
+        error?.data?.params === 'patientPrescriptionMedication';
+
+      if (isChronicConflict) {
+        dispatch(
+          notify({
+            msg: 'A chronic medication already exists for this prescription. Only one chronic medication is allowed.',
+            sev: 'warning'
+          })
+        );
         return;
       }
 
@@ -670,7 +677,6 @@ const DetailsModal = ({
         if (typeof error.data === 'string') errorMessage = error.data;
         else if (error.data?.message) errorMessage = error.data.message;
       }
-
       dispatch(notify({ msg: errorMessage, sev: 'warning' }));
     }
   };
@@ -684,7 +690,6 @@ const DetailsModal = ({
     setSelectedActiveIngredient(activeIngredient);
     setActiveIngredientKeyword(activeIngredient?.name ?? '');
     setShowActiveIngredientDropdown(false);
-
     setSelectedGeneric(null);
     setSearchKeyword('');
     setShowMedicationDropdown(false);
@@ -698,12 +703,7 @@ const DetailsModal = ({
     }
 
     if (activeIngredient?.highAlert) {
-      dispatch(
-        notify({
-          msg: 'This active ingredient is high alert',
-          sev: 'warning'
-        })
-      );
+      dispatch(notify({ msg: 'This active ingredient is high alert', sev: 'warning' }));
     }
   };
 
@@ -722,7 +722,6 @@ const DetailsModal = ({
       dispatch(notify({ msg: 'Please select active ingredient first', sev: 'warning' }));
       return;
     }
-
     setSearchKeyword(value);
     setShowMedicationDropdown(!!value);
   };
@@ -736,6 +735,7 @@ const DetailsModal = ({
     setAdminInstructions({ administrationInstructions: [] });
     setCustomeinst({ dose: null, unit: null, frequency: null, roa: null });
     setTags([]);
+    setTagsLoaded(false);
     setSearchKeyword('');
     setActiveIngredientKeyword('');
     setSearchKeywordicd('');
@@ -767,9 +767,6 @@ const DetailsModal = ({
     )
   );
 
-  // Normalize undefined fields to null so rsuite inputs stay controlled at all times.
-  // When handleCleare() resets to newApPrescriptionMedications (which has many `undefined` fields),
-  // rsuite InputNumber/Input would switch from controlled to uncontrolled, causing React warnings.
   const safeRecord = useMemo(() => {
     if (!prescriptionMedication) return {};
     const result: any = { ...prescriptionMedication };
@@ -819,9 +816,7 @@ const DetailsModal = ({
           <div className="footer-buttons" dir={dir}>
             <MyButton
               appearance="ghost"
-              onClick={() => {
-                setOpenOrderModel(true);
-              }}
+              onClick={() => setOpenOrderModel(true)}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -877,7 +872,6 @@ const DetailsModal = ({
                                         {ai.name}
                                         {ai.isLookAlikeSoundAlike ? ' (LASA)' : ''}
                                       </div>
-
                                       <div className="prescription-dropdown-item-extra">
                                         {ai.atcCode ? <div>ATC: {ai.atcCode}</div> : null}
                                       </div>
@@ -983,6 +977,7 @@ const DetailsModal = ({
                         <div className="prescription-inputs-inline">
                           <MyInput
                             disabled={preKey != null ? editDuration : true}
+                            required={!editDuration}
                             width={'100%'}
                             fieldType="number"
                             fieldLabel="Duration"
@@ -992,6 +987,7 @@ const DetailsModal = ({
                           />
                           <MyInput
                             disabled={preKey != null ? editDuration : true}
+                            required={!editDuration}
                             width={'100%'}
                             fieldType="select"
                             fieldLabel="Duration Type"
@@ -1028,7 +1024,6 @@ const DetailsModal = ({
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
-
                           <div style={{ marginBottom: '1.5vw' }}>
                             <MyInput
                               disabled={preKey != null ? false : true}
@@ -1065,9 +1060,9 @@ const DetailsModal = ({
                           patient={patient}
                           disabled={false}
                           selectMode
+                          selectedDiagnosisId={prescriptionMedication?.indicationIcd ?? null}
                           onSelectDiagnosis={ids => {
                             const selectedIcd = ids?.[0];
-
                             setPrescriptionMedications(prev => ({
                               ...prev,
                               indicationIcd: selectedIcd
@@ -1160,42 +1155,16 @@ const DetailsModal = ({
                 content={
                   <Form>
                     <MyLabel label="Parameters to monitor" />
-                    <MyTagInput tags={tags} setTags={setTags} />
-
-                    {/* <div className="prescription-refills-blocks">
-                      <MyInput
-                        disabled={preKey == null}
-                        width={140}
-                        fieldType="number"
-                        fieldLabel="Number of Refills"
-                        fieldName="numberOfRefills"
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                      />
-
-                      <MyInput
-                        disabled={preKey == null}
-                        width={180}
-                        fieldType="number"
-                        fieldLabel="Refill Interval Value"
-                        fieldName="refillValue"
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                      />
-
-                      <MyInput
-                        disabled={preKey == null}
-                        width={180}
-                        fieldType="select"
-                        fieldLabel="Refill Interval Unit"
-                        selectData={refillunitQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="refillUnit"
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                      />
-                    </div> */}
+                    <MyTagInput
+                      tags={tags}
+                      setTags={setTags}
+                      onRemoveTag={(tagToDelete: string) => {
+                        setTags(prev =>
+                          prev.filter(tag => String(tag).trim() !== String(tagToDelete).trim())
+                        );
+                      }}
+                      onClearAll={() => setTags([])}
+                    />
                   </Form>
                 }
               />
@@ -1213,7 +1182,6 @@ const DetailsModal = ({
                       setRecord={setPrescriptionMedications}
                       width="100%"
                     />
-
                     <MyInput
                       disabled={preKey == null}
                       height={100}
