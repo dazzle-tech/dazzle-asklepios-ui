@@ -151,7 +151,7 @@ const PatientProfile = () => {
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
   const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
-const [eligibilityChecked, setEligibilityChecked] = useState(false);
+// const [eligibilityChecked, setEligibilityChecked] = useState(false);
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
@@ -430,8 +430,8 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
             setOpenReferralRequestModal={setOpenReferralRequestModal}
-            eligibilityChecked={eligibilityChecked}
-            setEligibilityChecked={setEligibilityChecked}
+            // eligibilityChecked={eligibilityChecked}
+            // setEligibilityChecked={setEligibilityChecked}
           />
 
           <div className="container-of-tabs-reg">

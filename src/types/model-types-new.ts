@@ -491,6 +491,12 @@ export interface AppointmentFromTemplateRescheduleDTO {
   rescheduleReason: string;
 }
 
+export interface DiagnosticTestAppointmentRescheduleDTO {
+  orderTestId: number;
+  newAppointmentId: number;
+  rescheduleReason: string;
+}
+
 export interface AppointmentFromTemplateSearchFilterDTO {
   facility?: number | null;
   department?: number | null;

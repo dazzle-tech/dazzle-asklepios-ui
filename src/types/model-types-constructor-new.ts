@@ -1157,6 +1157,12 @@ export const newAppointmentFromTemplateRescheduleDTO: modelTypes.AppointmentFrom
   rescheduleReason: ''
 };
 
+export const newDiagnosticTestAppointmentRescheduleDTO: modelTypes.DiagnosticTestAppointmentRescheduleDTO = {
+  orderTestId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
+};
+
 export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
   facility: null,
   department: null,

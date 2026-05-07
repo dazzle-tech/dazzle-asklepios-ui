@@ -380,7 +380,7 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
     );
 
     return (
-      <Form layout="inline" fluid className="flex-dis-row">
+      <Form fluid className="form-of-filters-country-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -400,7 +400,6 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
 
         {dynamicInput}
 
-        <div className="margin-top-25">
           <MyButton
             color="var(--deep-blue)"
             width="80px"
@@ -420,7 +419,6 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
           >
             Search
           </MyButton>
-        </div>
       </Form>
     );
   };
@@ -486,28 +484,28 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
         title={<Translate>Districts</Translate>}
         content={
           <>
-            <div className="inputs-dis-flex">
-              <div className="geo-inline-form">
-                <Form fluid layout="inline">
+          <Form fluid>
+            <div className="country-set-up-headers-setup-container">
+                <div className='form-of-filters-set-up'>
                   <MyInput
                     fieldName="name"
                     fieldType="text"
-                    column
                     fieldLabel="District Name"
                     record={districtForEdit}
                     setRecord={setDistrictForEdit}
                     width={200}
+                    required
                   />
                   <MyInput
                     fieldName="code"
                     fieldType="text"
-                    column
                     fieldLabel="Code"
                     record={districtForEdit}
                     setRecord={setDistrictForEdit}
                     width={120}
+                    required
                   />
-                  <div className="margin-top-37">
+                  <div className="form-of-filters-country-set-up">
                     <MyButton
                       color="var(--deep-blue)"
                       width="80px"
@@ -515,8 +513,6 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
                     >
                       Save
                     </MyButton>
-                  </div>
-                  <div className="margin-top-37">
                     <MyButton
                       color="var(--primary-gray)"
                       width="80px"
@@ -525,11 +521,12 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
                       Clear
                     </MyButton>
                   </div>
-                </Form>
-              </div>
-
-              {districtFiltersUI()}
+                </div>
+              <div>
+                  {districtFiltersUI()}
+                </div>
             </div>
+          </Form>
 
             <MyTable
               data={districtTableData}

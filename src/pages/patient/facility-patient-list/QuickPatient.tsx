@@ -499,7 +499,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -510,7 +510,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -521,7 +521,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -538,7 +538,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           setRecord={setLocalPatient}
           disabled={isUnknown}
           searchable={false}
-          width={200}
+          width={"100%"}
         />
 
        <PhoneNumberInput
@@ -549,7 +549,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           setRecord={setLocalPatient}
           fieldLabel="Primary Mobile Number" 
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -559,7 +559,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           fieldName="email"
           record={localPatient}
           setRecord={setLocalPatient}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -574,7 +574,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           disableFutureDates
           showWarningIfBeforeYear1900
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
@@ -585,7 +585,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           <>
             <MyInput
               column
-              width={200}
+              width={"100%"}
               required
               fieldLabel="Encounter Type"
               fieldType="select"
@@ -607,7 +607,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
 
             <MyInput
-              width={200}
+              width={"100%"}
               required
               column
               fieldType="selectPagination"

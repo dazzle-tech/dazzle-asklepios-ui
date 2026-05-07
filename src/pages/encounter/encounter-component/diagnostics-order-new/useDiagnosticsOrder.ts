@@ -98,6 +98,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [collectSampleModal, setCollectSampleModal] = useState(false);
   const [testCardModal, setTestCardModal] = useState(false);
+  const [rescheduleAppointmentsModalOpen, setRescheduleAppointmentsModalOpen] = useState(false);
+  const [selectedOrderTestForReschedule, setSelectedOrderTestForReschedule] = useState<any>(null);
   const [reson, setReson] = useState<{ cancellationReason: string }>({
     cancellationReason: ''
   });
@@ -257,6 +259,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     );
 
   const orderTestList = orderTestsResponse?.data ?? [];
+
+  useEffect(() => {
+    if (!orderId) return;
+    const refreshTimer = setInterval(() => {
+      void orderTestRefetch();
+    }, 15000);
+    return () => clearInterval(refreshTimer);
+  }, [orderId, orderTestRefetch]);
 
   // Favorites
   const userId = authSlice?.user?.id;
@@ -753,6 +763,23 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     setOpenDetailsModel(true);
   };
 
+  const handleOpenRescheduleAppointments = (rowData: any) => {
+    const resourceId = Number(
+      rowData?.test?.id ?? rowData?.testId ?? rowData?.diagnosticTestId ?? rowData?.resourceId
+    );
+    if (!resourceId) {
+      dispatch(
+        notify({
+          msg: 'Missing diagnostic test id for this order test.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setSelectedOrderTestForReschedule(rowData);
+    setRescheduleAppointmentsModalOpen(true);
+  };
+
   const handleRecallFavoriteTest = async (t: any) => {
     const _orderId = orders?.id;
 
@@ -915,6 +942,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     setCollectSampleModal,
     testCardModal,
     setTestCardModal,
+    rescheduleAppointmentsModalOpen,
+    setRescheduleAppointmentsModalOpen,
+    selectedOrderTestForReschedule,
+    setSelectedOrderTestForReschedule,
     bulkDepartmentModalOpen,
     setBulkDepartmentModalOpen,
 
@@ -936,6 +967,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     CloseConfirmDeleteModel,
     handleCancle,
     handleEdit,
+    handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
 
     // helpers
