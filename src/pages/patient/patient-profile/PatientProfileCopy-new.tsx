@@ -465,7 +465,7 @@ const PatientProfile = () => {
 
           <Col md={12}>
             <SectionContainer
-              title={<Translate>Appointments</Translate>}
+              title='Appointment'
               content={<PatientAppointments patient={localPatient} />}
             />
           </Col>
