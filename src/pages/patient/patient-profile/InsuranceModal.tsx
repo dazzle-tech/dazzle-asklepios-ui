@@ -107,7 +107,7 @@ const InsuranceModal = ({
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
   });
-
+console.log('Resolved Patient ID:', resolvedPatientId);
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 

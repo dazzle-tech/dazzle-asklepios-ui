@@ -1,5 +1,76 @@
-.input-row {
+.gcs-score-preview {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #e6e9ef;
+  border-radius: 14px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.gcs-score-preview-header {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 14px;
+  color: #2f3a4a;
+}
+
+.gcs-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.gcs-score-card {
+  padding: 14px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  border: 1px solid #eef2f7;
+
   display: flex;
-  flex-direction: column;
-  gap: 2vw;
+  justify-content: space-between;
+  align-items: center;
+
+  transition: all 0.2s ease;
+}
+
+.gcs-score-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.gcs-score-label {
+  font-size: 13px;
+  color: #7a869a;
+}
+
+.gcs-score-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f6feb; 
+}
+
+.gcs-total-card {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  border: none;
+}
+
+.gcs-total-card .gcs-score-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.gcs-total-card .gcs-score-value {
+  color: white;
+}
+
+.gcs-badge-row {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+.gcs-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
