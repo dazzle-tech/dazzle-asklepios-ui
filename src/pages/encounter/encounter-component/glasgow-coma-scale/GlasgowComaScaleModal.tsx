@@ -45,36 +45,36 @@ const getGcsScore = (
 
 const getGcsInterpretation = (totalScore: number) => {
   if (totalScore >= 13 && totalScore <= 15) {
-    return 'Mild traumatic brain injury';
+    return 'MILD_TRAUMATIC_BRAIN_INJURY';
   }
 
   if (totalScore >= 9 && totalScore <= 12) {
-    return 'Moderate traumatic brain injury';
+    return 'MODERATE_TRAUMATIC_BRAIN_INJURY';
   }
 
   if (totalScore >= 3 && totalScore <= 8) {
-    return 'Severe traumatic brain injury (coma)';
+    return 'SEVERE_TRAUMATIC_BRAIN_INJURY_COMA';
   }
 
-  return 'Unknown';
+  return undefined;
 };
 
 const getRiskBadgeColors = (scoreInterpretation?: string | null) => {
-  if (scoreInterpretation === 'Mild traumatic brain injury') {
+  if (scoreInterpretation === 'MILD_TRAUMATIC_BRAIN_INJURY') {
     return {
       backgroundColor: 'var(--light-green)',
       color: 'var(--primary-green)'
     };
   }
 
-  if (scoreInterpretation === 'Moderate traumatic brain injury') {
+  if (scoreInterpretation === 'MODERATE_TRAUMATIC_BRAIN_INJURY') {
     return {
       backgroundColor: 'var(--light-orange)',
       color: 'var(--primary-orange)'
     };
   }
 
-  if (scoreInterpretation === 'Severe traumatic brain injury (coma)') {
+  if (scoreInterpretation === 'SEVERE_TRAUMATIC_BRAIN_INJURY_COMA') {
     return {
       backgroundColor: 'var(--light-pink)',
       color: 'var(--primary-pink)'
@@ -203,7 +203,11 @@ const GlasgowComaScaleModal = ({
           <MyBadgeStatus
             backgroundColor={badgeColors.backgroundColor}
             color={badgeColors.color}
-            contant={hasAllValues ? scoreInterpretation : 'Select all values'}
+            contant={
+              hasAllValues
+                ? formatEnumString(scoreInterpretation)
+                : 'Select all values'
+            }
           />
         </div>
       </div>

@@ -10,6 +10,7 @@ type PagedParams = {
   size: number;
   sort?: string;
   timestamp?: number;
+  showCancelled?: boolean;
 };
 
 type LinkMap = {
@@ -23,6 +24,11 @@ type PagedResult<T> = {
   data: T[];
   totalCount: number;
   links?: LinkMap;
+};
+
+type GlasgowComaScaleAssessmentCancelRequest = {
+  id: Id;
+  cancellationReason: string;
 };
 
 const mapPaged = (
@@ -56,8 +62,16 @@ export const glasgowComaScaleAssessmentService = createApi({
       PagedResult<GlasgowComaScaleAssessment>,
       { encounterId: Id } & PagedParams
     >({
-      query: ({ encounterId, page, size, sort = 'id,desc' }) => ({
-        url: `/api/patient/glasgow-coma-scale-assessment/by-encounter/${encounterId}`,
+      query: ({
+        encounterId,
+        showCancelled = false,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => ({
+        url: showCancelled
+          ? `/api/patient/glasgow-coma-scale-assessment/by-encounter/${encounterId}`
+          : `/api/patient/glasgow-coma-scale-assessment/by-encounter/${encounterId}/active`,
         params: {
           page,
           size,
@@ -101,10 +115,14 @@ export const glasgowComaScaleAssessmentService = createApi({
       invalidatesTags: ['GlasgowComaScaleAssessment']
     }),
 
-    deleteGlasgowComaScaleAssessment: builder.mutation<void, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/patient/glasgow-coma-scale-assessment/${id}`,
-        method: 'DELETE'
+    cancelGlasgowComaScaleAssessment: builder.mutation<
+      GlasgowComaScaleAssessment,
+      GlasgowComaScaleAssessmentCancelRequest
+    >({
+      query: body => ({
+        url: '/api/patient/glasgow-coma-scale-assessment/cancel',
+        method: 'PATCH',
+        body
       }),
       invalidatesTags: ['GlasgowComaScaleAssessment']
     })
@@ -118,5 +136,5 @@ export const {
   useLazyGetGlasgowComaScaleAssessmentsByEncounterIdQuery,
   useAddGlasgowComaScaleAssessmentMutation,
   useUpdateGlasgowComaScaleAssessmentMutation,
-  useDeleteGlasgowComaScaleAssessmentMutation
+  useCancelGlasgowComaScaleAssessmentMutation
 } = glasgowComaScaleAssessmentService;
