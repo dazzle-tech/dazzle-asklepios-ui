@@ -494,6 +494,28 @@ const BookPatient = ({
     return false;
   }, [readOnly, record?.service, record?.priority, record?.followUpEncounterId, bookingPatientId, appointmentDepartmentId]);
 
+  const patientChoiceButtonBase: React.CSSProperties = {
+    width: '100%',
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 400,
+    border: `1px solid ${mode === 'dark' ? 'var(--rs-border-primary)' : '#d6dde8'}`,
+    backgroundColor: mode === 'dark' ? 'var(--rs-bg-card)' : '#ffffff',
+    color: mode === 'dark' ? 'var(--rs-text-primary)' : '#2563EB',
+    transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    justifyContent: 'center'
+  };
+
+  const patientChoiceButtonActive: React.CSSProperties = {
+    border: 'none',
+    background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)',
+    color: '#ffffff',
+    boxShadow:
+      mode === 'dark'
+        ? '0 10px 24px rgba(37, 99, 235, 0.30)'
+        : '0 10px 24px rgba(37, 99, 235, 0.20)'
+  };
+
   const modalSteps = useMemo(
     () => [
       {
@@ -690,16 +712,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'select' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'select'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'select' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'select' ? patientChoiceButtonActive : {})
                         }}
                       >
                         {selectedPatient ? 'Change Patient' : 'Select Patient'}
@@ -716,16 +730,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'quick' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'quick'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'quick' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'quick' ? patientChoiceButtonActive : {})
                         }}
                       >
                         Quick Patient

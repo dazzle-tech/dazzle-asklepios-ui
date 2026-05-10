@@ -1643,7 +1643,7 @@ const ScheduleScreen = () => {
     const getBorderColor = status => {
       const key = normalizeStatusForLegend(status);
       const item = legendItems.find(i => normalize(i.label) === key);
-      return item?.borderColor ? item.color : '#007bff';
+      return item?.borderColor ? item.color : '#94A3B8';
     };
 
     const status = String(event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? '');
