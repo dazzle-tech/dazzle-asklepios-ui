@@ -70,6 +70,7 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
       title: <Translate>RANGE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
+        console.log("rowwwwwwwwwwwwwwwwwsssss",r)
         if (profileTest?.resultType === 'NUMBER') {
           switch (r.normalRangeType) {
             case 'RANGE':
@@ -100,14 +101,31 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
       title: <Translate>CRITICAL VALUE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (r.criticalValue != null) return r.criticalValue;
-        if (r.criticalValueLessThan != null)
+        if (!r.criticalValue) {
+          return ' ';
+        }
+
+        const hasLessThan =
+          r.criticalValueLessThan !== null &&
+          r.criticalValueLessThan !== undefined;
+
+        const hasMoreThan =
+          r.criticalValueMoreThan !== null &&
+          r.criticalValueMoreThan !== undefined;
+
+        if (hasLessThan && hasMoreThan) {
+          return `< ${r.criticalValueLessThan}  OR  > ${r.criticalValueMoreThan}`;
+        }
+        if (hasLessThan) {
           return `< ${r.criticalValueLessThan}`;
-        if (r.criticalValueMoreThan != null)
+        }
+        if (hasMoreThan) {
           return `> ${r.criticalValueMoreThan}`;
+        }
+
         return ' ';
       }
-    }
+    }    
   ];
 
   // Direction handling for RTL/LTR

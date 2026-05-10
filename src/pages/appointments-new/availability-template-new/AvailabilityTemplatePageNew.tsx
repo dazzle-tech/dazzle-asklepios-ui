@@ -29,7 +29,7 @@ import AvailabilityTemplateDetailsSection from './AvailabilityTemplateDetailsSec
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { RiFolderHistoryLine } from "react-icons/ri";
 import AvailabilityTemplateLogModal from './AvailabilityTemplateLogModal';
-
+import './styles.less';
 
 const AvailabilityTemplatePageNew = () => {
 
@@ -319,7 +319,7 @@ const AvailabilityTemplatePageNew = () => {
   ];
 
   const filters = (
-    <Form layout="inline">
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldType="select"
         fieldName="filter"
@@ -346,6 +346,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "departmentId" && (
         <MyInput
           fieldName="value"
@@ -358,6 +359,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "status" && (
         <MyInput
           fieldName="value"
@@ -370,6 +372,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "templateType" && (
         <MyInput
           fieldName="value"
@@ -382,6 +385,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {!recordOfFilter.filter && (
         <MyInput
           fieldType="text"
@@ -392,6 +396,7 @@ const AvailabilityTemplatePageNew = () => {
           placeholder="Search"
         />
       )}
+
       <MyButton
         color="var(--deep-blue)"
         onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}

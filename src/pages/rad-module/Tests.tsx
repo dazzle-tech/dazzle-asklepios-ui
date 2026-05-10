@@ -1067,7 +1067,7 @@ const Tests = forwardRef<any, Props>(
       <div dir={dir}>
         <Panel ref={ref} defaultExpanded>
 
-
+        <div style={{maxWidth:'73vw'}}>
           <MyTable
             filters={filters()}
             columns={columns}
@@ -1087,7 +1087,7 @@ const Tests = forwardRef<any, Props>(
             loadingHeight={200}
 
           />
-
+        </div>
 
           <CancellationModal
             open={openRejectedModal}

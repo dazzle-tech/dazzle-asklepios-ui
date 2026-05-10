@@ -12,10 +12,11 @@ import {
   useGetSurgicalHistoryQuery
 } from '@/services/patients/surgicalHistoryService';
 
-import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../styles.less';
+import Translate from '@/components/Translate';
 
 const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
@@ -77,6 +78,20 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
 
         return value ?? row?.complications ?? '';
       }
+    },
+    {
+          key: 'createdDate',
+          title: <Translate>CREATED AT / BY</Translate>,
+          expandable: true,
+          render: (row: any) =>
+            row?.createdDate ? (
+              <>
+                {row?.createdBy} <br />
+                <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+              </>
+            ) : (
+              ''
+            )
     },
     {
       key: 'hasImplantsOrDevices',

@@ -5,12 +5,13 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { useGetPatientProblemsQuery } from '@/services/patients/patientProblemService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
+import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useMemo, useState } from 'react';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import AddPatientProblem from './AddPatientProblem';
+import Translate from '@/components/Translate';
 
 const PatientProblems = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -127,7 +128,20 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
         return value ?? row?.sourceOfInformation ?? '';
       }
     },
-
+    {
+          key: 'createdDate',
+          title: <Translate>CREATED AT / BY</Translate>,
+          expandable: true,
+          render: (row: any) =>
+            row?.createdDate ? (
+              <>
+                {row?.createdBy} <br />
+                <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+              </>
+            ) : (
+              ''
+            )
+    },
     {
       key: 'status',
       title: 'STATUS',

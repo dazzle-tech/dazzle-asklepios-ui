@@ -714,6 +714,7 @@ const Result = forwardRef<any, Props>(
           const canEdit = row.processingStatus === 'RESULT_READY';
           const canApprove = row.processingStatus === 'RESULT_READY';
           const canReject = row.processingStatus === 'RESULT_READY';
+          const canPrint = row.processingStatus !== 'RESULT_APPROVED';
 
           return (
             <HStack spacing={10}>
@@ -773,8 +774,19 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <FontAwesomeIcon icon={faPrint} style={{ opacity: 0.5 }} />
+              <FontAwesomeIcon
+                icon={faPrint}
+                className="icon-laboratory-size"
+                style={{
+                  cursor: canPrint ? 'pointer' : 'not-allowed',
+                  opacity: canPrint ? 1 : 0.4
+                }}
+                onClick={() => {
+                  if (!canPrint) return;
 
+                }}
+              />
+              
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
                 <FontAwesomeIcon
                   icon={faFileLines}
@@ -930,6 +942,7 @@ const Result = forwardRef<any, Props>(
             </div>
           }
         >
+        <div style={{ minHeight: 600, maxWidth:'73vw' }}>
           <MyTable
             columns={columns}
             data={normalizedResults}
@@ -954,6 +967,7 @@ const Result = forwardRef<any, Props>(
               }
             }}
           />
+        </div>
 
           <ChatModal
             open={openResultNoteModal}

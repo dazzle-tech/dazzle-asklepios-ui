@@ -18,6 +18,7 @@ import { notify } from '@/utils/uiReducerActions';
 
 import '../styles.less';
 import Translate from '@/components/Translate';
+import { formatDateWithoutSeconds } from '@/utils';
 
 const Hospitalizations = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -100,6 +101,20 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
       flexGrow: 4,
       dataKey: 'medicalInterventionsPerformed'
     },
+            {
+          key: 'createdDate',
+          title: <Translate>CREATED AT / BY</Translate>,
+          expandable: true,
+          render: (row: any) =>
+            row?.createdDate ? (
+              <>
+                {row?.createdBy} <br />
+                <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+              </>
+            ) : (
+              ''
+            )
+        },
     ...(!toShowData
       ? [
           {
