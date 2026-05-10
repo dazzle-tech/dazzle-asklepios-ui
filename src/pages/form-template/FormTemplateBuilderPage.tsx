@@ -199,7 +199,7 @@ const FormTemplateBuilderPage = () => {
         .unwrap()
         .then((created: any) => {
           dispatch(notify({ msg: "Template created successfully", sev: "success" }));
-          navigate(`../${created.id}`);
+          navigate(`/form-template/${created.id}`);
         })
         .catch((e: any) => {
           console.error(e);
@@ -286,7 +286,7 @@ const FormTemplateBuilderPage = () => {
               setRecord={setTemplate}
             />
 
-            <MyButton appearance="ghost" onClick={() => navigate('../form-template')} width="90px">
+            <MyButton appearance="ghost" onClick={() => navigate('/form-template')} width="90px">
               Back
             </MyButton>
 
