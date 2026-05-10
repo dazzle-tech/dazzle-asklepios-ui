@@ -9,7 +9,7 @@
 .appointments-schedule-screen {
   .container-form-section {
     border-radius: 14px;
-    border: 1px solid #e6ebf4;
+    border: 1px solid var(--rs-border-primary);
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   }
 }
@@ -72,7 +72,7 @@
   height: 62px;
 }
 
-.rbc-time-content > * > .rbc-timeslot-group {
+.rbc-time-content>*>.rbc-timeslot-group {
   min-height: 81px;
 }
 
@@ -81,7 +81,7 @@
   font-size: 12px;
 }
 
-.rbc-time-content > .rbc-time-gutter {
+.rbc-time-content>.rbc-time-gutter {
   min-width: 41px !important;
   max-width: 41px !important;
   flex: none !important;
@@ -103,7 +103,7 @@
   border-color: #e8edf6;
 }
 
-.my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
+.my-calendar.day .rbc-time-view .rbc-time-content>.rbc-day-slot {
   min-width: 300px !important;
 }
 
@@ -259,7 +259,7 @@
 .appointments-slot-summary-divider {
   width: 1px;
   height: 22px;
-  background: #dce3ef;
+  background: var(--rs-border-primary);
   margin: 0 4px;
   flex-shrink: 0;
 }
@@ -363,8 +363,8 @@
   cursor: default !important;
 }
 
-.my-calendar .rbc-month-row + .rbc-month-row,
-.my-calendar .rbc-day-bg + .rbc-day-bg {
+.my-calendar .rbc-month-row+.rbc-month-row,
+.my-calendar .rbc-day-bg+.rbc-day-bg {
   border-color: #edf2f8;
 }
 
@@ -377,46 +377,60 @@
 }
 
 .dark {
+
   .left-section,
   .right-section {
     background-color: var(--dark-black) !important;
   }
+
   .appointments-main-card,
   .appointments-calendar-pane,
   .appointments-content-grid {
     background: #11151d !important;
     border-color: #2b313d !important;
   }
+
   .appointments-mini-panel {
     background: #141a24 !important;
     border-color: #2b313d !important;
   }
+
   .appointments-legend {
     border-color: #2b313d;
   }
-  .calender-icon-schedule{
+
+  .calender-icon-schedule {
     background-color: var(--gray-dark) !important;
     color: var(--white) !important;
   }
-  .btn-scheduling:hover{
+
+  .btn-scheduling:hover {
     background-color: rgb(60, 60, 60);
   }
 }
 
-.left-content-sections-main-conatainer{display: flex;
-flex-direction: column;
-gap: 1vw;}
+.left-content-sections-main-conatainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
 
-.right-content-sections-main-conatainer{display: flex;
-flex-direction: column;
-gap: 1vw;}
+.right-content-sections-main-conatainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
 
-.schedual-screen-filters-waiting-list-position{display: flex;
-flex-direction: column;
-gap: 0.4vw;}
+.schedual-screen-filters-waiting-list-position {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vw;
+}
 
-.show-rejected-view-appointment-request{display: flex;
-margin-top: 2vw;}
+.show-rejected-view-appointment-request {
+  display: flex;
+  margin-top: 2vw;
+}
 
 .appointments-filters-wrap .container-form-section {
   padding-top: 12px;
@@ -549,6 +563,7 @@ margin-top: 2vw;}
   background: #8ecfb3;
   display: inline-block;
 }
+
 /* Patient search sidebar overlay (same behavior as ER Triage) */
 .book-patient-sidebar-overlay {
   z-index: 5000;
@@ -565,3 +580,35 @@ margin-top: 2vw;}
   margin: 0 auto !important;
   width: min(560px, calc(100vw - 32px));
 }
+
+.dark {
+  .appointments-slot-summary-bar {
+    background-color: var(--dark-black);
+  }
+.my-calendar .rbc-time-header,
+  .my-calendar .rbc-month-header,
+  .my-calendar .rbc-header {
+    background-color: var(--dark-black) !important;
+  }
+
+  .rbc-time-slot {
+    background-color: var(--dark-black) !important;
+  }
+
+  .appointments-slot-summary-scope-date {
+    color: var(--white);
+  font-weight: bold;
+}
+.appointments-slot-summary-text {
+  color: var(--white) !important;
+}
+.appointments-slot-summary-text strong {
+   color: var(--white) !important;
+  font-weight: bold;
+}
+.rbc-time-view-resources .rbc-time-gutter, .rbc-time-view-resources .rbc-time-header-gutter{
+  background-color: var(--dark-black) !important;
+}
+}
+
+

@@ -1332,7 +1332,7 @@ const ScheduleScreen = () => {
           }
         />
         <div style={{ textAlign: 'left' }}>
-          <div style={{ fontSize: '14px' }} className="font-semibold text-sm">
+          <div style={{color: mode === 'dark' ? 'var(--white)' : 'gray', fontSize: '14px' }} className="font-semibold text-sm">
             {resource?.resourceName}
           </div>
           <div style={{ color: 'gray', fontSize: '12px' }}>{resource?.resource_type}</div>

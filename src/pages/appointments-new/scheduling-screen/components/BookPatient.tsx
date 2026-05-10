@@ -3,7 +3,7 @@ import { Avatar, Divider, Form, Panel } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { useBookPatientAppointmentMutation } from '@/services/appointment/appointmentService';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -50,6 +50,7 @@ const BookPatient = ({
   readOnly = false
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
   const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -837,13 +838,13 @@ const BookPatient = ({
                   <SectionContainer
                     title="Selected Appointment Time"
                     content={
-                      <Panel bordered style={{ padding: 10, background: '#f8f4ea' }}>
+                      <Panel bordered style={{ padding: 10, background: mode === 'dark' ? 'var(--dark-black)' :'#f8f4ea' }}>
                         <div>
                           <div>
-                            <div style={{ fontSize: 16, fontWeight: 500, color: '#000000' }}>
+                            <div style={{ fontSize: 16, fontWeight: 500, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.dateTitle}
                             </div>
-                            <div style={{ fontSize: 12, color: '#000000' }}>
+                            <div style={{ fontSize: 12, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.timeRange}
                             </div>
                           </div>
