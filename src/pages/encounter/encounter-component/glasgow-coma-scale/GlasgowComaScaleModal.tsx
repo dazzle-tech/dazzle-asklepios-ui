@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faG } from '@fortawesome/free-solid-svg-icons';
 import { useEnumOptions } from '@/services/enumsApi';
 import './Style.less';
+import { formatEnumString } from '@/utils';
 
 const getGcsScore = (
   type: 'eye' | 'verbal' | 'motor',
