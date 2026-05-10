@@ -354,7 +354,7 @@
 .my-calendar .rbc-time-content,
 .my-calendar .rbc-day-bg,
 .my-calendar .rbc-timeslot-group {
-  background: #ffffff;
+   background: #ffffff;
 }
 
 /* Visual cue only: keep cells looking static while preserving existing behavior */
@@ -365,11 +365,11 @@
 
 .my-calendar .rbc-month-row+.rbc-month-row,
 .my-calendar .rbc-day-bg+.rbc-day-bg {
-  border-color: #edf2f8;
+  border-color: var(--rs-border-primary);
 }
 
 .my-calendar .rbc-off-range-bg {
-  background: #fafcff;
+   background: #fafcff;
 }
 
 .my-calendar .rbc-current-time-indicator {
@@ -590,6 +590,7 @@
   .my-calendar .rbc-header {
     background-color: var(--dark-black) !important;
   }
+  
 
   .rbc-time-slot {
     background-color: var(--dark-black) !important;
@@ -606,10 +607,21 @@
    color: var(--white) !important;
   font-weight: bold;
 }
-.my-calendar .rbc-time-header-content, .my-calendar .rbc-time-gutter, .my-calendar .rbc-time-content, .my-calendar .rbc-day-bg, .my-calendar .rbc-timeslot-group{
-  background-color: var(--dark-black) !important;
+ .my-calendar .rbc-today {
+  background-color: rgba(13, 110, 253, 0.07) !important;
 }
-
+.rbc-time-view-resources .rbc-time-gutter, .rbc-time-view-resources .rbc-time-header-gutter{
+ background-color: var(--dark-black) !important;
 }
-
+.my-calendar .rbc-time-header-content,
+.my-calendar .rbc-time-gutter,
+.my-calendar .rbc-time-content,
+.my-calendar .rbc-day-bg,
+.my-calendar .rbc-timeslot-group {
+   background: var(--dark-black);
+}
+.my-calendar .rbc-off-range-bg {
+  background: #1f2633;
+}
+}
 
