@@ -117,7 +117,7 @@ const FormTemplates = () => {
   const handleNew = () => {
     setTemplate({ ...newFormTemplate });
     setPopupOpen(true);
-    navigate('../new');  
+    navigate('/form-template/new');
   };
 
   const handleDelete = (row: FormTemplate) => {
@@ -265,7 +265,7 @@ const FormTemplates = () => {
         onClick={() => {
           setTemplate(rowData);
           setPopupOpen(true);
-          navigate(`../${rowData.id}`);
+          navigate(`/form-template/${rowData.id}`);
         }}
       />
 

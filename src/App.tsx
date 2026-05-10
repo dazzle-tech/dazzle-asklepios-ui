@@ -861,8 +861,8 @@ const App = () => {
               />
               <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
               <Route path="form-template" element={<FormTemplates />} />
-              <Route path="new" element={<FormTemplateBuilderPage />} />
-              <Route path=":id" element={<FormTemplateBuilderPage />} />
+              <Route path="form-template/new" element={<FormTemplateBuilderPage />} />
+              <Route path="form-template/:id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
               <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
               <Route path="nurse-assessment" element={<NurseAssessment />} />

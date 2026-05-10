@@ -216,6 +216,7 @@ export const MODULES: Module[] =
         { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
         { name: "Supplier Setup", code: "SUPPLIER_SETUP", description: "Supplier Setup", icon: "FaRedRiver", viewOrder: 15, navPath: "supplier-setup" },
         { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
+        { name: "Form Template Setup", code: "FORM_TEMPLATE", description: "Form Template Setup", icon: "FaBook", viewOrder: 14, navPath: "form-template" },
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
         { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
