@@ -1,144 +1,233 @@
-//declares
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
+import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import ScoreCalculation from '@/pages/medical-component/score-calculation';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faG } from '@fortawesome/free-solid-svg-icons';
+import { useEnumOptions } from '@/services/enumsApi';
 import './Style.less';
 
-const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
-  // State to hold selected values for Eye, Verbal, Motor responses and the total Glasgow score
-  const [record, setRecord] = useState({
-    eyeOpening: '',
-    verbalResponse: '',
-    motorResponse: '',
-    aldreteScore: 0
-  });
+const getGcsScore = (
+  type: 'eye' | 'verbal' | 'motor',
+  value?: string | null
+): number => {
+  if (!value) return 0;
 
-  // Retrieve LOV lists for Eye Opening, Verbal Response, and Motor Response
-  const { data: eyeLovData } = useGetLovValuesByCodeQuery('GCS_EYE');
-  const { data: verbalLovData } = useGetLovValuesByCodeQuery('GCS_VERBAL');
-  const { data: motorLovData } = useGetLovValuesByCodeQuery('GCS_MOTOR');
-  const eyeLov = eyeLovData?.object || [];
-  const verbalLov = verbalLovData?.object || [];
-  const motorLov = motorLovData?.object || [];
-
-  // Get the numeric score from a list of values (LOV) by matching the ID
-  const getScoreById = (lovList, id) => {
-    if (!Array.isArray(lovList)) return 0;
-    const item = lovList.find(entry => entry.key === id);
-    if (!item) return 0;
-    return Number(item.score ?? item.valueOrder ?? 0);
-  };
-
-  // Return risk level label and color scheme according to score ranges:
-  const getRiskLevelInfo = score => {
-    if (score >= 13 && score <= 15) {
-      return {
-        label: 'Mild brain injury',
-        backgroundColor: 'var(--light-green)',
-        color: 'var(--primary-green)'
-      };
-    } else if (score >= 9 && score <= 12) {
-      return {
-        label: 'Moderate brain injury',
-        backgroundColor: 'var(--light-orange)',
-        color: 'var(--primary-orange)'
-      };
-    } else if (score <= 8) {
-      return {
-        label: 'Severe brain injury (coma)',
-        backgroundColor: 'var(--light-pink)',
-        color: 'var(--primary-pink)'
-      };
-    } else {
-      return {
-        label: 'Unknown',
-        backgroundColor: 'var(--background-gray)',
-        color: 'var(--primary-gray)'
-      };
+  const scores: Record<'eye' | 'verbal' | 'motor', Record<string, number>> = {
+    eye: {
+      SPONTANEOUS: 4,
+      TO_SPEECH: 3,
+      TO_PAIN: 2,
+      NO_RESPONSE: 1,
+      EYES_CLOSED_DUE_TO_SWELLING: 0
+    },
+    verbal: {
+      ORIENTED: 5,
+      CONFUSED_CONVERSATION: 4,
+      INAPPROPRIATE_WORDS: 3,
+      INCOMPREHENSIBLE_SOUNDS: 2,
+      NO_RESPONSE: 1,
+      INTUBATED_TRACHEOSTOMY: 0
+    },
+    motor: {
+      OBEYS_COMMANDS: 6,
+      LOCALIZES_PAIN: 5,
+      WITHDRAWS_FROM_PAIN: 4,
+      FLEXION_TO_PAIN: 3,
+      EXTENSION_TO_PAIN: 2,
+      NO_RESPONSE: 1
     }
   };
 
-  const riskInfo = getRiskLevelInfo(record.aldreteScore);
+  return scores[type][value] ?? 0;
+};
 
-  //handle save
-  const handleSave = () => {
-    onSave({
-      totalScore: record.aldreteScore,
-      riskLevel: riskInfo.label,
-      eyeOpening: record.eyeOpening,
-      verbalResponse: record.verbalResponse,
-      motorResponse: record.motorResponse
-    });
-    setOpen(false);
+const getGcsInterpretation = (totalScore: number) => {
+  if (totalScore >= 13 && totalScore <= 15) {
+    return 'Mild traumatic brain injury';
+  }
+
+  if (totalScore >= 9 && totalScore <= 12) {
+    return 'Moderate traumatic brain injury';
+  }
+
+  if (totalScore >= 3 && totalScore <= 8) {
+    return 'Severe traumatic brain injury (coma)';
+  }
+
+  return 'Unknown';
+};
+
+const getRiskBadgeColors = (scoreInterpretation?: string | null) => {
+  if (scoreInterpretation === 'Mild traumatic brain injury') {
+    return {
+      backgroundColor: 'var(--light-green)',
+      color: 'var(--primary-green)'
+    };
+  }
+
+  if (scoreInterpretation === 'Moderate traumatic brain injury') {
+    return {
+      backgroundColor: 'var(--light-orange)',
+      color: 'var(--primary-orange)'
+    };
+  }
+
+  if (scoreInterpretation === 'Severe traumatic brain injury (coma)') {
+    return {
+      backgroundColor: 'var(--light-pink)',
+      color: 'var(--primary-pink)'
+    };
+  }
+
+  return {
+    backgroundColor: 'var(--background-gray)',
+    color: 'var(--primary-gray)'
   };
+};
 
-  // Fields configuration: field names, associated LOV codes, and labels
-  const fields = [
-    { fieldName: 'eyeOpening', lovCode: 'GCS_EYE', label: 'Eye Opening' },
-    { fieldName: 'verbalResponse', lovCode: 'GCS_VERBAL', label: 'Verbal Response' },
-    { fieldName: 'motorResponse', lovCode: 'GCS_MOTOR', label: 'Motor Response' }
-  ];
+const GlasgowComaScaleModal = ({
+  open,
+  setOpen,
+  width,
+  gcsAssessment,
+  setGcsAssessment,
+  handleSave
+}) => {
+  const eyeOpeningOptions = useEnumOptions('GCSEye');
+  const verbalResponseOptions = useEnumOptions('GCSVerbal');
+  const motorResponseOptions = useEnumOptions('GCSMotor');
 
-  const ModalContent = (
-    <>
-      <div className="input-row">
-        <div className="score-calculation-position-handle">
-          <ScoreCalculation
-            record={record}
-            setRecord={setRecord}
-            fields={fields}
-            name="Glasgow Score"
-            disabledAldrete={true}
-       
-            fieldsPerRow={1}
-          />
+  const eyeOpeningScore = useMemo(
+    () => getGcsScore('eye', gcsAssessment?.eyeOpening),
+    [gcsAssessment?.eyeOpening]
+  );
+
+  const verbalResponseScore = useMemo(
+    () => getGcsScore('verbal', gcsAssessment?.verbalResponse),
+    [gcsAssessment?.verbalResponse]
+  );
+
+  const motorResponseScore = useMemo(
+    () => getGcsScore('motor', gcsAssessment?.motorResponse),
+    [gcsAssessment?.motorResponse]
+  );
+
+  const totalScore = useMemo(
+    () => eyeOpeningScore + verbalResponseScore + motorResponseScore,
+    [eyeOpeningScore, verbalResponseScore, motorResponseScore]
+  );
+
+  const scoreInterpretation = useMemo(
+    () => getGcsInterpretation(totalScore),
+    [totalScore]
+  );
+
+  const badgeColors = getRiskBadgeColors(scoreInterpretation);
+
+  const hasAllValues =
+    gcsAssessment?.eyeOpening &&
+    gcsAssessment?.verbalResponse &&
+    gcsAssessment?.motorResponse;
+
+  const conjureFormContent = () => (
+    <Form fluid>
+      <MyInput
+        width="100%"
+        fieldName="eyeOpening"
+        fieldLabel="Eye Opening"
+        fieldType="select"
+        selectData={eyeOpeningOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={gcsAssessment}
+        setRecord={setGcsAssessment}
+        required
+      />
+
+      <MyInput
+        width="100%"
+        fieldName="verbalResponse"
+        fieldLabel="Verbal Response"
+        fieldType="select"
+        selectData={verbalResponseOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={gcsAssessment}
+        setRecord={setGcsAssessment}
+        required
+      />
+
+      <MyInput
+        width="100%"
+        fieldName="motorResponse"
+        fieldLabel="Motor Response"
+        fieldType="select"
+        selectData={motorResponseOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={gcsAssessment}
+        setRecord={setGcsAssessment}
+        required
+      />
+
+      <div className="gcs-score-preview">
+        <div className="gcs-score-preview-header">
+          <span>Score Summary</span>
         </div>
-        <div className="badge-box">
+
+        <div className="gcs-score-grid">
+          <div className="gcs-score-card">
+            <span className="gcs-score-label">Eye Score</span>
+            <strong className="gcs-score-value">{eyeOpeningScore}</strong>
+          </div>
+
+          <div className="gcs-score-card">
+            <span className="gcs-score-label">Verbal Score</span>
+            <strong className="gcs-score-value">{verbalResponseScore}</strong>
+          </div>
+
+          <div className="gcs-score-card">
+            <span className="gcs-score-label">Motor Score</span>
+            <strong className="gcs-score-value">{motorResponseScore}</strong>
+          </div>
+
+          <div className="gcs-score-card gcs-total-card">
+            <span className="gcs-score-label">Total Score</span>
+            <strong className="gcs-score-value">{totalScore}</strong>
+          </div>
+        </div>
+
+        <div className="gcs-badge-row">
           <MyBadgeStatus
-            backgroundColor={riskInfo.backgroundColor}
-            color={riskInfo.color}
-            contant={riskInfo.label}
+            backgroundColor={badgeColors.backgroundColor}
+            color={badgeColors.color}
+            contant={hasAllValues ? scoreInterpretation : 'Select all values'}
           />
         </div>
       </div>
-    </>
+    </Form>
   );
-  // Effects
-  // Update total score by summing scores from selected Eye, Verbal, and Motor responses
-  useEffect(() => {
-    if (!eyeLov.length || !verbalLov.length || !motorLov.length) return;
 
-    const totalScore =
-      getScoreById(eyeLov, record.eyeOpening) +
-      getScoreById(verbalLov, record.verbalResponse) +
-      getScoreById(motorLov, record.motorResponse);
-
-    setRecord(prev => ({ ...prev, aldreteScore: totalScore }));
-  }, [record.eyeOpening, record.verbalResponse, record.motorResponse, eyeLov, verbalLov, motorLov]);
-
-
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Glasgow Coma Scale Assessment"
-      steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faG}/> }]}
-      size="30vw"
+      title={
+        gcsAssessment?.id
+          ? 'Edit Glasgow Coma Scale Assessment'
+          : 'New Glasgow Coma Scale Assessment'
+      }
       position="right"
-      actionButtonLabel="Save"
+      content={<div dir={dir}>{conjureFormContent()}</div>}
+      actionButtonLabel={gcsAssessment?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      content={<div dir={dir}>{ModalContent}</div>}
+      steps={[{ title: 'Assessment Info', icon: <FontAwesomeIcon icon={faG} /> }]}
+      size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };

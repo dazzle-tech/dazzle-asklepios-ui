@@ -32,6 +32,7 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from "@/s
 import { useEnumOptions } from "@/services/enumsApi";
 
 import type { PatientEncounter } from "@/types/model-types-new";
+import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
 
 type StartTriageProps = {
   patient: any;
@@ -224,9 +225,9 @@ const StartTriage = ({
   const encounterPriorityIsUrgent = useMemo(() => {
     const v = String(
       selectedEncounterPriority?.label ??
-        selectedEncounterPriority?.value ??
-        encounterPriorityValue ??
-        ""
+      selectedEncounterPriority?.value ??
+      encounterPriorityValue ??
+      ""
     ).toUpperCase();
 
     return (
@@ -343,7 +344,19 @@ const StartTriage = ({
           />
         )}
       </Row>
-
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
+          <SectionContainer
+            title={<Translate>Glasgow Coma Scale Assessment</Translate>}
+            content={
+              <GlasgowComaScale
+                patient={patient}
+                encounter={encounter}
+              />
+            }
+          />
+        )}
+      </Row>
       <Row gutter={30}>
         <SectionContainer
           title={<Translate>Chief Complaint</Translate>}
