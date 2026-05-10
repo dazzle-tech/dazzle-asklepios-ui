@@ -124,7 +124,7 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
   return (
     <div
       className="availability-template-summary-card"
-      style={{ backgroundColor: hexToRGBA(template?.templateColor ?? "#6982F0", 0.2) }}
+      style={{ backgroundColor: hexToRGBA(template?.templateColor ?? "#6982F0", 0.15) }}
     >
       {/* Header */}
       <div
