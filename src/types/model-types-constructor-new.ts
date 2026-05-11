@@ -1173,6 +1173,11 @@ export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFr
   patientId: null,
 };
 
+export const newBulkAppointmentRescheduleDTO: modelTypes.BulkAppointmentRescheduleDTO = {
+  originalAvailabilityGenerationBatchId: 0,
+  replacementAvailabilityGenerationBatchId: 0
+};
+
 export const newAppointmentRequestResponseVM: modelTypes.AppointmentRequestResponseVM = {
   id: null,
   patientId: null,
