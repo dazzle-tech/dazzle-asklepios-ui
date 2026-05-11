@@ -13,7 +13,10 @@ import { getHeight } from 'rsuite/esm/DOMHelper';
 import MergePreviewModal from './MergePreviewModal';
 import MergePatientsTab from './MergePatientsTab';
 import MergeTransactionsTab from './MergeTransactionsTab';
-
+import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
+import MyTab from '@/components/MyTab';
 const PatientMergeFiles: React.FC = () => {
   const [, setExpand] = useState(false);
   const [windowHeight] = useState(getHeight(window));
@@ -180,106 +183,150 @@ const PatientMergeFiles: React.FC = () => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (
-    <div dir={dir} style={{ padding: '20px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Header Section */}
-      <div style={{
-        backgroundColor: '#fff',
-        padding: '20px',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        marginBottom: '24px',
-        border: '1px solid #e2e8f0'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <FontAwesomeIcon icon={faCodeMerge} style={{ fontSize: '24px', color: '#3b82f6' }} />
-          <h2 style={{ margin: 0, color: '#1e293b', fontSize: '24px', fontWeight: '600' }}>
-            Patient Merge
-          </h2>
-        </div>
-        <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>
-          Select two patients to merge. The patient on the right will be the primary record, and data from the patient on the left will be merged into it.
-        </p>
+return (
+  <div dir={dir} className="patient-merge-files-page">
+    {/* <div className="patient-merge-files-header">
+      <div className="patient-merge-files-header-title">
+        <FontAwesomeIcon
+          icon={faCodeMerge}
+          className="patient-merge-files-header-icon"
+        />
+        <h2 className="patient-merge-files-header-text">
+          Patient Merge
+        </h2>
       </div>
 
-      <Grid fluid dir={dir}>
-        <Row gutter={24}>
-          <Col xs={24}>
-            <Tabs activeKey={activeTab} onSelect={handleTabChange} style={{ marginBottom: '20px' }}>
-              <Tabs.Tab eventKey="merge-patients" title="Merge Patients">
-                <MergePatientsTab
-                  fromPatient={fromPatient}
-                  toPatient={toPatient}
-                  setFromPatient={setFromPatient}
-                  setToPatient={setToPatient}
-                  refetchData={refetchData}
-                  setRefetchData={setRefetchData}
-                  previewLoading={previewLoading}
-                  previewFetching={previewFetching}
-                  handleMergeClick={handleMergeClick}
-                  handleClear={handleClear}
-                  setExpand={setExpand}
-                  windowHeight={windowHeight}
-                />
-              </Tabs.Tab>
+      <p className="patient-merge-files-header-description">
+        Select two patients to merge. The patient on the right will be the
+        primary record, and data from the patient on the left will be merged
+        into it.
+      </p>
+    </div> */}
 
-              <Tabs.Tab eventKey="transactions" title="Transactions">
-                <MergeTransactionsTab
-                  transactions={transactions}
-                  transactionsLoading={transactionsLoading}
-                  onRequestUndo={(mergeLogId) => setUndoConfirm({ show: true, mergeLogId })}
-                  undoLoading={undoLoading}
-                />
-              </Tabs.Tab>
-            </Tabs>
-          </Col>
-        </Row>
-      </Grid>
+    <MyTab
+      activeTab={
+        activeTab === 'merge-patients'
+          ? '1'
+          : activeTab === 'transactions'
+            ? '2'
+            : '1'
+      }
+      setActiveTab={(key: string) => {
+        if (key === '1') {
+          setActiveTab('merge-patients');
+        } else if (key === '2') {
+          setActiveTab('transactions');
+        }
+      }}
+      data={[
+        {
+          title: 'Merge Patients',
+          content: (
+            <MergePatientsTab
+              fromPatient={fromPatient}
+              toPatient={toPatient}
+              setFromPatient={setFromPatient}
+              setToPatient={setToPatient}
+              refetchData={refetchData}
+              setRefetchData={setRefetchData}
+              previewLoading={previewLoading}
+              previewFetching={previewFetching}
+              handleMergeClick={handleMergeClick}
+              handleClear={handleClear}
+              setExpand={setExpand}
+              windowHeight={windowHeight}
+            />
+          )
+        },
+        {
+          title: 'Transactions',
+          content: (
+            <MergeTransactionsTab
+              transactions={transactions}
+              transactionsLoading={transactionsLoading}
+              onRequestUndo={(mergeLogId: number) =>
+                setUndoConfirm({
+                  show: true,
+                  mergeLogId
+                })
+              }
+              undoLoading={undoLoading}
+            />
+          )
+        }
+      ]}
+    />
 
-      {/* Merge Preview Modal */}
-      <MergePreviewModal
-        open={showMergeModal}
-        conflicts={mergePreview?.conflicts || []}
-        autoTransfers={mergePreview?.autoTransfers || []}
-        fromPatientId={fromPatient.id}
-        toPatientId={toPatient.id}
-        onReviewSummary={handleReviewSummary}
-        onConfirmMerge={handleConfirmMerge}
-        onCancel={() => {
-          setShowMergeModal(false);
-          setShowSummary(false);
-          setSummaryData(null);
-        }}
-        loading={previewLoading || previewFetching || executeLoading || summarizeLoading}
-        showSummary={showSummary}
-        summaryData={summaryData}
-        onBackToConflicts={() => setShowSummary(false)}
-      />
+    <MergePreviewModal
+      open={showMergeModal}
+      conflicts={mergePreview?.conflicts || []}
+      autoTransfers={mergePreview?.autoTransfers || []}
+      fromPatientId={fromPatient.id}
+      toPatientId={toPatient.id}
+      onReviewSummary={handleReviewSummary}
+      onConfirmMerge={handleConfirmMerge}
+      onCancel={() => {
+        setShowMergeModal(false);
+        setShowSummary(false);
+        setSummaryData(null);
+      }}
+      loading={
+        previewLoading ||
+        previewFetching ||
+        executeLoading ||
+        summarizeLoading
+      }
+      showSummary={showSummary}
+      summaryData={summaryData}
+      onBackToConflicts={() => setShowSummary(false)}
+    />
 
-      {/* Undo Confirmation Modal */}
-      <Modal open={undoConfirm.show} onClose={() => setUndoConfirm({ show: false })} size="sm">
-        <Modal.Header>
-          <Modal.Title>Confirm Undo</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to undo this merge transaction? This action cannot be undone.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setUndoConfirm({ show: false })} appearance="subtle">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => undoConfirm.mergeLogId && handleUndo(undoConfirm.mergeLogId)}
-            color="red"
-            appearance="primary"
+    <MyModal
+      open={undoConfirm.show}
+      setOpen={(open: boolean) =>
+        setUndoConfirm({
+          show: open,
+          mergeLogId: open
+            ? undoConfirm.mergeLogId
+            : undefined
+        })
+      }
+      size="sm"
+      title="Confirm Undo"
+      hideCancel
+      hideBack
+      hideActionBtn
+      content={
+        <div className="patient-merge-files-undo-content">
+          Are you sure you want to undo this merge transaction?
+          This action cannot be undone.
+        </div>
+      }
+      footerButtons={
+        <>
+          <MyButton
+            onClick={() =>
+              setUndoConfirm({ show: false })
+            }
+            appearance="subtle"
+          >
+            <Translate>Cancel</Translate>
+          </MyButton>
+
+          <MyButton
+            onClick={() =>
+              undoConfirm.mergeLogId &&
+              handleUndo(undoConfirm.mergeLogId)
+            }
             loading={undoLoading}
           >
-            Confirm Undo
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
-  );
+            <Translate>Confirm Undo</Translate>
+          </MyButton>
+        </>
+      }
+    />
+  </div>
+);
 };
 
 export default PatientMergeFiles;

@@ -1,13 +1,22 @@
 import React from 'react';
-import { Col, Panel, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCodeMerge } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCodeMerge,
+  faArrowDown,
+  faDatabase,
+  faBullseye
+} from '@fortawesome/free-solid-svg-icons';
 import * as icons from '@rsuite/icons';
+
 import MyButton from '@/components/MyButton/MyButton';
-import PatientInfoCard from '@/components/PatientInfoCard';
 import ProfileSidebar from '../patient-profile/ProfileSidebar-new';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+
 import { Patient } from '@/types/model-types-new';
+
 import './styles.less';
+import PatientMergeCard from './patient-merge-files-card/PatientMergeCard';
 
 interface MergePatientsTabProps {
   fromPatient: Patient;
@@ -38,9 +47,13 @@ const MergePatientsTab: React.FC<MergePatientsTabProps> = ({
   setExpand,
   windowHeight
 }) => {
+  const isLoading = previewLoading || previewFetching;
+  const isMergeDisabled = !fromPatient?.id || !toPatient?.id;
+
   return (
-    <Row gutter={24} className="merge-patients-tab-row">
-      <Col xs={5}>
+    <div className="merge-patients-layout">
+      {/* Left Sidebar */}
+      <div className="merge-sidebar merge-sidebar-left">
         <ProfileSidebar
           expand={true}
           setExpand={setExpand}
@@ -52,59 +65,137 @@ const MergePatientsTab: React.FC<MergePatientsTabProps> = ({
           direction="right"
           showButton={false}
         />
-      </Col>
+      </div>
 
-      <Col xs={14}>
-        <Panel bordered>
-          <h6>From Patient</h6>
-          <PatientInfoCard patient={fromPatient} />
+      {/* Center Workspace */}
+      <div className="merge-center-content">
+        <div className="merge-workspace">
+          {/* Source Patient */}
+          <SectionContainer
+            title={
+              <div className="merge-section-title">
+                <FontAwesomeIcon icon={faDatabase} />
+                <span>
+                  <Translate>Source Patient</Translate>
+                </span>
+              </div>
+            }
+            minHeight="auto"
+            content={
+              <div className="merge-patient-section">
+                <div className="merge-patient-card">
+                  <PatientMergeCard patient={fromPatient} type="source" />
+                </div>
+              </div>
+            }
+          />
 
-          <div className="merge-controls">
-            <div className="merge-icon-card">
-              <FontAwesomeIcon
-                icon={faCodeMerge}
-                className="merge-icon"
-              />
-              <div className="merge-icon-title">Merge</div>
-            </div>
-          </div>
+          {/* Merge Process */}
+          <SectionContainer
+            title={
+              <div className="merge-section-title">
+                <FontAwesomeIcon icon={faCodeMerge} />
+                <span>
+                  <Translate>Merge Process</Translate>
+                </span>
+              </div>
+            }
+            minHeight="auto"
+            content={
+              <div className="merge-flow-container">
+                <div className="merge-flow-top">
+                  <div className="merge-flow-line" />
+                  <div className="merge-flow-badge">
+                    <FontAwesomeIcon
+                      icon={faCodeMerge}
+                      className="merge-flow-icon"
+                    />
+                  </div>
+                  <div className="merge-flow-line" />
+                </div>
 
-          <h6>Merge To</h6>
-          <PatientInfoCard patient={toPatient} />
+                <div className="merge-flow-arrow">
+                  <FontAwesomeIcon icon={faArrowDown} />
+                </div>
 
-          <div className="merge-action-row">
-            <MyButton
-              size="large"
-              prefixIcon={() => <FontAwesomeIcon icon={faCodeMerge} />}
-              appearance="primary"
-              onClick={handleMergeClick}
-              loading={previewLoading || previewFetching}
-              className="merge-action-button merge-action-button-primary"
-            >
-              Start Merge Process
-            </MyButton>
-            <MyButton
-              size="large"
-              prefixIcon={() => <icons.Reload />}
-              appearance="ghost"
-              className="merge-action-button merge-action-button-ghost"
-            >
-              Undo Last Merge
-            </MyButton>
-            <MyButton
-              size="large"
-              prefixIcon={() => <icons.Close />}
-              appearance="subtle"
-              onClick={handleClear}
-              className="merge-action-button merge-action-button-clear"
-            >
-              Clear Selection
-            </MyButton>
-          </div>
-        </Panel>
-      </Col>
+                <div className="merge-flow-text">
+                  <Translate>
+                    All selected patient data will be consolidated into the
+                    primary patient record.
+                  </Translate>
+                </div>
+              </div>
+            }
+          />
 
-      <Col xs={5}>
+          {/* Target Patient */}
+          <SectionContainer
+            title={
+              <div className="merge-section-title">
+                <FontAwesomeIcon icon={faBullseye} />
+                <span>
+                  <Translate>Primary Patient (Target)</Translate>
+                </span>
+              </div>
+            }
+            minHeight="auto"
+            content={
+              <div className="merge-patient-section">
+                <div className="merge-patient-card">
+                  <PatientMergeCard patient={toPatient} type="target" />
+                </div>
+              </div>
+            }
+          />
+
+          {/* Actions */}
+          <SectionContainer
+            title={
+              <div className="merge-section-title">
+                <FontAwesomeIcon icon={faCodeMerge} />
+                <span>
+                  <Translate>Actions</Translate>
+                </span>
+              </div>
+            }
+            minHeight="auto"
+            content={
+              <div className="merge-action-panel">
+                <MyButton
+                  appearance="primary"
+                  loading={isLoading}
+                  disabled={isMergeDisabled}
+                  onClick={handleMergeClick}
+                  prefixIcon={() => (
+                    <FontAwesomeIcon icon={faCodeMerge} />
+                  )}
+                >
+                  <Translate>Start Merge Process</Translate>
+                </MyButton>
+
+                <MyButton
+                  appearance="ghost"
+                  onClick={handleClear}
+                  prefixIcon={() => <icons.Reload />}
+                >
+                  <Translate>Reset Selection</Translate>
+                </MyButton>
+
+                <MyButton
+                  appearance="primary"
+                  onClick={handleClear}
+                  prefixIcon={() => <icons.Close />}
+                >
+                  <Translate>Clear Selection</Translate>
+                </MyButton>
+              </div>
+            }
+          />
+        </div>
+      </div>
+
+      {/* Right Sidebar */}
+      <div className="merge-sidebar merge-sidebar-right">
         <ProfileSidebar
           expand={true}
           setExpand={setExpand}
@@ -115,8 +206,8 @@ const MergePatientsTab: React.FC<MergePatientsTabProps> = ({
           title="Primary Patient (Target)"
           showButton={false}
         />
-      </Col>
-    </Row>
+      </div>
+    </div>
   );
 };
 

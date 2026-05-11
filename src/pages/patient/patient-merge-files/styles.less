@@ -1,339 +1,701 @@
-.merge-patients-tab-row {
-  margin-top: 12px;
+.merge-patients-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 1vw;
 }
 
-.merge-controls {
-  text-align: center;
-  margin: 20px 0;
+.merge-center-content {display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
-.merge-icon-card {
-  display: inline-flex;
+.merge-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.merge-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c3e50;
+
+  svg {
+    font-size: 14px;
+    color: #1675e0;
+  }
+}
+
+.merge-patient-section {
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.merge-patient-card {
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.merge-flow-container {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px;
-  border-radius: 18px;
-  background: #eef3ff;
-}
-
-.merge-icon-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #21325e;
-}
-
-.merge-action-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-}
-
-.merge-action-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.merge-action-button-primary {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: #fff;
-}
-
-.merge-action-button-ghost {
-  border: 1px solid #d1d5db;
-  color: #6b7280;
-  background: #fff;
-}
-
-.merge-action-button-clear {
-  color: #ef4444;
-  background: #fff;
-}
-
-.merge-icon {
-  font-size: 60px;
-  color: #3751ff;
-}
-
-.merge-button-undo {
-  margin-top: auto;
-}
-
-.merge-transaction-action-content {
-  text-align: right;
-}
-
-.merge-transactions-root {
-  margin-top: 20px;
-}
-
-.merge-panel-empty {
   text-align: center;
-  padding: 60px;
+  gap: 12px;
+  padding: 24px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-sizing: border-box;
 }
 
-.merge-panel-empty-text {
-  font-size: 16px;
-  color: #64748b;
+.merge-flow-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
 }
 
-.merge-transactions-list {
+.merge-flow-line {
+  flex: 1;
+  height: 1px;
+  background: #dcdfe6;
+}
+
+.merge-flow-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1675e0;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.merge-flow-icon {
+  font-size: 22px;
+}
+
+.merge-flow-arrow {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.merge-flow-text {
+  max-width: 560px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.merge-action-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.merge-btn {
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 320px;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+.merge-btn-primary {
+  min-width: 240px;
+}
+
+/* =========================
+   Large Screens
+   ========================= */
+@media (max-width: 1400px) {
+  .merge-patients-layout {
+    gap: 20px;
+  }
+
+  .merge-sidebar {
+    flex: 0 0 clamp(240px, 20vw, 300px);
+    min-width: 240px;
+    max-width: 300px;
+    width: clamp(240px, 20vw, 300px);
+  }
+}
+
+/* =========================
+   Medium Screens
+   ========================= */
+@media (max-width: 1200px) {
+  .merge-patients-layout {
+    gap: 16px;
+    padding: 8px;
+  }
+
+  .merge-sidebar {
+    flex: 0 0 clamp(220px, 19vw, 260px);
+    min-width: 220px;
+    max-width: 260px;
+    width: clamp(220px, 19vw, 260px);
+  }
+
+  .merge-btn {
+    flex: 1 1 calc(50% - 12px);
+    max-width: none;
+  }
+}
+
+/* =========================
+   Tablet & Mobile
+   ========================= */
+@media (max-width: 992px) {
+  .merge-patients-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .merge-sidebar,
+  .merge-center-content {
+    flex: none;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .merge-action-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .merge-btn {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 768px) {
+  .merge-workspace {
+    gap: 12px;
+  }
+
+  .merge-section-title {
+    font-size: 13px;
+  }
+
+  .merge-flow-container {
+    padding: 20px 12px;
+  }
+
+  .merge-flow-badge {
+    width: 48px;
+    height: 48px;
+  }
+
+  .merge-flow-icon {
+    font-size: 20px;
+  }
+
+  .merge-flow-text {
+    font-size: 12px;
+  }
+}
+
+/* =========================
+   Small Mobile
+   ========================= */
+@media (max-width: 576px) {
+  .merge-patients-layout {
+    padding: 4px;
+    gap: 12px;
+  }
+
+  .merge-patient-section,
+  .merge-flow-container {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .merge-flow-badge {
+    width: 42px;
+    height: 42px;
+  }
+
+  .merge-flow-icon {
+    font-size: 18px;
+  }
+
+  .merge-flow-text {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Merge Transactions - Clean Professional Styling
+   ========================================================= */
+
+.merge-transactions-root,
+.merge-changes-modal-content {
+  width: 100%;
+}
+
+.merge-transactions-list,
+.merge-changes-section,
+.merge-changes-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.merge-transaction-card {
-  border-radius: 8px;
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
+/* =========================================================
+   Section Title
+   ========================================================= */
 
-.merge-transaction-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.merge-transaction-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 0.5fr 1.5fr 1fr;
-  gap: 20px;
+.merge-transactions-title,
+.merge-changes-section-title {
+  display: inline-flex;
   align-items: center;
-}
-
-.merge-transaction-title {
-  font-size: 11px;
-  color: #94a3b8;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #2c3e50;
+
+  svg {
+    color: #1675e0;
+  }
 }
 
-.merge-transaction-heading {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-
-.merge-transaction-meta {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.merge-transaction-meta strong {
-  font-weight: 500;
-}
-
-.merge-transaction-small {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.merge-transaction-divider {
-  display: flex;
-  flex-direction: column;
+.merge-transactions-count,
+.merge-changes-count,
+.merge-status-badge,
+.merge-change-decision {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-}
-
-.merge-transaction-divider-line {
-  width: 1px;
-  height: 40px;
-  background-color: #e2e8f0;
-  opacity: 0.6;
-}
-
-.merge-transaction-arrow {
-  color: #3b82f6;
-  font-size: 16px;
-  opacity: 0.7;
-}
-
-.merge-status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
 }
 
-.merge-status-merged {
-  background-color: #d1fae5;
-  color: #10b981;
+/* =========================================================
+   Cards & Panels
+   ========================================================= */
+
+.merge-panel-empty,
+.merge-transaction-card,
+.merge-change-row,
+.merge-changes-header {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px;
+  background: #ffffff;
 }
 
-.merge-status-undone {
-  background-color: #f3f4f6;
-  color: #6b7280;
+.merge-panel-empty .rs-panel-body {
+  padding: 32px 20px !important;
+  text-align: center;
+}
+
+.merge-transaction-card .rs-panel-body {
+  padding: 20px !important;
+}
+
+/* =========================================================
+   Transaction Layout
+   ========================================================= */
+
+.merge-transaction-grid {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.merge-transaction-grid > div:nth-child(1),
+.merge-transaction-grid > div:nth-child(3) {
+  flex: 1;
+  min-width: 0;
 }
 
 .merge-transaction-actions {
+  width: 260px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
+  gap: 12px;
 }
 
-.merge-transaction-actions .rs-btn {
-  margin-top: auto;
+.merge-transaction-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.merge-transaction-buttons .rs-btn {
+  flex: 1 1 120px;
+}
+
+/* =========================================================
+   Typography
+   ========================================================= */
+
+.merge-transaction-title,
+.merge-transaction-reason-title,
+.merge-change-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.merge-transaction-heading,
+.merge-change-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.merge-transaction-meta,
+.merge-transaction-small,
+.merge-transaction-reason-text,
+.merge-panel-empty-text,
+.merge-changes-empty,
+.merge-flow-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
 }
 
 .merge-transaction-reason {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #eef2f7;
 }
 
-.merge-transaction-reason-title {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 600;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+/* =========================================================
+   Divider
+   ========================================================= */
 
-.merge-transaction-reason-text {
-  font-size: 13px;
-  color: #1e293b;
-  line-height: 1.6;
-}
-.merge-transaction-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.merge-changes-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  color: #1e293b;
-}
-
-.merge-changes-loading {
-  display: flex;
-  justify-content: center;
-  padding: 40px;
-}
-
-.merge-changes-section {
-  margin-bottom: 28px;
-}
-
-.merge-changes-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 10px;
-  margin-bottom: 12px;
-}
-
-.merge-changes-count {
-  background: #eef2ff;
-  color: #3b82f6;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.merge-changes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.merge-change-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1.5fr auto;
-  align-items: center;
-  gap: 16px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  padding: 14px;
-  border-radius: 10px;
-}
-
-.merge-change-label {
-  font-weight: 700;
-  color: #111827;
-}
-
-.merge-change-meta {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
+.merge-transaction-divider,
 .merge-change-values {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
+.merge-transaction-divider {
+  width: 90px;
+}
+
+.merge-transaction-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #dbe2ea;
+}
+
+.merge-transaction-arrow,
+.merge-change-arrow {
+  color: #1675e0;
+}
+
+/* =========================================================
+   Badges
+   ========================================================= */
+
+.merge-transactions-count,
+.merge-changes-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: #eef4ff;
+  color: #1675e0;
+}
+
+.merge-status-badge,
+.merge-change-decision {
+  padding: 4px 10px;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.merge-status-merged {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.merge-status-undone {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+/* =========================================================
+   Changes
+   ========================================================= */
+
+.merge-changes-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.merge-change-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.merge-change-field {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.merge-change-values {
+  flex: 1;
+  min-width: 0;
+}
+
+.merge-change-old,
+.merge-change-new {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  word-break: break-word;
+}
+
 .merge-change-old {
-  color: #ef4444;
-  background: #fef2f2;
-  padding: 4px 8px;
-  border-radius: 6px;
-  text-decoration: line-through;
+  background: #f8fafc;
+  color: #64748b;
 }
 
 .merge-change-new {
-  color: #059669;
-  background: #ecfdf5;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: 600;
+  background: #eef6ff;
+  color: #0f4c81;
 }
 
-.merge-change-arrow {
-  color: #64748b;
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 992px) {
+  .merge-transaction-grid,
+  .merge-change-row,
+  .merge-change-values,
+  .merge-transaction-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .merge-transaction-actions,
+  .merge-change-field {
+    width: 100%;
+  }
+
+  .merge-transaction-divider {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .merge-transaction-buttons .rs-btn {
+    width: 100%;
+  }
+
+  .merge-change-arrow {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+
+  .merge-change-decision {
+    align-self: flex-start;
+  }
 }
 
-.merge-change-decision {
-  font-size: 12px;
+@media (max-width: 576px) {
+  .merge-transaction-card .rs-panel-body,
+  .merge-change-row {
+    padding: 12px !important;
+  }
+
+  .merge-transactions-list,
+  .merge-changes-section,
+  .merge-changes-list {
+    gap: 12px;
+  }
+}
+
+
+
+
+
+
+.merge-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.merge-preview-reason-card {
+  background: #ffffff;
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.merge-preview-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.merge-preview-conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.merge-preview-conflict-card {
+  background: #ffffff;
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.03),
+    0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.merge-preview-conflict-header {
+  margin-bottom: 18px;
+}
+
+.merge-preview-conflict-title {
+  font-size: 14px;
   font-weight: 700;
-  color: #3b82f6;
-  background: #eff6ff;
-  padding: 4px 8px;
-  border-radius: 8px;
+  color: #101828;
+  line-height: 1.5;
 }
 
+.merge-preview-values-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
 
-
-.merge-changes-empty {
-  padding: 14px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  color: #64748b;
+.merge-preview-value-card {
   border-radius: 10px;
-  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.merge-preview-value-card.from {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.merge-preview-value-card.to {
+  background: #ecfdf3;
+  border-color: #b7ebc6;
+}
+
+.merge-preview-value-card-header {
+  margin-bottom: 6px;
+}
+
+.merge-preview-value-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.merge-preview-value-badge.from {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.merge-preview-value-badge.to {
+  background: #d1fadf;
+  color: #15803d;
+}
+
+.merge-preview-value-card-content {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #101828;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 36px;
+}
+
+.merge-preview-decision-area {
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .merge-preview-content {
+    gap: 18px;
+  }
+
+  .merge-preview-reason-card,
+  .merge-preview-conflict-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .merge-preview-values-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .merge-preview-value-card {
+    padding: 9px 10px;
+  }
+
+  .merge-preview-value-card-content {
+    font-size: 12px;
+    min-height: auto;
+  }
+
+  .merge-preview-conflict-title {
+    font-size: 13px;
+  }
 }
