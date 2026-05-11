@@ -942,7 +942,7 @@ const Result = forwardRef<any, Props>(
             </div>
           }
         >
-        <div style={{ minHeight: 600, maxWidth:'73vw' }}>
+        <div className='laboratory-table-size-container'>
           <MyTable
             columns={columns}
             data={normalizedResults}

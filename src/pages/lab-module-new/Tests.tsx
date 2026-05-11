@@ -884,7 +884,7 @@ const Tests = forwardRef<any, Props>(
     return (
       <div dir={dir}>
         <Panel ref={ref} defaultExpanded>
-          <div style={{ minHeight: 600, maxWidth:'73vw' }}>
+          <div className='laboratory-table-size-container'>
             <MyTable
               data={normalizedOrderTests}
               totalCount={testsResponse?.totalCount ?? 0}

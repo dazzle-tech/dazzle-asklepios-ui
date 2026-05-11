@@ -778,7 +778,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
   return (
 
-    <div dir={dir} style={{width: '80vw'}}>
+    <div dir={dir} className='radiologist-worklist-table-size'>
         <MyTable
         data={tableData}
         columns={columns}

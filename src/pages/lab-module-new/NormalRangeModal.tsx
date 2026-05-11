@@ -70,7 +70,6 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
       title: <Translate>RANGE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        console.log("rowwwwwwwwwwwwwwwwwsssss",r)
         if (profileTest?.resultType === 'NUMBER') {
           switch (r.normalRangeType) {
             case 'RANGE':

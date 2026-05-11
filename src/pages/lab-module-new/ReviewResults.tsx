@@ -573,7 +573,7 @@ const ReviewResults = forwardRef<any, any>(
           record={orderDate}
           setRecord={setOrderDate}
         />
-      <div style={{marginTop:'1.3vw'}}>
+      <div className='check-box-review-results-handle'>
         <MyInput
           fieldType="check"
           fieldLabel="Show Reviewed Results"
