@@ -82,7 +82,7 @@ const formatAppointmentRequestApproveError = (e: unknown): string => {
 
 const APPOINTMENT_REQUEST_APPROVE_STATUS = 'APPROVED';
 
-
+// ← ثابتة كـ array (لا تتغير)
 const SCHEDULE_LEGEND_ITEMS: {
   label: string;
   color: string;
@@ -90,16 +90,29 @@ const SCHEDULE_LEGEND_ITEMS: {
   icon: IconDefinition;
   summaryIconBg: string;
 }[] = [
-    { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
-    { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
-    { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
-    { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
-    { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
-    { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
-    { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
-    { label: 'Completed', color: '#93C5FD', icon: faCircleCheck, summaryIconBg: '#1d4ed8' },
-    { label: 'Cancel', color: '#FECACA', icon: faXmark, summaryIconBg: '#dc2626' }
-  ];
+  { label: 'No-Show',    color: '#FDE68A', icon: faUserSlash,    summaryIconBg: '#b45309' },
+  { label: 'Checked In', color: '#FDBA74', icon: faUserCheck,    summaryIconBg: '#ea580c' },
+  { label: 'Booked',     color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+  { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
+  { label: 'New',        color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
+  { label: 'In Service', color: '#C7D2FE', icon: faStethoscope,  summaryIconBg: '#4f46e5' },
+  { label: 'Confirmed',  color: '#ADFF2F', icon: faCheckDouble,  summaryIconBg: '#65a30d' },
+  { label: 'Completed',  color: '#93C5FD', icon: faCircleCheck,  summaryIconBg: '#1d4ed8' },
+  { label: 'Cancel',     color: '#FECACA', icon: faXmark,        summaryIconBg: '#dc2626' },
+];
+
+
+const DARK_COLORS: Record<string, { color: string; borderColor?: string; summaryIconBg: string }> = {
+  'No-Show':    { color: '#FBBF24', summaryIconBg: '#92400e' },
+  'Checked In': { color: '#FB923C', summaryIconBg: '#c2410c' },
+  'Booked':     { color: '#38BDF8', summaryIconBg: '#075985' },
+  'Reschedule': { color: '#C084FC', summaryIconBg: '#6d28d9' },
+  'New':        { color: '#34D399', borderColor: '#6EE7B7', summaryIconBg: '#047857' },
+  'In Service': { color: '#818CF8', summaryIconBg: '#3730a3' },
+  'Confirmed':  { color: '#A3E635', summaryIconBg: '#4d7c0f' },
+  'Completed':  { color: '#60A5FA', summaryIconBg: '#1e40af' },
+  'Cancel':     { color: '#F87171', summaryIconBg: '#b91c1c' },
+};
 
 const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
 
@@ -327,6 +340,7 @@ const ScheduleScreen = () => {
     appointableDiagnosticTestsResponse,
     appointableServicesResponse
   ]);
+
   const resourceNameById = useMemo(() => {
     const m = new Map<string, string>();
     (resourcesWithAvailabilityResponse?.object ?? []).forEach((r: any) => {
@@ -393,10 +407,8 @@ const ScheduleScreen = () => {
       const today = new Date();
 
       const formattedAppointments = sourceAppointments.map((appointment: any) => {
-        const startRaw =
-          appointment?.startDatetime
-        const endRaw =
-          appointment?.endDatetime
+        const startRaw = appointment?.startDatetime;
+        const endRaw = appointment?.endDatetime;
 
         const startDate = convertDate(startRaw);
         const endDate = convertDate(endRaw);
@@ -424,16 +436,13 @@ const ScheduleScreen = () => {
         const patientMrn =
           (fromPatientService?.mrn && fromPatientService.mrn.trim()) || patientMrnFromNested || '';
 
-        const departmentColumnId =
-          appointment?.departmentId ??
-          null;
+        const departmentColumnId = appointment?.departmentId ?? null;
         const normalizedDepartmentColumnId =
           departmentColumnId !== null && typeof departmentColumnId !== 'undefined'
             ? String(departmentColumnId)
             : '';
 
-        const resourceKey =
-          appointment?.resourceId
+        const resourceKey = appointment?.resourceId;
         const normalizedResourceKey =
           resourceKey !== null && typeof resourceKey !== 'undefined' ? String(resourceKey) : '';
 
@@ -470,14 +479,10 @@ const ScheduleScreen = () => {
           text: appointment.notes || 'No additional details available',
           appointmentData: appointment,
           hidden: isHidden,
-          // Calendar columns are departments; bind events by department id.
           resourceId: normalizedDepartmentColumnId,
-          // Keep actual resource id for resource-type/resource filtering logic.
           filterResourceId: normalizedResourceKey,
           tooltipResourceName: resourceNameForTitle,
-          fromTo: `${extractTimeFromTimestamp(
-            startRaw
-          )} - ${extractTimeFromTimestamp(endRaw)}`
+          fromTo: `${extractTimeFromTimestamp(startRaw)} - ${extractTimeFromTimestamp(endRaw)}`
         };
       });
       setAppointmentsData(formattedAppointments);
@@ -631,7 +636,6 @@ const ScheduleScreen = () => {
       return;
     }
 
-    // NEW / template slots: confirm, then approve request (if any) and open booking editor.
     if (shouldOpenBookPatientDirectly(status)) {
       const apptStart =
         freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
@@ -648,7 +652,6 @@ const ScheduleScreen = () => {
         return;
       }
       setActionsModalOpen(false);
-
       setBookPatientModalOpen(true);
       return;
     }
@@ -690,7 +693,6 @@ const ScheduleScreen = () => {
       patientId
     };
 
-    // Always load appointments from search API (facility defaults from logged-in context).
     if (!filter.facility) return;
 
     try {
@@ -741,8 +743,7 @@ const ScheduleScreen = () => {
       const slotPatientId = getAppointmentPatientId(raw);
       const requestPatientId = Number(request?.patientId ?? 0);
       const effectivePatientId = requestPatientId > 0 ? requestPatientId : slotPatientId != null ? slotPatientId : null;
-      const requestPatientName =
-        String(request?.patientName ?? '').trim() || '';
+      const requestPatientName = String(request?.patientName ?? '').trim() || '';
       const lockPatient = Boolean(request && requestPatientId > 0);
 
       if (shouldApprove && request) {
@@ -791,10 +792,8 @@ const ScheduleScreen = () => {
         } else {
           dispatch(showSystemLoader());
           try {
-            const requestedResourceTypeRaw =
-              request?.requestedResourceType ?? null;
-            const requestedResourceIdRaw =
-              request?.requestedResourceId ?? null;
+            const requestedResourceTypeRaw = request?.requestedResourceType ?? null;
+            const requestedResourceIdRaw = request?.requestedResourceId ?? null;
             const approveBody: Record<string, unknown> = {
               id: requestId,
               patientId,
@@ -928,7 +927,16 @@ const ScheduleScreen = () => {
     };
   }, [dispatch]);
 
-  const legendItems = SCHEDULE_LEGEND_ITEMS;
+  // legendItems: نفس الألوان في اللايت مود، وألوان أكثر إشباعاً في الدارك مود
+  const legendItems = useMemo(
+    () =>
+      SCHEDULE_LEGEND_ITEMS.map(item =>
+        mode === 'dark'
+          ? { ...item, ...DARK_COLORS[item.label] }
+          : item
+      ),
+    [mode]
+  );
 
   const finalResourceLit = useMemo(() => {
     const selectedDeptId = selectedDepartment?.departmentId ? String(selectedDepartment.departmentId) : '';
@@ -1058,13 +1066,13 @@ const ScheduleScreen = () => {
       bucketCounts[bucket] = (bucketCounts[bucket] || 0) + 1;
     }
 
-    const legendNormKeys = new Set(SCHEDULE_LEGEND_ITEMS.map(i => normLegendStr(i.label)));
+    const legendNormKeys = new Set(legendItems.map(i => normLegendStr(i.label)));
     let otherCount = 0;
     Object.entries(bucketCounts).forEach(([k, n]) => {
       if (!legendNormKeys.has(k)) otherCount += n;
     });
 
-    const legendRow = SCHEDULE_LEGEND_ITEMS.map(item => ({
+    const legendRow = legendItems.map(item => ({
       label: item.label,
       color: item.color,
       borderColor: item.borderColor,
@@ -1086,7 +1094,7 @@ const ScheduleScreen = () => {
             ? `${moment(calendarViewRange.start).format('MMM D')} – ${moment(calendarViewRange.end).format('MMM D, YYYY')}`
             : moment(currentCalendarDate).format('MMMM YYYY')
     };
-  }, [visibleAppointments, calendarViewRange, currentView, currentCalendarDate]);
+  }, [visibleAppointments, calendarViewRange, currentView, currentCalendarDate, legendItems]);
 
   const appointmn =
     visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
@@ -1169,7 +1177,6 @@ const ScheduleScreen = () => {
       ? (finalResourceLit ?? [])
       : (finalResourceLit ?? []);
 
-  // Force BigCalendar to remount when filters change (react-big-calendar can keep stale resource columns otherwise)
   const calendarKey = useMemo(() => {
     const facilityKey = selectedFacility?.id ?? '';
     const typeKeys = Array.isArray(selectedResourceType?.resourcesType)
@@ -1302,7 +1309,7 @@ const ScheduleScreen = () => {
     return out || head || res || 'Appointment';
   };
 
-  const [currentCalView, setCurrentCalView] = useState('month'); // Force "month" view
+  const [currentCalView, setCurrentCalView] = useState('month');
 
   useEffect(() => {
     return () => {
@@ -1332,7 +1339,7 @@ const ScheduleScreen = () => {
           }
         />
         <div style={{ textAlign: 'left' }}>
-          <div style={{color: mode === 'dark' ? 'var(--white)' : 'gray', fontSize: '14px' }} className="font-semibold text-sm">
+          <div style={{ color: mode === 'dark' ? 'var(--white)' : 'gray', fontSize: '14px' }} className="font-semibold text-sm">
             {resource?.resourceName}
           </div>
           <div style={{ color: 'gray', fontSize: '12px' }}>{resource?.resource_type}</div>
@@ -1400,7 +1407,6 @@ const ScheduleScreen = () => {
       return mappedFromStatusQuery;
     }
 
-    // Fallback: derive right panel list from currently loaded calendar events for selected day.
     const day = new Date(rightPanelDate ?? currentCalendarDate ?? new Date());
     const y = day.getFullYear();
     const m = day.getMonth();
@@ -1428,7 +1434,6 @@ const ScheduleScreen = () => {
     currentCalendarDate,
     patientDisplayByPatientService
   ]);
-
 
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
@@ -1572,9 +1577,7 @@ const ScheduleScreen = () => {
               className="available-slot-dot"
               style={isRescheduledSlot ? { background: '#7e22ce' } : undefined}
             />
-            <span>
-              {resourceText}
-            </span>
+            <span>{resourceText}</span>
           </div>
         </div>
       );
@@ -1602,7 +1605,10 @@ const ScheduleScreen = () => {
         </div>
 
         <div>
-          <p style={{ fontSize: '12px', color: 'black' }}>{patientSlotText}</p>
+          {/* ← لون النص حسب الـ mode */}
+          <p style={{ fontSize: '12px', color: mode === 'dark' ? '#f1f5f9' : 'black' }}>
+            {patientSlotText}
+          </p>
           <p
             style={{
               fontSize: '10px',
@@ -1634,16 +1640,18 @@ const ScheduleScreen = () => {
       return s;
     };
 
+    const bgAlpha = mode === 'dark' ? 0.3 : 0.15;
+
     const getBackgroundColor = status => {
       const key = normalizeStatusForLegend(status);
       const item = legendItems.find(i => normalize(i.label) === key);
-      return item ? hexToRgba(item.color, 0.15) : '#ffffffff';
+      return item ? hexToRgba(item.color, bgAlpha) : (mode === 'dark' ? '#2a2a2a' : '#ffffff');
     };
 
     const getBorderColor = status => {
       const key = normalizeStatusForLegend(status);
       const item = legendItems.find(i => normalize(i.label) === key);
-      return item?.borderColor ? item.color : '#94A3B8';
+      return item?.color ?? '#94A3B8';
     };
 
     const status = String(event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? '');
@@ -1659,6 +1667,7 @@ const ScheduleScreen = () => {
         }
       };
     }
+
     const backgroundColor = getBackgroundColor(status);
     const borderColor = getBorderColor(status);
 
@@ -1670,7 +1679,8 @@ const ScheduleScreen = () => {
         borderStyle: 'solid',
         borderRadius: '10px',
         padding: '8px',
-        color: 'black',
+        // ← لون النص حسب الـ mode
+        color: mode === 'dark' ? '#f1f5f9' : 'black',
         boxShadow: `0 2px 8px ${hexToRgba(borderColor, 0.3)}`,
         transition: 'all 0.2s ease'
       }
@@ -1720,9 +1730,7 @@ const ScheduleScreen = () => {
     return list.map((r: any) => {
       const patientName = String(r?.patientName ?? '').trim() || 'Unknown';
       const patientIdNum = Number(r?.patientId ?? 0);
-      const mrn = String(
-        r?.patientMrn ?? ''
-      ).trim();
+      const mrn = String(r?.patientMrn ?? '').trim();
       const resourceType = r?.requestedResourceType ?? '-';
       const resourceName =
         String(r?.departmentName ?? '').trim() ||
@@ -1773,7 +1781,6 @@ const ScheduleScreen = () => {
       return;
     }
 
-    // Keep ScheduleScreen UI untouched; agenda filtering/rendering happens inside approve modal only.
     setAppRequestModalOpen(false);
     setRequestToApprove(raw);
     setRequestApproveModalOpen(true);
@@ -2001,7 +2008,7 @@ const ScheduleScreen = () => {
         onClose={() => setShowReasonModal(false)}
         className="schedule-reason-center-modal"
       >
-        <Modal.Header >Reason for {reasonModalType === 'Cancel' ? 'Cancellation' : 'No-Show'}</Modal.Header>
+        <Modal.Header>Reason for {reasonModalType === 'Cancel' ? 'Cancellation' : 'No-Show'}</Modal.Header>
         <Modal.Body>
           <Form fluid layout="vertical">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 520, maxWidth: '100%' }}>
