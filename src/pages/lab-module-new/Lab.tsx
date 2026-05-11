@@ -287,7 +287,7 @@ const Lab = () => {
                     <Col xs={10}>
                       <Form fluid className="filter-form-lab-filters">
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="From Date"
                           fieldType="date"
                           fieldName="fromDate"
@@ -296,7 +296,7 @@ const Lab = () => {
                           showLabel={false}
                         />
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="To Date"
                           fieldType="date"
                           fieldName="toDate"
@@ -305,7 +305,7 @@ const Lab = () => {
                           showLabel={false}
                         />
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="Order ID"
                           fieldType="text"
                           fieldName="orderNumber"

@@ -1067,7 +1067,7 @@ const Tests = forwardRef<any, Props>(
       <div dir={dir}>
         <Panel ref={ref} defaultExpanded>
 
-
+        <div className="rad-test-table-main-size">
           <MyTable
             filters={filters()}
             columns={columns}
@@ -1085,9 +1085,8 @@ const Tests = forwardRef<any, Props>(
             onRowClick={rowData => setTest(rowData)}
             rowClassName={isTestSelected}
             loadingHeight={200}
-
           />
-
+        </div>
 
           <CancellationModal
             open={openRejectedModal}

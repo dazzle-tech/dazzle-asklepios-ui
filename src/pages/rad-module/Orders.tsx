@@ -257,7 +257,7 @@ const Orders = forwardRef<any, OrdersProps>(
 
     return (
 
-    <div dir={dir}>
+    <div dir={dir} style={{maxWidth:'65vw'}}>
       <MyTable
         data={ordersList}
         columns={tableColumns}

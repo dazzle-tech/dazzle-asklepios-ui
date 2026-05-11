@@ -573,6 +573,16 @@ const ReviewResults = forwardRef<any, any>(
           record={orderDate}
           setRecord={setOrderDate}
         />
+      <div className='check-box-review-results-handle'>
+        <MyInput
+          fieldType="check"
+          fieldLabel="Show Reviewed Results"
+          showLabel={false}
+          fieldName="showReview"
+          record={{ showReview }}
+          setRecord={(obj: any) => setShowReview(!!obj.showReview)}
+        />
+      </div>
       </div>
 
       <AdvancedSearchFilters

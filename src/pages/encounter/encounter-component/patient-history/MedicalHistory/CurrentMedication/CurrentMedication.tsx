@@ -9,6 +9,8 @@ import PlusIcon from '@rsuite/icons/Plus';
 import React, { useMemo, useState } from 'react';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import AddCurrentMedication from './AddCurrentMedication';
+import { formatDateWithoutSeconds } from '@/utils';
+import Translate from '@/components/Translate';
 
 const CurrentMedication = ({ patient, edit, toShowData = false }) => {
   const [open, setOpen] = useState(false);
@@ -81,6 +83,20 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
       flexGrow: 3,
       render: (row: any) => (row?.startDate ? new Date(row.startDate).toLocaleDateString() : '')
     },
+            {
+          key: 'createdDate',
+          title: <Translate>CREATED AT / BY</Translate>,
+          expandable: true,
+          render: (row: any) =>
+            row?.createdDate ? (
+              <>
+                {row?.createdBy} <br />
+                <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+              </>
+            ) : (
+              ''
+            )
+        },
     ...(!toShowData
       ? [
           {
