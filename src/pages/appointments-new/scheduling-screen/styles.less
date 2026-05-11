@@ -354,7 +354,7 @@
 .my-calendar .rbc-time-content,
 .my-calendar .rbc-day-bg,
 .my-calendar .rbc-timeslot-group {
-   background: #ffffff;
+  background: #ffffff;
 }
 
 /* Visual cue only: keep cells looking static while preserving existing behavior */
@@ -369,7 +369,7 @@
 }
 
 .my-calendar .rbc-off-range-bg {
-   background: #fafcff;
+  background: #fafcff;
 }
 
 .my-calendar .rbc-current-time-indicator {
@@ -531,13 +531,13 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1.1;
-  color: #2f3f57;
+  color: #52572f;
 }
 
 .available-slot-time {
   font-size: 12px;
   font-weight: 700;
-  color: #36506d;
+  color: #576d36;
   line-height: 1.1;
   letter-spacing: 0;
 }
@@ -548,7 +548,7 @@
   gap: 5px;
   font-size: 10px;
   font-weight: 500;
-  color: #6a7c92;
+  color: #87926a;
   line-height: 1.1;
 }
 
@@ -585,12 +585,13 @@
   .appointments-slot-summary-bar {
     background-color: var(--dark-black);
   }
-.my-calendar .rbc-time-header,
+
+  .my-calendar .rbc-time-header,
   .my-calendar .rbc-month-header,
   .my-calendar .rbc-header {
     background-color: var(--dark-black) !important;
   }
-  
+
 
   .rbc-time-slot {
     background-color: var(--dark-black) !important;
@@ -598,30 +599,79 @@
 
   .appointments-slot-summary-scope-date {
     color: var(--white);
-  font-weight: bold;
-}
-.appointments-slot-summary-text {
-  color: var(--white) !important;
-}
-.appointments-slot-summary-text strong {
-   color: var(--white) !important;
-  font-weight: bold;
-}
- .my-calendar .rbc-today {
-  background-color: rgba(13, 110, 253, 0.07) !important;
-}
-.rbc-time-view-resources .rbc-time-gutter, .rbc-time-view-resources .rbc-time-header-gutter{
- background-color: var(--dark-black) !important;
-}
-.my-calendar .rbc-time-header-content,
-.my-calendar .rbc-time-gutter,
-.my-calendar .rbc-time-content,
-.my-calendar .rbc-day-bg,
-.my-calendar .rbc-timeslot-group {
-   background: var(--dark-black);
-}
-.my-calendar .rbc-off-range-bg {
-  background: #1f2633;
-}
-}
+    font-weight: bold;
+  }
 
+  .appointments-slot-summary-text {
+    color: var(--white) !important;
+  }
+
+  .appointments-slot-summary-text strong {
+    color: var(--white) !important;
+    font-weight: bold;
+  }
+
+  .my-calendar .rbc-today {
+    background-color: rgba(13, 110, 253, 0.07) !important;
+  }
+
+  .rbc-time-view-resources .rbc-time-gutter,
+  .rbc-time-view-resources .rbc-time-header-gutter {
+    background-color: var(--dark-black) !important;
+  }
+
+  .my-calendar .rbc-time-header-content,
+  .my-calendar .rbc-time-gutter,
+  .my-calendar .rbc-time-content,
+  .my-calendar .rbc-day-bg,
+  .my-calendar .rbc-timeslot-group {
+    background: var(--dark-black);
+  }
+
+  .my-calendar .rbc-off-range-bg {
+    background: #1f2633;
+  }
+
+  .my-calendar .rbc-time-header,
+  .my-calendar .rbc-month-header,
+  .my-calendar .rbc-header {
+    color: var(--white);
+  }
+
+  .rbc-show-more {
+    color: var(--white) !important;
+    background-color: transparent !important;
+  }
+
+  .rbc-time-view {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-timeslot-group {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-time-content>*+*>* {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-time-header-content {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-day-slot .rbc-time-slot {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-month-view {
+    border-color: var(--rs-border-primary);
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody>tr>td+td {
+    border-color: var(--rs-border-primary);
+  }
+}
