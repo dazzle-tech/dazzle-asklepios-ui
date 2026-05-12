@@ -4534,3 +4534,20 @@ export interface DentalProcedureUpdateDTO {
   cdtCodeId?: number | null;
   notes?: string | null;
 }
+export interface GlasgowComaScaleAssessment {
+  id?: number;
+  encounter?: any | null;
+  patient?: any | null;
+
+  eyeOpening: string | null;
+  eyeOpeningScore?: number | null;
+
+  verbalResponse: string | null;
+  verbalResponseScore?: number | null;
+
+  motorResponse: string | null;
+  motorResponseScore?: number | null;
+
+  totalScore?: number | null;
+  scoreInterpretation?: string | null;
+}

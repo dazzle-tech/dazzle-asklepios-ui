@@ -870,53 +870,133 @@ const MyInput = ({
           </div>
         );
 
-      case 'checkPicker':
+      case 'checkPicker': {
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? 'label'];
+
+        const primaryLabelKey = labelKeys[0] ?? 'label';
+        const valueKey = props?.selectDataValue ?? 'value';
+        const dataList = props?.selectData ?? [];
+
+        const filteredData = !localSearch
+          ? dataList
+          : dataList.filter(item => {
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
+
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
+
+        const longestLabel = dataList.reduce((longest, item) => {
+          const text = isArrayLabel
+            ? buildCombinedLabel(item, labelKeys, '')
+            : String(item?.[primaryLabelKey] ?? '');
+
+          return text.length > longest.length ? text : longest;
+        }, '');
+
+        const popupWidth = Math.max(
+          typeof props?.width === 'number' ? props.width : 145,
+          longestLabel.length * 9 + 120
+        );
+
         return (
           <div ref={pickerRef}>
             <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-              block
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30
+              }}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
+              block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
+              searchable={false}
               container={resolveContainer()}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               name={fieldName}
-              data={props?.selectData ?? []}
-              labelKey={props?.selectDataLabel ?? ''}
-              valueKey={props?.selectDataValue ?? ''}
+              data={filteredData}
+              labelKey={primaryLabelKey}
+              valueKey={valueKey}
               value={record ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
-                  const valueKey = props?.selectDataValue ?? 'id';
                   const selectedItems = (props?.selectData ?? []).filter(item =>
                     (value ?? []).some(v => String(v) === String(item?.[valueKey]))
                   );
                   props.onSelectItem(selectedItems);
                 }
               }}
-              placeholder={props.placeholder ?? 'Select...'}
+              onKeyDown={(event: any) => {
+                const key = event?.key;
+                if (!key) return;
+
+                const ignoredKeys = [
+                  'Shift',
+                  'Tab',
+                  'Enter',
+                  'Escape',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'Control',
+                  'Alt',
+                  'Meta'
+                ];
+
+                if (ignoredKeys.includes(key)) {
+                  return;
+                }
+
+                if (key === 'Backspace') {
+                  setLocalSearch(prev => prev.slice(0, -1));
+                  return;
+                }
+
+                if (key.length === 1) {
+                  setLocalSearch(prev => prev + key);
+                }
+              }}
+              placeholder={
+                localSearch
+                  ? `Search: ${localSearch}`
+                  : props.placeholder ?? 'Select...'
+              }
               groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
-              menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
-              onKeyDown={focusNextField}
+              menuMaxHeight={getDynamicMenuMaxHeight(filteredData)}
               open={isCheckPickerOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
               }}
-              onClose={() => setIsCheckPickerOpen(false)}
+              onClose={() => {
+                setIsCheckPickerOpen(false);
+                setLocalSearch('');
+              }}
+              menuStyle={{
+                width: popupWidth
+              }}
+              virtualized={props?.virtualized ?? true}
               disabledItemValues={
                 props.disabledItemValues
-                  ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                  ? dataList.map(item => item[valueKey])
                   : []
               }
             />
           </div>
         );
-
+      }
+      
       case 'date':
         return (
           <div ref={pickerRef}>

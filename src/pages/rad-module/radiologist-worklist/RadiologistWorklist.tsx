@@ -777,8 +777,9 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div dir={dir}>
-      <MyTable
+
+    <div dir={dir} className='radiologist-worklist-table-size'>
+        <MyTable
         data={tableData}
         columns={columns}
         loading={isFetching}

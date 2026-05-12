@@ -247,7 +247,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         required
         fieldLabel="Surgery"
@@ -256,7 +256,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
       />
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         required
         fieldLabel="Date of surgery"
@@ -267,7 +267,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
       />
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         required
         fieldLabel="Facility"
@@ -277,7 +277,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         required
         fieldLabel="Anesthesia Type"
@@ -291,7 +291,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         fieldLabel="Complications"
         fieldType="select"
@@ -304,7 +304,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'28vw'}
         column
         fieldLabel="Adverse Reactions"
         fieldType="checkPicker"
@@ -314,10 +314,34 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
+        renderValue={() => ''}
       />
 
       <MyInput
-        width={'100%'}
+        width={'28vw'}
+        column
+        fieldLabel="Adverse Reactions Details"
+        fieldType="textarea"
+        fieldName="adverseReactionsDetails"
+        record={{
+          ...formData,
+          adverseReactionsDetails: (formData.adverseReactionsToAnesthesia || [])
+            .map(selectedKey => {
+              const item = (adverseLov?.object ?? []).find(
+                lov => lov.key === selectedKey
+              );
+              return item?.lovDisplayVale || selectedKey;
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => {}}
+        disabled
+      />
+
+
+      <MyInput
+        width={'14vw'}
         column
         fieldLabel="Implants or Devices"
         fieldType="checkbox"
@@ -327,7 +351,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         fieldLabel="Implants/Devices Description"
         fieldName="implantsOrDevicesDescription"

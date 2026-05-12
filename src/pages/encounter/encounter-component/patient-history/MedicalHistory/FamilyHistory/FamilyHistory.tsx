@@ -13,6 +13,8 @@ import { MdModeEdit } from 'react-icons/md';
 import '../styles.less';
 import AddFamilyHistory from './AddFamilyHistory';
 import './familyHistory.less';
+import Translate from '@/components/Translate';
+import { formatDateWithoutSeconds } from '@/utils';
 
 const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -62,6 +64,21 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
       flexGrow: 3,
       render: row => relations?.find(r => r.value === row.relation)?.label ?? row.relation
     },
+    {
+          key: 'createdDate',
+          title: <Translate>CREATED AT / BY</Translate>,
+          expandable: true,
+          render: (row: any) =>
+            row?.createdDate ? (
+              <>
+                {row?.createdBy} <br />
+                <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+              </>
+            ) : (
+              ''
+            )
+    },
+
     {
       key: 'inheritedDiseases',
       title: 'INHERITED DISEASES',

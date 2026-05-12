@@ -2998,3 +2998,20 @@ export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   cdtCodeId: null,
   notes: null,
 };
+export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
+  id: undefined,
+  encounter: null,
+  patient: null,
+
+  eyeOpening: null,
+  eyeOpeningScore: null,
+
+  verbalResponse: null,
+  verbalResponseScore: null,
+
+  motorResponse: null,
+  motorResponseScore: null,
+
+  totalScore: null,
+  scoreInterpretation: null
+};

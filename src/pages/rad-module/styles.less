@@ -42,25 +42,15 @@ flex-wrap: wrap;
 box-sizing: border-box;}
 
 .filter-form-radiology-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2vw;
-}
+display: flex;
+flex-direction: row;
+gap: 1vw;
 
-.filter-form-radiology-filters > * {
-  flex: 1 1 30%;
-  min-width: 200px;
-}
+flex-wrap: wrap;}
 
-@media (max-width: 768px) {
-  .filter-form-radiology-filters {
-    flex-direction: column;
-  }
+.orders-filters-main-container{display:flex;
+flex-direction: row;
+gap: 1vw;
+flex-wrap: wrap;}
 
-  .filter-form-radiology-filters > * {
-    width: 100%;
-    flex: 1 1 100%;
-  }
-}
-
-
+.rad-test-table-main-size{max-width: 73vw;}

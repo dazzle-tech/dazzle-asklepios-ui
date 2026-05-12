@@ -64,7 +64,7 @@ const DeletionConfirmationModal = ({
       : `Are you sure you want to ${config.text.toLowerCase()} this ${itemToDelete}?`;
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className={`delete-modal ${mode === 'light' ? 'light' : 'dark'}`}>
+    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className={`delete-modal ${mode}`}>
       <Modal.Header>
         <div className="delete-circle-wrapper" style={{ ['--circle-color' as any]: config.color }}>
           <div className="delete-circle-inner" style={{ backgroundColor: config.color }}>
@@ -78,7 +78,7 @@ const DeletionConfirmationModal = ({
         </div>
       </Modal.Body>
       <Modal.Footer className="footer-delete-modal">
-        <MyButton appearance="subtle" color="var(--dark-blue-gray)" onClick={() => setOpen(false)}>
+        <MyButton appearance="subtle" color={mode === 'dark' ? 'var(--white)' : "var(--dark-blue-gray)"} onClick={() => setOpen(false)}>
           {cancelButtonLabel}
         </MyButton>
         <MyButton backgroundColor={config.color} onClick={actionButtonFunction}>
