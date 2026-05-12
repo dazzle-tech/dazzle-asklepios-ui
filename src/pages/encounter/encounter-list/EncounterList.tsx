@@ -735,7 +735,52 @@ const EncounterList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      width: 220,
+      render: (row: any) => {
+        const complaint = row?.chiefComplaint ?? '-';
+        const MAX_LENGTH = 20;
+
+        const shouldTruncate =
+          complaint !== '-' && String(complaint).length > MAX_LENGTH;
+
+        const displayText = shouldTruncate
+          ? `${String(complaint).substring(0, MAX_LENGTH)}...`
+          : complaint;
+
+        const content = (
+          <div
+            style={{
+              cursor: shouldTruncate ? 'pointer' : 'default'
+            }}
+          >
+            {displayText}
+          </div>
+        );
+
+        if (!shouldTruncate) {
+          return content;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 400,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {complaint}
+              </Tooltip>
+            }
+          >
+            {content}
+          </Whisper>
+        );
+      }
     },
     {
       key: 'hasPrescription',
