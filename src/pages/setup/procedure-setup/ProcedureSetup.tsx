@@ -520,7 +520,6 @@ const ProcedureSetup: React.FC = () => {
           fieldName="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
-          virtualized={false}
         />
       ) : recordOfFilter.filter === 'facilityId' ? (
         <MyInput
