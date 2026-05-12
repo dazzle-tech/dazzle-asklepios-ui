@@ -99,6 +99,13 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         return;
       }
 
+      const categoryVal = payload?.categoryType;
+      if (!categoryVal || typeof categoryVal !== 'string' || /^\d+$/.test(String(categoryVal))) {
+        dispatch(notify({ msg: 'Please select a valid category.', sev: 'error' }));
+        setOpen(true);
+        return;
+      }
+
       if (isUpdate) {
         await updateProcedure({
           facilityId: procedure.facilityId,
@@ -259,6 +266,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   selectDataValue="value"
                   record={procedure}
                   setRecord={setProcedure}
+                  virtualized={false}
                 />
               </div>
             </div>
