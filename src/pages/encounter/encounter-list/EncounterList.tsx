@@ -309,7 +309,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-  console.log('encountersPaged', encountersPaged);
+  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
