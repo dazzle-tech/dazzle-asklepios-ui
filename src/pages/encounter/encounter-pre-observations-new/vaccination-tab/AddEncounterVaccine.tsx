@@ -819,6 +819,7 @@ const AddEncounterVaccine = ({
               disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
             <MyInput
+              width={"100%"}
               column
               required
               fieldLabel="Date Administered"

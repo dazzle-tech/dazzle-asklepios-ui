@@ -83,7 +83,7 @@ const Tests = forwardRef<any, Props>(
     const [openNoteModal, setOpenNoteModal] = useState(false);
     const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
     const [bulkRejectReason, setBulkRejectReason] = useState('');
-
+    const [selectedNoteTestId, setSelectedNoteTestId] = useState<number | null>(null);
     // ✅ undo-accept modal state
     const [openUndoAcceptModal, setOpenUndoAcceptModal] = useState(false);
     const [undoAcceptTargetId, setUndoAcceptTargetId] = useState<number | null>(null);
@@ -125,27 +125,28 @@ const Tests = forwardRef<any, Props>(
       isFetching: isNotesFetching,
       refetch: refetchNotes
     } = useGetNotesByOrderTestIdQuery(
-      test?.id
-        ? {
-          orderTestId: test.id,
-          page: 0,
-          size: 100
-        }
-        : skipToken
-    );
+  selectedNoteTestId
+    ? {
+        orderTestId: selectedNoteTestId,
+        page: 0,
+        size: 100
+      }
+    : skipToken
+);
+
 
     const [createNote, { isLoading: isSendingNote }] =
       useCreateDiagnosticOrderTestTechnicianNoteMutation();
 
     const handleSendMessage = async (value: string) => {
-      if (!test?.id || !order?.id) {
+      if (!selectedNoteTestId || !order?.id) {
         dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
         return;
       }
       try {
         await createNote({
           orderId: order.id,
-          orderTestId: test.id,
+          orderTestId: selectedNoteTestId,
           note: value
         }).unwrap();
 
@@ -596,6 +597,7 @@ const Tests = forwardRef<any, Props>(
                 }}
                 onClick={() => {
                   setTest(rowData);
+                  setSelectedNoteTestId(rowData.id);
                   setOpenNoteModal(true);
                 }}
               />
@@ -650,14 +652,26 @@ const Tests = forwardRef<any, Props>(
         width: 140,
         align: 'center',
         render: (rowData: any) => {
-          const canAccept = rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
+          const isLocked =
+            rowData.processingStatus === DiagnosticOrderTestStatus.RESULT_APPROVED ||
+            rowData.processingStatus === DiagnosticOrderTestStatus.RESULT_REJECTED ||
+            rowData.processingStatus === DiagnosticOrderTestStatus.REJECTED;
+
+          const canAccept =
+            !isLocked &&
+            rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
+
           const canReject =
+            !isLocked &&
             ![
               DiagnosticOrderTestStatus.RESULT_READY,
               DiagnosticOrderTestStatus.RESULT_APPROVED,
               DiagnosticOrderTestStatus.REJECTED
             ].includes(rowData.processingStatus);
-          const canUndoAccept = rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
+
+          const canUndoAccept =
+            !isLocked &&
+            rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
 
           return (
             <HStack spacing={10}>
@@ -672,12 +686,11 @@ const Tests = forwardRef<any, Props>(
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    cursor: canAccept ? 'pointer' : 'not-allowed'
+                    cursor: canAccept ? 'pointer' : 'not-allowed',
+                    opacity: canAccept ? 1 : 0.35
                   }}
                 />
               </Whisper>
-
-              {/* ✅ undo-accept: opens modal instead of direct action */}
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <ReloadIcon
                   className="icon-laboratory-size"
@@ -690,7 +703,7 @@ const Tests = forwardRef<any, Props>(
                     marginRight: 10,
                     color: canUndoAccept ? '#1675e0' : 'gray',
                     cursor: canUndoAccept ? 'pointer' : 'not-allowed',
-                    opacity: canUndoAccept ? 1 : 0.5
+                    opacity: canUndoAccept ? 1 : 0.35
                   }}
                 />
               </Whisper>
@@ -699,33 +712,33 @@ const Tests = forwardRef<any, Props>(
                 <WarningRoundIcon
                   className="icon-laboratory-size"
                   onClick={() => {
-                    if (!canReject) {
-                      dispatch(
-                        notify({
-                          msg: 'Cannot reject an accepted or already rejected test',
-                          sev: 'warning'
-                        })
-                      );
-                      return;
-                    }
+                    if (!canReject) return;
                     setTest(rowData);
                     setOpenRejectedModal(true);
                   }}
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    cursor: canReject ? 'pointer' : 'not-allowed'
+                    cursor: canReject ? 'pointer' : 'not-allowed',
+                    opacity: canReject ? 1 : 0.35
                   }}
                 />
               </Whisper>
 
-              <ExternalLabAction
-                key={`${rowData.id}-${order?.id}`}
-                rowData={rowData}
-                onSuccess={async () => {
-                  await refetchAllLabData();
+              <span
+                style={{
+                  pointerEvents: isLocked ? 'none' : 'auto',
+                  opacity: isLocked ? 0.35 : 1
                 }}
-              />
+              >
+                <ExternalLabAction
+                  key={`${rowData.id}-${order?.id}`}
+                  rowData={rowData}
+                  onSuccess={async () => {
+                    await refetchAllLabData();
+                  }}
+                />
+              </span>
             </HStack>
           );
         }

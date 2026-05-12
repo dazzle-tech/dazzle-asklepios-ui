@@ -4,7 +4,7 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faBolt, faPause } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
@@ -1387,7 +1387,14 @@ const UrgentCareTriage = () => {
                         !rowData?.priorityLevel)
                     }
                   >
-                    <FontAwesomeIcon icon={faCirclePlay} />
+                    <FontAwesomeIcon
+                      icon={
+                        String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+                        'TRIAGE_STARTED'
+                          ? faPause
+                          : faCirclePlay
+                      }
+                    />
                   </MyButton>
                 </div>
               </Whisper>

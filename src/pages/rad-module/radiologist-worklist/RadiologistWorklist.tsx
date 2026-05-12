@@ -109,6 +109,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [orderTestReport, setOrderTestReport] = useState<any>({
     ...newDiagnosticOrderTestReportResponseVM
   });
+
+  const [selectedRowId, setSelectedRowId] = useState<number | string | null>(null);
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
@@ -440,13 +442,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const columns: ColumnConfig[] = useMemo(
     () => [
       {
-        key: 'id',
-        title: 'ID',
-        width: 80,
-        render: row => <span style={{ fontWeight: 'bold' }}>{row.id}</span>
-      },
-
-      {
         key: 'department',
         title: 'Department',
         width: 160,
@@ -503,29 +498,48 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         title: 'Report',
         width: 80,
         align: 'center',
-        render: row => (
-          <Whisper speaker={<Tooltip>Add Report</Tooltip>}>
-            <span style={{ cursor: 'pointer' }}>
-              <FontAwesomeIcon
-                className="icon-radiologist-worklist-size"
-                icon={faSheetPlastic}
-                onClick={() => {
-                  const ot = orderTestsMap[String(row.orderTestId)];
+        render: row => {
+          const reportContent =
+            row?.report ??
+            row?.reportText ??
+            row?.findings ??
+            row?.impression ??
+            row?.conclusion ??
+            row?.reportHtml ??
+            '';
 
-                  setSelectedReportRow(row);
+          const hasReport =
+            typeof reportContent === 'string'
+              ? reportContent.replace(/<[^>]*>/g, '').trim().length > 0
+              : !!reportContent;
 
-                  setOrderTestReport({
-                    ...newDiagnosticOrderTestReportResponseVM,
-                    ...row,
-                    diagnosticTestId: ot?.diagnosticTestId
-                  });
+          return (
+            <Whisper speaker={<Tooltip>Add Report</Tooltip>}>
+              <span style={{ cursor: 'pointer' }}>
+                <FontAwesomeIcon
+                  className="icon-radiologist-worklist-size"
+                  icon={faSheetPlastic}
+                  style={{
+                    color: hasReport ? '#1675e0' : '#969fb0'
+                  }}
+                  onClick={() => {
+                    const ot = orderTestsMap[String(row.orderTestId)];
 
-                  setOpenReportEditor(true);
-                }}
-              />
-            </span>
-          </Whisper>
-        )
+                    setSelectedReportRow(row);
+
+                    setOrderTestReport({
+                      ...newDiagnosticOrderTestReportResponseVM,
+                      ...row,
+                      diagnosticTestId: ot?.diagnosticTestId
+                    });
+
+                    setOpenReportEditor(true);
+                  }}
+                />
+              </span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'attachments',
@@ -770,6 +784,11 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     });
   }, [orderTestsMap]);
 
+  const isSelected = (rowData: any) =>
+    rowData && selectedReportRow && rowData.id === selectedReportRow.id
+      ? 'selected-row'
+      : '';
+
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -779,7 +798,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   return (
 
     <div dir={dir} className='radiologist-worklist-table-size'>
-        <MyTable
+      <MyTable
         data={tableData}
         columns={columns}
         loading={isFetching}
@@ -789,7 +808,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         totalCount={totalCount}
         sortColumn={sortColumn}
         sortType={sortType}
-        onRowClick={rowData => {
+        rowClassName={isSelected}
+        onRowClick={(rowData: any) => {
           setSelectedReportRow(rowData);
           setOrderTestReport({
             ...newDiagnosticOrderTestReportResponseVM,
