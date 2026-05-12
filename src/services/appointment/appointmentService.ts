@@ -218,6 +218,28 @@ export const appointmentFromTemplateService = createApi({
       }
     }),
 
+    getAvailabilityTemplatesByDepartmentAndActive: builder.query<
+      PagedResult<AvailabilityTemplateResponseVM>,
+      { departmentId: Id; type: string; resourceId: Id } & PagedParams
+    >({
+      query: ({ departmentId, type, resourceId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/patient/availability-templates/by-department-and-type-and-resource-status/active',
+        method: 'GET',
+        params: { departmentId, type, resourceId, page, size, sort }
+      }),
+      transformResponse: (response: AvailabilityTemplateResponseVM[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
     getAppointmentsByDepartmentBetweenDates: builder.query<
       PagedResult<AppointmentFromTemplate>,
       {
@@ -369,6 +391,8 @@ export const {
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAvailabilityTemplatesByPublishStatusQuery,
   useLazyGetAvailabilityTemplatesByPublishStatusQuery,
+  useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
+  useLazyGetAvailabilityTemplatesByDepartmentAndActiveQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,
   useLazyGetAppointmentsByDepartmentBetweenDatesQuery,
   useGetAppointmentByIdQuery,

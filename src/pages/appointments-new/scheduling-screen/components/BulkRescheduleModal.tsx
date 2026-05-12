@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Divider, Form, Loader, Modal, Panel, Radio, RadioGroup } from 'rsuite';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faRightLeft } from '@fortawesome/free-solid-svg-icons';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import MyButton from '@/components/MyButton/MyButton';
 import '@/components/MyModal/styles.less';
@@ -11,13 +12,15 @@ import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { useGetAvailabilityGenerationBatchesByTemplateQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { useGetAvailabilityGenerationBatchesByTemplateQuery, useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import {
   useBulkRescheduleAppointmentsMutation,
   useCancelAppointmentMutation,
   useGetAvailabilityTemplatesByPublishStatusQuery,
+  useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
   useLazyGetAppointmentsByBatchIdQuery
 } from '@/services/appointment/appointmentService';
+import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import type {
   AvailabilityGenerationBatch,
   AvailabilityTemplateResponseVM
@@ -69,6 +72,32 @@ function isFreeSlotStatus(s: string): boolean {
 
 function isBookedOrConfirmed(s: string): boolean {
   return s === 'BOOKED' || s === 'CONFIRMED';
+}
+
+function getAppointmentPatientId(row: any): number | null {
+  const raw =
+    row?.patientId ??
+    (typeof row?.patient === 'object' ? row.patient?.id : row?.patient) ??
+    row?.patient?.patientId ??
+    row?.patient?.patient_id;
+  const numeric = Number(raw);
+  const result = Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+  console.log('[BulkRescheduleModal] getAppointmentPatientId', { raw, result, row });
+  return result;
+}
+
+function getPatientFullName(patient: any): string {
+  if (!patient) return '';
+  if (typeof patient === 'string') return patient.trim();
+  const candidateName =
+    [(patient?.firstName ?? patient?.first_name),
+      (patient?.secondName ?? patient?.second_name),
+      (patient?.thirdName ?? patient?.third_name),
+      (patient?.lastName ?? patient?.last_name)]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  return candidateName || String(patient?.fullName ?? patient?.full_name ?? patient?.name ?? '').trim();
 }
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -151,14 +180,29 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     );
 
   const { data: replacementBatchesPage, isFetching: loadingReplacementBatches } =
-    useGetAvailabilityGenerationBatchesByTemplateQuery(
+    useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery(
       {
         templateId: replacementTemplateId ?? 0,
+        batchId: originBatchId ?? 0,
         page: 0,
         size: 500,
         sort: 'id,desc'
       },
-      { skip: !open || !replacementTemplateId || step < 3 }
+      { skip: !open || !replacementTemplateId || !originBatchId || step < 3 }
+    );
+
+  const { data: departmentActiveTemplatesPage, isFetching: loadingDepartmentActiveTemplates } =
+    useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
+      selectedOriginTemplate?.departmentId && selectedOriginTemplate?.templateType && selectedOriginTemplate?.resourceId
+        ? {
+            departmentId: selectedOriginTemplate!.departmentId,
+            type: selectedOriginTemplate!.templateType,
+            resourceId: selectedOriginTemplate!.resourceId,
+            page: 0,
+            size: 1000,
+            sort: 'id,asc'
+          }
+        : skipToken
     );
 
   const [lazyGetByBatch] = useLazyGetAppointmentsByBatchIdQuery();
@@ -216,19 +260,37 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     });
   }, [batchAppointmentsAll]);
 
+  const patientIds = useMemo(() => {
+    const ids = bookedConfirmedRows
+      .map(row => getAppointmentPatientId(row))
+      .filter((id): id is number => id != null);
+    return Array.from(new Set(ids));
+  }, [bookedConfirmedRows]);
+
+  const { data: patients } = useGetPatientsByIdsQuery(
+    { ids: Array.from(patientIds) },
+    { skip: patientIds.length === 0 }
+  );
+
+  useEffect(() => {
+    console.log('[BulkRescheduleModal] patientIds', {
+      patientIds,
+      isArray: Array.isArray(patientIds),
+      isSet: patientIds instanceof Set,
+      patients
+    });
+  }, [patientIds, patients]);
+
+  const patientMap = useMemo(() => {
+    const map = new Map<number, any>();
+    patients?.forEach(p => map.set(Number(p.id), p));
+    return map;
+  }, [patients]);
+
   const replacementCandidates = useMemo(() => {
     if (!selectedOriginTemplate) return [];
-    return publishedTemplates.filter(t => {
-      if (t.id === selectedOriginTemplate.id) return false;
-      if (
-        selectedOriginTemplate.parentTemplateId != null &&
-        t.parentTemplateId === selectedOriginTemplate.parentTemplateId
-      ) {
-        return true;
-      }
-      return sameTemplateConfiguration(selectedOriginTemplate, t);
-    });
-  }, [publishedTemplates, selectedOriginTemplate]);
+    return departmentActiveTemplatesPage?.data ?? [];
+  }, [departmentActiveTemplatesPage?.data, selectedOriginTemplate]);
 
   const originBatches = originBatchesPage?.data ?? [];
   const replacementBatches = replacementBatchesPage?.data ?? [];
@@ -277,12 +339,19 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         key: 'patient',
         title: <Translate>Patient</Translate>,
         flexGrow: 2,
-        render: (row: any) => (
-          <span>{String(row?.patientName ?? row?.patient?.name ?? row?.patientId ?? '—')}</span>
-        )
+        render: (row: any) => {
+          const patientId = getAppointmentPatientId(row);
+          const patient = patientId != null ? patientMap.get(patientId) : undefined;
+          const nameFromService = patient ? getPatientFullName(patient) : undefined;
+          const nameFromRow =
+            getPatientFullName(row?.patient) || String(row?.patientName ?? '').trim();
+          const name = nameFromService || nameFromRow || '—';
+          console.log('[BulkRescheduleModal] render patient', { row, patientId, patient, nameFromService, nameFromRow, name });
+          return <span>{name}</span>;
+        }
       }
     ],
-    []
+    [patientMap]
   );
 
   const templatePickColumns = useMemo(
@@ -317,6 +386,40 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       }
     ],
     [originTemplateId]
+  );
+
+  const replacementTemplatePickColumns = useMemo(
+    () => [
+      {
+        key: 'pick',
+        title: '',
+        width: 44,
+        render: (row: any) => (
+          <input type="radio" readOnly checked={Number(replacementTemplateId) === Number(row.id)} />
+        )
+      },
+      {
+        key: 'templateName',
+        title: <Translate>Template</Translate>,
+        flexGrow: 2,
+        render: (row: any) => <strong>{row?.templateName ?? '-'}</strong>
+      },
+      {
+        key: 'templateType',
+        title: <Translate>Type</Translate>,
+        flexGrow: 1,
+        render: (row: any) => <span>{formatEnumString(String(row?.templateType ?? '')) || '-'}</span>
+      },
+      {
+        key: 'active',
+        title: <Translate>State</Translate>,
+        flexGrow: 1,
+        render: (row: any) => (
+          <MyBadgeStatus color={row?.isActive ? '#16a34a' : '#6b7280'} contant={row?.isActive ? 'Active' : 'Inactive'} />
+        )
+      }
+    ],
+    [replacementTemplateId]
   );
 
   const batchPickColumnsOrigin = useMemo(
@@ -538,7 +641,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     if (step === 5) {
       return (
         <Panel bordered style={{ padding: 24, textAlign: 'center' }}>
-          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Reschedule applied successfully</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
+            <FontAwesomeIcon icon={faCircleCheck} style={{ color: '#16a34a', fontSize: 24 }} />
+            <p style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Reschedule applied successfully</p>
+          </div>
           <p style={{ color: '#64748b', fontSize: 13 }}>
             All appointments in this run were handled. You can close this dialog.
           </p>
@@ -662,34 +768,32 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       return (
         <Form fluid layout="vertical">
           <p style={{ color: '#64748b', fontSize: 13, marginBottom: 12 }}>
-            Replacement templates with the same configuration as the selected template (same department, type, resource,
-            duration, capacity).
+            Replacement templates with the same configuration as the selected template (same department).
           </p>
-          <RadioGroup
-            name="replacement-template"
-            value={replacementTemplateId ?? undefined}
-            onChange={(value: any) => {
-              const id = Number(value);
-              setReplacementTemplateId(Number.isFinite(id) ? id : null);
-              setReplacementBatchId(null);
-              setSelectedReplacementBatchKey('');
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '52vh', overflowY: 'auto' }}>
-              {replacementCandidates.length === 0 ? (
-                <Panel bordered>No matching replacement templates were found.</Panel>
-              ) : (
-                replacementCandidates.map((t: AvailabilityTemplateResponseVM) => (
-                  <Radio key={t.id} value={t.id}>
-                    <strong>{t.templateName}</strong>
-                    <span style={{ color: '#64748b', marginLeft: 8 }}>
-                      · {t.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </Radio>
-                ))
-              )}
+          {loadingDepartmentActiveTemplates ? (
+            <Loader center />
+          ) : replacementCandidates.length === 0 ? (
+            <Panel bordered>No matching replacement templates were found.</Panel>
+          ) : (
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+              <MyTable
+                columns={replacementTemplatePickColumns as any}
+                data={replacementCandidates}
+                loading={loadingDepartmentActiveTemplates}
+                height={420}
+                onRowClick={(row: AvailabilityTemplateResponseVM) => {
+                  const id = Number(row?.id ?? 0);
+                  if (!Number.isFinite(id) || id <= 0) return;
+                  setReplacementTemplateId(id);
+                  setReplacementBatchId(null);
+                  setSelectedReplacementBatchKey('');
+                }}
+                rowClassName={(row: any) =>
+                  Number(replacementTemplateId) === Number(row?.id) ? 'selected-row' : ''
+                }
+              />
             </div>
-          </RadioGroup>
+          )}
         </Form>
       );
     }

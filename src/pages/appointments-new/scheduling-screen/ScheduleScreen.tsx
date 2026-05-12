@@ -1888,7 +1888,6 @@ const ScheduleScreen = () => {
             selectedResources={selectedResources}
             resourceNameById={resourceNameById}
             selectedResourceTypeValue={selectedResourceTypeValue}
-            onRescheduleClick={() => setBulkRescheduleModalOpen(true)}
           />
           <ScheduleContentGrid
             calendarKey={calendarKey}

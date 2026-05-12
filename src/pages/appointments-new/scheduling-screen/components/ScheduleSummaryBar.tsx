@@ -78,13 +78,6 @@ const ScheduleSummaryBar = ({
             ) : null}
           </div>
         </div>
-        {typeof onRescheduleClick === 'function' ? (
-          <div className="appointments-slot-summary-actions">
-            <MyButton appearance="primary" onClick={onRescheduleClick}>
-              Reschedule
-            </MyButton>
-          </div>
-        ) : null}
       </div>
     </div>
   );
