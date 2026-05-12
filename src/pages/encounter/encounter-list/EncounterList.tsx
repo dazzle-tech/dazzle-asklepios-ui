@@ -309,7 +309,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-
+  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -518,9 +518,6 @@ const EncounterList = () => {
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
-
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -1125,37 +1122,43 @@ const EncounterList = () => {
   }, [dispatch, tableLoading]);
 
   useEffect(() => {
-    if (!departmentId || appliedFilters) return;
+  if (!departmentId || appliedFilters) return;
 
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-    setAppliedFilters({
-      departmentId,
-      fromDate,
-      toDate,
-      statusIn: DEFAULT_STATUS,
-      patientName: undefined,
-      mrn: undefined,
-      encounterReasons: undefined,
-      chiefComplaint: undefined,
-      priorities: undefined,
-      hasPrescription: undefined,
-      hasOrder: undefined,
-      isObserved: undefined,
-      page: 0,
-      size: pageSize,
-      sort: DEFAULT_SORT
-    });
-  }, [
+  setAppliedFilters({
     departmentId,
-    appliedFilters,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    todayStr,
-    DEFAULT_STATUS,
-    pageSize
-  ]);
+    fromDate,
+    toDate,
+    statusIn: DEFAULT_STATUS,
+    patientName: undefined,
+    mrn: undefined,
+    encounterReasons: undefined,
+    chiefComplaint: undefined,
+    priorities: undefined,
+    hasPrescription: undefined,
+    hasOrder: undefined,
+    isObserved: undefined,
+    page: 0,
+    size: pageSize,
+    sort: DEFAULT_SORT
+  });
+}, [
+  departmentId,
+  appliedFilters,
+  dateFilter.fromDate,
+  dateFilter.toDate,
+  todayStr,
+  DEFAULT_STATUS,
+  pageSize
+]);
+
+useEffect(() => {
+  if (appliedFilters) {
+    refetchEncounters();
+  }
+}, [appliedFilters, refetchEncounters]);
 
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {
