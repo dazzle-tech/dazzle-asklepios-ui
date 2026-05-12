@@ -292,17 +292,37 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     ) : (
                       <>
                         {patients.map(p => (
-                          <PatientCardWithPicture
+                          <div
                             key={p.id}
-                            patient={p}
-                            onClick={() => setLocalPatient(p)}
-                            actions={
-                              <Button className="actions-button">
-                                <FaEllipsis />
-                              </Button>
-                            }
-                            arrowDirection={direction as any}
-                          />
+                            className={clsx({
+                              'patient-disabled': p.patientStatus === 'MERGED'
+                            })}
+                          >
+                            <PatientCardWithPicture
+                              patient={p}
+                              onClick={() => {
+                                if (p.patientStatus === 'MERGED') {
+                                  return;
+                                }
+
+                                setLocalPatient(p);
+                              }}
+                              actions={
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {p.patientStatus === 'MERGED' && (
+                                    <span className="patient-merged-badge">
+                                      <Translate>Merged</Translate>
+                                    </span>
+                                  )}
+
+                                  <Button className="actions-button">
+                                    <FaEllipsis />
+                                  </Button>
+                                </div>
+                              }
+                              arrowDirection={direction as any}
+                            />
+                          </div>
                         ))}
 
                         {links?.next && (

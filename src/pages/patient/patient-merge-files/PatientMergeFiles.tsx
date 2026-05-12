@@ -41,7 +41,7 @@ const PatientMergeFiles: React.FC = () => {
     },
     { skip: !showMergeModal || !fromPatient.id || !toPatient.id }
   );
-
+ console.log('Merge preview data:', mergePreview, 'From Patient ID:', fromPatient.id, 'To Patient ID:', toPatient.id);
   const [executeMerge, { isLoading: executeLoading }] = useExecuteMergeMutation();
   const [summarizeMerge, { isLoading: summarizeLoading }] = useSummarizeMergeMutation();
   const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMergeTransactionsQuery();
@@ -185,23 +185,7 @@ const PatientMergeFiles: React.FC = () => {
 
 return (
   <div dir={dir} className="patient-merge-files-page">
-    {/* <div className="patient-merge-files-header">
-      <div className="patient-merge-files-header-title">
-        <FontAwesomeIcon
-          icon={faCodeMerge}
-          className="patient-merge-files-header-icon"
-        />
-        <h2 className="patient-merge-files-header-text">
-          Patient Merge
-        </h2>
-      </div>
-
-      <p className="patient-merge-files-header-description">
-        Select two patients to merge. The patient on the right will be the
-        primary record, and data from the patient on the left will be merged
-        into it.
-      </p>
-    </div> */}
+   
 
     <MyTab
       activeTab={
