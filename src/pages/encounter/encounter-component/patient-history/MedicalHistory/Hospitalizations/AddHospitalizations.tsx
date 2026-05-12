@@ -182,11 +182,21 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       if (formData.id) {
         await updateHospitalization(payload).unwrap();
         dispatch(notify({ msg: 'Hospitalization updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addHospitalization(payload).unwrap();
         dispatch(notify({ msg: 'Hospitalization added successfully', sev: 'success' }));
+        setFormData({
+          facility: '',
+          reason: '',
+          admissionType: '',
+          dateOfAdmission: null,
+          lengthOfStayDays: null,
+          outcomes: '',
+          medicalInterventionsPerformed: '',
+          patientId: Number(patient?.id)
+        });
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_ADMISSION_ERROR_MAP);
     }

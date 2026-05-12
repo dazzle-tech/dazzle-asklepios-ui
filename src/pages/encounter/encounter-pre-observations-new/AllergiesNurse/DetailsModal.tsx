@@ -669,7 +669,8 @@ const isOtherType = allerges?.id
                 : undefined
             };
 
-            await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
+            const updatedAllergy = await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
+            setAllerges(updatedAllergy);
 
             dispatch(
               notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' })
@@ -808,6 +809,10 @@ useEffect(() => {
       handleClear();
     }
   }, [openToAdd]);
+
+  useEffect(() => {
+    setShowAllFields(!!allerges?.id);
+  }, [allerges?.id]);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';

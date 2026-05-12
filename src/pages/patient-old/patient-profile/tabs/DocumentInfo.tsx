@@ -1,14 +1,16 @@
 import React from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const DocumentInfo = ({
  validationResult,
  localPatient,
  setLocalPatient,
  docTypeLovQueryResponse,
- countryLovQueryResponse,
 }) => {
+  const countryEnum = useEnumOptions('CountryName');
+
   return (
     <Form layout="inline">
                     <MyInput
@@ -25,22 +27,20 @@ const DocumentInfo = ({
                       searchable={false}
                     />
                     <MyInput
-                      // required
                       vr={validationResult}
                       column
                       fieldLabel="Document Country"
                       fieldType="select"
                       fieldName="documentCountryLkey"
-                      selectData={countryLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
+                      selectData={countryEnum}
+                      selectDataLabel="label"
+                      selectDataValue="value"
                       record={localPatient}
                       setRecord={setLocalPatient}
                       disabled={localPatient.documentTypeLkey === 'NO_DOC'}
                       menuMaxHeight={200}
                     />
                     <MyInput
-                      // required
                       vr={validationResult}
                       column
                       fieldLabel="Document Number"

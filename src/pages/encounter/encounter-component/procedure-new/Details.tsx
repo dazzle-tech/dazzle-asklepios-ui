@@ -28,6 +28,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 const FIELD_ORDER = [
+  'categoryId',
   'procedureId',
   'toFacilityId',
   'toDepartmentId',
@@ -40,6 +41,7 @@ const FIELD_ORDER = [
 ];
 
 const REQUIRED_FIELDS = [
+  'categoryId',
   'procedureId',
   'toFacilityId',
   'procedureLevel',
@@ -131,6 +133,7 @@ const handleProcedureCrudError = (
 };
 
 const PROCEDURE_ERROR_MAP: Record<string, string> = {
+  'categoryId.required': 'is required',
   'procedureId.required': 'is required',
   'toFacilityId.required': 'is required',
   'procedureLevel.required': 'is required',
@@ -338,6 +341,7 @@ const Details = ({
 
   const validateRequiredFields = (): boolean => {
     const FIELD_LABELS: Record<string, string> = {
+      categoryId: 'category type',
       procedureId: 'procedure name',
       toFacilityId: 'facility',
       procedureLevel: 'procedure level',
@@ -346,13 +350,10 @@ const Details = ({
       bodyPart: 'body part'
     };
 
-    const effectiveToFacilityId = procedure.currentDepartment
-      ? authSlice?.selectedDepartment?.facilityId
-      : procedure.toFacilityId;
-
     const valuesMap: Record<string, any> = {
+      categoryId: procedure.categoryId,
       procedureId: procedure.procedureId,
-      toFacilityId: effectiveToFacilityId,
+      toFacilityId: procedure.toFacilityId,
       procedureLevel: procedure.procedureLevel,
       priority: procedure.priority,
       scheduledDateTime: procedure.scheduledDateTime,
@@ -684,6 +685,7 @@ const Details = ({
                         record={procedure}
                         setRecord={setProcedure}
                         required
+                        disablePastDates
                       />
                     }
                   />

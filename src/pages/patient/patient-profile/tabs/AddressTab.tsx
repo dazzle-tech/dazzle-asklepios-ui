@@ -17,7 +17,7 @@ import { useGetActiveCountriesQuery } from '@/services/setup/country/countryServ
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetActiveCommunitiesQuery } from '@/services/setup/country/districtCommunityService';
 import { useGetActiveAreasQuery } from '@/services/setup/country/communityAreaService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -31,7 +31,6 @@ import {
 } from '@/types/model-types-new';
 
 import { newAddress } from '@/types/model-types-constructor-new';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
@@ -198,6 +197,9 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
   const [openChangeLog, setOpenChangeLog] = useState(false);
 
+  const countryEnum = useEnumOptions('CountryName');
+  const countryLabelMap = Object.fromEntries(countryEnum.map(o => [o.value, o.label]));
+
   const resetLocationState = () => {
     setAddress({
       ...newAddress,
@@ -248,7 +250,6 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     }
   }, [patientId]);
 
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
   const { data: addressesResult, isFetching } = useGetPatientAddressesQuery(
     { patientId },
@@ -304,16 +305,11 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
     const mapped = countriesResponse.data.map((c: any) => ({
       ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(
-          countryLovQueryResponse?.object ?? [],
-          c.name,
-          'lovDisplayVale'
-        ) || c.name
+      displayName: countryLabelMap[c.code] || countryLabelMap[c.name] || c.name || c.code
     }));
 
     setCountryCache(prev => (countryPage === 0 ? mapped : [...prev, ...mapped]));
-  }, [countriesResponse, countryPage, countryLovQueryResponse]);
+  }, [countriesResponse, countryPage, countryLabelMap]);
 
   useEffect(() => {
     if (!districtsResponse?.data) return;
@@ -665,7 +661,6 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
         open={openChangeLog}
         setOpen={setOpenChangeLog}
         patientId={patientId}
-        countryLovQueryResponse={countryLovQueryResponse}
       />
     </>
   );

@@ -163,12 +163,12 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         if (formData.id) {
           await updatePatientProblem(payload).unwrap();
           dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
+          setOpen(false);
         } else {
           await addPatientProblem(payload).unwrap();
           dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
+          setFormData({ ...emptyPatientProblem, patientId: Number(patient?.id) });
         }
-
-        setOpen(false);
       } catch (err: any) {
         handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
       }

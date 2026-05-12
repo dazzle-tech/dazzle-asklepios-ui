@@ -36,16 +36,127 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
-const getApiErrorMessage = (error: any, fallback: string) => {
-  const message =
-    error?.data?.message ||
-    error?.error?.data?.message ||
-    error?.data?.detail ||
-    error?.error?.data?.detail;
+const FIELD_LABELS: Record<string, string> = {
+  toothNumber: 'tooth number',
+  surface: 'surface',
+  procedureId: 'procedure',
+  serviceId: 'service',
+  cdtCodeId: 'CDT code',
+  patientId: 'patient',
+  encounterId: 'encounter',
+  dose: 'dose',
+  unit: 'unit',
+  anesthesiaUsed: 'anesthesia used',
+  fillingMaterial: 'filling material',
+  notes: 'notes'
+};
 
-  if (!message) return fallback;
+const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
+  patientNotFound: 'Patient not found.',
+  encounterNotFound: 'Encounter not found.',
+  idNotFound: 'Dental procedure not found.',
+  procedureSetupNotFound: 'Procedure setup data not found.',
+  procedureSetupUnreachable: 'Unable to fetch procedure setup data. Please try again.',
+  serviceSetupNotFound: 'Service setup data not found.',
+  serviceSetupUnreachable: 'Unable to fetch service setup data. Please try again.',
+  procedureNotFound: 'The selected procedure does not exist.',
+  serviceNotFound: 'The selected service does not exist.',
+  cdtCodeNotFound: 'The selected CDT code does not exist.',
+  'db.constraint': 'A database constraint was violated. Please check your entries.',
+  cannotUpdateCancelled: 'Cannot update a cancelled dental procedure.',
+  procedureAlreadyBilled: 'Cannot modify this procedure because it has already been billed.',
+  serviceAlreadyBilled: 'Cannot modify this procedure because the service has already been billed.',
+  alreadyCancelled: 'This dental procedure is already cancelled.'
+};
 
-  return String(message).replace(/^error\./, '');
+const normalizeMsg = (msg: string) => {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('must not be null') || m.includes('cannot be null')) return 'is required';
+  if (m.includes('must not be blank')) return 'must not be blank';
+  if (m.includes('size must be between')) return 'length is out of range';
+  return msg || 'invalid value';
+};
+
+const handleCrudError = (error: any, dispatch: any) => {
+  const data = error?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => {
+      const rawField = String(fe.field ?? '');
+      const fieldLabel = FIELD_LABELS[rawField] ?? rawField;
+      return `• ${fieldLabel}: ${normalizeMsg(fe.message)}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+
+  if (
+    messageProp.includes('ConstraintViolationImpl') ||
+    messageProp.includes('Validation failed')
+  ) {
+    const violations: string[] = [];
+    const pattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
+    let match;
+
+    while ((match = pattern.exec(messageProp)) !== null) {
+      const rawField = match[1];
+      const fieldLabel = FIELD_LABELS[rawField] ?? rawField;
+      const normalized = normalizeMsg(match[2]);
+      violations.push(`• ${fieldLabel}: ${normalized}`);
+    }
+
+    if (violations.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+  }
+
+  const errorKey =
+    messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+
+  const humanMsg =
+    (errorKey && DENTAL_PROCEDURE_ERROR_MAP[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    messageProp ||
+    'Unexpected error. Please try again.';
+
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
+};
+
+const buildValidationError = (form: any) => {
+  const fieldErrors: { field: string; message: string }[] = [];
+
+  if (!form.toothNumber) {
+    fieldErrors.push({ field: 'toothNumber', message: 'must not be null' });
+  }
+
+  if (!form.surface) {
+    fieldErrors.push({ field: 'surface', message: 'must not be null' });
+  }
+
+  if (!form.procedureId) {
+    fieldErrors.push({ field: 'procedureId', message: 'must not be null' });
+  }
+
+  return fieldErrors.length > 0
+    ? { data: { fieldErrors }, status: 400 }
+    : null;
 };
 
 type FormMode = 'add' | 'edit';
@@ -215,6 +326,13 @@ const DentalProcedures = props => {
   };
 
   const handleSubmit = async () => {
+    const validationError = buildValidationError(form);
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch);
+      return;
+    }
+
     if (formMode === 'add') {
       try {
         const createPayload = {
@@ -234,12 +352,7 @@ const DentalProcedures = props => {
 
         await saveProcedure(createPayload).unwrap();
       } catch (error) {
-        dispatch(
-          notify({
-            msg: getApiErrorMessage(error, 'Failed to save dental procedure'),
-            sev: 'warning'
-          })
-        );
+        handleCrudError(error, dispatch);
       }
     } else {
       if (!form?.id) return;
@@ -261,12 +374,7 @@ const DentalProcedures = props => {
 
         await updateProcedure({ id: form.id, body }).unwrap();
       } catch (error) {
-        dispatch(
-          notify({
-            msg: getApiErrorMessage(error, 'Failed to update dental procedure'),
-            sev: 'warning'
-          })
-        );
+        handleCrudError(error, dispatch);
       }
     }
   };
@@ -277,13 +385,7 @@ const DentalProcedures = props => {
     try {
       await cancelProcedure({ id: selectedRow.id }).unwrap();
     } catch (error) {
-      dispatch(
-        notify({
-          msg: getApiErrorMessage(error, 'Failed to cancel dental procedure'),
-          sev: 'warning'
-        })
-      );
-
+      handleCrudError(error, dispatch);
       setCancelModalOpen(false);
     }
   };

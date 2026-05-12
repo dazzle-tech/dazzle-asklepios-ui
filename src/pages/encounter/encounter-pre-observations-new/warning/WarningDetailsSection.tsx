@@ -108,7 +108,7 @@ const WarningDetailsSection = ({
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
                                     fieldName='sourceOfInformation'
-                                    record={warning}
+                                    record={warning.byPatient ? { ...warning, sourceOfInformation: null } : warning}
                                     setRecord={setWarning}
                                     disabled
                                 />

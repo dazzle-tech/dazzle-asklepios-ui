@@ -31,7 +31,7 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
-  <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+  <DatePicker {...props} format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
 ));
 
 const focusNextField = (e: any) => {
@@ -404,6 +404,12 @@ const MyInput = ({
             placement={placement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            shouldDisableDate={(date: Date) => {
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+              if (props.disablePastDates) return date < today;
+              if (props.disableFutureDates) return date > today;
+              return false;
+            }}
           />
         );
 

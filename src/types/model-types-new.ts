@@ -1484,7 +1484,7 @@ export interface Address {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -1982,7 +1982,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -2141,7 +2141,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -2312,7 +2312,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;

@@ -230,11 +230,13 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       if (formData.id) {
         await updateSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history added successfully', sev: 'success' }));
+        setFormData({ ...emptySurgicalHistoryForm, patientId: Number(patient?.id) });
+        setOpenImplants({ open: false });
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, SURGICAL_HISTORY_ERROR_MAP);
     }
@@ -260,6 +262,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldLabel="Date of surgery"
         fieldType="date"
         fieldName="dateOfSurgery"
+        disableFutureDates
         record={formData}
         setRecord={setFormData}
       />
