@@ -13,13 +13,8 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { useGetAvailabilityGenerationBatchesByTemplateQuery, useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
-import {
-  useBulkRescheduleAppointmentsMutation,
-  useCancelAppointmentMutation,
-  useGetAvailabilityTemplatesByPublishStatusQuery,
-  useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
-  useLazyGetAppointmentsByBatchIdQuery
-} from '@/services/appointment/appointmentService';
+import { useBulkRescheduleAppointmentsMutation, useCancelAppointmentMutation, useLazyGetAppointmentsByBatchIdQuery } from '@/services/appointment/appointmentService';
+import { useGetAvailabilityTemplatesByPublishStatusQuery, useGetAvailabilityTemplatesByDepartmentAndActiveQuery } from '@/services/appointment/availabilityTemplateService';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import type {
   AvailabilityGenerationBatch,
@@ -37,7 +32,7 @@ const WIZARD_STEPS = [
   { title: 'Complete' }
 ];
 
-const SYSTEM_CANCEL_REASON = 'cancelled appointment by system';
+const SYSTEM_CANCEL_REASON = 'cancel appointment from reschedule';
 
 type Props = {
   open: boolean;
@@ -91,13 +86,31 @@ function getPatientFullName(patient: any): string {
   if (typeof patient === 'string') return patient.trim();
   const candidateName =
     [(patient?.firstName ?? patient?.first_name),
-      (patient?.secondName ?? patient?.second_name),
-      (patient?.thirdName ?? patient?.third_name),
-      (patient?.lastName ?? patient?.last_name)]
+    (patient?.secondName ?? patient?.second_name),
+    (patient?.thirdName ?? patient?.third_name),
+    (patient?.lastName ?? patient?.last_name)]
       .filter(Boolean)
       .join(' ')
       .trim();
   return candidateName || String(patient?.fullName ?? patient?.full_name ?? patient?.name ?? '').trim();
+}
+
+function extractErrorMessage(response: any): string {
+  try {
+    const msg = response?.data?.message ?? response?.data?.error ?? response?.message ?? response?.error;
+    if (typeof msg === 'string' && msg.trim()) {
+      return msg.replace(/^error\./i, '').trim();
+    }
+    if (response?.data && typeof response?.data === 'object') {
+      const detail = response.data.detail ?? response.data.description;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail.trim();
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
 }
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -126,7 +139,7 @@ async function fetchAllAppointmentsForBatch(
   const size = 200;
   let page = 0;
   const out: any[] = [];
-  for (;;) {
+  for (; ;) {
     const res = await lazyGet({
       batchId,
       page,
@@ -195,13 +208,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
       selectedOriginTemplate?.departmentId && selectedOriginTemplate?.templateType && selectedOriginTemplate?.resourceId
         ? {
-            departmentId: selectedOriginTemplate!.departmentId,
-            type: selectedOriginTemplate!.templateType,
-            resourceId: selectedOriginTemplate!.resourceId,
-            page: 0,
-            size: 1000,
-            sort: 'id,asc'
-          }
+          departmentId: selectedOriginTemplate!.departmentId,
+          type: selectedOriginTemplate!.templateType,
+          resourceId: selectedOriginTemplate!.resourceId,
+          page: 0,
+          size: 1000,
+          sort: 'id,asc'
+        }
         : skipToken
     );
 
@@ -572,8 +585,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       onSuccess?.();
       setConfirmBulkCancelOpen(false);
       handleClose();
-    } catch {
-      dispatch(notify({ msg: 'Some appointments could not be cancelled.', sev: 'error' }));
+    } catch (error) {
+      const errorMsg = extractErrorMessage(error) || 'Some appointments could not be cancelled.';
+      dispatch(notify({ msg: errorMsg, sev: 'error' }));
     } finally {
       hideSystemLoader();
     }
@@ -627,8 +641,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           sev: 'warning'
         })
       );
-    } catch {
-      dispatch(notify({ msg: 'Bulk reschedule failed.', sev: 'error' }));
+    } catch (error) {
+      const errorMsg = extractErrorMessage(error) || 'Bulk reschedule failed.';
+      dispatch(notify({ msg: errorMsg, sev: 'error' }));
     }
   };
 
