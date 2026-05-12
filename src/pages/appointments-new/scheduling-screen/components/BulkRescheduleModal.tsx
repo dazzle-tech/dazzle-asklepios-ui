@@ -1,38 +1,51 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Divider, Form, Loader, Modal, Panel, Radio, RadioGroup } from 'rsuite';
-import { useSelector } from 'react-redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleCheck, faRightLeft } from '@fortawesome/free-solid-svg-icons';
-import { skipToken } from '@reduxjs/toolkit/query/react';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Checkbox, Divider, Form, Loader, Modal, Panel } from "rsuite";
+import { useSelector } from "react-redux";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleCheck, faRightLeft } from "@fortawesome/free-solid-svg-icons";
+import { skipToken } from "@reduxjs/toolkit/query/react";
 
-import MyButton from '@/components/MyButton/MyButton';
-import '@/components/MyModal/styles.less';
-import MyStepper from '@/components/MyStepper';
-import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
-import { useGetAvailabilityGenerationBatchesByTemplateQuery, useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
-import { useBulkRescheduleAppointmentsMutation, useCancelAppointmentMutation, useLazyGetAppointmentsByBatchIdQuery } from '@/services/appointment/appointmentService';
-import { useGetAvailabilityTemplatesByPublishStatusQuery, useGetAvailabilityTemplatesByDepartmentAndActiveQuery } from '@/services/appointment/availabilityTemplateService';
-import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+import MyButton from "@/components/MyButton/MyButton";
+import "@/components/MyModal/styles.less";
+import MyStepper from "@/components/MyStepper";
+import MyTable from "@/components/MyTable";
+import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
+import Translate from "@/components/Translate";
+import { useAppDispatch } from "@/hooks";
+import {
+  useGetAvailabilityGenerationBatchesByTemplateQuery,
+  useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
+} from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
+import {
+  useBulkRescheduleAppointmentsMutation,
+  useCancelAppointmentMutation,useGetBulkReschedulePreviewQuery
+} from "@/services/appointment/appointmentService";
+import {
+  useGetAvailabilityTemplatesByPublishStatusQuery,
+  useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
+} from "@/services/appointment/availabilityTemplateService";
+import { useGetPatientsByIdsQuery } from "@/services/patient/patientService";
 import type {
   AvailabilityGenerationBatch,
-  AvailabilityTemplateResponseVM
-} from '@/types/model-types-new';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+  AvailabilityTemplateResponseVM,
+} from "@/types/model-types-new";
+import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
+import {
+  hideSystemLoader,
+  notify,
+  showSystemLoader,
+} from "@/utils/uiReducerActions";
 
 const WIZARD_STEPS = [
-  { title: 'Select template' },
-  { title: 'Select generation batch' },
-  { title: 'Review appointments' },
-  { title: 'Replacement template' },
-  { title: 'Replacement batch' },
-  { title: 'Complete' }
+  { title: "Select template" },
+  { title: "Select generation batch" },
+  { title: "Review appointments" },
+  { title: "Replacement template" },
+  { title: "Replacement batch" },
+  { title: "Complete" },
 ];
 
-const SYSTEM_CANCEL_REASON = 'cancel appointment from reschedule';
+const SYSTEM_CANCEL_REASON = "cancel appointment from reschedule";
 
 type Props = {
   open: boolean;
@@ -41,7 +54,8 @@ type Props = {
 };
 
 function appointmentStart(row: any): Date | null {
-  const raw = row?.startDatetime ?? row?.appointmentStart ?? row?.appointmentDateTime;
+  const raw =
+    row?.startDatetime ?? row?.appointmentStart ?? row?.appointmentDateTime;
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -55,62 +69,76 @@ function isStrictlyAfterCalendarToday(d: Date): boolean {
 }
 
 function normalizeApptStatus(row: any): string {
-  return String(row?.status ?? row?.appointmentStatus ?? '')
+  return String(row?.status ?? row?.appointmentStatus ?? "")
     .trim()
     .toUpperCase()
-    .replace(/[\s-]+/g, '_');
+    .replace(/[\s-]+/g, "_");
 }
 
 function isFreeSlotStatus(s: string): boolean {
-  return s === 'NEW' || s === 'RESCHEDULE' || s === 'NEW_APPOINTMENT';
+  return s === "NEW" || s === "RESCHEDULE" || s === "NEW_APPOINTMENT";
 }
 
 function isBookedOrConfirmed(s: string): boolean {
-  return s === 'BOOKED' || s === 'CONFIRMED';
+  return s === "BOOKED" || s === "CONFIRMED";
 }
 
 function getAppointmentPatientId(row: any): number | null {
   const raw =
     row?.patientId ??
-    (typeof row?.patient === 'object' ? row.patient?.id : row?.patient) ??
+    (typeof row?.patient === "object" ? row.patient?.id : row?.patient) ??
     row?.patient?.patientId ??
     row?.patient?.patient_id;
   const numeric = Number(raw);
   const result = Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-  console.log('[BulkRescheduleModal] getAppointmentPatientId', { raw, result, row });
+  console.log("[BulkRescheduleModal] getAppointmentPatientId", {
+    raw,
+    result,
+    row,
+  });
   return result;
 }
 
 function getPatientFullName(patient: any): string {
-  if (!patient) return '';
-  if (typeof patient === 'string') return patient.trim();
-  const candidateName =
-    [(patient?.firstName ?? patient?.first_name),
-    (patient?.secondName ?? patient?.second_name),
-    (patient?.thirdName ?? patient?.third_name),
-    (patient?.lastName ?? patient?.last_name)]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
-  return candidateName || String(patient?.fullName ?? patient?.full_name ?? patient?.name ?? '').trim();
+  if (!patient) return "";
+  if (typeof patient === "string") return patient.trim();
+  const candidateName = [
+    patient?.firstName ?? patient?.first_name,
+    patient?.secondName ?? patient?.second_name,
+    patient?.thirdName ?? patient?.third_name,
+    patient?.lastName ?? patient?.last_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return (
+    candidateName ||
+    String(
+      patient?.fullName ?? patient?.full_name ?? patient?.name ?? "",
+    ).trim()
+  );
 }
 
 function extractErrorMessage(response: any): string {
   try {
-    const msg = response?.data?.message ?? response?.data?.error ?? response?.message ?? response?.error;
-    if (typeof msg === 'string' && msg.trim()) {
-      return msg.replace(/^error\./i, '').trim();
+    const msg =
+      response?.data?.message ??
+      response?.data?.error ??
+      response?.message ??
+      response?.error;
+    if (typeof msg === "string" && msg.trim()) {
+      return msg.replace(/^error\./i, "").trim();
     }
-    if (response?.data && typeof response?.data === 'object') {
+    if (response?.data && typeof response?.data === "object") {
       const detail = response.data.detail ?? response.data.description;
-      if (typeof detail === 'string' && detail.trim()) {
+      if (typeof detail === "string" && detail.trim()) {
         return detail.trim();
       }
     }
   } catch {
     // ignore
   }
-  return '';
+  return "";
 }
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -119,39 +147,83 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-function sameTemplateConfiguration(
-  a: AvailabilityTemplateResponseVM,
-  b: AvailabilityTemplateResponseVM
-): boolean {
-  return (
-    a.departmentId === b.departmentId &&
-    a.templateType === b.templateType &&
-    a.resourceId === b.resourceId &&
-    (a.durationMinutes ?? null) === (b.durationMinutes ?? null) &&
-    (a.parallelCapacityValue ?? null) === (b.parallelCapacityValue ?? null)
+function looksLikeAppointmentList(value: any): boolean {
+  if (!Array.isArray(value)) return false;
+  if (value.length === 0) return true;
+  const first = value[0];
+  if (!first || typeof first !== "object") return false;
+  return Boolean(
+    first.id ??
+      first.appointmentId ??
+      first.startDatetime ??
+      first.startDateTime ??
+      first.appointmentStart ??
+      first.appointmentDateTime ??
+      first.status ??
+      first.appointmentStatus,
   );
 }
 
-async function fetchAllAppointmentsForBatch(
-  lazyGet: ReturnType<typeof useLazyGetAppointmentsByBatchIdQuery>[0],
-  batchId: number
-): Promise<any[]> {
-  const size = 200;
-  let page = 0;
-  const out: any[] = [];
-  for (; ;) {
-    const res = await lazyGet({
-      batchId,
-      page,
-      size,
-      sort: 'id,asc'
-    }).unwrap();
-    const chunk = res?.data ?? [];
-    out.push(...chunk);
-    if (chunk.length < size) break;
-    page += 1;
+function extractBulkReschedulePreviewAppointments(
+  preview: any,
+  includeFreeSlots: boolean,
+): any[] {
+  if (!preview) return [];
+  if (Array.isArray(preview)) return preview;
+
+  const root = preview?.data && typeof preview.data === "object" ? preview.data : preview;
+
+  const freeCandidates = [
+    root?.freeAppointments,
+    root?.freeAppointmentList,
+    root?.freeSlots,
+    root?.freeSlotAppointments,
+    root?.newAppointments,
+    root?.newAppointmentList,
+  ];
+
+  const bookedCandidates = [
+    root?.appointments,
+    root?.appointmentList,
+    root?.appointmentVMs,
+    root?.appointmentVMS,
+    root?.appointmentFromTemplates,
+    root?.bulkRescheduleAppointments,
+    root?.appointmentsForReschedule,
+    root?.previewAppointments,
+    root?.bookedAppointments,
+    root?.bookedConfirmedAppointments,
+    root?.bookedAndConfirmedAppointments,
+    root?.content,
+    root?.items,
+    root?.data,
+  ];
+
+  const preferredCandidates = includeFreeSlots
+    ? [...freeCandidates, ...bookedCandidates]
+    : bookedCandidates;
+
+  for (const candidate of preferredCandidates) {
+    if (looksLikeAppointmentList(candidate)) return candidate;
+    if (looksLikeAppointmentList(candidate?.data)) return candidate.data;
+    if (looksLikeAppointmentList(candidate?.content)) return candidate.content;
+    if (looksLikeAppointmentList(candidate?.items)) return candidate.items;
   }
-  return out;
+
+  const queue = [root];
+  const seen = new Set<any>();
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || typeof current !== "object" || seen.has(current)) continue;
+    seen.add(current);
+
+    for (const value of Object.values(current)) {
+      if (looksLikeAppointmentList(value)) return value;
+      if (value && typeof value === "object") queue.push(value);
+    }
+  }
+
+  return [];
 }
 
 const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
@@ -163,21 +235,27 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     useState<AvailabilityTemplateResponseVM | null>(null);
   const [originTemplateId, setOriginTemplateId] = useState<number | null>(null);
   const [originBatchId, setOriginBatchId] = useState<number | null>(null);
-  const [selectedOriginBatchRowKey, setSelectedOriginBatchRowKey] = useState<string>('');
+  const [selectedOriginBatchRowKey, setSelectedOriginBatchRowKey] =
+    useState<string>("");
 
-  const [replacementTemplateId, setReplacementTemplateId] = useState<number | null>(null);
-  const [replacementBatchId, setReplacementBatchId] = useState<number | null>(null);
-  const [selectedReplacementBatchKey, setSelectedReplacementBatchKey] = useState<string>('');
+  const [replacementTemplateId, setReplacementTemplateId] = useState<
+    number | null
+  >(null);
+  const [replacementBatchId, setReplacementBatchId] = useState<number | null>(
+    null,
+  );
+  const [selectedReplacementBatchKey, setSelectedReplacementBatchKey] =
+    useState<string>("");
 
   const [batchAppointmentsAll, setBatchAppointmentsAll] = useState<any[]>([]);
-  const [loadingBatchAppointments, setLoadingBatchAppointments] = useState(false);
   const [unmatchedIds, setUnmatchedIds] = useState<number[]>([]);
   const [confirmBulkCancelOpen, setConfirmBulkCancelOpen] = useState(false);
+  const [showFreeAppointments, setShowFreeAppointments] = useState(false);
 
   const { data: publishedTemplatesPage, isFetching: loadingTemplates } =
     useGetAvailabilityTemplatesByPublishStatusQuery(
-      { page: 0, size: 1000, sort: 'id,asc' },
-      { skip: !open }
+      { page: 0, size: 1000, sort: "id,asc" },
+      { skip: !open },
     );
   const publishedTemplates = publishedTemplatesPage?.data ?? [];
 
@@ -187,53 +265,75 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         templateId: originTemplateId ?? 0,
         page: 0,
         size: 500,
-        sort: 'id,desc'
+        sort: "id,desc",
       },
-      { skip: !open || !originTemplateId }
+      { skip: !open || !originTemplateId },
     );
 
-  const { data: replacementBatchesPage, isFetching: loadingReplacementBatches } =
-    useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery(
-      {
-        templateId: replacementTemplateId ?? 0,
-        batchId: originBatchId ?? 0,
-        page: 0,
-        size: 500,
-        sort: 'id,desc'
-      },
-      { skip: !open || !replacementTemplateId || !originBatchId || step < 3 }
-    );
+  const {
+    data: replacementBatchesPage,
+    isFetching: loadingReplacementBatches,
+  } = useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery(
+    {
+      templateId: replacementTemplateId ?? 0,
+      batchId: originBatchId ?? 0,
+      page: 0,
+      size: 500,
+      sort: "id,desc",
+    },
+    { skip: !open || !replacementTemplateId || !originBatchId || step < 3 },
+  );
 
-  const { data: departmentActiveTemplatesPage, isFetching: loadingDepartmentActiveTemplates } =
-    useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
-      selectedOriginTemplate?.departmentId && selectedOriginTemplate?.templateType && selectedOriginTemplate?.resourceId
-        ? {
+  const {
+    data: departmentActiveTemplatesPage,
+    isFetching: loadingDepartmentActiveTemplates,
+  } = useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
+    selectedOriginTemplate?.departmentId &&
+      selectedOriginTemplate?.templateType &&
+      selectedOriginTemplate?.resourceId
+      ? {
           departmentId: selectedOriginTemplate!.departmentId,
           type: selectedOriginTemplate!.templateType,
           resourceId: selectedOriginTemplate!.resourceId,
           page: 0,
           size: 1000,
-          sort: 'id,asc'
+          sort: "id,asc",
         }
-        : skipToken
-    );
+      : skipToken,
+  );
 
-  const [lazyGetByBatch] = useLazyGetAppointmentsByBatchIdQuery();
+  const {
+    data: bulkReschedulePreview,
+    isFetching: loadingBulkReschedulePreview,
+  } = useGetBulkReschedulePreviewQuery(
+    open && step === 2 && originBatchId
+      ? {
+          batchId: originBatchId,
+          includeFreeSlots: showFreeAppointments,
+        }
+      : skipToken,
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
+
   const [cancelAppointment] = useCancelAppointmentMutation();
-  const [bulkReschedule, { isLoading: bulkLoading }] = useBulkRescheduleAppointmentsMutation();
+  const [bulkReschedule, { isLoading: bulkLoading }] =
+    useBulkRescheduleAppointmentsMutation();
 
   const resetWizard = useCallback(() => {
     setStep(0);
     setSelectedOriginTemplate(null);
     setOriginTemplateId(null);
     setOriginBatchId(null);
-    setSelectedOriginBatchRowKey('');
+    setSelectedOriginBatchRowKey("");
     setReplacementTemplateId(null);
     setReplacementBatchId(null);
-    setSelectedReplacementBatchKey('');
+    setSelectedReplacementBatchKey("");
     setBatchAppointmentsAll([]);
     setUnmatchedIds([]);
     setConfirmBulkCancelOpen(false);
+    setShowFreeAppointments(false);
   }, []);
 
   useEffect(() => {
@@ -242,61 +342,48 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     }
   }, [open, resetWizard]);
 
-  useEffect(() => {
-    if (!open || step !== 2 || !originBatchId) {
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoadingBatchAppointments(true);
-      try {
-        const all = await fetchAllAppointmentsForBatch(lazyGetByBatch, originBatchId);
-        if (!cancelled) setBatchAppointmentsAll(all);
-      } catch {
-        if (!cancelled) setBatchAppointmentsAll([]);
-      } finally {
-        if (!cancelled) setLoadingBatchAppointments(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, step, originBatchId, lazyGetByBatch]);
+  const bulkPreviewRows = useMemo(
+    () =>
+      extractBulkReschedulePreviewAppointments(
+        bulkReschedulePreview,
+        showFreeAppointments,
+      ),
+    [bulkReschedulePreview, showFreeAppointments],
+  );
 
-  const bookedConfirmedRows = useMemo(() => {
-    return batchAppointmentsAll.filter(row => {
-      const st = normalizeApptStatus(row);
-      if (!isBookedOrConfirmed(st)) return false;
-      const d = appointmentStart(row);
-      if (!d) return false;
-      return isStrictlyAfterCalendarToday(d);
-    });
-  }, [batchAppointmentsAll]);
+  const appointmentPreviewRows = useMemo(() => {
+    if (!showFreeAppointments) return bulkPreviewRows;
+    return bulkPreviewRows.filter((row) => normalizeApptStatus(row) === "NEW");
+  }, [bulkPreviewRows, showFreeAppointments]);
+
+  useEffect(() => {
+    setBatchAppointmentsAll(bulkPreviewRows);
+  }, [bulkPreviewRows]);
 
   const patientIds = useMemo(() => {
-    const ids = bookedConfirmedRows
-      .map(row => getAppointmentPatientId(row))
+    const ids = appointmentPreviewRows
+      .map((row) => getAppointmentPatientId(row))
       .filter((id): id is number => id != null);
     return Array.from(new Set(ids));
-  }, [bookedConfirmedRows]);
+  }, [appointmentPreviewRows]);
 
   const { data: patients } = useGetPatientsByIdsQuery(
     { ids: Array.from(patientIds) },
-    { skip: patientIds.length === 0 }
+    { skip: patientIds.length === 0 },
   );
 
   useEffect(() => {
-    console.log('[BulkRescheduleModal] patientIds', {
+    console.log("[BulkRescheduleModal] patientIds", {
       patientIds,
       isArray: Array.isArray(patientIds),
       isSet: patientIds instanceof Set,
-      patients
+      patients,
     });
   }, [patientIds, patients]);
 
   const patientMap = useMemo(() => {
     const map = new Map<number, any>();
-    patients?.forEach(p => map.set(Number(p.id), p));
+    patients?.forEach((p) => map.set(Number(p.id), p));
     return map;
   }, [patients]);
 
@@ -313,10 +400,14 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       originBatches.map((b: AvailabilityGenerationBatch) => ({
         ...b,
         rowKey: String(b.id),
-        applyLabel: b.applyStartDateTime ? formatDateWithoutSeconds(b.applyStartDateTime) : '-',
-        endLabel: b.applyEndDateTime ? formatDateWithoutSeconds(b.applyEndDateTime) : '-'
+        applyLabel: b.applyStartDateTime
+          ? formatDateWithoutSeconds(b.applyStartDateTime)
+          : "-",
+        endLabel: b.applyEndDateTime
+          ? formatDateWithoutSeconds(b.applyEndDateTime)
+          : "-",
       })),
-    [originBatches]
+    [originBatches],
   );
 
   const replacementBatchRows = useMemo(
@@ -324,141 +415,191 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       replacementBatches.map((b: AvailabilityGenerationBatch) => ({
         ...b,
         rowKey: String(b.id),
-        applyLabel: b.applyStartDateTime ? formatDateWithoutSeconds(b.applyStartDateTime) : '-',
-        endLabel: b.applyEndDateTime ? formatDateWithoutSeconds(b.applyEndDateTime) : '-'
+        applyLabel: b.applyStartDateTime
+          ? formatDateWithoutSeconds(b.applyStartDateTime)
+          : "-",
+        endLabel: b.applyEndDateTime
+          ? formatDateWithoutSeconds(b.applyEndDateTime)
+          : "-",
       })),
-    [replacementBatches]
+    [replacementBatches],
   );
 
   const appointmentPreviewColumns = useMemo(
     () => [
       {
-        key: 'start',
+        key: "start",
         title: <Translate>Start</Translate>,
         flexGrow: 2,
         render: (row: any) => (
-          <span>{row?.startDatetime ? formatDateWithoutSeconds(row.startDatetime) : '-'}</span>
-        )
+          <span>
+            {row?.startDatetime || row?.startDateTime || row?.appointmentStart || row?.appointmentDateTime
+              ? formatDateWithoutSeconds(
+                  row.startDatetime || row.startDateTime || row.appointmentStart || row.appointmentDateTime,
+                )
+              : "-"}
+          </span>
+        ),
       },
       {
-        key: 'status',
+        key: "status",
         title: <Translate>Status</Translate>,
         flexGrow: 1,
         render: (row: any) => (
-          <MyBadgeStatus color="#0284c7" contant={formatEnumString(String(row?.status ?? ''))} />
-        )
+          <MyBadgeStatus
+            color="#0284c7"
+            contant={formatEnumString(String(row?.status ?? ""))}
+          />
+        ),
       },
       {
-        key: 'patient',
+        key: "patient",
         title: <Translate>Patient</Translate>,
         flexGrow: 2,
         render: (row: any) => {
           const patientId = getAppointmentPatientId(row);
-          const patient = patientId != null ? patientMap.get(patientId) : undefined;
-          const nameFromService = patient ? getPatientFullName(patient) : undefined;
+          const patient =
+            patientId != null ? patientMap.get(patientId) : undefined;
+          const nameFromService = patient
+            ? getPatientFullName(patient)
+            : undefined;
           const nameFromRow =
-            getPatientFullName(row?.patient) || String(row?.patientName ?? '').trim();
-          const name = nameFromService || nameFromRow || '—';
-          console.log('[BulkRescheduleModal] render patient', { row, patientId, patient, nameFromService, nameFromRow, name });
+            getPatientFullName(row?.patient) ||
+            String(row?.patientName ?? "").trim();
+          const name = nameFromService || nameFromRow || "—";
+          console.log("[BulkRescheduleModal] render patient", {
+            row,
+            patientId,
+            patient,
+            nameFromService,
+            nameFromRow,
+            name,
+          });
           return <span>{name}</span>;
-        }
-      }
+        },
+      },
     ],
-    [patientMap]
+    [patientMap],
   );
 
   const templatePickColumns = useMemo(
     () => [
       {
-        key: 'pick',
-        title: '',
+        key: "pick",
+        title: "",
         width: 44,
         render: (row: any) => (
-          <input type="radio" readOnly checked={Number(originTemplateId) === Number(row.id)} />
-        )
+          <input
+            type="radio"
+            readOnly
+            checked={Number(originTemplateId) === Number(row.id)}
+          />
+        ),
       },
       {
-        key: 'templateName',
+        key: "templateName",
         title: <Translate>Template</Translate>,
         flexGrow: 2,
-        render: (row: any) => <strong>{row?.templateName ?? '-'}</strong>
+        render: (row: any) => <strong>{row?.templateName ?? "-"}</strong>,
       },
       {
-        key: 'templateType',
+        key: "templateType",
         title: <Translate>Type</Translate>,
         flexGrow: 1,
-        render: (row: any) => <span>{formatEnumString(String(row?.templateType ?? '')) || '-'}</span>
+        render: (row: any) => (
+          <span>
+            {formatEnumString(String(row?.templateType ?? "")) || "-"}
+          </span>
+        ),
       },
       {
-        key: 'active',
+        key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
         render: (row: any) => (
-          <MyBadgeStatus color={row?.isActive ? '#16a34a' : '#6b7280'} contant={row?.isActive ? 'Active' : 'Inactive'} />
-        )
-      }
+          <MyBadgeStatus
+            color={row?.isActive ? "#16a34a" : "#6b7280"}
+            contant={row?.isActive ? "Active" : "Inactive"}
+          />
+        ),
+      },
     ],
-    [originTemplateId]
+    [originTemplateId],
   );
 
   const replacementTemplatePickColumns = useMemo(
     () => [
       {
-        key: 'pick',
-        title: '',
+        key: "pick",
+        title: "",
         width: 44,
         render: (row: any) => (
-          <input type="radio" readOnly checked={Number(replacementTemplateId) === Number(row.id)} />
-        )
+          <input
+            type="radio"
+            readOnly
+            checked={Number(replacementTemplateId) === Number(row.id)}
+          />
+        ),
       },
       {
-        key: 'templateName',
+        key: "templateName",
         title: <Translate>Template</Translate>,
         flexGrow: 2,
-        render: (row: any) => <strong>{row?.templateName ?? '-'}</strong>
+        render: (row: any) => <strong>{row?.templateName ?? "-"}</strong>,
       },
       {
-        key: 'templateType',
+        key: "templateType",
         title: <Translate>Type</Translate>,
         flexGrow: 1,
-        render: (row: any) => <span>{formatEnumString(String(row?.templateType ?? '')) || '-'}</span>
+        render: (row: any) => (
+          <span>
+            {formatEnumString(String(row?.templateType ?? "")) || "-"}
+          </span>
+        ),
       },
       {
-        key: 'active',
+        key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
         render: (row: any) => (
-          <MyBadgeStatus color={row?.isActive ? '#16a34a' : '#6b7280'} contant={row?.isActive ? 'Active' : 'Inactive'} />
-        )
-      }
+          <MyBadgeStatus
+            color={row?.isActive ? "#16a34a" : "#6b7280"}
+            contant={row?.isActive ? "Active" : "Inactive"}
+          />
+        ),
+      },
     ],
-    [replacementTemplateId]
+    [replacementTemplateId],
   );
 
   const batchPickColumnsOrigin = useMemo(
     () => [
       {
-        key: 'pick',
-        title: '',
+        key: "pick",
+        title: "",
         width: 44,
         render: (row: any) => (
-          <input type="radio" readOnly checked={selectedOriginBatchRowKey === row.rowKey} />
-        )
+          <input
+            type="radio"
+            readOnly
+            checked={selectedOriginBatchRowKey === row.rowKey}
+          />
+        ),
       },
       {
-        key: 'applyLabel',
+        key: "applyLabel",
         title: <Translate>Start</Translate>,
         flexGrow: 2,
-        render: (row: any) => <span>{row.applyLabel}</span>
+        render: (row: any) => <span>{row.applyLabel}</span>,
       },
       {
-        key: 'endLabel',
+        key: "endLabel",
         title: <Translate>End</Translate>,
         flexGrow: 2,
-        render: (row: any) => <span>{row.endLabel}</span>
+        render: (row: any) => <span>{row.endLabel}</span>,
       },
       {
-        key: 'executionStatus',
+        key: "executionStatus",
         title: <Translate>Status</Translate>,
         flexGrow: 2,
         render: (row: any) =>
@@ -469,36 +610,40 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             />
           ) : (
             <span>—</span>
-          )
-      }
+          ),
+      },
     ],
-    [selectedOriginBatchRowKey]
+    [selectedOriginBatchRowKey],
   );
 
   const batchPickColumnsReplacement = useMemo(
     () => [
       {
-        key: 'pick',
-        title: '',
+        key: "pick",
+        title: "",
         width: 44,
         render: (row: any) => (
-          <input type="radio" readOnly checked={selectedReplacementBatchKey === row.rowKey} />
-        )
+          <input
+            type="radio"
+            readOnly
+            checked={selectedReplacementBatchKey === row.rowKey}
+          />
+        ),
       },
       {
-        key: 'applyLabel',
+        key: "applyLabel",
         title: <Translate>Start</Translate>,
         flexGrow: 2,
-        render: (row: any) => <span>{row.applyLabel}</span>
+        render: (row: any) => <span>{row.applyLabel}</span>,
       },
       {
-        key: 'endLabel',
+        key: "endLabel",
         title: <Translate>End</Translate>,
         flexGrow: 2,
-        render: (row: any) => <span>{row.endLabel}</span>
+        render: (row: any) => <span>{row.endLabel}</span>,
       },
       {
-        key: 'executionStatus',
+        key: "executionStatus",
         title: <Translate>Status</Translate>,
         flexGrow: 2,
         render: (row: any) =>
@@ -509,10 +654,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             />
           ) : (
             <span>—</span>
-          )
-      }
+          ),
+      },
     ],
-    [selectedReplacementBatchKey]
+    [selectedReplacementBatchKey],
   );
 
   const handleClose = () => {
@@ -522,7 +667,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
   const handleNext = () => {
     if (step === 0) {
       if (!originTemplateId || !selectedOriginTemplate) {
-        dispatch(notify({ msg: 'Select a template to continue.', sev: 'warning' }));
+        dispatch(
+          notify({ msg: "Select a template to continue.", sev: "warning" }),
+        );
         return;
       }
       setStep(1);
@@ -530,7 +677,12 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     }
     if (step === 1) {
       if (!originBatchId) {
-        dispatch(notify({ msg: 'Select a generation batch to continue.', sev: 'warning' }));
+        dispatch(
+          notify({
+            msg: "Select a generation batch to continue.",
+            sev: "warning",
+          }),
+        );
         return;
       }
       setStep(2);
@@ -538,7 +690,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     }
     if (step === 3) {
       if (!replacementTemplateId) {
-        dispatch(notify({ msg: 'Select a replacement template.', sev: 'warning' }));
+        dispatch(
+          notify({ msg: "Select a replacement template.", sev: "warning" }),
+        );
         return;
       }
       setStep(4);
@@ -554,7 +708,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const runBulkCancelForBatch = async () => {
     if (!originBatchId) return;
-    const targets = batchAppointmentsAll.filter(row => {
+    const targets = batchAppointmentsAll.filter((row) => {
       const d = appointmentStart(row);
       if (!d || !isStrictlyAfterCalendarToday(d)) return false;
       const st = normalizeApptStatus(row);
@@ -564,30 +718,40 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       .map((row: any) => Number(row?.id ?? row?.key ?? 0))
       .filter((id: number) => Number.isFinite(id) && id > 0);
     if (ids.length === 0) {
-      dispatch(notify({ msg: 'No future appointments in this batch match cancel rules.', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: "No future appointments in this batch match cancel rules.",
+          sev: "warning",
+        }),
+      );
       return;
     }
     showSystemLoader();
     try {
       for (const chunk of chunkArray(ids, 15)) {
         await Promise.all(
-          chunk.map(id =>
-            cancelAppointment({ id, cancelReason: SYSTEM_CANCEL_REASON }).unwrap()
-          )
+          chunk.map((id) =>
+            cancelAppointment({
+              id,
+              cancelReason: SYSTEM_CANCEL_REASON,
+            }).unwrap(),
+          ),
         );
       }
       dispatch(
         notify({
           msg: `Cancelled ${ids.length} appointment(s). Patients will be notified when supported by the server.`,
-          sev: 'success'
-        })
+          sev: "success",
+        }),
       );
       onSuccess?.();
       setConfirmBulkCancelOpen(false);
       handleClose();
     } catch (error) {
-      const errorMsg = extractErrorMessage(error) || 'Some appointments could not be cancelled.';
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      const errorMsg =
+        extractErrorMessage(error) ||
+        "Some appointments could not be cancelled.";
+      dispatch(notify({ msg: errorMsg, sev: "error" }));
     } finally {
       hideSystemLoader();
     }
@@ -595,17 +759,22 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const handleApplyBulkReschedule = async () => {
     if (!originBatchId || !replacementBatchId) {
-      dispatch(notify({ msg: 'Select a replacement batch.', sev: 'warning' }));
+      dispatch(notify({ msg: "Select a replacement batch.", sev: "warning" }));
       return;
     }
     if (replacementBatchId === originBatchId) {
-      dispatch(notify({ msg: 'Replacement batch must be different from the original batch.', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: "Replacement batch must be different from the original batch.",
+          sev: "warning",
+        }),
+      );
       return;
     }
     try {
       const result = await bulkReschedule({
         originalAvailabilityGenerationBatchId: originBatchId,
-        replacementAvailabilityGenerationBatchId: replacementBatchId
+        replacementAvailabilityGenerationBatchId: replacementBatchId,
       }).unwrap();
 
       if (result.success) {
@@ -619,7 +788,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         result.unmatchedAppointmentIds ??
         result.unmatchedOldAppointmentIds ??
         ([] as number[]);
-      const list = Array.isArray(rawUnmatched) ? rawUnmatched.filter(n => Number.isFinite(n)) : [];
+      const list = Array.isArray(rawUnmatched)
+        ? rawUnmatched.filter((n) => Number.isFinite(n))
+        : [];
 
       if (list.length > 0) {
         setUnmatchedIds(list);
@@ -627,9 +798,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           notify({
             msg:
               result.message?.trim() ||
-              'Not all appointments could be matched to replacement slots. Review step 3.',
-            sev: 'warning'
-          })
+              "Not all appointments could be matched to replacement slots. Review step 3.",
+            sev: "warning",
+          }),
         );
         setStep(2);
         return;
@@ -637,31 +808,45 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
       dispatch(
         notify({
-          msg: result.message?.trim() || 'Bulk reschedule did not complete.',
-          sev: 'warning'
-        })
+          msg: result.message?.trim() || "Bulk reschedule did not complete.",
+          sev: "warning",
+        }),
       );
     } catch (error) {
-      const errorMsg = extractErrorMessage(error) || 'Bulk reschedule failed.';
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      const errorMsg = extractErrorMessage(error) || "Bulk reschedule failed.";
+      dispatch(notify({ msg: errorMsg, sev: "error" }));
     }
   };
 
   const stepperMeta = WIZARD_STEPS.map((s, index) => ({
     title: s.title,
-    isError: step === 2 && unmatchedIds.length > 0 && index === 2
+    isError: step === 2 && unmatchedIds.length > 0 && index === 2,
   }));
 
   const renderBody = () => {
     if (step === 5) {
       return (
-        <Panel bordered style={{ padding: 24, textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
-            <FontAwesomeIcon icon={faCircleCheck} style={{ color: '#16a34a', fontSize: 24 }} />
-            <p style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Reschedule applied successfully</p>
+        <Panel bordered style={{ padding: 24, textAlign: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              marginBottom: 12,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faCircleCheck}
+              style={{ color: "#16a34a", fontSize: 24 }}
+            />
+            <p style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
+              Reschedule applied successfully
+            </p>
           </div>
-          <p style={{ color: '#64748b', fontSize: 13 }}>
-            All appointments in this run were handled. You can close this dialog.
+          <p style={{ color: "#64748b", fontSize: 13 }}>
+            All appointments in this run were handled. You can close this
+            dialog.
           </p>
         </Panel>
       );
@@ -670,15 +855,22 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     if (step === 0) {
       return (
         <Form fluid layout="vertical">
-          <p style={{ color: '#64748b', fontSize: 13, marginBottom: 12 }}>
-            Published templates (active and inactive). Select one template to continue.
+          <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
+            Published templates (active and inactive). Select one template to
+            continue.
           </p>
           {loadingTemplates ? (
             <Loader center />
           ) : publishedTemplates.length === 0 ? (
             <Panel bordered>No published templates found.</Panel>
           ) : (
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 8,
+              }}
+            >
               <MyTable
                 columns={templatePickColumns as any}
                 data={publishedTemplates}
@@ -688,13 +880,16 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   const id = Number(row?.id ?? 0);
                   if (!Number.isFinite(id) || id <= 0) return;
                   setOriginTemplateId(id);
-                  const t = publishedTemplates.find(x => Number(x.id) === id) ?? null;
+                  const t =
+                    publishedTemplates.find((x) => Number(x.id) === id) ?? null;
                   setSelectedOriginTemplate(t);
                   setOriginBatchId(null);
-                  setSelectedOriginBatchRowKey('');
+                  setSelectedOriginBatchRowKey("");
                 }}
                 rowClassName={(row: any) =>
-                  Number(originTemplateId) === Number(row?.id) ? 'selected-row' : ''
+                  Number(originTemplateId) === Number(row?.id)
+                    ? "selected-row"
+                    : ""
                 }
               />
             </div>
@@ -705,16 +900,24 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
     if (step === 1) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ color: '#64748b', fontSize: 13 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ color: "#64748b", fontSize: 13 }}>
             Select one availability generation batch for this template.
           </p>
           {loadingOriginBatches ? (
             <Loader center />
           ) : originBatchRows.length === 0 ? (
-            <Panel bordered>No generation batches found for this template.</Panel>
+            <Panel bordered>
+              No generation batches found for this template.
+            </Panel>
           ) : (
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 8,
+              }}
+            >
               <MyTable
                 columns={batchPickColumnsOrigin as any}
                 data={originBatchRows}
@@ -725,7 +928,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   setOriginBatchId(Number(row.id));
                 }}
                 rowClassName={(row: any) =>
-                  selectedOriginBatchRowKey === row.rowKey ? 'selected-row' : ''
+                  selectedOriginBatchRowKey === row.rowKey ? "selected-row" : ""
                 }
               />
             </div>
@@ -736,45 +939,76 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
     if (step === 2) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {unmatchedIds.length > 0 ? (
-            <Panel bordered style={{ background: '#fffbeb', borderColor: '#fcd34d' }}>
+            <Panel
+              bordered
+              style={{ background: "#fffbeb", borderColor: "#fcd34d" }}
+            >
               <strong>Outstanding appointments</strong>
               <p style={{ fontSize: 13, marginTop: 6 }}>
-                These appointments could not be matched to replacement slots. Adjust replacement batch or cancel
-                appointments, then try again.
+                These appointments could not be matched to replacement slots.
+                Adjust replacement batch or cancel appointments, then try again.
               </p>
               <pre
                 style={{
                   marginTop: 8,
                   fontSize: 12,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                   maxHeight: 120,
-                  overflow: 'auto'
+                  overflow: "auto",
                 }}
               >
-                {unmatchedIds.join(', ')}
+                {unmatchedIds.join(", ")}
               </pre>
             </Panel>
           ) : null}
 
           <Panel bordered>
-            <p style={{ fontSize: 13, marginBottom: 8 }}>
-              Future <strong>BOOKED</strong> and <strong>CONFIRMED</strong> appointments after today (today excluded).
-            </p>
-            {loadingBatchAppointments ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 8,
+              }}
+            >
+              <p style={{ fontSize: 13, margin: 0 }}>
+                {showFreeAppointments ? (
+                  <>
+                    Future <strong>NEW</strong> free appointments after today
+                    (today excluded).
+                  </>
+                ) : (
+                  <>
+                    Future <strong>BOOKED</strong> and{" "}
+                    <strong>CONFIRMED</strong> appointments after today (today
+                    excluded).
+                  </>
+                )}
+              </p>
+              <Checkbox
+                checked={showFreeAppointments}
+                onChange={(_, checked) =>
+                  setShowFreeAppointments(Boolean(checked))
+                }
+              >
+                Show free appointments
+              </Checkbox>
+            </div>
+            {loadingBulkReschedulePreview ? (
               <Loader center />
             ) : (
               <MyTable
                 columns={appointmentPreviewColumns as any}
-                data={bookedConfirmedRows}
+                data={appointmentPreviewRows}
                 height={260}
-                loading={loadingBatchAppointments}
+                loading={loadingBulkReschedulePreview}
               />
             )}
           </Panel>
-
         </div>
       );
     }
@@ -782,15 +1016,24 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     if (step === 3) {
       return (
         <Form fluid layout="vertical">
-          <p style={{ color: '#64748b', fontSize: 13, marginBottom: 12 }}>
-            Replacement templates with the same configuration as the selected template (same department).
+          <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
+            Replacement templates with the same configuration as the selected
+            template (same department).
           </p>
           {loadingDepartmentActiveTemplates ? (
             <Loader center />
           ) : replacementCandidates.length === 0 ? (
-            <Panel bordered>No matching replacement templates were found.</Panel>
+            <Panel bordered>
+              No matching replacement templates were found.
+            </Panel>
           ) : (
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 8,
+              }}
+            >
               <MyTable
                 columns={replacementTemplatePickColumns as any}
                 data={replacementCandidates}
@@ -801,10 +1044,12 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   if (!Number.isFinite(id) || id <= 0) return;
                   setReplacementTemplateId(id);
                   setReplacementBatchId(null);
-                  setSelectedReplacementBatchKey('');
+                  setSelectedReplacementBatchKey("");
                 }}
                 rowClassName={(row: any) =>
-                  Number(replacementTemplateId) === Number(row?.id) ? 'selected-row' : ''
+                  Number(replacementTemplateId) === Number(row?.id)
+                    ? "selected-row"
+                    : ""
                 }
               />
             </div>
@@ -815,16 +1060,25 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
     if (step === 4) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ color: '#64748b', fontSize: 13 }}>
-            Select the replacement generation batch. This runs the bulk reschedule mapping on save.
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ color: "#64748b", fontSize: 13 }}>
+            Select the replacement generation batch. This runs the bulk
+            reschedule mapping on save.
           </p>
           {loadingReplacementBatches ? (
             <Loader center />
           ) : replacementBatchRows.length === 0 ? (
-            <Panel bordered>No batches found for this replacement template.</Panel>
+            <Panel bordered>
+              No batches found for this replacement template.
+            </Panel>
           ) : (
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 8,
+              }}
+            >
               <MyTable
                 columns={batchPickColumnsReplacement as any}
                 data={replacementBatchRows}
@@ -835,7 +1089,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   setReplacementBatchId(Number(row.id));
                 }}
                 rowClassName={(row: any) =>
-                  selectedReplacementBatchKey === row.rowKey ? 'selected-row' : ''
+                  selectedReplacementBatchKey === row.rowKey
+                    ? "selected-row"
+                    : ""
                 }
               />
             </div>
@@ -870,7 +1126,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             <MyButton appearance="subtle" onClick={handleBack}>
               Back
             </MyButton>
-            <MyButton appearance="primary" onClick={() => setConfirmBulkCancelOpen(true)}>
+            <MyButton
+              appearance="primary"
+              onClick={() => setConfirmBulkCancelOpen(true)}
+            >
               Cancel appointments
             </MyButton>
             <MyButton appearance="default" disabled style={{ opacity: 0.65 }}>
@@ -943,7 +1202,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         onClose={handleClose}
         size="85vw"
         enforceFocus={step !== 5}
-        className={`${mode === 'light' ? 'modal-light' : 'modal-dark'} bulk-reschedule-wizard-modal`}
+        className={`${mode === "light" ? "modal-light" : "modal-dark"} bulk-reschedule-wizard-modal`}
       >
         <Modal.Header>
           <Modal.Title>
@@ -952,15 +1211,15 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           </Modal.Title>
         </Modal.Header>
         <Divider className="divider-line" />
-        <Modal.Body style={{ height: '72vh' }}>
+        <Modal.Body style={{ height: "72vh" }}>
           <MyStepper
             activeStep={step}
             stepsList={stepperMeta.map((s, index) => ({
               key: index,
               value: <Translate>{s.title}</Translate>,
-              description: '',
+              description: "",
               customIcon: null,
-              isError: s.isError || false
+              isError: s.isError || false,
             }))}
             modalColor="var(--primary-blue)"
           />
@@ -971,19 +1230,30 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         {renderFooter()}
       </Modal>
 
-      <Modal open={confirmBulkCancelOpen} size="xs" onClose={() => setConfirmBulkCancelOpen(false)}>
+      <Modal
+        open={confirmBulkCancelOpen}
+        size="xs"
+        onClose={() => setConfirmBulkCancelOpen(false)}
+      >
         <Modal.Header>
           <Modal.Title>Cancel future appointments?</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          This will cancel all future free, booked, and confirmed appointments for this batch (today excluded), using the
-          reason &quot;{SYSTEM_CANCEL_REASON}&quot;.
+          This will cancel all future free, booked, and confirmed appointments
+          for this batch (today excluded), using the reason &quot;
+          {SYSTEM_CANCEL_REASON}&quot;.
         </Modal.Body>
         <Modal.Footer>
-          <MyButton appearance="subtle" onClick={() => setConfirmBulkCancelOpen(false)}>
+          <MyButton
+            appearance="subtle"
+            onClick={() => setConfirmBulkCancelOpen(false)}
+          >
             Back
           </MyButton>
-          <MyButton appearance="primary" onClick={() => void runBulkCancelForBatch()}>
+          <MyButton
+            appearance="primary"
+            onClick={() => void runBulkCancelForBatch()}
+          >
             Confirm cancel
           </MyButton>
         </Modal.Footer>

@@ -195,6 +195,7 @@ export const appointmentFromTemplateService = createApi({
       },
       providesTags: ['AppointmentFromTemplate']
     }),
+    
 
     getAppointmentsByDepartmentBetweenDates: builder.query<
       PagedResult<AppointmentFromTemplate>,
@@ -292,10 +293,14 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
-    getBulkReschedulePreview: builder.query<BulkReschedulePreviewVM, { batchId: Id }>({
-      query: ({ batchId }) => ({
+    getBulkReschedulePreview: builder.query<
+      BulkReschedulePreviewVM,
+      { batchId: Id; includeFreeSlots: boolean }
+    >({
+      query: ({ batchId, includeFreeSlots }) => ({
         url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
-        method: 'GET'
+        method: 'GET',
+        params: { includeFreeSlots }
       }),
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
