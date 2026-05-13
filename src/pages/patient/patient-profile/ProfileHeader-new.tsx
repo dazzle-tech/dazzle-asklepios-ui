@@ -32,7 +32,11 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import { useLazyGetPatientInformationPdfQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
+import {
+  useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -77,8 +81,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
-   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
- const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
   const {
     data: profilePictureTicket,
@@ -154,6 +159,53 @@ const handlePrintPatientLabel = async (rowData: any) => {
     setPrintingType(null);
   }
 };
+
+const extractErrorMessage = (response: any): string => {
+  try {
+    const msg =
+      response?.data?.message ??
+      response?.data?.error ??
+      response?.message ??
+      response?.error;
+
+    if (typeof msg === 'string' && msg.trim()) {
+      return msg.replace(/^error\./i, '').trim();
+    }
+
+    if (response?.data && typeof response?.data === 'object') {
+      const detail = response.data.detail ?? response.data.description;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail.trim();
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+};
+
+const handleSendPasswordEmail = async () => {
+  if (!localPatient?.id) return;
+
+  try {
+    await sendPatientPasswordEmail(localPatient.id).unwrap();
+    dispatch(
+      notify({
+        msg: 'Password email sent successfully',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    const errorMsg = extractErrorMessage(error);
+    dispatch(
+      notify({
+        msg: errorMsg || 'Failed to send password email',
+        sev: 'error'
+      })
+    );
+  }
+};
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -529,6 +581,16 @@ useEffect(() => {
                 onClick={handleClear}
               >
                 <Translate>Clear</Translate>
+              </MyButton>
+
+              <MyButton
+                appearance="ghost"
+                disabled={!localPatient?.id || isSendingPasswordEmail}
+                onClick={handleSendPasswordEmail}
+              >
+                <Translate>
+                  {isSendingPasswordEmail ? 'Sending Password Email...' : 'Send Password Email'}
+                </Translate>
               </MyButton>
 
               <MyButton
