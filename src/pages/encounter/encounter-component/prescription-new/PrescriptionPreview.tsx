@@ -267,25 +267,17 @@ const PrescriptionPreview = ({ orderMedication }) => {
                     setRecord={noop}
                   />
 
-                  <MyInput
-                    disabled
-                    width={140}
-                    fieldType="date"
-                    fieldLabel="Valid Until"
-                    fieldName="validUtil"
-                    record={record}
-                    setRecord={noop}
-                  />
-
-                  <MyInput
-                    disabled
-                    width={160}
-                    fieldType="checkbox"
-                    fieldLabel="Brand Substitute Allowed"
-                    fieldName="genericSubstitute"
-                    record={record}
-                    setRecord={noop}
-                  />
+                  <div style={{ marginBottom: '1.5vw' }}>
+                    <MyInput
+                      disabled
+                      width={160}
+                      fieldType="checkbox"
+                      fieldLabel="Brand Substitute Allowed"
+                      fieldName="genericSubstitute"
+                      record={record}
+                      setRecord={noop}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

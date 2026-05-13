@@ -127,6 +127,8 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'already.cancelled': 'Telephonic consultation already cancelled.',
   'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
 
+  'unique.approval_number': 'Approval Number already exists. Please use a different approval number.',
+
   'db.constraint': 'Database constraint violation.'
 };
 
@@ -220,6 +222,7 @@ const DetailsTele = ({
 
   useEffect(() => {
     if (!practitionersResult?.data?.data) return;
+    if (practitionersResult?.isFetching) return;
 
     const newPractitioners = practitionersResult.data.data;
 
@@ -228,7 +231,7 @@ const DetailsTele = ({
       const unique = newPractitioners.filter(p => !existingIds.has(p.id));
       return [...prev, ...unique];
     });
-  }, [practitionersResult?.data?.data]);
+  }, [practitionersResult?.data?.data, practitionersResult?.isFetching]);
 
   /* ========================= ACTIONS ========================= */
 
@@ -320,15 +323,14 @@ const DetailsTele = ({
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     }
   };
+
   const handleOpenAttachmentModal = () => {
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -381,6 +383,7 @@ const DetailsTele = ({
               />
 
               <div className="row-2-cols">
+                {/* ✅ إضافة isFetching guard في onFetchMore */}
                 <MyInput
                   width="11vw"
                   fieldLabel="Physician"
@@ -396,6 +399,7 @@ const DetailsTele = ({
                   searchable
                   hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
                   onFetchMore={() => {
+                    if (practitionersResult?.isFetching) return; // ✅ منع الطلبات المتعددة
                     const nextPage = practitionerPage + 1;
                     setPractitionerPage(nextPage);
 
@@ -440,7 +444,19 @@ const DetailsTele = ({
                   fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
-                  setRecord={setFormData}
+                  setRecord={rec => {
+                    const val = String(rec?.approvalNumber ?? '');
+                    if (val.length > 10) {
+                      dispatch(
+                        notify({
+                          msg: 'Approval Number must not exceed 10 digits',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+                    setFormData(rec);
+                  }}
                 />
 
                 <div className="attachment-button-consultation-position">
