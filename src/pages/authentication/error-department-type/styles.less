@@ -14,7 +14,7 @@
 
   &__image {
     margin-bottom: 20px;
-
+    color: red !important;
     img {
       max-width: 100%;
       width: 340px;
@@ -74,4 +74,22 @@
       background: #1677ff;
     }
   }
+}
+
+.dark{
+  .error-page {
+  background: var(--dark-black);
+
+    &__code {
+    color: var(--white);
+  }
+    &__title {
+    color: var(--white);
+  } 
+  
+  &__details strong{
+    color: var(--white) !important;
+  }
+}
+ 
 }
