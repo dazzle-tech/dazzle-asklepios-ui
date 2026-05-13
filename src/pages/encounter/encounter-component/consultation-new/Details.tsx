@@ -166,6 +166,14 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
 
   const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
 
+  if (err?.status === 404 || data?.status === 404) {
+    const detail = String(data?.detail ?? '');
+    if (detail.toLowerCase().includes('department not found')) {
+      dispatch(notify({ msg: 'Department not found. Please ensure your department is configured correctly.' + suffix, sev: 'warning' }));
+      return;
+    }
+  }
+
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||
     data?.detail ||
@@ -212,10 +220,14 @@ const Details = ({
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
+
+  const resolvedFromFacilityId = encounter?.facilityId || selectedDepartment?.facilityId;
+  const resolvedFromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
+
   const [formData, setFormData] = useState<Consultation>({
     ...newConsultation,
-    fromFacilityId: selectedDepartment.facilityId,
-    fromDepartmentId: selectedDepartment.departmentId
+    fromFacilityId: resolvedFromFacilityId,
+    fromDepartmentId: resolvedFromDepartmentId
   });
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
@@ -267,6 +279,8 @@ const Details = ({
         ...newConsultation,
         patientId: patient?.id,
         encounterId: encounter?.id,
+        fromFacilityId: resolvedFromFacilityId,
+        fromDepartmentId: resolvedFromDepartmentId,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
@@ -349,6 +363,8 @@ const Details = ({
       ...newConsultation,
       patientId: patient?.id,
       encounterId: encounter?.id,
+      fromFacilityId: resolvedFromFacilityId,
+      fromDepartmentId: resolvedFromDepartmentId,
       destinationType: 'DEPARTMENT',
       toFacilityId: null,
       toDepartmentId: null,
@@ -415,11 +431,16 @@ const Details = ({
 
     try {
       if (formData.id) {
+        const updateToDepartmentId =
+          formData.destinationType === 'CONSULTANT' && !formData.toDepartmentId
+            ? resolvedFromDepartmentId
+            : formData.toDepartmentId;
+
         await updateConsultation({
           id: formData.id,
           destinationType: formData.destinationType,
           toFacilityId: formData.toFacilityId,
-          toDepartmentId: formData.toDepartmentId,
+          toDepartmentId: updateToDepartmentId,
           consultantSpeciality: formData.consultantSpeciality,
           practitionerId: formData.practitionerId,
           consultationMethod: formData.consultationMethod,
@@ -432,22 +453,29 @@ const Details = ({
         }).unwrap();
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
+        const effectiveToDepartmentId =
+          formData.destinationType === 'CONSULTANT' && !formData.toDepartmentId
+            ? resolvedFromDepartmentId
+            : formData.toDepartmentId;
+
         await createConsultation({
           ...formData,
-          fromFacilityId: selectedDepartment.facilityId,
-          fromDepartmentId: selectedDepartment.departmentId,
+          fromFacilityId: resolvedFromFacilityId,
+          fromDepartmentId: resolvedFromDepartmentId,
+          toDepartmentId: effectiveToDepartmentId,
           status: 'REQUESTED'
         }).unwrap();
 
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
-
-      setOpen(false);
-      handleClear();
-      refetchCon?.();
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
+      return;
     }
+
+    setOpen(false);
+    handleClear();
+    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {
@@ -702,7 +730,15 @@ const Details = ({
                           selectDataLabel={['firstName', 'lastName']}
                           selectDataValue="id"
                           record={formData}
-                          setRecord={setFormData}
+                          setRecord={newData => {
+                            const selectedPrac = allPractitioners.find(
+                              (p: any) => String(p.id) === String(newData.practitionerId)
+                            );
+                            setFormData({
+                              ...newData,
+                              toDepartmentId: (selectedPrac as any)?.departmentId ?? newData.toDepartmentId ?? null
+                            });
+                          }}
                           loading={practitionersResult?.isFetching}
                           searchable
                           hasMore={hasPractitioners}
