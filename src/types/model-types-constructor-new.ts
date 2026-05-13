@@ -758,7 +758,8 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   type: '',
   departmentId: undefined,
   facilityId: undefined,
-   parallelCapacityValue: 1,
+  appointable: false,
+  parallelCapacityValue: 1,
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
@@ -771,7 +772,8 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   type: '',
   departmentId: undefined,
   facilityId: undefined,
-   parallelCapacityValue: 1,
+  appointable: false,
+  parallelCapacityValue: 1,
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
@@ -965,6 +967,7 @@ export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTe
   endTime: '',
   slotStrategy: '',
   slotDurationMinutes: 0,
+  applyToAllWorkingDays: false,
   allowedServices: []
 };
 
@@ -1098,6 +1101,7 @@ export const newAppointmentFromTemplate: modelTypes.AppointmentFromTemplate = {
   patientId: null,
   availabilityTemplateId: null,
   requireConfirmation: true,
+  requirePractitioner: false,
   encounterReason: null,
   status: null,
   appointmentDateTime: null,
@@ -1147,6 +1151,18 @@ export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemp
 export const newAppointmentFromTemplateNoShowDTO: modelTypes.AppointmentFromTemplateNoShowDTO = {
   id: 0,
   noShowReason: ''
+};
+
+export const newAppointmentFromTemplateRescheduleDTO: modelTypes.AppointmentFromTemplateRescheduleDTO = {
+  oldAppointmentId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
+};
+
+export const newDiagnosticTestAppointmentRescheduleDTO: modelTypes.DiagnosticTestAppointmentRescheduleDTO = {
+  orderTestId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
 };
 
 export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
@@ -2983,4 +2999,21 @@ export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   serviceId: undefined,
   cdtCodeId: null,
   notes: null,
+};
+export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
+  id: undefined,
+  encounter: null,
+  patient: null,
+
+  eyeOpening: null,
+  eyeOpeningScore: null,
+
+  verbalResponse: null,
+  verbalResponseScore: null,
+
+  motorResponse: null,
+  motorResponseScore: null,
+
+  totalScore: null,
+  scoreInterpretation: null
 };

@@ -177,7 +177,11 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const links = brandsPage?.links || {};
 
   const { data: manufactureLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  const vaccineType = useEnumOptions('VaccineType');
+const vaccineType = useEnumOptions('VaccineType', {
+  labelOverrides: {
+    MRNA: 'mRNA'
+  }
+});
   const roa = useEnumOptions('RouteOfAdministration');
   const durationUnit = useEnumOptions('DurationUnit');
   const volumUnit = useEnumOptions('MeasurementUnit');
@@ -602,7 +606,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
                   record={vaccine}
                   setRecord={setVaccine}
                   disabled={!edit_new}
-                  menuMaxHeight={200}
                   required
                 />
               </div>
@@ -909,7 +912,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
       }
       childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      mainSize="sm"
+      mainSize="45vw"
     />
   );
 };

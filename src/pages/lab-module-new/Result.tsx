@@ -380,10 +380,28 @@ const Result = forwardRef<any, Props>(
     };
 
     const handleBulkApprove = () => {
-      if (!selectedResultIds.length) return;
+      const eligibleIds = normalizedResults
+        .filter(
+          row =>
+            selectedResultIds.includes(row.id) &&
+            row.processingStatus === 'RESULT_READY'
+        )
+        .map(row => row.id);
+
+      if (!eligibleIds.length) {
+        dispatch(
+          notify({
+            msg: 'No results are eligible for approval.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
       const emptyResults = normalizedResults.filter(
-        r => selectedResultIds.includes(r.id) && isResultEmpty(r)
+        row =>
+          eligibleIds.includes(row.id) &&
+          isResultEmpty(row)
       );
 
       if (emptyResults.length > 0) {
@@ -397,8 +415,12 @@ const Result = forwardRef<any, Props>(
       }
 
       const hasCritical = normalizedResults.some(
-        r => selectedResultIds.includes(r.id) && isCriticalResult(r)
+        row =>
+          eligibleIds.includes(row.id) &&
+          isCriticalResult(row)
       );
+
+      setSelectedResultIds(eligibleIds);
 
       if (hasCritical) {
         setIsBulkCriticalApprove(true);
@@ -665,8 +687,11 @@ const Result = forwardRef<any, Props>(
                 icon={faDiagramPredecessor}
                 style={{ cursor: 'pointer', opacity: 0.8 }}
                 onClick={() => {
-                  setSelectedComparisonProfileId(row.profileTestId);
-                  setOpenComparisonModal(true);
+                    console.log('🔍 Selected Row:', row);
+                    console.log('🆔 row.profileTestId:', row.profileTestId);
+
+                    setSelectedComparisonProfileId(row.profileTestId);
+                    setOpenComparisonModal(true);
                 }}
               />
             </span>
@@ -714,6 +739,7 @@ const Result = forwardRef<any, Props>(
           const canEdit = row.processingStatus === 'RESULT_READY';
           const canApprove = row.processingStatus === 'RESULT_READY';
           const canReject = row.processingStatus === 'RESULT_READY';
+          const canPrint = row.processingStatus !== 'RESULT_APPROVED';
 
           return (
             <HStack spacing={10}>
@@ -773,8 +799,19 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <FontAwesomeIcon icon={faPrint} style={{ opacity: 0.5 }} />
+              <FontAwesomeIcon
+                icon={faPrint}
+                className="icon-laboratory-size"
+                style={{
+                  cursor: canPrint ? 'pointer' : 'not-allowed',
+                  opacity: canPrint ? 1 : 0.4
+                }}
+                onClick={() => {
+                  if (!canPrint) return;
 
+                }}
+              />
+              
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
                 <FontAwesomeIcon
                   icon={faFileLines}
@@ -930,6 +967,7 @@ const Result = forwardRef<any, Props>(
             </div>
           }
         >
+        <div className='laboratory-table-size-container'>
           <MyTable
             columns={columns}
             data={normalizedResults}
@@ -954,6 +992,7 @@ const Result = forwardRef<any, Props>(
               }
             }}
           />
+        </div>
 
           <ChatModal
             open={openResultNoteModal}
@@ -1043,9 +1082,9 @@ const Result = forwardRef<any, Props>(
             hideActionBtn
             content={() => (
               <LaboratoryResultComparison
-                patient={{ key: order?.patientId }}
-                profileTestId={selectedComparisonProfileId}
-                hideTestNameFilter={true}
+                  patient={{ id: order?.patientId }}
+                  profileTestId={selectedComparisonProfileId}
+                  hideTestNameFilter={true}
               />
             )}
           />

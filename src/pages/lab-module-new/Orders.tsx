@@ -11,7 +11,7 @@ import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
-
+import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
 
 type OrdersProps = {
@@ -42,6 +42,22 @@ const Orders = forwardRef<any, OrdersProps>(
       size: 5,
       sort: ['isUrgent,desc', 'submittedDate,desc']
     });
+
+const { data: diagnosesList } = useGetPatientDiagnosesByEncounterIdQuery(
+  order?.encounterId ? { encounterId: order.encounterId } : skipToken
+);
+
+const diagnosisMap = useMemo(() => {
+  const map: Record<number, any> = {};
+
+  (diagnosesList ?? []).forEach((d: any) => {
+    if (d?.id != null) {
+      map[d.id] = d;
+    }
+  });
+
+  return map;
+}, [diagnosesList]);
 
     const fromDateParam = useMemo(() => {
       if (!dateFilter?.fromDate) return undefined;
@@ -195,7 +211,7 @@ const Orders = forwardRef<any, OrdersProps>(
           const patient = patientsMap[Number(r.patientId)];
           return (
             <>
-              <span>{patient ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ') : '—'}</span>
+              <span>{patient ? `${patient.firstName} ${patient.lastName}` : '—'}</span>
               <br />
               <span className="date-table-style">{patient?.medicalRecordNumber ?? '—'}</span>
             </>
@@ -206,6 +222,13 @@ const Orders = forwardRef<any, OrdersProps>(
         key: 'diagnosis',
         title: <Translate>Diagnosis</Translate>,
         flexGrow: 3,
+        render: (r: any) => {
+          const diagnosis = diagnosisMap[r.icdDiagnosisId];
+
+          return diagnosis
+            ? `${diagnosis.code ?? ''} - ${diagnosis.name ?? diagnosis.description ?? ''}`
+            : '—';
+        }
       },
       {
         key: 'status',

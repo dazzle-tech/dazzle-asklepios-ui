@@ -49,29 +49,50 @@ const ChildModal = ({
   const childRight = mainWidth + GAP;
   const subChildRight = mainWidth + childWidth + (GAP * 2);
 
-  useEffect(() => {
-    if (showChild) {
-      const childModal = document.querySelector('.child-right-modal');
-      if (childModal instanceof HTMLElement) {
-        childModal.style.position = 'fixed';
-        childModal.style.top = '0px';
-        childModal.style.right = `${childRight}px`;
-        childModal.style.zIndex = '1051';
-      }
-    }
-  }, [showChild, childRight]);
+useEffect(() => {
+  if (showChild) {
+    const el = document.querySelector('.child-right-modal');
+    if (el instanceof HTMLElement) {
+      const isSmall = window.innerWidth < 1200;
 
-  useEffect(() => {
-    if (showSubChild) {
-      const subChildModal = document.querySelector('.sub-child-right-modal');
-      if (subChildModal instanceof HTMLElement) {
-        subChildModal.style.position = 'fixed';
-        subChildModal.style.top = '0px';
-        subChildModal.style.right = `${subChildRight}px`;
-        subChildModal.style.zIndex = '1052';
+      el.style.position = 'fixed';
+      el.style.top = '0px';
+      el.style.zIndex = '1051';
+
+      if (isSmall) {
+        // 🔥 fallback mobile
+        el.style.right = '0px';
+        el.style.width = '100%';
+      } else {
+        el.style.right = `${childRight}px`;
+        el.style.width = `${childWidth}px`;
       }
     }
-  }, [showSubChild, subChildRight]);
+  }
+}, [showChild, childRight, childWidth]);
+
+
+useEffect(() => {
+  if (showSubChild) {
+    const el = document.querySelector('.sub-child-right-modal');
+    if (el instanceof HTMLElement) {
+      const isSmall = window.innerWidth < 1200;
+
+      el.style.position = 'fixed';
+      el.style.top = '0px';
+      el.style.zIndex = '1052';
+
+      if (isSmall) {
+        el.style.right = '0px';
+        el.style.width = '100%';
+      } else {
+        el.style.right = `${subChildRight}px`;
+        el.style.width = `${SIZE_WIDTH_MAP[subChildSize]}px`;
+      }
+    }
+  }
+}, [showSubChild, subChildRight, subChildSize]);
+
 
   return (
     <>

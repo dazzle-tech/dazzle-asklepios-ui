@@ -274,6 +274,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       </div>
       <div dir={dir}>
         <div className="container">
+
           <div className="left-boxs">
             <Row>
               <Col xs={14}>
@@ -290,7 +291,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
               <Col xs={10}>
                 <Form fluid className="filter-form-radiology-filters">
                   <MyInput
-                    width={"100%"}
+                    width="8vw"
                     placeholder="From Date"
                     fieldType="date"
                     fieldName="fromDate"
@@ -299,7 +300,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={"100%"}
+                    width="8vw"
                     placeholder="To Date"
                     fieldType="date"
                     fieldName="toDate"
@@ -308,21 +309,36 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={"100%"}
+                    width="8vw"
                     placeholder="Order ID"
                     fieldType="text"
                     fieldName="orderNumber"
                     record={{ orderNumber: orderNumberFilter }}
-                    setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
+                    setRecord={(val: any) =>
+                      setOrderNumberFilter(val.orderNumber ?? '')
+                    }
                     showLabel={false}
                   />
                 </Form>
 
-                {test?.id && <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />}
+                {test?.id && (
+                  <Row>
+                    <Col md={24}>
+                      <MyStepper
+                        stepsList={stepsDataComputed}
+                        activeStep={activeStep}
+                      />
+                    </Col>
+                  </Row>
+                )}
               </Col>
             </Row>
 
-            <Tabs activeKey={activeKey} onSelect={key => setActiveKey(key)} appearance="subtle">
+            <Tabs
+              activeKey={activeKey}
+              onSelect={key => setActiveKey(key)}
+              appearance="subtle"
+            >
               <Tabs.Tab eventKey="1" title="Tests">
                 <Tests
                   ref={TestsRef}
@@ -344,8 +360,10 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
               showDiagnosis={true}
               showVisitDetails={false}
               showBalance={false}
+              showCloseButton={false}
             />
           </div>
+
         </div>
       </div>
     </>

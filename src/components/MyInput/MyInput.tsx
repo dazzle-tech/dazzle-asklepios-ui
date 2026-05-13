@@ -21,7 +21,7 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
-
+import { InputPicker } from 'rsuite';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -49,20 +49,20 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check'
-    | 'textnumber';
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check'
+  | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -155,6 +155,10 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [localSearch, setLocalSearch] = useState('');
+
+
+  const allowEnterNewLine = props.allowEnterNewLine ?? true;
 
   useEffect(() => {
     const handleScroll = event => {
@@ -243,9 +247,6 @@ const MyInput = ({
     setRecord({ ...record, [fieldName]: value });
   };
 
-  const inputWidth = props?.width ?? 145;
-  const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
-
   const pickerPlacement = props.placement ?? 'autoVerticalStart';
   const pickerPreventOverflow = props.preventOverflow ?? true;
 
@@ -315,9 +316,19 @@ const MyInput = ({
     return spaceBelow > 250 ? 'bottomStart' : 'topStart';
   };
 
-  const resolveContainer = () => {
-    return document.querySelector('.rs-content') || document.body;
-  };
+const resolveContainer = () => {
+  const pickerElement = pickerRef.current as HTMLElement | null;
+
+  return (
+    pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
+    pickerElement?.closest('.child-right-modal .rs-modal-body') ||
+    pickerElement?.closest('.right-modal .rs-modal-body') ||
+    pickerElement?.closest('.rs-modal-body') ||
+    pickerElement?.closest('.rs-drawer-body') ||
+    pickerElement?.closest('.rs-content') ||
+    document.body
+  ) as HTMLElement;
+};
 
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
@@ -343,7 +354,7 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  if (props.allowEnterNewLine) {
+                  if (allowEnterNewLine) {
                     return;
                   }
                   focusNextField(e);
@@ -365,6 +376,7 @@ const MyInput = ({
       case 'checkbox':
         return (
           <Toggle
+            name={fieldName}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             checkedChildren={props.checkedLabel || 'Yes'}
             unCheckedChildren={props.unCheckedLabel || 'No'}
@@ -421,10 +433,10 @@ const MyInput = ({
             value={
               record[fieldName]
                 ? (() => {
-                    const [h, m, s] = record[fieldName].split(':').map(Number);
-                    const d = new Date(1970, 0, 1, h, m, s ?? 0);
-                    return d;
-                  })()
+                  const [h, m, s] = record[fieldName].split(':').map(Number);
+                  const d = new Date(1970, 0, 1, h, m, s ?? 0);
+                  return d;
+                })()
                 : null
             }
             onChange={(value: Date | null) => {
@@ -455,84 +467,265 @@ const MyInput = ({
 
       case 'select': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
+
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
-          : [props.selectDataLabel ?? ''];
-        const primaryLabelKey = labelKeys[0] ?? '';
-        const valueKey = props?.selectDataValue ?? '';
+          : [props.selectDataLabel ?? 'label'];
+
+        const primaryLabelKey = labelKeys[0] ?? 'label';
+
+        const valueKey = props?.selectDataValue ?? 'value';
+
         const dataList = props?.selectData ?? [];
 
+        const filteredData = !localSearch
+          ? dataList
+          : dataList.filter(item => {
+            const text = isArrayLabel
+              ? buildCombinedLabel(item, labelKeys, '')
+              : String(item?.[primaryLabelKey] ?? '');
+
+            return text
+              .toLowerCase()
+              .includes(localSearch.toLowerCase());
+          });
+
+        // 🔥 calculate popup width
+        const longestLabel = dataList.reduce(
+          (longest, item) => {
+            const text = isArrayLabel
+              ? buildCombinedLabel(
+                item,
+                labelKeys,
+                ''
+              )
+              : String(
+                item?.[primaryLabelKey] ?? ''
+              );
+
+            return text.length > longest.length
+              ? text
+              : longest;
+          },
+          ''
+        );
+
+        const popupWidth = Math.max(
+          typeof props?.width === 'number'
+            ? props.width
+            : 145,
+          longestLabel.length * 9 + 120
+        );
+
         return (
-          <div ref={pickerRef}>
+          <div
+            ref={pickerRef}
+          >
             <Form.Control
-              style={{ width: styleWidth, height: props?.height ?? 30 }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
-              block
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30
+              }}
+              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
+                }`}
+              block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              renderMenuItem={
-                props.renderMenuItem ??
-                (isArrayLabel
-                  ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
-                  : props.isEnum
-                  ? (label: any) => formatEnumString(String(label))
-                  : undefined)
-              }
-              searchBy={props.searchBy}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              searchable={props.searchable !== undefined ? props.searchable : true}
-              cleanable={props.cleanable !== undefined ? props.cleanable : true}
-              readOnly={props.readOnly !== undefined ? props.readOnly : false}
-              name={fieldName}
-              data={dataList}
+              searchable={false}
+
+              data={filteredData}
+
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              value={record ? record[fieldName] : ''}
+
+              value={
+                record?.[fieldName] !== undefined &&
+                  record?.[fieldName] !== null
+                  ? record[fieldName]
+                  : null
+              }
+
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
-                  if (value === null || value === undefined || value === '') {
-                    props.onSelectItem(null);
-                    return;
-                  }
-
                   const selectedItem =
-                    dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ?? null;
+                    dataList.find(
+                      (x: any) =>
+                        String(x?.[valueKey]) ===
+                        String(value)
+                    ) ?? null;
 
-                  props.onSelectItem(selectedItem);
+                  props.onSelectItem(
+                    selectedItem
+                  );
                 }
               }}
-              defaultValue={props.defaultSelectValue}
-              placeholder={props.placeholder}
-              menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
-              onKeyDown={focusNextField}
-              loading={props?.loading ?? false}
-              open={isSelectOpen}
-              onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsSelectOpen(true);
+              onKeyDown={(event: any) => {
+                const key = event?.key;
+
+                if (!key) return;
+
+                const ignoredKeys = [
+                  'Shift',
+                  'Tab',
+                  'Enter',
+                  'Escape',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'Control',
+                  'Alt',
+                  'Meta'
+                ];
+
+                if (
+                  ignoredKeys.includes(key)
+                ) {
+                  return;
+                }
+
+                if (key === 'Backspace') {
+                  setLocalSearch(prev =>
+                    prev.slice(0, -1)
+                  );
+
+                  return;
+                }
+
+                if (key.length === 1) {
+                  setLocalSearch(
+                    prev => prev + key
+                  );
+                }
               }}
-              onClose={() => setIsSelectOpen(false)}
-              virtualized={props?.virtualized ?? true}
+
+              renderMenuItem={
+                props.renderMenuItem ??
+                (isArrayLabel
+                  ? (
+                    label: any,
+                    item: any
+                  ) =>
+                    buildCombinedLabel(
+                      item,
+                      labelKeys,
+                      label
+                    )
+                  : props.isEnum
+                    ? (label: any) =>
+                      formatEnumString(
+                        String(label)
+                      )
+                    : undefined)
+              }
+
               renderValue={
                 isArrayLabel
-                  ? (value, item, selectedElement) => {
-                      if (!item) return selectedElement;
-                      return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                    }
+                  ? (
+                    value,
+                    item,
+                    selectedElement
+                  ) => {
+                    if (!item)
+                      return selectedElement;
+
+                    return (
+                      <span>
+                        {buildCombinedLabel(
+                          item,
+                          labelKeys,
+                          selectedElement
+                        )}
+                      </span>
+                    );
+                  }
                   : props.isEnum
-                  ? (value, item, selectedElement) => {
+                    ? (
+                      value,
+                      item,
+                      selectedElement
+                    ) => {
                       const base =
-                        (item && item[primaryLabelKey]) || selectedElement || value || '';
-                      return <span>{formatEnumString(String(base))}</span>;
+                        (item &&
+                          item[
+                          primaryLabelKey
+                          ]) ||
+                        selectedElement ||
+                        value ||
+                        '';
+
+                      return (
+                        <span>
+                          {formatEnumString(
+                            String(base)
+                          )}
+                        </span>
+                      );
                     }
-                  : undefined
+                    : undefined
               }
+
+              placeholder={
+                localSearch
+                  ? `Search: ${localSearch}`
+                  : props.placeholder
+              }
+
+              cleanable={
+                props.cleanable !== undefined
+                  ? props.cleanable
+                  : true
+              }
+
+              loading={
+                props?.loading ?? false
+              }
+
+              open={isSelectOpen}
+
+              onOpen={() => {
+                setPlacement(
+                  calculatePlacement()
+                );
+
+                setIsSelectOpen(true);
+              }}
+
+              onClose={() => {
+                setIsSelectOpen(false);
+
+                setLocalSearch('');
+              }}
+
+              placement={placement}
+
+              preventOverflow={
+                pickerPreventOverflow
+              }
+
+              container={resolveContainer()}
+
+              menuMaxHeight={getDynamicMenuMaxHeight(
+                filteredData
+              )}
+
+              menuStyle={{
+                width: popupWidth
+              }}
+
+              virtualized={
+                props?.virtualized ?? true
+              }
+
               disabledItemValues={
-                props.disabledItemValues ? dataList.map(item => item[valueKey]) : []
+                props.disabledItemValues
+                  ? dataList.map(
+                    item =>
+                      item[valueKey]
+                  )
+                  : []
               }
             />
           </div>
@@ -544,6 +737,7 @@ const MyInput = ({
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? 'name'];
+
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
         const pickerValue = record?.[fieldName] ?? '';
@@ -553,29 +747,47 @@ const MyInput = ({
           <div ref={pickerRef}>
             <Form.Control
               name={fieldName}
-              style={{ width: styleWidth, height: props?.height ?? 30 }}
+              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
               className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
               block
               disabled={props.disabled}
+
+              // 🔥🔥🔥 نفس الحل
               accepter={SelectPicker}
-              onSearch={searchText => {
-                props.setSearchKeyWard?.(searchText);
+              searchable={true}
+              searchBy={(keyword, label, item) => {
+                if (!keyword) return true;
+
+                const text = isArrayLabel
+                  ? buildCombinedLabel(item, labelKeys, '')
+                  : String(item?.[primaryLabelKey] ?? '');
+
+                return text
+                  .toLowerCase()
+                  .includes(keyword.toLowerCase());
               }}
+
               data={[
                 ...dataList,
                 ...(props.hasMore
                   ? [
-                      {
-                        [valueKey]: '__load_more__',
-                        [labelKey]: 'Load more...',
-                        isLoadMore: true
-                      }
-                    ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                   : [])
               ]}
+
               labelKey={labelKey}
               valueKey={valueKey}
               value={pickerValue}
+
+              onSearch={(searchText) => {
+                props.setSearchKeyWard?.(searchText);
+              }}
+
               onChange={(value, item, event) => {
                 if (item?.isLoadMore || value === '__load_more__') {
                   event?.preventDefault?.();
@@ -585,11 +797,9 @@ const MyInput = ({
                   return;
                 }
 
-                if (value === null || value === '' || value === undefined) {
+                if (!value) {
                   handleValueChange(null);
-                  if (props.onSelectItem) {
-                    props.onSelectItem(null);
-                  }
+                  props.onSelectItem?.(null);
                   return;
                 }
 
@@ -597,87 +807,13 @@ const MyInput = ({
                   dataList.find((x: any) => x[valueKey] === value) ?? item ?? null;
 
                 handleValueChange(value);
-
-                if (props.onSelectItem && selectedItem) {
-                  props.onSelectItem(selectedItem);
-                }
+                props.onSelectItem?.(selectedItem);
               }}
-              renderValue={(value, item, selectedElement) => {
-                // ✅ الحل: لما item يكون null (القيمة مش في الصفحة الحالية من الـ pagination)
-                // نبحث عنها في الـ data أو نستخدم renderOptionLabel أو نرجع القيمة نفسها
-                const resolvedItem =
-                  item ??
-                  dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ??
-                  null;
 
-                if (resolvedItem?.isLoadMore) return selectedElement;
-
-                if (props.renderOptionLabel) {
-                  if (resolvedItem) {
-                    const base = props.renderOptionLabel(resolvedItem);
-                    return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                  }
-                  // ✅ حتى لو ما لقينا الـ item في الـ data، نمرر object وهمي بالـ value
-                  // عشان renderOptionLabel يقدر يتعامل معه
-                  const fallbackBase = props.renderOptionLabel({ [valueKey]: value });
-                  if (fallbackBase) {
-                    return (
-                      <span>
-                        {props.isEnum ? formatEnumString(String(fallbackBase)) : fallbackBase}
-                      </span>
-                    );
-                  }
-                }
-
-                if (resolvedItem) {
-                  if (isArrayLabel) {
-                    const base = buildCombinedLabel(resolvedItem, labelKeys, selectedElement);
-                    return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                  }
-                  const base = resolvedItem[labelKey];
-                  return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
-                }
-
-                // ✅ آخر fallback: نعرض القيمة كما هي بدل ما نعرض فراغ
-                return <span>{selectedElement || String(value ?? '')}</span>;
-              }}
-              renderMenuItem={(label, item) => {
-                if (item?.isLoadMore) {
-                  return (
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                      onClick={e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        props.onFetchMore?.();
-                      }}
-                    >
-                      {item[labelKey]}
-                    </div>
-                  );
-                }
-
-                if (props.renderOptionLabel) {
-                  const base = props.renderOptionLabel(item);
-                  return props.isEnum ? formatEnumString(String(base)) : base;
-                }
-
-                if (isArrayLabel) {
-                  const base = buildCombinedLabel(item, labelKeys, label);
-                  return props.isEnum ? formatEnumString(String(base)) : base;
-                }
-
-                return props.isEnum ? formatEnumString(String(label)) : label;
-              }}
               placeholder={props.placeholder ?? 'Select...'}
-              searchable
               cleanable
               loading={props.loading ?? false}
-              menuMaxHeight={props.menuMaxHeight ?? 240}
+
               open={isSelectOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
@@ -691,12 +827,10 @@ const MyInput = ({
                 }
                 setIsSelectOpen(false);
               }}
+
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               container={resolveContainer()}
-              disabledItemValues={
-                props.disabledItemValues ? dataList.map(item => item[props?.selectDataValue]) : []
-              }
             />
           </div>
         );
@@ -740,53 +874,133 @@ const MyInput = ({
           </div>
         );
 
-      case 'checkPicker':
+      case 'checkPicker': {
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? 'label'];
+
+        const primaryLabelKey = labelKeys[0] ?? 'label';
+        const valueKey = props?.selectDataValue ?? 'value';
+        const dataList = props?.selectData ?? [];
+
+        const filteredData = !localSearch
+          ? dataList
+          : dataList.filter(item => {
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
+
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
+
+        const longestLabel = dataList.reduce((longest, item) => {
+          const text = isArrayLabel
+            ? buildCombinedLabel(item, labelKeys, '')
+            : String(item?.[primaryLabelKey] ?? '');
+
+          return text.length > longest.length ? text : longest;
+        }, '');
+
+        const popupWidth = Math.max(
+          typeof props?.width === 'number' ? props.width : 145,
+          longestLabel.length * 9 + 120
+        );
+
         return (
           <div ref={pickerRef}>
             <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-              block
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30
+              }}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
+              block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
+              searchable={false}
               container={resolveContainer()}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               name={fieldName}
-              data={props?.selectData ?? []}
-              labelKey={props?.selectDataLabel ?? ''}
-              valueKey={props?.selectDataValue ?? ''}
+              data={filteredData}
+              labelKey={primaryLabelKey}
+              valueKey={valueKey}
               value={record ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
-                  const valueKey = props?.selectDataValue ?? 'id';
                   const selectedItems = (props?.selectData ?? []).filter(item =>
                     (value ?? []).some(v => String(v) === String(item?.[valueKey]))
                   );
                   props.onSelectItem(selectedItems);
                 }
               }}
-              placeholder={props.placeholder ?? 'Select...'}
+              onKeyDown={(event: any) => {
+                const key = event?.key;
+                if (!key) return;
+
+                const ignoredKeys = [
+                  'Shift',
+                  'Tab',
+                  'Enter',
+                  'Escape',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'Control',
+                  'Alt',
+                  'Meta'
+                ];
+
+                if (ignoredKeys.includes(key)) {
+                  return;
+                }
+
+                if (key === 'Backspace') {
+                  setLocalSearch(prev => prev.slice(0, -1));
+                  return;
+                }
+
+                if (key.length === 1) {
+                  setLocalSearch(prev => prev + key);
+                }
+              }}
+              placeholder={
+                localSearch
+                  ? `Search: ${localSearch}`
+                  : props.placeholder ?? 'Select...'
+              }
               groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
-              menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
-              onKeyDown={focusNextField}
+              menuMaxHeight={getDynamicMenuMaxHeight(filteredData)}
               open={isCheckPickerOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
               }}
-              onClose={() => setIsCheckPickerOpen(false)}
+              onClose={() => {
+                setIsCheckPickerOpen(false);
+                setLocalSearch('');
+              }}
+              menuStyle={{
+                width: popupWidth
+              }}
+              virtualized={props?.virtualized ?? true}
               disabledItemValues={
                 props.disabledItemValues
-                  ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                  ? dataList.map(item => item[valueKey])
                   : []
               }
             />
           </div>
         );
-
+      }
+      
       case 'date':
         return (
           <div ref={pickerRef}>
@@ -886,8 +1100,8 @@ const MyInput = ({
               ? '0'
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-            ? String(record[fieldName])
-            : '';
+              ? String(record[fieldName])
+              : '';
 
         const inputControl = props.allowDecimal ? (
           <Form.Control
@@ -921,8 +1135,8 @@ const MyInput = ({
                 const trimmed = digitsOnly.slice(0, 10);
                 normalized = normalized.includes('.')
                   ? trimmed.slice(0, normalized.indexOf('.')) +
-                    '.' +
-                    trimmed.slice(normalized.indexOf('.'))
+                  '.' +
+                  trimmed.slice(normalized.indexOf('.'))
                   : trimmed;
 
                 dispatch(notify({ msg: 'Maximum allowed is 10 digits', sev: 'warning' }));
@@ -969,7 +1183,7 @@ const MyInput = ({
             min={props.min ?? 0}
             step={props.step ?? 1}
             accepter={InputNumber}
-            value={record?.[fieldName] ?? null}
+            value={value}
             onChange={value => {
               if (value === '' || value === null || value === undefined) {
                 setRecord?.({ ...record, [fieldName]: null });

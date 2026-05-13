@@ -3,7 +3,7 @@ import { Avatar, Divider, Form, Panel } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { useBookPatientAppointmentMutation } from '@/services/appointment/appointmentService';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -50,6 +50,7 @@ const BookPatient = ({
   readOnly = false
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
   const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -493,6 +494,28 @@ const BookPatient = ({
     return false;
   }, [readOnly, record?.service, record?.priority, record?.followUpEncounterId, bookingPatientId, appointmentDepartmentId]);
 
+  const patientChoiceButtonBase: React.CSSProperties = {
+    width: '100%',
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 400,
+    border: `1px solid ${mode === 'dark' ? 'var(--rs-border-primary)' : '#d6dde8'}`,
+    backgroundColor: mode === 'dark' ? 'var(--rs-bg-card)' : '#ffffff',
+    color: mode === 'dark' ? 'var(--rs-text-primary)' : '#2563EB',
+    transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    justifyContent: 'center'
+  };
+
+  const patientChoiceButtonActive: React.CSSProperties = {
+    border: 'none',
+    background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)',
+    color: '#ffffff',
+    boxShadow:
+      mode === 'dark'
+        ? '0 10px 24px rgba(37, 99, 235, 0.30)'
+        : '0 10px 24px rgba(37, 99, 235, 0.20)'
+  };
+
   const modalSteps = useMemo(
     () => [
       {
@@ -599,7 +622,10 @@ const BookPatient = ({
       dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
       return
     }
-
+    if(appointmentData.requirePractitioner && !record.defaultPractitioner){
+      dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+      return
+    }
     if (record.service === 'FOLLOW_UP') {
       if (!appointmentDepartmentId) {
         dispatch(
@@ -686,16 +712,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'select' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'select'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'select' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'select' ? patientChoiceButtonActive : {})
                         }}
                       >
                         {selectedPatient ? 'Change Patient' : 'Select Patient'}
@@ -712,16 +730,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'quick' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'quick'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'quick' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'quick' ? patientChoiceButtonActive : {})
                         }}
                       >
                         Quick Patient
@@ -834,13 +844,13 @@ const BookPatient = ({
                   <SectionContainer
                     title="Selected Appointment Time"
                     content={
-                      <Panel bordered style={{ padding: 10, background: '#f8f4ea' }}>
+                      <Panel bordered style={{ padding: 10, background: mode === 'dark' ? 'var(--dark-black)' :'#f8f4ea' }}>
                         <div>
                           <div>
-                            <div style={{ fontSize: 16, fontWeight: 500, color: '#000000' }}>
+                            <div style={{ fontSize: 16, fontWeight: 500, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.dateTitle}
                             </div>
-                            <div style={{ fontSize: 12, color: '#000000' }}>
+                            <div style={{ fontSize: 12, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.timeRange}
                             </div>
                           </div>
@@ -867,6 +877,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
+                            required={appointmentData?.requirePractitioner}
                           />
                           <MyInput
                             fieldType="select"

@@ -490,7 +490,7 @@ const AgeGroupSetup: React.FC = () => {
     if (selectedFilter === 'facilityId') {
       dynamicInput = (
         <MyInput
-          width={250}
+          width={"100%"}
           fieldLabel=""
           fieldName="value"
           fieldType="select"
@@ -504,7 +504,7 @@ const AgeGroupSetup: React.FC = () => {
     } else if (selectedFilter === 'ageGroup') {
       dynamicInput = (
         <MyInput
-          width={220}
+          width={"12vw"}
           fieldName="value"
           fieldLabel=""
           fieldType="select"
@@ -525,13 +525,13 @@ const AgeGroupSetup: React.FC = () => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder="Enter Value"
-          width={220}
+          width={"100%"}
         />
       );
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <Form fluid className='form-of-filters-set-up'>
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -543,9 +543,9 @@ const AgeGroupSetup: React.FC = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          width="170px"
+          width="12vw"
         />
-        {dynamicInput}
+        {recordOfFilter.filter && dynamicInput}
         <MyButton
           color="var(--deep-blue)"
           onClick={() => {

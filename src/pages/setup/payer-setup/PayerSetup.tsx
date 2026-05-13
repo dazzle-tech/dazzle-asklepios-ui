@@ -332,7 +332,7 @@ const PayorSetup = () => {
   ];
 
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         width="10vw"
         fieldName="category"

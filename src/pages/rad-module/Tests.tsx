@@ -44,6 +44,7 @@ import { Checkbox, Dropdown, Form, HStack, Panel, Popover, Tooltip, Whisper } fr
 import PatientArrivalModal from './PatientArrivalModal';
 import './styles.less';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 type Props = {
   order: any;
@@ -82,10 +83,24 @@ const Tests = forwardRef<any, Props>(
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
     const [openArrivalModal, setOpenArrivalModal] = useState(false);
     const [reportsByTestId, setReportsByTestId] = useState<Record<number, any>>({});
-
+    const [selectedNoteTestId, setSelectedNoteTestId] = useState<number | string | null>(null);
     const [openUndoAcceptModal, setOpenUndoAcceptModal] = useState(false);
     const [undoAcceptReason, setUndoAcceptReason] = useState('');
     const [undoAcceptTargetId, setUndoAcceptTargetId] = useState<number | null>(null);
+
+    const UserFullName = ({ login }: { login?: string }) => {
+      const { data: fullName, isFetching } = useGetUserFullNameByLoginQuery(
+        login!,
+        {
+          skip: !login
+        }
+      );
+
+      if (!login) return <> </>;
+
+      return <>{isFetching ? login : fullName || login}</>;
+    };
+
 
     const notifyFromApiError = (e: any) => {
       const status = e?.status || e?.originalStatus;
@@ -154,12 +169,12 @@ const Tests = forwardRef<any, Props>(
       isFetching: isNotesFetching,
       refetch: refetchNotes
     } = useGetNotesByOrderTestIdQuery(
-      test?.id
+      selectedNoteTestId
         ? {
-          orderTestId: test.id,
-          page: 0,
-          size: 100
-        }
+            orderTestId: selectedNoteTestId,
+            page: 0,
+            size: 100
+          }
         : skipToken
     );
 
@@ -790,7 +805,9 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) => (
           <>
-            <div>{rowData.createdBy}</div>
+            <div>
+              <UserFullName login={rowData.createdBy} />
+            </div>
             <div className="date-table-style">
               {formatDateWithoutSeconds(rowData.createdDate)}
             </div>
@@ -825,6 +842,7 @@ const Tests = forwardRef<any, Props>(
               }}
               onClick={() => {
                 setTest(rowData);
+                setSelectedNoteTestId(rowData.id);
                 setOpenNoteModal(true);
               }}
             />
@@ -871,12 +889,15 @@ const Tests = forwardRef<any, Props>(
             rowData.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
 
           const canUndoAccept =
-            rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
-
+            rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED &&
+            !rowData.imageStatus;
+            
           const canReject =
+            rowData.processingStatus !== DiagnosticOrderTestStatus.ACCEPTED &&
+            rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_READY &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
-
+            
           return (
             <HStack spacing={8}>
               <Whisper speaker={<Tooltip>Accept</Tooltip>}>
@@ -1067,7 +1088,7 @@ const Tests = forwardRef<any, Props>(
       <div dir={dir}>
         <Panel ref={ref} defaultExpanded>
 
-
+        <div className="rad-test-table-main-size">
           <MyTable
             filters={filters()}
             columns={columns}
@@ -1085,9 +1106,8 @@ const Tests = forwardRef<any, Props>(
             onRowClick={rowData => setTest(rowData)}
             rowClassName={isTestSelected}
             loadingHeight={200}
-
           />
-
+        </div>
 
           <CancellationModal
             open={openRejectedModal}

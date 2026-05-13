@@ -47,7 +47,7 @@ const Lab = () => {
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
-const [activeKey, setActiveKey] = useState('1');
+  const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
 
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
@@ -287,7 +287,7 @@ const [activeKey, setActiveKey] = useState('1');
                     <Col xs={10}>
                       <Form fluid className="filter-form-lab-filters">
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="From Date"
                           fieldType="date"
                           fieldName="fromDate"
@@ -296,7 +296,7 @@ const [activeKey, setActiveKey] = useState('1');
                           showLabel={false}
                         />
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="To Date"
                           fieldType="date"
                           fieldName="toDate"
@@ -305,7 +305,7 @@ const [activeKey, setActiveKey] = useState('1');
                           showLabel={false}
                         />
                         <MyInput
-                          width={130}
+                          width={"8vw"}
                           placeholder="Order ID"
                           fieldType="text"
                           fieldName="orderNumber"
@@ -341,6 +341,7 @@ const [activeKey, setActiveKey] = useState('1');
                     showDiagnosis={false}
                     showVisitDetails={false}
                     showBalance={false}
+                    showCloseButton={false}
                   />
                 </div>
               </div>

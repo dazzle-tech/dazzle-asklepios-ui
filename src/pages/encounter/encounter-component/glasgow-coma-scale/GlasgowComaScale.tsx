@@ -1,196 +1,683 @@
-import React, { useState } from 'react';
-import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { Checkbox, Form } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import GlasgowComaScaleModal from './GlasgowComaScaleModal';
-import PlusIcon from '@rsuite/icons/Plus';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import React, { useMemo, useState } from 'react';
 import './Style.less';
 import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import CancellationModal from '@/components/CancellationModal';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import { Panel, Checkbox } from 'rsuite';
+import { MdModeEdit } from 'react-icons/md';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useLocation } from 'react-router-dom';
+import { useAppDispatch } from '@/hooks';
+import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { newGlasgowComaScaleAssessment } from '@/types/model-types-constructor-new';
+import GlasgowComaScaleModal from './GlasgowComaScaleModal';
+import {
+  useGetGlasgowComaScaleAssessmentsByEncounterIdQuery,
+  useAddGlasgowComaScaleAssessmentMutation,
+  useUpdateGlasgowComaScaleAssessmentMutation,
+  useCancelGlasgowComaScaleAssessmentMutation
+} from '@/services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 
-// Initial sample data for the table
-const initialSampleData = [
-  {
-    id: 1,
-    gcsScore: 15,
-    levelOfInjury: 'Mild brain injury',
-    addedBy: 'Dr. Rami',
-    addedAt: '2025-07-29 10:30 AM',
-    cancelled: false
-  },
-  {
-    id: 2,
-    gcsScore: 8,
-    levelOfInjury: 'Moderate brain injury',
-    addedBy: 'Nurse Layla',
-    addedAt: '2025-07-25 01:15 PM',
-    cancelled: false
-  },
-  {
-    id: 3,
-    gcsScore: 4,
-    levelOfInjury: 'Severe brain injury (coma)',
-    addedBy: 'Dr. Ahmad',
-    addedAt: '2025-07-10 08:45 AM',
-    cancelled: true
+const GCS_ERROR_MAP: Record<string, string> = {
+  'id.mismatch': 'Path id does not match payload id.',
+  'id.notfound': 'Glasgow Coma Scale assessment not found.',
+  'encounter.notfound': 'Encounter not found.',
+  'patient.notfound': 'Patient not found.',
+  'patient.encounter.mismatch': 'The provided patient does not belong to the provided encounter.',
+  'gcs.score.invalid': 'Invalid GCS total score.',
+  'gcs.cancel.invalid':
+    'Cancelled By and Cancellation Reason are required when cancelling Glasgow Coma Scale assessment.',
+  'db.constraint':
+    'Database constraint violated while saving Glasgow Coma Scale assessment.'
+};
+
+const GCS_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  encounterId: 'Encounter',
+  eyeOpening: 'Eye Opening',
+  verbalResponse: 'Verbal Response',
+  motorResponse: 'Motor Response',
+  cancellationReason: 'Cancellation Reason'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? err ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    return msg || 'invalid value';
+  };
+
+  const toLabel = (field: string) => GCS_FIELD_LABELS[field] ?? field;
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        sev: 'error'
+      })
+    );
+    return;
   }
-];
 
-// Table columns configuration
-const columns: ColumnConfig[] = [
-  {
-    key: 'gcsScore',
-    title: 'GCS Score',
-    dataKey: 'gcsScore',
-    width: 100
-  },
-{
-  key: 'levelOfInjury',
-  title: 'Level of Injury',
-  dataKey: 'levelOfInjury',
-  width: 200,
-  render: row => (
-    <MyBadgeStatus
-      backgroundColor={
-        row.levelOfInjury === 'Mild brain injury'
-          ? 'var(--light-green)'
-          : row.levelOfInjury === 'Moderate brain injury'
-          ? 'var(--light-orange)'
-          : row.levelOfInjury === 'Severe brain injury (coma)'
-          ? 'var(--light-pink)'
-          : 'var(--background-gray)'
-      }
-      color={
-        row.levelOfInjury === 'Mild brain injury'
-          ? 'var(--primary-green)'
-          : row.levelOfInjury === 'Moderate brain injury'
-          ? 'var(--primary-orange)'
-          : row.levelOfInjury === 'Severe brain injury (coma)'
-          ? 'var(--primary-pink)'
-          : 'var(--primary-gray)'
-      }
-      contant={row.levelOfInjury}
-    />
-  )
-},
+  const messageProp: string = data?.message || '';
 
-  {
-    key: 'addedByAt',
-    title: 'Added By\\At',
-    dataKey: 'addedByAt',
-    width: 220,
-    render: row => (
-      <>
-        {row.addedBy}
-        <br />
-        <span className="date-table-style">{row.addedAt}</span>
-      </>
-    )
+  const errorKey =
+    (messageProp && messageProp.startsWith('error.')
+      ? messageProp.substring(6)
+      : undefined) || data?.errorKey;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+};
+
+const getRiskBadgeColors = (scoreInterpretation?: string | null) => {
+  if (scoreInterpretation === 'MILD_TRAUMATIC_BRAIN_INJURY') {
+    return {
+      backgroundColor: 'var(--light-green)',
+      color: 'var(--primary-green)'
+    };
   }
-];
 
-const GlasgowComaScale = () => {
-  // Sort states
-  const [sortColumn, setSortColumn] = useState('gcsScore');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  if (scoreInterpretation === 'MODERATE_TRAUMATIC_BRAIN_INJURY') {
+    return {
+      backgroundColor: 'var(--light-orange)',
+      color: 'var(--primary-orange)'
+    };
+  }
 
-  // Pagination states
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  //select row
-  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
-  // Modal open state
-  const [modalOpen, setModalOpen] = useState(false);
+  if (scoreInterpretation === 'SEVERE_TRAUMATIC_BRAIN_INJURY_COMA') {
+    return {
+      backgroundColor: 'var(--light-pink)',
+      color: 'var(--primary-pink)'
+    };
+  }
 
-  // Data state to hold the GCS records
-  const [sampleData, setSampleData] = useState(initialSampleData);
+  return {
+    backgroundColor: 'var(--background-gray)',
+    color: 'var(--primary-gray)'
+  };
+};
 
-  // Sort the data based on sortColumn and sortType
-  const sortedData = [...sampleData].sort((a, b) => {
-    const aVal = a[sortColumn];
-    const bVal = b[sortColumn];
-    if (aVal === bVal) return 0;
-    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
+type GlasgowComaScaleProps = {
+  patient?: any;
+  encounter?: any;
+  viewMode?: string;
+};
+
+const GlasgowComaScale = ({
+  patient: patientProp,
+  encounter: encounterProp,
+  viewMode: viewModeProp
+}: GlasgowComaScaleProps) => {
+  const { state } = useLocation();
+
+  const patient = patientProp ?? state?.patient;
+  const encounter = encounterProp ?? state?.encounter;
+  const viewMode = viewModeProp ?? state?.viewMode;
+
+  const edit = viewMode === 'readOnly';
+
+  const [openCancellationReasonModal, setOpenCancellationReasonModal] =
+    useState(false);
+
+  const [showCanceled, setShowCanceled] = useState(false);
+
+  const patientId = patient?.id
+    ? Number(patient.id)
+    : patient?.key
+      ? Number(patient.key)
+      : undefined;
+
+  const encounterId = encounter?.id
+    ? Number(encounter.id)
+    : undefined;
+
+  const dispatch = useAppDispatch();
+
+  const [gcsAssessment, setGcsAssessment] = useState<any>({
+    ...newGlasgowComaScaleAssessment
   });
 
-  // Pagination slice
-  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const [openPopup, setOpenPopup] = useState(false);
 
-  // Handle saving a new GCS record from the modal
-  const handleSave = newRecord => {
-    // Create a new record with unique id and current timestamp
-    const newData = {
-      id: sampleData.length + 1,
-      gcsScore: newRecord.totalScore,
-      levelOfInjury: newRecord.riskLevel,
-      addedBy: 'Current User', // Replace with actual user
-      addedAt: new Date().toLocaleString(),
-      cancelled: false
-    };
+  const [width] = useState(window.innerWidth);
 
-    // Add new record to the top of the list
-    setSampleData(prev => [newData, ...prev]);
-    setModalOpen(false);
-  };
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 10,
+    sort: 'id,desc'
+  });
 
-  // Filters UI with Cancel button, Show Cancelled checkbox, Add button
-  const filters = (
-    <div className="table-buttons-container">
-      <div className="left-group">
-        <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-        <Checkbox>
-          <Translate>Show Cancelled</Translate>
-        </Checkbox>
-      </div>
-      <div className="right-group">
-        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
-          Add
-        </MyButton>
-      </div>
-    </div>
+  const [sortColumn, setSortColumn] = useState('id');
+
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
+
+  const {
+    data: gcsListResponse,
+    isFetching,
+    refetch
+  } = useGetGlasgowComaScaleAssessmentsByEncounterIdQuery(
+    encounterId
+      ? {
+        encounterId,
+        showCancelled: showCanceled,
+        page: paginationParams.page,
+        size: paginationParams.size,
+        sort: paginationParams.sort
+      }
+      : skipToken
   );
-  //select row
-  const isSelectedRow = rowData => {
-    return rowData.id === selectedRowId ? 'selected-row' : '';
+
+  const tableData = useMemo(
+    () => gcsListResponse?.data ?? gcsListResponse ?? [],
+    [gcsListResponse]
+  );
+
+  const totalCount =
+    gcsListResponse?.totalCount ?? tableData.length ?? 0;
+
+  const [createGcsAssessment] =
+    useAddGlasgowComaScaleAssessmentMutation();
+
+  const [updateGcsAssessment] =
+    useUpdateGlasgowComaScaleAssessmentMutation();
+
+  const [cancelGcsAssessment] =
+    useCancelGlasgowComaScaleAssessmentMutation();
+
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+
+    if (!gcsAssessment?.eyeOpening)
+      missingFields.push('Eye Opening');
+
+    if (!gcsAssessment?.verbalResponse)
+      missingFields.push('Verbal Response');
+
+    if (!gcsAssessment?.motorResponse)
+      missingFields.push('Motor Response');
+
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(
+        field => `• ${field}: is required`
+      );
+
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'warning'
+        })
+      );
+
+      return false;
+    }
+
+    return true;
   };
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const handleSave = async () => {
+    if (!validateRequiredFields()) return false;
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+    try {
+      dispatch(showSystemLoader());
 
+      const payload = {
+        ...(gcsAssessment?.id && {
+          id: Number(gcsAssessment.id)
+        }),
+
+        patient: patientId ? { id: patientId } : null,
+
+        encounter: encounterId ? { id: encounterId } : null,
+
+        eyeOpening: gcsAssessment.eyeOpening,
+
+        verbalResponse: gcsAssessment.verbalResponse,
+
+        motorResponse: gcsAssessment.motorResponse
+      };
+
+      if (gcsAssessment?.id) {
+        await updateGcsAssessment(payload as any).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Glasgow Coma Scale assessment updated successfully',
+            sev: 'success'
+          })
+        );
+      } else {
+        await createGcsAssessment(payload as any).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Glasgow Coma Scale assessment created successfully',
+            sev: 'success'
+          })
+        );
+      }
+
+      setOpenPopup(false);
+
+      setGcsAssessment({
+        ...newGlasgowComaScaleAssessment
+      });
+
+      refetch();
+
+      return true;
+    } catch (err: any) {
+      handleCrudError(err, dispatch, GCS_ERROR_MAP);
+
+      return false;
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!gcsAssessment?.id) return;
+
+    const cancellationReason =
+      gcsAssessment?.cancellationReason?.trim();
+
+    if (!cancellationReason) {
+      dispatch(
+        notify({
+          msg: 'Cancellation Reason is required',
+          sev: 'warning'
+        })
+      );
+
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      await cancelGcsAssessment({
+        id: gcsAssessment.id,
+        cancellationReason
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Glasgow Coma Scale assessment cancelled successfully',
+          sev: 'success'
+        })
+      );
+
+      setOpenCancellationReasonModal(false);
+
+      setGcsAssessment({
+        ...newGlasgowComaScaleAssessment
+      });
+
+      refetch();
+    } catch (err: any) {
+      handleCrudError(err, dispatch, GCS_ERROR_MAP);
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const isSelected = (rowData: any) =>
+    rowData?.id === gcsAssessment?.id
+      ? 'selected-row'
+      : '';
+
+  const tableColumns = [
+    {
+      key: 'totalScore',
+      title: <Translate>GCS Score</Translate>,
+      flexGrow: 1,
+      render: (row: any) => row?.totalScore ?? '-'
+    },
+
+    {
+      key: 'scoreInterpretation',
+      title: <Translate>Level of Injury</Translate>,
+      flexGrow: 3,
+      render: (row: any) => {
+        const colors = getRiskBadgeColors(
+          row?.scoreInterpretation
+        );
+
+        return (
+          <MyBadgeStatus
+            backgroundColor={colors.backgroundColor}
+            color={colors.color}
+            contant={
+              formatEnumString(
+                row?.scoreInterpretation
+              ) ?? '-'
+            }
+          />
+        );
+      }
+    },
+
+    {
+      key: 'eyeOpening',
+      title: <Translate>Eye Opening</Translate>,
+      flexGrow: 2,
+      render: (row: any) => (
+        <p>
+          {formatEnumString(row?.eyeOpening)} (
+          {row?.eyeOpeningScore ?? 0})
+        </p>
+      )
+    },
+
+    {
+      key: 'verbalResponse',
+      title: <Translate>Verbal Response</Translate>,
+      flexGrow: 2,
+      render: (row: any) => (
+        <p>
+          {formatEnumString(row?.verbalResponse)} (
+          {row?.verbalResponseScore ?? 0})
+        </p>
+      )
+    },
+
+    {
+      key: 'motorResponse',
+      title: <Translate>Motor Response</Translate>,
+      flexGrow: 2,
+      render: (row: any) => (
+        <p>
+          {formatEnumString(row?.motorResponse)} (
+          {row?.motorResponseScore ?? 0})
+        </p>
+      )
+    },
+
+    {
+      key: 'createdBy',
+      title: <Translate>Created By/At</Translate>,
+      flexGrow: 3,
+      expandable: true,
+      render: (row: any) => (
+        <>
+          {row?.createdBy ?? '-'}
+          <br />
+          <span className="date-table-style">
+            {row?.createdDate
+              ? formatDateWithoutSeconds(
+                row.createdDate
+              )
+              : '-'}
+          </span>
+        </>
+      )
+    },
+
+    {
+      key: 'lastModifiedDate',
+      title: 'Updated By/At',
+      expandable: true,
+      render: (row: any) =>
+        row?.lastModifiedDate ? (
+          <>
+            {row?.lastModifiedBy ?? '-'} <br />
+
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(
+                row.lastModifiedDate
+              )}
+            </span>
+          </>
+        ) : (
+          ''
+        )
+    },
+
+    {
+      key: 'cancelledByAt',
+      title: 'Cancelled By/At',
+      expandable: true,
+      render: (row: any) =>
+        row?.cancelledAt ? (
+          <>
+            {row?.cancelledBy ?? '-'}
+            <br />
+
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(
+                row.cancelledAt
+              )}
+            </span>
+          </>
+        ) : (
+          ''
+        )
+    },
+
+    {
+      key: 'cancellationReason',
+      title: (
+        <Translate>
+          Cancellation Reason
+        </Translate>
+      ),
+      expandable: true,
+      render: (row: any) =>
+        row?.cancellationReason ?? '-'
+    },
+
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      flexGrow: 1,
+      align: 'center',
+
+      render: (rowData: any) => (
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            justifyContent: 'center'
+          }}
+        >
+          <MdModeEdit
+            className="icons-style"
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            style={{
+              cursor: rowData?.cancelledAt
+                ? 'not-allowed'
+                : 'pointer',
+
+              opacity: rowData?.cancelledAt
+                ? 0.5
+                : 1
+            }}
+            onClick={e => {
+              e.stopPropagation();
+
+              if (rowData?.cancelledAt) return;
+
+              setGcsAssessment({
+                ...rowData
+              });
+
+              setOpenPopup(true);
+            }}
+          />
+
+          <CloseOutlineIcon
+            className="icons-style"
+            title="Cancel"
+            style={{
+              fontSize: 24,
+              color: 'var(--primary-pink)',
+              cursor: rowData?.cancelledAt
+                ? 'not-allowed'
+                : 'pointer',
+
+              opacity: rowData?.cancelledAt
+                ? 0.5
+                : 1
+            }}
+            onClick={e => {
+              e.stopPropagation();
+
+              if (rowData?.cancelledAt) return;
+
+              setGcsAssessment(rowData);
+
+              setOpenCancellationReasonModal(true);
+            }}
+          />
+        </div>
+      )
+    }
+  ];
+
+  const handlePageChange = (
+    _event: any,
+    newPage: number
+  ) => {
+    setPaginationParams({
+      ...paginationParams,
+      page: newPage
+    });
+  };
+
+  const handleSortChange = (
+    column: string,
+    type: 'asc' | 'desc'
+  ) => {
+    setSortColumn(column);
+
+    setSortType(type);
+
+    setPaginationParams({
+      ...paginationParams,
+      sort: `${column},${type}`,
+      page: 0
+    });
+  };
+
+  const direction =
+    localStorage.getItem('direction') || 'LTR';
+
+  const dir =
+    direction === 'RTL'
+      ? 'rtl'
+      : 'ltr';
 
   return (
-    <div dir={dir}>
-      <MyTable
-        data={paginatedData}
-        columns={columns}
-        loading={false}
-        sortColumn={sortColumn}
-        rowClassName={isSelectedRow}
-        onRowClick={rowData => {
-          setSelectedRowId(rowData.id);
-        }}
-        sortType={sortType}
-        onSortChange={(col, type) => {
-          setSortColumn(col);
-          setSortType(type);
-        }}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        totalCount={sortedData.length}
-        onPageChange={(_, newPage) => setPage(newPage)}
-        onRowsPerPageChange={e => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
-        tableButtons={filters}
-      />
+    <div
+      dir={dir}
+      className={edit ? 'disabled-panel' : ''}
+    >
+      <Panel dir={dir}>
 
-      <GlasgowComaScaleModal open={modalOpen} setOpen={setModalOpen} onSave={handleSave} />
+        <div className="gcs-table-header">
+          <Checkbox
+            checked={showCanceled}
+            onChange={() => {
+              setShowCanceled(prev => !prev);
+
+              setPaginationParams(prev => ({
+                ...prev,
+                page: 0,
+                timestamp: Date.now()
+              }));
+            }}
+          >
+            <Translate>Show Cancelled</Translate>
+          </Checkbox>
+
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={() => {
+              setGcsAssessment({
+                ...newGlasgowComaScaleAssessment
+              });
+
+              setOpenPopup(true);
+            }}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>
+
+        <MyTable
+          data={tableData}
+          totalCount={totalCount}
+          loading={isFetching}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          onRowClick={(rowData: any) => {
+            setGcsAssessment(rowData);
+          }}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={(e: any) => {
+            const newSize = Number(
+              e.target.value
+            );
+
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+        />
+
+        <CancellationModal
+          open={openCancellationReasonModal}
+          setOpen={
+            setOpenCancellationReasonModal
+          }
+          object={gcsAssessment}
+          setObject={setGcsAssessment}
+          handleCancle={handleCancel}
+          fieldName="cancellationReason"
+          fieldLabel="Cancellation Reason"
+          title="Cancellation"
+        />
+
+        <GlasgowComaScaleModal
+          open={openPopup}
+          setOpen={setOpenPopup}
+          width={width}
+          gcsAssessment={gcsAssessment}
+          setGcsAssessment={setGcsAssessment}
+          handleSave={handleSave}
+        />
+      </Panel>
     </div>
   );
 };

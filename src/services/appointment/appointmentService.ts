@@ -8,6 +8,8 @@ import type {
   AppointmentFromTemplateQuickAppointmentResponseVM,
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
+  AppointmentFromTemplateRescheduleDTO,
+  DiagnosticTestAppointmentRescheduleDTO,
   AppointmentFromTemplateSearchFilterDTO
 } from '@/types/model-types-new';
 
@@ -85,9 +87,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -100,6 +99,36 @@ export const appointmentFromTemplateService = createApi({
         method: 'POST',
         body
       }),
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    rescheduleAppointment: builder.mutation<
+      AppointmentFromTemplate,
+      AppointmentFromTemplateRescheduleDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/reschedule`,
+        method: 'POST',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    rescheduleDiagnosticTestAppointment: builder.mutation<
+      AppointmentFromTemplate,
+      DiagnosticTestAppointmentRescheduleDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/reschedule-diagnostic-test`,
+        method: 'POST',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -231,9 +260,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -243,9 +269,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'PUT',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -254,9 +277,6 @@ export const appointmentFromTemplateService = createApi({
         url: `${APPOINTMENT_BASE_URL}/${id}/confirm`,
         method: 'PUT'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -265,9 +285,6 @@ export const appointmentFromTemplateService = createApi({
         url: `${APPOINTMENT_BASE_URL}/${id}/check-in`,
         method: 'PUT'
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -287,6 +304,8 @@ export const appointmentFromTemplateService = createApi({
 export const {
   useBookPatientAppointmentMutation,
   useCreateQuickAppointmentMutation,
+  useRescheduleAppointmentMutation,
+  useRescheduleDiagnosticTestAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useGetAppointmentsByBatchIdQuery,

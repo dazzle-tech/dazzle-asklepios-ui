@@ -182,7 +182,13 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       setSelectedInsurance(null);
       setOpenDeleteModal(false);
     } catch (err: any) {
-      const msg = err?.data?.detail || 'Failed to delete insurance';
+      let msg = 'Failed to delete insurance';
+
+      if (err?.data?.message === 'error.delete.hasCoverages') {
+        msg = 'This insurance cannot be deleted because it has associated coverages.';
+      } else if (err?.data?.detail) {
+        msg = err.data.detail;
+      }
       dispatch(notify({ msg, sev: 'error' }));
     }
   };

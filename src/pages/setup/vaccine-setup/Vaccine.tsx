@@ -65,8 +65,11 @@ const Vaccine: React.FC = () => {
   });
 
   // Enums
-  const vaccineTypeOptions = useEnumOptions('VaccineType');
-  const roa = useEnumOptions('RouteOfAdministration');
+  const vaccineTypeOptions = useEnumOptions('VaccineType', {
+    labelOverrides: {
+      MRNA: 'mRNA'
+    }
+  });  const roa = useEnumOptions('RouteOfAdministration');
 
   // Data (main)
   const {
@@ -384,7 +387,7 @@ const Vaccine: React.FC = () => {
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -436,7 +439,14 @@ const Vaccine: React.FC = () => {
       key: 'type',
       title: <Translate>Type</Translate>,
       flexGrow: 3,
-      render: (row: VaccineModel) => formatEnumString(row?.type)
+      render: (row: VaccineModel) => {
+        const value = formatEnumString(row?.type);
+        if (String(row?.type).toUpperCase() === 'MRNA') {
+          return 'mRNA';
+        }
+
+        return value;
+      }
     },
     {
       key: 'numberOfDoses',

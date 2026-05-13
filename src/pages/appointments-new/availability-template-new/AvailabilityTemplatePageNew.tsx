@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
+import { MdContentCopy } from 'react-icons/md';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -8,6 +9,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {
   useGetAvailabilityTemplatesByTemplateTypeQuery,
+  useCloneAvailabilityTemplateMutation,
   useToggleAvailabilityTemplateActiveMutation,
   useUpdateAvailabilityTemplateMutation
 } from '@/services/appointment/availabilityTemplateService';
@@ -27,7 +29,7 @@ import AvailabilityTemplateDetailsSection from './AvailabilityTemplateDetailsSec
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { RiFolderHistoryLine } from "react-icons/ri";
 import AvailabilityTemplateLogModal from './AvailabilityTemplateLogModal';
-
+import './styles.less';
 
 const AvailabilityTemplatePageNew = () => {
 
@@ -59,6 +61,7 @@ const AvailabilityTemplatePageNew = () => {
       { skip: !selectedFacility?.id }
     );
   const [toggleTemplateActive] = useToggleAvailabilityTemplateActiveMutation();
+  const [cloneTemplate] = useCloneAvailabilityTemplateMutation();
   const [updateTemplate] = useUpdateAvailabilityTemplateMutation();
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
@@ -187,6 +190,27 @@ const AvailabilityTemplatePageNew = () => {
     }
   };
 
+  const handleCloneTemplate = async (rowData: AvailabilityTemplateResponseVM) => {
+    if (!rowData?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      const clonedTemplate = await cloneTemplate({ id: rowData.id }).unwrap();
+      dispatch(
+        notify({
+          msg: 'Template cloned successfully',
+          sev: 'success'
+        })
+      );
+      setSelectedTemplate(clonedTemplate);
+      refetch();
+    } catch (error) {
+      const errorMsg = extractErrorMessage(error) || 'Clone failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
   const columns = [
     {
       key: 'templateName',
@@ -272,6 +296,13 @@ const AvailabilityTemplatePageNew = () => {
               />
             </>
           )}
+          <MdContentCopy
+            title="Clone"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => handleCloneTemplate(rowData)}
+          />
           <RiFolderHistoryLine
             title="Log"
             size={24}
@@ -288,7 +319,7 @@ const AvailabilityTemplatePageNew = () => {
   ];
 
   const filters = (
-    <Form layout="inline">
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldType="select"
         fieldName="filter"
@@ -315,6 +346,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "departmentId" && (
         <MyInput
           fieldName="value"
@@ -327,6 +359,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "status" && (
         <MyInput
           fieldName="value"
@@ -339,6 +372,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {recordOfFilter.filter === "templateType" && (
         <MyInput
           fieldName="value"
@@ -351,6 +385,7 @@ const AvailabilityTemplatePageNew = () => {
           showLabel={false}
         />
       )}
+
       {!recordOfFilter.filter && (
         <MyInput
           fieldType="text"
@@ -361,6 +396,7 @@ const AvailabilityTemplatePageNew = () => {
           placeholder="Search"
         />
       )}
+
       <MyButton
         color="var(--deep-blue)"
         onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}

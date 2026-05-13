@@ -205,7 +205,7 @@ const AddEncounterVaccine = ({
 
   const [vaccine, setVaccine] = useState<Vaccine>({ ...vaccineObject });
   const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...vaccineBrandObject });
-  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...vaccineDoseObjet });
+  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...(newVaccineDose as VaccineDose) });
   const [vaccineToDose, setVaccineToDose] = useState<VaccineDose>({
     ...newVaccineDose,
     doseNumber: ''
@@ -218,7 +218,7 @@ const AddEncounterVaccine = ({
     vaccineBrandId: vaccineBrandObject?.id ?? null
   });
   const [dosePicker, setDosePicker] = useState<{ vaccineDoseId: number | null }>({
-    vaccineDoseId: vaccineDoseObjet?.id ?? null
+    vaccineDoseId: null
   });
   const [administrationReaction, setAdministrationReactions] = useState<{
     administrationReactionsLkey: string | null;
@@ -768,7 +768,7 @@ const AddEncounterVaccine = ({
                 setVaccineDose({ ...(newVaccineDose as VaccineDose), ...(item as VaccineDose) });
                 setDosePicker({ vaccineDoseId: item.id as number });
               }}
-              placeholder={vaccineDose?.doseNumber ? String(vaccineDose.doseNumber) : 'Select'}
+              placeholder="Select"
               disabled={isDisabledField}
             />
             <MyInput
@@ -819,6 +819,7 @@ const AddEncounterVaccine = ({
               disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
             <MyInput
+              width={"100%"}
               column
               required
               fieldLabel="Date Administered"

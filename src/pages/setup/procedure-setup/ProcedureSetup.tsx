@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink, MdAttachMoney } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdLink } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
@@ -15,7 +15,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useEnumOptions } from '@/services/enumsApi';
-import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import {
   useGetProceduresQuery,
   useToggleProcedureIsActiveMutation,
@@ -30,7 +30,6 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -78,9 +77,7 @@ const ProcedureSetup: React.FC = () => {
     timestamp: Date.now(),
   });
 
-  // Enum options for category
-  
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
 
   // Main list and facilities
   const { data: proceduresPage, isFetching, refetch } = useGetProceduresQuery({
@@ -121,9 +118,6 @@ const ProcedureSetup: React.FC = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch]);
-   useEffect(() => {
-     console.log('recordOfFilter changed', recordOfFilter);
-   }, [recordOfFilter]);
   // Resize listener for modal width
   useEffect(() => {
     const handleResize = () => {
@@ -393,8 +387,7 @@ const ProcedureSetup: React.FC = () => {
       key: 'categoryType',
       title: <Translate>Category</Translate>,
       flexGrow: 3,
-      render: (row: any) =>
-        row?.categoryType ? conjureValueBasedOnKeyFromList(CategoryLovQueryResponse?.object ?? [], row?.categoryType, 'lovDisplayVale') : '',
+      render: (row: any) => row?.categoryType ? formatEnumString(row.categoryType) : '',
     },
     {
       key: 'isAppointable',
@@ -499,7 +492,7 @@ const ProcedureSetup: React.FC = () => {
 
   // Filters UI
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -517,13 +510,13 @@ const ProcedureSetup: React.FC = () => {
       />
       {recordOfFilter.filter === 'categoryType' ? (
         <MyInput
-           showLabel={false}
+          showLabel={false}
           width="100%"
           fieldType="select"
           fieldLabel="Category Type"
-          selectData={CategoryLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={categoryOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           fieldName="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}

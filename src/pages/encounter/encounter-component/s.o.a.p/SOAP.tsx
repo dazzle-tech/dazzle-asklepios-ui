@@ -36,22 +36,12 @@ const SOAP = props => {
   const patient = props.patient || location.state?.patient || outletContext?.patient;
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
 
-const viewMode =
-  props.viewMode ??
-  location.state?.viewMode ??
-  outletContext?.viewMode;
+  const viewMode = props.viewMode ?? location.state?.viewMode ?? outletContext?.viewMode;
 
   const edit =
-    viewMode === 'readOnly' ||
-    (props.edit ??
-      location.state?.edit ??
-      outletContext?.edit ??
-      false);
+    viewMode === 'readOnly' || (props.edit ?? location.state?.edit ?? outletContext?.edit ?? false);
 
-
-
-    const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
-
+  const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
 
   const encounterId = encounterFromNav?.id || location.state?.encounter?.id;
 
@@ -109,10 +99,15 @@ const viewMode =
     hasPrescription: Boolean(encounter?.hasPrescription),
     hasOrder: Boolean(encounter?.hasOrder),
     isObserved: Boolean(encounter?.isObserved),
-    physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null,
+    physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null
   });
 
   const saveChanges = async () => {
+    if (!localEncounter?.chiefComplaint?.trim()) {
+      dispatch(notify({ msg: 'Chief Complaint cannot be empty.', sev: 'warning' }));
+      return;
+    }
+
     try {
       const idToUpdate = localEncounter?.id ?? encounterId;
 
@@ -160,10 +155,10 @@ const viewMode =
       title: 'Visit Details',
       content: (
         <div
-            className={clsx('column-container', { 'disabled-panel': edit })}
-            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
-          >
-            <div className="top-section">
+          className={clsx('column-container', { 'disabled-panel': edit })}
+          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+        >
+          <div className="top-section">
             <SectionContainer
               title={<Translate>Chief Complaint </Translate>}
               content={
@@ -221,14 +216,18 @@ const viewMode =
     },
     {
       title: 'Physical Examination & Findings',
-      content:         <div
-            className={clsx('column-container', { 'disabled-panel': edit })}
-            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
-          ><ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} /></div>
+      content: (
+        <div
+          className={clsx('column-container', { 'disabled-panel': edit })}
+          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+        >
+          <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+        </div>
+      )
     }
   ];
 
-    useEffect(() => {
+  useEffect(() => {
     if (isLoading || isFetching) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
 
@@ -243,12 +242,7 @@ const viewMode =
 
   return (
     <div className="patient-summary-container">
-      <MyTab
-        data={tabData}     
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        lazy    
-      />
+      <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
     </div>
   );
 };

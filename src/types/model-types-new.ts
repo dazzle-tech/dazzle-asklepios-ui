@@ -286,6 +286,7 @@ export interface AvailabilityTemplateIntervalCreateDTO {
   endTime: string;
   slotStrategy: string;
   slotDurationMinutes: number;
+  applyToAllWorkingDays?: boolean | null;
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
@@ -430,6 +431,7 @@ export interface AppointmentFromTemplate {
   patientId?: number | null;
   availabilityTemplateId?: number | null;
   requireConfirmation?: boolean | null;
+  requirePractitioner?: boolean | null;
   encounterReason?: EncounterReason | null;
   status?: AppointmentStatus | null;
   appointmentDateTime?: string | null;
@@ -481,6 +483,18 @@ export interface AppointmentFromTemplateCancelDTO {
 export interface AppointmentFromTemplateNoShowDTO {
   id: number;
   noShowReason: string;
+}
+
+export interface AppointmentFromTemplateRescheduleDTO {
+  oldAppointmentId: number;
+  newAppointmentId: number;
+  rescheduleReason: string;
+}
+
+export interface DiagnosticTestAppointmentRescheduleDTO {
+  orderTestId: number;
+  newAppointmentId: number;
+  rescheduleReason: string;
 }
 
 export interface AppointmentFromTemplateSearchFilterDTO {
@@ -2380,7 +2394,6 @@ export type PatientProcedure = {
   status?: ProcStatus;
 
   cancelledDate?: string | null;
-  // ✅ String بدل number
   cancelledBy?: string | null;
   cancellationReason?: string | null;
 };
@@ -3137,7 +3150,6 @@ export type PatientProcedureUpdateVM = {
 export type PatientProcedureCancelVM = {
   id: number;
   cancellationReason: string;
-  // ✅ شيلنا cancelledBy - بيتاخد من SecurityUtils
 };
 
 export interface DiagnosticOrder extends AuditingEntity {
@@ -3824,7 +3836,6 @@ export interface TelephonicConsultationUpdateVM {
 
 export interface TelephonicConsultationCancelVM {
   reason: string;
-  // ✅ شيلنا cancelledBy
 }
 export type NextOfKin = {
   id: number;
@@ -4522,4 +4533,21 @@ export interface DentalProcedureUpdateDTO {
   serviceId?: number | null;
   cdtCodeId?: number | null;
   notes?: string | null;
+}
+export interface GlasgowComaScaleAssessment {
+  id?: number;
+  encounter?: any | null;
+  patient?: any | null;
+
+  eyeOpening: string | null;
+  eyeOpeningScore?: number | null;
+
+  verbalResponse: string | null;
+  verbalResponseScore?: number | null;
+
+  motorResponse: string | null;
+  motorResponseScore?: number | null;
+
+  totalScore?: number | null;
+  scoreInterpretation?: string | null;
 }

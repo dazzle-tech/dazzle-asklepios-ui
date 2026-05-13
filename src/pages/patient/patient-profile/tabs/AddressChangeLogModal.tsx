@@ -29,7 +29,10 @@ const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
   );
 
   const { isLoading: isCountriesLoading } = useGetCountriesQuery(
-    undefined,
+    {
+      page: 0,
+      size: 1000
+    },
     { skip: !open }
   );
 

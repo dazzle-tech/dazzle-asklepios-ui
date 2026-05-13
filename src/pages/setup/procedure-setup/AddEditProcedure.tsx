@@ -7,17 +7,15 @@ import { FaStar } from 'react-icons/fa';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useEnumCapitalized } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 
 import {
   useAddProcedureMutation,
-  useUpdateProcedureMutation,
+  useUpdateProcedureMutation
 } from '@/services/setup/procedure/procedureService';
-
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 type AddEditProcedureProps = {
   open: boolean;
@@ -36,7 +34,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
   procedure,
   setProcedure,
   onSaveSuccess,
-  actionLoading,
+  actionLoading
 }) => {
   const dispatch = useAppDispatch();
 
@@ -49,19 +47,19 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
   const facilityListRequest: ListRequest = { ...initialListRequest };
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');
 
   const isLoading = isAdding || isUpdating || actionLoading;
 
   const normalizedCurrencyOptions = (currencyOptions ?? []).map((c: any) => ({
     ...c,
-    value: String(c.value).toUpperCase(),
+    value: String(c.value).toUpperCase()
   }));
 
   const normalizedProcedure = {
     ...procedure,
-    currency: procedure?.currency ? String(procedure.currency).toUpperCase() : null,
+    currency: procedure?.currency ? String(procedure.currency).toUpperCase() : null
   };
 
   useEffect(() => {
@@ -75,7 +73,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         prev?.currency ??
         (defaultFacility?.defaultCurrency
           ? String(defaultFacility.defaultCurrency).toUpperCase()
-          : null),
+          : null)
     }));
   }, [open, procedure?.id, defaultFacility?.id, defaultFacility?.defaultCurrency, setProcedure]);
 
@@ -85,7 +83,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
     const payload: any = {
       ...procedure,
-      currency: procedure?.currency ? String(procedure.currency).toUpperCase() : null,
+      currency: procedure?.currency ? String(procedure.currency).toUpperCase() : null
     };
 
     try {
@@ -105,14 +103,14 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         await updateProcedure({
           facilityId: procedure.facilityId,
           id: procedure.id,
-          ...payload,
+          ...payload
         }).unwrap();
 
         dispatch(notify({ msg: 'Procedure updated successfully', sev: 'success' }));
       } else {
         await addProcedure({
           facilityId: procedure.facilityId,
-          ...payload,
+          ...payload
         }).unwrap();
 
         dispatch(notify({ msg: 'Procedure added successfully', sev: 'success' }));
@@ -142,13 +140,14 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
           preparationInstructions: 'Preparation Instructions',
           recoveryNotes: 'Recovery Notes',
           currency: 'Currency',
-          price: 'Price',
+          price: 'Price'
         };
 
         const normalizeMsg = (msg: string) => {
           const m = (msg || '').toLowerCase();
           if (m.includes('must not be null')) return 'is required';
-          if (m.includes('must not be blank') || m.includes('must not be empty')) return 'must not be blank';
+          if (m.includes('must not be blank') || m.includes('must not be empty'))
+            return 'must not be blank';
           if (m.includes('size must be between')) return 'length is out of range';
           if (m.includes('must be greater than')) return 'value is too small';
           if (m.includes('must be less than')) return 'value is too large';
@@ -194,12 +193,13 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         'payload.required': 'Procedure payload is required.',
         'unique.facility.name_code_category':
           'A procedure with the same name, code, and category already exists in this facility.',
-        'db.constraint': 'Database constraint violated. Please check unique fields or required values.',
+        'db.constraint':
+          'Database constraint violated. Please check unique fields or required values.',
         'facility.mismatch': 'Procedure does not belong to the given facility.',
         notfound: 'Procedure not found.',
         facilityrequired: 'Facility id is required.',
         'unique.facility.name': 'Procedure name already exists in this facility.',
-        'fk.facility.notfound': 'Facility not found.',
+        'fk.facility.notfound': 'Facility not found.'
       };
 
       let humanMsg: string;
@@ -217,7 +217,6 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
       setOpen(true);
     }
   };
-console.log("procedure;::----->", procedure);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -244,7 +243,7 @@ console.log("procedure;::----->", procedure);
                       facilityId: facility?.id ?? null,
                       currency: facility?.defaultCurrency
                         ? String(facility.defaultCurrency).toUpperCase()
-                        : null,
+                        : null
                     }));
                   }}
                 />
@@ -257,9 +256,9 @@ console.log("procedure;::----->", procedure);
                   fieldLabel="Category"
                   fieldType="select"
                   fieldName="categoryType"
-                  selectData={CategoryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={categoryOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={procedure}
                   setRecord={setProcedure}
                 />
@@ -391,13 +390,16 @@ console.log("procedure;::----->", procedure);
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  useEffect(() => {
+    console.log(procedure.categoryType);
+  }, [procedure.categoryType]);
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={isEdit ? 'Edit Procedure' : 'New Procedure'}
       position="right"
-      content={(stepNumber) => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
+      content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       isDisabledActionBtn={isLoading}

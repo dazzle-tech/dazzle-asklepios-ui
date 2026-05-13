@@ -57,8 +57,11 @@ const PolicyDefinitions = () => {
   const [filteredList, setFilteredList] = useState<PolicyDefinition[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
 
-  const { data: policyDefinitionListResponse, isFetching, refetch } =
-    useGetAllPolicyDefinitionsQuery(paginationParams);
+  const {
+    data: policyDefinitionListResponse,
+    isFetching,
+    refetch
+  } = useGetAllPolicyDefinitionsQuery(paginationParams);
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
   const [fetchByFacility] = useLazyGetPolicyDefinitionsByFacilityQuery();
@@ -86,7 +89,13 @@ const PolicyDefinitions = () => {
     if (isFiltered) {
       handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
     } else {
-      PaginationPerPage.handlePageChange(event, newPage, paginationParams, link, setPaginationParams);
+      PaginationPerPage.handlePageChange(
+        event,
+        newPage,
+        paginationParams,
+        link,
+        setPaginationParams
+      );
     }
   };
 
@@ -153,8 +162,6 @@ const PolicyDefinitions = () => {
           sev: 'success'
         })
       );
-
-      
     } catch (error) {
       dispatch(
         notify({
@@ -274,7 +281,7 @@ const PolicyDefinitions = () => {
   };
 
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"

@@ -19,7 +19,7 @@ import { useSaveProceduresMutation, useGetProceduresQuery } from '@/services/pro
 
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
 import Details from './Details';
@@ -76,7 +76,6 @@ const Referrals = (props: any) => {
   });
 
   /** LOVs */
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
   /** Highlight selected row in the table */
   const isSelected = (rowData: any) =>
@@ -335,10 +334,7 @@ const Referrals = (props: any) => {
         title: <Translate>CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData?.categoryKey
-          );
-          return category?.lovDisplayVale || ' ';
+          return formatEnumString(rowData?.categoryKey) || ' ';
         }
       },
       {
@@ -481,7 +477,7 @@ const Referrals = (props: any) => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse, fetchPatintAttachmentsResponce]
+    [fetchPatintAttachmentsResponce]
   );
 
   const pageIndex = (listRequest.pageNumber ?? 1) - 1;

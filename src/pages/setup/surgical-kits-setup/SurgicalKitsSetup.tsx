@@ -37,10 +37,8 @@ const SurgicalKitsSetup: React.FC = () => {
 
   // ---- Header page setup (inside useEffect) ----
   useEffect(() => {
-    const divContent = (
-     "Surgical Kits Setup"
-    );
-    
+    const divContent = 'Surgical Kits Setup';
+
     dispatch(setPageCode('Surgical_Kits_Setup'));
     dispatch(setDivContent(divContent));
 
@@ -169,7 +167,7 @@ const SurgicalKitsSetup: React.FC = () => {
 
   // Filters UI
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -226,11 +224,11 @@ const SurgicalKitsSetup: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-      // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <Panel dir={dir}>

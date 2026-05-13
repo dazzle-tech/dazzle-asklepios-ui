@@ -47,8 +47,8 @@ interface ProfileHeaderProps {
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
-  eligibilityChecked: boolean;
-  setEligibilityChecked: (val: boolean) => void;
+  // eligibilityChecked: boolean;
+  // setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -357,11 +357,11 @@ const handlePrintPatientLabel = async (rowData: any) => {
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-useEffect(() => {
-  if (location.state?.eligibilityDone) {
-    setEligibilityChecked(true);
-  }
-}, [location.state]);
+// useEffect(() => {
+//   if (location.state?.eligibilityDone) {
+//     setEligibilityChecked(true);
+//   }
+// }, [location.state]);
 
 
 const whisperRef = useRef<any>(null);
@@ -510,8 +510,8 @@ useEffect(() => {
 
               <MyButton
                 onClick={() => {
-                  setEligibilityChecked(true);
-                  navigate(`/patient-profile/${localPatient?.id}`);
+                  // setEligibilityChecked(true);
+                  // navigate(`/patient-profile/${localPatient?.id}`);
                 }}
               >
                 <Translate>Eligibility Check</Translate>

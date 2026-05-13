@@ -102,10 +102,16 @@ const PatientFamilyMembers = ({ localPatient }) => {
     setRelationModalOpen(true);
   };
 
-  const handleEditRelative = () => {
-    if (!selectedPatientRelation?.id) return;
-    setRelationModalOpen(true);
-  };
+    const handleEditRelative = () => {
+      if (!selectedPatientRelation?.id) return;
+
+      setSelectedPatientRelation(prev => ({
+        ...prev,
+        relativePatientId: prev?.relativePatient?.id
+      }));
+
+      setRelationModalOpen(true);
+    };
 
 // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

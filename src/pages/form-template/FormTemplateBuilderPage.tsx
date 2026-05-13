@@ -29,7 +29,14 @@ const FormTemplateBuilderPage = () => {
 
   const params = useParams();
   const templateId = params.id ? Number(params.id) : null;
- const [creator, setCreator] = useState<SurveyCreator | null>(null);
+
+  useEffect(() => {
+    if (params.id && isNaN(Number(params.id))) {
+      navigate('/error-403', { replace: true });
+    }
+  }, [params.id]);
+
+  const [creator, setCreator] = useState<SurveyCreator | null>(null);
   const [template, setTemplate] = useState<FormTemplate>({ ...newFormTemplate });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -192,7 +199,7 @@ const FormTemplateBuilderPage = () => {
         .unwrap()
         .then((created: any) => {
           dispatch(notify({ msg: "Template created successfully", sev: "success" }));
-          navigate(`../${created.id}`);
+          navigate(`/form-template/${created.id}`);
         })
         .catch((e: any) => {
           console.error(e);
@@ -279,7 +286,7 @@ const FormTemplateBuilderPage = () => {
               setRecord={setTemplate}
             />
 
-            <MyButton appearance="ghost" onClick={() => navigate('../form-template')} width="90px">
+            <MyButton appearance="ghost" onClick={() => navigate('/form-template')} width="90px">
               Back
             </MyButton>
 

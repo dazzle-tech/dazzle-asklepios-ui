@@ -33,6 +33,7 @@ interface ProfileSidebarProps {
   title?: React.ReactNode;
   direction?: string;
   showButton?: boolean;
+  searchRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const PAGE_SIZE = 10;
@@ -45,7 +46,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   direction = 'left',
   showButton = true,
   refetchData,
-  setRefetchData
+  setRefetchData,
+  searchRef
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
@@ -177,6 +179,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       setRefetchData?.(false);
     }
   }, [refetchData]);
+
+  useEffect(() => {
+    if (searchRef) {
+      searchRef.current = () => {
+        if (searchKeyword && String(searchKeyword).length >= 3) search(0);
+      };
+    }
+  }, [search, searchKeyword, searchRef]);
 
   useEffect(() => {
     setPatients([]);

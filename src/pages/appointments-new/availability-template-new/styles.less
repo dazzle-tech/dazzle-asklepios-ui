@@ -57,6 +57,7 @@
   flex-shrink: 0;
   border-right: 1px solid var(--rs-border-primary);
   background: var(--rs-bg-card);
+  background-color: transparent;
 }
 
 .time-header {
@@ -69,7 +70,8 @@
   justify-content: center;
   font-weight: 600;
   border-bottom: 1px solid var(--rs-border-primary);
-  background: var(--rs-bg-card);
+  background: var(--rs-bg-card) !important;
+  border-right: 1px solid var(--rs-border-primary);
 }
 
 .time-cell {
@@ -79,7 +81,8 @@
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--rs-border-secondary);
-  background: var(--rs-bg-card);
+  background: var(--rs-bg-card) !important;
+  border-right: 1px solid var(--rs-border-primary);
 }
 
 
@@ -406,7 +409,7 @@
   }
   .body-of-availability-template-summary-card{
     padding: 12px;
-    color: #333;
+    color: var(--color-text-primary);
     font-size: 14px;
     display: flex;
     flex-direction: column;
@@ -460,6 +463,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  color: var(--color-text-primary);
 }
 
 .container-of-table-and-section-availability-template {
@@ -468,3 +472,12 @@
   gap: 10px;
   padding: 2px
 }
+
+  .dark, .rs-theme-dark {
+    .availability-template-summary-card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .body-of-availability-template-summary-card {
+      color: var(--rs-text-primary);
+    }
+  }

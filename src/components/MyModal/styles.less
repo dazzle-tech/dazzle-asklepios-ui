@@ -1,23 +1,29 @@
 body.modal-open {
   overflow: hidden !important;
 }
+
 .rs-modal-backdrop {
   background-color: rgba(0, 0, 0, 0.4);
 }
+
 html,
 body {
   height: 100%;
   overflow-x: hidden;
 }
-.title-modal{
- text-align: center;
+
+.title-modal {
+  text-align: center;
 }
-.icon-title-modal{
+
+.icon-title-modal {
   margin-right: 8px;
 }
-.steps-modal{
-margin-bottom: 20px;
+
+.steps-modal {
+  margin-bottom: 20px;
 }
+
 .rigth-modal {
   position: fixed !important;
   top: 0 !important;
@@ -27,6 +33,7 @@ margin-bottom: 20px;
   transform: none !important;
   border-radius: 22px !important;
 }
+
 .left-modal {
   position: fixed !important;
   top: 0 !important;
@@ -36,12 +43,14 @@ margin-bottom: 20px;
   transform: none !important;
   border-radius: 22px !important;
 }
+
 .rs-modal-content {
   background: linear-gradient(0deg, #FFFFFF, #FFFFFF), rgba(0, 0, 0, 0.29);
   border: 1px solid white;
   border-radius: 22px !important;
   padding: 0px !important;
 }
+
 .rs-modal-header {
   display: flex !important;
   flex-direction: row !important;
@@ -50,56 +59,70 @@ margin-bottom: 20px;
   padding: 20px !important;
 
 }
+
 .rs-modal-header-close {
   width: 20px !important;
   height: 20.77px !important;
   color: #5B5B5B !important;
 }
+
 .rs-modal-header .rs-modal-header-close {
   font-size: medium !important;
 }
+
 .divider-line {
   margin: 0 !important;
 }
+
 .divider-line .rs-divider {
   background-color: #EDEDF0 !important;
 }
+
 .rs-modal-body {
   padding: 20px !important;
   margin-top: 0px !important;
-     max-height: none !important;
+  max-height: none !important;
 }
+
 .rs-modal-footer {
   padding: 5px 20px !important;
 }
+
 .rs-steps-item {
   padding-left: 0 !important;
 }
+
 .rs-steps-item-title {
   padding-right: 0px !important;
   font-size: 12px !important;
-  line-height: normal!important;
+  line-height: normal !important;
 }
+
 .centered-step {
   justify-content: center !important;
 }
-.footer-modal{
+
+.footer-modal {
   display: flex;
   align-items: center;
 }
-.footer-modal-content{
+
+.footer-modal-content {
   display: flex;
   align-items: center;
   margin-left: auto;
 }
+
 .step-past {
   color: green;
   font-size: 20px;
 }
+
 .step-active {
   color: blue;
   font-size: 20px;
 }
+
 .step-future {
   color: gray;
   font-size: 20px;
@@ -125,10 +148,15 @@ margin-bottom: 20px;
   margin-bottom: 0 !important;
 }
 
+.css-pbxam1 {
+  background-color: transparent !important;
+}
+
 // Keep this as the last style in the file to override styles when dark mode is active
-.modal-dark{
+.rs-theme-dark {
   .rs-modal-content {
-  box-shadow: var(--dark-mode-box-shadow) !important;
-  background: var(--dark-black)!important;
+    box-shadow: var(--dark-mode-box-shadow) !important;
+    background: var(--dark-black) !important;
   }
+
 }

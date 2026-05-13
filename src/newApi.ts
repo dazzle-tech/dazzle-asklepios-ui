@@ -28,32 +28,44 @@ export const BaseQuery = baseFetchBaseQuery;
  */
 export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: any) => {
   try {
-    // Wait for the query to be fulfilled
     const { data } = await queryFulfilled;
 
-    // If API response contains a message, notify the user
     if (data && data._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {
-    console.error('API Error:', err);
-    // Handle errors
-    if (err?.error?.status == 422) {
-      // Validation error (Unprocessable Entity)
-      dispatch(
-        notify({
-          msg: err.error?.data?.message || 'Unprocessable Entity',
-          sev: 'error',
-        })
-      );
-    } else {
-      // Generic server error
-      dispatch(
-        notify({
-          msg: err.error?.data?.msg || 'Internal Server Error',
-          sev: 'error',
-        })
-      );
-    }
+  console.error('API Error:', err);
+
+  const status = err?.error?.status;
+
+  const message =
+    err?.error?.data?.message ||
+    err?.error?.data?.msg ||
+    err?.error?.data?.detail;
+
+  const cleanMessage = message
+    ? String(message).replace(/^error\./, '')
+    : 'Something went wrong';
+
+  if (status === 422) {
+    dispatch(
+      notify({
+        msg: cleanMessage || 'Unprocessable Entity',
+        sev: 'error',
+      })
+    );
+    return;
   }
+
+  if (status && status < 500) {
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: cleanMessage || 'Internal Server Error',
+      sev: 'error'
+    })
+  );
+}
 };

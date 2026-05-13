@@ -70,12 +70,13 @@ const PatientSummary = () => {
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-
       {
         id: 'c9',
         content: <PatientPlan patient={patient} />,
         display: true
       },
+      { id: 'c11', content: <Procedures patient={patient} />, display: false },
+      { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
       // {
       //   id: 'c10',
       //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
@@ -83,8 +84,6 @@ const PatientSummary = () => {
       // }
     ],
     col3: [
-      { id: 'c11', content: <Procedures patient={patient} />, display: false },
-      { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
       {
         id: 'c13',
         content: (
