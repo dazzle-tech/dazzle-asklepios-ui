@@ -341,6 +341,7 @@ const Lab = () => {
                     showDiagnosis={false}
                     showVisitDetails={false}
                     showBalance={false}
+                    showCloseButton={false}
                   />
                 </div>
               </div>
