@@ -206,10 +206,10 @@ const NormalConsultation = props => {
     dateRangeNotCancelledQuery.isLoading;
 
   const refetch = () => {
-    allQuery.refetch();
-    notCancelledQuery.refetch();
-    dateRangeQuery.refetch();
-    dateRangeNotCancelledQuery.refetch();
+    if (!allQuery.isUninitialized) allQuery.refetch();
+    if (!notCancelledQuery.isUninitialized) notCancelledQuery.refetch();
+    if (!dateRangeQuery.isUninitialized) dateRangeQuery.refetch();
+    if (!dateRangeNotCancelledQuery.isUninitialized) dateRangeNotCancelledQuery.refetch();
   };
 
   const rows: Consultation[] = consultationData?.data ?? [];
