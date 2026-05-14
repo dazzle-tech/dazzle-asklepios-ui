@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Row, Col, Form, TagPicker } from 'rsuite';
+import { Row, Col, Form } from 'rsuite';
 import { MdSave } from 'react-icons/md';
 import { newActiveIngredient } from '@/types/model-types-constructor-new';
 import { ActiveIngredient } from '@/types/model-types-new';
@@ -26,6 +26,17 @@ const Pharmacokinetics = ({ activeIngredients }) => {
         value: item.key
       })),
     [routeOfEliminationLovResponse]
+  );
+
+  const routeOfEliminationValues = useMemo(
+    () =>
+      activeIngredient.pharmaRouteOfElimination
+        ? activeIngredient.pharmaRouteOfElimination
+            .split(',')
+            .map(entry => entry.trim())
+            .filter(Boolean)
+        : [],
+    [activeIngredient.pharmaRouteOfElimination]
   );
 
   const save = () => {
@@ -100,23 +111,29 @@ const Pharmacokinetics = ({ activeIngredients }) => {
       <br />
       <Row>
         <Col md={8}>
-          <div className="my-input-label">Route Of Elimination</div>
-          <TagPicker
-            data={routeOptions}
-            value={
-              activeIngredient.pharmaRouteOfElimination
-                ? activeIngredient.pharmaRouteOfElimination.split(',').map(entry => entry.trim()).filter(Boolean)
-                : []
-            }
-            onChange={values => {
+          <MyInput
+            fieldName="pharmaRouteOfElimination"
+            fieldType="multyPicker"
+            fieldLabel="Route Of Elimination"
+            record={{
+              ...activeIngredient,
+              pharmaRouteOfElimination: routeOfEliminationValues
+            }}
+            setRecord={record => {
+              const values = Array.isArray(record?.pharmaRouteOfElimination)
+                ? record.pharmaRouteOfElimination
+                : [];
+
               setActiveIngredient(prev => ({
                 ...prev,
-                pharmaRouteOfElimination: values && values.length ? values.join(',') : null
+                pharmaRouteOfElimination: values.length ? values.join(',') : null
               }));
             }}
+            selectData={routeOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
             placeholder="Select route"
-            cleanable
-            style={{ width: '100%' }}
+            width="100%"
           />
         </Col>
         <Col md={8}>

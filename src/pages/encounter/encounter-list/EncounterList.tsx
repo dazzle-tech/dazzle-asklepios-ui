@@ -309,7 +309,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-
+  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -518,9 +518,6 @@ const EncounterList = () => {
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
-
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -738,7 +735,52 @@ const EncounterList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      width: 220,
+      render: (row: any) => {
+        const complaint = row?.chiefComplaint ?? '-';
+        const MAX_LENGTH = 20;
+
+        const shouldTruncate =
+          complaint !== '-' && String(complaint).length > MAX_LENGTH;
+
+        const displayText = shouldTruncate
+          ? `${String(complaint).substring(0, MAX_LENGTH)}...`
+          : complaint;
+
+        const content = (
+          <div
+            style={{
+              cursor: shouldTruncate ? 'pointer' : 'default'
+            }}
+          >
+            {displayText}
+          </div>
+        );
+
+        if (!shouldTruncate) {
+          return content;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 400,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {complaint}
+              </Tooltip>
+            }
+          >
+            {content}
+          </Whisper>
+        );
+      }
     },
     {
       key: 'hasPrescription',
@@ -1125,37 +1167,43 @@ const EncounterList = () => {
   }, [dispatch, tableLoading]);
 
   useEffect(() => {
-    if (!departmentId || appliedFilters) return;
+  if (!departmentId || appliedFilters) return;
 
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-    setAppliedFilters({
-      departmentId,
-      fromDate,
-      toDate,
-      statusIn: DEFAULT_STATUS,
-      patientName: undefined,
-      mrn: undefined,
-      encounterReasons: undefined,
-      chiefComplaint: undefined,
-      priorities: undefined,
-      hasPrescription: undefined,
-      hasOrder: undefined,
-      isObserved: undefined,
-      page: 0,
-      size: pageSize,
-      sort: DEFAULT_SORT
-    });
-  }, [
+  setAppliedFilters({
     departmentId,
-    appliedFilters,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    todayStr,
-    DEFAULT_STATUS,
-    pageSize
-  ]);
+    fromDate,
+    toDate,
+    statusIn: DEFAULT_STATUS,
+    patientName: undefined,
+    mrn: undefined,
+    encounterReasons: undefined,
+    chiefComplaint: undefined,
+    priorities: undefined,
+    hasPrescription: undefined,
+    hasOrder: undefined,
+    isObserved: undefined,
+    page: 0,
+    size: pageSize,
+    sort: DEFAULT_SORT
+  });
+}, [
+  departmentId,
+  appliedFilters,
+  dateFilter.fromDate,
+  dateFilter.toDate,
+  todayStr,
+  DEFAULT_STATUS,
+  pageSize
+]);
+
+useEffect(() => {
+  if (appliedFilters) {
+    refetchEncounters();
+  }
+}, [appliedFilters, refetchEncounters]);
 
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {

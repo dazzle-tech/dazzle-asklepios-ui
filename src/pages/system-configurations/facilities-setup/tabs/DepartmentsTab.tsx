@@ -337,28 +337,61 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     .finally(() => setLoad(false));
 };
 
-  const handleUpdate = () => {
-    if (!validateRequiredFields()) {
-      return;
-    }
-    setOpenForm(false);
-    setLoad(true);
-    updateDepartment({
-      ...department,
-      encounterType: department?.encounterType || undefined,
-      workingDays: buildWorkingDaysPayload(department?.workingDays)
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
-        refetchDepartments();
-      })
-      .catch(() => {
-        dispatch(notify({ msg: 'Failed to update department', sev: 'error' }));
-      })
-      .finally(() => setLoad(false));
-  };
+ const handleUpdate = () => {
+  if (!validateRequiredFields()) {
+    return;
+  }
 
+  setOpenForm(false);
+  setLoad(true);
+
+  updateDepartment({
+    ...department,
+    encounterType: department?.encounterType || undefined,
+    workingDays: buildWorkingDaysPayload(department?.workingDays),
+  })
+    .unwrap()
+    .then(async () => {
+      const departmentId = department?.id;
+
+      if (addDefaultMedicalSheets && departmentId) {
+        const defaultSheetsPayload = MedicalSheets
+          .filter(sheet => sheet.isDefaultMedicalSheet)
+          .map(sheet => ({
+            departmentId,
+            medicalSheet: sheet.code.toUpperCase(),
+          }));
+
+        if (defaultSheetsPayload.length) {
+          await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+        }
+      }
+
+      if (addDefaultNurseMedicalSheets && departmentId) {
+        const defaultNurseSheetsPayload = MedicalSheets
+          .filter(sheet => sheet.isDefaultNurseMedicalSheet)
+          .map(sheet => ({
+            departmentId,
+            medicalSheet: sheet.code.toUpperCase(),
+          }));
+
+        if (defaultNurseSheetsPayload.length) {
+          await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+        }
+      }
+
+      dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
+
+      setAddDefaultMedicalSheets(false);
+      setAddDefaultNurseMedicalSheets(false);
+      refetchDepartments();
+    })
+    .catch((err: any) => {
+      const msg = extractApiErrorMessage(err);
+      dispatch(notify({ msg, sev: 'error' }));
+    })
+    .finally(() => setLoad(false));
+};
   const handleFilterChange = async (fieldName, value, page = 0, size = filterPagination.size) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);

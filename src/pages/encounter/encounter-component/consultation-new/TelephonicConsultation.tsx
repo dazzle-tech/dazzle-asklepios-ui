@@ -1,4 +1,5 @@
 import CancellationModal from '@/components/CancellationModal';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -226,7 +227,7 @@ const TelephonicConsultation = props => {
       title: 'Consultation Content',
       flexGrow: 4,
       render: (row: TelephonicConsultations) => (
-        <div className="consultation-content-container">{row.consultationContent}</div>
+        <ExpandableText text={row.consultationContent} lines={3} />
       )
     },
     {

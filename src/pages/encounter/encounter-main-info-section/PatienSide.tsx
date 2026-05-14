@@ -65,7 +65,9 @@ const PatientSide = ({
   showVisitDetails = true,
   showAllergiesWarnings = true,
   showBalance = true,
-  showCurrentMeds = true
+  showCurrentMeds = true,
+  showCloseButton = true,
+  onClose = null
 }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -487,16 +489,21 @@ const PatientSide = ({
 
   return (
     <Panel className="patient-panel" dir={dir}>
-      {setPatient && (
+      {showCloseButton && setPatient && (
         <div className="patient-panel-close-btn">
           <IoMdClose
             size={22}
             className="icons-style"
-            onClick={() => setPatient({ ...newPatient })}
+            onClick={() => {
+              if (typeof onClose === 'function') {
+                onClose();
+              } else {
+                setPatient({ ...newPatient });
+              }
+            }}
           />
         </div>
       )}
-
       <div className="div-avatar">
         <Avatar
           circle

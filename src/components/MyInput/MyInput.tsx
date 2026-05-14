@@ -316,9 +316,19 @@ const MyInput = ({
     return spaceBelow > 250 ? 'bottomStart' : 'topStart';
   };
 
-  const resolveContainer = () => {
-    return document.querySelector('.rs-content') || document.body;
-  };
+const resolveContainer = () => {
+  const pickerElement = pickerRef.current as HTMLElement | null;
+
+  return (
+    pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
+    pickerElement?.closest('.child-right-modal .rs-modal-body') ||
+    pickerElement?.closest('.right-modal .rs-modal-body') ||
+    pickerElement?.closest('.rs-modal-body') ||
+    pickerElement?.closest('.rs-drawer-body') ||
+    pickerElement?.closest('.rs-content') ||
+    document.body
+  ) as HTMLElement;
+};
 
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;

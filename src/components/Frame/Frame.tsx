@@ -23,7 +23,7 @@ import './styles.less';
 import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 import Header from '../Header';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-
+import Sidebarlogo from '../../images/SideBarLogo.png';
 // MUI imports
 import {
   Drawer,
@@ -216,8 +216,8 @@ const Frame = (props: FrameProps) => {
                 authSlice.tenant && authSlice.tenant.tenantLogoPath
                   ? authSlice.tenant.tenantLogoPath
                   : mode === 'light'
-                    ? Logo
-                    : DLogo
+                    ? Sidebarlogo
+                    : Sidebarlogo
               }
             />
           )}

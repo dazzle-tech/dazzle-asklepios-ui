@@ -127,6 +127,8 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'already.cancelled': 'Telephonic consultation already cancelled.',
   'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
 
+  'unique.approval_number': 'Approval Number already exists. Please use a different approval number.',
+
   'db.constraint': 'Database constraint violation.'
 };
 
@@ -218,6 +220,19 @@ const DetailsTele = ({
     });
   }, [open, consultationOrders?.id, practitionerLoaded]);
 
+  useEffect(() => {
+    if (!practitionersResult?.data?.data) return;
+    if (practitionersResult?.isFetching) return;
+
+    const newPractitioners = practitionersResult.data.data;
+
+    setAllPractitioners(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const unique = newPractitioners.filter(p => !existingIds.has(p.id));
+      return [...prev, ...unique];
+    });
+  }, [practitionersResult?.data?.data, practitionersResult?.isFetching]);
+
   /* ========================= ACTIONS ========================= */
 
   const handleClear = () => {
@@ -308,15 +323,14 @@ const DetailsTele = ({
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     }
   };
+
   const handleOpenAttachmentModal = () => {
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -440,7 +454,19 @@ const DetailsTele = ({
                   fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
-                  setRecord={setFormData}
+                  setRecord={rec => {
+                    const val = String(rec?.approvalNumber ?? '');
+                    if (val.length > 10) {
+                      dispatch(
+                        notify({
+                          msg: 'Approval Number must not exceed 10 digits',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+                    setFormData(rec);
+                  }}
                 />
 
                 <div className="attachment-button-consultation-position">
