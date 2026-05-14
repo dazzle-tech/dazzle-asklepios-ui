@@ -176,11 +176,31 @@ export const newPatientService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'Patient', id }, 'Patient']
     }),
 
-    sendPatientPasswordEmail: builder.mutation<void, Id>({
+    sendPatientPasswordEmail: builder.mutation<void, Id>( {
       query: id => ({
         url: `/api/patient/${encodeURIComponent(String(id))}/send-create-password`,
         method: 'POST'
       })
+    }),
+
+    finishCreatePatientPassword: builder.mutation({
+      query: (keyAndPassword) => ({
+        url: '/api/patient/create-patient-password/finish',
+        method: 'POST',
+        body: keyAndPassword,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    }),
+
+    validateCreatePatientPasswordKey: builder.query({
+      query: (key: string) => ({
+        url: `/api/patient/create-patient-password/validate?key=${encodeURIComponent(key)}`,
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => response,
+      transformErrorResponse: (response: any) => response
     }),
 
     getPatientsByAnyDocumentNumber: builder.query<
@@ -324,6 +344,9 @@ export const {
   useAddPatientMutation,
   useUpdatePatientMutation,
   useSendPatientPasswordEmailMutation,
+  useFinishCreatePatientPasswordMutation,
+  useValidateCreatePatientPasswordKeyQuery,
+  useLazyValidateCreatePatientPasswordKeyQuery,
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
