@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -59,7 +59,6 @@ import {
   useUpdateAddressMutation
 } from '@/services/patients/AddressService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 
 import {
   useAddPatientInsuranceMutation,
@@ -69,8 +68,6 @@ import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
 import { PhoneNumberInput } from '@/components';
-
-const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -85,8 +82,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-  'patient.department.date.duplicate':
-    'Patient already has same department encounter Today',
+  'patient.department.date.duplicate': 'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
   'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
@@ -249,7 +245,9 @@ const toHumanPatientDocumentError = (
     'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
-    notfound: 'Patient document not found.'
+    notfound: 'Patient document not found.',
+    'number.invalid.start': 'Document number has an invalid starting digit for the selected type.',
+    'number.invalid.length': 'ID number should not be less than 10 digits.'
   };
 
   if (keyMap[errorKey]) {
@@ -474,8 +472,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
-
   const patientDocumentEnum = useEnumOptions('DocumentType', {
     exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
   });
@@ -685,40 +681,29 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
-  const [docCountryCache, setDocCountryCache] = useState<any[]>([]);
-  const [docCountryPage, setDocCountryPage] = useState(0);
-  const [docCountrySearch, setDocCountrySearch] = useState('');
-  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
-  const [docCountryOpen, setDocCountryOpen] = useState(false);
-  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+  const enumLabels = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
+    [enumLabels]
+  );
 
-  const [saudiCountryId, setSaudiCountryId] = useState<number | null>(null);
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+  const countrySelectData = useMemo(
+    () =>
+      (activeCountriesResp?.data ?? []).map(c => ({
+        value: c.id,
+        label: enumLabelMap[c.name] || formatEnumString(c.name)
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeCountriesResp]
+  );
+  const countrySelectDataRef = useRef(countrySelectData);
+  countrySelectDataRef.current = countrySelectData;
 
-  const { data: docCountriesData } = useGetActiveCountriesQuery({
-    page: docCountryPage,
-    size: PAGE_SIZE,
-    ...(docCountrySearch && { search: docCountrySearch }),
-    sort: 'id,asc'
-  });
-
-  useEffect(() => {
-    if (!docCountriesData?.data) return;
-
-    const mapped = docCountriesData.data.map((c: any) => ({
-      ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
-    }));
-
-    setDocCountryCache(prev => (docCountryPage === 0 ? mapped : [...prev, ...mapped]));
-    setDocHasMoreCountries(docCountriesData.last === false);
-    setDocPaginationLoading(false);
-
-    const saudi = mapped.find((c: any) => c.name === SAUDI_ARABIA_LOV_NAME);
-    if (saudi) {
-      setSaudiCountryId(saudi.id);
-    }
-  }, [docCountriesData, docCountryPage, countryLov]);
+  const saudiCountryId = useMemo(
+    () => (activeCountriesResp?.data ?? []).find(c => c.name === 'SAUDI_ARABIA')?.id ?? null,
+    [activeCountriesResp]
+  );
 
   useEffect(() => {
     if (open && !secondaryDocument.id) {
@@ -730,30 +715,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   }, [open, saudiCountryId]);
 
-  useEffect(() => {
-    if (open && !secondaryDocument.id && saudiCountryId && !secondaryDocument.countryId) {
-      setSecondaryDocument(prev => ({ ...prev, countryId: saudiCountryId }));
-    }
-  }, [saudiCountryId]);
-
-  const loadMoreDocCountries = () => {
-    if (!docHasMoreCountries || docPaginationLoading) return;
-    setDocPaginationLoading(true);
-    setDocCountryPage(p => p + 1);
-  };
-
-  const isSaudiCountry = () => {
-    if (!secondaryDocument.countryId) return false;
-    const selected = docCountryCache.find((c: any) => c.id === secondaryDocument.countryId);
-    return selected?.name === SAUDI_ARABIA_LOV_NAME;
-  };
-
   const validateDocument = () => {
-    const { type, number } = secondaryDocument;
+    const { type, number, countryId } = secondaryDocument as any;
     const numberStr = String(number ?? '').trim();
-    const saudi = isSaudiCountry();
 
-    if (!saudi) return true;
+    if (countryId !== saudiCountryId) return true;
 
     if (type === 'NATIONAL_ID') {
       if (!numberStr.startsWith('1')) {
@@ -908,12 +874,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
     const mapped = addrCountriesResponse.data.map((c: any) => ({
       ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+      displayName: c.displayName || c.name
     }));
 
     setAddrCountryCache(prev => (addrCountryPage === 0 ? mapped : [...prev, ...mapped]));
-  }, [addrCountriesResponse, addrCountryPage, countryLov]);
+  }, [addrCountriesResponse, addrCountryPage]);
 
   useEffect(() => {
     if (!addrDistrictsResponse?.data) return;
@@ -986,41 +951,40 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  const isPhoneValid = (phone: any) => {
+    if (!phone) return false;
 
-const isPhoneValid = (phone: any) => {
-  if (!phone) return false;
+    const digits = String(phone).replace(/\D/g, '');
 
-  const digits = String(phone).replace(/\D/g, '');
+    return digits.length > 3;
+  };
 
-  return digits.length > 3;
-};
+  const validateMandatoryPatientFields = (): boolean => {
+    const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
 
-const validateMandatoryPatientFields = (): boolean => {
-  const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
-    const value = (localPatient as any)?.[key];
+      if (key === 'primaryMobileNumber') {
+        return !isPhoneValid(value);
+      }
 
-    if (key === 'primaryMobileNumber') {
-      return !isPhoneValid(value);
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
     }
 
-    if (value === null || value === undefined) return true;
-    if (typeof value === 'string' && value.trim() === '') return true;
-
-    return false;
-  }).map(({ label }) => label);
-
-  if (missingFields.length > 0) {
-    dispatch(
-      notify({
-        msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
-        sev: 'warning'
-      })
-    );
-    return false;
-  }
-
-  return true;
-};
+    return true;
+  };
 
   const handleSave = async (): Promise<Patient | null> => {
     if (!validateMandatoryPatientFields()) {
@@ -1036,13 +1000,13 @@ const validateMandatoryPatientFields = (): boolean => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true }
-        }).unwrap()
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
         : await addPatient({
-          ...localPatient,
-          isCompletedPatient: true
-        }).unwrap();
+            ...localPatient,
+            isCompletedPatient: true
+          }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1096,13 +1060,13 @@ const validateMandatoryPatientFields = (): boolean => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true }
-        }).unwrap()
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
         : await addPatient({
-          ...localPatient,
-          isCompletedPatient: true
-        }).unwrap();
+            ...localPatient,
+            isCompletedPatient: true
+          }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1195,7 +1159,7 @@ const validateMandatoryPatientFields = (): boolean => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      isPrimary: secondaryDocument.isPrimary ?? false,
+      isPrimary: secondaryDocument.type === 'NATIONAL_ID',
       number: String(secondaryDocument.number ?? '').trim()
     };
 
@@ -1273,10 +1237,6 @@ const validateMandatoryPatientFields = (): boolean => {
       setPlanPage(0);
       setRelativePage(0);
       setAllRelatives([]);
-
-      setDocCountryOpen(false);
-      setDocCountrySearch('');
-      setDocCountryPage(0);
     }
   }, [open]);
 
@@ -1454,36 +1414,13 @@ const validateMandatoryPatientFields = (): boolean => {
                 column
                 width={300}
                 fieldLabel="Document Country"
-                fieldType="selectPagination"
+                fieldType="select"
                 fieldName="countryId"
-                selectData={docCountryCache}
-                selectDataLabel="displayName"
-                selectDataValue="id"
-                searchKeyWard={docCountrySearch}
-                setSearchKeyWard={v => {
-                  setDocCountrySearch(v);
-                  setDocCountryPage(0);
-                }}
-                hasMore={docHasMoreCountries}
-                onFetchMore={loadMoreDocCountries}
-                loading={docPaginationLoading}
-                open={docCountryOpen}
-                onOpen={() => setDocCountryOpen(true)}
-                onClose={() => setDocCountryOpen(false)}
-                onSelectItem={(item: any) => {
-                  setSecondaryDocument(prev => ({
-                    ...prev,
-                    countryId: item ? item.id : null
-                  }));
-
-                  if (!item) {
-                    setDocCountrySearch('');
-                    setDocCountryPage(0);
-                  }
-
-                  setDocCountryOpen(false);
-                }}
+                selectData={countrySelectData}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={secondaryDocument}
+                setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
               />
             )}
 
@@ -1492,7 +1429,7 @@ const validateMandatoryPatientFields = (): boolean => {
                 required
                 column
                 width={300}
-                fieldType="textnumber"
+                fieldType="number"
                 fieldLabel="Document Number"
                 fieldName="number"
                 record={secondaryDocument}
@@ -1516,7 +1453,7 @@ const validateMandatoryPatientFields = (): boolean => {
         return (
           <Form layout="inline">
             <span className="custom-text">Contact Information</span>
-             <PhoneNumberInput
+            <PhoneNumberInput
               column
               fieldName="secondMobileNumber"
               fieldLabel="Secondary Mobile Number"

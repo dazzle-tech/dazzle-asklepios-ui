@@ -288,11 +288,12 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();
         dispatch(notify({ msg: 'Social history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addSocialHistory(payload).unwrap();
         dispatch(notify({ msg: 'Social history added successfully', sev: 'success' }));
+        resetAll();
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, SOCIAL_HISTORY_ERROR_MAP);
     }
@@ -330,6 +331,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldType="date"
                 fieldLabel="Start date"
                 fieldName="smokeStartDate"
+                disableFutureDates
                 record={record}
                 setRecord={setRecord}
               />
@@ -377,6 +379,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldType="date"
                 fieldLabel="Quit date"
                 fieldName="smokeQuitDate"
+                disableFutureDates
                 record={record}
                 setRecord={setRecord}
               />
@@ -424,6 +427,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldType="date"
                 fieldLabel="Since when"
                 fieldName="alcoholSinceWhen"
+                disableFutureDates
                 record={record}
                 setRecord={setRecord}
               />

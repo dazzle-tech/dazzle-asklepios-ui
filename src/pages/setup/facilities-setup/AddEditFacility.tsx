@@ -2,7 +2,6 @@ import MyModal from '@/components/MyModal/MyModal';
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
 import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
@@ -28,8 +27,7 @@ const AddEditFacility = ({
   const facilityTypeOptions = useEnumOptions("FacilityType"); 
 
   const currencyOptions = useEnumCapitalized("Currency");
-  // Fetch country Lov list response
-  const { data: contryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const countryOptions = useEnumOptions('CountryName');
   // Fetch state Lov list response
   const { data: stateLovQueryResponse } = useGetLovValuesByCodeQuery('STATE_PROV');
   // Fetch city Lov list response
@@ -125,9 +123,9 @@ const AddEditFacility = ({
                 fieldLabel="Facility Country"
                 fieldType="select"
                 fieldName="countryLkey"
-                selectData={contryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={countryOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={address}
                 setRecord={setAddress}
               />

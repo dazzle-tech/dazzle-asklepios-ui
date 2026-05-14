@@ -236,6 +236,7 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
                 setRecord={setRescheduleDto}
                 rows={4}
                 width="100%"
+                required
                 column
               />
             </Form>

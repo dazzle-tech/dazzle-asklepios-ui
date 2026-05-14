@@ -25,8 +25,19 @@ import { Consultation, ConsultationUpdatePayload } from '@/types/model-types-new
 import { useLazyGetSpecialistPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 
+const ENUM_CLASS_TO_FIELD_LABEL: Record<string, string> = {
+  ConsultationLevel: 'priority level',
+  ConsultationMethod: 'consultation method',
+  ConsultationType: 'consultation type',
+  DestinationType: 'destination type'
+};
+
 const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
-  const data = err?.data ?? {};
+  // Normalize: RTK Query onQueryStarted wraps as { error: { status, data } }
+  // while .unwrap() throws { status, data } directly. Support both.
+  const normalized = err?.error ?? err ?? {};
+  const data = normalized?.data ?? err?.data ?? {};
+  const rawStatus = normalized?.status ?? err?.status;
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
@@ -50,6 +61,12 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     return msg || 'invalid value';
   };
 
+  // RTK Query network/fetch errors
+  if (rawStatus === 'FETCH_ERROR' || rawStatus === 'PARSING_ERROR') {
+    dispatch(notify({ msg: 'Network error. Please check your connection and try again.' + suffix, sev: 'warning' }));
+    return;
+  }
+
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const lines = data.fieldErrors.map((fe: any) => {
       const rawField = String(fe.field ?? '');
@@ -67,6 +84,22 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
   }
 
   const messageProp: string = data?.message || '';
+  const detailProp: string = data?.detail || '';
+  const httpStatus: number | undefined =
+    typeof rawStatus === 'number' ? rawStatus : typeof data?.status === 'number' ? data.status : undefined;
+
+  // RFC 7807: "No enum constant" in detail → invalid enum value sent
+  if (detailProp.includes('No enum constant')) {
+    const match = detailProp.match(/No enum constant [^.]+\.([A-Za-z]+)\.(\w+)/);
+    if (match) {
+      const enumClass = match[1];
+      const fieldLabel = ENUM_CLASS_TO_FIELD_LABEL[enumClass] ?? enumClass;
+      dispatch(notify({ msg: `${fieldLabel} has an invalid value. Please re-select and try again.` + suffix, sev: 'warning' }));
+    } else {
+      dispatch(notify({ msg: 'An invalid value was submitted. Please review your selections.' + suffix, sev: 'warning' }));
+    }
+    return;
+  }
 
   if (
     messageProp.includes('ConstraintViolationImpl') ||
@@ -101,7 +134,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     }
   }
 
-  if (err?.status === 400 || data?.status === 400) {
+  if (httpStatus === 400) {
     const message = messageProp.toLowerCase();
 
     for (const [fieldKey, fieldLabel] of Object.entries(FIELD_LABELS)) {
@@ -166,6 +199,8 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
 
   const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
 
+  // Plain JS Error object (e.g. TypeError thrown before/after network call)
+  const jsMessage = err instanceof Error ? err.message : null;
   if (err?.status === 404 || data?.status === 404) {
     const detail = String(data?.detail ?? '');
     if (detail.toLowerCase().includes('department not found')) {
@@ -176,17 +211,15 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
 
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
+    detailProp ||
     data?.title ||
-    data?.message ||
-    'Unexpected error';
-     console.error('Error details:', {
-        status: err?.status,
-        errorKey,
-        messageProp,
-        data
-      });
+    messageProp ||
+    (typeof normalized?.error === 'string' ? normalized.error : null) ||
+    jsMessage ||
+    (httpStatus === 500 ? 'A server error occurred. Please try again later.' : null) ||
+    'An unexpected error occurred. Please try again.';
 
+  console.error('[Consultation] Unhandled error:', { rawStatus, httpStatus, data, err });
   dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
@@ -468,6 +501,10 @@ const Details = ({
 
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
+
+      setOpen(false);
+      handleClear();
+      try { refetchCon?.(); } catch (_) { /* query not yet started */ }
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
       return;

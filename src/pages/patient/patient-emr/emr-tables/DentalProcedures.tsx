@@ -157,8 +157,6 @@ const DentalProcedures = ({ patient, encounter }: any) => {
     }
   ];
 
-  console.log('Dental Procedures Rendered with rows:', rows);
-
   // ─────────── Render ───────────
   return (
     <MyTable

@@ -582,10 +582,10 @@ return (
                   Cancel
                 </MyButton>
 
-                <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
+                {/* <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
                   <FontAwesomeIcon icon={faPrint} />
                   <span className="print-label">Print</span>
-                </MyButton>
+                </MyButton> */}
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                 <Translate>Show Cancelled</Translate>
