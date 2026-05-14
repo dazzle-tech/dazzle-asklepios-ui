@@ -18,6 +18,7 @@ const CreatePatientPassword = () => {
   const [formError, setFormError] = useState<Record<string, any>>({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isPasswordCreated, setIsPasswordCreated] = useState(false);
 
   const hasValidKey = key && typeof key === 'string' && key.trim() !== '';
   const [isKeyValid, setIsKeyValid] = useState<any>(undefined);
@@ -166,7 +167,7 @@ const CreatePatientPassword = () => {
     try {
       await finishCreatePatientPassword({ key, newPassword: formValue.newPassword }).unwrap();
       setSuccess('Password created successfully!');
-      navigate('/login');
+      setIsPasswordCreated(true);
     } catch (err: any) {
       const errorMessage =
         err?.data?.message ||
@@ -308,7 +309,9 @@ const CreatePatientPassword = () => {
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           padding: '20px',
-          borderRadius: '10px'
+          borderRadius: '10px',
+          opacity: isPasswordCreated ? 0.6 : 1,
+          pointerEvents: isPasswordCreated ? 'none' : 'auto',
         }}
       >
         <div className="bodySignInDiv">
@@ -317,68 +320,80 @@ const CreatePatientPassword = () => {
           </Panel>
 
           <Panel className="sign-in-panel">
-            <Form fluid onSubmit={handleSubmit}>
-              <h4 className="create-password-header-title">Create Your Password</h4>
-
-              <MyInput
-                width="100%"
-                fieldLabel="New Password"
-                fieldName="newPassword"
-                fieldType="password"
-                record={formValue}
-                setRecord={setFormValue}
-                placeholder="Enter New Password"
-                showLabel={true}
-                required
-              />
-              <MyInput
-                width="100%"
-                fieldLabel="Confirm Password"
-                fieldName="confirmPassword"
-                fieldType="password"
-                record={formValue}
-                setRecord={setFormValue}
-                placeholder="Confirm Password"
-                showLabel={true}
-                required
-              />
-              <Form.HelpText className="create-password-hint">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div>1. Minimum 8 characters</div>
-                  <div>2. At least one uppercase letter</div>
-                  <div>3. At least one number</div>
-                  <div>4. At least one symbol (@ $ ! % * ? & # _ - .)</div>
-                  <div>5. No spaces</div>
-                </div>
-              </Form.HelpText>
-              {formValue.confirmPassword && formValue.newPassword !== formValue.confirmPassword && (
-                <Form.HelpText style={{ color: 'red', marginTop: 4 }}>
-                  Passwords do not match
-                </Form.HelpText>
-              )}
-
-              {error && (
-                <p style={{ color: 'red', marginBottom: 10, marginTop: 10 }}>{error}</p>
-              )}
-              {success && (
-                <Message showIcon type="success" className="create-password-success-message">
-                  {success}
+            {isPasswordCreated ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <div style={{ marginBottom: '20px', fontSize: '48px', color: 'green' }}>✓</div>
+                <Message showIcon type="success" style={{ marginBottom: '20px' }}>
+                  Password created successfully!
                 </Message>
-              )}
+                <p style={{ color: '#666', marginTop: '20px', fontSize: '16px' }}>
+                  Your account is now active and ready to use.
+                </p>
+              </div>
+            ) : (
+              <Form fluid onSubmit={handleSubmit}>
+                <h4 className="create-password-header-title">Create Your Password</h4>
 
-              <Form.Group>
-                <Button
-                  style={{ backgroundColor: 'var(--primary-blue)' }}
-                  appearance="primary"
-                  onClick={handleSubmit}
-                  loading={isLoading}
-                  className="submit-button"
-                  block
-                >
-                  Create Password
-                </Button>
-              </Form.Group>
-            </Form>
+                <MyInput
+                  width="100%"
+                  fieldLabel="New Password"
+                  fieldName="newPassword"
+                  fieldType="password"
+                  record={formValue}
+                  setRecord={setFormValue}
+                  placeholder="Enter New Password"
+                  showLabel={true}
+                  required
+                />
+                <MyInput
+                  width="100%"
+                  fieldLabel="Confirm Password"
+                  fieldName="confirmPassword"
+                  fieldType="password"
+                  record={formValue}
+                  setRecord={setFormValue}
+                  placeholder="Confirm Password"
+                  showLabel={true}
+                  required
+                />
+                <Form.HelpText className="create-password-hint">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div>1. Minimum 8 characters</div>
+                    <div>2. At least one uppercase letter</div>
+                    <div>3. At least one number</div>
+                    <div>4. At least one symbol (@ $ ! % * ? & # _ - .)</div>
+                    <div>5. No spaces</div>
+                  </div>
+                </Form.HelpText>
+                {formValue.confirmPassword && formValue.newPassword !== formValue.confirmPassword && (
+                  <Form.HelpText style={{ color: 'red', marginTop: 4 }}>
+                    Passwords do not match
+                  </Form.HelpText>
+                )}
+
+                {error && (
+                  <p style={{ color: 'red', marginBottom: 10, marginTop: 10 }}>{error}</p>
+                )}
+                {success && (
+                  <Message showIcon type="success" className="create-password-success-message">
+                    {success}
+                  </Message>
+                )}
+
+                <Form.Group>
+                  <Button
+                    style={{ backgroundColor: 'var(--primary-blue)' }}
+                    appearance="primary"
+                    onClick={handleSubmit}
+                    loading={isLoading}
+                    className="submit-button"
+                    block
+                  >
+                    Create Password
+                  </Button>
+                </Form.Group>
+              </Form>
+            )}
           </Panel>
         </div>
       </Panel>
