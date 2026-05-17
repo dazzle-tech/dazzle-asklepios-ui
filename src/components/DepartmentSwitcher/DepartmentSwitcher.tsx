@@ -64,10 +64,13 @@ const DepartmentSwitcher = ({
   afterSelect,
   beforeSelect
 }: DepartmentSwitcherProps) => {
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
 
   const [openedOnce, setOpenedOnce] = useState(false);
+
+  const isDark = mode === 'dark';
 
   const userId = authSlice.user?.id;
   const selectedDepartment = authSlice.selectedDepartment;
@@ -153,105 +156,147 @@ const DepartmentSwitcher = ({
 
       return (
         <Popover ref={ref} className={className} style={{ left, top, width }} full>
-          <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontWeight: 600 }}>My Departments</span>
+          <div
+            style={{
+              padding: '8px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+              color: isDark ? '#f5f5f5' : '#111827'
+            }}
+          >
+            <span style={{ fontWeight: 600, color: isDark ? '#f5f5f5' : '#111827' }}>
+              My Departments
+            </span>
 
             {showFacilityNameInHeader && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: isDark ? '#d4d4d4' : '#374151'
+                  }}
+                >
                   {headerFacilityName}
                 </span>
-                <span style={{ fontSize: '11px', color: '#6c757d' }}>
+                <span style={{ fontSize: '11px', color: isDark ? '#8a8a8a' : '#6c757d' }}>
                   {headerDepartmentName}
                 </span>
               </div>
             )}
           </div>
 
-          <Divider style={{ margin: 0 }} />
+          <Divider style={{ margin: 0, borderColor: isDark ? '#333333' : '#e5e7eb' }} />
 
-          {showLoading ? (
-            <div style={{ padding: '12px' }}>Loading departments...</div>
-          ) : activeDepartments.length === 0 ? (
-            <div style={{ padding: '12px' }}>No active departments found.</div>
-          ) : (
-            <div
-              style={{
-                maxHeight,
-                overflowY: 'auto',
-                margin: '8px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8
-              }}
-            >
-              {activeDepartments.map(dept => {
-                const isActive =
-                  String(selectedDepartment?.departmentId ?? '') ===
-                    String(dept.departmentId ?? '') &&
-                  String(selectedDepartment?.facilityId ?? '') === String(dept.facilityId ?? '');
+          <div style={{ backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }}>
+            {showLoading ? (
+              <div style={{ padding: '12px', color: isDark ? '#8a8a8a' : '#6c757d' }}>
+                Loading departments...
+              </div>
+            ) : activeDepartments.length === 0 ? (
+              <div style={{ padding: '12px', color: isDark ? '#8a8a8a' : '#6c757d' }}>
+                No active departments found.
+              </div>
+            ) : (
+              <div
+                style={{
+                  maxHeight,
+                  overflowY: 'auto',
+                  margin: '8px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8
+                }}
+              >
+                {activeDepartments.map(dept => {
+                  const isActive =
+                    String(selectedDepartment?.departmentId ?? '') ===
+                      String(dept.departmentId ?? '') &&
+                    String(selectedDepartment?.facilityId ?? '') === String(dept.facilityId ?? '');
 
-                const departmentDisplayName = dept.departmentName ?? 'Unnamed Department';
-                const facilityDisplayName = dept.facilityName ?? '';
+                  const departmentDisplayName = dept.departmentName ?? 'Unnamed Department';
 
-                return (
-                  <div
-                    key={dept.id ?? `${dept.userId}-${dept.departmentId}-${dept.facilityId}`}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                      border: '1px solid var(--border-color-light, #e5e7eb)',
-                      borderRadius: 8,
-                      padding: '8px 12px',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => selectDepartment(dept, rsuiteOnClose)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 600, flex: '1 1 auto' }}>
-                        {departmentDisplayName}
-                      </span>
-
-                      {isActive && (
+                  return (
+                    <div
+                      key={dept.id ?? `${dept.userId}-${dept.departmentId}-${dept.facilityId}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        border: `1px solid ${isDark ? '#333333' : '#e5e7eb'}`,
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        backgroundColor: isActive
+                          ? isDark ? '#2e2e2e' : '#f9fafb'
+                          : isDark ? '#1a1a1a' : '#ffffff',
+                        transition: 'background-color 0.15s ease'
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark
+                          ? '#2e2e2e'
+                          : '#f3f4f6';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLDivElement).style.backgroundColor = isActive
+                          ? isDark ? '#2e2e2e' : '#f9fafb'
+                          : isDark ? '#1a1a1a' : '#ffffff';
+                      }}
+                      onClick={() => selectDepartment(dept, rsuiteOnClose)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span
                           style={{
-                            fontSize: '11px',
-                            background: '#facc15',
-                            color: '#1f2937',
-                            padding: '1px 6px',
-                            borderRadius: 999
+                            fontWeight: 600,
+                            flex: '1 1 auto',
+                            color: isDark ? '#f5f5f5' : '#111827'
                           }}
                         >
-                          Current
+                          {departmentDisplayName}
                         </span>
-                      )}
 
-                      {dept.isDefault && (
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            background: 'var(--deep-blue)',
-                            color: 'var(--white)',
-                            padding: '1px 6px',
-                            borderRadius: 999
-                          }}
-                        >
-                          Default
+                        {isActive && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              background: isDark ? '#78350f' : '#facc15',
+                              color: isDark ? '#fef9c3' : '#1f2937',
+                              padding: '1px 6px',
+                              borderRadius: 999
+                            }}
+                          >
+                            Current
+                          </span>
+                        )}
+
+                        {dept.isDefault && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              background: 'var(--deep-blue)',
+                              color: 'var(--white)',
+                              padding: '1px 6px',
+                              borderRadius: 999
+                            }}
+                          >
+                            Default
+                          </span>
+                        )}
+                      </div>
+
+                      {/* {facilityDisplayName && (
+                        <span style={{ fontSize: '11px', color: isDark ? '#8a8a8a' : '#6c757d' }}>
+                          {facilityDisplayName}
                         </span>
-                      )}
+                      )} */}
                     </div>
-
-                    {/* {facilityDisplayName && (
-                      <span style={{ fontSize: '11px', color: '#6c757d' }}>
-                        {facilityDisplayName}
-                      </span>
-                    )} */}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </Popover>
       );
     },
@@ -266,7 +311,8 @@ const DepartmentSwitcher = ({
       showFacilityNameInHeader,
       headerFacilityName,
       headerDepartmentName,
-      selectDepartment
+      selectDepartment,
+      isDark
     ]
   );
 
