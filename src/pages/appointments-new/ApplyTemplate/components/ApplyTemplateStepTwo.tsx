@@ -78,6 +78,7 @@ const findOverlappingBreakWindow = (
 };
 
 const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateResponseVM | null; dto?: AvailabilityGenerationBatchApplyDTO }> = ({ selectedTemplate, dto }) => {
+   const mode = useAppSelector((state: any) => state.ui.mode);
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
@@ -130,13 +131,13 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
       {
         key: "date",
         title: "Date",
-        render: (row: GeneratedSlot) => <span className="text-sm font-medium text-slate-700">{row.date}</span>
+        render: (row: GeneratedSlot) => <span>{row.date}</span>
       },
       {
         key: "time",
         title: "Time",
         width: 150,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.time}</span>
+        render: (row: GeneratedSlot) => <span>{row.time}</span>
       },
       {
         key: "slotType",
@@ -172,13 +173,13 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         key: "duration",
         title: "Duration",
         width: 120,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.duration}</span>
+        render: (row: GeneratedSlot) => <span>{row.duration}</span>
       },
       {
         key: "capacity",
         title: "Capacity",
         width: 120,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.capacity}</span>
+        render: (row: GeneratedSlot) => <span>{row.capacity}</span>
       },
       {
         key: "status",
@@ -410,7 +411,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
 
   return (
     <>
-      <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.45fr_0.75fr]">
+      <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.45fr_0.75fr]" style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}}>
         <SlotsToBeGeneratedSection
           generatedSlots={generatedSlots}
           generatedSlotsColumns={generatedSlotsColumns}
