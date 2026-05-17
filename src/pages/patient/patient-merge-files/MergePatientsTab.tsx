@@ -17,6 +17,8 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import PatientMergeCard from './patient-merge-files-card/PatientMergeCard';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 
 interface MergePatientsTabProps {
   fromPatient: Patient;
@@ -48,8 +50,41 @@ const MergePatientsTab: React.FC<MergePatientsTabProps> = ({
   windowHeight
 }) => {
   const isLoading = previewLoading || previewFetching;
-  const isMergeDisabled = !fromPatient?.id || !toPatient?.id;
+  const isFromMerged = fromPatient?.patientStatus === 'MERGED';
+const isToMerged = toPatient?.patientStatus === 'MERGED';
+const dispatch = useAppDispatch()
+const isMergeDisabled =
+  !fromPatient?.id ||
+  !toPatient?.id;
 
+const showMergedPatientWarning = () => {
+  if (isFromMerged) {
+    dispatch(notify({
+      msg: 'Source patient is already merged and cannot be used in another merge.',
+      sev: 'warning'
+    }));
+  
+    return;
+  }
+
+  if (isToMerged) {
+    dispatch(notify({
+        msg: 'Primary patient is already merged and cannot be used in another merge.',
+        sev: 'warning'
+    }));
+
+    return;
+  }
+};
+
+const handleStartMerge = () => {
+  if (isFromMerged || isToMerged) {
+    showMergedPatientWarning();
+    return;
+  }
+
+  handleMergeClick();
+};
   return (
     <div className="merge-patients-layout">
       {/* Left Sidebar */}
@@ -165,7 +200,7 @@ const MergePatientsTab: React.FC<MergePatientsTabProps> = ({
                   appearance="primary"
                   loading={isLoading}
                   disabled={isMergeDisabled}
-                  onClick={handleMergeClick}
+                  onClick={handleStartMerge}
                   prefixIcon={() => (
                     <FontAwesomeIcon icon={faCodeMerge} />
                   )}

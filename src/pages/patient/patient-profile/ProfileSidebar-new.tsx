@@ -304,17 +304,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         {patients.map(p => (
                           <div
                             key={p.id}
-                            className={clsx({
-                              'patient-disabled': p.patientStatus === 'MERGED'
-                            })}
+                          
                           >
                             <PatientCardWithPicture
                               patient={p}
                               onClick={() => {
-                                if (p.patientStatus === 'MERGED') {
-                                  return;
-                                }
-
+                              
                                 setLocalPatient(p);
                               }}
                               actions={

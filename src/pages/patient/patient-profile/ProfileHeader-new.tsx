@@ -25,7 +25,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useRef, useState,useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
@@ -33,6 +33,7 @@ import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
 import { useLazyGetPatientInformationPdfQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
+import { FaCodeMerge } from 'react-icons/fa6';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -77,8 +78,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
-   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
- const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
   const {
     data: profilePictureTicket,
@@ -90,70 +91,70 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
 
 
-const handlePrintInformation = async () => {
-  if (!localPatient?.id) return;
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
 
-  try {
-    setPrintingType('information');
+    try {
+      setPrintingType('information');
 
-    const blob = await triggerGetPatientInformationPdf({
-      patientId: localPatient.id
-    }).unwrap();
+      const blob = await triggerGetPatientInformationPdf({
+        patientId: localPatient.id
+      }).unwrap();
 
-    const fileURL = window.URL.createObjectURL(blob);
-    const win = window.open(fileURL, '_blank');
+      const fileURL = window.URL.createObjectURL(blob);
+      const win = window.open(fileURL, '_blank');
 
-    if (win) {
-      win.focus();
+      if (win) {
+        win.focus();
+      }
+
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
     }
+  };
 
-    setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
-  } catch (err: any) {
-    dispatch(
-      notify({
-        msg: err?.data?.message || 'Print failed',
-        sev: 'error'
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
+  const handlePrintPatientLabel = async (rowData: any) => {
+    if (!rowData?.id) return;
 
-const handlePrintPatientLabel = async (rowData: any) => {
-  if (!rowData?.id) return;
+    try {
+      setPrintingType('label');
 
-  try {
-    setPrintingType('label');
+      const blob = await triggerGetPatientLabelPdf({
+        patientId: rowData.id
+      }).unwrap();
 
-    const blob = await triggerGetPatientLabelPdf({
-      patientId: rowData.id
-    }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
 
-    const fileURL = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `label-${rowData.medicalRecordNumber}.pdf`;
 
-    const link = document.createElement('a');
-    link.href = fileURL;
-    link.download = `label-${rowData.medicalRecordNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => {
-      window.URL.revokeObjectURL(fileURL);
-    }, 1000);
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Failed to download label pdf',
-        sev: 'error'
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Failed to download label pdf',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -251,37 +252,37 @@ const handlePrintPatientLabel = async (rowData: any) => {
     </Popover>
   );
 
- const contentOfPrintIconMenu = (
-  <Popover>
-    <Dropdown.Menu>
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintInformation();
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
+  const contentOfPrintIconMenu = (
+    <Popover>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          disabled={!localPatient?.id || printingType !== null}
+          onClick={async () => {
+            await handlePrintInformation();
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <Translate>
+              {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
+            </Translate>
+          </div>
+        </Dropdown.Item>
 
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintPatientLabel(localPatient);
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  </Popover>
-);
+        <Dropdown.Item
+          disabled={!localPatient?.id || printingType !== null}
+          onClick={async () => {
+            await handlePrintPatientLabel(localPatient);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <Translate>
+              {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
+            </Translate>
+          </div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
+  );
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -357,34 +358,34 @@ const handlePrintPatientLabel = async (rowData: any) => {
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-// useEffect(() => {
-//   if (location.state?.eligibilityDone) {
-//     setEligibilityChecked(true);
-//   }
-// }, [location.state]);
+  // useEffect(() => {
+  //   if (location.state?.eligibilityDone) {
+  //     setEligibilityChecked(true);
+  //   }
+  // }, [location.state]);
 
 
-const whisperRef = useRef<any>(null);
+  const whisperRef = useRef<any>(null);
 
-useEffect(() => {
-  if (quickPatientModalOpen || openScanDocumentModal) {
-    whisperRef.current?.close?.();
-  }
-}, [quickPatientModalOpen, openScanDocumentModal]);
+  useEffect(() => {
+    if (quickPatientModalOpen || openScanDocumentModal) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal]);
 
-useEffect(() => {
-  const handleClick = (e: any) => {
-    if (e.target.closest('.rs-popover')) return;
+  useEffect(() => {
+    const handleClick = (e: any) => {
+      if (e.target.closest('.rs-popover')) return;
 
-    setOpenMoreMenu(false);
-  };
+      setOpenMoreMenu(false);
+    };
 
-  document.addEventListener('mousedown', handleClick);
+    document.addEventListener('mousedown', handleClick);
 
-  return () => {
-    document.removeEventListener('mousedown', handleClick);
-  };
-}, []);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, []);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -480,6 +481,22 @@ useEffect(() => {
                     <div className="status-icon">
                       {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
                       {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
+                    </div>
+                  </Whisper>
+                )}
+                {localPatient.patientStatus === 'MERGED' && (
+                  <Whisper
+                    placement="bottom"
+                    controlId="merged-patient-tooltip"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        Merged Patient
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon merged-status-icon">
+                      <Icon color="orange" as={FaCodeMerge} />
                     </div>
                   </Whisper>
                 )}

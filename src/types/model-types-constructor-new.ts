@@ -1676,7 +1676,12 @@ export const newPatient: modelTypes.Patient = {
   lastModifiedDate: null,
   visitType: null,
   durationInMinutes: null,
-  resourceSpecific: false
+  resourceSpecific: false,
+  patientStatus: null,
+  mergedIntoPatientId: null,
+  mergedAt: null,
+  mergedBy: null,
+  
 };
 
 export const newAddress: modelTypes.Address = {

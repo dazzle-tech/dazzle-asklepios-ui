@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Panel, Loader } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -9,14 +9,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 
 import { useLazyGetMergeTransactionChangesQuery } from '@/services/patients/patientMergeService';
 
-
 import './styles.less';
 import MergeTransactionChangesModal from './MergeTransactionChangesModal';
+import { Form } from 'rsuite';
 
 interface MergeTransactionsTabProps {
     transactions?: any[];
@@ -31,6 +32,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
     onRequestUndo,
     undoLoading
 }) => {
+    const [search, setSearch] = useState('');
     const [changesModalOpen, setChangesModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
@@ -38,6 +40,23 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
         getTransactionChanges,
         { data: changesData, isFetching: changesLoading, error: changesError }
     ] = useLazyGetMergeTransactionChangesQuery();
+
+    const filteredTransactions = useMemo(() => {
+        const searchValue = search.trim().toLowerCase();
+
+        if (!searchValue) {
+            return transactions;
+        }
+
+        return transactions.filter((transaction: any) => {
+            return (
+                transaction.fromPatientName?.toLowerCase().includes(searchValue) ||
+                transaction.toPatientName?.toLowerCase().includes(searchValue) ||
+                transaction.fromPatientMrn?.toLowerCase().includes(searchValue) ||
+                transaction.toPatientMrn?.toLowerCase().includes(searchValue)
+            );
+        });
+    }, [transactions, search]);
 
     const handleViewChanges = async (transaction: any) => {
         setSelectedTransaction(transaction);
@@ -81,7 +100,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
 
                         {!transactionsLoading && (
                             <span className="merge-transactions-count">
-                                {transactions.length}
+                                {filteredTransactions.length}
                             </span>
                         )}
                     </div>
@@ -89,6 +108,22 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                 minHeight="auto"
                 content={
                     <div className="merge-transactions-root">
+                        <div className="merge-transactions-search">
+                            <Form fluid>
+                                <MyInput
+                                    fieldType="text"
+                                    fieldName="search"
+                                    fieldLabel=""
+                                    placeholder="Search by patient name or MRN"
+                                    record={{ search }}
+                                    setRecord={(updated: any) =>
+                                        setSearch(updated?.search || '')
+                                    }
+                                    width={350}
+                                />
+                            </Form>
+                        </div>
+
                         {transactionsLoading ? (
                             <Panel className="merge-panel-empty">
                                 <Loader
@@ -100,7 +135,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                                     }
                                 />
                             </Panel>
-                        ) : transactions.length === 0 ? (
+                        ) : filteredTransactions.length === 0 ? (
                             <Panel className="merge-panel-empty">
                                 <p className="merge-panel-empty-text">
                                     <Translate>No merge transactions found</Translate>
@@ -108,7 +143,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                             </Panel>
                         ) : (
                             <div className="merge-transactions-list">
-                                {transactions.map((transaction: any) => (
+                                {filteredTransactions.map((transaction: any) => (
                                     <Panel
                                         key={transaction.mergeLogId}
                                         bordered
@@ -116,6 +151,9 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                                     >
                                         <div className="merge-transaction-grid">
                                             <div>
+                                                <div className="merge-transaction-number">
+                                                    {transaction.transactionNumber || '-'}
+                                                </div>
                                                 <div className="merge-transaction-title">
                                                     <Translate>Source Patient</Translate>
                                                 </div>
@@ -163,11 +201,10 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                                                 <div className="merge-transaction-small">
                                                     <Translate>Status</Translate>:{' '}
                                                     <span
-                                                        className={`merge-status-badge ${
-                                                            transaction.mergeStatus === 'MERGED'
+                                                        className={`merge-status-badge ${transaction.mergeStatus === 'MERGED'
                                                                 ? 'merge-status-merged'
                                                                 : 'merge-status-undone'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {transaction.mergeStatus || 'UNKNOWN'}
                                                     </span>

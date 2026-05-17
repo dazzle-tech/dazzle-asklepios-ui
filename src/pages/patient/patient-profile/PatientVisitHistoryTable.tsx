@@ -294,6 +294,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                     <MyButton
                       appearance="subtle"
                       size="small"
+                      disabled={!row.id || localPatient?.patientStatus === 'MERGED'}
                       onClick={() => {
                         setSelectedVisit(row);
                         setOpenCancelModal(true);
@@ -312,7 +313,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                   container={getTooltipContainer}
                 >
                   <span className="visit-history__tooltip-trigger">
-                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
+                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)} disabled={localPatient?.patientStatus === 'MERGED'}>
                       <FontAwesomeIcon icon={faCheckDouble} />
                     </MyButton>
                   </span>
@@ -333,6 +334,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                         setSelectedVisit(row);
                         setOpenDischargeModal(true);
                       }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
                     >
                       <FontAwesomeIcon icon={faPowerOff} />
                     </MyButton>
@@ -355,6 +357,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                         setQuickInitialStep(1);
                         setQuickAppointmentModel(true);
                       }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
                     >
                       <FontAwesomeIcon icon={faFileInvoiceDollar} />
                     </MyButton>

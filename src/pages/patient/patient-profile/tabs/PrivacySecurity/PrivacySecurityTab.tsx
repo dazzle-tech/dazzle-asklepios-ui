@@ -17,6 +17,7 @@ import { newPatientHIPAA } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { useEnumOptions } from '@/services/enumsApi';
+import clsx from 'clsx';
 
 interface PrivacySecurityTabProps {
   localPatient: Patient;
@@ -109,7 +110,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
 
 
   return (
-    <div className="tab-main-container" dir={dir}>
+    <div className="tab-main-container" dir={dir} >
       <AddVerification
         open={verificationModalOpen}
         setOpen={setVerificationModalOpen}
@@ -122,7 +123,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
               <SectionContainer
                   title={<Translate>Security Access Level</Translate>}
                   content={
-                    <Form layout="inline" className="btn-fileds-style">
+                    <Form layout="inline" className="btn-fileds-style" >
                       <MyInput
                         vr={validationResult}
                         showLabel={false}
@@ -133,6 +134,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
                         selectDataValue="value"
                         record={localPatient}
                         setRecord={setLocalPatient}
+                        disabled={!localPatient.id || localPatient.patientStatus === 'MERGED'}
                       />
                     </Form>
                   }
@@ -144,7 +146,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
                     <Form layout="inline" className="btn-fileds-style">
                       <MyButton
                         onClick={() => setVerificationModalOpen(true)}
-                        disabled={!localPatient.id}
+                        disabled={!localPatient.id || localPatient.patientStatus === 'MERGED'}
                         prefixIcon={() => <PlusRound />}
                       >
                         Patient Verification
@@ -163,7 +165,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
                         </div>
                       )}
 
-                      <div className="covg-content">
+                      <div  className={clsx('covg-content', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
                         <MyInput
                           column
                           vr={validationResult}
@@ -210,6 +212,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
                             loading={creating || updating}
                             prefixIcon={() => <CheckRound />}
                             onClick={handleSaveHIPAA}
+                            disabled={!localPatient.id || localPatient.patientStatus === 'MERGED'}
                           >
                             Save HIPAA
                           </MyButton>

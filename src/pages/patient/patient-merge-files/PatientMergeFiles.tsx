@@ -41,7 +41,6 @@ const PatientMergeFiles: React.FC = () => {
     },
     { skip: !showMergeModal || !fromPatient.id || !toPatient.id }
   );
- console.log('Merge preview data:', mergePreview, 'From Patient ID:', fromPatient.id, 'To Patient ID:', toPatient.id);
   const [executeMerge, { isLoading: executeLoading }] = useExecuteMergeMutation();
   const [summarizeMerge, { isLoading: summarizeLoading }] = useSummarizeMergeMutation();
   const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMergeTransactionsQuery();
@@ -106,7 +105,7 @@ const PatientMergeFiles: React.FC = () => {
       const result = await executeMerge(executeRequest).unwrap();
 
       dispatch(notify({
-        msg: `Merge completed successfully. Log ID: ${result.mergeLogId || 'N/A'}`,
+        msg: `Merge completed successfully. Log Number : ${result.transactionNumber || 'N/A'}`,
         sev: 'success'
       }));
 

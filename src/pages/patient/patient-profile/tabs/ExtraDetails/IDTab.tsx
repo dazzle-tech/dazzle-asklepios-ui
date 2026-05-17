@@ -19,6 +19,7 @@ import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
 import { useGetCountriesBulkMutation } from '@/services/setup/country/countryService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import clsx from 'clsx';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
@@ -234,7 +235,10 @@ const IDTab = ({ localPatient }) => {
           />
           <FontAwesomeIcon
             icon={faTrash}
-            className="action-icon delete-icon"
+            className={clsx('action-icon delete-icon', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+            style={{ cursor: rowData.isPrimary ? 'not-allowed' : 'pointer' }}
+            // "action-icon delete-icon"
+
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -278,8 +282,9 @@ const IDTab = ({ localPatient }) => {
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewDocSecondary}
-          disabled={!localPatient?.id}
-          prefixIcon={() => <PlusRound />}
+          disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
+          prefixIcon={() => <PlusRound />}   
+
         >
           <Translate>New Document</Translate>
         </MyButton>

@@ -17,6 +17,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
+import clsx from 'clsx';
 
 const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
 
@@ -206,7 +207,7 @@ const AddExtraDetails = ({
   };
 
   const content = () => (
-    <Form layout="inline" fluid className="patient-doc-secondary-container">
+    <Form layout="inline" fluid    className={clsx('patient-doc-secondary-container', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
       <MyInput
         required
         column

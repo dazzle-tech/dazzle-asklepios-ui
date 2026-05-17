@@ -125,22 +125,23 @@ const PatientFamilyMembers = ({ localPatient }) => {
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewRelative}
-          disabled={!localPatient?.id}
+          disabled={!localPatient?.id ||localPatient.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
         >
           <Translate>New Relative</Translate>
         </MyButton>
 
         <MyButton
-          disabled={!selectedPatientRelation?.id}
+          disabled={!selectedPatientRelation?.id || localPatient?.patientStatus === 'MERGED'}
           onClick={handleEditRelative}
           prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
+
         >
           Edit
         </MyButton>
 
         <MyButton
-          disabled={!selectedPatientRelation?.id}
+          disabled={!selectedPatientRelation?.id || localPatient?.patientStatus === 'MERGED'}
           onClick={() => setDeleteRelativeModalOpen(true)}
           prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
         >

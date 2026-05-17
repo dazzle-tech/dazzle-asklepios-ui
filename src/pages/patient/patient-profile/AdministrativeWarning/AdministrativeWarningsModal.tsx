@@ -146,7 +146,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
           </InputGroup.Button>
         </InputGroup>
 
-        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew}>
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew} disabled={localPatient?.patientStatus === 'MERGED'}>
           Add
         </MyButton>
       </div>
@@ -230,7 +230,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
               <div className="right-side-card">
                 <button
                   className="action-btn accept-btn"
-                  disabled={warning.resolved}
+                  disabled={warning.resolved || localPatient?.patientStatus === 'MERGED'}
                   onClick={() => handleResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faCircleCheck} />
@@ -238,7 +238,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
                 <button
                   className="action-btn undo-btn"
-                  disabled={!warning.resolved}
+                  disabled={!warning.resolved || localPatient?.patientStatus === 'MERGED'}
                   onClick={() => handleUndoResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faRotateLeft} />
@@ -246,6 +246,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
                 <button
                   className="action-btn delete-btn"
+                  disabled={localPatient?.patientStatus === 'MERGED'}
                   onClick={() => {
                     setWarningToDelete(warning);
                     setDeleteModalOpen(true);

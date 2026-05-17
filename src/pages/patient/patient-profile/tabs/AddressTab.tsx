@@ -36,6 +36,7 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
 import { FaSave } from 'react-icons/fa';
+import clsx from 'clsx';
 const toHumanAddressError = (
   err: any,
   fieldLabels: Record<string, string> = {
@@ -432,231 +433,233 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
             >
               <Translate>Address Change Log</Translate>
             </MyButton>
+            <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
 
-            <Form layout="inline" fluid>
-              <MyInput
-                column
-                required
-                fieldLabel="Country"
-                fieldType="selectPagination"
-                fieldName="countryId"
-                selectData={countryCache}
-                selectDataLabel="displayName"
-                selectDataValue="id"
-                record={address}
-                setRecord={setAddress}
-                searchKeyWard={countrySearch}
-                setSearchKeyWard={setCountrySearch}
-                hasMore={!!countriesResponse?.links?.next}
-                onFetchMore={() => {
-                  if (countriesResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(countriesResponse.links.next);
-                    setCountryPage(page);
-                  }
-                }}
-                onSelectItem={(item: SimpleCountry | null) => {
-                  if (!item) return resetLocationState();
-
-                  setAddress(prev => ({
-                    ...prev,
-                    countryId: item.id,
-                    districtId: null,
-                    communityId: null,
-                    areaId: null,
-                    locationJson: {
-                      country: { id: item.id, name: item.name, code: item.code },
-                      district: null,
-                      community: null,
-                      area: null
+              <Form layout="inline" fluid>
+                <MyInput
+                  column
+                  required
+                  fieldLabel="Country"
+                  fieldType="selectPagination"
+                  fieldName="countryId"
+                  selectData={countryCache}
+                  selectDataLabel="displayName"
+                  selectDataValue="id"
+                  record={address}
+                  setRecord={setAddress}
+                  searchKeyWard={countrySearch}
+                  setSearchKeyWard={setCountrySearch}
+                  hasMore={!!countriesResponse?.links?.next}
+                  onFetchMore={() => {
+                    if (countriesResponse?.links?.next) {
+                      const { page } = extractPaginationFromLink(countriesResponse.links.next);
+                      setCountryPage(page);
                     }
-                  }));
+                  }}
+                  onSelectItem={(item: SimpleCountry | null) => {
+                    if (!item) return resetLocationState();
 
-                  setDistrictCache([]);
-                  setCommunityCache([]);
-                  setAreaCache([]);
+                    setAddress(prev => ({
+                      ...prev,
+                      countryId: item.id,
+                      districtId: null,
+                      communityId: null,
+                      areaId: null,
+                      locationJson: {
+                        country: { id: item.id, name: item.name, code: item.code },
+                        district: null,
+                        community: null,
+                        area: null
+                      }
+                    }));
 
-                  setDistrictPage(0);
-                  setCommunityPage(0);
-                  setAreaPage(0);
+                    setDistrictCache([]);
+                    setCommunityCache([]);
+                    setAreaCache([]);
 
-                  setDistrictSearch('');
-                  setCommunitySearch('');
-                  setAreaSearch('');
+                    setDistrictPage(0);
+                    setCommunityPage(0);
+                    setAreaPage(0);
 
-                  setRefreshToken(prev => prev + 1);
-                }}
-                disabled={!localPatient?.id}
-              />
+                    setDistrictSearch('');
+                    setCommunitySearch('');
+                    setAreaSearch('');
 
-              <MyInput
-                column
-                required
-                fieldLabel="District"
-                fieldType="selectPagination"
-                fieldName="districtId"
-                selectData={districtCache}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={{
-                  ...address,
-                  districtId: address.countryId ? address.districtId : null
-                }}
-                setRecord={setAddress}
-                searchKeyWard={districtSearch}
-                setSearchKeyWard={setDistrictSearch}
-                hasMore={!!districtsResponse?.links?.next}
-                disabled={!address.countryId}
-                onFetchMore={() => {
-                  if (districtsResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(districtsResponse.links.next);
-                    setDistrictPage(page);
-                  }
-                }}
-                onSelectItem={(item: SimpleDistrict | null) => {
-                  if (!item) return;
+                    setRefreshToken(prev => prev + 1);
+                  }}
+                  disabled={!localPatient?.id}
+                />
 
-                  setAddress(prev => ({
-                    ...prev,
-                    districtId: item.id,
-                    communityId: null,
-                    areaId: null,
-                    locationJson: {
-                      ...prev.locationJson,
-                      district: { id: item.id, name: item.name, code: item.code },
-                      community: null,
-                      area: null
+                <MyInput
+                  column
+                  required
+                  fieldLabel="District"
+                  fieldType="selectPagination"
+                  fieldName="districtId"
+                  selectData={districtCache}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={{
+                    ...address,
+                    districtId: address.countryId ? address.districtId : null
+                  }}
+                  setRecord={setAddress}
+                  searchKeyWard={districtSearch}
+                  setSearchKeyWard={setDistrictSearch}
+                  hasMore={!!districtsResponse?.links?.next}
+                  disabled={!address.countryId}
+                  onFetchMore={() => {
+                    if (districtsResponse?.links?.next) {
+                      const { page } = extractPaginationFromLink(districtsResponse.links.next);
+                      setDistrictPage(page);
                     }
-                  }));
+                  }}
+                  onSelectItem={(item: SimpleDistrict | null) => {
+                    if (!item) return;
 
-                  setCommunityCache([]);
-                  setAreaCache([]);
-                  setCommunityPage(0);
-                  setAreaPage(0);
-                  setCommunitySearch('');
-                  setAreaSearch('');
-                  setRefreshToken(prev => prev + 1);
-                }}
-              />
+                    setAddress(prev => ({
+                      ...prev,
+                      districtId: item.id,
+                      communityId: null,
+                      areaId: null,
+                      locationJson: {
+                        ...prev.locationJson,
+                        district: { id: item.id, name: item.name, code: item.code },
+                        community: null,
+                        area: null
+                      }
+                    }));
 
-              <MyInput
-                column
-                required
-                fieldLabel="Community"
-                fieldType="selectPagination"
-                fieldName="communityId"
-                selectData={communityCache}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={{
-                  ...address,
-                  communityId: address.districtId ? address.communityId : null
-                }}
-                setRecord={setAddress}
-                searchKeyWard={communitySearch}
-                setSearchKeyWard={setCommunitySearch}
-                hasMore={!!communitiesResponse?.links?.next}
-                disabled={!address.districtId}
-                onFetchMore={() => {
-                  if (communitiesResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(communitiesResponse.links.next);
-                    setCommunityPage(page);
-                  }
-                }}
-                onSelectItem={(item: SimpleCommunity | null) => {
-                  if (!item) return;
+                    setCommunityCache([]);
+                    setAreaCache([]);
+                    setCommunityPage(0);
+                    setAreaPage(0);
+                    setCommunitySearch('');
+                    setAreaSearch('');
+                    setRefreshToken(prev => prev + 1);
+                  }}
+                />
 
-                  setAddress(prev => ({
-                    ...prev,
-                    communityId: item.id,
-                    areaId: null,
-                    locationJson: {
-                      ...prev.locationJson,
-                      community: { id: item.id, name: item.name },
-                      area: null
+                <MyInput
+                  column
+                  required
+                  fieldLabel="Community"
+                  fieldType="selectPagination"
+                  fieldName="communityId"
+                  selectData={communityCache}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={{
+                    ...address,
+                    communityId: address.districtId ? address.communityId : null
+                  }}
+                  setRecord={setAddress}
+                  searchKeyWard={communitySearch}
+                  setSearchKeyWard={setCommunitySearch}
+                  hasMore={!!communitiesResponse?.links?.next}
+                  disabled={!address.districtId}
+                  onFetchMore={() => {
+                    if (communitiesResponse?.links?.next) {
+                      const { page } = extractPaginationFromLink(communitiesResponse.links.next);
+                      setCommunityPage(page);
                     }
-                  }));
+                  }}
+                  onSelectItem={(item: SimpleCommunity | null) => {
+                    if (!item) return;
 
-                  setAreaCache([]);
-                  setAreaPage(0);
-                  setAreaSearch('');
+                    setAddress(prev => ({
+                      ...prev,
+                      communityId: item.id,
+                      areaId: null,
+                      locationJson: {
+                        ...prev.locationJson,
+                        community: { id: item.id, name: item.name },
+                        area: null
+                      }
+                    }));
 
-                  setRefreshToken(prev => prev + 1);
-                }}
-              />
+                    setAreaCache([]);
+                    setAreaPage(0);
+                    setAreaSearch('');
 
-              <MyInput
-                column
-                fieldLabel="Area"
-                fieldType="selectPagination"
-                fieldName="areaId"
-                selectData={areaCache}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={{
-                  ...address,
-                  areaId: address.communityId ? address.areaId : null
-                }}
-                setRecord={setAddress}
-                searchKeyWard={areaSearch}
-                setSearchKeyWard={setAreaSearch}
-                hasMore={!!areasResponse?.links?.next}
-                disabled={!address.communityId}
-                onFetchMore={() => {
-                  if (areasResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(areasResponse.links.next);
-                    setAreaPage(page);
-                  }
-                }}
-                onSelectItem={(item: SimpleArea | null) => {
-                  if (!item) return;
+                    setRefreshToken(prev => prev + 1);
+                  }}
+                />
 
-                  setAddress(prev => ({
-                    ...prev,
-                    areaId: item.id,
-                    locationJson: {
-                      ...prev.locationJson,
-                      area: { id: item.id, name: item.name }
+                <MyInput
+                  column
+                  fieldLabel="Area"
+                  fieldType="selectPagination"
+                  fieldName="areaId"
+                  selectData={areaCache}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={{
+                    ...address,
+                    areaId: address.communityId ? address.areaId : null
+                  }}
+                  setRecord={setAddress}
+                  searchKeyWard={areaSearch}
+                  setSearchKeyWard={setAreaSearch}
+                  hasMore={!!areasResponse?.links?.next}
+                  disabled={!address.communityId}
+                  onFetchMore={() => {
+                    if (areasResponse?.links?.next) {
+                      const { page } = extractPaginationFromLink(areasResponse.links.next);
+                      setAreaPage(page);
                     }
-                  }));
-                }}
-              />
+                  }}
+                  onSelectItem={(item: SimpleArea | null) => {
+                    if (!item) return;
 
-              <MyInput
-                column
-                fieldLabel="Street Name"
-                fieldName="streetName"
-                record={address}
-                setRecord={setAddress}
-                disabled={!localPatient?.id}
-              />
+                    setAddress(prev => ({
+                      ...prev,
+                      areaId: item.id,
+                      locationJson: {
+                        ...prev.locationJson,
+                        area: { id: item.id, name: item.name }
+                      }
+                    }));
+                  }}
+                />
 
-              <MyInput
-                column
-                fieldLabel="House/Apartment Number"
-                fieldName="houseApartmentNumber"
-                record={address}
-                setRecord={setAddress}
-                disabled={!localPatient?.id}
-              />
+                <MyInput
+                  column
+                  fieldLabel="Street Name"
+                  fieldName="streetName"
+                  record={address}
+                  setRecord={setAddress}
+                  disabled={!localPatient?.id}
+                />
 
-              <MyInput
-                column
-                fieldLabel="Postal/ZIP code"
-                fieldName="postalZipCode"
-                record={address}
-                setRecord={setAddress}
-                disabled={!localPatient?.id}
-              />
+                <MyInput
+                  column
+                  fieldLabel="House/Apartment Number"
+                  fieldName="houseApartmentNumber"
+                  record={address}
+                  setRecord={setAddress}
+                  disabled={!localPatient?.id}
+                />
 
-              <MyInput
-                column
-                fieldLabel="Additional Address Line"
-                fieldName="additionalAddressLine"
-                record={address}
-                setRecord={setAddress}
-                disabled={!localPatient?.id}
-              />
-            </Form>
+                <MyInput
+                  column
+                  fieldLabel="Postal/ZIP code"
+                  fieldName="postalZipCode"
+                  record={address}
+                  setRecord={setAddress}
+                  disabled={!localPatient?.id}
+                />
+
+                <MyInput
+                  column
+                  fieldLabel="Additional Address Line"
+                  fieldName="additionalAddressLine"
+                  record={address}
+                  setRecord={setAddress}
+                  disabled={!localPatient?.id}
+                />
+              </Form>
+            </div>
           </div>
         }
       />

@@ -1,4 +1,5 @@
 import MyInput from '@/components/MyInput';
+import clsx from 'clsx';
 import React from 'react';
 import { Form } from 'rsuite';
 
@@ -12,7 +13,7 @@ const BasicInfo = ({
   patientClassLovQueryResponse
 }) => {
   return (
-    <Form layout="inline">
+    <Form layout="inline"  className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}>
       <MyInput
         required
         vr={validationResult}

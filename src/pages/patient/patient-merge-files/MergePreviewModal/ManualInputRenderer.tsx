@@ -38,20 +38,13 @@ const ManualInputRenderer: React.FC<Props> = ({
     if (decision.fieldType === 'boolean') {
         return (
             <MyInput
-                fieldType="select"
+                fieldType="checkbox"
                 fieldName="selectedValue"
                 fieldLabel="Select Value"
                 record={{ selectedValue: decision.selectedValue }}
                 setRecord={(updatedRecord: any) =>
                     handleValueChange(globalIdx, updatedRecord?.selectedValue)
                 }
-                selectData={[
-                    { label: 'Yes', value: true },
-                    { label: 'No', value: false }
-                ]}
-                selectDataLabel="label"
-                selectDataValue="value"
-                searchable={false}
                 width="100%"
                 required
             />
