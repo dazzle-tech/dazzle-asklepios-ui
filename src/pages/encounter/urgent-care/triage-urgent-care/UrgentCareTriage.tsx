@@ -266,18 +266,36 @@ const EncounterPriorityAction = ({
 }) => {
   const whisperRef = useRef<any>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const mode = useSelector((state: any) => state.ui.mode);
+  const isDark = mode === 'dark';
+
+  const popoverBackground = isDark ? '#0f172a' : '#ffffff';
+  const popoverForeground = isDark ? '#e5e7eb' : '#111827';
+  const popoverBorder = isDark ? '#334155' : '#e5e7eb';
+  const mutedForeground = isDark ? '#94a3b8' : '#64748b';
+  const selectedBackground = isDark ? 'rgba(59, 130, 246, 0.16)' : '#eff6ff';
+  const selectedBorder = isDark ? '#3b82f6' : '#bfdbfe';
 
   const selectedPriority = String(rowData?.priorityLevel ?? '');
 
   const prioritySpeaker = (
-    <Popover>
+    <Popover
+      style={{
+        backgroundColor: popoverBackground,
+        color: popoverForeground,
+        border: `1px solid ${popoverBorder}`,
+        borderRadius: 12,
+        boxShadow: isDark ? '0 12px 32px rgba(0, 0, 0, 0.45)' : '0 12px 32px rgba(15, 23, 42, 0.12)'
+      }}
+    >
       <div
         style={{
           minWidth: 220,
-          background: '#fff',
           display: 'flex',
           flexDirection: 'column',
-          padding: 8
+          padding: 8,
+          color: popoverForeground,
+          backgroundColor: 'transparent'
         }}
       >
         <div
@@ -285,16 +303,18 @@ const EncounterPriorityAction = ({
             fontSize: 14,
             fontWeight: 700,
             padding: '4px 6px 10px 6px',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: `1px solid ${popoverBorder}`,
             marginBottom: 8,
-            color: '#111827'
+            color: popoverForeground
           }}
         >
           Priority
         </div>
 
         {!encounterPriorityEnumOptions?.length ? (
-          <div style={{ padding: 8, color: '#111827' }}>No priority options</div>
+          <div style={{ padding: 8, color: mutedForeground }}>
+            No priority options
+          </div>
         ) : (
           encounterPriorityEnumOptions.map((p: any) => {
             const value = String(p?.value ?? '');
@@ -328,9 +348,12 @@ const EncounterPriorityAction = ({
                   padding: '10px 12px',
                   marginBottom: 6,
                   borderRadius: 8,
-                  border: isSelected ? '1px solid #bfd3ff' : '1px solid #e5e7eb',
-                  background: isSelected ? '#eef4ff' : '#ffffff',
-                  color: '#111827',
+                  border: isSelected ? `1px solid ${selectedBorder}` : `1px solid ${popoverBorder}`,
+                  backgroundColor: isSelected ? selectedBackground : 'transparent',
+                  color: popoverForeground,
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
                   cursor: 'pointer'
                 }}
               >
@@ -347,7 +370,7 @@ const EncounterPriorityAction = ({
                       width: 10,
                       height: 10,
                       borderRadius: '50%',
-                      backgroundColor: priorityDotColor.get(value) ?? '#98A2B4',
+                      backgroundColor: priorityDotColor.get(value) ?? mutedForeground,
                       flex: '0 0 auto'
                     }}
                   />
@@ -355,7 +378,7 @@ const EncounterPriorityAction = ({
                     style={{
                       fontSize: 14,
                       fontWeight: 500,
-                      color: '#111827'
+                      color: popoverForeground
                     }}
                   >
                     {label}
@@ -365,7 +388,7 @@ const EncounterPriorityAction = ({
                 <span
                   style={{
                     fontWeight: 700,
-                    color: '#111827',
+                    color: isSelected ? popoverForeground : mutedForeground,
                     minWidth: 16,
                     textAlign: 'right'
                   }}

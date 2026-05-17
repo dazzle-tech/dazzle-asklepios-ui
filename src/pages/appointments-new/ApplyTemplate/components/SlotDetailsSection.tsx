@@ -1,11 +1,12 @@
 import * as React from "react";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import {
   Info,
   CalendarDays,
   Clock3,
-  ListTree
+  ListTree,
 } from "lucide-react";
 import { Pill, SurfaceCard } from "./shared";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
@@ -14,6 +15,7 @@ import { useGetDepartmentByIdQuery } from "@/services/security/departmentService
 import { useGetPractitionerByIdQuery } from "@/services/setup/practitioner/PractitionerService";
 import { useGetAvailabilityGenerationBatchByIdQuery } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import { useGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
+import { useAppSelector } from "@/hooks";
 
 const SlotDetailsSection: React.FC<{
   dto?: AvailabilityGenerationBatchApplyDTO;
@@ -25,6 +27,9 @@ const SlotDetailsSection: React.FC<{
 }> = ({ dto, setDto, selectedCell, selectedCellSlots = [], selectedSlot, onSelectSlot }) => {
   void dto;
   void setDto;
+
+  const mode = useAppSelector((state: any) => state.ui.mode);
+  const isDark = mode === "dark";
 
   const statusColor = React.useMemo(() => {
     const s = String(selectedSlot?.status ?? "").toUpperCase();
@@ -51,7 +56,7 @@ const SlotDetailsSection: React.FC<{
     const preferred = selectedSlot ?? selectedCellSlots?.[0];
     const start = preferred?.startDatetime ?? preferred?.appointmentDateTime;
     const end = preferred?.endDatetime;
-    if (!start && !end) return selectedCell ? `${selectedCell.dateKey} · ${selectedCell.timeLabel}` : "-";
+    if (!start && !end) return selectedCell ? `${selectedCell.dateKey}· ${selectedCell.timeLabel}` : "-";
     if (!end) return formatDateWithoutSeconds(start);
     return `${formatDateWithoutSeconds(start)} - ${formatDateWithoutSeconds(end)}`;
   }, [selectedSlot, selectedCellSlots, selectedCell]);
@@ -78,10 +83,10 @@ const SlotDetailsSection: React.FC<{
   }, [selectedSlot]);
 
   const { data: departmentById } = useGetDepartmentByIdQuery(departmentId as any, {
-    skip: !departmentId
+    skip: !departmentId,
   });
   const { data: practitionerById } = useGetPractitionerByIdQuery(defaultPractitionerId as any, {
-    skip: !defaultPractitionerId
+    skip: !defaultPractitionerId,
   });
 
   const capacitySource = React.useMemo(() => {
@@ -154,26 +159,46 @@ const SlotDetailsSection: React.FC<{
     >
       <div className="space-y-5">
         {!selectedCell ? (
-          <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+          <div
+            className={cn(
+              "rounded-xl border border-dashed px-4 py-8 text-center text-sm",
+              isDark ? "border-zinc-700 text-zinc-300" : "border-slate-300 text-slate-500"
+            )}
+            style={isDark ? { backgroundColor: "var(--dark-black)", borderColor: "#3d3d3d", color: "var(--white)" } : undefined}
+          >
             Select a slot cell from preview to see slot list and details.
           </div>
         ) : (
           <>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <CalendarDays className="h-4 w-4 text-slate-500" />
+            <div
+              className={cn(
+                "rounded-xl border px-4 py-3 transition-colors",
+                isDark ? "border-zinc-700 bg-zinc-950/60" : "border-slate-200 bg-slate-50"
+              )}
+              style={isDark ? { backgroundColor: "var(--dark-black)", borderColor: "#3d3d3d" } : undefined}
+            >
+              <div className={cn("flex items-center gap-2 text-sm font-semibold", isDark ? "text-zinc-100" : "text-slate-700")}>
+                <CalendarDays className={cn("h-4 w-4", isDark ? "text-zinc-400" : "text-slate-500")} />
                 {cellDateTimeRange}
               </div>
             </div>
 
             <div>
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <ListTree className="h-4 w-4 text-slate-500" />
+              <div className={cn("mb-3 flex items-center gap-2 text-sm font-semibold", isDark ? "text-zinc-100" : "text-slate-700")}>
+                <ListTree className={cn("h-4 w-4", isDark ? "text-zinc-400" : "text-slate-500")} />
                 Slots in this cell ({selectedCellSlots.length})
               </div>
-              <div className="max-h-[170px] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2">
+              <div
+                className={cn(
+                  "max-h-[170px] space-y-2 overflow-y-auto rounded-xl border p-2 transition-colors",
+                  isDark ? "border-zinc-700 bg-zinc-950/60" : "border-slate-200 bg-white"
+                )}
+                style={isDark ? { backgroundColor: "var(--extra-dark-black)", borderColor: "#3d3d3d" } : undefined}
+              >
                 {selectedCellSlots.length === 0 ? (
-                  <div className="px-2 py-3 text-xs text-slate-500">No slots in this selection.</div>
+                  <div className={cn("px-2 py-3 text-xs", isDark ? "text-zinc-400" : "text-slate-500")}>
+                    No slots in this selection.
+                  </div>
                 ) : (
                   selectedCellSlots.map((slot: any, idx: number) => {
                     const slotId = slot?.id ?? `${slot?.startDatetime ?? slot?.appointmentDateTime}-${idx}`;
@@ -183,14 +208,29 @@ const SlotDetailsSection: React.FC<{
                         key={String(slotId)}
                         type="button"
                         onClick={() => onSelectSlot?.(slot)}
-                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left ${
-                          isActive ? "border-sky-400 bg-sky-50" : "border-slate-200 bg-white"
-                        }`}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors",
+                          isActive
+                            ? isDark
+                              ? "border-emerald-400 bg-emerald-500/10"
+                              : "border-sky-400 bg-sky-50"
+                            : isDark
+                              ? "border-zinc-700 bg-zinc-950/70"
+                              : "border-slate-200 bg-white"
+                        )}
+                        style={
+                          isDark
+                            ? {
+                                backgroundColor: isActive ? "rgba(16,185,129,0.1)" : "var(--dark-black)",
+                                borderColor: isActive ? "#34d399" : "#3d3d3d",
+                              }
+                            : undefined
+                        }
                       >
-                        <span className="text-xs font-medium text-slate-700">
-                          #{slot?.id ?? "-"} · {formatEnumString(slot?.status ?? "-")}
+                        <span className={cn("text-xs font-medium", isDark ? "text-zinc-100" : "text-slate-700")}>
+                          #{slot?.id ?? "-"}· {formatEnumString(slot?.status ?? "-")}
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className={cn("text-[11px]", isDark ? "text-zinc-400" : "text-slate-500")}>
                           {slot?.startDatetime ? formatDateWithoutSeconds(slot.startDatetime) : "-"}
                         </span>
                       </button>
@@ -200,24 +240,32 @@ const SlotDetailsSection: React.FC<{
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Clock3 className="h-4 w-4 text-slate-500" />
+            <div
+              className={cn(
+                "rounded-2xl border p-4 transition-colors",
+                isDark ? "border-zinc-700 bg-zinc-950/60" : "border-slate-200 bg-slate-50"
+              )}
+              style={isDark ? { backgroundColor: "var(--dark-black)", borderColor: "#3d3d3d" } : undefined}
+            >
+              <div className={cn("mb-2 flex items-center gap-2 text-sm font-semibold", isDark ? "text-zinc-100" : "text-slate-700")}>
+                <Clock3 className={cn("h-4 w-4", isDark ? "text-zinc-400" : "text-slate-500")} />
                 Selected Slot Details
               </div>
               {!selectedSlot ? (
-                <div className="text-xs text-slate-500">Select a specific slot from the list above.</div>
+                <div className={cn("text-xs", isDark ? "text-zinc-400" : "text-slate-500")}>
+                  Select a specific slot from the list above.
+                </div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">
+                      <div className={cn("text-sm font-semibold", isDark ? "text-zinc-100" : "text-slate-900")}>
                         {(departmentById as any)?.name || selectedSlot?.departmentName || "Department -"}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className={cn("mt-1 text-xs", isDark ? "text-zinc-400" : "text-slate-500")}>
                         Capacity: {capacityIndex}/{parallelCapacityValue || "-"} Appointments
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className={cn("mt-1 text-xs", isDark ? "text-zinc-400" : "text-slate-500")}>
                         Practitioner:{" "}
                         {(practitionerById as any)?.fullName ||
                           [(practitionerById as any)?.firstName, (practitionerById as any)?.lastName]
@@ -227,7 +275,7 @@ const SlotDetailsSection: React.FC<{
                           "Default Practitioner -"}
                       </div>
                     </div>
-                    <Pill className="bg-sky-100 text-sky-700">
+                    <Pill className={isDark ? "bg-emerald-500/10 text-emerald-200" : "bg-sky-100 text-sky-700"}>
                       {formatEnumString(
                         selectedSlot?.resourceType ??
                           selectedSlot?.templateType ??
@@ -236,10 +284,25 @@ const SlotDetailsSection: React.FC<{
                       )}
                     </Pill>
                   </div>
-                  <Progress value={capacityPercent} className="h-2.5 bg-slate-200 [&>div]:bg-blue-600" />
-                  <div className="grid grid-cols-1 gap-1 text-xs text-slate-700">
-                    <div><span className="font-semibold">Deferred:</span> {String(selectedSlot?.deffered ?? selectedSlot?.deferred ?? "-")}</div>
-                    <div><span className="font-semibold">Deferred At:</span> {selectedSlot?.defferedAt ? formatDateWithoutSeconds(selectedSlot.defferedAt) : "-"}</div>
+                  <Progress
+                    value={capacityPercent}
+                    className={cn(
+                      "h-2.5",
+                      isDark ? "bg-zinc-700 [&>div]:bg-emerald-400" : "bg-slate-200 [&>div]:bg-blue-600"
+                    )}
+                  />
+                  <div className={cn("grid grid-cols-1 gap-1 text-xs", isDark ? "text-zinc-200" : "text-slate-700")}>
+                    <div>
+                      <span className="font-semibold">Deferred:</span>{" "}
+                      {String(selectedSlot?.deffered ?? selectedSlot?.deferred ?? "-")}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Deferred At:</span>{" "}
+                      {selectedSlot?.defferedAt ? formatDateWithoutSeconds(selectedSlot.defferedAt) : "-"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Time Range:</span> {slotTimeRange}
+                    </div>
                   </div>
                 </div>
               )}
