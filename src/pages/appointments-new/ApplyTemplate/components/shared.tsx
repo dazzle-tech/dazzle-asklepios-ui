@@ -239,14 +239,14 @@ export function SurfaceCard({
   headerAction?: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-2xl border-border shadow-sm">
+    <Card className="rounded-2xl border-border bg-card text-card-foreground shadow-sm">
       <CardHeader className="flex flex-row items-start justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
-          <CardTitle className="flex items-center gap-1 text-[11px] font-semibold leading-tight tracking-tight text-slate-900">
-            <Icon className="h-2.5 w-2.5 shrink-0 text-slate-500" />
+          <CardTitle className="flex items-center gap-1 text-[11px] font-semibold leading-tight tracking-tight text-card-foreground">
+            <Icon className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
             {title}
           </CardTitle>
-          {description ? <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{description}</p> : null}
+          {description ? <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{description}</p> : null}
         </div>
         {headerAction}
       </CardHeader>

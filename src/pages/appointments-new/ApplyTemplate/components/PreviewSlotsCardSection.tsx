@@ -34,7 +34,27 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
   onCellClick,
   slotsByCell = {}
 }) => {
-   const mode = useAppSelector((state: any) => state.ui.mode);
+  const mode = useAppSelector((state: any) => state.ui.mode);
+  const isDark = mode === "dark";
+  const headerGridStyle = {
+    gridTemplateColumns: `100px repeat(${periodDays.length}, minmax(88px, 1fr))`,
+    ...(isDark
+      ? {
+          backgroundColor: "var(--black)",
+          borderColor: "var(--gray-dark)"
+        }
+      : {})
+  };
+  const rowGridStyle = {
+    gridTemplateColumns: `100px repeat(${periodDays.length}, minmax(88px, 1fr))`,
+    ...(isDark
+      ? {
+          borderColor: "var(--gray-dark)"
+        }
+      : {})
+  };
+  const panelStyle = isDark ? { backgroundColor: "var(--extra-dark-black)", borderColor: "var(--gray-dark)" } : undefined;
+  const innerPanelStyle = isDark ? { backgroundColor: "var(--dark-black)", borderColor: "var(--gray-dark)" } : undefined;
   return (
     <SurfaceCard
       title="Preview Slots"
@@ -42,25 +62,55 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
       icon={CalendarDays}
       headerAction={null}
     >
-      <div style={{backgroundColor: mode === 'dark' ? '#2E2D2D' : ''}} className="rounded-2xl border border-slate-200 bg-white p-3">
+      <div
+        className={cn(
+          "rounded-2xl border p-3 transition-colors",
+          isDark ? "border-neutral-800 bg-transparent" : "border-slate-200 bg-white"
+        )}
+        style={panelStyle}
+      >
         {!startDate || !endDate || endDate < startDate ? (
-          <div style={{backgroundColor: mode === 'dark' ? '#2E2D2D' : '', color: mode === 'dark' ? 'var(--white)' : ''}} className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+          <div
+            className={cn(
+              "rounded-xl border border-dashed px-4 py-8 text-center text-sm transition-colors",
+              isDark
+                ? "border-neutral-700 text-zinc-300"
+                : "border-slate-300 bg-slate-50 text-slate-500"
+            )}
+            style={innerPanelStyle}
+          >
             Select valid From/To dates to preview appointments.
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="w-full max-w-full rounded-xl border border-slate-200">
+            <div
+              className={cn(
+                "w-full max-w-full overflow-hidden rounded-xl border transition-colors",
+                isDark ? "border-neutral-800" : "border-slate-200"
+              )}
+              style={panelStyle}
+            >
               <div className="max-h-[400px] w-full overflow-x-auto overflow-y-auto">
                 <div className="w-max min-w-full">
                   <div
-                    className="grid border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold text-slate-500"
-                    style={{ gridTemplateColumns: `100px repeat(${periodDays.length}, minmax(88px, 1fr))` }}
+                    className={cn(
+                      "grid border-b text-center text-xs font-semibold transition-colors",
+                      isDark ? "border-neutral-800 text-zinc-300" : "border-slate-200 bg-slate-50 text-slate-500"
+                    )}
+                    style={headerGridStyle}
                   >
                     <div className="px-2 py-3 text-left">Time</div>
                     {periodDays.map((day) => {
                       const key = formatLocalDateForApi(day) || "";
                       return (
-                        <div key={`header-${key}`} className="border-l border-slate-200 px-2 py-3">
+                        <div
+                          key={`header-${key}`}
+                          className={cn(
+                            "border-l px-2 py-3 transition-colors",
+                            isDark ? "border-neutral-800" : "border-slate-200"
+                          )}
+                          style={isDark ? { borderColor: "var(--gray-dark)" } : undefined}
+                        >
                           {day.toLocaleDateString([], { weekday: "short", day: "2-digit", month: "short" })}
                         </div>
                       );
@@ -69,10 +119,15 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
                   {(timeRows.length > 0 ? timeRows : ["--:--"]).map((timeLabel) => (
                     <div
                       key={`row-${timeLabel}`}
-                      className="grid border-b border-slate-100 last:border-b-0"
-                      style={{ gridTemplateColumns: `100px repeat(${periodDays.length}, minmax(88px, 1fr))` }}
+                      className={cn(
+                        "grid border-b last:border-b-0 transition-colors",
+                        isDark ? "border-neutral-800" : "border-slate-100"
+                      )}
+                      style={rowGridStyle}
                     >
-                      <div className="px-2 py-3 text-sm font-medium text-slate-600">{timeLabel}</div>
+                      <div className={cn("px-2 py-3 text-sm font-medium", isDark ? "text-zinc-300" : "text-slate-600")}>
+                        {timeLabel}
+                      </div>
                       {periodDays.map((day) => {
                         const dateKey = formatLocalDateForApi(day) || "";
                         const cell = matrix[`${dateKey}|${timeLabel}`];
@@ -84,14 +139,28 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
                         const color = count > 0 ? getStatusColor(dominantStatus) : "#E2E8F0";
 
                         return (
-                          <div key={`${dateKey}-${timeLabel}`} className="border-l border-slate-100 px-2 py-2">
+                          <div
+                            key={`${dateKey}-${timeLabel}`}
+                            className={cn(
+                              "border-l px-2 py-2 transition-colors",
+                              isDark ? "border-neutral-800" : "border-slate-100"
+                            )}
+                            style={isDark ? { borderColor: "var(--gray-dark)" } : undefined}
+                          >
                             <div
                               className={cn(
-                                "flex min-h-[44px] cursor-pointer flex-col items-center justify-center rounded-lg text-xs font-semibold",
-                                count > 0 ? "text-white" : "text-slate-500",
-                                selectedCellKey === cellKey ? "ring-2 ring-slate-800 ring-offset-1" : ""
+                                "flex min-h-[44px] cursor-pointer flex-col items-center justify-center rounded-lg text-xs font-semibold transition-all",
+                                count > 0 ? "text-white" : isDark ? "text-zinc-300" : "text-slate-500",
+                                selectedCellKey === cellKey
+                                  ? isDark
+                                    ? "ring-2 ring-white ring-offset-1"
+                                    : "ring-2 ring-slate-800 ring-offset-1 ring-offset-white"
+                                  : ""
                               )}
-                              style={{ backgroundColor: color }}
+                              style={{
+                                backgroundColor: count > 0 ? color : isDark ? "var(--dark-black)" : undefined,
+                                color: count > 0 ? undefined : isDark ? "var(--white)" : undefined
+                              }}
                               onClick={() =>
                                 onCellClick?.({
                                   dateKey,
@@ -114,7 +183,11 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
               {statusLegendItems.map((item) => (
                 <div
                   key={item.label}
-                  className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs transition-colors",
+                    isDark ? "border-neutral-800 text-zinc-300" : "border-slate-200 bg-white text-slate-600"
+                  )}
+                  style={isDark ? { backgroundColor: "var(--dark-black)", borderColor: "var(--gray-dark)" } : undefined}
                 >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                   <span>{item.label}</span>
@@ -125,7 +198,9 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
         )}
       </div>
 
-      {isLoadingCounts && <div className="mt-3 text-xs text-slate-500">Loading appointments...</div>}
+      {isLoadingCounts && (
+        <div className={cn("mt-3 text-xs", isDark ? "text-zinc-400" : "text-slate-500")}>Loading appointments...</div>
+      )}
     </SurfaceCard>
   );
 };
