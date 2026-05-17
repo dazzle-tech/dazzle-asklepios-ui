@@ -25,13 +25,28 @@ import { useLazyGetNurseSummaryReportPdfQuery } from '@/services/observationServ
 import './styles.less';
 import clsx from 'clsx';
 
-const NurseStation = () => {
+type NurseStationModalProps = {
+  patient?: any;
+  encounter?: any;
+  onSheetNavigate?: (relativePath: string) => void;
+  outletContent?: React.ReactNode;
+};
+
+const NurseStation = ({
+  patient: modalPatient,
+  encounter: modalEncounter,
+  onSheetNavigate,
+  outletContent
+}: NurseStationModalProps = {}) => {
+  const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
+  const propsData = inModal
+    ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
+    : location.state;
   const fromPage = propsData?.fromPage;
   const pageSource = fromPage || '';
 
@@ -39,7 +54,7 @@ const NurseStation = () => {
     ...propsData?.encounter
   });
 
-  const viewMode = location.state?.viewMode;
+  const viewMode = propsData?.viewMode;
   const isFromEMR =
     location.state?.fromPage === 'PatientEMR' ||
     location.pathname.includes('emr');
@@ -192,15 +207,19 @@ const NurseStation = () => {
           <Panel>
             <div className="container-bt">
               <div className="left">
-                <BackButton
-                  onClick={handleGoBack}
-                  text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
-                />
-                <MyButton
-                  backgroundColor={'var(--primary-gray)'}
-                  onClick={() => navigate(-1)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
-                />
+                {!inModal && (
+                  <BackButton
+                    onClick={handleGoBack}
+                    text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
+                  />
+                )}
+                {!inModal && (
+                  <MyButton
+                    backgroundColor={'var(--primary-gray)'}
+                    onClick={() => navigate(-1)}
+                    prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
+                  />
+                )}
 
                 <Form fluid>
                   <MyInput
@@ -218,30 +237,32 @@ const NurseStation = () => {
                 </Form>
               </div>
 
-              <div className="right">
-                <MyButton
-                  loading={isGeneratingReport}
-                  disabled={isGeneratingReport}
-                  onClick={async () => {
-                    try {
-                      setIsGeneratingReport(true);
-                      await handleGenerateReport();
-                    } finally {
-                      setIsGeneratingReport(false);
-                    }
-                  }}
-                >
-                  Generate Report
-                </MyButton>
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
-              </div>
+              {!inModal && (
+                <div className="right">
+                  <MyButton
+                    loading={isGeneratingReport}
+                    disabled={isGeneratingReport}
+                    onClick={async () => {
+                      try {
+                        setIsGeneratingReport(true);
+                        await handleGenerateReport();
+                      } finally {
+                        setIsGeneratingReport(false);
+                      }
+                    }}
+                  >
+                    Generate Report
+                  </MyButton>
+                  <MyButton
+                    disabled={edit}
+                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                    onClick={handleCompleteEncounter}
+                    appearance="ghost"
+                  >
+                    <Translate>Complete Visit</Translate>
+                  </MyButton>
+                </div>
+              )}
             </div>
 
             <Divider />
@@ -278,7 +299,11 @@ const NurseStation = () => {
                   <List.Item
                     className="drawer-item return-button"
                     onClick={() => {
-                      navigate('/nurse-station', { state: location.state });
+                      if (onSheetNavigate) {
+                        onSheetNavigate('');
+                      } else {
+                        navigate('/nurse-station', { state: location.state });
+                      }
                       setIsDrawerOpen(false);
                     }}
                   >
@@ -296,31 +321,44 @@ const NurseStation = () => {
                         className="drawer-item"
                         onClick={() => {
                           setIsDrawerOpen(false);
-                          navigate(fullPath, {
-                            state: {
+                          if (onSheetNavigate) {
+                            onSheetNavigate(clean);
+                          } else {
+                            navigate(fullPath, {
+                              state: {
+                                patient: propsData?.patient,
+                                encounter: propsData?.encounter,
+                                edit,
+                                fromPage: propsData?.fromPage
+                              }
+                            });
+                          }
+                        }}
+                      >
+                        {onSheetNavigate ? (
+                          <span className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </span>
+                        ) : (
+                          <Link
+                            to={fullPath}
+                            state={{
                               patient: propsData?.patient,
                               encounter: propsData?.encounter,
                               edit,
                               fromPage: propsData?.fromPage
-                            }
-                          });
-                        }}
-                      >
-                        <Link
-                          to={fullPath}
-                          state={{
-                            patient: propsData?.patient,
-                            encounter: propsData?.encounter,
-                            edit,
-                            fromPage: propsData?.fromPage
-                          }}
-                          className="inherit-link"
-                        >
-                          {icon}
-                          <span className="margin-left-10">
-                            <Translate>{name}</Translate>
-                          </span>
-                        </Link>
+                            }}
+                            className="inherit-link"
+                          >
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </Link>
+                        )}
                       </List.Item>
                     );
                   })}
@@ -328,19 +366,21 @@ const NurseStation = () => {
               </Drawer.Body>
             </Drawer>
                 <div
-                className={clsx('column-container', { 'disabled-panel': edit })}
-                style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+                className={clsx('column-container', { 'disabled-panel': edit && !inModal })}
+                style={edit && !inModal ? { pointerEvents: 'none', opacity: 0.6 } : {}}
                 >
             <div className="content-with-sticky">
               <div className="main-content-area">
-                <Outlet
-                  context={{
-                    patient: propsData?.patient,
-                    encounter: propsData?.encounter,
-                    edit,
-                    setLocalEncounter
-                  }}
-                />
+                {outletContent !== undefined ? outletContent : (
+                  <Outlet
+                    context={{
+                      patient: propsData?.patient,
+                      encounter: propsData?.encounter,
+                      edit,
+                      setLocalEncounter
+                    }}
+                  />
+                )}
                 </div>
               </div>
                 </div>

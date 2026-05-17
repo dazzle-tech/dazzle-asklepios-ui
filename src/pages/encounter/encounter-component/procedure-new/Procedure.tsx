@@ -428,17 +428,19 @@ const Referrals = (props: any) => {
         flexGrow: 1,
         render: (rowData: any) => {
           const isCancelled = rowData?.status === 'CANCELLED';
+          const isDisabled = edit || isCancelled;
           return (
             <MdModeEdit
               size={24}
-              fill={isCancelled ? '#ccc' : 'var(--primary-gray)'}
-              className={isCancelled ? 'edit-icon disabled' : 'edit-icon'}
+              fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+              className={isDisabled ? 'edit-icon disabled' : 'edit-icon'}
               style={{
-                cursor: isCancelled ? 'not-allowed' : 'pointer',
-                opacity: isCancelled ? 0.5 : 1
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.5 : 1
               }}
               onClick={async e => {
                 e.stopPropagation();
+                if (edit) return;
 
                 if (isCancelled) {
                   dispatch(
