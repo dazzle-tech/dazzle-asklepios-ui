@@ -332,11 +332,11 @@ export function SummaryRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
-      <div className="flex items-center gap-3 text-slate-500">
+      <div className="flex items-center gap-3 text-muted-foreground">
         <Icon className="h-4 w-4" />
         <span>{label}</span>
       </div>
-      <div className="text-right font-medium text-slate-800">{value}</div>
+      <div className="text-right font-medium text-card-foreground">{value}</div>
     </div>
   );
 }
