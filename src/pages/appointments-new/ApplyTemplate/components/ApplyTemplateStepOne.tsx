@@ -313,7 +313,10 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
         </Form>
       </div>
 
-      <div style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}} className="grid gap-4 overflow-x-hidden bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
+      <div
+        className="grid gap-4 overflow-x-hidden bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]"
+        style={mode === "dark" ? { backgroundColor: "var(--extra-dark-black)" } : undefined}
+      >
         <ApplyConfigurationSection
           dto={formState}
           setDto={setFormState}

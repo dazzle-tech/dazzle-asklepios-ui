@@ -2,6 +2,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/hooks";
 import {
   CalendarRange,
   ChevronDown,
@@ -238,8 +239,12 @@ export function SurfaceCard({
   children?: React.ReactNode;
   headerAction?: React.ReactNode;
 }) {
+  const isDark = useAppSelector((state: any) => state.ui.mode === "dark");
   return (
-    <Card className="rounded-2xl border-border bg-card text-card-foreground shadow-sm">
+    <Card
+      className="rounded-2xl border-border bg-card text-card-foreground shadow-sm"
+      style={isDark ? { borderColor: "#3d3d3d", backgroundColor: "var(--dark-black)" } : undefined}
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
           <CardTitle className="flex items-center gap-1 text-[11px] font-semibold leading-tight tracking-tight text-card-foreground">
@@ -250,7 +255,7 @@ export function SurfaceCard({
         </div>
         {headerAction}
       </CardHeader>
-      <Separator />
+      <Separator style={isDark ? { backgroundColor: "#3d3d3d" } : undefined} />
       <CardContent className="px-4 py-3">{children}</CardContent>
     </Card>
   );

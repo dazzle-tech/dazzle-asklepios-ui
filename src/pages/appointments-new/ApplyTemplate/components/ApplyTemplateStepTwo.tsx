@@ -1,11 +1,9 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import {
   generatedSlots as generatedSlotsMock,
   type GeneratedSlot,
-  Pill,
 } from "./shared";
 import type {
   AvailabilityGenerationBatchApplyDTO,
@@ -132,7 +130,6 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
       {
         key: "date",
         title: "Date",
-        width: 180,
         render: (row: GeneratedSlot) => <span className="text-sm font-medium text-slate-700">{row.date}</span>
       },
       {
@@ -146,19 +143,18 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         title: "Type",
         width: 140,
         render: (row: GeneratedSlot) => (
-          <Pill
-            className={cn(
+          <MyBadgeStatus
+            contant={row.slotType ?? "Slot"}
+            color={
               row.slotType === "Buffer"
-                ? "bg-violet-100 text-violet-700"
+                ? "#7C3AED"
                 : row.slotType === "Break"
-                  ? "bg-rose-100 text-rose-700"
+                  ? "#E11D48"
                   : row.slotType === "Holiday"
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-emerald-100 text-emerald-700"
-            )}
-          >
-            {row.slotType ?? "Slot"}
-          </Pill>
+                    ? "#D97706"
+                    : "#059669"
+            }
+          />
         )
       },
       {
@@ -166,9 +162,10 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         title: "resource",
         width: 170,
         render: (row: GeneratedSlot) => (
-          <Pill className={cn(row.alert ? "bg-rose-100 text-rose-700" : "bg-sky-100 text-sky-700")}>
-            {formatEnumString(row.channel)}
-          </Pill>
+          <MyBadgeStatus
+            contant={formatEnumString(row.channel)}
+            color={row.alert ? "#E11D48" : "#0284C7"}
+          />
         )
       },
       {
