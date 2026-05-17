@@ -79,8 +79,9 @@ const ScheduleFiltersPanel = ({
         }
         content={
           !filtersCollapsed && (
-            <Form fluid layout="inline">
+            <Form fluid className="date-filter-form">
               <div
+              // className="er-triage-filters-position-handle"
                 className="appointments-filter-row"
                 style={{
                   display: 'flex',
@@ -152,7 +153,7 @@ const ScheduleFiltersPanel = ({
                   searchable
                 />
 
-                <div
+                {/* <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -160,8 +161,8 @@ const ScheduleFiltersPanel = ({
                     minWidth: 0,
                     flex: '0 0 auto'
                   }}
-                >
-                  <span
+                > */}
+                  {/* <span
                     style={{
                       fontSize: 12,
                       fontWeight: 600,
@@ -171,18 +172,13 @@ const ScheduleFiltersPanel = ({
                     }}
                   >
                     Patient
-                  </span>
+                  </span> */}
                   <PatientSearch
                     value={schedulePatientFilter}
                     onChange={setSchedulePatientFilter}
-                    width="100%"
-                    containerMinWidth={0}
-                    criteriaWidthPx={108}
-                    inputHeightPx={35}
-                    showLabel={false}
                     fieldLabel="Patient"
                   />
-                </div>
+                {/* </div> */}
 
                 <MyInput
                   height={35}

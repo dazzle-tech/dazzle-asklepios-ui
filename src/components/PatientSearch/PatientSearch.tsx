@@ -337,7 +337,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   textOverflow: 'ellipsis'
                 }}
               >
-                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis'}}>
                   {value?.fullName ?? ''}
                 </strong>
                 <span style={{ marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -441,15 +441,15 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   setResults([]);
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{p?.fullName ?? ''}</div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>{p?.fullName ?? ''}</div>
+                <div style={{ fontSize: 12, opacity: 0.8, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>
                   {p?.patientMrn ? `MRN: ${p.patientMrn}` : ''}
                   {p?.documentNo ? ` • Doc: ${p.documentNo}` : ''}
                 </div>
               </div>
             ))
           ) : (
-            <div style={{ padding: 10, fontSize: 12 }}>
+            <div style={{ padding: 10, fontSize: 12, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>
               <Translate>No patients found.</Translate>
             </div>
           )}
