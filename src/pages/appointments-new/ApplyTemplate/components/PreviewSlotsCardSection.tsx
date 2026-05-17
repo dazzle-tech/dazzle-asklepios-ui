@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { CalendarDays } from "lucide-react";
 import { SurfaceCard } from "./shared";
 import { formatLocalDateForApi } from "../applyTemplateDateUtils";
+import { useAppSelector } from "@/hooks";
 
 type MatrixCell = { count: number; statuses: Record<string, number> };
 
@@ -33,6 +34,7 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
   onCellClick,
   slotsByCell = {}
 }) => {
+   const mode = useAppSelector((state: any) => state.ui.mode);
   return (
     <SurfaceCard
       title="Preview Slots"
@@ -40,9 +42,9 @@ const PreviewSlotsCardSection: React.FC<Props> = ({
       icon={CalendarDays}
       headerAction={null}
     >
-      <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <div style={{backgroundColor: mode === 'dark' ? '#2E2D2D' : ''}} className="rounded-2xl border border-slate-200 bg-white p-3">
         {!startDate || !endDate || endDate < startDate ? (
-          <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+          <div style={{backgroundColor: mode === 'dark' ? '#2E2D2D' : '', color: mode === 'dark' ? 'var(--white)' : ''}} className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
             Select valid From/To dates to preview appointments.
           </div>
         ) : (

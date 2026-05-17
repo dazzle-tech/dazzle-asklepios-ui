@@ -39,6 +39,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
   onEffectiveTemplateIntervalsStatus,
   templateFacilityId,
 }) => {
+   const mode = useAppSelector((state: any) => state.ui.mode);
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
@@ -178,10 +179,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
   return (
     <SurfaceCard title="Apply Configuration" description="Configure scope, resources, intervals and exceptions" icon={Settings2}>
-      <div className="space-y-5">
-        <div>
-          <p className="mb-3 text-sm font-semibold text-slate-700">Resource Scope</p>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}} className="space-y-5">
+        <div style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}}>
+          <p className="mb-3 text-sm font-semibold text-slate-700" style={{color: mode === 'dark' ? 'var(--white)' : ''}}>Resource Scope</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4" style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : ''}}>
             <Form fluid>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {options.map(opt => {
@@ -245,9 +246,9 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
         </div>
 
 
-        <div>
+        <div style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}}>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">
+            <p className="text-sm font-semibold text-slate-700" style={{color: mode === 'dark' ? 'var(--white)' : ''}}>
               Intervals ({isSpecificScope && selectedChildTemplateId > 0 ? 'Resource Template' : 'Selected Template'})
             </p>
           </div>
@@ -270,15 +271,16 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
                 const rows = intervalsByDay[day] ?? [];
                 if (rows.length === 0) return null;
                 return (
-                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3"  style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : '', color: mode === 'dark' ? 'var(--white)' : ''}}>
                     <div className="mb-2 text-xs font-semibold text-slate-500">{day.replace('_', ' ')}</div>
                     <div className="space-y-2">
                       {rows.map((interval, idx) => (
                         <div
                           key={`${day}-${interval?.id ?? idx}`}
                           className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                          style={{backgroundColor: mode === 'dark' ? '#2E2D2D' : '', color: mode === 'dark' ? 'var(--white)' : ''}}
                         >
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-slate-800" style={{color: mode === 'dark' ? 'var(--white)' : ''}}>
                             {interval?.startTime ?? '--:--'} - {interval?.endTime ?? '--:--'}
                           </span>
                           <span className="mx-2 text-slate-300">|</span>
@@ -334,7 +336,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
               ))}
 
             {!isLoadingHolidays && (!shouldFetchHolidays || (holidaysInRange as any[])?.length === 0) && (
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500" style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : ''}}>
                 No Exceptions in the selected range.
               </div>
             )}
