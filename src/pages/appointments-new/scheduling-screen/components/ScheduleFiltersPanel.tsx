@@ -81,7 +81,6 @@ const ScheduleFiltersPanel = ({
           !filtersCollapsed && (
             <Form fluid className="date-filter-form">
               <div
-              // className="er-triage-filters-position-handle"
                 className="appointments-filter-row"
                 style={{
                   display: 'flex',
@@ -152,34 +151,11 @@ const ScheduleFiltersPanel = ({
                   disabled={!selectedResourceTypeValue?.value}
                   searchable
                 />
-
-                {/* <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: 'calc(11.5vw * 2 + 12px)',
-                    minWidth: 0,
-                    flex: '0 0 auto'
-                  }}
-                > */}
-                  {/* <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      marginBottom: 4,
-                      lineHeight: 1.2,
-                      color: mode === 'light' ? 'var(--rs-text-primary)' : 'var(--rs-text-secondary)'
-                    }}
-                  >
-                    Patient
-                  </span> */}
                   <PatientSearch
                     value={schedulePatientFilter}
                     onChange={setSchedulePatientFilter}
                     fieldLabel="Patient"
                   />
-                {/* </div> */}
-
                 <MyInput
                   height={35}
                   width={'11.5vw'}
