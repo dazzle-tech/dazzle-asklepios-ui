@@ -319,7 +319,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       title: '',
       render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          {(!rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
+          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
@@ -330,7 +330,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
             }}
           />}
 
-          {(!rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
+          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"

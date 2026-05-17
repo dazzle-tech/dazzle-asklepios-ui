@@ -1428,6 +1428,8 @@ export interface Patient {
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
   securityAccessLevel?: string | null;
+  bloodGroup?: string | null;
+  patientConditions?: string | null;
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;

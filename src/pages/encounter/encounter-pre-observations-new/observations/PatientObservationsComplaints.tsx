@@ -21,6 +21,7 @@ import {
 import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 
 type PatientObservationsComplaintsProps = {
   patientId: number;
@@ -68,6 +69,11 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     { skip: !encounterId }
   );
 
+  const { data: patientData, refetch: refetchPatient } = useGetPatientByIdQuery(
+    { id: patientId },
+    { skip: !patientId }
+  );
+
   const [record, setRecord] = useState<PatientObservationsComplaintsModel>({
     ...newPatientObservationsComplaints,
     patientId,
@@ -76,12 +82,17 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   const [clearKey, setClearKey] = useState(0);
 
+  // Populate form from latest encounter observations.
+  // Blood group and patient conditions are intentionally excluded — they are
+  // patient-level data managed by the effects below.
   useEffect(() => {
     if (!latestByEncounter) return;
 
     setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
+      bloodGroup: prev.bloodGroup,
+      patientConditions: prev.patientConditions,
       id: undefined,
       patientId,
       encounterId,
@@ -91,6 +102,26 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
           : true
     }));
   }, [latestByEncounter, patientId, encounterId]);
+
+  // Blood group and patient conditions are always driven by the patient record.
+  // Both run on initial load and after every save (refetchPatient updates patientData).
+  useEffect(() => {
+    if (!patientData?.bloodGroup) return;
+
+    setRecord(prev => ({
+      ...prev,
+      bloodGroup: patientData.bloodGroup ?? null
+    }));
+  }, [patientData?.bloodGroup]);
+
+  useEffect(() => {
+    if (!patientData?.patientConditions) return;
+
+    setRecord(prev => ({
+      ...prev,
+      patientConditions: patientData.patientConditions ?? null
+    }));
+  }, [patientData?.patientConditions]);
 
   const createPayload = useMemo(() => {
     return {
@@ -238,6 +269,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         body: encounterPayload
       }).unwrap();
       setEncounter(updatedEncounter);
+
+      await refetchPatient();
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (err: any) {

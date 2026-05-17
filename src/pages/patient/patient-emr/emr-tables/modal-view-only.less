@@ -1,0 +1,66 @@
+.modal-view-only {
+
+  // disabled-panel inside modal: keep pointer-events blocked but remove opacity
+  // (opacity cascades to ALL children including checkboxes — can't be overridden per-child)
+  // Our button/input rules below handle the visual disabled state instead.
+  .disabled-panel {
+    opacity: 1 !important;
+  }
+
+  button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle),
+  .rs-btn:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle) {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  textarea,
+  select,
+  .rs-input,
+  .rs-picker-toggle,
+  .rs-picker-search-bar-input,
+  .rs-slider {
+    pointer-events: none !important;
+    opacity: 0.7 !important;
+  }
+
+  // Tabs
+  .rs-nav-item,
+  .rs-nav-item * {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+  // Toggles
+  .rs-toggle,
+  .rs-btn-toggle,
+  .rs-toggle *,
+  .rs-btn-toggle * {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+  // Checkboxes — interactive + no forced opacity (RSuite manages internal opacity)
+  .rs-checkbox,
+  .rs-check-item,
+  .rs-radio,
+  .rs-checkbox *,
+  .rs-check-item *,
+  .rs-radio * {
+    pointer-events: all !important;
+  }
+
+  // Medical Sheets search toolbar stays fully interactive
+  .container-bt input,
+  .container-bt .rs-input,
+  .container-bt button,
+  .container-bt .rs-btn {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+}

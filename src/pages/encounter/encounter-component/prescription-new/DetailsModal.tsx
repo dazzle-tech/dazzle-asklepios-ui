@@ -264,7 +264,7 @@ const DetailsModal = ({
       }
     }
   }, [
-    prescriptionMedication,
+    prescriptionMedication?.id,
     Brand,
     customeInstructions,
     indicationLovQueryResponse,
