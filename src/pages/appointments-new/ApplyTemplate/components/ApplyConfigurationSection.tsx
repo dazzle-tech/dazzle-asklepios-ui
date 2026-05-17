@@ -254,13 +254,13 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
           </div>
           <div className="space-y-2">
             {isLoadingIntervals && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <div style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : '', color: mode === 'dark' ? 'var(--white)' : ''}} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 Loading intervals...
               </div>
             )}
 
             {!isLoadingIntervals && !effectiveTemplateIdForIntervals && (
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+              <div style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : '', color: mode === 'dark' ? 'var(--white)' : ''}} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
                 Select a template to view intervals.
               </div>
             )}
@@ -301,7 +301,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
             {!isLoadingIntervals &&
               effectiveTemplateIdForIntervals > 0 &&
               daysToQuery.every(day => (intervalsByDay[day] ?? []).length === 0) && (
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                <div style={{backgroundColor: mode === 'dark' ? 'var(--dark-black)' : '', color: mode === 'dark' ? 'var(--white)' : ''}} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
                   No intervals found for this template.
                 </div>
               )}
@@ -310,7 +310,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Exceptions</p>
+            <p style={{ color: mode === 'dark' ? 'var(--white)' : ''}} className="text-sm font-semibold text-slate-700">Exceptions</p>
           </div>
           <div className="space-y-2">
             {isLoadingHolidays && shouldFetchHolidays && (

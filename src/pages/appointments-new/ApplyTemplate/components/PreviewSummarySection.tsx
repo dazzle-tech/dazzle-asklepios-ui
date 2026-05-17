@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { TimerReset } from "lucide-react";
 import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
 import {
@@ -262,6 +263,8 @@ function computePreview(
 }
 
 const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMinutes, dto, holidayDates }) => {
+  const mode = useAppSelector((s: any) => s.ui.mode);
+  const isDark = mode === "dark";
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ??
@@ -377,6 +380,11 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
   const effectiveSlotAfter = Math.max(0, Number((templateData as any)?.defaultBufferAfterMinutes ?? 0));
   const rawParallelCapacity = Number((templateData as any)?.parallelCapacityValue ?? 1);
   const effectiveParallelCapacity = Number.isFinite(rawParallelCapacity) && rawParallelCapacity > 0 ? rawParallelCapacity : 1;
+  const statClassName = isDark
+    ? "border border-emerald-500/20 bg-[rgba(16,185,129,0.07)] shadow-none"
+    : undefined;
+  const statValueClassName = isDark ? "text-emerald-50" : undefined;
+  const statLabelClassName = isDark ? "text-emerald-100/80" : undefined;
 
   const { totalSlotTypeSlots, totalBufferTypeSlots, avgSlotsPerDay, exceptions, days } = React.useMemo(
     () =>
@@ -404,20 +412,53 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
   );
 
   return (
-    <Card className="rounded-2xl border-sky-200 bg-sky-50 shadow-sm">
+    <Card
+      className={isDark ? "rounded-2xl shadow-sm" : "rounded-2xl border-sky-200 bg-sky-50 shadow-sm"}
+      style={isDark ? { backgroundColor: "#10261f", borderColor: "#214437" } : undefined}
+    >
       <CardHeader className="px-5 py-4">
-        <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
-          <TimerReset className="h-4 w-4 text-sky-600" />
+        <CardTitle className={cn("flex items-center gap-2 text-base font-semibold", isDark ? "text-emerald-50" : "text-slate-900")}>
+          <TimerReset className={cn("h-4 w-4", isDark ? "text-emerald-200" : "text-sky-600")} />
           Preview Summary
         </CardTitle>
       </CardHeader>
       <Separator />
       <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-5">
-        <MiniStat label="Slots/Day avg" value={days > 0 ? String(avgSlotsPerDay) : "-"} />
-        <MiniStat label="Slot count" value={days > 0 ? String(totalSlotTypeSlots) : "-"} />
-        <MiniStat label="Buffer count" value={days > 0 ? String(totalBufferTypeSlots) : "-"} />
-        <MiniStat label="Exceptions" value={days > 0 ? String(exceptions) : "-"} />
-        <MiniStat label="Date Range" value={formatDaysLabel(days)} />
+        <MiniStat
+          label="Slots/Day avg"
+          value={days > 0 ? String(avgSlotsPerDay) : "-"}
+          className={statClassName}
+          valueClassName={statValueClassName}
+          labelClassName={statLabelClassName}
+        />
+        <MiniStat
+          label="Slot count"
+          value={days > 0 ? String(totalSlotTypeSlots) : "-"}
+          className={statClassName}
+          valueClassName={statValueClassName}
+          labelClassName={statLabelClassName}
+        />
+        <MiniStat
+          label="Buffer count"
+          value={days > 0 ? String(totalBufferTypeSlots) : "-"}
+          className={statClassName}
+          valueClassName={statValueClassName}
+          labelClassName={statLabelClassName}
+        />
+        <MiniStat
+          label="Exceptions"
+          value={days > 0 ? String(exceptions) : "-"}
+          className={statClassName}
+          valueClassName={statValueClassName}
+          labelClassName={statLabelClassName}
+        />
+        <MiniStat
+          label="Date Range"
+          value={formatDaysLabel(days)}
+          className={statClassName}
+          valueClassName={statValueClassName}
+          labelClassName={statLabelClassName}
+        />
       </CardContent>
     </Card>
   );

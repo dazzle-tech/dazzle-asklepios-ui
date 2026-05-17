@@ -282,11 +282,23 @@ export function FakeSelect({
   );
 }
 
-export function MiniStat({ label, value }: { label: string; value: string }) {
+export function MiniStat({
+  label,
+  value,
+  className,
+  valueClassName,
+  labelClassName,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+  valueClassName?: string;
+  labelClassName?: string;
+}) {
   return (
-    <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-center">
-      <div className="text-2xl font-bold text-slate-900">{value}</div>
-      <div className="mt-1 text-xs text-slate-500">{label}</div>
+    <div className={cn("rounded-xl border border-border bg-card px-4 py-3 text-center shadow-sm", className)}>
+      <div className={cn("text-2xl font-bold text-card-foreground", valueClassName)}>{value}</div>
+      <div className={cn("mt-1 text-xs text-muted-foreground", labelClassName)}>{label}</div>
     </div>
   );
 }
