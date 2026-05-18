@@ -507,6 +507,26 @@ export interface AppointmentFromTemplateSearchFilterDTO {
   patientId?: number | null;
 }
 
+/** GET `/appointments/bulk-reschedule/preview/{batchId}` — BulkReschedulePreviewVM */
+export interface BulkReschedulePreviewVM {
+  affectedAppointmentCount?: number | null;
+}
+
+/** POST `/appointments/bulk-reschedule` — BulkAppointmentRescheduleDTO */
+export interface BulkAppointmentRescheduleDTO {
+  originalAvailabilityGenerationBatchId: number;
+  replacementAvailabilityGenerationBatchId: number;
+}
+
+/** POST `/appointments/bulk-reschedule` — BulkAppointmentRescheduleResponseVM */
+export interface BulkAppointmentRescheduleResponseVM {
+  success: boolean;
+  /** When mapping fails, backend may return ids that could not be matched to replacement slots */
+  unmatchedAppointmentIds?: number[] | null;
+  unmatchedOldAppointmentIds?: number[] | null;
+  message?: string | null;
+}
+
 export type AppointmentRequestStatus = string;
 
 export interface AppointmentRequestResponseVM {

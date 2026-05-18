@@ -9,8 +9,12 @@ import type {
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
   AppointmentFromTemplateRescheduleDTO,
+  BulkAppointmentRescheduleDTO,
+  BulkAppointmentRescheduleResponseVM,
+  BulkReschedulePreviewVM,
   DiagnosticTestAppointmentRescheduleDTO,
-  AppointmentFromTemplateSearchFilterDTO
+  AppointmentFromTemplateSearchFilterDTO,
+  AvailabilityTemplateResponseVM
 } from '@/types/model-types-new';
 
 type Id = number | string;
@@ -191,6 +195,7 @@ export const appointmentFromTemplateService = createApi({
       },
       providesTags: ['AppointmentFromTemplate']
     }),
+    
 
     getAppointmentsByDepartmentBetweenDates: builder.query<
       PagedResult<AppointmentFromTemplate>,
@@ -288,6 +293,41 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
+    getBulkReschedulePreview: builder.query<
+      BulkReschedulePreviewVM,
+      { batchId: Id; includeFreeSlots: boolean }
+    >({
+      query: ({ batchId, includeFreeSlots }) => ({
+        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
+        method: 'GET',
+        params: { includeFreeSlots }
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    cancelBulkRescheduleAppointments: builder.mutation<void, { batchId: Id }>({
+      query: ({ batchId }) => ({
+        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/cancel/${batchId}`,
+        method: 'PUT'
+      }),
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    bulkRescheduleAppointments: builder.mutation<
+      BulkAppointmentRescheduleResponseVM,
+      BulkAppointmentRescheduleDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule`,
+        method: 'POST',
+        body,
+        validateStatus: response => response.status === 200 || response.status === 409
+      }),
+      invalidatesTags: (result, _error, _arg) => (result?.success ? ['AppointmentFromTemplate'] : [])
+    }),
+
     getAppointmentLogs: builder.query<AppointmentLog[], { appointmentId: Id }>({
       query: ({ appointmentId }) => ({
         url: `${APPOINTMENT_BASE_URL}/${appointmentId}/logs`,
@@ -320,6 +360,10 @@ export const {
   useNoShowAppointmentMutation,
   useConfirmAppointmentMutation,
   useCheckInAppointmentMutation,
+  useGetBulkReschedulePreviewQuery,
+  useLazyGetBulkReschedulePreviewQuery,
+  useCancelBulkRescheduleAppointmentsMutation,
+  useBulkRescheduleAppointmentsMutation,
   useGetAppointmentLogsQuery,
   useLazyGetAppointmentLogsQuery
 } = appointmentFromTemplateService;

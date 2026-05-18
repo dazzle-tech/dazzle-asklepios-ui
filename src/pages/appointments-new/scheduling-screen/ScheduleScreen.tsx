@@ -32,7 +32,8 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
-import ViewRequestsFloatingButton from './components/ViewRequestsFloatingButton';
+import ScheduleFloatingActions from './components/ScheduleFloatingActions';
+import BulkRescheduleModal from './components/BulkRescheduleModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
@@ -168,6 +169,7 @@ const ScheduleScreen = () => {
   const pendingAgendaSlotRef = useRef<any>(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
+  const [bulkRescheduleModalOpen, setBulkRescheduleModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
 
@@ -2055,7 +2057,15 @@ const ScheduleScreen = () => {
           <ViewAppointmentRequests data={requestsRows} onApprove={handleApproveRequest} onReject={handleRejectRequest} />
         }
       ></MyModal>
-      <ViewRequestsFloatingButton onOpen={() => setAppRequestModalOpen(true)} />
+      <BulkRescheduleModal
+        open={bulkRescheduleModalOpen}
+        setOpen={setBulkRescheduleModalOpen}
+        onSuccess={() => void handleSearchAppointmentsByCriteria()}
+      />
+      <ScheduleFloatingActions
+        onViewAppointmentRequests={() => setAppRequestModalOpen(true)}
+        onBulkReschedule={() => setBulkRescheduleModalOpen(true)}
+      />
     </div>
   );
 };

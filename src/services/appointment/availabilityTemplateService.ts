@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery } from '../../newApi';
+import { BaseQuery, onQueryStarted } from '../../newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   AvailabilityTemplateCreateDTO,
   AvailabilityTemplateResponseVM,
@@ -7,6 +8,21 @@ import type {
 } from '@/types/model-types-new';
 
 type Id = number | string;
+
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
 
 type AvailabilityTemplateLog = {
   id: number;
@@ -83,7 +99,7 @@ export const availabilityTemplateService = createApi({
     }),
 
     getAvailabilityTemplates: builder.query<AvailabilityTemplateResponseVM[], { departmentId?: Id } | void>({
-      query: (params) => ({
+      query: (params?: { departmentId?: Id }) => ({
         url: '/api/patient/availability-templates',
         method: 'GET',
         params: params?.departmentId ? { departmentId: params.departmentId } : undefined
@@ -163,6 +179,49 @@ export const availabilityTemplateService = createApi({
       providesTags: ['AvailabilityTemplate']
     }),
 
+    getAvailabilityTemplatesByDepartmentAndActive: builder.query<
+      PagedResult<AvailabilityTemplateResponseVM>,
+      { departmentId: Id; type: string; resourceId: Id } & PagedParams
+    >({
+      query: ({ departmentId, type, resourceId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/patient/availability-templates/by-department-and-status/active',
+        method: 'GET',
+        params: { departmentId, type, resourceId, page, size, sort }
+      }),
+      transformResponse: (response: AvailabilityTemplateResponseVM[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AvailabilityTemplate']
+    }),
+    getAvailabilityTemplatesByPublishStatus: builder.query<
+      PagedResult<AvailabilityTemplateResponseVM>,
+      PagedParams
+    >({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/patient/availability-templates/by-facility-and-publish-status',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: AvailabilityTemplateResponseVM[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
     getAvailabilityTemplatesByStatus: builder.query<AvailabilityTemplateResponseVM[], { status: string }>({
       query: ({ status }) => ({
         url: '/api/patient/availability-templates/by-facility-and-status',
@@ -212,9 +271,13 @@ export const {
   useLazyGetAvailabilityTemplatesByParentTemplateIdQuery,
   useGetAvailabilityTemplatesByDepartmentIdQuery,
   useLazyGetAvailabilityTemplatesByDepartmentIdQuery,
+  useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
+  useLazyGetAvailabilityTemplatesByDepartmentAndActiveQuery,
   useGetAvailabilityTemplatesByStatusQuery,
   useLazyGetAvailabilityTemplatesByStatusQuery,
   useGetAvailabilityTemplatesActiveByStatusQuery,
   useGetAvailabilityTemplateLogsQuery,
-  useLazyGetAvailabilityTemplateLogsQuery
+  useLazyGetAvailabilityTemplateLogsQuery,
+  useGetAvailabilityTemplatesByPublishStatusQuery,
+  useLazyGetAvailabilityTemplatesByPublishStatusQuery,
 } = availabilityTemplateService;
