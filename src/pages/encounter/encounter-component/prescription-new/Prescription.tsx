@@ -870,22 +870,23 @@ const Prescription = (props: Props) => {
       render: (rowData: any) => {
         return (
           <div className="flex-c8">
-            <MdModeEdit
-              title="Edit"
-              size={20}
-              className={'font-aws'}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (edit) return;
-                setPatientPrescriptionMedicationObject({
-                  ...rowData,
-                  key: rowData.key ?? rowData.id,
-                  id: rowData.id ?? rowData.key
-                });
-                setOpenDetailsModal(true);
-                setOpenToAdd(false);
-              }}
-            />
+            {!edit && (
+              <MdModeEdit
+                title="Edit"
+                size={20}
+                className={'font-aws'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPatientPrescriptionMedicationObject({
+                    ...rowData,
+                    key: rowData.key ?? rowData.id,
+                    id: rowData.id ?? rowData.key
+                  });
+                  setOpenDetailsModal(true);
+                  setOpenToAdd(false);
+                }}
+              />
+            )}
           </div>
         );
       }

@@ -1448,6 +1448,8 @@ export interface Patient {
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
   securityAccessLevel?: string | null;
+  bloodGroup?: string | null;
+  patientConditions?: string | null;
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -1504,7 +1506,7 @@ export interface Address {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -2002,7 +2004,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -2161,7 +2163,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;
@@ -2332,7 +2334,7 @@ export interface UserStickyNotesCreateVM {
 export interface PatientDocument {
   id?: number;
   patientId: number;
-  countryId: number;
+  countryId?: number | null;
   type: string;
   number: string;
   isPrimary?: boolean | null;

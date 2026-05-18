@@ -63,7 +63,10 @@ function extractEnumStrings(
 
 /* --------------------------- Default labeler --------------------------- */
 function formatEnumLabel(value: string) {
-  return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 /* --------------------------------- API --------------------------------- */
@@ -71,7 +74,7 @@ function formatEnumLabel(value: string) {
 export const enumsApi = createApi({
   reducerPath: 'enumsApi',
   baseQuery: BaseQuery,
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     getAllEnums: builder.query<Enumerations, void>({
       query: () => '/setup-service/v3/api-docs',
       transformResponse: (spec: OpenAPIV3_1.Document): Enumerations => {
@@ -87,9 +90,9 @@ export const enumsApi = createApi({
       },
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
-      },
-    }),
-  }),
+      }
+    })
+  })
 });
 
 export const { useGetAllEnumsQuery } = enumsApi;
@@ -100,7 +103,7 @@ export function useEnumByName(name: string): string[] {
   const token = localStorage.getItem('id_token');
 
   const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
-    skip: !token,
+    skip: !token
   });
   return allEnums[name] ?? [];
 }
@@ -113,29 +116,31 @@ export function useEnumOptions(
   const { exclude = [], labelOverrides = {}, labelFormatter } = params;
 
   return useMemo(() => {
-    const filtered = values.filter((v) => !exclude.includes(v));
+    const filtered = values.filter(v => !exclude.includes(v));
     const fmt = labelFormatter ?? formatEnumLabel;
 
-    return filtered.map((v) => ({
+    return filtered.map(v => ({
       value: v,
-      label: labelOverrides[v] ?? fmt(v),
+      label: labelOverrides[v] ?? fmt(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
 }
 
 export function useEnumCapitalized(
   name: string,
-  params: Omit<EnumOptionsParams, 'labelFormatter'> & { labelFormatter?: (v: string) => string } = {}
+  params: Omit<EnumOptionsParams, 'labelFormatter'> & {
+    labelFormatter?: (v: string) => string;
+  } = {}
 ): { value: string; label: string }[] {
   const values = useEnumByName(name);
   const { exclude = [], labelOverrides = {}, labelFormatter } = params;
 
   return useMemo(() => {
-    const filtered = values.filter((v) => !exclude.includes(v));
+    const filtered = values.filter(v => !exclude.includes(v));
     const fmt = labelFormatter ?? ((v: string) => v);
-    return filtered.map((v) => ({
+    return filtered.map(v => ({
       value: v,
-      label: labelOverrides[v] ?? fmt(v),
+      label: labelOverrides[v] ?? fmt(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
 }
@@ -174,11 +179,11 @@ export function useEnumOptionsWithScore(
   const { exclude = [], labelOverrides = {}, labelFormatter } = params;
 
   return useMemo(() => {
-    const filtered = values.filter((v) => !exclude.includes(v));
+    const filtered = values.filter(v => !exclude.includes(v));
 
     const fmt = labelFormatter ?? formatEnumLabel;
 
-    return filtered.map((v) => ({
+    return filtered.map(v => ({
       value: v,
       label: labelOverrides[v] ?? fmt(v),
       score: extractScoreFromEnumValue(v)

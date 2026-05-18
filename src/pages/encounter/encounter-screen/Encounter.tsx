@@ -39,7 +39,20 @@ import PatientHistorySummaryModal from '../encounter-component/patient-history/M
 import AiAssistantPopup from './AiAssistantPopup';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
-const Encounter = () => {
+type EncounterModalProps = {
+  patient?: any;
+  encounter?: any;
+  onSheetNavigate?: (relativePath: string) => void;
+  outletContent?: React.ReactNode;
+};
+
+const Encounter = ({
+  patient: modalPatient,
+  encounter: modalEncounter,
+  onSheetNavigate,
+  outletContent
+}: EncounterModalProps = {}) => {
+  const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
   const [action, setAction] = useState(() => () => {});
 
@@ -47,7 +60,9 @@ const Encounter = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state || {};
+  const propsData = inModal
+    ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
+    : (location.state || {});
     
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
@@ -376,6 +391,7 @@ useEffect(() => {
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
 
   useEffect(() => {
+    if (inModal) return;
     if (!location.pathname.includes('/encounter')) return;
 
     const encounterDeptId = propsData?.encounter?.departmentId;
@@ -422,35 +438,39 @@ useEffect(() => {
           {!isDragging && <div className="draggable-pulse" />}
         </div> */}
 
-        <div
-          ref={aiButtonRef}
-          className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
-          style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
-          onMouseDown={handleAiMouseDown}
-          onClick={handleAiClick}
-        >
-          <button
-            type="button"
-            className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
-            title="AI Assistant"
+        {!inModal && (
+          <div
+            ref={aiButtonRef}
+            className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
+            style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
+            onMouseDown={handleAiMouseDown}
+            onClick={handleAiClick}
           >
-            <FontAwesomeIcon icon={faRobot} />
-            <span className="ai-badge-2">AI</span>
-          </button>
+            <button
+              type="button"
+              className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
+              title="AI Assistant"
+            >
+              <FontAwesomeIcon icon={faRobot} />
+              <span className="ai-badge-2">AI</span>
+            </button>
 
-          {!isAiDragging && <div className="draggable-pulse" />}
-        </div>
+            {!isAiDragging && <div className="draggable-pulse" />}
+          </div>
+        )}
 
         <div className="left-box">
           <Panel>
             <div className="container-bt">
               <div className="left">
-                <BackButton onClick={handleGoBack} text="To Patients list" />
-                <MyButton
-                  backgroundColor={'var(--primary-gray)'}
-                  onClick={() => navigate(-1)}
-                  prefixIcon={() => <FaArrowLeft />}
-                />
+                {!inModal && <BackButton onClick={handleGoBack} text="To Patients list" />}
+                {!inModal && (
+                  <MyButton
+                    backgroundColor={'var(--primary-gray)'}
+                    onClick={() => navigate(-1)}
+                    prefixIcon={() => <FaArrowLeft />}
+                  />
+                )}
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -472,7 +492,7 @@ useEffect(() => {
                 </Form>
               </div>
 
-              <div className="right">
+              {!inModal && <div className="right">
                 {isMedicalHistoryTab && (
                   <MyButton
                     disabled={edit}
@@ -576,7 +596,7 @@ useEffect(() => {
                     backgroundColor="#8360BF"
                   />
                 )}
-              </div>
+              </div>}
             </div>
 
             <Divider />
@@ -613,8 +633,12 @@ useEffect(() => {
                   <List.Item
                     className="drawer-item return-button"
                     onClick={() => {
-                      const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                      navigate(basePath, { state: sharedNavigationState });
+                      if (onSheetNavigate) {
+                        onSheetNavigate('');
+                      } else {
+                        const basePath = location.pathname.split('/').slice(0, -1).join('/');
+                        navigate(basePath, { state: sharedNavigationState });
+                      }
                       setIsDrawerOpen(false);
                     }}
                   >
@@ -631,17 +655,29 @@ useEffect(() => {
                         className="drawer-item"
                         onClick={() => {
                           setIsDrawerOpen(false);
-                          navigate(fullPath, {
-                            state: sharedNavigationState
-                          });
+                          if (onSheetNavigate) {
+                            const relativePath = path.startsWith('/') ? path.slice(1) : path;
+                            onSheetNavigate(relativePath);
+                          } else {
+                            navigate(fullPath, { state: sharedNavigationState });
+                          }
                         }}
                       >
-                        <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
-                          {icon}
-                          <span className="margin-left-10">
-                            <Translate>{name}</Translate>
+                        {onSheetNavigate ? (
+                          <span className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
                           </span>
-                        </Link>
+                        ) : (
+                          <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </Link>
+                        )}
                       </List.Item>
                     );
                   })}
@@ -651,15 +687,17 @@ useEffect(() => {
 
             <div className="content-with-sticky">
               <div className="main-content-area">
-                <Outlet
-                  context={{
-                    patient: propsData?.patient,
-                    encounter: propsData?.encounter,
-                    edit,
-                    setLocalEncounter,
-                    onDiagnosisSaved: handlePatientDiagnosisSaved
-                  }}
-                />
+                {outletContent !== undefined ? outletContent : (
+                  <Outlet
+                    context={{
+                      patient: propsData?.patient,
+                      encounter: propsData?.encounter,
+                      edit,
+                      setLocalEncounter,
+                      onDiagnosisSaved: handlePatientDiagnosisSaved
+                    }}
+                  />
+                )}
               </div>
 
               {expand && (

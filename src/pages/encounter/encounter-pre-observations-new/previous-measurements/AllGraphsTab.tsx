@@ -88,14 +88,14 @@ const AllGraphsTab = (props: any) => {
     if (!arr.length) {
       return (
         <div className="graph-card">
-          <h4>{title}</h4>No Data
+          <h4 className='title-of-graph-previous-masurements'>{title}</h4>No Data
         </div>
       );
     }
 
     return (
       <div className="graph-card">
-        <h4>{title}</h4>
+        <h4 className='title-of-graph-previous-masurements'>{title}</h4>
         <Line
           data={{
             labels: arr.map(x => format(x.createdAt)),

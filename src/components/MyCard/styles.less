@@ -49,7 +49,24 @@
 // Keep this as the last style in the file to override styles when dark mode is active
 .my-card.dark{
     box-shadow: var(--dark-mode-box-shadow);
+    color: var(--white);
+
+    .rs-card-body,
+    .rs-card-footer {
+        color: var(--white);
+    }
+
     .title-style{
          color: var(--white) !important;
+    }
+
+    .contant-text-basic,
+    .footer-contant-text-basic {
+        color: var(--white);
+    }
+
+    .contant-text-profile,
+    .footer-contant-text-profile {
+        color: #cbd5e1;
     }
 }

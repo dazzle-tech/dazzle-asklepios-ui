@@ -2,6 +2,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/hooks";
 import {
   CalendarRange,
   ChevronDown,
@@ -238,19 +239,23 @@ export function SurfaceCard({
   children?: React.ReactNode;
   headerAction?: React.ReactNode;
 }) {
+  const isDark = useAppSelector((state: any) => state.ui.mode === "dark");
   return (
-    <Card className="rounded-2xl border-border shadow-sm">
+    <Card
+      className="rounded-2xl border-border bg-card text-card-foreground shadow-sm"
+      style={isDark ? { borderColor: "#3d3d3d", backgroundColor: "var(--dark-black)" } : undefined}
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
-          <CardTitle className="flex items-center gap-1 text-[11px] font-semibold leading-tight tracking-tight text-slate-900">
-            <Icon className="h-2.5 w-2.5 shrink-0 text-slate-500" />
+          <CardTitle className="flex items-center gap-1 text-[11px] font-semibold leading-tight tracking-tight text-card-foreground">
+            <Icon className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
             {title}
           </CardTitle>
-          {description ? <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{description}</p> : null}
+          {description ? <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{description}</p> : null}
         </div>
         {headerAction}
       </CardHeader>
-      <Separator />
+      <Separator style={isDark ? { backgroundColor: "#3d3d3d" } : undefined} />
       <CardContent className="px-4 py-3">{children}</CardContent>
     </Card>
   );
@@ -282,11 +287,23 @@ export function FakeSelect({
   );
 }
 
-export function MiniStat({ label, value }: { label: string; value: string }) {
+export function MiniStat({
+  label,
+  value,
+  className,
+  valueClassName,
+  labelClassName,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+  valueClassName?: string;
+  labelClassName?: string;
+}) {
   return (
-    <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-center">
-      <div className="text-2xl font-bold text-slate-900">{value}</div>
-      <div className="mt-1 text-xs text-slate-500">{label}</div>
+    <div className={cn("rounded-xl border border-border bg-card px-4 py-3 text-center shadow-sm", className)}>
+      <div className={cn("text-2xl font-bold text-card-foreground", valueClassName)}>{value}</div>
+      <div className={cn("mt-1 text-xs text-muted-foreground", labelClassName)}>{label}</div>
     </div>
   );
 }
@@ -315,11 +332,11 @@ export function SummaryRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
-      <div className="flex items-center gap-3 text-slate-500">
+      <div className="flex items-center gap-3 text-muted-foreground">
         <Icon className="h-4 w-4" />
         <span>{label}</span>
       </div>
-      <div className="text-right font-medium text-slate-800">{value}</div>
+      <div className="text-right font-medium text-card-foreground">{value}</div>
     </div>
   );
 }

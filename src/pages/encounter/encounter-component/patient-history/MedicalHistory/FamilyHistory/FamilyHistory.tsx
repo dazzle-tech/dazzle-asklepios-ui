@@ -1,19 +1,17 @@
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import PlusIcon from '@rsuite/icons/Plus';
-import React, { useState } from 'react';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
-import AddFamilyHistory from './AddFamilyHistory';
+import { useEnumOptions } from '@/services/enumsApi';
 import {
   useDeleteFamilyHistoryMutation,
   useGetFamilyHistoryQuery
 } from '@/services/patients/familyHistoryService';
-import { useEnumOptions } from '@/services/enumsApi';
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
 import '../styles.less';
+import AddFamilyHistory from './AddFamilyHistory';
 import './familyHistory.less';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';

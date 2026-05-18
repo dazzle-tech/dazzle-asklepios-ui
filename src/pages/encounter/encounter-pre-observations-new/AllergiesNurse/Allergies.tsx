@@ -16,7 +16,12 @@ import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { useCancelPatientAllergyMutation, useGetPatientAllergiesByPatientIdQuery, useResolvePatientAllergyMutation, useUndoResolvePatientAllergyMutation } from '@/services/encounters/patientAllergiesService';
+import {
+  useCancelPatientAllergyMutation,
+  useGetPatientAllergiesByPatientIdQuery,
+  useResolvePatientAllergyMutation,
+  useUndoResolvePatientAllergyMutation
+} from '@/services/encounters/patientAllergiesService';
 import { PatientAllergiesResponseVM } from '@/types/model-types-new';
 import { patientAllergiesResponseVM } from '@/types/model-types-constructor-new';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -44,19 +49,19 @@ const NameCell = ({ login }: { login?: string | null }) => {
 };
 
 const Allergies = (props: AllergiesProps) => {
-
   const location = useLocation();
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const patient = props.patient ?? location.state?.patient ?? {};
   const encounter = props.encounter ?? location.state?.encounter ?? {};
 
-  
   const viewMode = location.state?.viewMode;
 
   const edit = viewMode === 'readOnly' || props.edit;
-  
-  const [allerges, setAllerges] = useState<PatientAllergiesResponseVM>({ ...patientAllergiesResponseVM });
+
+  const [allerges, setAllerges] = useState<PatientAllergiesResponseVM>({
+    ...patientAllergiesResponseVM
+  });
   const [showCanceled, setShowCanceled] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [openToAdd, setOpenToAdd] = useState(true);
@@ -94,7 +99,6 @@ const Allergies = (props: AllergiesProps) => {
   // number of all patient allergies
   const totalCount = allergiesListResponse?.totalCount ?? 0;
 
-
   // actions
   const [cancelPatientAllergy] = useCancelPatientAllergyMutation();
   const [resolvePatientAllergy] = useResolvePatientAllergyMutation();
@@ -109,14 +113,15 @@ const Allergies = (props: AllergiesProps) => {
     {
       key: 'allergenType',
       title: <Translate>Allergy Type</Translate>,
-      render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
+      render: (rowData: PatientAllergiesResponseVM) => (
+        <p>{formatEnumString(rowData.allergenType)}</p>
+      )
     },
 
     {
       key: 'allergen',
       title: <Translate>Allergen</Translate>,
       render: (rowData: PatientAllergiesResponseVM) => {
-
         // ✅ NEW → OTHER TYPE
         if (rowData?.allergenType === 'OTHER') {
           return <p>{rowData?.allergenName ?? '-'}</p>;
@@ -128,9 +133,7 @@ const Allergies = (props: AllergiesProps) => {
             (item: any) => item.id === rowData.allergenId
           );
           return <p>{allergen?.name ?? '-'}</p>;
-        }
-
-        else if (rowData?.medicationClassId && medicationClassesListResponse) {
+        } else if (rowData?.medicationClassId && medicationClassesListResponse) {
           const medicationClass = medicationClassesListResponse.find(
             (item: any) => item.id === rowData.medicationClassId
           );
@@ -143,20 +146,23 @@ const Allergies = (props: AllergiesProps) => {
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      render: rowData =>
+      render: rowData => (
         <MyBadgeStatus
-          color={rowData?.status === 'CANCELLED' ? '#969fb0' : rowData?.status === 'RESOLVED' ? '#800080' : '#45b887'}
-          contant={
-            <Translate>
-              {formatEnumString(rowData?.status)}
-            </Translate>
+          color={
+            rowData?.status === 'CANCELLED'
+              ? '#969fb0'
+              : rowData?.status === 'RESOLVED'
+              ? '#800080'
+              : '#45b887'
           }
+          contant={<Translate>{formatEnumString(rowData?.status)}</Translate>}
         />
+      )
     },
     {
       key: 'severity',
       title: <Translate>Severity</Translate>,
-      render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
+      render: rowData => <p>{formatEnumString(rowData?.severity)}</p>
     },
     props.showTableActions !== false && {
       key: 'actions',
@@ -177,8 +183,10 @@ const Allergies = (props: AllergiesProps) => {
             className="icons-style"
             size={24}
             fill="var(--primary-gray)"
-            onClick={() => {
+            onClick={e => {
+              e.stopPropagation();
               if (isPast || rowData.status !== 'ACTIVE') return;
+              setAllerges(rowData);
               setOpenDetailsModal(true);
               setOpenToAdd(false);
             }}
@@ -189,7 +197,6 @@ const Allergies = (props: AllergiesProps) => {
           />
         );
       }
-
     },
 
     {
@@ -197,7 +204,7 @@ const Allergies = (props: AllergiesProps) => {
       title: 'Created By/At',
       expandable: true,
 
-     render: (row: PatientAllergiesResponseVM) => (
+      render: (row: PatientAllergiesResponseVM) => (
         <>
           <NameCell login={row.createdBy} />
           <br />
@@ -216,7 +223,6 @@ const Allergies = (props: AllergiesProps) => {
           <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedDate)}</span>
         </>
       )
-
     },
     {
       key: 'cancelledByAt',
@@ -229,7 +235,6 @@ const Allergies = (props: AllergiesProps) => {
           <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
         </>
       )
-
     },
     {
       key: 'cancellationReason',
@@ -238,7 +243,7 @@ const Allergies = (props: AllergiesProps) => {
     }
   ].filter(Boolean);
 
-  // handle clear data 
+  // handle clear data
   const handleClear = () => {
     setAllerges({
       ...patientAllergiesResponseVM
@@ -250,17 +255,16 @@ const Allergies = (props: AllergiesProps) => {
     let reason;
     if (allerges?.cancellationReason) {
       reason = allerges?.cancellationReason;
-    }
-    else {
+    } else {
       reason = undefined;
-      dispatch(notify({ msg: "Cancellation Reason is required", sev: 'warning' }));
+      dispatch(notify({ msg: 'Cancellation Reason is required', sev: 'warning' }));
     }
     if (reason) {
       try {
         const result = await cancelPatientAllergy({
           id: allerges.id,
-          cancelledBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
-          reason: reason, // optional
+          cancelledBy: authSlice?.user?.firstName + ' ' + authSlice?.user?.lastName,
+          reason: reason // optional
         }).unwrap();
         setAllerges(result);
         setOpenCancellationReasonModel(false);
@@ -277,7 +281,7 @@ const Allergies = (props: AllergiesProps) => {
     try {
       const result = await resolvePatientAllergy({
         id: allerges.id,
-        resolvedBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
+        resolvedBy: authSlice?.user?.firstName + ' ' + authSlice?.user?.lastName
       }).unwrap();
       setAllerges(result);
 
@@ -293,7 +297,7 @@ const Allergies = (props: AllergiesProps) => {
   const handleUndoResolve = async () => {
     try {
       const result = await undoResolvePatientAllergy({
-        id: allerges.id,
+        id: allerges.id
       }).unwrap();
       setOpenConfirmUndoResolvedModel(false);
       setAllerges(result);
@@ -323,27 +327,24 @@ const Allergies = (props: AllergiesProps) => {
     });
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-  
-      // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div
-            dir={dir}
-            className={clsx({ 'disabled-panel': edit })}
-            style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
-          >
-          <div className="bt-div-2">
+      dir={dir}
+      className={clsx({ 'disabled-panel': edit })}
+      style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+    >
+      <div className="bt-div-2">
         <div className="bt-left-2">
           <MyButton
             prefixIcon={() => <CloseOutlineIcon />}
             onClick={() => setOpenCancellationReasonModel(true)}
-            disabled={!allerges?.id || allerges?.status === "CANCELLED"}
+            disabled={!allerges?.id || allerges?.status === 'CANCELLED'}
           >
             Cancel
           </MyButton>
@@ -351,7 +352,9 @@ const Allergies = (props: AllergiesProps) => {
           <MyButton
             prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
             onClick={() => setOpenConfirmResolvedModel(true)}
-            disabled={!allerges?.id || allerges?.status === "RESOLVED" || allerges?.status === "CANCELLED"}
+            disabled={
+              !allerges?.id || allerges?.status === 'RESOLVED' || allerges?.status === 'CANCELLED'
+            }
           >
             Resolved
           </MyButton>
@@ -359,7 +362,9 @@ const Allergies = (props: AllergiesProps) => {
           <MyButton
             prefixIcon={() => <ReloadIcon />}
             onClick={() => setOpenConfirmUndoResolvedModel(true)}
-            disabled={!allerges?.id || allerges?.status === "ACTIVE" || allerges?.status === "CANCELLED"}
+            disabled={
+              !allerges?.id || allerges?.status === 'ACTIVE' || allerges?.status === 'CANCELLED'
+            }
           >
             Undo Resolved
           </MyButton>
@@ -383,14 +388,18 @@ const Allergies = (props: AllergiesProps) => {
           </MyButton>
         </div>
       </div>
-      <div className='container-of-table-and-section-patient-allergy'>
+      <div className="container-of-table-and-section-patient-allergy">
         <MyTable
           columns={tableColumns}
           data={allergiesListResponse?.data || []}
           totalCount={totalCount}
           onRowClick={rowData => {
-            setAllerges(rowData);
-            setOpenToAdd(false);
+            if (allerges?.id && rowData.id === allerges.id) {
+              handleClear();
+            } else {
+              setAllerges(rowData);
+              setOpenToAdd(false);
+            }
           }}
           rowClassName={isSelected}
           loading={isLoading}
@@ -411,11 +420,7 @@ const Allergies = (props: AllergiesProps) => {
           onSortChange={handleSortChange}
         />
         {allerges?.id && (
-        <AllergyDetailsSection
-          allerges={allerges}
-          setAllerges={setAllerges}
-          edit={edit}
-        />
+          <AllergyDetailsSection allerges={allerges} setAllerges={setAllerges} edit={edit} />
         )}
       </div>
       <CancellationModal

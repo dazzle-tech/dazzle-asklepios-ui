@@ -264,7 +264,7 @@ const DetailsModal = ({
       }
     }
   }, [
-    prescriptionMedication,
+    prescriptionMedication?.id,
     Brand,
     customeInstructions,
     indicationLovQueryResponse,
@@ -509,6 +509,13 @@ const DetailsModal = ({
       return;
     }
 
+    const durationTypeRaw =
+      prescriptionMedication?.durationType ?? prescriptionMedication?.durationTypeLkey ?? null;
+    if (!isChronic && hasDuration && !durationTypeRaw) {
+      dispatch(notify({ msg: 'Please select Duration Type', sev: 'warning' }));
+      return;
+    }
+
     if (isChronic) {
       const currentId = prescriptionMedication?.id;
       const anotherChronicExists = (existingMedications as any[]).some(m => {
@@ -591,7 +598,7 @@ const DetailsModal = ({
       indicationManually: prescriptionMedication?.indicationManually ?? null,
       indicationUse:
         prescriptionMedication?.indicationUse ?? prescriptionMedication?.indicationUseLkey ?? null,
-      indicationIcd: prescriptionMedication?.indicationIcd ?? null,
+      indicationIcd: prescriptionMedication?.indicationIcd ?? '',
       parametersToMonitor: tagcompine ?? null,
       numberOfRefills: prescriptionMedication?.numberOfRefills ?? null,
       refillValue: prescriptionMedication?.refillValue ?? null,

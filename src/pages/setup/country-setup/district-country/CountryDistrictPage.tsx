@@ -7,7 +7,6 @@ import { useAppDispatch } from '@/hooks';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { notify } from '@/utils/uiReducerActions';
 import MyInput from '@/components/MyInput';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -28,10 +27,11 @@ import { newCountryDistrict } from '@/types/model-types-constructor-new';
 
 import DistrictCommunityChildPanel from '../Community/DistrictCommunityChildPanel';
 import ChildModal from '@/components/ChildModal/ChildModal';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import AddEditCountryDistrictModal from './AddEditCountryDistrictModal';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { conjureValuesFromEnumList } from '@/utils';
 
 const CountryDistrictPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -40,7 +40,7 @@ const CountryDistrictPage: React.FC = () => {
   const location = useLocation();
 
   const countryFromState = (location.state as any)?.country;
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const countryEnum = useEnumOptions('CountryName');
 
   const [district, setDistrict] = useState<CountryDistrict>({ ...newCountryDistrict });
 
@@ -544,11 +544,7 @@ const CountryDistrictPage: React.FC = () => {
     <Panel>
       <div className="country-district-header">
         <h6>
-          {`${conjureValueBasedOnKeyFromList(
-            countryLovQueryResponse?.object ?? [],
-            countryFromState?.name,
-            'lovDisplayVale'
-          )}`}
+          {conjureValuesFromEnumList(countryEnum, countryFromState?.code ?? '', 'label') || (countryFromState?.name ?? '')}
           <Translate> Districts</Translate>
         </h6>
 

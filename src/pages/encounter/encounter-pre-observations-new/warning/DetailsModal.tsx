@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -41,6 +41,8 @@ const DetailsModal = ({
     ...newPatientWarningsUpdateDTO
   });
   const [showAllFields, setShowAllFields] = useState(false);
+  const originalWarningRef = useRef<any>(null);
+  const savedRef = useRef(false);
 
   // Lists (LOVs + enums)
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
@@ -65,6 +67,14 @@ const DetailsModal = ({
   const handleClear = () => {
     setPatientWarningsCreateDTO({ ...newPatientWarningsCreateDTO });
     setPatientWarningsUpdateDTO({ ...newPatientWarningsUpdateDTO });
+  };
+
+  const handleUpdateDTOWithSync = (newDto) => {
+    setPatientWarningsUpdateDTO(newDto);
+    if (warning?.id && open) {
+      const { id, ...fieldsToSync } = newDto;
+      setWarning(prev => ({ ...prev, ...fieldsToSync }));
+    }
   };
 
   const handleSave = async () => {
@@ -104,7 +114,7 @@ const DetailsModal = ({
         }).unwrap();
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       } else {
-        await updatePatientWarning({
+        const updatedWarning = await updatePatientWarning({
           id: warning.id,
           dto: {
             ...patientWarningsUpdateDTO,
@@ -113,9 +123,11 @@ const DetailsModal = ({
               : ''
           }
         }).unwrap();
+        setWarning(updatedWarning);
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       }
 
+      savedRef.current = true;
       setOpen(false);
       await fetchWarnings();
       dispatch(resetRefetchEncounter());
@@ -144,7 +156,7 @@ const DetailsModal = ({
               selectDataValue="key"
               fieldName="warningType"
               record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-              setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
               required
               width="100%"
             />
@@ -154,7 +166,7 @@ const DetailsModal = ({
               required
               fieldName="warning"
               record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-              setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
               width="100%"
             />
           </Col>
@@ -167,7 +179,7 @@ const DetailsModal = ({
               selectDataValue="value"
               fieldName="severity"
               record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-              setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
               searchable={false}
               required
               width="100%"
@@ -263,7 +275,7 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="note"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
                   allowEnterNewLine
                 />
               </Col>
@@ -274,7 +286,7 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="actionTaken"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
                   allowEnterNewLine
                 />
               </Col>
@@ -287,6 +299,23 @@ const DetailsModal = ({
 
   // Effects
   useEffect(() => {
+    if (open) {
+      savedRef.current = false;
+      if (warning?.id) {
+        originalWarningRef.current = { ...warning };
+      } else {
+        originalWarningRef.current = null;
+      }
+    } else {
+      if (!savedRef.current && originalWarningRef.current) {
+        setWarning(originalWarningRef.current);
+      }
+      originalWarningRef.current = null;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     if (warning?.id) {
       setPatientWarningsUpdateDTO({
         id: warning.id,
@@ -300,15 +329,24 @@ const DetailsModal = ({
         note: warning.note,
         actionTaken: warning.actionTaken
       });
+      const hasMoreDetails =
+        warning.onsetDate ||
+        warning.onsetDateUndefined ||
+        warning.byPatient ||
+        warning.sourceOfInformation ||
+        warning.note ||
+        warning.actionTaken;
+      setShowAllFields(!!hasMoreDetails);
     } else {
       setPatientWarningsCreateDTO({ ...newPatientWarningsCreateDTO });
+      setShowAllFields(false);
     }
-  }, [warning]);
+  }, [warning?.id, open]);
 
   useEffect(() => {
     if (warning?.id) {
       if (patientWarningsUpdateDTO.onsetDateUndefined) {
-        setPatientWarningsUpdateDTO({ ...patientWarningsUpdateDTO, onsetDate: '' });
+        handleUpdateDTOWithSync({ ...patientWarningsUpdateDTO, onsetDate: '' });
       }
     } else {
       if (patientWarningsCreateDTO.onsetDateUndefined) {
@@ -320,7 +358,7 @@ const DetailsModal = ({
   useEffect(() => {
     if (warning?.id) {
       if (patientWarningsUpdateDTO.byPatient) {
-        setPatientWarningsUpdateDTO({ ...patientWarningsUpdateDTO, sourceOfInformation: null });
+        handleUpdateDTOWithSync({ ...patientWarningsUpdateDTO, sourceOfInformation: null });
       }
     } else {
       if (patientWarningsCreateDTO.byPatient) {

@@ -6,6 +6,7 @@ import CheckIcon from '@rsuite/icons/Check';
 import Translate from '@/components/Translate';
 import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useSelector } from 'react-redux';
 import './styles.less';
 
 type Props = {
@@ -29,6 +30,7 @@ const AdversEffects: React.FC<Props> = ({
 }) => {
   const [isTextareaEditable, setIsTextareaEditable] = useState(false);
   const [localText, setLocalText] = useState(''); // the visible text while editing
+  const mode = useSelector((state: any) => state.ui.mode);
 
   // Fetch enum options
   const hookResult: any = useEnumOptions('PossibleReaction');
@@ -129,7 +131,8 @@ const AdversEffects: React.FC<Props> = ({
   };
 
   return (
-    <div className="icd10-root possible-reactions-root">
+    <div className={mode === 'dark' ? 'dark' : ''}>
+      <div className="icd10-root possible-reactions-root">
       <Row>
         <Text>
           <Translate>{label ?? 'Possible Reactions'}</Translate>
@@ -229,6 +232,7 @@ const AdversEffects: React.FC<Props> = ({
           </div>
         </Col>
       </Row>
+      </div>
     </div>
   );
 };

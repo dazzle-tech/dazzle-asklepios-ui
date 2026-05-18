@@ -1,11 +1,9 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import {
   generatedSlots as generatedSlotsMock,
   type GeneratedSlot,
-  Pill,
 } from "./shared";
 import type {
   AvailabilityGenerationBatchApplyDTO,
@@ -80,6 +78,7 @@ const findOverlappingBreakWindow = (
 };
 
 const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateResponseVM | null; dto?: AvailabilityGenerationBatchApplyDTO }> = ({ selectedTemplate, dto }) => {
+   const mode = useAppSelector((state: any) => state.ui.mode);
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
@@ -132,33 +131,31 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
       {
         key: "date",
         title: "Date",
-        width: 180,
-        render: (row: GeneratedSlot) => <span className="text-sm font-medium text-slate-700">{row.date}</span>
+        render: (row: GeneratedSlot) => <span>{row.date}</span>
       },
       {
         key: "time",
         title: "Time",
         width: 150,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.time}</span>
+        render: (row: GeneratedSlot) => <span>{row.time}</span>
       },
       {
         key: "slotType",
         title: "Type",
         width: 140,
         render: (row: GeneratedSlot) => (
-          <Pill
-            className={cn(
+          <MyBadgeStatus
+            contant={row.slotType ?? "Slot"}
+            color={
               row.slotType === "Buffer"
-                ? "bg-violet-100 text-violet-700"
+                ? "#7C3AED"
                 : row.slotType === "Break"
-                  ? "bg-rose-100 text-rose-700"
+                  ? "#E11D48"
                   : row.slotType === "Holiday"
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-emerald-100 text-emerald-700"
-            )}
-          >
-            {row.slotType ?? "Slot"}
-          </Pill>
+                    ? "#D97706"
+                    : "#059669"
+            }
+          />
         )
       },
       {
@@ -166,22 +163,23 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         title: "resource",
         width: 170,
         render: (row: GeneratedSlot) => (
-          <Pill className={cn(row.alert ? "bg-rose-100 text-rose-700" : "bg-sky-100 text-sky-700")}>
-            {formatEnumString(row.channel)}
-          </Pill>
+          <MyBadgeStatus
+            contant={formatEnumString(row.channel)}
+            color={row.alert ? "#E11D48" : "#0284C7"}
+          />
         )
       },
       {
         key: "duration",
         title: "Duration",
         width: 120,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.duration}</span>
+        render: (row: GeneratedSlot) => <span>{row.duration}</span>
       },
       {
         key: "capacity",
         title: "Capacity",
         width: 120,
-        render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.capacity}</span>
+        render: (row: GeneratedSlot) => <span>{row.capacity}</span>
       },
       {
         key: "status",
@@ -413,7 +411,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
 
   return (
     <>
-      <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.45fr_0.75fr]">
+      <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.45fr_0.75fr]" style={{backgroundColor: mode === 'dark' ? 'var(--extra-dark-black)' : ''}}>
         <SlotsToBeGeneratedSection
           generatedSlots={generatedSlots}
           generatedSlotsColumns={generatedSlotsColumns}

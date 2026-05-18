@@ -23,6 +23,10 @@ import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Tooltip, Whisper, Form } from 'rsuite';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import EncounterModalContent from './EncounterModalContent';
+import NurseStationModalContent from './NurseStationModalContent';
 
 type Props = {
   localPatient: any;
@@ -40,7 +44,13 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
 
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>({});
+  const [openEncounterModal, setOpenEncounterModal] = useState(false);
+  const [openNurseModal, setOpenNurseModal] = useState(false);
+  const [modalRow, setModalRow] = useState<any>(null);
+
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
@@ -88,25 +98,17 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   };
 
   const handleViewDoctorVisit = (row: any) => {
-    navigate('/encounter', {
-      state: {
-        patient: localPatient,
-        encounter: row,
-        fromPage: 'PatientEMR',
-        viewMode: 'readOnly'
-      }
-    });
+    dispatch(setPatient(localPatient));
+    dispatch(setEncounter(row));
+    setModalRow(row);
+    setOpenEncounterModal(true);
   };
 
   const handleViewNurseStation = (row: any) => {
-    navigate('/nurse-station', {
-      state: {
-        patient: localPatient,
-        encounter: row,
-        fromPage: 'PatientEMR',
-        viewMode: 'readOnly'
-      }
-    });
+    dispatch(setPatient(localPatient));
+    dispatch(setEncounter(row));
+    setModalRow(row);
+    setOpenNurseModal(true);
   };
 
   const handleViewTriage = (row: any) => {
@@ -209,48 +211,42 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
         const isUrgentCare = departmentType === 'EMERGENCY_ROOM';
 
         return (
-      <Form layout="inline">
-<div className="visit-history-actions-icons">
-        {/* View Triage */}
-        {isUrgentCare && (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>View Triage</Tooltip>}>
-            <div>
-              <MyButton
-                size="small"
-                onClick={() => handleViewTriage(row)}
-              >
-                <FontAwesomeIcon icon={faCommentMedical} />
-              </MyButton>
+          <Form layout="inline">
+            <div className="visit-history-actions-icons">
+              {/* View Triage */}
+              {isUrgentCare && (
+                <Whisper trigger="hover" placement="top" speaker={<Tooltip>View Triage</Tooltip>}>
+                  <div>
+                    <MyButton size="small" onClick={() => handleViewTriage(row)}>
+                      <FontAwesomeIcon icon={faCommentMedical} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {/* Nurse */}
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Nurse Station</Tooltip>}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="black"
+                    onClick={() => handleViewNurseStation(row)}
+                  >
+                    <FontAwesomeIcon icon={faUserNurse} />
+                  </MyButton>
+                </div>
+              </Whisper>
+
+              {/* Doctor */}
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Doctor Visit</Tooltip>}>
+                <div>
+                  <MyButton size="small" onClick={() => handleViewDoctorVisit(row)}>
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
             </div>
-          </Whisper>
-        )}
-
-        {/* Nurse */}
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Nurse Station</Tooltip>}>
-          <div>
-            <MyButton
-              size="small"
-              backgroundColor="black"
-              onClick={() => handleViewNurseStation(row)}
-            >
-              <FontAwesomeIcon icon={faUserNurse} />
-            </MyButton>
-          </div>
-        </Whisper>
-
-        {/* Doctor */}
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Doctor Visit</Tooltip>}>
-          <div>
-            <MyButton
-              size="small"
-              onClick={() => handleViewDoctorVisit(row)}
-            >
-              <FontAwesomeIcon icon={faUserDoctor} />
-            </MyButton>
-          </div>
-        </Whisper>
-</div>
-      </Form>
+          </Form>
         );
       }
     }
@@ -280,6 +276,38 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
           onEncounterSaved={handleEncounterSaved}
         />
       )}
+
+      <MyModal
+        open={openEncounterModal}
+        setOpen={setOpenEncounterModal}
+        title="Doctor Visit"
+        size="95vw"
+        bodyheight="80vh"
+        hideActionBtn
+        cancelButtonLabel="Close"
+        enforceFocus={false}
+        content={
+          modalRow ? (
+            <EncounterModalContent patient={localPatient} encounter={modalRow} />
+          ) : null
+        }
+      />
+
+      <MyModal
+        open={openNurseModal}
+        setOpen={setOpenNurseModal}
+        title="Nurse Station"
+        size="95vw"
+        bodyheight="80vh"
+        hideActionBtn
+        cancelButtonLabel="Close"
+        enforceFocus={false}
+        content={
+          modalRow ? (
+            <NurseStationModalContent patient={localPatient} encounter={modalRow} />
+          ) : null
+        }
+      />
     </div>
   );
 };

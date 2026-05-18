@@ -52,7 +52,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const genderEnum = useEnumOptions('Gender');
   const patientDocumentEnum = useEnumOptions('DocumentType');
 
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
 
@@ -122,7 +121,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           validationResult={validationResult}
           genderEnum={genderEnum}
           patientDocumentEnum={patientDocumentEnum}
-          countryLovQueryResponse={countryLovQueryResponse}
           patientClassLovQueryResponse={patientClassLovQueryResponse}
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}

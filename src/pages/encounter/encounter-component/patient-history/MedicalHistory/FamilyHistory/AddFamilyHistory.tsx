@@ -176,12 +176,12 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       if (formData.id) {
         await updateFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history added successfully', sev: 'success' }));
+        setFormData({ ...emptyFamilyHistory, patientId: Number(patient?.id) });
       }
-
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, FAMILY_HISTORY_ERROR_MAP);
     }

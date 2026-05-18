@@ -128,6 +128,8 @@
 
 // Keep this as the last style in the file to override styles when dark mode is active
 .my-input-container.dark {
+  color-scheme: dark;
+
   .required-field {
     color: red;
   }
@@ -139,6 +141,44 @@
   .rs-input-group input.rs-input~.rs-input-group-addon,
   .rs-input-group .rs-form-control-wrapper~.rs-input-group-addon {
     background-color: var(--gray-dark) !important;
+  }
+
+  .rs-input {
+    background-color: var(--dark-black) !important;
+    color: var(--white) !important;
+  }
+
+  .rs-input:focus,
+  .rs-input:focus-visible {
+    background-color: var(--dark-black) !important;
+    color: var(--white) !important;
+  }
+
+  .rs-input:-webkit-autofill,
+  .rs-input:-webkit-autofill:hover,
+  .rs-input:-webkit-autofill:focus,
+  .rs-input:-webkit-autofill:active,
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--white) !important;
+    caret-color: var(--white) !important;
+    -webkit-box-shadow:
+      0 0 0 1px rgba(110, 109, 109, 0.16),
+      0 0 0 1000px var(--dark-black) inset !important;
+    box-shadow:
+      0 0 0 1px rgba(110, 109, 109, 0.16),
+      0 0 0 1000px var(--dark-black) inset !important;
+    background-color: var(--dark-black) !important;
   }
 
   svg:not(:root) {
