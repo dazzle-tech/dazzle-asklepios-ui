@@ -1,7 +1,7 @@
 .gcs-score-preview {
   margin-top: 18px;
   padding: 16px;
-  border: 1px solid #e6e9ef;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 14px;
   background-color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -24,7 +24,7 @@
   padding: 14px;
   border-radius: 12px;
   background: #f7f9fc;
-  border: 1px solid #eef2f7;
+  border: 1px solid var(--rs-border-primary);
 
   display: flex;
   justify-content: space-between;
@@ -73,4 +73,48 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.rs-theme-dark{
+  .gcs-score-preview {
+    background-color: var(--extra-dark-black);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+  .gcs-score-preview-header {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .gcs-score-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  }
+
+  .gcs-score-card:hover {
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+    transform: translateY(-2px);
+  }
+
+  .gcs-score-label {
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .gcs-score-value {
+    color: #8bb8ff;
+  }
+
+  .gcs-total-card {
+    background: linear-gradient(135deg, #2856a8, #17386f);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 24px rgba(20, 56, 110, 0.35);
+  }
+
+  .gcs-total-card .gcs-score-label {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .gcs-total-card .gcs-score-value {
+    color: #ffffff;
+  }
 }

@@ -10,6 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
+import { useAppSelector } from "@/hooks";
 import { useGetFacilityByIdQuery } from "@/services/security/facilityService";
 import { useGetDepartmentByIdQuery } from "@/services/security/departmentService";
 import { useGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
@@ -44,6 +45,7 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
   totalBufferSlotsToBeCreated,
   exceptionCount,
 }) => {
+  const isDark = useAppSelector((state: any) => state.ui.mode === "dark");
   const scopeUpper = String((dto as any)?.scope ?? "").trim().toUpperCase();
   const effectiveTemplateId =
     scopeUpper === "SPECIFIC_RESOURCE"
@@ -107,25 +109,42 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
           : `${exceptionCount} organization holiday${exceptionCount === 1 ? "" : "s"} included as exceptions`
       : null;
 
+  const totalSlotsCardClass = isDark
+    ? "border border-emerald-500/20 bg-[rgba(16,185,129,0.07)] shadow-none"
+    : "border border-emerald-200 bg-emerald-50";
+  const totalSlotsLabelClass = isDark ? "text-emerald-100/90" : "text-slate-700";
+  const totalSlotsValueClass = isDark
+    ? "bg-[rgba(255,255,255,0.05)] text-emerald-100"
+    : "bg-white text-emerald-700";
+  const statsTextClass = isDark ? "text-emerald-50/85" : "text-slate-600";
+  const configCardClass = isDark ? "border-[#3d3d3d] bg-[var(--extra-dark-black)]" : "border-slate-200 bg-white";
+  const configTitleClass = isDark ? "text-emerald-50" : "text-slate-800";
+  const configItemTextClass = isDark ? "text-slate-200" : "text-slate-600";
+  const infoCardClass = isDark
+    ? "border border-sky-500/20 bg-[rgba(14,165,233,0.08)]"
+    : "border border-sky-200 bg-sky-50";
+  const infoTextClass = isDark ? "text-sky-50/90" : "text-slate-700";
+  const infoIconClass = isDark ? "text-sky-300" : "text-sky-600";
+
   return (
     <SurfaceCard title="Application Summary" description="Final review before execution" icon={Wrench}>
       <div className="space-y-5">
         <div className="space-y-3">
           <SummaryRow label="Template" value={templateName} icon={FileCheck2} />
           <SummaryRow label="Date Range" value={dateRangeLabel} icon={CalendarRange} />
-          <SummaryRow label="Facility" value={facilityName || "—"} icon={Hospital} />
-          <SummaryRow label="Department" value={departmentName || "—"} icon={Stethoscope} />
+          <SummaryRow label="Facility" value={facilityName} icon={Hospital} />
+          <SummaryRow label="Department" value={departmentName} icon={Stethoscope} />
           <SummaryRow label="Resource scope" value={scopeLabel} icon={Layers} />
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+        <div className={`rounded-2xl px-4 py-4 ${totalSlotsCardClass}`}>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-slate-700">Total slots</span>
-            <Pill className="bg-white text-emerald-700">
+            <span className={`text-sm font-semibold ${totalSlotsLabelClass}`}>Total slots</span>
+            <Pill className={totalSlotsValueClass}>
               {totalSlotsToBeCreated} {totalSlotsToBeCreated === 1 ? "appointment" : "appointments"}
             </Pill>
           </div>
-          <div className="mt-3 space-y-2 text-sm text-slate-600">
+          <div className={`mt-3 space-y-2 text-sm ${statsTextClass}`}>
             <div className="flex items-center justify-between">
               <span>Number of Slot </span>
               <span>{totalPrimarySlotsToBeCreated}</span>
@@ -135,15 +154,15 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
               <span>{totalBufferSlotsToBeCreated}</span>
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
+          <div className={`mt-3 flex items-center justify-between text-sm ${statsTextClass}`}>
             <span>Daily average</span>
             <span>{dailyAverage != null ? `~${dailyAverage} slots per day` : "—"}</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-sm font-semibold text-slate-800">Configuration</div>
-          <div className="mt-3 space-y-2 text-sm text-slate-600">
+        <div className={`rounded-2xl p-4 ${configCardClass}`}>
+          <div className={`text-sm font-semibold ${configTitleClass}`}>Configuration</div>
+          <div className={`mt-3 space-y-2 text-sm ${configItemTextClass}`}>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               {scopeConfigLine}
@@ -157,9 +176,9 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-slate-700">
+        <div className={`rounded-2xl p-4 text-sm ${infoCardClass} ${infoTextClass}`}>
           <div className="flex items-start gap-3">
-            <Info className="mt-0.5 h-4 w-4 text-sky-600" />
+            <Info className={`mt-0.5 h-4 w-4 ${infoIconClass}`} />
             <p>
               <span className="font-semibold">Next step:</span> Free appointments will be created and ready for
               patient booking.

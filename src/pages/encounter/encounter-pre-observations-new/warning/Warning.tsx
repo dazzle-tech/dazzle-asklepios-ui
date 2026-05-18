@@ -184,8 +184,12 @@ const Warning = (props: WarningProps) => {
             className="icons-style"
             size={24}
             fill="var(--primary-gray)"
-            onClick={() => {
+            onClick={e => {
+              e.stopPropagation();
               if (isPast || rowData.status !== 'ACTIVE') return;
+              if (rowData.id !== warning?.id) {
+                setWarning(rowData);
+              }
               setOpenDetailsModal(true);
               setOpenToAdd(false);
             }}
@@ -402,8 +406,12 @@ const Warning = (props: WarningProps) => {
           data={warningsListResponse?.data || []}
           totalCount={totalCount}
           onRowClick={rowData => {
-            setWarning(rowData);
-            setOpenToAdd(false);
+            if (rowData.id === warning?.id) {
+              handleClear();
+            } else {
+              setWarning(rowData);
+              setOpenToAdd(false);
+            }
           }}
           rowClassName={isSelected}
           loading={isLoading}

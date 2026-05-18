@@ -202,7 +202,6 @@ const GlasgowComaScaleModal = ({
 
         <div className="gcs-badge-row">
           <MyBadgeStatus
-            backgroundColor={badgeColors.backgroundColor}
             color={badgeColors.color}
             contant={
               hasAllValues

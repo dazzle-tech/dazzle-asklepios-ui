@@ -7,19 +7,20 @@ import {
 import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { faFilePen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { PlusRound } from '@rsuite/icons';
 import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
-import { useGetCountriesBulkMutation } from '@/services/setup/country/countryService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
 import clsx from 'clsx';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
@@ -30,17 +31,27 @@ const IDTab = ({ localPatient }) => {
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
     ...newPatientDocument
   });
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const enumLabels = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
+    [enumLabels]
+  );
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+  const countryEnum = useMemo(
+    () =>
+      (activeCountriesResp?.data ?? []).map(c => ({
+        value: c.id,
+        label: enumLabelMap[c.name] || formatEnumString(c.name)
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeCountriesResp]
+  );
 
   const [deletePatientDocument] = useDeletePatientDocumentMutation();
 
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  // Countries bulk
-  const [countriesMap, setCountriesMap] = useState<Record<number | string, any>>({});
-  const [getCountriesBulk] = useGetCountriesBulkMutation();
 
   // Fetch patient documents list
   const {
@@ -60,35 +71,6 @@ const IDTab = ({ localPatient }) => {
   const rows = patientSecondaryDocumentsResponse?.data ?? [];
   const totalCount = patientSecondaryDocumentsResponse?.totalCount ?? 0;
 
-  // Load countries in bulk based on countryId in rows (no infinite loop)
-  useEffect(() => {
-    const loadCountries = async () => {
-      const docs = patientSecondaryDocumentsResponse?.data ?? [];
-      if (!docs.length) {
-        setCountriesMap({});
-        return;
-      }
-
-      const uniqueIds = Array.from(
-        new Set(docs.map(row => row.countryId).filter(id => id !== null && id !== undefined))
-      );
-
-      if (!uniqueIds.length) {
-        setCountriesMap({});
-        return;
-      }
-
-      try {
-        const countries = await getCountriesBulk(uniqueIds as number[]).unwrap();
-        const map = Object.fromEntries(countries.map((c: any) => [c.id, c]));
-        setCountriesMap(map);
-      } catch (e) {
-        console.error('Bulk country load failed', e);
-      }
-    };
-
-    loadCountries();
-  }, [patientSecondaryDocumentsResponse, getCountriesBulk]);
 
   const isSelectedDocument = (rowData: any) =>
     rowData?.id === secondaryDocument?.id ? 'selected-row' : '';
@@ -141,23 +123,8 @@ const IDTab = ({ localPatient }) => {
       flexGrow: 4,
       render: (rowData: any) => {
         if (!rowData.countryId) return <span></span>;
-
-        const countryObj = countriesMap[rowData.countryId];
-        const countryName =
-          countryObj?.name ||
-          countryObj?.countryName ||
-          countryObj?.countryNameEn ||
-          countryObj?.description ||
-          '';
-
-        const displayValue =
-          conjureValueBasedOnKeyFromList(
-            countryLovQueryResponse?.object || [],
-            countryName,
-            'lovDisplayVale'
-          ) || '';
-
-        return <span>{displayValue}</span>;
+        const label = countryEnum.find(c => c.value === rowData.countryId)?.label;
+        return <span>{label ?? '-'}</span>;
       }
     },
     {

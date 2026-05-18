@@ -226,13 +226,10 @@ const ReferralRequest = () => {
     const missingFields: string[] = [];
 
     if (!referral?.referralType) missingFields.push('Referral Type');
+    if (!referral?.toFacilityId) missingFields.push('To Facility');
+    if (!referral?.toDepartmentId) missingFields.push('To Department');
     if (!referral?.priority) missingFields.push('Priority');
     if (!referral?.referralReason) missingFields.push('Referral Reason');
-    if (!referral?.toDepartmentId) missingFields.push('To Department');
-
-    if (referral?.referralType === 'EXTERNAL' && !referral?.toFacilityId) {
-      missingFields.push('To Facility');
-    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);

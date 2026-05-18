@@ -189,7 +189,65 @@ const Details = ({
     });
   };
 
+  const validateRequiredFields = (): boolean => {
+    const FIELD_LABELS: Record<string, string> = {
+      facilityKey: 'facility',
+      categoryKey: 'category type',
+      procedureNameKey: 'procedure name',
+      procedureLevelLkey: 'procedure level',
+      priorityLkey: 'priority',
+      scheduledDateTime: 'scheduled date time',
+      bodyPartLkey: 'body part'
+    };
+
+    const requiredFields = ['categoryKey', 'procedureNameKey', 'procedureLevelLkey', 'priorityLkey', 'scheduledDateTime', 'bodyPartLkey'];
+
+    const missing: string[] = [];
+
+    if (!procedure.currentDepartment) {
+      const facilityValue = procedure['facilityKey'];
+      const facilityEmpty =
+        facilityValue === null ||
+        facilityValue === undefined ||
+        facilityValue === '' ||
+        (typeof facilityValue === 'string' && facilityValue.trim() === '');
+      if (facilityEmpty) {
+        missing.push('facility');
+      }
+    }
+
+    requiredFields.forEach(field => {
+      const value = procedure[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      if (isEmpty) {
+        missing.push(FIELD_LABELS[field] ?? field);
+      }
+    });
+
+    if (missing.length > 0) {
+      const lines = missing.map(label => `• ${label}: is required`).join('\n');
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       await saveProcedures({
         ...procedure,

@@ -642,13 +642,13 @@ const BookPatient = ({
         return
       }
     }
-
+    
     await bookPatientAppointment({
       id: appointmentId,
       patientId: Number(record.patientId),
       defaultService: record?.defaultService ? Number(record.defaultService) : null,
       defaultPractitioner: record?.defaultPractitioner ? Number(record.defaultPractitioner) : null,
-      reason: record?.reason || record?.service || null,
+      reason: record?.reason || null,
       note: record?.note || null,
       originType: record?.originType ? String(record.originType) : null,
       originName: record?.originName ? String(record.originName) : null,

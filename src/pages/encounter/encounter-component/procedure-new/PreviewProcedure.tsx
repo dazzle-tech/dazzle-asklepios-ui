@@ -74,7 +74,7 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
       }
     >
       <Form fluid>
-        <div className='margin-bottom-10' >
+        <div className="margin-bottom-10">
           <SectionContainer
             title="Procedure Details"
             content={

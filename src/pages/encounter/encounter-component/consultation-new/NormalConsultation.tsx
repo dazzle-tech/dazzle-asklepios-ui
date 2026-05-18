@@ -206,10 +206,10 @@ const NormalConsultation = props => {
     dateRangeNotCancelledQuery.isLoading;
 
   const refetch = () => {
-    allQuery.refetch();
-    notCancelledQuery.refetch();
-    dateRangeQuery.refetch();
-    dateRangeNotCancelledQuery.refetch();
+    if (!allQuery.isUninitialized) allQuery.refetch();
+    if (!notCancelledQuery.isUninitialized) notCancelledQuery.refetch();
+    if (!dateRangeQuery.isUninitialized) dateRangeQuery.refetch();
+    if (!dateRangeNotCancelledQuery.isUninitialized) dateRangeNotCancelledQuery.refetch();
   };
 
   const rows: Consultation[] = consultationData?.data ?? [];
@@ -582,10 +582,10 @@ return (
                   Cancel
                 </MyButton>
 
-                <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
+                {/* <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
                   <FontAwesomeIcon icon={faPrint} />
                   <span className="print-label">Print</span>
-                </MyButton>
+                </MyButton> */}
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                 <Translate>Show Cancelled</Translate>

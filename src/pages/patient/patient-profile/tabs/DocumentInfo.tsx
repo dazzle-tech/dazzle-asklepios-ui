@@ -9,6 +9,7 @@ import {
   useUpdatePatientDocumentMutation,
   useGetPrimaryDocumentsByPatientQuery
 } from '@/services/patients/patientDocumentsService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
@@ -19,10 +20,10 @@ import clsx from 'clsx';
 const DocumentInfo = ({
   validationResult,
   localPatient,
-  patientDocumentEnum,
-  countryLovQueryResponse
+  patientDocumentEnum
 }) => {
   const dispatch = useAppDispatch();
+  const countryOptions = useEnumOptions('CountryName');
 
   const patientId = localPatient?.id;
 
@@ -142,10 +143,10 @@ const DocumentInfo = ({
             column
             fieldLabel="Document Country"
             fieldType="select"
-            fieldName="countryId"
-            selectData={countryLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
+            fieldName="countryName"
+            selectData={countryOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
             record={doc}
             setRecord={setDoc}
             disabled={doc.type === 'NO_DOC'}

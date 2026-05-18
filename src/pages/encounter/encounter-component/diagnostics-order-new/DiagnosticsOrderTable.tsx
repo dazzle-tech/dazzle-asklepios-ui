@@ -132,6 +132,7 @@ const getDepartmentName = (id?: number) =>
             checked={selectedRows.includes(rowId)}
             disabled={isDisabled}
             onChange={() => handleCheckboxChange(rowId)}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           />
         );
       }
@@ -243,9 +244,9 @@ const getDepartmentName = (id?: number) =>
               </span>
             </Whisper>
 
-            <Whisper placement="top" speaker={<Tooltip>Pre-test assessment</Tooltip>}>
+            {/* <Whisper placement="top" speaker={<Tooltip>Pre-test assessment</Tooltip>}>
               <FontAwesomeIcon color={actionColor} className="icons-styles" icon={faListCheck} />
-            </Whisper>
+            </Whisper> */}
 
             <Whisper placement="top" speaker={<Tooltip>Test card</Tooltip>}>
               <HStack spacing={10}>

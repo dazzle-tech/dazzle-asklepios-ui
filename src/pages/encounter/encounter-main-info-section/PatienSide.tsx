@@ -26,6 +26,7 @@ import {
   useLazyGetLatestPatientObservationsComplaintsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { useGetCurrentMedicationsQuery } from '@/services/patients/currentMedicationService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
@@ -70,6 +71,11 @@ const PatientSide = ({
   onClose = null
 }) => {
   const profileImageFileInputRef = useRef(null);
+
+  const { data: freshPatient } = useGetPatientByIdQuery(
+    { id: patient?.id },
+    { skip: !patient?.id }
+  );
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
@@ -181,10 +187,10 @@ const PatientSide = ({
   // ─────────────────────────────────────────────────────────────────────────
 
   const patientConditionItems =
-    latestPatientObservationsComplaints?.patientConditions
-      ?.split(',')
-      .map(item => item.trim())
-      .filter(Boolean) || [];
+    (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
+      .split(',')
+      .map((item: string) => item.trim())
+      .filter(Boolean);
 
   const getPatientConditionColors = () => {
     return {
@@ -465,7 +471,7 @@ const PatientSide = ({
     O_NEGATIVE: 'O-',
     UNKNOWN: 'Unknown'
   };
-  const bloodGroupRaw = (latestPatientObservationsComplaints as any)?.bloodGroup ?? '';
+  const bloodGroupRaw = (freshPatient as any)?.bloodGroup ?? (patient as any)?.bloodGroup ?? '';
   const bloodGroupLabel = bloodGroupRaw
     ? BLOOD_GROUP_LABELS[String(bloodGroupRaw)] ?? String(bloodGroupRaw)
     : '';

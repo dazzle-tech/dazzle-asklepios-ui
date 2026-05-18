@@ -20,6 +20,7 @@ import { useAppSelector } from '@/hooks';
 
 const FavoriteTests: React.FC = () => {
   const [favoriteTestIds, setFavoriteTestIds] = useState<number[]>([]);
+  const mode = useAppSelector((state) => state.ui.mode);
   
   const [paginationParams] = useState({
     page: 0,
@@ -86,7 +87,7 @@ const user = authSlice?.user;
 
   return (
   <div dir={dir}>
-    <div className="favorite-tests">
+    <div className={`favorite-tests ${mode}`}>
 
       <HStack spacing={10} style={{ marginBottom: 20 }}>
         <Button

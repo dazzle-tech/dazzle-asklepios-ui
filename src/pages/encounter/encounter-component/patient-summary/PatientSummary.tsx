@@ -24,9 +24,14 @@ import PatientPlan from './PatientPlan';
 import PrimaryCareProviderTable from './PrimaryCareProviderTable/PrimaryCareProviderTable';
 // import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
-const PatientSummary = () => {
+const PatientSummary = ({
+  patient: patientProp,
+  encounter: encounterProp
+}: { patient?: any; encounter?: any } = {}) => {
   const location = useLocation();
-  const { patient, encounter } = location.state || {};
+  const stateData = location.state || {};
+  const patient = patientProp ?? stateData.patient;
+  const encounter = encounterProp ?? stateData.encounter;
   const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));

@@ -6,6 +6,7 @@ import 'react-tabs/style/react-tabs.css';
 import { useSaveNewSecondaryDocumentMutation } from '@/services/patientService'
 import { newApPatientSecondaryDocuments } from '@/types/model-types-constructor';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { notify } from '@/utils/uiReducerActions';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,7 +17,7 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
     const [saveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
     // Fetch LOV data for various fields
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-    const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+    const countryEnum = useEnumOptions('CountryName');
     const dispatch = useAppDispatch();
     // MyModal Content
     const content = () => (
@@ -28,9 +29,9 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
                 fieldLabel="Document Country"
                 fieldType="select"
                 fieldName="documentCountryLkey"
-                selectData={countryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={countryEnum}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={secondaryDocument}
                 setRecord={newRecord =>
                     setSecondaryDocument({

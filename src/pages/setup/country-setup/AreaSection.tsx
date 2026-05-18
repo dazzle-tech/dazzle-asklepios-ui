@@ -475,7 +475,7 @@ const AreaSection: React.FC<Props> = ({ communityId }) => {
           <>
             <div className="inputs-dis-flex">
               <div className="geo-inline-form">
-                <Form fluid layout="inline">
+                <Form fluid layout="inline" className="form-of-filters-set-up">
                   <MyInput
                     fieldName="name"
                     fieldType="text"

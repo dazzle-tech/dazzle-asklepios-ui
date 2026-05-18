@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import { Form } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { useSaveGeneralAssessmentMutation } from '@/services/encounterService';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -28,7 +29,7 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
     const { data: positionStatusLovQueryResponse } = useGetLovValuesByCodeQuery('POSITION_STATUS');
     const { data: bodyMovementLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_MOVEMENT');
     const { data: levelOfConscLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-    const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+    const countryEnum = useEnumOptions('CountryName');
     const { data: speechAssLovQueryResponse } = useGetLovValuesByCodeQuery('SPEECH_ASSESSMENT');
     const { data: moodLovQueryResponse } = useGetLovValuesByCodeQuery('MOOD_BEHAVIOR');
 
@@ -299,9 +300,9 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldLabel="Family Location"
                     fieldType="select"
                     fieldName="familyLocationLkey"
-                    selectData={countryLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={countryEnum}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
                     disabled={isDisabledField}

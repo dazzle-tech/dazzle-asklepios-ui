@@ -19,9 +19,9 @@ type PatientSearchCriterion =
   | 'patientMrn'
   | 'documentNo'
   | 'fullName'
-  | 'archivingNumber'
-  | 'phoneNumber'
-  | 'dob';
+  // | 'archivingNumber'
+  // | 'phoneNumber'
+  // | 'dob';
 
 type PatientSearchCriterionOrEmpty = PatientSearchCriterion | '';
 
@@ -103,9 +103,9 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       'fullName',
       'patientMrn',
       'documentNo',
-      'archivingNumber',
-      'phoneNumber',
-      'dob'
+      // 'archivingNumber',
+      // 'phoneNumber',
+      // 'dob'
     ];
     const list = (criteriaOptions?.length ? criteriaOptions : defaults).filter(Boolean);
     // de-dupe
@@ -118,15 +118,15 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
         case 'patientMrn':
           return <Translate>MRN</Translate>;
         case 'documentNo':
-          return <Translate>Primary Document</Translate>;
+          return <Translate>Document Number</Translate>;
         case 'fullName':
           return <Translate>Full Name</Translate>;
-        case 'archivingNumber':
-          return <Translate>Archiving Number</Translate>;
-        case 'phoneNumber':
-          return <Translate>Primary Phone Number</Translate>;
-        case 'dob':
-          return <Translate>Date Of Birth</Translate>;
+        // case 'archivingNumber':
+        //   return <Translate>Archiving Number</Translate>;
+        // case 'phoneNumber':
+        //   return <Translate>Primary Phone Number</Translate>;
+        // case 'dob':
+        //   return <Translate>Date Of Birth</Translate>;
       }
     };
 
@@ -165,7 +165,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   }, [resetToken]);
 
   useEffect(() => {
-    if (selectedCriterion === 'dob') return;
+    // if (selectedCriterion === 'dob') return;
     if (selectedCriterion && !effectiveCriteriaOptions.includes(selectedCriterion as PatientSearchCriterion)) {
       setSelectedCriterion(effectiveCriteriaOptions[0] ?? '');
     }
@@ -181,7 +181,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   useEffect(() => {
     // auto-search patients when typing >= minChars (debounced)
     if (value) return;
-    if (selectedCriterion === 'dob') return;
+    // if (selectedCriterion === 'dob') return;
     if (!selectedCriterion) return;
 
     if (!searchKeyword || searchKeyword.length < minChars) {
@@ -203,12 +203,12 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
             case 'documentNo':
               res = await fetchByDocumentNo({ number: searchKeyword, ...common } as any).unwrap();
               break;
-            case 'archivingNumber':
-              res = await fetchByArchiving({ archivingNumber: searchKeyword, ...common } as any).unwrap();
-              break;
-            case 'phoneNumber':
-              res = await fetchByPrimaryPhone({ phone: searchKeyword, ...common } as any).unwrap();
-              break;
+            // case 'archivingNumber':
+            //   res = await fetchByArchiving({ archivingNumber: searchKeyword, ...common } as any).unwrap();
+            //   break;
+            // case 'phoneNumber':
+            //   res = await fetchByPrimaryPhone({ phone: searchKeyword, ...common } as any).unwrap();
+            //   break;
             case 'fullName':
             default:
               res = await fetchByFullName({ keyword: searchKeyword, ...common } as any).unwrap();
@@ -233,7 +233,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   useEffect(() => {
     // auto-search patients when picking DOB
     if (value) return;
-    if (selectedCriterion !== 'dob') return;
+    // if (selectedCriterion !== 'dob') return;
 
     if (!dobValue) {
       setResults([]);
@@ -273,8 +273,10 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     }
   }, [dobValue, selectedCriterion, value]);
 
+  // const showPatientResults =
+  //   !value && (selectedCriterion === 'dob' ? !!dobValue : searchKeyword.length >= minChars);
   const showPatientResults =
-    !value && (selectedCriterion === 'dob' ? !!dobValue : searchKeyword.length >= minChars);
+    !value && (searchKeyword.length >= minChars);
 
   return (
     <Form.Group
@@ -337,7 +339,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   textOverflow: 'ellipsis'
                 }}
               >
-                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis'}}>
                   {value?.fullName ?? ''}
                 </strong>
                 <span style={{ marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -383,18 +385,20 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
               </span>
             )}
           </div>
-        ) : selectedCriterion === 'dob' ? (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <DatePicker
-              format="yyyy-MM-dd"
-              placeholder="DOB"
-              value={dobValue}
-              onChange={v => setDobValue(v)}
-              oneTap
-              style={{ width: '100%', height: inputHeightPx }}
-            />
-          </div>
-        ) : (
+        ) 
+        // : selectedCriterion === 'dob' ? (
+        //   <div style={{ flex: 1, minWidth: 0 }}>
+        //     <DatePicker
+        //       format="yyyy-MM-dd"
+        //       placeholder="DOB"
+        //       value={dobValue}
+        //       onChange={v => setDobValue(v)}
+        //       oneTap
+        //       style={{ width: '100%', height: inputHeightPx }}
+        //     />
+        //   </div>
+        // )
+         : (
           <div style={{ flex: 1, minWidth: 0 }}>
             <Input
               placeholder="Search Patients"
@@ -441,15 +445,15 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   setResults([]);
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{p?.fullName ?? ''}</div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>{p?.fullName ?? ''}</div>
+                <div style={{ fontSize: 12, opacity: 0.8, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>
                   {p?.patientMrn ? `MRN: ${p.patientMrn}` : ''}
                   {p?.documentNo ? ` • Doc: ${p.documentNo}` : ''}
                 </div>
               </div>
             ))
           ) : (
-            <div style={{ padding: 10, fontSize: 12 }}>
+            <div style={{ padding: 10, fontSize: 12, color: mode === 'light' ? 'var(--black)' : 'var(--white)' }}>
               <Translate>No patients found.</Translate>
             </div>
           )}

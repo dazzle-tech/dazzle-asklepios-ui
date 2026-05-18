@@ -83,10 +83,10 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     patient
       ? patient
       : propsData?.patient
-        ? propsData.patient
-        : propsData?.fromPage === 'clinicalVisit'
-          ? propsData?.localPatient
-          : { ...newPatient }
+      ? propsData.patient
+      : propsData?.fromPage === 'clinicalVisit'
+      ? propsData?.localPatient
+      : { ...newPatient }
   );
 
   const [refetchData, setRefetchData] = useState(false);
@@ -124,9 +124,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [patient, enc, location.state]);
 
-
- 
-
   useEffect(() => {
     return () => {
       if (!inModal) {
@@ -136,7 +133,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     };
   }, [inModal, dispatch]);
 
-
   useEffect(() => {
     if (activeSectionCard) {
       setActiveCard(null);
@@ -144,106 +140,107 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   }, [activeSectionCard]);
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-    
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
-      <div className="emr-content">
-        <div className="emr-main-row-handle">
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="History"
-              icon={faHouseChimneyMedical}
-              backgroundColor="var(--card-purple)"
-              width={170}
-              height={100}
-              onClick={() =>
-                setActiveSectionCard(activeSectionCard === 'history' ? null : 'history')
-              }
-              active={activeSectionCard === 'history'}
-            />
-          </div>
+    <div dir={dir}>
+      <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
+        <div className="emr-content">
+          <div className="emr-main-row-handle">
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="History"
+                icon={faHouseChimneyMedical}
+                backgroundColor="var(--card-purple)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'history' ? null : 'history')
+                }
+                active={activeSectionCard === 'history'}
+              />
+            </div>
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="Visits"
-              icon={faBed}
-              backgroundColor="var(--card-blue)"
-              width={170}
-              height={100}
-              onClick={() => setActiveSectionCard(activeSectionCard === 'visits' ? null : 'visits')}
-              active={activeSectionCard === 'visits'}
-            />
-          </div>
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="Visits"
+                icon={faBed}
+                backgroundColor="var(--card-blue)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'visits' ? null : 'visits')
+                }
+                active={activeSectionCard === 'visits'}
+              />
+            </div>
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="Clinical"
-              icon={faTriangleExclamation}
-              backgroundColor="var(--card-green)"
-              width={170}
-              height={100}
-              onClick={() =>
-                setActiveSectionCard(activeSectionCard === 'clinical' ? null : 'clinical')
-              }
-              active={activeSectionCard === 'clinical'}
-            />
-          </div>
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="Clinical"
+                icon={faTriangleExclamation}
+                backgroundColor="var(--card-green)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'clinical' ? null : 'clinical')
+                }
+                active={activeSectionCard === 'clinical'}
+              />
+            </div>
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="Diagnostics"
-              icon={faPersonShelter}
-              backgroundColor="var(--card-light-blue)"
-              width={170}
-              height={100}
-              onClick={() =>
-                setActiveSectionCard(activeSectionCard === 'diagnostics' ? null : 'diagnostics')
-              }
-              active={activeSectionCard === 'diagnostics'}
-            />
-          </div>
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="Diagnostics"
+                icon={faPersonShelter}
+                backgroundColor="var(--card-light-blue)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'diagnostics' ? null : 'diagnostics')
+                }
+                active={activeSectionCard === 'diagnostics'}
+              />
+            </div>
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="Treatment"
-              icon={faUserNurse}
-              backgroundColor="var(--card-dark-blue)"
-              width={170}
-              height={100}
-              onClick={() =>
-                setActiveSectionCard(activeSectionCard === 'treatment' ? null : 'treatment')
-              }
-              active={activeSectionCard === 'treatment'}
-            />
-          </div>
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="Treatment"
+                icon={faUserNurse}
+                backgroundColor="var(--card-dark-blue)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'treatment' ? null : 'treatment')
+                }
+                active={activeSectionCard === 'treatment'}
+              />
+            </div>
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={3}
-              footerText="Documentation"
-              icon={faUserInjured}
-              backgroundColor="var(--card-dark-pink)"
-              width={170}
-              height={100}
-              onClick={() =>
-                setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')
-              }
-              active={activeSectionCard === 'documents'}
-            />
-          </div>
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={3}
+                footerText="Documentation"
+                icon={faUserInjured}
+                backgroundColor="var(--card-dark-pink)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')
+                }
+                active={activeSectionCard === 'documents'}
+              />
+            </div>
 
-          {/* <div className="animation-emr-card-patient-emr">
+            {/* <div className="animation-emr-card-patient-emr">
             <EMRCard
               number={3}
               footerText="Services"
@@ -258,24 +255,23 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
             />
           </div> */}
 
-          <div className="animation-emr-card-patient-emr">
-            <EMRCard
-              number={0}
-              footerText="All"
-              icon={faBarsProgress}
-              backgroundColor="black"
-              width={170}
-              height={100}
-              onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
-            />
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={0}
+                footerText="All"
+                icon={faBarsProgress}
+                backgroundColor="black"
+                width={170}
+                height={100}
+                onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
+              />
+            </div>
           </div>
 
-        </div>
-
-        <div className="emr-main-row-handle">
-          {activeSectionCard === 'history' && (
-            <div className="emr-main-row-handle">
-              {/* <div className="animation-emr-card-patient-emr">
+          <div className="emr-main-row-handle">
+            {activeSectionCard === 'history' && (
+              <div className="emr-main-row-handle">
+                {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={10}
                   footerText="60s"
@@ -286,57 +282,59 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => alert('Clicked')}
                 />
               </div> */}
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="P.M.H"
-                  icon={faUserLock}
-                  backgroundColor="var(--card-purple)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory')
-                  }
-                  active={activeCard === 'pastmedicalhistory'}
-                />
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="P.M.H"
+                    icon={faUserLock}
+                    backgroundColor="var(--card-purple)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(
+                        activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory'
+                      )
+                    }
+                    active={activeCard === 'pastmedicalhistory'}
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeSectionCard === 'visits' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="Appointments"
-                  icon={faCalendar}
-                  backgroundColor="var(--card-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'appointments' ? null : 'appointments')
-                  }
-                  active={activeCard === 'appointments'}
-                />
-              </div>
+            {activeSectionCard === 'visits' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Appointments"
+                    icon={faCalendar}
+                    backgroundColor="var(--card-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'appointments' ? null : 'appointments')
+                    }
+                    active={activeCard === 'appointments'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Clinic Visits"
-                  icon={faHouseChimneyMedical}
-                  backgroundColor="var(--card-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'clinicvisits' ? null : 'clinicvisits')
-                  }
-                  active={activeCard === 'clinicvisits'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Clinic Visits"
+                    icon={faHouseChimneyMedical}
+                    backgroundColor="var(--card-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'clinicvisits' ? null : 'clinicvisits')
+                    }
+                    active={activeCard === 'clinicvisits'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                {/* <EMRCard
+                <div className="animation-emr-card-patient-emr">
+                  {/* <EMRCard
                   number={3}
                   footerText="Inpatient"
                   icon={faBed}
@@ -346,23 +344,25 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => setActiveCard(activeCard === 'inpatient' ? null : 'inpatient')}
                   active={activeCard === 'inpatient'}
                 /> */}
-              </div>
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Urgent Care"
-                  icon={faTriangleExclamation}
-                  backgroundColor="var(--card-blue)"
-                  width={150}
-                  height={100}
-                  active={activeCard === 'Urgent Care'}
-                  onClick={() => setActiveCard(activeCard === 'Urgent Care' ? null : 'Urgent Care')}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Urgent Care"
+                    icon={faTriangleExclamation}
+                    backgroundColor="var(--card-blue)"
+                    width={150}
+                    height={100}
+                    active={activeCard === 'Urgent Care'}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'Urgent Care' ? null : 'Urgent Care')
+                    }
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                {/* <EMRCard
+                <div className="animation-emr-card-patient-emr">
+                  {/* <EMRCard
                   number={3}
                   footerText="Day Case"
                   icon={faPersonShelter}
@@ -372,83 +372,85 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => setActiveCard(activeCard === 'daycase' ? null : 'daycase')}
                   active={activeCard === 'daycase'}
                 /> */}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeSectionCard === 'clinical' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Consultations"
-                  icon={faUserDoctor}
-                  backgroundColor="var(--card-green)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'consultations' ? null : 'consultations')
-                  }
-                  active={activeCard === 'consultations'}
-                />
-              </div>
+            {activeSectionCard === 'clinical' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Consultations"
+                    icon={faUserDoctor}
+                    backgroundColor="var(--card-green)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'consultations' ? null : 'consultations')
+                    }
+                    active={activeCard === 'consultations'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Nurse Assessments"
-                  icon={faUserNurse}
-                  backgroundColor="var(--card-green)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'nurseassessments' ? null : 'nurseassessments')
-                  }
-                  active={activeCard === 'nurseassessments'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Nurse Assessments"
+                    icon={faUserNurse}
+                    backgroundColor="var(--card-green)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'nurseassessments' ? null : 'nurseassessments')
+                    }
+                    active={activeCard === 'nurseassessments'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Procedures"
-                  icon={faUserInjured}
-                  backgroundColor="var(--card-green)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'procedures' ? null : 'procedures')}
-                  active={activeCard === 'procedures'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Procedures"
+                    icon={faUserInjured}
+                    backgroundColor="var(--card-green)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'procedures' ? null : 'procedures')}
+                    active={activeCard === 'procedures'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Diagnosis"
-                  icon={faUserInjured}
-                  backgroundColor="var(--card-green)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'diagnosis' ? null : 'diagnosis')}
-                  active={activeCard === 'diagnosis'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Diagnosis"
+                    icon={faUserInjured}
+                    backgroundColor="var(--card-green)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'diagnosis' ? null : 'diagnosis')}
+                    active={activeCard === 'diagnosis'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Dental Procedures"
-                  icon={faUserInjured}
-                  backgroundColor="var(--card-green)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'dentalprocedures' ? null : 'dentalprocedures')}
-                  active={activeCard === 'dentalprocedures'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Dental Procedures"
+                    icon={faUserInjured}
+                    backgroundColor="var(--card-green)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'dentalprocedures' ? null : 'dentalprocedures')
+                    }
+                    active={activeCard === 'dentalprocedures'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                {/* <EMRCard
+                <div className="animation-emr-card-patient-emr">
+                  {/* <EMRCard
                   number={3}
                   footerText="Operations"
                   icon={faBedPulse}
@@ -458,39 +460,39 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => setActiveCard(activeCard === 'operations' ? null : 'operations')}
                   active={activeCard === 'operations'}
                 /> */}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeSectionCard === 'diagnostics' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={5}
-                  footerText="Laboratory"
-                  icon={faVial}
-                  backgroundColor="var(--card-light-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'laboratory' ? null : 'laboratory')}
-                  active={activeCard === 'laboratory'}
-                />
-              </div>
+            {activeSectionCard === 'diagnostics' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={5}
+                    footerText="Laboratory"
+                    icon={faVial}
+                    backgroundColor="var(--card-light-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'laboratory' ? null : 'laboratory')}
+                    active={activeCard === 'laboratory'}
+                  />
+                </div>
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Radiology"
-                  icon={faXRay}
-                  backgroundColor="var(--card-light-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'radiology' ? null : 'radiology')}
-                  active={activeCard === 'radiology'}
-                />
-              </div>
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Radiology"
+                    icon={faXRay}
+                    backgroundColor="var(--card-light-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'radiology' ? null : 'radiology')}
+                    active={activeCard === 'radiology'}
+                  />
+                </div>
 
-              {/* <div className="animation-emr-card-patient-emr">
+                {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={3}
                   footerText="Pathology"
@@ -502,224 +504,241 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   active={activeCard === 'pathology'}
                 />
               </div> */}
-            </div>
-          )}
-
-          {activeSectionCard === 'treatment' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={3}
-                  footerText="Medications"
-                  icon={faPills}
-                  backgroundColor="var(--card-dark-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'medications' ? null : 'medications')}
-                  active={activeCard === 'medications'}
-                />
               </div>
+            )}
 
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="Vaccines"
-                  icon={faSyringe}
-                  backgroundColor="var(--card-dark-blue)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'vaccines' ? null : 'vaccines')}
-                  active={activeCard === 'vaccines'}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeSectionCard === 'documents' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="Forms"
-                  icon={faFileInvoice}
-                  backgroundColor="var(--card-dark-pink)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'forms' ? null : 'forms')}
-                  active={activeCard === 'forms'}
-                />
-              </div>
-
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="Attachments"
-                  icon={faPaperclip}
-                  backgroundColor="var(--card-dark-pink)"
-                  width={150}
-                  height={100}
-                  onClick={() => setActiveCard(activeCard === 'attachments' ? null : 'attachments')}
-                  active={activeCard === 'attachments'}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeSectionCard === 'services' && (
-            <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={4}
-                  footerText="Applied Services"
-                  icon={faConciergeBell}
-                  backgroundColor="var(--card-gray)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'appliedservices' ? null : 'appliedservices')
-                  }
-                  active={activeCard === 'appliedservices'}
-                />
-              </div>
-
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={5}
-                  footerText="Dental Charts"
-                  icon={faTooth}
-                  backgroundColor="var(--card-gray)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'dentalcharts' ? null : 'dentalcharts')
-                  }
-                  active={activeCard === 'dentalcharts'}
-                />
-              </div>
-
-              <div className="animation-emr-card-patient-emr">
-                <EMRCard
-                  number={5}
-                  footerText="Ledger Account"
-                  icon={faMoneyBillTransfer}
-                  backgroundColor="var(--card-gray)"
-                  width={150}
-                  height={100}
-                  onClick={() =>
-                    setActiveCard(activeCard === 'ledgeraccount' ? null : 'ledgeraccount')
-                  }
-                  active={activeCard === 'ledgeraccount'}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-
-        {activeCard === 'all' && (
-          <div className="emr-all-scroll-wrapper">
-            <div className="emr-all-sections">
-
-              {/* ================= HISTORY ================= */}
-              <SectionContainer
-                title={<Translate>Patient History</Translate>}
-                content={<PatientHistory toShowData={true} patient={localPatient} />}
-              />
-
-              {/* ================= VISITS ================= */}
-              <SectionContainer
-                title={<Translate>Appointments</Translate>}
-                content={<AppointmentsTable patient={localPatient} />}
-              />
-
-              <SectionContainer
-                title={<Translate>Clinic Visits</Translate>}
-                content={
-                  <VisitHistoryTable
-                    localPatient={localPatient}
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
-                    departmentType="OUTPATIENT_CLINIC"
+            {activeSectionCard === 'treatment' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={3}
+                    footerText="Medications"
+                    icon={faPills}
+                    backgroundColor="var(--card-dark-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'medications' ? null : 'medications')
+                    }
+                    active={activeCard === 'medications'}
                   />
-                }
-              />
+                </div>
 
-              <SectionContainer
-                title={<Translate>Urgent Care</Translate>}
-                content={<VisitHistoryTable
-                  localPatient={localPatient}
-                  quickAppointmentModel={quickAppointmentModel}
-                  setQuickAppointmentModel={setQuickAppointmentModel}
-                  departmentType="EMERGENCY_ROOM"
-                />}
-              />
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Vaccines"
+                    icon={faSyringe}
+                    backgroundColor="var(--card-dark-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'vaccines' ? null : 'vaccines')}
+                    active={activeCard === 'vaccines'}
+                  />
+                </div>
+              </div>
+            )}
 
-              {/* ================= CLINICAL ================= */}
-              <SectionContainer
-                title={<Translate>Consultations</Translate>}
-                content={<ConsultationsTable patient={localPatient} />}
-              />
+            {activeSectionCard === 'documents' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Forms"
+                    icon={faFileInvoice}
+                    backgroundColor="var(--card-dark-pink)"
+                    width={150}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'forms' ? null : 'forms')}
+                    active={activeCard === 'forms'}
+                  />
+                </div>
 
-              <SectionContainer
-                title={<Translate>Nurse Assessments</Translate>}
-                content={<PreviousMeasurementsMain patient={localPatient} />}
-              />
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Attachments"
+                    icon={faPaperclip}
+                    backgroundColor="var(--card-dark-pink)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'attachments' ? null : 'attachments')
+                    }
+                    active={activeCard === 'attachments'}
+                  />
+                </div>
+              </div>
+            )}
 
-              <SectionContainer
-                title={<Translate>Procedures</Translate>}
-                content={<ProceduresTable patient={localPatient} />}
-              />
+            {activeSectionCard === 'services' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Applied Services"
+                    icon={faConciergeBell}
+                    backgroundColor="var(--card-gray)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'appliedservices' ? null : 'appliedservices')
+                    }
+                    active={activeCard === 'appliedservices'}
+                  />
+                </div>
 
-              <SectionContainer
-                title={<Translate>Diagnosis</Translate>}
-                content={<DiagnosisTable patient={localPatient} />}
-              />
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={5}
+                    footerText="Dental Charts"
+                    icon={faTooth}
+                    backgroundColor="var(--card-gray)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'dentalcharts' ? null : 'dentalcharts')
+                    }
+                    active={activeCard === 'dentalcharts'}
+                  />
+                </div>
 
-              <SectionContainer
-                title={<Translate>Dental Procedures</Translate>}
-                content={<DentalProcedures patient={localPatient} />}
-              />
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={5}
+                    footerText="Ledger Account"
+                    icon={faMoneyBillTransfer}
+                    backgroundColor="var(--card-gray)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(activeCard === 'ledgeraccount' ? null : 'ledgeraccount')
+                    }
+                    active={activeCard === 'ledgeraccount'}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
 
-              <SectionContainer
-                title={<Translate>Operations</Translate>}
-                content={<OperationsTable />}
-              />
+          {activeCard === 'all' && (
+            <div className="emr-all-scroll-wrapper">
+              <div className="emr-all-sections">
+                {/* ================= HISTORY ================= */}
+                <SectionContainer
+                  title={<Translate>Patient History</Translate>}
+                  content={
+                    <PatientHistory
+                      toShowData={true}
+                      patient={localPatient}
+                      encounter={undefined}
+                      edit={undefined}
+                    />
+                  }
+                />
 
-              {/* ================= DIAGNOSTICS ================= */}
-              <SectionContainer
-                title={<Translate>Laboratory</Translate>}
-                content={<LaboratoryTable patient={localPatient} />}
-              />
+                {/* ================= VISITS ================= */}
+                <SectionContainer
+                  title={<Translate>Appointments</Translate>}
+                  content={<AppointmentsTable patient={localPatient} />}
+                />
 
-              <SectionContainer
-                title={<Translate>Radiology</Translate>}
-                content={<RadiologyTable patient={localPatient} />}
-              />
+                <SectionContainer
+                  title={<Translate>Clinic Visits</Translate>}
+                  content={
+                    <VisitHistoryTable
+                      localPatient={localPatient}
+                      quickAppointmentModel={quickAppointmentModel}
+                      setQuickAppointmentModel={setQuickAppointmentModel}
+                      departmentType="OUTPATIENT_CLINIC"
+                    />
+                  }
+                />
 
-              {/* ================= TREATMENT ================= */}
-              <SectionContainer
-                title={<Translate>Current Medications</Translate>}
-                content={<CurrentMedicationsTable patient={localPatient} />}
-              />
+                <SectionContainer
+                  title={<Translate>Urgent Care</Translate>}
+                  content={
+                    <VisitHistoryTable
+                      localPatient={localPatient}
+                      quickAppointmentModel={quickAppointmentModel}
+                      setQuickAppointmentModel={setQuickAppointmentModel}
+                      departmentType="EMERGENCY_ROOM"
+                    />
+                  }
+                />
 
-              <SectionContainer
-                title={<Translate>Vaccinations</Translate>}
-                content={<VaccinationTable patient={localPatient} />}
-              />
+                {/* ================= CLINICAL ================= */}
+                <SectionContainer
+                  title={<Translate>Consultations</Translate>}
+                  content={<ConsultationsTable patient={localPatient} />}
+                />
 
-              {/* ================= DOCUMENTATION ================= */}
-              <SectionContainer
-                title={<Translate>Clinical Forms</Translate>}
-                content={<ClinicalFormsTable />}
-              />
+                <SectionContainer
+                  title={<Translate>Nurse Assessments</Translate>}
+                  content={<PreviousMeasurementsMain patient={localPatient} />}
+                />
 
-              <SectionContainer
-                title={<Translate>Attachments</Translate>}
-                content={<AttachmentsTable localPatient={localPatient} />}
-              />
+                <SectionContainer
+                  title={<Translate>Procedures</Translate>}
+                  content={<ProceduresTable patient={localPatient} />}
+                />
 
-              {/* ================= SERVICES ================= */}
-              {/* <SectionContainer
+                <SectionContainer
+                  title={<Translate>Diagnosis</Translate>}
+                  content={<DiagnosisTable patient={localPatient} />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Dental Procedures</Translate>}
+                  content={<DentalProcedures patient={localPatient} />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Operations</Translate>}
+                  content={<OperationsTable />}
+                />
+
+                {/* ================= DIAGNOSTICS ================= */}
+                <SectionContainer
+                  title={<Translate>Laboratory</Translate>}
+                  content={<LaboratoryTable patient={localPatient} />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Radiology</Translate>}
+                  content={
+                    <RadiologyTable
+                      patient={localPatient}
+                      setEncounter={undefined}
+                      setPatient={undefined}
+                    />
+                  }
+                />
+
+                {/* ================= TREATMENT ================= */}
+                <SectionContainer
+                  title={<Translate>Current Medications</Translate>}
+                  content={<CurrentMedicationsTable patient={localPatient} />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Vaccinations</Translate>}
+                  content={<VaccinationTable patient={localPatient} />}
+                />
+
+                {/* ================= DOCUMENTATION ================= */}
+                <SectionContainer
+                  title={<Translate>Clinical Forms</Translate>}
+                  content={<ClinicalFormsTable />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Attachments</Translate>}
+                  content={<AttachmentsTable localPatient={localPatient} />}
+                />
+
+                {/* ================= SERVICES ================= */}
+                {/* <SectionContainer
                 title={<Translate>Applied Services</Translate>}
                 content={<AppliedServicesTable patient={localPatient} />}
               />
@@ -733,80 +752,80 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                 title={<Translate>Ledger Account</Translate>}
                 content={<LedgerAccountTable />}
               /> */}
-
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
+          {/* Active Tables */}
+          {activeCard === 'appointments' && <AppointmentsTable patient={localPatient} />}
 
+          {activeCard === 'clinicvisits' && (
+            <VisitHistoryTable localPatient={localPatient} departmentType="OUTPATIENT_CLINIC" />
+          )}
+          {/* {activeCard === 'inpatient' && <InpatientTable />} */}
+          {/* {activeCard === 'daycase' && <DayCaseTable />} */}
+          {activeCard === 'Urgent Care' && (
+            <VisitHistoryTable localPatient={localPatient} departmentType="EMERGENCY_ROOM" />
+          )}
+          {activeCard === 'nurseassessments' && <PreviousMeasurementsMain patient={localPatient} />}
+          {activeCard === 'procedures' && <ProceduresTable patient={localPatient} />}
+          {activeCard === 'diagnosis' && <DiagnosisTable patient={localPatient} />}
+          {activeCard === 'dentalprocedures' && <DentalProcedures patient={localPatient} />}
+          {activeCard === 'operations' && <OperationsTable />}
+          {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
+          {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}
+          {activeCard === 'radiology' && (
+            <RadiologyTable
+              patient={localPatient}
+              setEncounter={undefined}
+              setPatient={undefined}
+            />
+          )}
 
-
-
-        {/* Active Tables */}
-        {activeCard === 'appointments' && (<AppointmentsTable patient={localPatient} />)}
-
-        {activeCard === 'clinicvisits' && (
-          <VisitHistoryTable
-            localPatient={localPatient}
-            departmentType="OUTPATIENT_CLINIC"
-          />
-        )}
-        {/* {activeCard === 'inpatient' && <InpatientTable />} */}
-        {/* {activeCard === 'daycase' && <DayCaseTable />} */}
-        {activeCard === 'Urgent Care' && (
-          <VisitHistoryTable
-            localPatient={localPatient}
-            departmentType="EMERGENCY_ROOM"
-          />
-        )}
-        {activeCard === 'nurseassessments' && (<PreviousMeasurementsMain patient={localPatient} />)}
-        {activeCard === 'procedures' && <ProceduresTable patient={localPatient} />}
-        {activeCard === 'diagnosis' && <DiagnosisTable patient={localPatient} />}
-        {activeCard === 'dentalprocedures' && <DentalProcedures patient={localPatient} />}
-        {activeCard === 'operations' && <OperationsTable />}
-        {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
-        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}
-        {activeCard === 'radiology' && <RadiologyTable patient={localPatient} />}
-      
-        {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
-        {activeCard === 'vaccines' && <VaccinationTable patient={localPatient} />}
-        {activeCard === 'forms' && <ClinicalFormsTable />}
-        {activeCard === 'attachments' && <AttachmentsTable localPatient={localPatient} />}
-        {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient} />}
-        {activeCard === 'dentalcharts' && <DentalChartsTable />}
-        {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
-        {activeCard === 'pastmedicalhistory' && (
-          <PatientHistory toShowData={true} patient={localPatient} />
-        )}
-      </div>
-
-      <div className="emr-right">
-        <div className="patient-side-main-container-handle">
-           <PatientSide
-                          patient={localPatient}
-                          setPatient={setLocalPatient}
-                          encounter={encounter}
-                          showDiagnosis={false}
-                          showVisitDetails={false}
-                          showBalance={false}
-                          showMeasurements={false}
-                        />
+          {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
+          {activeCard === 'vaccines' && <VaccinationTable patient={localPatient} />}
+          {activeCard === 'forms' && <ClinicalFormsTable />}
+          {activeCard === 'attachments' && <AttachmentsTable localPatient={localPatient} />}
+          {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient} />}
+          {activeCard === 'dentalcharts' && <DentalChartsTable />}
+          {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
+          {activeCard === 'pastmedicalhistory' && (
+            <PatientHistory
+              toShowData={true}
+              patient={localPatient}
+              encounter={undefined}
+              edit={undefined}
+            />
+          )}
         </div>
-        {!hideProfileSidebar && (
-          <div className="profile-sidebar-main-container-handle">
-            <ProfileSidebar
-              expand={expand}
-              setExpand={setExpand}
-              windowHeight={windowHeight}
-              setLocalPatient={setLocalPatient}
-              setRefetchData={setRefetchData}
-              refetchData={refetchData}
+
+        <div className="emr-right">
+          <div className="patient-side-main-container-handle">
+            <PatientSide
+              patient={localPatient}
+              setPatient={setLocalPatient}
+              encounter={encounter}
+              showDiagnosis={false}
+              showVisitDetails={false}
+              showBalance={false}
+              showMeasurements={false}
             />
           </div>
-        )}
+          {!hideProfileSidebar && (
+            <div className="profile-sidebar-main-container-handle">
+              <ProfileSidebar
+                expand={expand}
+                setExpand={setExpand}
+                windowHeight={windowHeight}
+                setLocalPatient={setLocalPatient}
+                setRefetchData={setRefetchData}
+                refetchData={refetchData}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
   );
 };
 

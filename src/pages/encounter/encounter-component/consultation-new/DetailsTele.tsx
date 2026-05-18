@@ -127,6 +127,8 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'already.cancelled': 'Telephonic consultation already cancelled.',
   'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
 
+  'unique.approval_number': 'Approval Number already exists. Please use a different approval number.',
+
   'db.constraint': 'Database constraint violation.'
 };
 
@@ -194,32 +196,33 @@ const DetailsTele = ({
 
   useEffect(() => {
     if (!open || !consultationOrders?.id) return;
-
     if (!practitionerLoaded || !practitionerById) return;
 
     setPractitioner({
       ...newPractitioner,
       facilityId: practitionerById.facilityId
     });
-
-    setAllPractitioners([practitionerById]);
     setPractitionerPage(0);
+    setFormData(prev => ({ ...prev, practitionerId: practitionerById.id }));
 
     triggerGetPractitionersByFacility({
       facilityId: practitionerById.facilityId,
       page: 0,
       size: pageSize,
       sort: 'id,asc'
+    }).then(result => {
+      const list = result?.data?.data ?? [];
+      const existingIds = new Set([practitionerById.id]);
+      const others = list.filter((p: any) => !existingIds.has(p.id));
+      setAllPractitioners([practitionerById, ...others]);
+    }).catch(err => {
+      setAllPractitioners([practitionerById]);
     });
-
-    setFormData(prev => ({
-      ...prev,
-      practitionerId: practitionerById.id
-    }));
   }, [open, consultationOrders?.id, practitionerLoaded]);
 
   useEffect(() => {
     if (!practitionersResult?.data?.data) return;
+    if (practitionersResult?.isFetching) return;
 
     const newPractitioners = practitionersResult.data.data;
 
@@ -228,7 +231,7 @@ const DetailsTele = ({
       const unique = newPractitioners.filter(p => !existingIds.has(p.id));
       return [...prev, ...unique];
     });
-  }, [practitionersResult?.data?.data]);
+  }, [practitionersResult?.data?.data, practitionersResult?.isFetching]);
 
   /* ========================= ACTIONS ========================= */
 
@@ -315,20 +318,19 @@ const DetailsTele = ({
       }
 
       setOpen(false);
-      refetchCon?.();
+      try { refetchCon?.(); } catch (_) { /* query not yet started */ }
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     }
   };
+
   const handleOpenAttachmentModal = () => {
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -372,6 +374,8 @@ const DetailsTele = ({
                       page: 0,
                       size: pageSize,
                       sort: 'id,asc'
+                    }).then(result => {
+                      setAllPractitioners(result?.data?.data ?? []);
                     }).catch(err => {
                       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
                     });
@@ -394,8 +398,12 @@ const DetailsTele = ({
                   disabled={!practitioner?.facilityId}
                   loading={practitionersResult?.isFetching}
                   searchable
-                  hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
+                  hasMore={
+                    allPractitioners.length > 0 &&
+                    (practitionersResult?.data?.totalCount ?? 0) > allPractitioners.length
+                  }
                   onFetchMore={() => {
+                    if (practitionersResult?.isFetching) return;
                     const nextPage = practitionerPage + 1;
                     setPractitionerPage(nextPage);
 
@@ -404,6 +412,12 @@ const DetailsTele = ({
                       page: nextPage,
                       size: pageSize,
                       sort: 'id,asc'
+                    }).then(result => {
+                      const more = result?.data?.data ?? [];
+                      setAllPractitioners(prev => {
+                        const existingIds = new Set(prev.map((p: any) => p.id));
+                        return [...prev, ...more.filter((p: any) => !existingIds.has(p.id))];
+                      });
                     }).catch(err => {
                       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
                     });
@@ -440,7 +454,19 @@ const DetailsTele = ({
                   fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
-                  setRecord={setFormData}
+                  setRecord={rec => {
+                    const val = String(rec?.approvalNumber ?? '');
+                    if (val.length > 10) {
+                      dispatch(
+                        notify({
+                          msg: 'Approval Number must not exceed 10 digits',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+                    setFormData(rec);
+                  }}
                 />
 
                 <div className="attachment-button-consultation-position">

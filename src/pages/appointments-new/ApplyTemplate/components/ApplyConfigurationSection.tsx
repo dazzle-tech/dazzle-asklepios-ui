@@ -39,6 +39,8 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
   onEffectiveTemplateIntervalsStatus,
   templateFacilityId,
 }) => {
+  const isDark = useAppSelector((state: any) => state.ui.mode === "dark");
+  const surfaceStyle = isDark ? { backgroundColor: "var(--dark-black)", borderColor: "#3d3d3d", color: "var(--white)" } : undefined;
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
@@ -178,10 +180,13 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
   return (
     <SurfaceCard title="Apply Configuration" description="Configure scope, resources, intervals and exceptions" icon={Settings2}>
-      <div className="space-y-5">
-        <div>
-          <p className="mb-3 text-sm font-semibold text-slate-700">Resource Scope</p>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div
+        className="space-y-5"
+        style={isDark ? { backgroundColor: "var(--extra-dark-black)" } : undefined}
+      >
+        <div style={isDark ? { backgroundColor: "var(--extra-dark-black)" } : undefined}>
+          <p className="mb-3 text-sm font-semibold text-slate-700" style={isDark ? { color: "var(--white)" } : undefined}>Resource Scope</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4" style={surfaceStyle}>
             <Form fluid>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {options.map(opt => {
@@ -244,22 +249,27 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
           </div>
         </div>
 
-
-        <div>
+        <div style={isDark ? { backgroundColor: "var(--extra-dark-black)" } : undefined}>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">
+            <p className="text-sm font-semibold text-slate-700" style={isDark ? { color: "var(--white)" } : undefined}>
               Intervals ({isSpecificScope && selectedChildTemplateId > 0 ? 'Resource Template' : 'Selected Template'})
             </p>
           </div>
           <div className="space-y-2">
             {isLoadingIntervals && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <div
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600"
+                style={surfaceStyle}
+              >
                 Loading intervals...
               </div>
             )}
 
             {!isLoadingIntervals && !effectiveTemplateIdForIntervals && (
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+              <div
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500"
+                style={surfaceStyle}
+              >
                 Select a template to view intervals.
               </div>
             )}
@@ -270,22 +280,23 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
                 const rows = intervalsByDay[day] ?? [];
                 if (rows.length === 0) return null;
                 return (
-                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <div className="mb-2 text-xs font-semibold text-slate-500">{day.replace('_', ' ')}</div>
+                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3" style={surfaceStyle}>
+                    <div className="mb-2 text-xs font-semibold text-slate-500" style={isDark ? { color: "var(--white)" } : undefined}>{day.replace('_', ' ')}</div>
                     <div className="space-y-2">
                       {rows.map((interval, idx) => (
                         <div
                           key={`${day}-${interval?.id ?? idx}`}
                           className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                          style={isDark ? { backgroundColor: "var(--extra-dark-black)", borderColor: "#3d3d3d", color: "var(--white)" } : undefined}
                         >
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-slate-800" style={isDark ? { color: "var(--white)" } : undefined}>
                             {interval?.startTime ?? '--:--'} - {interval?.endTime ?? '--:--'}
                           </span>
-                          <span className="mx-2 text-slate-300">|</span>
+                          <span className="mx-2 text-slate-300" style={isDark ? { color: "var(--gray-dark)" } : undefined}>|</span>
                           <span>
                             Duration: {interval?.slotDurationMinutes ?? '-'} min
                           </span>
-                          <span className="mx-2 text-slate-300">|</span>
+                          <span className="mx-2 text-slate-300" style={isDark ? { color: "var(--gray-dark)" } : undefined}>|</span>
                           <span>
                             Strategy: {interval?.slotStrategy ? formatEnumString(String(interval.slotStrategy)) : '-'}
                           </span>
@@ -299,7 +310,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
             {!isLoadingIntervals &&
               effectiveTemplateIdForIntervals > 0 &&
               daysToQuery.every(day => (intervalsByDay[day] ?? []).length === 0) && (
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                <div
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500"
+                  style={surfaceStyle}
+                >
                   No intervals found for this template.
                 </div>
               )}
@@ -308,11 +322,11 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Exceptions</p>
+            <p className="text-sm font-semibold text-slate-700" style={isDark ? { color: "var(--white)" } : undefined}>Exceptions</p>
           </div>
           <div className="space-y-2">
             {isLoadingHolidays && shouldFetchHolidays && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600" style={surfaceStyle}>
                 Loading holidays for selected range...
               </div>
             )}
@@ -334,15 +348,18 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
               ))}
 
             {!isLoadingHolidays && (!shouldFetchHolidays || (holidaysInRange as any[])?.length === 0) && (
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+              <div
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500"
+                style={surfaceStyle}
+              >
                 No Exceptions in the selected range.
               </div>
             )}
           </div>
 
           {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length > 0 && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-700">Holiday Handling Mode</p>
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4" style={surfaceStyle}>
+              <p className="mb-3 text-sm font-semibold text-slate-700" style={isDark ? { color: "var(--white)" } : undefined}>Holiday Handling Mode</p>
               {!String((dto as any)?.holidayHandlingMode ?? "").trim() && (
                 <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />

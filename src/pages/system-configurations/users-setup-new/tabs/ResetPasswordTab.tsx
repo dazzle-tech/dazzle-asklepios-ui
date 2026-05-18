@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Radio, RadioGroup } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { ApUser } from '@/types/model-types-new';
 import { useRequestPasswordResetMutation } from '@/services/userService';
@@ -13,6 +13,7 @@ interface ResetPasswordTabProps {
 }
 
 const ResetPasswordTab: React.FC<ResetPasswordTabProps> = ({ user, width }) => {
+   const mode = useAppSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const [requestPasswordReset] = useRequestPasswordResetMutation();
 
@@ -61,10 +62,10 @@ const ResetPasswordTab: React.FC<ResetPasswordTabProps> = ({ user, width }) => {
           width={width > 600 ? 520 : 250}
         />
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', marginLeft: '10px' }}>
-          <span style={{ marginBottom: 8 }}>How would you like to reset the password?</span>
+          <span style={{ marginBottom: 8, color: mode === 'dark' ? 'var(--white)' : ''}}>How would you like to reset the password?</span>
           <RadioGroup name="radio-group-inline" defaultValue="email" style={{ marginBottom: 8 }}>
-            <Radio value="email">Email</Radio>
-            <Radio disabled value="phone">
+            <Radio style={{color: mode === 'dark' ? 'var(--white)' : ''}} value="email">Email</Radio>
+            <Radio style={{color: mode === 'dark' ? 'var(--white)' : ''}} disabled value="phone">
               Phone Number
             </Radio>
           </RadioGroup>

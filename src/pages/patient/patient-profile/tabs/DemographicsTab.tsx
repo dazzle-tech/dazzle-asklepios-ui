@@ -14,7 +14,6 @@ interface DemographicsTabProps {
   validationResult: any;
   genderEnum: any;
   patientDocumentEnum: any;
-  countryLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
