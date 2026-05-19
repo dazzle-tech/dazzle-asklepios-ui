@@ -1672,6 +1672,9 @@ export const newPatient: modelTypes.Patient = {
   details: '',
   isUnknown: false,
 
+  isCchiPatient: false,
+  documentId: '',
+   
   isVerified: false,
   isCompletedPatient: false,
   securityAccessLevel: null,

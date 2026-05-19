@@ -218,7 +218,7 @@ import { uccMedicationOrderService } from './services/medicalsheetsEncounter/ucc
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
-
+import { cchiApi } from './services/waseel-integration/cchiService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -554,7 +554,8 @@ export const store = configureStore({
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
 
-    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer
+    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
+    [cchiApi.reducerPath]: cchiApi.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -743,7 +744,8 @@ export const store = configureStore({
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
-        glasgowComaScaleAssessmentService.middleware
+        glasgowComaScaleAssessmentService.middleware,
+        cchiApi.middleware
       ) as any
 });
 

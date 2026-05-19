@@ -309,7 +309,6 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,

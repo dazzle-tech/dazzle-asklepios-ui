@@ -1445,6 +1445,9 @@ export interface Patient {
   details?: string | null;
   isUnknown?: boolean | null;
 
+  isCchiPatient?: boolean | null;
+  documentId?: string | null;
+
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
   securityAccessLevel?: string | null;

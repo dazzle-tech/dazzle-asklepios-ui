@@ -98,7 +98,7 @@ export const enumsApi = createApi({
 export const { useGetAllEnumsQuery } = enumsApi;
 
 /* -------------------------------- Hooks -------------------------------- */
-
+ // Debug log
 export function useEnumByName(name: string): string[] {
   const token = localStorage.getItem('id_token');
 
