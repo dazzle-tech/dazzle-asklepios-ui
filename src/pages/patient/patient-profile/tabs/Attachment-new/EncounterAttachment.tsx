@@ -15,6 +15,7 @@ import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/Att
 import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
 import { EncounterAttachment as EncounterAttachmentType } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -158,6 +159,31 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
         setPageSize(parseInt(event.target.value, 10));
         setPage(0); // Reset to first page
     };
+
+      const UserDateCell = ({
+        login,
+        date
+        }: {
+        login?: string;
+        date?: string;
+        }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+            skip: !login
+        });
+
+        if (!date && !login) return null;
+
+        return (
+            <>
+            {fullName || login || ''}
+            <br />
+            <span className="date-table-style">
+                {date ? formatDateWithoutSeconds(date) : ''}
+            </span>
+            </>
+        );
+        };
+
     // Table Columns
     const columns = [
         {
@@ -227,18 +253,34 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             fullText: true,
         },
         {
-            key: 'createdDate',
-            title: <Translate>Created By/At</Translate>,
-            fullText: true,
-            flexGrow: 3,
-            render: (row: EncounterAttachmentType) => row?.createdDate ? <>{row?.createdBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdDate)}</span> </> : ' '
+        key: 'createdDate',
+        title: <Translate>Created By/At</Translate>,
+        fullText: true,
+        flexGrow: 3,
+        render: (row: EncounterAttachmentType) =>
+            row?.createdDate ? (
+            <UserDateCell
+                login={row?.createdBy}
+                date={row?.createdDate}
+            />
+            ) : (
+            ' '
+            )
         },
         {
-            key: 'lastModifiedDate',
-            title: <Translate>Updated By/At</Translate>,
-            fullText: true,
-            flexGrow: 3,
-            render: (row: EncounterAttachmentType) => row?.lastModifiedDate ? <>{row?.lastModifiedBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.lastModifiedDate)}</span> </> : ' '
+        key: 'lastModifiedDate',
+        title: <Translate>Updated By/At</Translate>,
+        fullText: true,
+        flexGrow: 3,
+        render: (row: EncounterAttachmentType) =>
+            row?.lastModifiedDate ? (
+            <UserDateCell
+                login={row?.lastModifiedBy}
+                date={row?.lastModifiedDate}
+            />
+            ) : (
+            ' '
+            )
         },
     ];
 

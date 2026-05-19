@@ -30,7 +30,7 @@ const TestCardModal = ({ test }: any) => {
   const testId = test?.id;
 
 
-    const raw = test?.type;
+  const raw = test?.type;
 
 
 
@@ -43,11 +43,11 @@ const TestCardModal = ({ test }: any) => {
   });
 
   const { data: rad } = useGetRadiologyByTestIdQuery(testId, {
-    skip:  raw !== 'RADIOLOGY',
+    skip: raw !== 'RADIOLOGY',
   });
 
   const { data: path } = useGetPathologyByTestIdQuery(testId, {
-    skip:  raw !== 'PATHOLOGY',
+    skip: raw !== 'PATHOLOGY',
   });
 
   const { data: propertyLov } = useGetLovValuesByCodeQuery('LAB_PROPERTIES');
@@ -88,15 +88,36 @@ const TestCardModal = ({ test }: any) => {
       category: lovLabelSmart(categoriesLov?.object, lab.category),
       resultUnit: lovLabelSmart(valueUnitLov?.object, lab.resultUnit),
       reagents: lovLabelSmart(reagentsLov?.object, lab.reagents),
-      sampleContainer: lovLabelSmart(sampleContainerLov?.object, lab.sampleContainer),
-      sampleVolumeUnit: lovLabelSmart(valueUnitLov?.object, lab.sampleVolumeUnit),
+      sampleContainer: lovLabelSmart(
+        sampleContainerLov?.object,
+        lab.sampleContainer
+      ),
+      sampleVolumeUnit: lovLabelSmart(
+        valueUnitLov?.object,
+        lab.sampleVolumeUnit
+      ),
       tubeColor: lovLabelSmart(tubeColorLov?.object, lab.tubeColor),
       tubeType: lovLabelSmart(tubeTypeLov?.object, lab.tubeType),
+
       timeUnit: lovLabelSmart(timeUnitLov?.object, lab.timeUnit),
-      property: prettifyLov(lovLabelSmart(propertyLov?.object, lab.property)),
-      system: prettifyLov(lovLabelSmart(systemLov?.object, lab.system)),
-      scale: prettifyLov(lovLabelSmart(scaleLov?.object, lab.scale)),
-      method: prettifyLov(lovLabelSmart(methodLov?.object, lab.method)),
+
+      turnaroundTimeUnit: lovLabelSmart(
+        timeUnitLov?.object,
+        lab.turnaroundTimeUnit
+      ),
+
+      property: prettifyLov(
+        lovLabelSmart(propertyLov?.object, lab.property)
+      ),
+      system: prettifyLov(
+        lovLabelSmart(systemLov?.object, lab.system)
+      ),
+      scale: prettifyLov(
+        lovLabelSmart(scaleLov?.object, lab.scale)
+      ),
+      method: prettifyLov(
+        lovLabelSmart(methodLov?.object, lab.method)
+      ),
 
       timing: prettifyLov(lab.timing),
     };
@@ -166,144 +187,146 @@ const TestCardModal = ({ test }: any) => {
     timeUnitsLov,
   ]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <div className="test-card-container">
-      { raw === 'LABORATORY' && (
-        <Form fluid>
-          <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
-          content={
-          <div className="test-card-main-container">
-            <MyInput fieldLabel="Category" fieldName="category" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Result Unit" fieldName="resultUnit" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Property" fieldName="property" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Timing" fieldName="timing" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="System" fieldName="system" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Scale" fieldName="scale" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Method" fieldName="method" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Reagents" fieldName="reagents" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Test Duration Time" fieldName="testDurationTime" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Time Unit" fieldName="timeUnit" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Sample Container" fieldName="sampleContainer" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Sample Volume" fieldName="sampleVolume" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Sample Volume Unit" fieldName="sampleVolumeUnit" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Tube Color" fieldName="tubeColor" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Tube Type" fieldName="tubeType" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Test Description" fieldName="testDescription" fieldType="textarea" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Sample Handling" fieldName="sampleHandling" fieldType="textarea" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Preparation Requirements" fieldName="preparationRequirements" fieldType="textarea" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Medical Indications" fieldName="medicalIndications" fieldType="textarea" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Associated Risks" fieldName="associatedRisks" fieldType="textarea" record={labView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Test Instructions" fieldName="testInstructions" fieldType="textarea" record={labView} width={"11vw"} disabled />
-          </div>}
-          />
-        </Form>
-      )}
-
-      { raw === 'RADIOLOGY' && (
-        <Form fluid>
-      <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
-          content={
-          <div className="test-card-main-container">
-            <MyInput
-              fieldLabel="Category"
-              fieldName="category"
-              record={radView}
-              width={"11vw"}
-              disabled
+    <div dir={dir}>
+      <div className="test-card-container">
+        {raw === 'LABORATORY' && (
+          <Form fluid>
+            <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
+              content={
+                <div className="test-card-main-container">
+                  <MyInput fieldLabel="Category" fieldName="category" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Result Unit" fieldName="resultUnit" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Property" fieldName="property" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Timing" fieldName="timing" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="System" fieldName="system" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Scale" fieldName="scale" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Method" fieldName="method" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Reagents" fieldName="reagents" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Test Duration Time" fieldName="testDurationTime" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Time Unit" fieldName="timeUnit" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Turnaround Time" fieldName="turnaroundTime" record={labView} width={"11vw"} disabled/>
+                  <MyInput fieldLabel="Turnaround Time Unit" fieldName="turnaroundTimeUnit" record={labView} width={"11vw"} disabled/>
+                  <MyInput fieldLabel="Sample Container" fieldName="sampleContainer" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Sample Volume" fieldName="sampleVolume" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Sample Volume Unit" fieldName="sampleVolumeUnit" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Tube Color" fieldName="tubeColor" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Tube Type" fieldName="tubeType" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Test Description" fieldName="testDescription" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Sample Handling" fieldName="sampleHandling" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Preparation Requirements" fieldName="preparationRequirements" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Medical Indications" fieldName="medicalIndications" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Associated Risks" fieldName="associatedRisks" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Test Instructions" fieldName="testInstructions" fieldType="textarea" record={labView} width={"11vw"} disabled />
+                </div>}
             />
+          </Form>
+        )}
 
-            <MyInput
-              fieldLabel="Image duration"
-              fieldName="imageDuration"
-              record={radView}
-              width={"11vw"}
-              disabled
+        {raw === 'RADIOLOGY' && (
+          <Form fluid>
+            <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
+              content={
+                <div className="test-card-main-container">
+                  <MyInput
+                    fieldLabel="Category"
+                    fieldName="category"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Image duration"
+                    fieldName="imageDuration"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Turnaround time"
+                    fieldName="turnaroundTime"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Time unit"
+                    fieldName="turnaroundTimeUnit"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Medical Indications"
+                    fieldName="medicalIndications"
+                    fieldType="textarea"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Associated Risks"
+                    fieldName="associatedRisks"
+                    fieldType="textarea"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+
+                  <MyInput
+                    fieldLabel="Test Instructions"
+                    fieldName="testInstructions"
+                    fieldType="textarea"
+                    record={radView}
+                    width={"11vw"}
+                    disabled
+                  />
+                </div>}
             />
+          </Form>
+        )}
 
-            <MyInput
-              fieldLabel="Turnaround time"
-              fieldName="turnaroundTime"
-              record={radView}
-              width={"11vw"}
-              disabled
+
+        {raw === 'PATHOLOGY' && (
+          <Form fluid>
+            <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
+              content={<>
+                <div className="test-card-main-container">
+
+                  <MyInput fieldLabel="Category" fieldName="category" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Specimen Type" fieldName="specimenType" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Analysis Procedure" fieldName="analysisProcedure" record={pathView} width={"11vw"} disabled />
+
+                  <MyInput fieldLabel="Turnaround Time" fieldName="turnaroundTime" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Time Unit" fieldName="timeUnit" record={pathView} width={"11vw"} disabled />
+                </div>
+
+                <div className="test-card-main-container">
+                  <MyInput fieldLabel="Test Description" fieldName="testDescription" fieldType="textarea" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Sample Handling" fieldName="sampleHandling" fieldType="textarea" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Preparation Requirements" fieldName="preparationRequirements" fieldType="textarea" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Medical Indications" fieldName="medicalIndications" fieldType="textarea" record={pathView} width={"11vw"} disabled />
+                  <MyInput fieldLabel="Associated Risks" fieldName="associatedRisks" fieldType="textarea" record={pathView} width={"11vw"} disabled />
+
+                </div>
+              </>}
             />
+          </Form>
+        )}
 
-            <MyInput
-              fieldLabel="Time unit"
-              fieldName="turnaroundTimeUnit"
-              record={radView}
-              width={"11vw"}
-              disabled
-            />
-
-            <MyInput
-              fieldLabel="Medical Indications"
-              fieldName="medicalIndications"
-              fieldType="textarea"
-              record={radView}
-              width={"11vw"}
-              disabled
-            />
-
-            <MyInput
-              fieldLabel="Associated Risks"
-              fieldName="associatedRisks"
-              fieldType="textarea"
-              record={radView}
-              width={"11vw"}
-              disabled
-            />
-
-            <MyInput
-              fieldLabel="Test Instructions"
-              fieldName="testInstructions"
-              fieldType="textarea"
-              record={radView}
-              width={"11vw"}
-              disabled
-            />
-          </div>}
-          />
-        </Form>
-      )}
-
-
-      { raw === 'PATHOLOGY' && (
-        <Form fluid>
-        <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
-          content={<>
-          <div className="test-card-main-container">
-
-            <MyInput fieldLabel="Category" fieldName="category" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Specimen Type" fieldName="specimenType" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Analysis Procedure" fieldName="analysisProcedure" record={pathView} width={"11vw"} disabled />
-
-            <MyInput fieldLabel="Turnaround Time" fieldName="turnaroundTime" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Time Unit" fieldName="timeUnit" record={pathView} width={"11vw"} disabled />
-          </div>
-
-          <div className="test-card-main-container">
-            <MyInput fieldLabel="Test Description" fieldName="testDescription" fieldType="textarea" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Sample Handling" fieldName="sampleHandling" fieldType="textarea" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Preparation Requirements" fieldName="preparationRequirements" fieldType="textarea" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Medical Indications" fieldName="medicalIndications" fieldType="textarea" record={pathView} width={"11vw"} disabled />
-            <MyInput fieldLabel="Associated Risks" fieldName="associatedRisks" fieldType="textarea" record={pathView} width={"11vw"} disabled />
-
-          </div>
-          </>}
-          />
-        </Form>
-      )}
-
+      </div>
     </div>
-  </div>
   );
 };
 

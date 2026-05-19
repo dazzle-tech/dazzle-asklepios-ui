@@ -3022,3 +3022,22 @@ export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessmen
   totalScore: null,
   scoreInterpretation: null
 };
+export const newPatientProblem: modelTypes.PatientProblem = {
+  id: undefined,
+  patient: null,
+  condition: null,
+  dateOfDiagnosis: null,
+  conditionStatus: null,
+  type: null,
+  dateOfResolution: null,
+  byPatient: true,
+  sourceOfInformation: null,
+  status: 'ACTIVE',
+  cancelledBy: null,
+  cancelledDate: null,
+  cancellationReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};

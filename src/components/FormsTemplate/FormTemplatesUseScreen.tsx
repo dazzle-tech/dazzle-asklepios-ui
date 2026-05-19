@@ -10,7 +10,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import {
   useGetFormTemplatesQuery,
   useLazyGetFormTemplatesQuery
@@ -202,6 +202,41 @@ const FormTemplatesUseScreen = () => {
     });
   };
 
+  const UserFullNameCell = ({ login }: { login?: string | null }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+      skip: !login
+    });
+
+    if (!login) {
+      return <span>-</span>;
+    }
+
+    return <span>{fullName || login}</span>;
+  };
+
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string | null;
+    date?: string | null;
+  }) => {
+    if (!login && !date) {
+      return <span>-</span>;
+    }
+
+    return (
+      <>
+        <UserFullNameCell login={login} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateTime(date) : '-'}
+        </span>
+      </>
+    );
+  };
+
+
   const templateColumns = [
     { key: 'name', title: <Translate>Template</Translate>, flexGrow: 4 },
     { key: 'description', title: <Translate>Description</Translate>, flexGrow: 6 },
@@ -234,13 +269,10 @@ const FormTemplatesUseScreen = () => {
       dataKey: 'createdByAt',
       width: 200,
       render: (row: any) => (
-        <>
-          {row.createdBy}
-          <br />
-          <span className="date-table-style">
-            {formatDateTime(row.createdDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={row.createdBy}
+          date={row.createdDate}
+        />
       )
     },
     {

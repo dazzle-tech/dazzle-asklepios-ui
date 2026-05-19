@@ -22,7 +22,7 @@ import {
 
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import type { PatientDiagnosis as PatientDiagnosisType } from '@/types/model-types-new';
 import './styles.less';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -258,6 +258,31 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     }
   };
 
+
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string;
+    date?: string;
+  }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+      skip: !login
+    });
+
+    if (!date && !login) return null;
+
+    return (
+      <>
+        {fullName || login || ''}
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : ''}
+        </span>
+      </>
+    );
+  };
+
   const tableColumns = useMemo(
     () => [
       {
@@ -304,13 +329,10 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         expandable: true,
         flexGrow: 2,
         render: row => (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">
-              {row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
       {

@@ -4,7 +4,13 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { SocialHistory } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
@@ -14,6 +20,7 @@ type PagedResult<T> = {
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
+
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
@@ -27,20 +34,34 @@ export const socialHistoryService = createApi({
   tagTypes: ['SocialHistory'],
 
   endpoints: builder => ({
-
     getSocialHistory: builder.query<
       PagedResult<SocialHistory>,
       { patientId: Id } & PagedParams
     >({
-      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+      query: ({
+        patientId,
+        page,
+        size,
+        sort = 'id,desc',
+        showCancelled = false
+      }) => ({
         url: '/api/patient/social-history',
-        params: { patientId, page, size, sort }
+        params: {
+          patientId,
+          page,
+          size,
+          sort,
+          showCancelled
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['SocialHistory']
     }),
 
-    addSocialHistory: builder.mutation<SocialHistory, SocialHistory>({
+    addSocialHistory: builder.mutation<
+      SocialHistory,
+      SocialHistory
+    >({
       query: body => ({
         url: '/api/patient/social-history',
         method: 'POST',
@@ -49,7 +70,22 @@ export const socialHistoryService = createApi({
       invalidatesTags: ['SocialHistory']
     }),
 
-    updateSocialHistory: builder.mutation<SocialHistory, SocialHistory>({
+    cancelSocialHistory: builder.mutation<
+      SocialHistory,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/social-history/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['SocialHistory']
+    }),
+
+    updateSocialHistory: builder.mutation<
+      SocialHistory,
+      SocialHistory
+    >({
       query: body => ({
         url: '/api/patient/social-history',
         method: 'PUT',
@@ -58,7 +94,10 @@ export const socialHistoryService = createApi({
       invalidatesTags: ['SocialHistory']
     }),
 
-    deleteSocialHistory: builder.mutation<void, { id: Id }>({
+    deleteSocialHistory: builder.mutation<
+      void,
+      { id: Id }
+    >({
       query: ({ id }) => ({
         url: `/api/patient/social-history/${id}`,
         method: 'DELETE'
@@ -73,5 +112,6 @@ export const {
   useLazyGetSocialHistoryQuery,
   useAddSocialHistoryMutation,
   useUpdateSocialHistoryMutation,
+  useCancelSocialHistoryMutation,
   useDeleteSocialHistoryMutation
 } = socialHistoryService;

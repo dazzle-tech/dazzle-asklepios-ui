@@ -27,6 +27,8 @@ import DetailsTele from './DetailsTele';
 import './styles.less';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { Loader } from 'rsuite';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -192,6 +194,39 @@ const TelephonicConsultation = props => {
     }
   };
 
+  const UserFullNameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName, isLoading } = useGetUserFullNameByLoginQuery(login!, {
+    skip: !login
+  });
+
+  if (!login) return <span>-</span>;
+  if (isLoading) return <Loader size="xs" />;
+
+  return <span>{fullName || login}</span>;
+};
+
+const UserDateCell = ({
+  login,
+  date
+}: {
+  login?: string | null;
+  date?: string | null;
+}) => {
+  if (!login && !date) {
+    return <span>-</span>;
+  }
+
+  return (
+    <>
+      <UserFullNameCell login={login} />
+      <br />
+      <span className="date-table-style">
+        {date ? formatDateWithoutSeconds(date) : ''}
+      </span>
+    </>
+  );
+};
+
   const columns = [
     {
       key: 'select',
@@ -288,12 +323,11 @@ const TelephonicConsultation = props => {
       title: 'CREATED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.createdDate ? (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
+        row?.createdBy || row?.createdDate ? (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         ) : (
           ' '
         )
@@ -303,12 +337,11 @@ const TelephonicConsultation = props => {
       title: 'CANCELLED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.cancelledAt ? (
-          <>
-            {row.cancelledBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
-          </>
+        row?.cancelledBy || row?.cancelledAt ? (
+          <UserDateCell
+            login={row.cancelledBy}
+            date={row.cancelledAt}
+          />
         ) : (
           ' '
         )

@@ -4573,3 +4573,23 @@ export interface GlasgowComaScaleAssessment {
   totalScore?: number | null;
   scoreInterpretation?: string | null;
 }
+export interface PatientProblem {
+  id?: number;
+  patient?: any | null;
+
+  condition: string | null;
+  dateOfDiagnosis?: string | Date | null;
+  conditionStatus: string | null;
+  type: string | null;
+  dateOfResolution?: string | Date | null;
+  byPatient: boolean | null;
+  sourceOfInformation?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}

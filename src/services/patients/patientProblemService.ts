@@ -4,7 +4,12 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { PatientProblem } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
@@ -28,16 +33,29 @@ export const patientProblemService = createApi({
 
   endpoints: builder => ({
     /* LIST */
-    getPatientProblems: builder.query<PagedResult<PatientProblem>, { patientId: Id } & PagedParams>(
-      {
-        query: ({ patientId, page, size, sort = 'id,desc' }) => ({
-          url: '/api/patient/problems',
-          params: { patientId, page, size, sort }
-        }),
-        transformResponse: mapPaged,
-        providesTags: ['PatientProblem']
-      }
-    ),
+    getPatientProblems: builder.query<
+      PagedResult<PatientProblem>,
+      { patientId: Id } & PagedParams
+    >({
+      query: ({
+        patientId,
+        showCancelled = false,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => ({
+        url: '/api/patient/problems',
+        params: {
+          patientId,
+          showCancelled,
+          page,
+          size,
+          sort
+        }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['PatientProblem']
+    }),
 
     /* CREATE */
     addPatientProblem: builder.mutation<PatientProblem, PatientProblem>({
@@ -59,6 +77,18 @@ export const patientProblemService = createApi({
       invalidatesTags: ['PatientProblem']
     }),
 
+    cancelPatientProblem: builder.mutation<
+      PatientProblem,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/problems/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['PatientProblem']
+    }),
+
     /* DELETE */
     deletePatientProblem: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
@@ -74,5 +104,6 @@ export const {
   useLazyGetPatientProblemsQuery,
   useAddPatientProblemMutation,
   useUpdatePatientProblemMutation,
+  useCancelPatientProblemMutation,
   useDeletePatientProblemMutation
 } = patientProblemService;
