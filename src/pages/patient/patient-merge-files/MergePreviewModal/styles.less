@@ -1,0 +1,43 @@
+.merge-preview-content,
+.merge-preview-reason-card,
+.merge-preview-sections,
+.merge-preview-entity-section,
+.merge-preview-conflict-list {
+  background: transparent;
+  color: inherit;
+}
+
+.light {
+  .merge-preview-reason-card {
+    background: transparent;
+  }
+}
+
+.dark {
+  .merge-preview-reason-card {
+    background: transparent;
+    color: #ffffff;
+  }
+  .merge-preview-reason-card label,
+  .merge-preview-reason-card .rs-form-control-label,
+  .merge-preview-reason-card .rs-form-group-label {
+    color: #ffffff !important;
+  }
+  .merge-preview-reason-card textarea,
+  .merge-preview-reason-card .rs-input {
+    background-color: var(--dark-black) !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+  }
+  .merge-preview-reason-card textarea::placeholder,
+  .merge-preview-reason-card .rs-input::placeholder {
+    color: #94a3b8 !important;
+  }
+  .merge-preview-content,
+  .merge-preview-sections,
+  .merge-preview-entity-section,
+  .merge-preview-conflict-list {
+    background: transparent;
+    color: #ffffff;
+  }
+}

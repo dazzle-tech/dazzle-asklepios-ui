@@ -208,13 +208,13 @@ const handleStartMerge = () => {
                   <Translate>Start Merge Process</Translate>
                 </MyButton>
 
-                <MyButton
+                {/* <MyButton
                   appearance="ghost"
                   onClick={handleClear}
                   prefixIcon={() => <icons.Reload />}
                 >
                   <Translate>Reset Selection</Translate>
-                </MyButton>
+                </MyButton> */}
 
                 <MyButton
                   appearance="primary"
