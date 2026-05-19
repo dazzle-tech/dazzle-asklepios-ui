@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -55,6 +55,7 @@ type Row = {
     resourceKey?: string | null;
     createdBy?: string | null;
     createdAt?: number | string | null;
+    preferredDate?: string | null;
 
     status?: string | null;
 
@@ -288,6 +289,23 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             }
         },
         {
+            key: 'preferredDate',
+            title: 'Preferred Date',
+            render: (row: Row) => {
+                const pd =
+                    row.preferredDate ??
+                    (row as any)?.preferred_date ??
+                    (row?._raw && ((row as any)._raw.preferredDate ?? (row as any)._raw.preferred_date)) ??
+                    null;
+
+                if (!pd) return '-';
+
+                // Accept dates in ISO or YYYY-MM-DD format
+                const d = dayjs(String(pd));
+                return d.isValid() ? d.format('DD-MM-YYYY') : String(pd);
+            }
+        },
+        {
             key: 'createdByAt',
             title: 'Created By\\At',
             expandable: true,
@@ -418,6 +436,8 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
                 onRowClick={(rowData: Row) => setSelectedRowId(safeStr(rowData.id))}
                 filters={tablefilters}
             />
+
+            
 
             <CancellationModal
                 open={rejectModalOpen}
