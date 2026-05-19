@@ -74,6 +74,7 @@ import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTempl
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import Accounting from './pages/billing-module';
 import CreatePassword from './pages/create-password/CreatePassword';
+import CreatePatientPassword from './pages/patient/patient-profile/CreatePatientPassword';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -871,6 +872,7 @@ const App = () => {
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
+          <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
