@@ -562,6 +562,7 @@ export interface AppointmentRequestResponseVM {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestCreateDTO {
@@ -576,6 +577,7 @@ export interface AppointmentRequestCreateDTO {
   priority: EncounterPriority;
   reason?: string | null;
   note?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestUpdateDTO {
