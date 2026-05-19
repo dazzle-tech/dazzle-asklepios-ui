@@ -22,7 +22,7 @@ import {
   useUpdateGlasgowComaScaleAssessmentMutation,
   useCancelGlasgowComaScaleAssessmentMutation
 } from '@/services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 const GCS_ERROR_MAP: Record<string, string> = {
   'id.mismatch': 'Path id does not match payload id.',
   'id.notfound': 'Glasgow Coma Scale assessment not found.',
@@ -346,6 +346,14 @@ const GlasgowComaScale = ({
       ? 'selected-row'
       : '';
 
+  const UserFullName = ({ login }: { login?: string }) => {
+    const { data } = useGetUserFullNameByLoginQuery(
+      login || skipToken
+    );
+
+    return <>{data || login || '-'}</>;
+  };
+
   const tableColumns = [
     {
       key: 'totalScore',
@@ -420,13 +428,11 @@ const GlasgowComaScale = ({
       expandable: true,
       render: (row: any) => (
         <>
-          {row?.createdBy ?? '-'}
+          <UserFullName login={row?.createdBy} />
           <br />
           <span className="date-table-style">
             {row?.createdDate
-              ? formatDateWithoutSeconds(
-                row.createdDate
-              )
+              ? formatDateWithoutSeconds(row.createdDate)
               : '-'}
           </span>
         </>
@@ -435,17 +441,15 @@ const GlasgowComaScale = ({
 
     {
       key: 'lastModifiedDate',
-      title: 'Updated By/At',
+      title: <Translate>Updated By/At</Translate>,
       expandable: true,
       render: (row: any) =>
         row?.lastModifiedDate ? (
           <>
-            {row?.lastModifiedBy ?? '-'} <br />
-
+            <UserFullName login={row?.lastModifiedBy} />
+            <br />
             <span className="date-table-style">
-              {formatDateWithoutSeconds(
-                row.lastModifiedDate
-              )}
+              {formatDateWithoutSeconds(row.lastModifiedDate)}
             </span>
           </>
         ) : (
@@ -455,18 +459,15 @@ const GlasgowComaScale = ({
 
     {
       key: 'cancelledByAt',
-      title: 'Cancelled By/At',
+      title: <Translate>Cancelled By/At</Translate>,
       expandable: true,
       render: (row: any) =>
         row?.cancelledAt ? (
           <>
-            {row?.cancelledBy ?? '-'}
+            <UserFullName login={row?.cancelledBy} />
             <br />
-
             <span className="date-table-style">
-              {formatDateWithoutSeconds(
-                row.cancelledAt
-              )}
+              {formatDateWithoutSeconds(row.cancelledAt)}
             </span>
           </>
         ) : (
