@@ -500,12 +500,12 @@ const PatientQuickAppointment = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
-                disabled={encounterReadOnly}
+                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
               >
                 Clear
               </MyButton>
               <MyButton
-                disabled={encounterReadOnly}
+                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
                 onClick={handleSave}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >

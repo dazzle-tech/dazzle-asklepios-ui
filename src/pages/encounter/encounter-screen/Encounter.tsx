@@ -206,6 +206,9 @@ const Encounter = ({
 useEffect(() => {
   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
 }, [propsData?.viewMode, propsData?.readOnly]);
+useEffect(() => {
+  setEdit(patientToSend?.patientStatus === 'MERGED');
+}, [patientToSend]);
 
   useEffect(() => {
     if (

@@ -193,6 +193,7 @@ const IDTab = ({ localPatient }) => {
           <FontAwesomeIcon
             icon={faFilePen}
             className="action-icon edit-icon"
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'} 
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -203,6 +204,7 @@ const IDTab = ({ localPatient }) => {
           <FontAwesomeIcon
             icon={faTrash}
             className={clsx('action-icon delete-icon', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
             style={{ cursor: rowData.isPrimary ? 'not-allowed' : 'pointer' }}
             // "action-icon delete-icon"
 
@@ -250,7 +252,7 @@ const IDTab = ({ localPatient }) => {
         <MyButton
           onClick={handleNewDocSecondary}
           disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
-          prefixIcon={() => <PlusRound />}   
+          prefixIcon={() => <PlusRound />}
 
         >
           <Translate>New Document</Translate>

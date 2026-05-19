@@ -57,6 +57,30 @@ export const patientMergeService = createApi({
         method: 'GET'
       }),
       providesTags: ['PatientMerge']
+    }),
+
+    getMergeConfigTables: builder.query<any, void>({
+      query: () => ({
+        url: '/api/patient/patient-merge/config/tables',
+        method: 'GET'
+      }),
+      providesTags: ['PatientMerge']
+    }),
+
+    getAvailablePatientTables: builder.query<any, void>({
+      query: () => ({
+        url: '/api/patient/patient-merge/config/available-patient-tables',
+        method: 'GET'
+      }),
+      providesTags: ['PatientMerge']
+    }),
+
+    syncMissingMergeTables: builder.mutation<number, void>({
+      query: () => ({
+        url: '/api/patient/patient-merge/config/sync-missing-tables',
+        method: 'POST'
+      }),
+      invalidatesTags: ['PatientMerge']
     })
   })
 });
@@ -70,5 +94,10 @@ export const {
   useGetMergeTransactionsQuery,
   useLazyGetMergeTransactionsQuery,
   useGetMergeTransactionChangesQuery,
-  useLazyGetMergeTransactionChangesQuery
+  useLazyGetMergeTransactionChangesQuery,
+  useGetMergeConfigTablesQuery,
+  useLazyGetMergeConfigTablesQuery,
+  useGetAvailablePatientTablesQuery,
+  useLazyGetAvailablePatientTablesQuery,
+  useSyncMissingMergeTablesMutation
 } = patientMergeService;

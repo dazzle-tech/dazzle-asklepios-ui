@@ -526,6 +526,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </MyButton> */}
 
               <MyButton
+                  disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => {
                   // setEligibilityChecked(true);
                   // navigate(`/patient-profile/${localPatient?.id}`);
@@ -537,6 +538,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
@@ -544,6 +546,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>Clear</Translate>
               </MyButton>
@@ -556,7 +559,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <Translate>Quick Patient</Translate>
               </MyButton>
 
-              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+              <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
                 <Translate>Quick Appointment</Translate>
               </MyButton>
 
