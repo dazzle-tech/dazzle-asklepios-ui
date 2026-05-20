@@ -5,11 +5,11 @@ import { Whisper, Tooltip } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-import { useLazyGetSampleLabelPdfQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
+import { useLazyGetSampleLabelsPdfQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 
 export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
   const dispatch = useAppDispatch();
-  const [trigger, { isFetching }] = useLazyGetSampleLabelPdfQuery();
+  const [trigger, { isFetching }] = useLazyGetSampleLabelsPdfQuery();
 const onPrint = async (e: any) => {
   e.stopPropagation();
 
