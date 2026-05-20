@@ -6,6 +6,7 @@ import { ConflictDecision } from './types';
 import { getDecisionOptions } from './utils';
 import ReadonlyValueCard from './ReadonlyValueCard';
 import ManualInputRenderer from './ManualInputRenderer';
+import './styles.less';
 
 interface Props {
     entityName: string;

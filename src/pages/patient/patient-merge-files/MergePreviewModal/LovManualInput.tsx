@@ -3,6 +3,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ConflictDecision } from './types';
+import './styles.less';
 
 interface Props {
     decision: ConflictDecision;

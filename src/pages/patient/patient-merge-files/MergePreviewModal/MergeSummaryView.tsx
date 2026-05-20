@@ -4,6 +4,7 @@ import { Form } from 'rsuite';
 import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyInput from '@/components/MyInput';
+import './styles.less';
 
 import { getSectionIcon } from './utils';
 import { formatEnumString } from '@/utils';

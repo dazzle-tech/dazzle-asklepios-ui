@@ -538,7 +538,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
-                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
+                disabled={!!localPatient?.id && localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>

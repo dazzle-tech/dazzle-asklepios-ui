@@ -3,6 +3,7 @@ import MyInput from '@/components/MyInput';
 import { ConflictDecision } from './types';
 import EnumManualInput from './EnumManualInput';
 import LovManualInput from './LovManualInput';
+import './styles.less';
 
 interface Props {
     decision: ConflictDecision;

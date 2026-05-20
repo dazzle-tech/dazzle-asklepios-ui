@@ -6,12 +6,12 @@ import {
     faHistory,
     faEdit
 } from '@fortawesome/free-solid-svg-icons';
-
+import { useSelector } from 'react-redux';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByKeyQuery } from '@/services/setupService';
 import { formatEnumString } from '@/utils';
-
+import './styles.less';
 interface Props {
     open: boolean;
     transaction: any;
@@ -34,6 +34,7 @@ const TransactionChangeValue = ({
         String(value).trim() !== '';
 
     const shouldFetchLov = inputType === 'LOV' && hasValue;
+
 
     const { data: lovValueResponse } = useGetLovValuesByKeyQuery(
         value,
@@ -93,7 +94,6 @@ const MergeTransactionChangesModal: React.FC<Props> = ({
                 </div>
             );
         }
-
         return (
             <div className="merge-changes-section">
                 <div className="merge-changes-section-title">
@@ -151,6 +151,8 @@ const MergeTransactionChangesModal: React.FC<Props> = ({
         );
     };
 
+const mode = useSelector((state: any) => state.ui.mode);
+    
     return (
         <MyModal
             open={open}
@@ -168,9 +170,8 @@ const MergeTransactionChangesModal: React.FC<Props> = ({
             }
             size="lg"
             bodyheight="70vh"
-            customClassName="merge-transaction-changes-modal"
             content={
-                <div className="merge-changes-modal-content">
+                <div className="merge-changes-modal-content" className={`merge-transaction-changes-modal ${mode === 'dark' ? 'dark' : 'light'}`}>
                     {transaction && (
                         <div className="merge-changes-header">
                             <div className="merge-changes-patient-card source">

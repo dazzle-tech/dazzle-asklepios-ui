@@ -1,6 +1,8 @@
 import React from 'react';
 import { Form } from 'rsuite';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
+import './styles.less';
 
 import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -29,8 +31,14 @@ const MergeConflictsView: React.FC<Props> = ({
     handleDecisionChange,
     handleValueChange
 }) => {
+    const mode = useSelector((state: any) => state.ui.mode);
+
     return (
-        <div className="merge-preview-content">
+        <div
+            className={`merge-preview-content ${
+                mode === 'dark' ? 'dark' : 'light'
+            }`}
+        >
             <div className="merge-preview-reason-card">
                 <Form fluid>
                     <MyInput
@@ -57,36 +65,53 @@ const MergeConflictsView: React.FC<Props> = ({
                         >
                             <SectionContainer
                                 title={
-                                    <Translate>{getEntityLabel(entityName)}</Translate>
+                                    <Translate>
+                                        {getEntityLabel(entityName)}
+                                    </Translate>
                                 }
                                 icon={faExclamationTriangle}
                                 content={
                                     <div className="merge-preview-conflict-list">
-                                        {entityConflicts.map((conflict, idx) => {
-                                            const globalIdx = decisions.findIndex(
-                                                d =>
-                                                    d.entityName === conflict.entityName &&
-                                                    d.fieldName === conflict.fieldName &&
-                                                    d.fromRecordId === conflict.fromRecordId
-                                            );
+                                        {entityConflicts.map(
+                                            (conflict, idx) => {
+                                                const globalIdx =
+                                                    decisions.findIndex(
+                                                        d =>
+                                                            d.entityName ===
+                                                                conflict.entityName &&
+                                                            d.fieldName ===
+                                                                conflict.fieldName &&
+                                                            d.fromRecordId ===
+                                                                conflict.fromRecordId
+                                                    );
 
-                                            const decision = decisions[globalIdx];
+                                                const decision =
+                                                    decisions[globalIdx];
 
-                                            if (!decision) return null;
+                                                if (!decision) return null;
 
-                                            return (
-                                                <ConflictCard
-                                                    key={`${entityName}-${conflict.fieldName || conflict.matchKey}-${idx}`}
-                                                    entityName={entityName}
-                                                    conflict={conflict}
-                                                    decision={decision}
-                                                    globalIdx={globalIdx}
-                                                    lovBulkResponse={lovBulkResponse}
-                                                    handleDecisionChange={handleDecisionChange}
-                                                    handleValueChange={handleValueChange}
-                                                />
-                                            );
-                                        })}
+                                                return (
+                                                    <ConflictCard
+                                                        key={`${entityName}-${conflict.fieldName || conflict.matchKey}-${idx}`}
+                                                        entityName={
+                                                            entityName
+                                                        }
+                                                        conflict={conflict}
+                                                        decision={decision}
+                                                        globalIdx={globalIdx}
+                                                        lovBulkResponse={
+                                                            lovBulkResponse
+                                                        }
+                                                        handleDecisionChange={
+                                                            handleDecisionChange
+                                                        }
+                                                        handleValueChange={
+                                                            handleValueChange
+                                                        }
+                                                    />
+                                                );
+                                            }
+                                        )}
                                     </div>
                                 }
                             />

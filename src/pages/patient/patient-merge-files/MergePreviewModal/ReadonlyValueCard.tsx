@@ -2,7 +2,7 @@ import React from 'react';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByKeyQuery } from '@/services/setupService';
 import { formatEnumString } from '@/utils';
-
+import './styles.less';
 interface Props {
     fieldLabel: string;
     value: any;
