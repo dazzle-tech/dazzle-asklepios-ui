@@ -79,21 +79,21 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'VTE Risk Assessment', code: 'VTE_RISK_ASSESSMENT', icon: <FontAwesomeIcon icon={faBraille} className="icon" />, path: '/vte-risk-assessment' },
   // { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
-  { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit' ,  isDefaultMedicalSheet: true  },
-  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations',isDefaultNurseMedicalSheet: true },
-  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies' ,isDefaultNurseMedicalSheet: true},
-  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings',isDefaultNurseMedicalSheet: true },
-  { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result',isDefaultMedicalSheet: true },
+  { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit', isDefaultMedicalSheet: true },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true },
+  { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result', isDefaultMedicalSheet: true },
   // { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
   { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
-  { name: 'Prescription', code: 'PRESCRIPTION', icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />, path: '/prescription',isDefaultMedicalSheet: true },
-    // { name: 'Medication Order', code: 'DRUG_ORDER', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medication-order' },
-  { name: 'Diagnostics Order', code: 'DIAGNOSTICS_ORDER', icon: <FontAwesomeIcon icon={faVials} className="icon" />, path: '/diagnostics-order',isDefaultMedicalSheet: true },
-  { name: 'Consultation', code: 'CONSULTATION', icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: '/consultation' ,isDefaultMedicalSheet: true},
+  { name: 'Prescription', code: 'PRESCRIPTION', icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />, path: '/prescription', isDefaultMedicalSheet: true },
+  // { name: 'Medication Order', code: 'DRUG_ORDER', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medication-order' },
+  { name: 'Diagnostics Order', code: 'DIAGNOSTICS_ORDER', icon: <FontAwesomeIcon icon={faVials} className="icon" />, path: '/diagnostics-order', isDefaultMedicalSheet: true },
+  { name: 'Consultation', code: 'CONSULTATION', icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: '/consultation', isDefaultMedicalSheet: true },
   // { name: 'Operation Requests', code: 'OPERATION_REQUESTS', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/operation-request' },
-  { name: 'Procedures', code: 'PROCEDURES', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/procedures',isDefaultMedicalSheet: true },
-  { name: 'Patient History', code: 'PATIENT_HISTORY', icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />, path: '/patient-history',isDefaultMedicalSheet: true,isDefaultNurseMedicalSheet: true },
-  { name: 'Referral Request', code: 'REFERRAL_REQUEST', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/referral-request' ,isDefaultMedicalSheet: true},
+  { name: 'Procedures', code: 'PROCEDURES', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/procedures', isDefaultMedicalSheet: true },
+  { name: 'Patient History', code: 'PATIENT_HISTORY', icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />, path: '/patient-history', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
+  { name: 'Referral Request', code: 'REFERRAL_REQUEST', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/referral-request', isDefaultMedicalSheet: true },
   // { name: 'Multidisciplinary Team Notes', code: 'MULTIDISCIPLINARY_TEAM_NOTES', icon: <FontAwesomeIcon icon={faComment} className="icon" />, path: '/multidisciplinary-team-notes' },
   // { name: 'Discharge Planning', code: 'DISCHARGE_PLANNING', icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />, path: '/discharge-planning' },
   // { name: 'Bedside Procedures', code: 'BEDSIDE_PROCEDURES_REQUEST', icon: <FontAwesomeIcon icon={faSuitcaseMedical} className="icon" />, path: '/bedside-procedures-requests' },
@@ -108,7 +108,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   // { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   // { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
-  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes',isDefaultMedicalSheet: true ,isDefaultNurseMedicalSheet: true},
+  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
   // { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   // { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   // { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
@@ -139,7 +139,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   // { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   // { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
-  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products',isDefaultNurseMedicalSheet: true },
+  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products', isDefaultNurseMedicalSheet: true },
   { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
   {
     name: 'Nurse Assessment',
@@ -155,7 +155,7 @@ export const MedicalSheets: MedicalSheet[] = [
   },
 
   { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
-  
+
 ];
 
 
@@ -230,6 +230,8 @@ export const MODULES: Module[] =
           navPath: "price-list",
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
+        { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
+
       ],
     },
 
@@ -339,7 +341,7 @@ export const MODULES: Module[] =
           icon: "FaCalendarDays",
           viewOrder: 1,
           navPath: "availability-templates",
-        },{
+        }, {
           name: "Apply Template",
           code: "APPLY_TEMPLATE",
           description: "",
@@ -454,7 +456,7 @@ export const MODULES: Module[] =
       viewOrder: 6,
       departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
-        { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
+        { name: "Urgent Care Triage", code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage" },
         { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },

@@ -1,3 +1,4 @@
+import { skillDefinitionCreateDTO } from './../services/setup/skillDefinition/skillDefinitionService';
 import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 // ------------------- ApUser -------------------
@@ -2870,14 +2871,14 @@ export const newPolicyDefinition: modelTypes.PolicyDefinition = {
   code: '',
   name: '',
   description: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newPolicyDefinitionCreateDTO: modelTypes.PolicyDefinitionCreateDTO = {
   facilityId: undefined,
   code: '',
   name: '',
-  description: '',
+  description: ''
 };
 
 export const newPolicyDefinitionUpdateDTO: modelTypes.PolicyDefinitionUpdateDTO = {
@@ -2885,7 +2886,34 @@ export const newPolicyDefinitionUpdateDTO: modelTypes.PolicyDefinitionUpdateDTO 
   facilityId: undefined,
   code: '',
   name: '',
+  description: ''
+};
+export const newSkillDefinition: modelTypes.SkillDefinition = {
+  id: undefined,
+  facilityId: undefined,
+  facilityName: '',
+  code: '',
+  name: '',
   description: '',
+  isActive: true,
+  type: '',
+};
+
+export const newSkillDefinitionCreateDTO: modelTypes.SkillDefinitionCreateDTO = {
+  facilityId: undefined,
+  code: '',
+  name: '',
+  description: '',
+  type: '',
+};
+
+export const newSkillDefinitionUpdateDTO: modelTypes.SkillDefinitionUpdateDTO = {
+  id: undefined,
+  facilityId: undefined,
+  code: '',
+  name: '',
+  description: '',
+  type: '',
 };
 export const newRoom: modelTypes.Room = {
   id: undefined,
