@@ -76,12 +76,7 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
     { departmentId: record?.departmentId },
     { skip: !record?.departmentId }
   );
-  /* Reactive (not lazy) query — fires automatically whenever record.departmentId changes.
-     We use the regular query instead of useLazyGetDepartmentByIdQuery so that
-     the department data becomes available reactively, the same way departmentServices
-     does, allowing the working-days hierarchy effect to react consistently.
-     Skipped in edit mode because the template already has its own stored values;
-     we should not overwrite them with department defaults.*/
+  
   const { data: selectedDepartmentFullObject } = useGetDepartmentByIdQuery(
     record?.departmentId,
     { skip: !record?.departmentId || isEditMode }

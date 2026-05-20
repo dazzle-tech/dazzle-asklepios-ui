@@ -53,10 +53,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState<AvailabilityTemplateCreateDTO | AvailabilityTemplateUpdateDTO>({ ...newAvailabilityTemplateCreateDTO });
 
-  // Becomes true when the modal opens and stays true until the resourceId effect
-  // resolves its async fetch. Used to know whether a working-days overwrite came
-  // from the initial load (should use editRecord days) or from the user picking
-  // a new resource (should use resource/parent days).
+  /* Becomes true when the modal opens and stays true until the resourceId effect
+     resolves its async fetch. Used to know whether a working-days overwrite came
+     from the initial load (should use editRecord days) or from the user picking
+     a new resource (should use resource/parent days). */
   const justOpenedRef = useRef(false);
 
   // Becomes true when the user manually ticks/unticks an allowed service.
@@ -216,10 +216,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
     });
   };
 
-  // Writes normalized working days into the record without marking them as
-  // "user touched". The equality check prevents a re-render when the days
-  // didn't actually change (avoids infinite loops when the effect re-fires).
-  // Resets workingDaysTouchedRef so subsequent auto-fills are not blocked.
+  /* Writes normalized working days into the record without marking them as
+     "user touched". The equality check prevents a re-render when the days
+     didn't actually change (avoids infinite loops when the effect re-fires).
+     Resets workingDaysTouchedRef so subsequent auto-fills are not blocked. */
   const applyWorkingDays = (sourceWorkingDays: any[] = []) => {
     if (!dayOptions?.length) return;
     const normalized = normalizeWorkingDays(sourceWorkingDays);
