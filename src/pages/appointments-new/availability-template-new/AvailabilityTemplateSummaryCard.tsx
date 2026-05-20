@@ -1,13 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
-import { CiSquareMinus } from "react-icons/ci";
-import { FaRegEdit } from "react-icons/fa";
-import { IoSettingsSharp } from "react-icons/io5";
+import { CiSquareMinus } from 'react-icons/ci';
+import { FaRegEdit } from 'react-icons/fa';
+import { MdDelete } from 'react-icons/md';
 import { Tooltip, Whisper } from 'rsuite';
-import { MdDelete } from "react-icons/md";
 import { useDeleteAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { formatEnumString } from '@/utils';
 import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
@@ -15,40 +11,55 @@ import { useLazyGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { formatEnumString } from '@/utils';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { hexToRGBA } from './utils';
 
-type DepartmentPoolCardProps = {
+type Props = {
   template: any;
   onEdit?: (template: any) => void;
   readOnly?: boolean;
 };
 
-const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
-  template,
-  onEdit,
-  ...props
-}) => {
+const AvailabilityTemplateSummaryCard: React.FC<Props> = ({ template, onEdit, readOnly }) => {
   const dispatch = useAppDispatch();
-  const [showDetails, setShowDetails] = useState<boolean>(true);
+  const [showDetails, setShowDetails] = useState(true);
+  const [resourceName, setResourceName] = useState('');
+  const [departmentName, setDepartmentName] = useState('');
+  const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
 
-  const [resourceName, setRresourceName] = useState<string>("");
-  const [departmentName, setDepartmentName] = useState<string>("");
-  const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
-  const [deleteAvailabilityTemplate] = useDeleteAvailabilityTemplateMutation();
-
-  function hexToRGBA(hex: string, opacity = 0.2) {
-    hex = hex.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-
-  }
+  const [deleteTemplate] = useDeleteAvailabilityTemplateMutation();
   const [getPractitioner] = useLazyGetPractitionerByIdQuery();
   const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
   const [getCatalog] = useLazyGetCatalogByIdQuery();
   const [getService] = useLazyGetServiceByIdQuery();
-   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
+  const [getDepartment] = useLazyGetDepartmentByIdQuery();
+
+  const allowedServicesText = (template?.allowedServices ?? [])
+    .map((s: any) => s?.service)
+    .filter((s: any) => typeof s === 'string' && s.trim().length > 0)
+    .map((s: string) => formatEnumString(s))
+    .join(', ') || '—';
+
+  useEffect(() => {
+    if (!template?.id) return;
+
+    if (template?.templateType === 'DEPARTMENT') {
+      getDepartment(template.departmentId).unwrap().then(res => setDepartmentName(res?.name ?? ''));
+      return;
+    }
+
+    if (!template?.resourceId) { setResourceName(''); return; }
+
+    const fetchers: Record<string, () => void> = {
+      PRACTITIONER: () => getPractitioner(template.resourceId).unwrap().then(res => setResourceName(`${res?.firstName} ${res?.lastName}`)),
+      DIAGNOSTIC_TEST: () => getDiagnosticTest(String(template.resourceId)).unwrap().then(res => setResourceName(res?.data?.name ?? '')),
+      CATALOG: () => getCatalog(template.resourceId).unwrap().then(res => setResourceName(res?.name ?? '')),
+      SERVICE: () => getService(template.resourceId).unwrap().then(res => setResourceName(res?.name ?? '')),
+    };
+
+    fetchers[template.templateType]?.();
+  }, [template]);
 
   const handleDeleteConfirm = async () => {
     if (!template?.id) {
@@ -56,142 +67,51 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
       return;
     }
     try {
-      await deleteAvailabilityTemplate({ id: template.id }).unwrap();
-      setOpenConfirmDeleteModal(false);
-       dispatch(notify({ msg: 'Template deleted Successfully', sev: 'success' }));
-    } catch (error) {
+      await deleteTemplate({ id: template.id }).unwrap();
+      setOpenConfirmDelete(false);
+      dispatch(notify({ msg: 'Template deleted Successfully', sev: 'success' }));
+    } catch {
       dispatch(notify({ msg: 'Failed to delete this template', sev: 'warning' }));
     }
   };
 
-  const allowedServiceNames = (template?.allowedServices ?? [])
-    .map((s: any) => s?.service)
-    .filter((s: any) => typeof s === 'string' && s.trim().length > 0)
-    .map((s: string) => formatEnumString(s)) as string[];
-
-  const allowedServicesText = allowedServiceNames.length > 0 ? allowedServiceNames.join(', ') : '—';
-
-
-
-  useEffect(() => {
-    if (!template?.id) {
-      return;
-    }
-    if(template?.templateType === "DEPARTMENT"){
-    getDepartment(template.departmentId)
-    .unwrap()
-    .then(res => {
-       setDepartmentName(res?.name);
-    });
-    return;
-  }
-
-    if (!template?.resourceId) {
-      setRresourceName("");
-      return;
-    }
-
-    if (template?.templateType === "PRACTITIONER") {
-      getPractitioner(template.resourceId)
-        .unwrap()
-        .then(res => {
-          setRresourceName(res?.firstName + " " + res?.lastName);
-        });
-    } else if (template?.templateType === 'DIAGNOSTIC_TEST') {
-      getDiagnosticTest(String(template.resourceId))
-        .unwrap()
-        .then(res => {
-          setRresourceName(res?.data?.name);
-        });
-    }
-    else if (template?.templateType === 'CATALOG') {
-      getCatalog(template.resourceId)
-        .unwrap()
-        .then(res => {
-          setRresourceName(res?.name);
-        });
-    }
-    else if (template?.templateType === 'SERVICE') {
-      getService(template.resourceId)
-        .unwrap()
-        .then(res => {
-          setRresourceName(res?.name);
-        });
-    }
-
-  }, [template]);
+  const color = template?.templateColor ?? '#6982F0';
 
   return (
-    <div
-      className="availability-template-summary-card"
-      style={{ backgroundColor: hexToRGBA(template?.templateColor ?? "#6982F0", 0.15) }}
-    >
-      {/* Header */}
-      <div
-        className="header-of-availability-template-summary-card"
-        style={{ backgroundColor: template?.templateColor ?? "#6982F0" }}
-      >
-        <span style={styles.title}>{template.templateName}</span>
-
+    <div className="availability-template-summary-card" style={{ backgroundColor: hexToRGBA(color, 0.15) }}>
+      <div className="header-of-availability-template-summary-card" style={{ backgroundColor: color }}>
+        <span style={{ fontWeight: 600 }}>{template.templateName}</span>
         <div style={{ display: 'flex', gap: '5px' }}>
-          {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
-          <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
+          <CiSquareMinus className="icons-style" onClick={() => setShowDetails(!showDetails)} />
           {template.parentTemplateId && (
-            <FaRegEdit
-              className='icons-style'
-              onClick={() => onEdit?.(template)}
-            />
+            <FaRegEdit className="icons-style" onClick={() => onEdit?.(template)} />
           )}
-          {(template.parentTemplateId && !props.readOnly) && (
-            <MdDelete className='icons-style'
-              onClick={() => {
-                if (template.parentTemplateId)
-                  setOpenConfirmDeleteModal(true)
-              }}
-            />
+          {template.parentTemplateId && !readOnly && (
+            <MdDelete className="icons-style" onClick={() => setOpenConfirmDelete(true)} />
           )}
         </div>
       </div>
 
-      {/* Body */}
       {showDetails && (
         <div className="body-of-availability-template-summary-card">
+          <div><strong>Type:</strong> {formatEnumString(template.templateType)}</div>
+          <div><strong>Parallel Capacity:</strong> {template.parallelCapacityValue}</div>
           <div>
-            <strong>Type:</strong> {formatEnumString(template.templateType)}
+            <strong>{departmentName ? 'Department Name:' : 'Resource Name:'}</strong>{' '}
+            {departmentName || resourceName}
           </div>
-
-          <div>
-            <strong>Parallel Capacity:</strong> {template.parallelCapacityValue}
-          </div>
-
-          <div>
-            <strong>{departmentName ? 'Department Name:' : 'Resource Name:'}</strong> {departmentName ? departmentName : resourceName}
-          </div>
-
-          <Whisper
-            placement="top"
-            trigger="click"
-            speaker={<Tooltip>{allowedServicesText}</Tooltip>}
-          >
+          <Whisper placement="top" trigger="click" speaker={<Tooltip>{allowedServicesText}</Tooltip>}>
             <div className="services-text">
               <strong>Services allowed:&nbsp;</strong>
-
-
-              <span
-                // className="services-text"
-                title="Click to view all services"
-              >
-                {allowedServicesText}
-              </span>
+              <span title="Click to view all services">{allowedServicesText}</span>
             </div>
           </Whisper>
-
         </div>
       )}
 
       <DeletionConfirmationModal
-        open={openConfirmDeleteModal}
-        setOpen={setOpenConfirmDeleteModal}
+        open={openConfirmDelete}
+        setOpen={setOpenConfirmDelete}
         itemToDelete="Availability Template"
         actionButtonFunction={handleDeleteConfirm}
         actionType="delete"
@@ -201,11 +121,3 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
 };
 
 export default AvailabilityTemplateSummaryCard;
-
-/* ---------- styles ---------- */
-
-const styles: { [key: string]: React.CSSProperties } = {
-  title: {
-    fontWeight: 600,
-  },
-};
