@@ -20,7 +20,7 @@ const onPrint = async (e: any) => {
       dispatch(
         notify({
           msg: 'No collected sample found',
-          sev: 'warning'
+          sev: 'warning',
         })
       );
       return;
@@ -30,14 +30,28 @@ const onPrint = async (e: any) => {
       new Blob([result], { type: 'application/pdf' })
     );
 
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const printWindow = window.open(url, '_blank');
 
-    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.focus();
+
+      };
+    } else {
+      dispatch(
+        notify({
+          msg: 'Please allow pop-ups to preview the sample label',
+          sev: 'warning',
+        })
+      );
+    }
+
+    setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
   } catch (err: any) {
     dispatch(
       notify({
         msg: err?.data?.message || 'Print failed',
-        sev: 'error'
+        sev: 'error',
       })
     );
   }
