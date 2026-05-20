@@ -310,7 +310,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
 
       {/* Tabs */}
       <div className="tabs-section">
-        <MyTab data={tabData} />
+        <MyTab data={tabData} lazy/>
       </div>
     </div>
   );

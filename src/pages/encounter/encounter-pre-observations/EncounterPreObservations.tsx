@@ -198,6 +198,7 @@ const EncounterPreObservations = ({ }) => {
                 data={tabData}
                 activeTab={activeKey}
                 setActiveTab={setActiveKey}
+                lazy
               />
             </Panel>
           </div>

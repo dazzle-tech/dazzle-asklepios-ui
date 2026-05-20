@@ -777,6 +777,6 @@ const OptometricExamTabs = ({
     }
   ];
 
-  return <MyTab data={tabData} />;
+  return <MyTab data={tabData} lazy />;
 };
 export default OptometricExamTabs;

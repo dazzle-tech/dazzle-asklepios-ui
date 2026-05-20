@@ -10,6 +10,6 @@ const WoundCareDocumentation = () => {
     { title: 'Wound Care', content: <WoundCare object={object} setObject={setObject} /> },
     { title: 'Tracking', content: <Tracking /> }
   ];
-  return <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} />;
+  return <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} lazy/>;
 };
 export default WoundCareDocumentation;

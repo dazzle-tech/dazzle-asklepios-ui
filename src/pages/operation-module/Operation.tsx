@@ -90,6 +90,7 @@ const Operation = () => {
     <div className="container" dir={dir}>
       <div className="left-box">
       <MyTab
+      lazy
         data={tabData.map(tab => ({
           ...tab,
           content: <div dir={dir}>{tab.content}</div>

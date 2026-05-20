@@ -17,6 +17,7 @@ const OperationRoomMaterials = () => {
     const dir = isRTL ? 'rtl' : 'ltr';
   return (
 <MyTab
+lazy
   data={data.map(tab => ({
     ...tab,
     content: <div dir={dir}>{tab.content}</div>

@@ -17,6 +17,7 @@ import MyInput from '@/components/MyInput';
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import type { ApEncounter } from '@/types/model-types';
+import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
 
 const UrgentCareViewTriage = () => {
   const location = useLocation();
@@ -189,6 +190,21 @@ const UrgentCareViewTriage = () => {
             />
           )}
         </Row>
+
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+          <SectionContainer
+            title={<Translate>Glasgow Coma Scale Assessment</Translate>}
+            content={
+              <GlasgowComaScale
+                patient={patient}
+                encounter={encounter}
+                viewMode="View"
+              />
+            }
+          />
+        )}
+      </Row>
 
         <Row gutter={30}>
           <SectionContainer

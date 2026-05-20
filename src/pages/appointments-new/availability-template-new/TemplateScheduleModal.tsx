@@ -112,7 +112,7 @@ const TemplateScheduleModal: React.FC<Props> = ({ open, setOpen, template }) => 
             />
 
             <div className="days-header">
-              <MyTab data={tabData} />
+              <MyTab data={tabData} lazy/>
               <div className="days-actions">
                 <MyButton
                   appearance="subtle"

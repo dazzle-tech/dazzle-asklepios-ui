@@ -328,7 +328,7 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
       <Divider />
 
       <div className="days-header">
-        <MyTab data={tabData} />
+        <MyTab data={tabData} lazy/>
         <div className="days-actions">
           <MyButton appearance="subtle" disabled={!record?.id} onClick={() => setOpenPreviewSlots(true)}>
             <Translate>Preview slots</Translate>
