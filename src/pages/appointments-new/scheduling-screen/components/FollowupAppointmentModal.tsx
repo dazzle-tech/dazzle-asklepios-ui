@@ -11,9 +11,7 @@ import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
-import { useGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
-import { useGetPractitionerByUserIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetDocumentsByPatientQuery } from '@/services/patients/patientDocumentsService';
 import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
@@ -41,9 +39,6 @@ import { useEnumOptions } from '@/services/enumsApi';
 import PatientSearchBar from '../PatientSearchBar';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
-const normalizeResourceTypeKey = (value: any) => String(value ?? '').trim().toUpperCase();
-const isPractitionerResourceType = (value: any) =>
-  normalizeResourceTypeKey(value) === 'PRACTITIONER' || normalizeResourceTypeKey(value) === '2039534205961578';
 
 
 const FollowupAppointmentModal = ({
@@ -83,25 +78,6 @@ const FollowupAppointmentModal = ({
 
     return null;
   }, [authSlice?.tenant?.selectedFacility]);
-
-  const currentUserId = useMemo(() => {
-    const rawUser = authSlice?.user;
-    const id = Number(rawUser?.id ?? rawUser?.userId ?? rawUser?.key ?? NaN);
-    return Number.isFinite(id) ? id : null;
-  }, [authSlice?.user]);
-
-  const sourceEncounterId = useMemo(() => {
-    const id = Number(
-      appointmentData?.sourceEncounterId ??
-        appointmentData?.followUpEncounterId ??
-        appointmentData?.encounterId ??
-        selectedSlot?.sourceEncounterId ??
-        selectedSlot?.followUpEncounterId ??
-        selectedSlot?.encounterId ??
-        NaN
-    );
-    return Number.isFinite(id) && id > 0 ? id : null;
-  }, [appointmentData, selectedSlot]);
 
   const isEditingExistingAppointment = useMemo(() => {
     const a: any = appointmentData;
@@ -379,129 +355,39 @@ const FollowupAppointmentModal = ({
     skip: !appointment?.facilityKey
   });
 
-  const { data: encounterResponse } = useGetEncounterByIdQuery(
-    { id: sourceEncounterId as number },
-    { skip: !isOpen || !sourceEncounterId }
-  );
-
-  const { data: practitionerByUserResponse } = useGetPractitionerByUserIdQuery(currentUserId as number, {
-    skip: !isOpen || !currentUserId
+  const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
+    type: 'DAY_CASE',
+    facilityId: appointment?.facilityKey,
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  }, {
+    skip: !appointment?.facilityKey
   });
-
-  const selectedResourceType = String(appointment?.resourceTypeLkey ?? '').toUpperCase();
-  const practitionerAllowed = Boolean(practitionerByUserResponse?.id);
-
+  
   useEffect(() => {
-    if (!selectedResourceType) {
+    const selectedType = String(appointment?.resourceTypeLkey ?? '').toUpperCase();
+    if (!selectedType) {
       setFilteredResourcesList([]);
       return;
     }
-
-    const encounterDeptId = String(
-      encounterResponse?.departmentId ??
-        encounterResponse?.departmentKey ??
-        appointmentData?.departmentId ??
-        appointmentData?.departmentKey ??
-        selectedSlot?.departmentId ??
-        selectedSlot?.departmentKey ??
-        ''
-    ).trim();
-
-    if (selectedResourceType === 'DEPARTMENT') {
-      const dept = (departmentListResponse as any)?.data?.find(
-        (d: any) => String(d?.id ?? d?.key ?? '') === encounterDeptId
+    if (selectedType === 'DEPARTMENT' || selectedType === 'DAY_CASE') {
+      const list =
+        selectedType === 'DAY_CASE'
+          ? (dayCaseDepartmentListResponse as any)?.data ?? []
+          : (departmentListResponse as any)?.data ?? [];
+      setFilteredResourcesList(
+        list.map((d: any) => ({
+          ...d,
+          key: String(d?.id ?? d?.key ?? ''),
+          resourceKey: String(d?.id ?? d?.key ?? ''),
+          resourceName: d?.name ?? d?.departmentName ?? `Department #${d?.id ?? ''}`
+        }))
       );
-      if (!dept && !encounterDeptId) {
-        setFilteredResourcesList([]);
-        return;
-      }
-      setFilteredResourcesList([
-        {
-          ...(dept ?? {}),
-          key: String(dept?.id ?? dept?.key ?? encounterDeptId),
-          resourceKey: String(dept?.id ?? dept?.key ?? encounterDeptId),
-          resourceName: dept?.name ?? dept?.departmentName ?? `Department #${encounterDeptId || ''}`
-        }
-      ]);
       return;
     }
-
-    if (isPractitionerResourceType(selectedResourceType) && practitionerAllowed) {
-      const practitionerName =
-        practitionerByUserResponse?.practitionerFullName ??
-        practitionerByUserResponse?.fullName ??
-        practitionerByUserResponse?.practitionerName ??
-        [practitionerByUserResponse?.firstName, practitionerByUserResponse?.lastName].filter(Boolean).join(' ').trim();
-      setFilteredResourcesList([
-        {
-          ...(practitionerByUserResponse ?? {}),
-          key: String(practitionerByUserResponse?.id ?? practitionerByUserResponse?.key ?? ''),
-          resourceKey: String(practitionerByUserResponse?.id ?? practitionerByUserResponse?.key ?? ''),
-          resourceName: practitionerName || `Practitioner #${practitionerByUserResponse?.id ?? ''}`
-        }
-      ]);
-      return;
-    }
-
     setFilteredResourcesList([]);
-  }, [
-    appointmentData?.departmentId,
-    appointmentData?.departmentKey,
-    departmentListResponse,
-    encounterResponse,
-    practitionerAllowed,
-    practitionerByUserResponse,
-    selectedResourceType,
-    selectedSlot?.departmentId,
-    selectedSlot?.departmentKey
-  ]);
-
-  useEffect(() => {
-    if (!isOpen || showOnly || !selectedResourceType) return;
-
-    const encounterDeptId = String(
-      encounterResponse?.departmentId ??
-        encounterResponse?.departmentKey ??
-        appointmentData?.departmentId ??
-        appointmentData?.departmentKey ??
-        selectedSlot?.departmentId ??
-        selectedSlot?.departmentKey ??
-        ''
-    ).trim();
-
-    if (selectedResourceType === 'DEPARTMENT') {
-      if (!encounterDeptId) return;
-      setAppointment(prev => ({
-        ...prev,
-        resourceKey: encounterDeptId,
-        departmentKey: encounterDeptId,
-        departmentId: encounterDeptId
-      }));
-      return;
-    }
-
-    if (isPractitionerResourceType(selectedResourceType) && practitionerAllowed) {
-      const practitionerId = String(practitionerByUserResponse?.id ?? practitionerByUserResponse?.key ?? '');
-      if (!practitionerId || !encounterDeptId) return;
-      setAppointment(prev => ({
-        ...prev,
-        resourceKey: practitionerId,
-        departmentKey: encounterDeptId,
-        departmentId: encounterDeptId
-      }));
-    }
-  }, [
-    appointmentData?.departmentId,
-    appointmentData?.departmentKey,
-    encounterResponse,
-    isOpen,
-    practitionerAllowed,
-    practitionerByUserResponse,
-    selectedResourceType,
-    selectedSlot?.departmentId,
-    selectedSlot?.departmentKey,
-    showOnly
-  ]);
+  }, [appointment?.resourceTypeLkey, departmentListResponse, dayCaseDepartmentListResponse]);
 
   const resourcesWithNames = useMemo(() => {
     const resources = filteredResourcesList ?? [];
@@ -525,13 +411,49 @@ const FollowupAppointmentModal = ({
   const normalizedAppointment = useMemo(() => {
     if (!appointment) return appointment;
 
+    let normalizedDepartmentKey = appointment.departmentKey;
+
+    if (appointment.departmentKey !== null && appointment.departmentKey !== undefined && appointment.departmentKey !== '') {
+      if (appointment.resourceTypeLkey === '2039534205961578' || appointment.resourceTypeLkey === 'PRACTITIONER') {
+        const matchingDept = departmentListResponse?.data?.find(
+          dept => {
+            const deptIdStr = String(dept.id);
+            const deptKeyStr = dept.key ? String(dept.key) : null;
+            const apptDeptKeyStr = String(appointment.departmentKey);
+            return deptIdStr === apptDeptKeyStr || deptKeyStr === apptDeptKeyStr;
+          }
+        );
+        if (matchingDept) {
+          normalizedDepartmentKey = matchingDept.id;
+        } else {
+          normalizedDepartmentKey = appointment.departmentKey;
+        }
+      }
+      else if (appointment.resourceTypeLkey === '2039548173192779' || appointment.resourceTypeLkey === 'PROCEDURE') {
+        const matchingDept = dayCaseDepartmentListResponse?.data?.find(
+          dept => {
+            const deptIdStr = String(dept.id);
+            const deptKeyStr = dept.key ? String(dept.key) : null;
+            const apptDeptKeyStr = String(appointment.departmentKey);
+            return deptIdStr === apptDeptKeyStr || deptKeyStr === apptDeptKeyStr;
+          }
+        );
+        if (matchingDept) {
+          normalizedDepartmentKey = matchingDept.id;
+        } else {
+          normalizedDepartmentKey = appointment.departmentKey;
+        }
+      } else {
+        normalizedDepartmentKey = appointment.departmentKey;
+      }
+    }
+
     return {
       ...appointment,
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey,
-      departmentKey: appointment.departmentKey,
-      departmentId: appointment.departmentId ?? appointment.departmentKey
+      departmentKey: normalizedDepartmentKey
     };
-  }, [appointment]);
+  }, [appointment, departmentListResponse, dayCaseDepartmentListResponse]);
 
   const [createAppointmentRequest] = useCreateAppointmentRequestMutation();
 
@@ -556,21 +478,8 @@ const FollowupAppointmentModal = ({
 
   const TemplateTypeEnum = useEnumOptions('TemplateType');
   const ResourceTypeEnum = TemplateTypeEnum;
-  const resourceTypeOptions = useMemo(() => {
-    const departmentOption = (ResourceTypeEnum ?? []).find(
-      (item: any) =>
-        normalizeResourceTypeKey(item?.value) === 'DEPARTMENT' ||
-        normalizeResourceTypeKey(item?.label) === 'DEPARTMENT'
-    );
-    const practitionerOption = (ResourceTypeEnum ?? []).find(
-      (item: any) =>
-        normalizeResourceTypeKey(item?.value) === 'PRACTITIONER' ||
-        normalizeResourceTypeKey(item?.label) === 'PRACTITIONER' ||
-        normalizeResourceTypeKey(item?.value) === '2039534205961578'
-    );
 
-    return [departmentOption, practitionerAllowed ? practitionerOption : null].filter(Boolean);
-  }, [ResourceTypeEnum, practitionerAllowed]);
+  const DEFAULT_RESOURCE_TYPE = 'DEPARTMENT';
 
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -609,16 +518,12 @@ const FollowupAppointmentModal = ({
       setAppointment(prev => ({
         ...prev,
         resourceTypeLkey: null,
-        resourceKey: null,
-        departmentKey: null,
-        departmentId: null
+        resourceKey: null
       }));
     } else if (filterType === 'resource') {
       setAppointment(prev => ({
         ...prev,
-        resourceKey: null,
-        departmentKey: null,
-        departmentId: null
+        resourceKey: null
       }));
     }
   };
@@ -945,6 +850,79 @@ const FollowupAppointmentModal = ({
   }, [instructionValue]);
 
   useEffect(() => {
+    if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+      // Extract the first value from the array (resourceType.resourcesType is an array like ['CLINIC'])
+      const firstResourceType = resourceType.resourcesType[0];
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: firstResourceType
+      }));
+    }
+  }, [resourceType]);
+
+  // For follow-up requests, resource type must be DEPARTMENT from TemplateType.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (appointment?.resourceTypeLkey === DEFAULT_RESOURCE_TYPE) return;
+    setAppointment(prev => ({
+      ...prev,
+      resourceTypeLkey: DEFAULT_RESOURCE_TYPE
+    }));
+  }, [isOpen, appointment?.resourceTypeLkey]);
+
+  // Set default resource type to CLINIC for new appointments
+  useEffect(() => {
+    // Skip if we have appointmentData (editing existing appointment)
+    if (isEditingExistingAppointment) {
+      return;
+    }
+
+    // Skip if resourceTypeLkey is already set to a valid value (and it's not empty/null)
+    if (appointment?.resourceTypeLkey && appointment.resourceTypeLkey !== null && appointment.resourceTypeLkey !== '') {
+      return;
+    }
+
+    // If resourceType prop has values (filter is applied from ScheduleScreen), use the first one
+    if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+      const firstResourceType = resourceType.resourcesType[0];
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: firstResourceType
+      }));
+      return;
+    }
+
+    // Set default to CLINIC when modal opens for new appointment
+    if (isOpen) {
+      // If ResourceTypeEnum is loaded, try to match the value
+      if (Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length > 0) {
+        const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
+
+        const match =
+          ResourceTypeEnum.find(
+            (x: any) =>
+              normalize(x?.label) === normalize(DEFAULT_RESOURCE_TYPE) ||
+              normalize(x?.value) === normalize(DEFAULT_RESOURCE_TYPE)
+          ) || null;
+
+        if (match?.value) {
+          setAppointment(prev => ({
+            ...prev,
+            resourceTypeLkey: match.value
+          }));
+          return;
+        }
+      }
+
+      // Fallback: use DEFAULT_RESOURCE_TYPE directly (works even if enum not loaded yet)
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: DEFAULT_RESOURCE_TYPE
+      }));
+    }
+  }, [ResourceTypeEnum, appointment?.resourceTypeLkey, isEditingExistingAppointment, resourceType, isOpen]);
+
+  useEffect(() => {
     // If facility prop is provided, use it
     if (facility) {
       setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
@@ -1067,6 +1045,13 @@ const FollowupAppointmentModal = ({
     if (!appointment?.visitTypeLkey) {
       missingFields.push('Visit Type');
     }
+    if ((appointment?.resourceTypeLkey === '2039534205961578' ||
+      appointment?.resourceTypeLkey === 'PRACTITIONER' ||
+      appointment?.resourceTypeLkey === '2039548173192779' ||
+      appointment?.resourceTypeLkey === 'PROCEDURE') &&
+      !appointment?.departmentKey) {
+      missingFields.push('Department');
+    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `${field}: is required`);
@@ -1122,7 +1107,7 @@ const FollowupAppointmentModal = ({
 
     const patientId = Number(localPatient.key);
     const facilityId = Number(appointment?.facilityKey);
-    const departmentId = Number(appointment?.departmentId ?? appointment?.departmentKey ?? finalResourceKey);
+    const departmentId = Number(appointment?.departmentKey ?? finalResourceKey);
     if (!Number.isFinite(patientId) || !Number.isFinite(facilityId) || !Number.isFinite(departmentId)) {
       dispatch(notify({ msg: 'Patient, facility and department are required.', sev: 'warning' }));
       return;
@@ -1497,48 +1482,82 @@ const FollowupAppointmentModal = ({
                             </div>
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
-                                disabled={showOnly}
+                                disabled={showOnly || from === 'Encounter'}
                                 width={'15vw'}
                                 vr={validationResult}
                                 column
                                 fieldLabel="Resource Type"
                                 fieldType="select"
                                 fieldName="resourceTypeLkey"
-                                selectData={resourceTypeOptions}
+                                selectData={
+                                  (TemplateTypeEnum ?? []).filter(
+                                    (item: any) =>
+                                      String(item?.value ?? '').toUpperCase() === 'DEPARTMENT' ||
+                                      String(item?.label ?? '').toUpperCase() === 'DEPARTMENT'
+                                  )
+                                }
                                 selectDataLabel="label"
                                 selectDataValue="value"
                                 record={appointment}
-                                setRecord={(nextRecord: any) => {
-                                  const nextType = nextRecord?.resourceTypeLkey ?? null;
-                                  setAppointment(prev => ({
-                                    ...prev,
-                                    ...nextRecord,
-                                    resourceTypeLkey: nextType,
-                                    resourceKey: null,
-                                    departmentKey: null,
-                                    departmentId: null
-                                  }));
-                                }}
+                                setRecord={setAppointment}
                                 searchable={false}
                                 required
                               />
                             </div>
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
-                                disabled
+                                disabled={showOnly}
                                 width={'15vw'}
                                 column
                                 fieldLabel="Resource"
-                                selectData={resourcesWithNames ?? []}
+                                selectData={departmentListResponse?.data ?? []}
                                 fieldType="select"
-                                selectDataLabel="resourceName"
-                                selectDataValue="resourceKey"
+                                selectDataLabel="name"
+                                selectDataValue="id"
                                 fieldName="resourceKey"
                                 record={appointment}
                                 setRecord={setAppointment}
                                 required
                               />
                             </div>
+                            {(appointment?.resourceTypeLkey === '2039534205961578' || appointment?.resourceTypeLkey === 'PRACTITIONER') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={departmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={normalizedAppointment || appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
+                            {(appointment?.resourceTypeLkey === '2039548173192779' || appointment?.resourceTypeLkey === 'PROCEDURE') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={dayCaseDepartmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={normalizedAppointment || appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
                                 width={'15vw'}
