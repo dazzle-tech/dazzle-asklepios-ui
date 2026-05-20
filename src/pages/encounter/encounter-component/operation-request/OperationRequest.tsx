@@ -73,6 +73,7 @@ const OperationRequest = props => {
   ];
   return (
     <MyTab 
+    lazy
      data={tabData}
     />
   );

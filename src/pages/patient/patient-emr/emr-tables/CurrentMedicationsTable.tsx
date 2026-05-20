@@ -20,7 +20,7 @@ const MedicationsRecord: React.FC<Props> = ({ patient }) => {
     },
   ];
 
-  return <MyTab data={tabData} />;
+  return <MyTab data={tabData} lazy/>;
 };
 
 export default MedicationsRecord;

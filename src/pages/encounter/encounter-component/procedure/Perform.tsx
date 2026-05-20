@@ -204,6 +204,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
              data={tabData}
              activeTab={activeTab}
              setActiveTab={setActiveTab}
+             lazy
             />
         </div>
         <div className='right-box'>

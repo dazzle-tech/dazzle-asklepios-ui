@@ -345,7 +345,7 @@ useEffect(() => {
   const tabContant = () => {
     return (
       <Box>
-        <MyTab data={tabData} />
+        <MyTab data={tabData} lazy/>
       </Box>
     );
   };

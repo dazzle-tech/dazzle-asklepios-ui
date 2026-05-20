@@ -50,6 +50,7 @@ const tabData = [
   return (
     <div dir={dir}>
       <MyTab
+      lazy
         data={tabData.map(tab => ({
           ...tab,
           content: <div dir={dir}>{tab.content}</div>

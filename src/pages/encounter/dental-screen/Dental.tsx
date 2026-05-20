@@ -89,7 +89,7 @@ const Dental = () => {
 
   return (
     <Box>
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Box>
   );
 };

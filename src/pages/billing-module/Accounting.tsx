@@ -516,7 +516,7 @@ const Accounting: React.FC = () => {
           title="Search Patient"
           content={contentOfSearchSection()}
         />
-        <MyTab key={`${patient?.id ?? 'no-patient'}-${tabsResetKey}`} data={tabData} />
+        <MyTab key={`${patient?.id ?? 'no-patient'}-${tabsResetKey}`} data={tabData} lazy/>
       </div>
 
       {patient?.id && (
