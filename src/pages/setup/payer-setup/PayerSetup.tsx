@@ -313,6 +313,17 @@ const PayorSetup = () => {
         )
     },
     {
+      key: 'nphiesId',
+      title: <Translate>NPHIES ID</Translate>,
+      flexGrow: 2
+    },
+    {
+      key: 'isWaseelEnabled',
+      title: <Translate>Waseel</Translate>,
+      flexGrow: 1,
+      render: (rowData: Payor) => <span>{rowData.isWaseelEnabled ? 'Yes' : 'No'}</span>
+    },
+    {
       key: 'expiryDate',
       title: <Translate>Contract Expiry Date</Translate>,
       flexGrow: 2,

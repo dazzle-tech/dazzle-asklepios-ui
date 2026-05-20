@@ -1370,44 +1370,51 @@ export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
 // ------------------- Payor -------------------
 export const newPayor: modelTypes.Payor = {
   id: undefined,
+
   code: '',
   name: '',
   category: null,
+
   address: '',
   phone: '',
   email: '',
   contractManagerContact: '',
+
   startDate: null,
   expiryDate: null,
   renewable: false,
+
   allowPartialCoverage: false,
   acceptCopay: false,
   acceptDeductibles: false,
   allowPackagePricing: false,
   allowDrgBilling: false,
   forcePreApproval: false,
+
+  // Waseel / NPHIES
+  nphiesId: '',
+  waseelPayerId: '',
+  tpaNphiesId: '',
+  isWaseelEnabled: false,
+
   isActive: true
 };
 
 export const newPayorPlan: modelTypes.PayorPlan = {
   id: undefined,
-  code: '',
+
+  payorId: undefined,
   name: '',
-  category: null,
-  address: '',
-  phone: '',
-  email: '',
-  contractManagerContact: '',
-  startDate: null,
-  expiryDate: null,
-  renewable: false,
-  allowPartialCoverage: false,
-  acceptCopay: false,
-  acceptDeductibles: false,
-  allowPackagePricing: false,
-  allowDrgBilling: false,
-  forcePreApproval: false,
+  planType: null,
+
+  // Waseel / CCHI
+  networkId: '',
+  coverageType: '',
+  payerNphiesId: '',
+  waseelPlanId: '',
+
   isActive: true,
+
   createdDate: null,
   lastModifiedDate: null
 };
@@ -1423,6 +1430,19 @@ export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   lastModifiedDate: null
 };
 
+export const newPayorPlanCoverageClass: modelTypes.PayorPlanCoverageClass = {
+  id: undefined,
+
+  planId: undefined,
+  coverageClassType: null,
+  coverageClassValue: '',
+  coverageClassName: '',
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
 // ------------------- Invoice Item -------------------
 export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   invoiceId: 0,

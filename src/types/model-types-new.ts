@@ -1719,46 +1719,54 @@ export interface BillingInvoiceResponseVM {
 
 export interface Payor {
   id?: number;
+
   code: string;
   name: string;
   category: string | null;
+
   address?: string;
   phone?: string;
   email?: string;
   contractManagerContact?: string;
+
   startDate?: Date | string | null;
   expiryDate?: Date | string | null;
   renewable: boolean;
+
   allowPartialCoverage: boolean;
   acceptCopay: boolean;
   acceptDeductibles: boolean;
   allowPackagePricing: boolean;
   allowDrgBilling: boolean;
   forcePreApproval: boolean;
+
+  // Waseel / NPHIES
+  nphiesId?: string;
+  waseelPayerId?: string;
+  tpaNphiesId?: string;
+  isWaseelEnabled: boolean;
+
   isActive: boolean;
+
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
 
 export interface PayorPlan {
   id?: number;
-  code: string;
+
+  payorId?: number;
   name: string;
-  category: string | null;
-  address?: string;
-  phone?: string;
-  email?: string;
-  contractManagerContact?: string;
-  startDate?: Date | string | null;
-  expiryDate?: Date | string | null;
-  renewable: boolean;
-  allowPartialCoverage: boolean;
-  acceptCopay: boolean;
-  acceptDeductibles: boolean;
-  allowPackagePricing: boolean;
-  allowDrgBilling: boolean;
-  forcePreApproval: boolean;
+  planType: string | null;
+
+  // Waseel / CCHI
+  networkId?: string;
+  coverageType?: string;
+  payerNphiesId?: string;
+  waseelPlanId?: string;
+
   isActive: boolean;
+
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
@@ -1773,8 +1781,22 @@ export interface PayorPlanItem {
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }
-/* Billing Items */
 
+export interface PayorPlanCoverageClass {
+  id?: number;
+
+  planId?: number;
+  coverageClassType: string | null;
+  coverageClassValue: string;
+  coverageClassName?: string;
+
+  isActive: boolean;
+
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* Billing Items */
 export interface BillingInvoiceItemCreateVM {
   invoiceId: number;
   nurseServiceProductKey?: string | null;

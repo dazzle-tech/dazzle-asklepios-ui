@@ -219,6 +219,7 @@ import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { cchiApi } from './services/waseel-integration/cchiService';
+import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -555,7 +556,8 @@ export const store = configureStore({
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
-    [cchiApi.reducerPath]: cchiApi.reducer
+    [cchiApi.reducerPath]: cchiApi.reducer,
+    [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -745,7 +747,8 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        cchiApi.middleware
+        cchiApi.middleware,
+        PayorPlanCoverageClassService.middleware
       ) as any
 });
 
