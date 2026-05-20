@@ -216,6 +216,7 @@ import PolicyDefinitions from './pages/setup/policy-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
+import PatientMergeConfig from '@/pages/setup/patient-merge-config/PatientMergeConfig';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -867,7 +868,8 @@ const App = () => {
               <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
               <Route path="nurse-assessment" element={<NurseAssessment />} />
               <Route path="physician-assessment" element={<PhysicianAssessment />} />
-            </Route>
+              <Route path="patient-merge-config" element={<PatientMergeConfig />} />
+            </Route> 
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />

@@ -82,6 +82,22 @@ export const patientMergeService = createApi({
       }),
       invalidatesTags: ['PatientMerge']
     })
+    ,
+    saveMergeConfigTable: builder.mutation<any, any>({
+  query: body => ({
+    url: '/api/patient/patient-merge/config/tables',
+    method: 'POST',
+    body
+  }),
+  invalidatesTags: ['PatientMerge']
+}),
+getMergeTableColumns: builder.query<string[], { tableName: string }>({
+  query: ({ tableName }) => ({
+    url: `/api/patient/patient-merge/config/table-columns/${tableName}`,
+    method: 'GET'
+  }),
+  providesTags: ['PatientMerge']
+}),
   })
 });
 
@@ -99,5 +115,8 @@ export const {
   useLazyGetMergeConfigTablesQuery,
   useGetAvailablePatientTablesQuery,
   useLazyGetAvailablePatientTablesQuery,
-  useSyncMissingMergeTablesMutation
+  useSyncMissingMergeTablesMutation,
+  useSaveMergeConfigTableMutation,
+  useLazyGetMergeTableColumnsQuery,
+useGetMergeTableColumnsQuery,
 } = patientMergeService;
