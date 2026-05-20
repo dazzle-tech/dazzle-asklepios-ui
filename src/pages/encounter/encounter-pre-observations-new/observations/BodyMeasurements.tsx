@@ -37,10 +37,8 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   // === API ===
   const [createBodyMeasurements] = useCreateBodyMeasurementsMutation();
 
-  const { data: latestBodyMeasurementsByEncounterId } = useGetLatestBodyMeasurementsByEncounterIdQuery(
-    { encounterId },
-    { skip: !encounterId }
-  );
+  const { data: latestBodyMeasurementsByEncounterId } =
+    useGetLatestBodyMeasurementsByEncounterIdQuery({ encounterId }, { skip: !encounterId });
 
   // === Local state ===
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurementsModelObject>({
@@ -89,7 +87,6 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     setBodyMassIndex('');
     setBodySurfaceArea('');
   }, [bodyMeasurements?.weight, bodyMeasurements?.height]);
-
 
   const bodyMeasurementsCreatePayload = useMemo(() => {
     return {
@@ -148,7 +145,9 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Body measurements payload is required.',
@@ -180,15 +179,28 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       return;
     }
 
+    const missing: string[] = [];
+    if (bodyMeasurements.weight == null) missing.push('• Weight: must not be empty');
+    if (bodyMeasurements.height == null) missing.push('• Height: must not be empty');
+
+    if (missing.length > 0) {
+      dispatch(
+        notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
+      );
+      return;
+    }
+
     try {
-      const createResponse = await createBodyMeasurements(bodyMeasurementsCreatePayload as any).unwrap();
+      const createResponse = await createBodyMeasurements(
+        bodyMeasurementsCreatePayload as any
+      ).unwrap();
 
       setBodyMeasurements(previousBodyMeasurements => ({
         ...previousBodyMeasurements,
         ...createResponse,
         patientId,
         encounterId,
-        id: undefined 
+        id: undefined
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
@@ -211,85 +223,83 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSaveBodyMeasurements} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClearBodyMeasurements} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            <div className="rows-gap" style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Weight"
-                  fieldName="weight"
-                  rightAddon="Kg"
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="container-Column">
-                  <MyLabel label="Body Mass Index" />
-                  <div>
-                    <FontAwesomeIcon icon={faPerson} className="my-icon" />
-                    <text>{bodyMassIndex}</text>
-                  </div>
+          <div className="rows-gap" style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <MyInput
+                width="100%"
+                fieldLabel="Weight"
+                fieldName="weight"
+                rightAddon="Kg"
+                fieldType="number"
+                record={bodyMeasurements}
+                setRecord={setBodyMeasurements}
+                disabled={disabled}
+                required
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="container-Column">
+                <MyLabel label="Body Mass Index" />
+                <div>
+                  <FontAwesomeIcon icon={faPerson} className="my-icon" />
+                  <span>{bodyMassIndex}</span>
                 </div>
               </div>
             </div>
-            <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Height"
-                  fieldName="height"
-                  rightAddon="Cm"
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="container-Column">
-                  <MyLabel label="Body Surface Area" />
-                  <div>
-                    <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
-                    <text>{bodySurfaceArea}</text>
-                  </div>
+          </div>
+          <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+            <div style={{ flex: 1 }}>
+              <MyInput
+                width="100%"
+                fieldLabel="Height"
+                fieldName="height"
+                rightAddon="Cm"
+                fieldType="number"
+                record={bodyMeasurements}
+                setRecord={setBodyMeasurements}
+                disabled={disabled}
+                required
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="container-Column">
+                <MyLabel label="Body Surface Area" />
+                <div>
+                  <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
+                  <span>{bodySurfaceArea}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Head circumference"
-                  fieldName="headCircumference"
-                  rightAddon="Cm"
-                  rightAddonwidth={40}
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                />
-              </div>
-
-              <div style={{ flex: 1 }} />
+          <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+            <div style={{ flex: 1 }}>
+              <MyInput
+                width="100%"
+                fieldLabel="Head circumference"
+                fieldName="headCircumference"
+                rightAddon="Cm"
+                rightAddonwidth={40}
+                fieldType="number"
+                record={bodyMeasurements}
+                setRecord={setBodyMeasurements}
+                disabled={disabled}
+              />
             </div>
-          </Form>
+
+            <div style={{ flex: 1 }} />
+          </div>
         </div>
       }
     />

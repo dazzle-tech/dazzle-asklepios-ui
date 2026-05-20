@@ -17,6 +17,7 @@ import TrashIcon from '@rsuite/icons/Trash';
 import CloseIcon from '@rsuite/icons/Close';
 import CheckIcon from '@rsuite/icons/Check';
 import EditIcon from '@rsuite/icons/Edit';
+import { useSelector } from 'react-redux';
 import { useLazySearchIcd10Query } from '../../services/setup/icd10service';
 
 import './styles.less';
@@ -50,6 +51,7 @@ const Icd10Search: React.FC<Props> = ({
   const [picked, setPicked] = useState<any | null>(null);
   const [addedFeedback, setAddedFeedback] = useState<string | null>(null);
   const [isTextareaEditable, setIsTextareaEditable] = useState(false);
+  const modeTheme = useSelector((state: any) => state.ui.mode);
 
   const textFromParent: string =
     mode === 'multiICD10' ? String(object?.[fieldName] ?? '') : '';
@@ -238,7 +240,8 @@ const Icd10Search: React.FC<Props> = ({
   const hasContent = mode === 'multiICD10' ? !!currentTextValue.trim() : !!selectedItem;
 
   return (
-    <div key={instanceId} data-instance-id={instanceId} className="icd10-root">
+    <div className={modeTheme === 'dark' ? 'dark' : ''}>
+      <div key={instanceId} data-instance-id={instanceId} className="icd10-root">
       <Row>
         <Text><Translate>{props?.label ?? (mode === 'singleICD10' ? 'Diagnosis (ICD-10)' : 'Select ICD-10 Codes')}</Translate></Text>
         <Col md={24}>
@@ -502,6 +505,7 @@ const Icd10Search: React.FC<Props> = ({
           </Col>
         </Row>
       )}
+      </div>
     </div>
   );
 };

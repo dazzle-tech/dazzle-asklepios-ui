@@ -18,6 +18,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
+import { skipToken } from '@reduxjs/toolkit/query';
 
 type Props = {
     patient: any;
@@ -30,7 +31,6 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     profileTestId = null,
     hideTestNameFilter = false
 }) => {
-
     const [record, setRecord] = useState<any>({});
 
     const today = new Date();
@@ -38,13 +38,21 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     const firstDayOfMonth = new Date(
         today.getFullYear(),
         today.getMonth(),
-        1, 0, 0, 0, 0
+        1,
+        0,
+        0,
+        0,
+        0
     );
 
     const lastDayOfMonth = new Date(
         today.getFullYear(),
         today.getMonth() + 1,
-        0, 23, 59, 59, 999
+        0,
+        23,
+        59,
+        59,
+        999
     );
 
     const [dateFilter, setDateFilter] = useState({
@@ -59,22 +67,48 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     const toInstant = dateFilter.toDate
         ? new Date(dateFilter.toDate).toISOString()
         : lastDayOfMonth.toISOString();
-    //add new patient edits
-    const { data, isLoading } = useGetPatientResultsHistoryQuery({
-        patientId: patient?.id,
-        from: fromInstant,
-        to: toInstant,
-        profileTestId: profileTestId ?? undefined
-    });
 
-    /* ================= GET PROFILES BY IDS ================= */
+        const actualPatientId = useMemo(() => {
+        const id =
+            patient?.id ??
+            patient?.patient?.id ??
+            patient?.selectedPatient?.id ??
+            null;
+
+        return id !== null && id !== undefined
+            ? Number(id)
+            : null;
+    }, [patient]);
+
+    const {
+        data = [],
+        isLoading,
+        isFetching,
+        error
+    } = useGetPatientResultsHistoryQuery(
+        actualPatientId != null
+            ? {
+                  patientId: actualPatientId,
+                  from: fromInstant,
+                  to: toInstant,
+                  profileTestId:
+                      profileTestId != null
+                          ? Number(profileTestId)
+                          : undefined
+              }
+            : skipToken,
+        {
+            refetchOnMountOrArgChange: true
+        }
+    );
 
     const profileIds = useMemo(() => {
-        if (!data) return [];
+        if (!data || !Array.isArray(data)) return [];
 
         const ids = new Set<number>();
-        data.forEach(group => {
-            if (group.profileTestId) {
+
+        data.forEach((group: any) => {
+            if (group?.profileTestId) {
                 ids.add(group.profileTestId);
             }
         });
@@ -89,78 +123,110 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         if (profileIds.length > 0) {
             fetchProfilesByIds(profileIds);
         }
-    }, [profileIds]);
-
-    /* ================= PROFILE MAPS ================= */
+    }, [profileIds, fetchProfilesByIds]);
 
     const profileNameMap = useMemo(() => {
-        if (!profilesByIds) return {};
+        if (!profilesByIds || !Array.isArray(profilesByIds)) return {};
+
         const map: Record<number, string> = {};
+
         profilesByIds.forEach((profile: any) => {
             map[profile.id] = profile.name;
         });
+
         return map;
     }, [profilesByIds]);
 
     const profileMap = useMemo(() => {
-        if (!profilesByIds) return new Map();
-        return new Map(profilesByIds.map((p: any) => [p.id, p]));
+        if (!profilesByIds || !Array.isArray(profilesByIds)) {
+            return new Map();
+        }
+
+        return new Map(
+            profilesByIds.map((p: any) => [p.id, p])
+        );
     }, [profilesByIds]);
 
-    /* ================= LOV ================= */
-    // list of value new function
     const { data: allLovValues } =
-        useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+        useGetLovAllValuesQuery({
+            ...initialListRequestAllValues
+        });
 
     const { data: lovDefinitions } =
-        useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+        useGetLovsQuery({
+            ...initialListRequest,
+            pageSize: 1000
+        });
 
     const { data: valueUnitLov } =
         useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-    const resolveLovDisplayValue = (lovId: any, key: any) => {
-        if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object)
-            return key;
+    const resolveLovDisplayValue = (
+        lovId: any,
+        key: any
+    ) => {
+        if (
+            !lovId ||
+            key == null ||
+            !lovDefinitions?.object ||
+            !allLovValues?.object
+        ) {
+            return '-';
+        }
 
         const lovDef = lovDefinitions.object.find(
-            (d: any) => String(d.key) === String(lovId)
+            (d: any) =>
+                String(d.key) === String(lovId)
         );
 
-        if (!lovDef?.lovCode) return key;
+        if (!lovDef?.lovCode) {
+            return '-';
+        }
 
-        return (
-            allLovValues.object.find(
-                (v: any) =>
-                    String(v.lovCode) === String(lovDef.lovCode) &&
-                    String(v.key) === String(key)
-            )?.lovDisplayVale ?? key
+        const found = allLovValues.object.find(
+            (v: any) =>
+                String(v.lovCode) === String(lovDef.lovCode) &&
+                String(v.key) === String(key)
         );
+
+        return found?.lovDisplayVale || found?.name || '-';
     };
-
-
 
     const resolveUnitDisplay = (profile: any) => {
         if (!profile) return null;
 
-        if (profile?.resultType?.toUpperCase() === 'LOV') return null;
+        if (
+            profile?.resultType?.toUpperCase() === 'LOV'
+        ) {
+            return null;
+        }
 
-        if (!profile?.resultUnit || !valueUnitLov?.object) return null;
+        if (
+            !profile?.resultUnit ||
+            !valueUnitLov?.object
+        ) {
+            return null;
+        }
 
         const unit = valueUnitLov.object.find(
-            (u: any) => String(u.key) === String(profile.resultUnit)
+            (u: any) =>
+                String(u.key) === String(profile.resultUnit)
         )?.lovDisplayVale;
 
         return unit ?? null;
     };
 
-
     const pivotData = useMemo(() => {
-        if (!data) return [];
+        if (!data || !Array.isArray(data)) return [];
 
-        return data.map(group => {
+        return data.map((group: any) => {
             const dateMap: Record<string, any> = {};
-            group.results?.forEach(result => {
-                const date = formatDateWithoutSeconds(result?.resultDate);
+
+            group?.results?.forEach((result: any) => {
+                const date = formatDateWithoutSeconds(
+                    result?.resultDate
+                );
+
                 dateMap[date] = result;
             });
 
@@ -173,25 +239,30 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         });
     }, [data, profileNameMap]);
 
-    /* ================= FILTER BY NAME ================= */
-
     const filteredPivot = useMemo(() => {
-        if (!record?.testName) return pivotData;
+        if (!record?.testName) {
+            return pivotData;
+        }
 
-        return pivotData.filter(test =>
+        return pivotData.filter((test: any) =>
             test.testName
                 ?.toLowerCase()
-                .includes(record.testName.toLowerCase())
+                .includes(
+                    record.testName.toLowerCase()
+                )
         );
     }, [pivotData, record]);
 
     const renderResultValue = (result: any) => {
         if (!result) return '-';
 
-        const profile = profileMap.get(result.profileTestId);
+        const profile = profileMap.get(
+            result.profileTestId
+        );
 
         const isLovTest =
-            profile?.resultType?.toUpperCase() === 'LOV';
+            profile?.resultType?.toUpperCase() ===
+            'LOV';
 
         let displayValue: any = '-';
 
@@ -200,36 +271,37 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                 profile?.listOfValueId,
                 result.resultValueText
             );
-        }
-        else if (profile?.listOfValueId && result.resultValueText) {
-            displayValue = resolveLovDisplayValue(
-                profile?.listOfValueId,
-                result.resultValueText
-            );
-        }
-        else if (
+        } else if (
             result.resultValueNumber !== null &&
             result.resultValueNumber !== undefined
         ) {
             displayValue = result.resultValueNumber;
         }
-        else if (result.resultValueText) {
-            displayValue = result.resultValueText;
-        }
 
         const unit = resolveUnitDisplay(profile);
 
         return (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
                 <div>
                     <span>{displayValue}</span>
+
                     {unit && (
-                        <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#666' }}>
+                        <span
+                            style={{
+                                marginLeft: 6,
+                                fontSize: '0.7rem',
+                                color: '#666'
+                            }}
+                        >
                             {unit}
                         </span>
                     )}
                 </div>
-
 
                 {result.normalRangeValue?.trim() && (
                     <span
@@ -239,7 +311,12 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                             marginTop: 2
                         }}
                     >
-                        {result.normalRangeValue}
+                        {isLovTest
+                            ? resolveLovDisplayValue(
+                                  profile?.listOfValueId,
+                                  result.normalRangeValue
+                              )
+                            : result.normalRangeValue}
                     </span>
                 )}
             </div>
@@ -247,7 +324,11 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     };
 
     const filters = () => (
-        <Form layout="inline" fluid className="date-filter-form">
+        <Form
+            layout="inline"
+            fluid
+            className="date-filter-form"
+        >
             <MyInput
                 column
                 width={150}
@@ -257,6 +338,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                 record={dateFilter}
                 setRecord={setDateFilter}
             />
+
             <MyInput
                 column
                 width={150}
@@ -266,9 +348,10 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                 record={dateFilter}
                 setRecord={setDateFilter}
             />
+
             {!hideTestNameFilter && (
                 <MyInput
-                    width={'100%'}
+                    width="100%"
                     column
                     fieldLabel="Test Name"
                     fieldType="text"
@@ -284,40 +367,64 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         <div style={{ overflowX: 'hidden' }}>
             <Row>
                 <Col md={24}>
-
                     <div className="my-table-filters-laboratory-result-comparsion">
                         {filters()}
                     </div>
 
-                    {isLoading && <div style={{ padding: 20 }}>Loading...</div>}
+                    {(isLoading || isFetching) && (
+                        <div style={{ padding: 20 }}>
+                            Loading...
+                        </div>
+                    )}
 
-                    {filteredPivot.map((group, index) => {
-                        const dates = Object.keys(group.results).sort();
+                    {filteredPivot.map(
+                        (group: any, index: number) => {
+                            const dates = Object.keys(
+                                group.results
+                            ).sort();
 
-                        const columns = [
-                            {
-                                key: 'testName',
-                                title: <Translate>Test Name</Translate>,
-                                width: 220,
-                                render: () => group.testName
-                            },
-                            ...dates.map(date => ({
-                                key: date,
-                                title: date,
-                                render: () => renderResultValue(group.results[date])
-                            }))
-                        ];
+                            const columns = [
+                                {
+                                    key: 'testName',
+                                    title: (
+                                        <Translate>
+                                            Test Name
+                                        </Translate>
+                                    ),
+                                    width: 220,
+                                    render: () =>
+                                        group.testName
+                                },
+                                ...dates.map(date => ({
+                                    key: date,
+                                    title: date,
+                                    render: () =>
+                                        renderResultValue(
+                                            group.results[
+                                                date
+                                            ]
+                                        )
+                                }))
+                            ];
 
-                        return (
-                            <div key={index} className="comparison-table-wrapper">
-                                <MyTable
-                                    columns={columns}
-                                    data={[{ testName: group.testName }]}
-                                />
-                            </div>
-                        );
-                    })}
-
+                            return (
+                                <div
+                                    key={index}
+                                    className="comparison-table-wrapper"
+                                >
+                                    <MyTable
+                                        columns={columns}
+                                        data={[
+                                            {
+                                                testName:
+                                                    group.testName
+                                            }
+                                        ]}
+                                    />
+                                </div>
+                            );
+                        }
+                    )}
                 </Col>
             </Row>
         </div>

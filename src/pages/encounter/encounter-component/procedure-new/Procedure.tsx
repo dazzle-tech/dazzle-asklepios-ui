@@ -12,6 +12,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
@@ -30,7 +31,26 @@ import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/securi
 import { cond } from 'lodash';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+    case 'COMPLETED':
+      return '#0DAA41';
+    case 'CANCELLED':
+      return '#D64545';
+    case 'IN_PROGRESS':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
 
 const TableLoader = () => (
   <div className="table-loader">
@@ -49,7 +69,7 @@ const Referrals = (props: any) => {
   const edit = props.edit ?? location.state?.edit ?? false;
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-   const isNurse = jobRole === 'NURSE';
+  const isNurse = jobRole === 'NURSE';
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -68,7 +88,6 @@ const Referrals = (props: any) => {
     currentDepartment: true
   });
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
@@ -85,12 +104,12 @@ const Referrals = (props: any) => {
     isLoading: procedureLoding
   } = useFindProcdureByEncounterQuery(
     {
-      encounterId: encounter?.id || encounter?.key,
+      encounterId: encounter?.id,
       page,
       size: pageSize,
       includeCancelled: showCanceled
     },
-    { skip: !encounter?.id && !encounter?.key }
+    { skip: !encounter?.id }
   );
 
   const procedures = proceduresData?.data ?? [];
@@ -128,8 +147,8 @@ const Referrals = (props: any) => {
 
   const handleClear = useCallback(() => {
     setProcedure({
-      encounterId: encounter?.id || encounter?.key,
-      patientId: patient?.id || patient?.key,
+      encounterId: encounter?.id,
+      patientId: patient?.id,
       currentDepartment: true,
       indicationId: null,
       bodyPart: '',
@@ -138,15 +157,17 @@ const Referrals = (props: any) => {
       priority: 'NORMAL',
       procedureLevel: 'MINOR',
       toDepartmentId: null,
-      categoryKey: null,
+      categoryId: null,
       procedureId: null,
+      procedureObj: null,
+      procedureName: null,
       notes: null,
       extraDocumentation: null,
       scheduledDateTime: null
     });
     setShowPreview(false);
     setEditing(false);
-  }, [encounter?.key, encounter?.id, patient?.key, patient?.id]);
+  }, [encounter?.id, patient?.id]);
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
@@ -186,8 +207,8 @@ const Referrals = (props: any) => {
       const procedureData = {
         ...procedure,
         indications: indicationsDescription,
-        encounterId: encounter?.id || encounter?.key,
-        patientId: patient?.id || patient?.key
+        encounterId: encounter?.id,
+        patientId: patient?.id
       };
 
       if (procedure?.id) {
@@ -224,7 +245,6 @@ const Referrals = (props: any) => {
       handleClear();
     } catch (error) {
       dispatch(notify({ msg: 'Cancellation failed', sev: 'warning' }));
-      console.error('Cancel error:', error);
     }
   };
 
@@ -281,6 +301,41 @@ const Referrals = (props: any) => {
     return map;
   }, [icdDiagnoses]);
 
+
+const UserFullNameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+    skip: !login
+  });
+
+  if (!login) {
+    return <span>-</span>;
+  }
+
+  return <span>{fullName || login}</span>;
+};
+
+    const UserDateCell = ({
+      login,
+      date
+    }: {
+      login?: string | null;
+      date?: string | null;
+    }) => {
+      if (!login && !date) {
+        return <span>-</span>;
+      }
+
+      return (
+        <>
+          <UserFullNameCell login={login} />
+          <br />
+          <span className="date-table-style">
+            {date ? formatDateWithoutSeconds(date) : ''}
+          </span>
+        </>
+      );
+    };
+
   const tableColumns = useMemo(
     () => [
       {
@@ -323,11 +378,7 @@ const Referrals = (props: any) => {
 
           const proc = proceduresMap.get(Number(rowData.procedureId));
 
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === proc?.categoryType
-          );
-
-          return category?.lovDisplayVale || '';
+          return formatEnumString(proc?.categoryType) || '';
         }
       },
       {
@@ -395,69 +446,98 @@ const Referrals = (props: any) => {
         }
       },
       {
+        key: 'status',
+        dataKey: 'status',
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 1.5,
+        minWidth: 110,
+        render: (rowData: any) => {
+          const status = String(rowData?.status ?? '').toUpperCase();
+          const statusDisplay = status ? status.replace(/_/g, ' ') : '';
+          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
+        }
+      },
+      {
         key: 'edit',
         dataKey: '',
         title: <Translate>EDIT</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => (
-          <MdModeEdit
-            size={24}
-            fill="var(--primary-gray)"
-            className="edit-icon"
-            onClick={async e => {
-              e.stopPropagation();
+        render: (rowData: any) => {
+          const isCancelled = rowData?.status === 'CANCELLED';
+          const isDisabled = edit || isCancelled;
+          return (
+            <MdModeEdit
+              size={24}
+              fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+              className={isDisabled ? 'edit-icon disabled' : 'edit-icon'}
+              style={{
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.5 : 1
+              }}
+              onClick={async e => {
+                e.stopPropagation();
+                if (edit) return;
 
-              if (!rowData?.procedureId) {
-                dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
-                return;
-              }
+                if (isCancelled) {
+                  dispatch(
+                    notify({
+                      msg: 'Cancelled procedure cannot be edited',
+                      sev: 'warning'
+                    })
+                  );
+                  return;
+                }
 
-              try {
-                const procedureRes = await getProcedureById({
-                  id: rowData.procedureId
-                }).unwrap();
+                if (!rowData?.procedureId) {
+                  dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
+                  return;
+                }
 
-                const updatedProcedure = {
-                  ...rowData,
-                  procedureId: procedureRes.id,
-                  categoryKey:
-                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                try {
+                  const procedureRes = await getProcedureById({
+                    id: rowData.procedureId
+                  }).unwrap();
 
-                  toDepartmentId:
-                    rowData.toDepartmentId ||
-                    procedureRes.toDepartmentId ||
-                    procedureRes.departmentId ||
-                    procedureRes.department?.id,
+                  const updatedProcedure = {
+                    ...rowData,
+                    procedureId: procedureRes.id,
+                    procedureObj: procedureRes,
+                    procedureName: procedureRes.name,
+                    categoryId:
+                      procedureRes.categoryType || procedureRes.category || rowData.categoryId,
 
-                  procedureLevel:
-                    rowData.procedureLevel ||
-                    procedureRes.procedureLevel ||
-                    procedureRes.level ||
-                    procedureRes.procedureLevelKey
-                };
+                    toDepartmentId:
+                      rowData.toDepartmentId ||
+                      procedureRes.toDepartmentId ||
+                      procedureRes.departmentId ||
+                      procedureRes.department?.id,
 
-                setProcedure(updatedProcedure);
-                setOpenDetailsModal(true);
-              } catch (error) {
-                console.error('GET PROCEDURE ERROR', error);
-                dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
-              }
-            }}
-          />
-        )
+                    procedureLevel:
+                      rowData.procedureLevel ||
+                      procedureRes.procedureLevel ||
+                      procedureRes.level ||
+                      procedureRes.procedureLevelId
+                  };
+
+                  setProcedure(updatedProcedure);
+                  setOpenDetailsModal(true);
+                } catch (error) {
+                  dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
+                }
+              }}
+            />
+          );
+        }
       },
       {
         key: 'created',
         title: <Translate>CREATED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.createdBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.createdDate ? formatDateWithoutSeconds(rowData.createdDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.createdBy}
+            date={rowData?.createdDate}
+          />
         )
       },
       {
@@ -465,13 +545,10 @@ const Referrals = (props: any) => {
         title: <Translate>UPDATED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.lastModifiedBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.lastModifiedDate ? formatDateWithoutSeconds(rowData.lastModifiedDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.lastModifiedBy}
+            date={rowData?.lastModifiedDate}
+          />
         )
       },
       {
@@ -479,13 +556,10 @@ const Referrals = (props: any) => {
         title: <Translate>CANCELLED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.cancelledBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.cancelledDate ? formatDateWithoutSeconds(rowData.cancelledDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.cancelledBy}
+            date={rowData?.cancelledDate}
+          />
         )
       },
       {
@@ -497,7 +571,6 @@ const Referrals = (props: any) => {
       }
     ],
     [
-      CategoryLovQueryResponse,
       proceduresMap,
       dispatch,
       getProcedureById,
@@ -524,16 +597,15 @@ const Referrals = (props: any) => {
     }
   }, [openDetailsModal, procedure?.toFacilityId, getDepartmentsByFacility]);
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
-      <div ref={tableContainerRef} >
+      <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
           data={procedures}
@@ -546,8 +618,8 @@ const Referrals = (props: any) => {
 
                 const updatedProcedure = {
                   ...rowData,
-                  categoryKey:
-                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                  categoryId:
+                    procedureRes.categoryType || procedureRes.category || rowData.categoryId,
                   procedureId: procedureRes.id
                 };
 
@@ -560,7 +632,6 @@ const Referrals = (props: any) => {
                 setShowPreview(true);
               }
             } catch (error) {
-              console.error('Failed to load procedure details:', error);
               setProcedure(rowData);
               setEditing(rowData?.status === 'CANCELLED');
               setShowPreview(true);
@@ -578,7 +649,10 @@ const Referrals = (props: any) => {
               <div className="bt-left-2">
                 <MyButton
                   onClick={() => setOpenCancellationReasonModel(true)}
-                  disabled={isNurse || (edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true)}
+                  disabled={
+                    isNurse ||
+                    (edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true)
+                  }
                   prefixIcon={() => <BlockIcon />}
                 >
                   Cancel
@@ -615,15 +689,17 @@ const Referrals = (props: any) => {
         title="Perform Details"
         actionButtonFunction={handleSave}
         size="full"
-        content={<div dir={dir}>
-          <Perform
-            proRefetch={proRefetch}
-            encounter={encounter}
-            patient={patient}
-            procedure={procedure}
-            setProcedure={setProcedure}
-            edit={edit}
-          /></div>
+        content={
+          <div dir={dir}>
+            <Perform
+              proRefetch={proRefetch}
+              encounter={encounter}
+              patient={patient}
+              procedure={procedure}
+              setProcedure={setProcedure}
+              edit={edit}
+            />
+          </div>
         }
       />
 
@@ -656,14 +732,16 @@ const Referrals = (props: any) => {
         title={`Attachments - ${procedure?.procedureName || 'Procedure'}`}
         size="lg"
         hideActionBtn={true}
-        content={<div dir={dir}>
-          <EncounterAttachment
-            localEncounter={encounter}
-            source="PROCEDURE_REQUEST_ATTACHMENT"
-            sourceId={procedure?.id ? Number(procedure.id) : undefined}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
-          /> </div>
+        content={
+          <div dir={dir}>
+            <EncounterAttachment
+              localEncounter={encounter}
+              source="PROCEDURE_REQUEST_ATTACHMENT"
+              sourceId={procedure?.id ? Number(procedure.id) : undefined}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => {}}
+            />
+          </div>
         }
       />
     </div>

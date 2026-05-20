@@ -1,14 +1,19 @@
 .my-badge-status {
-  display: flex;
-  align-items: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  width: fit-content;
+  max-width: 100%;
   box-sizing: border-box;
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   font-family: 'Inter Regular', sans-serif;
   font-size: 12px;
   line-height: 1.4;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  color: var(--badge-color);
+  background-color: color-mix(in srgb, var(--badge-color) 20%, transparent);
 }

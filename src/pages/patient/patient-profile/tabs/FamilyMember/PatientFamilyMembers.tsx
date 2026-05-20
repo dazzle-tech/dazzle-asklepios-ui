@@ -88,14 +88,30 @@ const PatientFamilyMembers = ({ localPatient }) => {
   };
 
   const handleNewRelative = () => {
+    if (localPatient?.isUnknown) {
+      dispatch(
+        notify({
+          msg: "This Patient in unkown , you can't add relative for unkown patient",
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     setSelectedPatientRelation(null);
     setRelationModalOpen(true);
   };
 
-  const handleEditRelative = () => {
-    if (!selectedPatientRelation?.id) return;
-    setRelationModalOpen(true);
-  };
+    const handleEditRelative = () => {
+      if (!selectedPatientRelation?.id) return;
+
+      setSelectedPatientRelation(prev => ({
+        ...prev,
+        relativePatientId: prev?.relativePatient?.id
+      }));
+
+      setRelationModalOpen(true);
+    };
 
 // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

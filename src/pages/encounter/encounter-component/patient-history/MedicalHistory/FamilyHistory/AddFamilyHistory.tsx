@@ -176,12 +176,12 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       if (formData.id) {
         await updateFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history added successfully', sev: 'success' }));
+        setFormData({ ...emptyFamilyHistory, patientId: Number(patient?.id) });
       }
-
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, FAMILY_HISTORY_ERROR_MAP);
     }
@@ -192,7 +192,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Condition"
         fieldName="condition"
@@ -202,7 +202,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Relation"
         fieldType="select"
@@ -217,7 +217,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Inherited Diseases"
         fieldType="checkbox"

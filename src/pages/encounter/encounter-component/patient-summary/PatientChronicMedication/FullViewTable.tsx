@@ -165,10 +165,22 @@ const FullViewTable = ({
   sortColumn,
   sortType,
   handlePageChange,
-  handleSortChange
+  handleSortChange,
+  activeIngredientsMap
 }) => {
 
  const tableColumns = [
+    {
+      key: 'activeIngredientId',
+    
+      title: 'Active Ingredients',
+      flexGrow: 1,
+      render: (rowData: any) => {
+       const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        return ingredient?.name ? String(ingredient.name) : '-';
+      }
+
+    },
       {
         key: 'medicationsId',
         dataKey: 'medicationsId',

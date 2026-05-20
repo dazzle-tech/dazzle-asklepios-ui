@@ -10,7 +10,7 @@ import {
 } from '@/services/patients/patientProcedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,7 +26,9 @@ import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 const FIELD_ORDER = [
+  'categoryId',
   'procedureId',
   'toFacilityId',
   'toDepartmentId',
@@ -39,6 +41,7 @@ const FIELD_ORDER = [
 ];
 
 const REQUIRED_FIELDS = [
+  'categoryId',
   'procedureId',
   'toFacilityId',
   'procedureLevel',
@@ -130,6 +133,7 @@ const handleProcedureCrudError = (
 };
 
 const PROCEDURE_ERROR_MAP: Record<string, string> = {
+  'categoryId.required': 'is required',
   'procedureId.required': 'is required',
   'toFacilityId.required': 'is required',
   'procedureLevel.required': 'is required',
@@ -154,6 +158,11 @@ const Details = ({
   const [procedurePage, setProcedurePage] = useState(0);
   const [procedureOptions, setProcedureOptions] = useState<any[]>([]);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const deptSize = 20;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   const [createProcedure] = useCreateProcdureMutation();
@@ -161,13 +170,12 @@ const Details = ({
 
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
-  const [getDepartmentsByFacility, { data: departmentListResponse }] =
-    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartmentsByFacility, { isFetching: deptLoading }] =
+    useLazyGetDepartmentByFacilityQuery();
 
   const [
     getProcedureByFacility,
@@ -176,70 +184,124 @@ const Details = ({
 
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
 
-  // ✅ جلب الـ departments لما يتغير الـ facility
-  useEffect(() => {
-    if (procedure?.toFacilityId) {
-      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
-    }
-  }, [procedure?.toFacilityId, getDepartmentsByFacility]);
+  const loadDepartments = async ({
+    facilityId,
+    page = 0,
+    append = false
+  }: {
+    facilityId: any;
+    page?: number;
+    append?: boolean;
+  }) => {
+    if (!facilityId) return;
+    try {
+      const response = await getDepartmentsByFacility({
+        facilityId,
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
 
-  // ✅ جلب الـ procedures — مع تصفير فوري عند page 0
+      const rows = response?.data ?? [];
+      const nextLink = response?.links?.next ?? null;
+
+      setDeptHasMore(Boolean(nextLink));
+      setDeptNextLink(nextLink);
+
+      if (append) {
+        setAllDepartments(prev => {
+          const seen = new Set(prev.map((d: any) => d.id));
+          return [...prev, ...rows.filter((d: any) => !seen.has(d.id))];
+        });
+      } else {
+        setAllDepartments(rows);
+      }
+    } catch {
+      setAllDepartments([]);
+    }
+  };
+
   useEffect(() => {
     const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
 
-    if (facilityId && procedure.categoryKey) {
+    if (facilityId && procedure.categoryId) {
       if (procedurePage === 0) {
-        setProcedureOptions([]);
+        setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
       }
       getProcedureByFacility({
         facilityId,
-        category: procedure.categoryKey,
+        category: procedure.categoryId,
         page: procedurePage,
         size: 20,
         sort: 'name,asc'
       });
     } else {
-      setProcedureOptions([]);
+      setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
     }
   }, [
     procedure?.toFacilityId,
     authSlice?.selectedDepartment?.facilityId,
-    procedure.categoryKey,
+    procedure.categoryId,
     procedurePage,
     getProcedureByFacility
   ]);
 
-  // ✅ تجميع الـ pages
   useEffect(() => {
-    if (procedureByFacility?.data) {
-      if (procedurePage === 0) {
-        setProcedureOptions(procedureByFacility.data);
+    if (!procedureByFacility?.data) return;
+
+    const apiData = procedureByFacility.data;
+
+    if (procedurePage === 0) {
+      const selectedInApi = apiData.some(
+        (p: any) => p.id === procedure?.procedureId
+      );
+
+      if (procedure?.procedureObj && !selectedInApi) {
+        setProcedureOptions([procedure.procedureObj, ...apiData]);
       } else {
-        setProcedureOptions(prev => [...prev, ...procedureByFacility.data]);
+        setProcedureOptions(apiData);
       }
+    } else {
+      setProcedureOptions(prev => {
+        const existingIds = new Set(prev.map((p: any) => p.id));
+        const merged = [...prev];
+        apiData.forEach((p: any) => {
+          if (!existingIds.has(p.id)) merged.push(p);
+        });
+        return merged;
+      });
     }
   }, [procedureByFacility?.data]);
 
-  // ✅ لما يتغير الـ currentDepartment
   useEffect(() => {
     if (procedure.currentDepartment) {
-      setProcedure({
-        ...procedure,
-        toDepartmentId: null,
-        toFacilityId: authSlice?.selectedDepartment?.facilityId
-      });
-    }
-  }, [procedure.currentDepartment]);
-
-  // ✅ تصفير الـ department لما يُمسح الـ facility
-  useEffect(() => {
-    if (!procedure?.toFacilityId) {
       setProcedure(prev => ({
         ...prev,
-        toDepartmentId: null
+        toDepartmentId: null,
+        toFacilityId: authSlice?.selectedDepartment?.facilityId
       }));
     }
+  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
+
+  // Reset & reload departments whenever facility changes
+  useEffect(() => {
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
+
+    if (!procedure?.toFacilityId) {
+      setProcedure(prev => ({ ...prev, toDepartmentId: null }));
+      return;
+    }
+
+    loadDepartments({ facilityId: procedure.toFacilityId, page: 0 });
   }, [procedure?.toFacilityId]);
+
+  useEffect(() => {
+    setProcedurePage(0);
+    setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
+  }, [procedure?.categoryId, procedure?.toFacilityId]);
 
   const hasMoreProcedures = procedureByFacility?.links?.next != null;
 
@@ -252,6 +314,10 @@ const Details = ({
   const handleClear = () => {
     setProcedureOptions([]);
     setProcedurePage(0);
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
     setProcedure({
       indicationId: null,
       bodyPart: '',
@@ -260,8 +326,10 @@ const Details = ({
       priority: null,
       procedureLevel: 'MINOR',
       toDepartmentId: null,
-      categoryKey: null,
+      categoryId: null,
       procedureId: null,
+      procedureObj: null,
+      procedureName: null,
       encounterId: encounter?.id,
       patientId: patient?.id,
       currentDepartment: true,
@@ -271,7 +339,61 @@ const Details = ({
     });
   };
 
+  const validateRequiredFields = (): boolean => {
+    const FIELD_LABELS: Record<string, string> = {
+      categoryId: 'category type',
+      procedureId: 'procedure name',
+      toFacilityId: 'facility',
+      procedureLevel: 'procedure level',
+      priority: 'priority',
+      scheduledDateTime: 'scheduled date time',
+      bodyPart: 'body part'
+    };
+
+    const valuesMap: Record<string, any> = {
+      categoryId: procedure.categoryId,
+      procedureId: procedure.procedureId,
+      toFacilityId: procedure.toFacilityId,
+      procedureLevel: procedure.procedureLevel,
+      priority: procedure.priority,
+      scheduledDateTime: procedure.scheduledDateTime,
+      bodyPart: procedure.bodyPart
+    };
+
+    const missing: string[] = [];
+
+    REQUIRED_FIELDS.forEach(field => {
+      const value = valuesMap[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      if (isEmpty) {
+        missing.push(FIELD_LABELS[field] ?? field);
+      }
+    });
+
+    if (missing.length > 0) {
+      const lines = missing.map(label => `• ${label}: is required`).join('\n');
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       const procedureData = {
         procedureId: procedure.procedureId,
@@ -299,10 +421,12 @@ const Details = ({
         await updateProcedure({
           id: procedure.id,
           procedureId: procedure.procedureId,
-          indicationId: procedure.indicationId,
+          indicationId: Array.isArray(procedure.indicationId)
+            ? procedure.indicationId[0]
+            : procedure.indicationId,
           procedureLevel: procedure.procedureLevel,
           priority: procedure.priority,
-          bodyPart: procedure.bodyPart,
+          bodyPart: procedure.bodyPart || '',
           side: procedure.side,
           toFacilityId: procedure.currentDepartment
             ? authSlice?.selectedDepartment?.facilityId
@@ -318,9 +442,9 @@ const Details = ({
         await createProcedure(procedureData).unwrap();
       }
 
-      proRefetch();
       setOpenDetailsModal(false);
       handleClear();
+      proRefetch();
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       handleProcedureCrudError(error, dispatch, PROCEDURE_ERROR_MAP, procedure);
@@ -334,7 +458,7 @@ const Details = ({
   return (
     <>
       <AdvancedModal
-        size="60vw"
+        size="80vw"
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
         actionButtonFunction={handleSave}
@@ -387,21 +511,24 @@ const Details = ({
                         width="100%"
                         fieldType="select"
                         fieldLabel="Category Type"
-                        selectData={CategoryLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="categoryKey"
+                        selectData={categoryOptions ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        fieldName="categoryId"
                         record={procedure}
                         setRecord={updatedProcedure => {
                           setProcedure({
                             ...updatedProcedure,
-                            procedureId: null
+                            procedureId: null,
+                            procedureObj: null,
+                            procedureName: null
                           });
+                          setProcedurePage(0);
                         }}
                         required
                       />
 
-                      {procedure?.categoryKey && (
+                      {procedure?.categoryId && (
                         <MyInput
                           column
                           width="100%"
@@ -423,20 +550,30 @@ const Details = ({
                         />
                       )}
 
-                      {procedure?.categoryKey && (
+                      {procedure?.categoryId && (
                         <MyInput
                           width="100%"
                           fieldLabel="Department"
                           fieldName="toDepartmentId"
-                          fieldType="select"
-                          selectData={
-                            Array.isArray(departmentListResponse) ? departmentListResponse : []
-                          }
+                          fieldType="selectPagination"
+                          selectData={allDepartments}
                           selectDataLabel="name"
                           selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
                           disabled={!procedure?.toFacilityId}
+                          loading={deptLoading}
+                          hasMore={deptHasMore}
+                          onFetchMore={async () => {
+                            if (!deptNextLink || !procedure?.toFacilityId) return;
+                            const { page } = extractPaginationFromLink(deptNextLink);
+                            setDeptPage(page);
+                            await loadDepartments({
+                              facilityId: procedure.toFacilityId,
+                              page,
+                              append: true
+                            });
+                          }}
                           required
                         />
                       )}
@@ -548,6 +685,7 @@ const Details = ({
                         record={procedure}
                         setRecord={setProcedure}
                         required
+                        disablePastDates
                       />
                     }
                   />

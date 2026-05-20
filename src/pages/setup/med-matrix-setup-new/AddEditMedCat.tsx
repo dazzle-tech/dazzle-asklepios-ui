@@ -43,7 +43,7 @@ const AddEditMedCat = ({ open, setOpen, medCategory, setMedCategory, edit_new, r
         <Form layout="inline" fluid>
           <div className="container-of-two-fields-vaccine">
             <MyInput
-              width={250}
+              width={"100%"}
               column
               fieldLabel="Name"
               fieldName="name"
@@ -69,7 +69,7 @@ const AddEditMedCat = ({ open, setOpen, medCategory, setMedCategory, edit_new, r
         open={open}
         setOpen={setOpen}
         title="New/Edit Therapeutic Category "
-        size="sm"
+        size="33vw"
         bodyheight="65vh"
         content={<div dir={dir}>{conjureFormContentOfModal()}</div>}
         hideCancel={false}

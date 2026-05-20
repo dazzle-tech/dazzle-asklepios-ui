@@ -1,36 +1,99 @@
 .dashboard-dark {
+  color: #ffffff !important;
+
+  .rs-panel,
+  .rs-panel-body,
+  .rs-panel-header {
     color: #ffffff !important;
+  }
 
-    .rs-panel,
-    .rs-panel-body,
-    .rs-panel-header {
-        color: #ffffff !important;
-    }
+  /* 🔥 أهم سطر - يخلي العنوان responsive */
+  .rs-panel-header {
+    font-size: clamp(14px, 2vw, 22px) !important;
+    line-height: 1.2;
+  }
 
-    .rs-panel-header span {
-        color: #ffffff !important;
-    }
+  .rs-panel-header span {
+    font-size: inherit !important;
+  }
 
-    .title-with-icon,
-    .title-with-icon span {
-        color: #ffffff !important;
-    }
+  .title-with-icon,
+  .title-with-icon span {
+    color: #ffffff !important;
+  }
 
-    .chart-subtitle {
-        color: #d1d5db !important;
-    }
+  .chart-subtitle {
+    color: #d1d5db !important;
+  }
 
-    table,
-    td,
-    th {
-        color: #ffffff !important;
-    }
+  table,
+  td,
+  th {
+    color: #ffffff !important;
+  }
 
-    .recharts-text {
-        fill: #ffffff !important;
-    }
+  .recharts-text {
+    fill: #ffffff !important;
+  }
 
-    svg {
-        color: #e5e7eb !important;
-    }
+  svg {
+    color: #e5e7eb !important;
+  }
+}
+
+/* 🔥 Title */
+.responsive-title {
+  font-size: clamp(14px, 2vw, 22px) !important;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* 🔥 Subtitle */
+.responsive-subtitle {
+  font-size: clamp(12px, 1.5vw, 16px) !important;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
+/* 🔥 Chart Container */
+.chart-container {
+  width: 100%;
+  height: 350px;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .chart-container {
+    height: 300px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 250px;
+  }
+
+  .responsive-title {
+    text-align: center;
+  }
+
+  .responsive-subtitle {
+    text-align: center;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .chart-container {
+    height: 200px;
+  }
+
+  .responsive-title {
+    font-size: 13px !important;
+  }
+
+  .responsive-subtitle {
+    font-size: 11px !important;
+  }
 }

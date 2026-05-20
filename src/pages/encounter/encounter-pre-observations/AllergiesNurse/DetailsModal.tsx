@@ -124,6 +124,10 @@ const DetailsModal = ({
     return values?.filter(Boolean)?.join(', ');
   };
 
+  useEffect(() => {
+    setShowAllFields(!!allerges?.id);
+  }, [allerges?.id]);
+
   return (
     <>
       <MyModal

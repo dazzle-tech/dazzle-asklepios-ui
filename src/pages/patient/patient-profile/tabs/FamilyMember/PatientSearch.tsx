@@ -5,12 +5,11 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import Translate from '@/components/Translate';
 
 import {
-  useLazyGetPatientsQuery,
   useLazyGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
   useLazyGetPatientsByDateOfBirthQuery,
-  useLazyGetPatientsByFullNameQuery,
+  useLazyGetPatientsByFullNameQuery
 } from '@/services/patient/patientService';
 
 import { Box, Skeleton } from '@mui/material';
@@ -19,7 +18,6 @@ import { Drawer, Form, Input, InputGroup, Button } from 'rsuite';
 import SearchIcon from '@rsuite/icons/Search';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-import { FaEllipsis } from 'react-icons/fa6';
 
 import './style.less';
 
@@ -46,8 +44,6 @@ const PatientSearch = ({
   const [isLastPage, setIsLastPage] = useState(true);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
-  // lazy endpoints
-  const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByDocumentNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
@@ -61,12 +57,13 @@ const PatientSearch = ({
     { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
     { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
     { label: <Translate>Date of Birth</Translate>, value: 'dob' },
-    { label: <Translate>Full Name</Translate>, value: 'fullName' },
+    { label: <Translate>Full Name</Translate>, value: 'fullName' }
   ];
 
   const filteredPatients = useMemo(() => {
-    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return patients;
-    return patients.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
+    const knownPatientsOnly = patients.filter(p => !p?.isUnknown);
+    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return knownPatientsOnly;
+    return knownPatientsOnly.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
   }, [patients, allowedSecondGenders]);
 
   const prepareTrigger = () => {
@@ -87,13 +84,11 @@ const PatientSearch = ({
 
   const buildParams = (pageIndex: number) => {
     const params: any = { page: pageIndex, size: PAGE_SIZE };
-
     if (selectedCriterion === 'patientMrn') params.mrn = searchKeyword;
     if (selectedCriterion === 'archivingNumber') params.archivingNumber = searchKeyword;
     if (selectedCriterion === 'phoneNumber') params.phone = searchKeyword;
     if (selectedCriterion === 'dob') params.date = searchKeyword;
     if (selectedCriterion === 'fullName') params.keyword = searchKeyword;
-
     return params;
   };
 
@@ -102,17 +97,15 @@ const PatientSearch = ({
     if (!effectiveTrigger) return;
 
     setIsLoadingPatients(true);
-
     try {
       const result = await effectiveTrigger(buildParams(pageIndex));
       const response = result?.data;
-
       const newData = response?.data ?? response?.object ?? [];
-      const last = response?.last ?? !(response?.links?.next);
+      const last = response?.last ?? !response?.links?.next;
 
       setPatients(prev => (pageIndex === 0 ? newData : [...prev, ...newData]));
       setIsLastPage(last);
-    } catch (e) {
+    } catch {
       dispatch(notify({ msg: 'Failed to load patients', sev: 'error' }));
       setPatients([]);
       setIsLastPage(true);
@@ -132,11 +125,9 @@ const PatientSearch = ({
 
     const fn = prepareTrigger();
     setTriggerFn(() => fn);
-
     setPage(0);
     setPatients([]);
     setIsLastPage(false);
-
     loadPage(0, fn);
   };
 
@@ -145,7 +136,7 @@ const PatientSearch = ({
       setSelectedPatientRelation({
         ...(selectedPatientRelation ?? {}),
         relativePatientId: patient.id,
-        relativePatient: patient,
+        relativePatient: patient
       });
     }
     setSearchResultVisible(false);
@@ -181,8 +172,12 @@ const PatientSearch = ({
         </Drawer.Title>
       </Drawer.Header>
 
-      {/* Search UI like ProfileSidebar */}
-      <Drawer.Actions>
+      {/*
+        ✅ FIX: moved search controls OUT of Drawer.Actions into Drawer.Body
+           Drawer.Actions is designed for buttons only — it clips form content.
+      */}
+      <Drawer.Body>
+        {/* ── Search controls ── */}
         <div className="patient-search-container">
           <Form fluid>
             <MyInput
@@ -197,7 +192,6 @@ const PatientSearch = ({
               placeholder="Select Search Criteria"
               searchable={false}
               cleanable={false}
-              width="auto"
             />
           </Form>
 
@@ -215,9 +209,8 @@ const PatientSearch = ({
             </InputGroup.Button>
           </InputGroup>
         </div>
-      </Drawer.Actions>
 
-      <Drawer.Body>
+        {/* ── Results ── */}
         <Box className="patient-list">
           {isLoadingPatients ? (
             Array.from({ length: 4 }).map((_, index) => (
@@ -231,7 +224,7 @@ const PatientSearch = ({
               </Box>
             ))
           ) : filteredPatients.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 20 }}>
+            <div className="patient-list-empty">
               <Translate>No patients found</Translate>
             </div>
           ) : (
@@ -243,7 +236,6 @@ const PatientSearch = ({
                   handleSelectPatient(patient);
                   handleClose();
                 }}
-
                 arrowDirection="right"
               />
             ))

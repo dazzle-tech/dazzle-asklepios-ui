@@ -111,6 +111,7 @@
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 .bt-right {
   display: flex;
@@ -943,7 +944,32 @@ form.margin-left-3 .rs-form-control-label {
 }
 
 .prescription-preview-container {
+  padding-left: 1px;
+  padding-right: 1px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.7vw;
+}
+
+.footer-buttons {
+  flex-wrap: nowrap;
+}
+
+.footer-buttons MyButton {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark{
+  .prescription-full-block{
+    color: var(--white);
+  }
+  
+  .indication-icd-label {
+    color: var(--white);
+  }
+
 }

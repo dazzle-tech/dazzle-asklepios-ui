@@ -92,12 +92,11 @@ export const patientAdministrativeWarningsService = createApi({
     // ============================
     resolvePatientAdministrativeWarning: builder.mutation<
       modelTypes.PatientAdministrativeWarningsResponseVM,
-      { id: Id; body: modelTypes.PatientAdministrativeWarningsResolveDTO }
+      { id: Id }
     >({
-      query: ({ id, body }) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-administrative-warnings/${id}/resolve`,
-        method: 'PATCH',
-        body
+        method: 'PATCH'
       }),
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientAdministrativeWarnings', id }
@@ -109,12 +108,11 @@ export const patientAdministrativeWarningsService = createApi({
     // ============================
     undoResolvePatientAdministrativeWarning: builder.mutation<
       modelTypes.PatientAdministrativeWarningsResponseVM,
-      { id: Id; body: modelTypes.PatientAdministrativeWarningsUndoResolveDTO }
+      { id: Id }
     >({
-      query: ({ id, body }) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-administrative-warnings/${id}/undo-resolve`,
-        method: 'PATCH',
-        body
+        method: 'PATCH'
       }),
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientAdministrativeWarnings', id }

@@ -6,6 +6,7 @@ import {
     useSaveProceduresMutation
 } from '@/services/procedureService';
 import { useGetLovValuesByCodeQuery, useGetProcedureListQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheck, faList, faPlay, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -26,7 +27,7 @@ import MyTab from '@/components/MyTab';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
-    const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+    const categoryOptions = useEnumOptions('ProcedureCategory');
     const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
@@ -109,9 +110,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     width={200}
                     fieldType="select"
                     fieldLabel="Category Type"
-                    selectData={CategoryLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={categoryOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     fieldName={'categoryKey'}
                     record={procedure}
                     setRecord={setProcedure}

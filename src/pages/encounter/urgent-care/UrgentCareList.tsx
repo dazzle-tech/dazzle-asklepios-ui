@@ -12,6 +12,8 @@ import {
   faCommentMedical,
   faUserNurse
 } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -61,6 +63,8 @@ import { Patient } from '@/types/model-types-new';
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
 
+dayjs.extend(duration);
+
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -77,10 +81,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw) {
@@ -108,7 +112,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'patient.department.date.duplicate':
-    'This patient already has an encounter for this department on this date.',
+    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
   'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
@@ -183,6 +187,7 @@ const UrgentCareList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
+
   useEffect(() => {
     dispatch(setPageCode('Urgent_Care_List'));
     dispatch(setDivContent('Urgent Care Department'));
@@ -218,6 +223,14 @@ const UrgentCareList = () => {
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
+  
+  
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
+
+  const [isSearchTriggered, setIsSearchTriggered] = useState(false);
+
+
 
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
@@ -244,16 +257,20 @@ const UrgentCareList = () => {
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const getDefaultDates = () => {
+  const now = new Date();
+  const lastWeek = new Date(now);
+  lastWeek.setDate(lastWeek.getDate() - 7);
 
-  const lastWeek = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d;
-  }, []);
+  return { now, lastWeek };
+};
 
-  const [dateFilter, setDateFilter] = useState({ fromDate: lastWeek, toDate: today });
+const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
+
+const [dateFilter, setDateFilter] = useState({
+  fromDate: initialLastWeek,
+  toDate: initialNow
+});
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
@@ -273,11 +290,10 @@ const UrgentCareList = () => {
   });
   const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
-  const [filterLoading, setFilterLoading] = useState(false);
 
   useEffect(() => {
     if (!departmentId) return;
-    triggerGetDepartmentById(Number(departmentId)).catch(() => {});
+    triggerGetDepartmentById(Number(departmentId)).catch(() => { });
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -285,87 +301,53 @@ const UrgentCareList = () => {
   }, [departmentData]);
 
   const handlePatientSearchClick = useCallback(() => {
-    setFilterLoading(true);
     setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
-    setSearchTick(prev => prev + 1);
   }, [patientSearchDraft]);
 
-  const filterParams = useMemo(() => {
-    if (!departmentId || !isEmergencyDepartment) return null;
-
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-    const chiefComplaint =
-      String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
-    const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
-    const normalizedPriorities =
-      uniqueNonEmpty(priorities) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
-
-    return {
-      departmentId: String(departmentId),
-      fromDate,
-      toDate,
-      statusIn: normalizedStatusIn,
-      patientName,
-      mrn,
-      encounterReasons: normalizedEncounterReasons,
-      chiefComplaint,
-      priorities: normalizedPriorities,
-      hasPrescription,
-      hasOrder,
-      isObserved,
-      page,
-      size: pageSize,
-      sort: DEFAULT_SORT,
-      timestamp: searchTick
-    };
-  }, [
-    DEFAULT_STATUS,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    departmentId,
-    encounterReasons,
-    hasOrder,
-    isObserved,
-    page,
-    pageSize,
-    priorities,
-    record,
-    statusIn,
-    todayStr,
-    hasPrescription,
-    patientSearchApplied,
-    searchTick,
-    isEmergencyDepartment
-  ]);
+  const filterParams = appliedFilters;
 
   const {
     data: encountersPaged,
-    isFetching: isEncountersFetching,
-    isLoading: isEncountersLoading,
-    refetch: refetchEncounters
-  } = useFilterEncountersQuery(filterParams as any, {
-    skip: !filterParams
+    isFetching,
+    isLoading,
+    refetch
+  } = useFilterEncountersQuery(appliedFilters, {
+    skip: !appliedFilters
   });
 
-  useEffect(() => {
-    if (!isEncountersFetching) {
-      setFilterLoading(false);
-    }
-  }, [isEncountersFetching]);
+useEffect(() => {
+  if (!isFetching && isSearchTriggered) {
+    setIsSearchTriggered(false);
+  }
+}, [isFetching, isSearchTriggered]);
+
+useEffect(() => {
+  if (!filterParams && departmentId && isEmergencyDepartment) {
+    const fromDate = toISODate(dateFilter.fromDate);
+    const toDate = toISODate(dateFilter.toDate);
+
+    setAppliedFilters({
+      departmentId: String(departmentId),
+      fromDate,
+      toDate,
+      statusIn: DEFAULT_STATUS,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+  }
+}, [departmentId, isEmergencyDepartment]);
 
   const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
 
   const dateRangeCountParams = useMemo(
     () => ({
       departmentId: String(departmentId ?? ''),
-      fromDate: toISODate(dateFilter.fromDate) ?? todayStr,
-      toDate: toISODate(dateFilter.toDate) ?? todayStr
+      fromDate: toISODate(dateFilter.fromDate),
+      toDate: toISODate(dateFilter.toDate)
     }),
-    [departmentId, dateFilter.fromDate, dateFilter.toDate, todayStr]
+    [departmentId, dateFilter.fromDate, dateFilter.toDate]
   );
 
   const { data: totalErPatientsCount } = useCountDepartmentTotalByDateRangeQuery(
@@ -408,7 +390,7 @@ const UrgentCareList = () => {
 
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
@@ -437,7 +419,7 @@ const UrgentCareList = () => {
       const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
 
       const fullName =
-        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
+        [firstName, secondName, lastName].filter(Boolean).join(' ').trim() || '-';
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
@@ -505,12 +487,12 @@ const UrgentCareList = () => {
 
   useEffect(() => {
     if (!isEmergencyDepartment || roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
+    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, roomIdsFromAssignments, getRoomsByIds]);
 
   useEffect(() => {
     if (!isEmergencyDepartment || bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
+    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, bedIdsFromAssignments, getBedsByIds]);
 
   const roomsMap = useMemo(() => {
@@ -565,24 +547,24 @@ const UrgentCareList = () => {
         resolvedBed: bedFromApi,
         apRoom: roomFromApi?.name
           ? {
-              ...(row?.apRoom ?? {}),
-              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
+            ...(row?.apRoom ?? {}),
+            key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+            name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
+          }
           : row?.apRoom,
         apBed: bedFromApi?.name
           ? {
-              ...(row?.apBed ?? {}),
-              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
+            ...(row?.apBed ?? {}),
+            key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+            name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
+          }
           : row?.apBed
       };
     });
   }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
 
   const handleRefreshAfterBedChange = useCallback(async () => {
-    await refetchEncounters();
+    await refetch();
 
     const refreshedAssignmentsResult = await refetchActiveAssignments();
     const refreshedAssignments = refreshedAssignmentsResult?.data ?? activeAssignments ?? [];
@@ -610,19 +592,27 @@ const UrgentCareList = () => {
     if (refreshedBedIds.length > 0) {
       await getBedsByIds({ ids: refreshedBedIds }).unwrap();
     }
-  }, [
-    refetchEncounters,
-    refetchActiveAssignments,
-    getRoomsByIds,
-    getBedsByIds,
-    activeAssignments
-  ]);
+  }, [refetch, refetchActiveAssignments, getRoomsByIds, getBedsByIds, activeAssignments]);
 
   const getEncounterId = (row: any) => row?.id ?? null;
+
+  const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
   const startEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
+
+    const statusUpper = String(row?.status ?? '').toUpperCase();
+
+    if (statusUpper === 'ONGOING') {
+      return true;
+    }
+
+    if (startingEncounterIdsRef.current.has(encounterId)) {
+      return false;
+    }
+
+    startingEncounterIdsRef.current.add(encounterId);
 
     try {
       await startEncounter({ id: encounterId }).unwrap();
@@ -630,6 +620,8 @@ const UrgentCareList = () => {
     } catch (error: any) {
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
+    } finally {
+      startingEncounterIdsRef.current.delete(encounterId);
     }
   };
 
@@ -685,11 +677,7 @@ const UrgentCareList = () => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
+    navigate('/encounter', {
       state: {
         info: 'toEncounter',
         fromPage: 'Urgent_Care_List',
@@ -698,13 +686,9 @@ const UrgentCareList = () => {
       }
     });
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleGoToNurseStation = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
-
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -717,11 +701,7 @@ const UrgentCareList = () => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const targetPath = fullPatient?.isPrivatePatient
-      ? '/user-access-patient-private'
-      : '/nurse-station';
-
-    navigate(targetPath, {
+    navigate('/nurse-station', {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : 'toNurseStation',
         fromPage: 'Urgent_Care_List',
@@ -738,7 +718,7 @@ const UrgentCareList = () => {
     const isCancelled = await cancelEncounterSafe(encounter);
     if (!isCancelled) return;
 
-    refetchEncounters();
+    refetch();
     setOpen(false);
   };
 
@@ -752,25 +732,45 @@ const UrgentCareList = () => {
   }, []);
 
   const handleGoToViewTriage = (encounterData: any, patientData: any) => {
-    navigate('/view-triage', {
+    navigate('/urgent-care-view-triage', {
       state: {
-        from: 'ER_Waiting_List',
-        info: 'toViewTriage',
+        from: 'Urgent_Care_List',
+        info: 'toUrgentCareViewTriage',
         patient: patientData,
         encounter: encounterData
       }
     });
   };
 
+  const calculateDoorToPhysician = (createdAt: string, startedDate: string) => {
+    if (!createdAt || !startedDate) return '-';
+
+    const diff = dayjs(startedDate).diff(dayjs(createdAt));
+    const dur = dayjs.duration(diff);
+
+    const minutes = Math.floor(dur.asMinutes());
+
+    return `${minutes} min`;
+  };
+
   const handleClearFilters = () => {
     const now = new Date();
-    const lastWeekDate = new Date(now);
-    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
 
-    setFilterLoading(true);
-    setRecord({});
-    setDateFilter({ fromDate: lastWeekDate, toDate: now });
-    setStatusIn(DEFAULT_STATUS);
+    const clearedDateFilter = {
+      fromDate: new Date(lastWeek.getTime()),
+      toDate: new Date(now.getTime() + 1000)
+    };
+
+    const fromDate = toISODate(clearedDateFilter.fromDate);
+    const toDate = toISODate(clearedDateFilter.toDate);
+
+    setRecord({ chiefComplain: '' });
+
+    setDateFilter({ ...clearedDateFilter });
+
+    setStatusIn([...DEFAULT_STATUS]);
     setEncounterReasons([]);
     setPriorities([]);
     setHasPrescription(undefined);
@@ -778,11 +778,23 @@ const UrgentCareList = () => {
     setIsObserved(undefined);
 
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
-    setPatientSearchDraft(clearedSearch);
-    setPatientSearchApplied(clearedSearch);
+    setPatientSearchDraft({ ...clearedSearch });
+    setPatientSearchApplied({ ...clearedSearch });
 
     setPage(0);
-    setSearchTick(prev => prev + 1);
+    setIsSearchTriggered(false);
+
+    setAppliedFilters({
+      departmentId: String(departmentId),
+      fromDate,
+      toDate,
+      statusIn: [...DEFAULT_STATUS],
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+
+    setFiltersKey(prev => prev + 1);
   };
 
   const tableColumns = [
@@ -831,11 +843,28 @@ const UrgentCareList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      render: (row: any) => {
+        const text = row?.chiefComplaint || '-';
+
+        const speaker = (
+          <Tooltip>
+            {text}
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="chief-complaint-cell">
+              {text}
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'location',
       title: 'LOCATION',
+      expandable: true,
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
 
@@ -924,7 +953,33 @@ const UrgentCareList = () => {
     {
       key: 'encounterDate',
       title: 'DATE',
+      expandable: true,
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
+    },
+    {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
+    },
+    {
+      key: 'doorToPhysician',
+      title: 'DOOR TO PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        calculateDoorToPhysician(row?.createdAt, row?.startedDate)
     },
     {
       key: 'status',
@@ -1002,7 +1057,11 @@ const UrgentCareList = () => {
                   onClick={() => {
                     setLocalEncounter(row);
                     setLocalPatient(row?.patientObject ?? { ...newPatient });
-                    setOpenNurseAssessment(true);
+                    if (row?.isObserved) {
+                      handleGoToNurseStation(row);
+                    } else {
+                      setOpenNurseAssessment(true);
+                    }
                   }}
                 >
                   <FontAwesomeIcon icon={faUserNurse} />
@@ -1073,65 +1132,93 @@ const UrgentCareList = () => {
 
   const filters = () => (
     <>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={v => {
-            setFilterLoading(true);
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
+      <div key={filtersKey}>
+        
+        <Form layout="inline" fluid className="date-filter-form">
 
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={v => {
-            setFilterLoading(true);
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={v => {
+              setDateFilter(v);
+              setPage(0);
+            }}
+          />
 
-        <SearchPatientCriteria
-          record={patientSearchDraft}
-          setRecord={setPatientSearchDraft}
-          onSearchClick={handlePatientSearchClick}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={v => {
+              setDateFilter(v);
+              setPage(0);
+            }}
+          />
 
-        <MyInput
-          column
-          width={260}
-          fieldType="checkPicker"
-          fieldLabel="Encounter Status"
-          fieldName="statusIn"
-          selectData={EncounterStatusEnum}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={{ statusIn }}
-          setRecord={(v: any) => {
-            setFilterLoading(true);
-            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
-            setPage(0);
-          }}
-        />
-      </Form>
+          <SearchPatientCriteria
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
+          />
+
+          <MyInput
+            column
+            width={260}
+            fieldType="checkPicker"
+            fieldLabel="Encounter Status"
+            fieldName="statusIn"
+            selectData={EncounterStatusEnum}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ statusIn }}
+            setRecord={(v: any) => {
+              setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+              setPage(0);
+            }}
+          />
+
+        </Form>
+
+      </div>
 
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
+        searchOnClick={() => {
+          const fromDate = toISODate(dateFilter.fromDate);
+          const toDate = toISODate(dateFilter.toDate);
+
+          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+
+          setAppliedFilters({
+            departmentId: String(departmentId),
+            fromDate,
+            toDate,
+            statusIn: uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS,
+            patientName,
+            mrn,
+            encounterReasons: uniqueNonEmpty(encounterReasons),
+            chiefComplaint: record?.chiefComplain || undefined,
+            priorities: uniqueNonEmpty(priorities),
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page,
+            size: pageSize,
+            sort: DEFAULT_SORT
+          });
+        }}
         content={
           <div className="advanced-filters">
-            <Form key={JSON.stringify(record)} fluid className="dissss">
+            <Form fluid className="dissss">
+
               <MyInput
                 fieldName="encounterReasons"
                 fieldType="checkPicker"
@@ -1141,9 +1228,10 @@ const UrgentCareList = () => {
                 fieldLabel="Encounter Reason"
                 record={{ encounterReasons }}
                 setRecord={(v: any) => {
-                  setFilterLoading(true);
                   const raw = Array.isArray(v) ? v : v?.encounterReasons;
-                  setEncounterReasons(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
+                  setEncounterReasons(
+                    Array.isArray(raw) ? raw.map(String).filter(Boolean) : []
+                  );
                   setPage(0);
                 }}
                 searchable
@@ -1155,11 +1243,7 @@ const UrgentCareList = () => {
                 fieldName="chiefComplain"
                 fieldType="text"
                 record={record}
-                setRecord={v => {
-                  setFilterLoading(true);
-                  setRecord(v);
-                  setPage(0);
-                }}
+                setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
 
@@ -1169,7 +1253,6 @@ const UrgentCareList = () => {
                 fieldType="checkPicker"
                 record={{ priorities }}
                 setRecord={(v: any) => {
-                  setFilterLoading(true);
                   setPriorities(Array.isArray(v?.priorities) ? v.priorities : []);
                   setPage(0);
                 }}
@@ -1180,6 +1263,7 @@ const UrgentCareList = () => {
                 fieldLabel="Priority"
                 searchable={true}
               />
+
             </Form>
           </div>
         }
@@ -1187,17 +1271,16 @@ const UrgentCareList = () => {
     </>
   );
 
-  const tableLoading =
-    filterLoading ||
-    isDepartmentFetching ||
-    isEncountersLoading ||
-    isEncountersFetching ||
-    patientsBulkLoading ||
-    isAssignmentsLoading ||
-    isAssignmentsFetching ||
-    isRoomsByIdsLoading ||
-    isBedsByIdsLoading;
-
+const tableLoading =
+  isDepartmentFetching ||
+  isLoading ||
+  isFetching ||
+  patientsBulkLoading ||
+  isAssignmentsLoading ||
+  isAssignmentsFetching ||
+  isRoomsByIdsLoading ||
+  isBedsByIdsLoading;
+  
   if (!departmentId) {
     return (
       <Panel>
@@ -1208,18 +1291,18 @@ const UrgentCareList = () => {
     );
   }
 
-  if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
-    return (
-      <Panel>
-        <div className="encounter-list__no-department">
-          <p>
-            User Current Department should be Emergency to View This Screen, so no ER encounters are
-            available.
-          </p>
-        </div>
-      </Panel>
-    );
-  }
+  // if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
+  //   return (
+  //     <Panel>
+  //       <div className="encounter-list__no-department">
+  //         <p>
+  //           User Current Department should be Emergency to View This Screen, so no ER encounters are
+  //           available.
+  //         </p>
+  //       </div>
+  //     </Panel>
+  //   );
+  // }
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -1309,7 +1392,7 @@ const UrgentCareList = () => {
         open={openTransferPatientModal}
         setOpen={setOpenTransferPatientModal}
         localEncounter={encounter}
-        refetchInpatientList={refetchEncounters}
+        refetchInpatientList={refetch}
       />
 
       <MyModal

@@ -22,6 +22,7 @@ import { useLocation } from 'react-router-dom';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { MdModeEdit } from 'react-icons/md';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 const REFERRAL_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Referral request data is required.',
@@ -91,6 +92,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 const ReferralRequest = () => {
   const { state } = useLocation();
   const { patient, encounter } = state || {};
+  const viewMode = state?.viewMode;
+  const edit = viewMode === 'readOnly';
+
 
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
@@ -223,13 +227,10 @@ const ReferralRequest = () => {
     const missingFields: string[] = [];
 
     if (!referral?.referralType) missingFields.push('Referral Type');
+    if (!referral?.toFacilityId) missingFields.push('To Facility');
+    if (!referral?.toDepartmentId) missingFields.push('To Department');
     if (!referral?.priority) missingFields.push('Priority');
     if (!referral?.referralReason) missingFields.push('Referral Reason');
-    if (!referral?.toDepartmentId) missingFields.push('To Department');
-
-    if (referral?.referralType === 'EXTERNAL' && !referral?.toFacilityId) {
-      missingFields.push('To Facility');
-    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
@@ -293,6 +294,42 @@ const ReferralRequest = () => {
   };
 
   const isSelected = (rowData: any) => (rowData?.id === referral?.id ? 'selected-row' : '');
+
+
+  const UserFullNameCell = ({ login }: { login?: string | null }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+      skip: !login
+    });
+
+    if (!login) {
+      return <span>-</span>;
+    }
+
+    return <span>{fullName || login}</span>;
+  };
+
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string | null;
+    date?: string | null;
+  }) => {
+    if (!login && !date) {
+      return <span>-</span>;
+    }
+
+    return (
+      <>
+        <UserFullNameCell login={login} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : '-'}
+        </span>
+      </>
+    );
+  };
+
 
   const tableColumns = [
     {
@@ -361,31 +398,23 @@ const ReferralRequest = () => {
       title: <Translate>Created By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.createdBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.createdDate ? formatDateWithoutSeconds(row.createdDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
       )
     },
-
     {
       key: 'acceptedBy',
       title: <Translate>Accepted By/At</Translate>,
       flexGrow: 3,
       expandable: true,
       render: (row: any) => (
-        <>
-          {row?.acceptedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.acceptedDate ? formatDateWithoutSeconds(row.acceptedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.acceptedBy}
+          date={row?.acceptedDate}
+        />
       )
     },
     {
@@ -393,15 +422,11 @@ const ReferralRequest = () => {
       title: <Translate>Rejected By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.rejectedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.rejectedDate ? formatDateWithoutSeconds(row.rejectedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.rejectedBy}
+          date={row?.rejectedDate}
+        />
       )
     },
     {
@@ -452,6 +477,7 @@ const ReferralRequest = () => {
     const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir} className={edit ? 'disabled-panel' : ''}>
     <Panel dir={dir}>
       <div style={{ position: 'relative' }}>
         {listsLoading && (
@@ -529,6 +555,7 @@ const ReferralRequest = () => {
         fieldName="cancelReason"
       />
     </Panel>
+  </div>
   );
 };
 

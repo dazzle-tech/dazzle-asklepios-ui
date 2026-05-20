@@ -10,7 +10,6 @@ import {
   useAddHospitalizationMutation,
   useUpdateHospitalizationMutation
 } from '@/services/patients/hospitalizationsService';
-import { newHospitalization } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import Translate from '@/components/Translate';
@@ -107,7 +106,16 @@ const PATIENT_ADMISSION_ERROR_MAP: Record<string, string> = {
 
 const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<any>(newHospitalization);
+  const [formData, setFormData] = useState<any>({
+    facility: '',
+    reason: '',
+    admissionType: '',
+    dateOfAdmission: null,
+    lengthOfStayDays: null,
+    outcomes: '',
+    medicalInterventionsPerformed: '',
+    patientId: null
+  });
 
   /*  LOAD  */
 
@@ -119,7 +127,13 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       });
     } else {
       setFormData({
-        ...newHospitalization,
+        facility: '',
+        reason: '',
+        admissionType: '',
+        dateOfAdmission: null,
+        lengthOfStayDays: null,
+        outcomes: '',
+        medicalInterventionsPerformed: '',
         patientId: Number(patient?.id)
       });
     }
@@ -168,11 +182,21 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       if (formData.id) {
         await updateHospitalization(payload).unwrap();
         dispatch(notify({ msg: 'Hospitalization updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addHospitalization(payload).unwrap();
         dispatch(notify({ msg: 'Hospitalization added successfully', sev: 'success' }));
+        setFormData({
+          facility: '',
+          reason: '',
+          admissionType: '',
+          dateOfAdmission: null,
+          lengthOfStayDays: null,
+          outcomes: '',
+          medicalInterventionsPerformed: '',
+          patientId: Number(patient?.id)
+        });
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_ADMISSION_ERROR_MAP);
     }
@@ -183,7 +207,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Facility"
         fieldName="facility"
@@ -193,7 +217,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Reason"
         fieldName="reason"
@@ -203,7 +227,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Admission Type"
         fieldName="admissionType"
@@ -213,20 +237,26 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Date of admission"
         fieldType="date"
         fieldName="dateOfAdmission"
         record={formData}
         setRecord={setFormData}
+        disableFutureDates
         required
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
-        fieldLabel={<span><Translate>Length of stay</Translate><Translate>(Days)</Translate></span>}
+        fieldLabel={
+          <span>
+            <Translate>Length of stay</Translate>
+            <Translate>(Days)</Translate>
+          </span>
+        }
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}
@@ -234,7 +264,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'100%'}
         column
         fieldLabel="Outcomes"
         fieldName="outcomes"
@@ -243,7 +273,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={300}
+        width={'100%'}
         column
         fieldLabel="Medical Interventions Performed"
         fieldType="textarea"
@@ -254,12 +284,10 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
-  /*  MODAL  */
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal

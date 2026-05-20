@@ -30,12 +30,17 @@ import Translate from '@/components/Translate';
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-
+  const [activeTab, setActiveTab] = useState('1');
   const outletContext = useOutletContext<any>();
 
   const patient = props.patient || location.state?.patient || outletContext?.patient;
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? outletContext?.edit ?? false;
+
+  const viewMode = props.viewMode ?? location.state?.viewMode ?? outletContext?.viewMode;
+
+  const edit =
+    viewMode === 'readOnly' || (props.edit ?? location.state?.edit ?? outletContext?.edit ?? false);
+
   const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
 
   const encounterId = encounterFromNav?.id || location.state?.encounter?.id;
@@ -93,10 +98,16 @@ const SOAP = props => {
     chiefComplaint: encounter?.chiefComplaint ?? null,
     hasPrescription: Boolean(encounter?.hasPrescription),
     hasOrder: Boolean(encounter?.hasOrder),
-    isObserved: Boolean(encounter?.isObserved)
+    isObserved: Boolean(encounter?.isObserved),
+    physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null
   });
 
   const saveChanges = async () => {
+    if (!localEncounter?.chiefComplaint?.trim()) {
+      dispatch(notify({ msg: 'Chief Complaint cannot be empty.', sev: 'warning' }));
+      return;
+    }
+
     try {
       const idToUpdate = localEncounter?.id ?? encounterId;
 
@@ -143,10 +154,13 @@ const SOAP = props => {
     {
       title: 'Visit Details',
       content: (
-        <div className={clsx('column-container', { 'disabled-panel': edit })}>
+        <div
+          className={clsx('column-container', { 'disabled-panel': edit })}
+          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+        >
           <div className="top-section">
             <SectionContainer
-              title={<Translate>Chief </Translate>}
+              title={<Translate>Chief Complaint </Translate>}
               content={
                 <Form fluid>
                   <MyInput
@@ -202,7 +216,14 @@ const SOAP = props => {
     },
     {
       title: 'Physical Examination & Findings',
-      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+      content: (
+        <div
+          className={clsx('column-container', { 'disabled-panel': edit })}
+          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+        >
+          <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+        </div>
+      )
     }
   ];
 
@@ -221,12 +242,7 @@ const SOAP = props => {
 
   return (
     <div className="patient-summary-container">
-      <MyTab
-        data={tabData.map(tab => ({
-          ...tab,
-          content: <div dir={dir}>{tab.content}</div>
-        }))}
-      />
+      <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
     </div>
   );
 };

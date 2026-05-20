@@ -1,6 +1,6 @@
 import { BaseQuery } from "@/newApi";
 import { UserDepartment } from "@/types/model-types-new";
-import { createApi } from "@reduxjs/toolkit/dist/query/react";
+import { createApi } from '@reduxjs/toolkit/query/react';
 
 export const userDepartmentService = createApi({
   reducerPath: 'newUserDepartmentApi',

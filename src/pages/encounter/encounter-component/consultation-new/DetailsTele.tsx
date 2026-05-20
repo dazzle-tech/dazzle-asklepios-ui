@@ -127,6 +127,8 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'already.cancelled': 'Telephonic consultation already cancelled.',
   'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
 
+  'unique.approval_number': 'Approval Number already exists. Please use a different approval number.',
+
   'db.constraint': 'Database constraint violation.'
 };
 
@@ -175,47 +177,52 @@ const DetailsTele = ({
       setFormData({
         ...newTelephonicConsultation,
         patientId: patient?.id,
-        encounterId: encounter?.id
+        encounterId: encounter?.id,
+        practitionerId: null
       });
+
       setPractitioner({ ...newPractitioner });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.id, encounter?.id]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !consultationOrders?.practitionerId) return;
+    if (!open || !consultationOrders?.id) return;
+    if (!consultationOrders?.practitionerId) return;
+
     triggerGetPractitionerById(consultationOrders.practitionerId);
-  }, [open, consultationOrders?.practitionerId]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !practitionerLoaded || !practitionerById) return;
+    if (!open || !consultationOrders?.id) return;
+    if (!practitionerLoaded || !practitionerById) return;
 
     setPractitioner({
       ...newPractitioner,
       facilityId: practitionerById.facilityId
     });
-
-    setAllPractitioners([practitionerById]);
     setPractitionerPage(0);
+    setFormData(prev => ({ ...prev, practitionerId: practitionerById.id }));
 
     triggerGetPractitionersByFacility({
       facilityId: practitionerById.facilityId,
       page: 0,
       size: pageSize,
       sort: 'id,asc'
+    }).then(result => {
+      const list = result?.data?.data ?? [];
+      const existingIds = new Set([practitionerById.id]);
+      const others = list.filter((p: any) => !existingIds.has(p.id));
+      setAllPractitioners([practitionerById, ...others]);
     }).catch(err => {
-      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      setAllPractitioners([practitionerById]);
     });
-
-    setFormData(prev => ({
-      ...prev,
-      practitionerId: practitionerById.id
-    }));
-  }, [open, practitionerLoaded, practitionerById]);
+  }, [open, consultationOrders?.id, practitionerLoaded]);
 
   useEffect(() => {
     if (!practitionersResult?.data?.data) return;
+    if (practitionersResult?.isFetching) return;
 
     const newPractitioners = practitionersResult.data.data;
 
@@ -224,7 +231,7 @@ const DetailsTele = ({
       const unique = newPractitioners.filter(p => !existingIds.has(p.id));
       return [...prev, ...unique];
     });
-  }, [practitionersResult?.data?.data]);
+  }, [practitionersResult?.data?.data, practitionersResult?.isFetching]);
 
   /* ========================= ACTIONS ========================= */
 
@@ -239,7 +246,41 @@ const DetailsTele = ({
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!practitioner?.facilityId) {
+      fieldErrors.push({ field: 'facilityId', message: 'must not be null' });
+    }
+
+    if (!formData.practitionerId) {
+      fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+    }
+
+    if (!formData.dateOfCall) {
+      fieldErrors.push({ field: 'dateOfCall', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+          data: { fieldErrors },
+          status: 400
+        }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
+    }
+
     try {
       if ((formData as TelephonicConsultations).id) {
         const payload = {
@@ -251,24 +292,36 @@ const DetailsTele = ({
           notes: formData.notes,
           extraDocumentation: formData.extraDocumentation
         };
+
         await updateConsultation(payload).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation updated successfully',
+            sev: 'success'
+          })
+        );
       } else {
         const createPayload = {
           ...formData,
           patientId: patient?.id
         };
+
         await createConsultation(createPayload).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation created successfully',
+            sev: 'success'
+          })
+        );
       }
 
       setOpen(false);
+      try { refetchCon?.(); } catch (_) { /* query not yet started */ }
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
-      return;
     }
-
-    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {
@@ -276,12 +329,9 @@ const DetailsTele = ({
     setShowAttachmentModal(true);
   };
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
@@ -324,6 +374,8 @@ const DetailsTele = ({
                       page: 0,
                       size: pageSize,
                       sort: 'id,asc'
+                    }).then(result => {
+                      setAllPractitioners(result?.data?.data ?? []);
                     }).catch(err => {
                       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
                     });
@@ -346,8 +398,12 @@ const DetailsTele = ({
                   disabled={!practitioner?.facilityId}
                   loading={practitionersResult?.isFetching}
                   searchable
-                  hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
+                  hasMore={
+                    allPractitioners.length > 0 &&
+                    (practitionersResult?.data?.totalCount ?? 0) > allPractitioners.length
+                  }
                   onFetchMore={() => {
+                    if (practitionersResult?.isFetching) return;
                     const nextPage = practitionerPage + 1;
                     setPractitionerPage(nextPage);
 
@@ -356,6 +412,12 @@ const DetailsTele = ({
                       page: nextPage,
                       size: pageSize,
                       sort: 'id,asc'
+                    }).then(result => {
+                      const more = result?.data?.data ?? [];
+                      setAllPractitioners(prev => {
+                        const existingIds = new Set(prev.map((p: any) => p.id));
+                        return [...prev, ...more.filter((p: any) => !existingIds.has(p.id))];
+                      });
                     }).catch(err => {
                       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
                     });
@@ -389,10 +451,22 @@ const DetailsTele = ({
                 <MyInput
                   width="12vw"
                   fieldName="approvalNumber"
-                  fieldType="number"
+                  fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
-                  setRecord={setFormData}
+                  setRecord={rec => {
+                    const val = String(rec?.approvalNumber ?? '');
+                    if (val.length > 10) {
+                      dispatch(
+                        notify({
+                          msg: 'Approval Number must not exceed 10 digits',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+                    setFormData(rec);
+                  }}
                 />
 
                 <div className="attachment-button-consultation-position">

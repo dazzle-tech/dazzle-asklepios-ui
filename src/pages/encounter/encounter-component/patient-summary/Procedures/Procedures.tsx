@@ -31,7 +31,6 @@ const Procedures = ({ patient }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const [getProcedureById] = useLazyGetProcedureByIdQuery();
   const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
 
@@ -133,17 +132,12 @@ const Procedures = ({ patient }) => {
 
           const proc = proceduresMap.get(Number(rowData.procedureId));
 
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === proc?.categoryType
-          );
-
-          return category?.lovDisplayVale || '';
+          return formatEnumString(proc?.categoryType) || '';
         }
       },
 
     ],
     [
-      CategoryLovQueryResponse,
       proceduresMap,
       dispatch,
       getProcedureById,

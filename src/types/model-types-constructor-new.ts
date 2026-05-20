@@ -1,6 +1,7 @@
 import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 // ------------------- ApUser -------------------
+
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -57,7 +58,8 @@ export const newDepartment: modelTypes.Department = {
   parallelCapacityEnabled: false,
   requirePractitioner: false,
   requireBilling: false,
-  requirePreAssessment: false
+  requirePreAssessment: false,
+  workingDays: []
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
@@ -241,6 +243,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  workingDays: [],
 };
 
 // ------------------- Language Translation -------------------
@@ -337,36 +340,38 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
-  {
-    orderId: 0,
-    orderTestId: 0,
-    unit: '',
-    quantity: 0,
-    collectedAt: ''
-  };
+{
+  orderId: 0,
+  orderTestId: 0,
+  unit: '',
+  quantity: 0,
+  collectedAt: '',
+  expiryDate: null,
+  sourceOfSample: null
+};
 
 export const newDiagnosticOrderTestCollectedSampleBulkSame: modelTypes.DiagnosticOrderTestCollectedSampleBulkSameDTO =
-  {
-    orderId: 0,
-    orderTestIds: [],
-    unit: '',
-    quantity: 0,
-    collectedAt: ''
-  };
+{
+  orderId: 0,
+  orderTestIds: [],
+  unit: '',
+  quantity: 0,
+  collectedAt: ''
+};
 
 export const newDiagnosticOrderTestCollectedSampleResponse: modelTypes.DiagnosticOrderTestCollectedSampleResponseVM =
-  {
-    id: 0,
-    orderId: 0,
-    orderTestId: 0,
-    unit: '',
-    quantity: 0,
-    collectedAt: '',
-    createdBy: null,
-    createdDate: null,
-    lastModifiedBy: null,
-    lastModifiedDate: null
-  };
+{
+  id: 0,
+  orderId: 0,
+  orderTestId: 0,
+  unit: '',
+  quantity: 0,
+  collectedAt: '',
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
 
 // ------------------- Laboratory -------------------
 export const newLaboratory: modelTypes.Laboratory = {
@@ -460,7 +465,8 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   otc: false,
   hasSynonyms: false,
   antimicrobial: false,
-  highRiskMed: false,
+  highAlert: false,
+  isLookAlikeSoundAlike: false,
   abortiveMedication: false,
   laborInducingMed: false,
   isControlled: false,
@@ -724,7 +730,7 @@ export const newCdtDentalAction: modelTypes.CdtDentalAction = {
 export const newBrandMedicationActiveIngredient: modelTypes.BrandMedicationActiveIngredient = {
   id: undefined,
   brandId: undefined,
-  activeIngredientId: undefined,
+  activeIngredientId: null,
   strength: undefined,
   unit: ''
 };
@@ -739,7 +745,7 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   departmentName: null,
   facilityId: 0,
   facilityName: null,
-   parallelCapacityValue: 1,
+  parallelCapacityValue: 1,
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
@@ -752,7 +758,8 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   type: '',
   departmentId: undefined,
   facilityId: undefined,
-   parallelCapacityValue: 1,
+  appointable: false,
+  parallelCapacityValue: 1,
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
@@ -765,7 +772,8 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   type: '',
   departmentId: undefined,
   facilityId: undefined,
-   parallelCapacityValue: 1,
+  appointable: false,
+  parallelCapacityValue: 1,
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
@@ -959,6 +967,7 @@ export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTe
   endTime: '',
   slotStrategy: '',
   slotDurationMinutes: 0,
+  applyToAllWorkingDays: false,
   allowedServices: []
 };
 
@@ -970,6 +979,20 @@ export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTe
   slotStrategy: null,
   slotDurationMinutes: null,
   allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalBreakCreateDTO: modelTypes.AvailabilityTemplateIntervalBreakCreateDTO = {
+  intervalId: 0,
+  startTime: '',
+  endTime: ''
+};
+
+export const newAvailabilityTemplateIntervalBreakResponseVM: modelTypes.AvailabilityTemplateIntervalBreakResponseVM = {
+  id: null,
+  intervalId: null,
+  templateId: null,
+  startTime: null,
+  endTime: null
 };
 
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
@@ -994,8 +1017,8 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requireBilling: false,
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
-  requireConfirmation: false,
-  financialDetails: 'BOTH', 
+  requireConfirmation: true,
+  financialDetails: 'BOTH',
   isActive: true,
   workingDays: [],
   allowedServices: []
@@ -1038,8 +1061,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
   templateId: 0,
-  startDate: '',
-  endDate: '',
+  startDate: null,
+  endDate: null,
   deferred: false,
   deferredAt: null,
   scope: '',
@@ -1077,6 +1100,8 @@ export const newAppointmentFromTemplate: modelTypes.AppointmentFromTemplate = {
   id: null,
   patientId: null,
   availabilityTemplateId: null,
+  requireConfirmation: true,
+  requirePractitioner: false,
   encounterReason: null,
   status: null,
   appointmentDateTime: null,
@@ -1128,6 +1153,18 @@ export const newAppointmentFromTemplateNoShowDTO: modelTypes.AppointmentFromTemp
   noShowReason: ''
 };
 
+export const newAppointmentFromTemplateRescheduleDTO: modelTypes.AppointmentFromTemplateRescheduleDTO = {
+  oldAppointmentId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
+};
+
+export const newDiagnosticTestAppointmentRescheduleDTO: modelTypes.DiagnosticTestAppointmentRescheduleDTO = {
+  orderTestId: 0,
+  newAppointmentId: 0,
+  rescheduleReason: ''
+};
+
 export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
   facility: null,
   department: null,
@@ -1136,6 +1173,70 @@ export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFr
   status: null,
   bookingMode: null,
   patientId: null,
+};
+
+export const newBulkAppointmentRescheduleDTO: modelTypes.BulkAppointmentRescheduleDTO = {
+  originalAvailabilityGenerationBatchId: 0,
+  replacementAvailabilityGenerationBatchId: 0
+};
+
+export const newAppointmentRequestResponseVM: modelTypes.AppointmentRequestResponseVM = {
+  id: null,
+  patientId: null,
+  patientName: null,
+  patientMrn: null,
+  facilityId: null,
+  facilityName: null,
+  departmentId: null,
+  departmentName: null,
+  sourceEncounterId: null,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: null,
+  reason: null,
+  note: null,
+  status: null,
+  cancelledAt: null,
+  cancelReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  preferredDate: null,
+};
+
+export const newAppointmentRequestCreateDTO: modelTypes.AppointmentRequestCreateDTO = {
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null,
+  preferredDate: null
+};
+
+export const newAppointmentRequestUpdateDTO: modelTypes.AppointmentRequestUpdateDTO = {
+  id: 0,
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null,
+  status: '',
+  cancelReason: null
+};
+
+export const newAppointmentRequestCancelDTO: modelTypes.AppointmentRequestCancelDTO = {
+  cancelReason: ''
 };
 
 // ------------------- Price List -------------------
@@ -1195,9 +1296,10 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
   itemType: null,
-  productType: null,
   serviceId: null,
-  productId: null,
+  brandMedicationId: null,
+  diagnosticTestId: null,
+  procedureId: null,
   price: 0,
   discountAllowed: false,
   isActive: true
@@ -1608,18 +1710,18 @@ export const newAddress: modelTypes.Address = {
 };
 
 export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredHealthProfessional =
-  {
-    id: undefined,
-    patientId: 0,
-    practitionerId: 0,
-    facilityId: 0,
-    networkAffiliation: '',
-    relatedWith: '',
-    createdBy: '',
-    createdDate: null,
-    lastModifiedBy: null,
-    lastModifiedDate: null
-  };
+{
+  id: undefined,
+  patientId: 0,
+  practitionerId: 0,
+  facilityId: 0,
+  networkAffiliation: '',
+  relatedWith: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
 
 export const newPatientInsurance: modelTypes.PatientInsurance = {
   id: undefined,
@@ -1878,6 +1980,7 @@ export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM =
 
   allergenType: '',
   allergenId: undefined,
+  allergenName: '',
   severity: '',
 
   medicationClassId: undefined,
@@ -1928,9 +2031,9 @@ export const newPatientWarnings: modelTypes.PatientWarnings = {
 };
 
 export const newPatientAllergiesActiveIngredientCreate: modelTypes.PatientAllergiesActiveIngredientCreate =
-  {
-    activeIngredientId: undefined
-  };
+{
+  activeIngredientId: undefined
+};
 
 export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
   patientId: undefined,
@@ -2018,6 +2121,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   id: undefined as any,
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
+  activeIngredientId: null,
   instructionsType: null,
   instructions: null,
   dose: null,
@@ -2028,7 +2132,6 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   durationType: null,
   chronicMedication: false,
   maximumDose: null,
-  validUtil: null,
   allowedSubstitute: false,
   indicationManually: null,
   indicationUse: null,
@@ -2135,7 +2238,11 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   patientArrivedNoteRad: undefined,
 
   cancellationReason: undefined,
-  cancelledBy: undefined
+  cancelledBy: undefined,
+  undoAcceptReason: undefined,
+  undoAcceptBy: undefined,
+  undoAcceptDate: undefined,
+  icdDiagnosisId: undefined,
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
@@ -2166,60 +2273,60 @@ export const newDiagnosticOrderTestResultReject: modelTypes.DiagnosticOrderTestR
 };
 
 export const newDiagnosticOrderTestResultResponse: modelTypes.DiagnosticOrderTestResultResponseVM =
-  {
-    id: 0,
+{
+  id: 0,
 
-    orderId: 0,
-    orderTestId: 0,
-    profileTestId: null,
+  orderId: 0,
+  orderTestId: 0,
+  profileTestId: null,
 
-    resultValueNumber: null,
-    resultValueText: null,
+  resultValueNumber: null,
+  resultValueText: null,
 
-    marker: null,
-    viewMarker: null,
-    normalRangeValue: null,
-    viewNormalRange: null,
+  marker: null,
+  viewMarker: null,
+  normalRangeValue: null,
+  viewNormalRange: null,
 
-    processingStatus: null,
+  processingStatus: null,
 
-    approvedBy: null,
-    approvedDate: null,
+  approvedBy: null,
+  approvedDate: null,
 
-    rejectedBy: null,
-    rejectedDate: null,
-    rejectedReason: null,
+  rejectedBy: null,
+  rejectedDate: null,
+  rejectedReason: null,
 
-    reviewBy: null,
-    reviewDate: null,
+  reviewBy: null,
+  reviewDate: null,
 
-    createdBy: null,
-    createdDate: null,
-    lastModifiedBy: null,
-    lastModifiedDate: null
-  };
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
 
 export const newFilledProfileTestIdsParams: modelTypes.FilledProfileTestIdsParams = {
   orderTestIds: []
 };
 
 export const newDiagnosticOrderTestResultTechnicianNote: modelTypes.DiagnosticOrderTestResultTechnicianNote =
-  {
-    id: undefined,
-    orderId: undefined,
-    orderTestId: undefined,
-    resultId: undefined,
-    note: '',
-    createdBy: undefined,
-    createdDate: undefined
-  };
+{
+  id: undefined,
+  orderId: undefined,
+  orderTestId: undefined,
+  resultId: undefined,
+  note: '',
+  createdBy: undefined,
+  createdDate: undefined
+};
 
 export const newDiagnosticOrderTestResultTechnicianNoteCreateDTO: modelTypes.DiagnosticOrderTestResultTechnicianNoteCreateDTO =
-  {
-    resultId: undefined,
-    orderTestId: undefined,
-    note: ''
-  };
+{
+  resultId: undefined,
+  orderTestId: undefined,
+  note: ''
+};
 
 export const newLabResultLogResponseVM: modelTypes.LabResultLogResponseVM = {
   id: undefined,
@@ -2232,48 +2339,48 @@ export const newLabResultLogResponseVM: modelTypes.LabResultLogResponseVM = {
 };
 
 export const newDiagnosticOrderTestReportCreateRequestDTO: modelTypes.DiagnosticOrderTestReportCreateDTO =
-  {
-    orderId: undefined,
-    orderTestId: undefined,
-    report: '',
-    severity: ''
-  };
+{
+  orderId: undefined,
+  orderTestId: undefined,
+  report: '',
+  severity: ''
+};
 
 export const newDiagnosticOrderTestReportUpdateRequestDTO: modelTypes.DiagnosticOrderTestReportUpdateDTO =
-  {
-    id: undefined,
-    report: '',
-    severity: ''
-  };
+{
+  id: undefined,
+  report: '',
+  severity: ''
+};
 
 export const newDiagnosticOrderTestReportResponseVM: modelTypes.DiagnosticOrderTestReportResponseVM =
-  {
-    id: undefined,
+{
+  id: undefined,
 
-    orderId: undefined,
-    orderTestId: undefined,
+  orderId: undefined,
+  orderTestId: undefined,
 
-    report: '',
-    severity: '',
+  report: '',
+  severity: '',
 
-    approvedBy: undefined,
-    approvedDate: undefined,
+  approvedBy: undefined,
+  approvedDate: undefined,
 
-    rejectedBy: undefined,
-    rejectedDate: undefined,
-    rejectedReason: '',
+  rejectedBy: undefined,
+  rejectedDate: undefined,
+  rejectedReason: '',
 
-    reviewBy: undefined,
-    reviewDate: undefined,
+  reviewBy: undefined,
+  reviewDate: undefined,
 
-    processingStatus: undefined,
-    imageStatus: undefined,
+  processingStatus: undefined,
+  imageStatus: undefined,
 
-    createdDate: undefined,
-    createdBy: undefined,
-    lastModifiedDate: undefined,
-    lastModifiedBy: undefined
-  };
+  createdDate: undefined,
+  createdBy: undefined,
+  lastModifiedDate: undefined,
+  lastModifiedBy: undefined
+};
 
 export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   patientId: undefined,
@@ -2378,6 +2485,13 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   billingInvoiceId: undefined,
   billingInvoiceItemId: undefined,
 };
+export enum ServiceSource {
+  LABORATORY = 'LABORATORY',
+  RADIOLOGY = 'RADIOLOGY',
+  PROCEDURE = 'PROCEDURE',
+  CONSULTATION_PORTAL = 'CONSULTATION_PORTAL',
+  SERVICE_AND_PRODUCT = 'SERVICE_AND_PRODUCT',
+}
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
@@ -2391,7 +2505,10 @@ export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProduct
 
   quantity: 1,
   unitPrice: 0,
-  currency: ''};
+  currency: '',
+  serviceSource: ServiceSource.SERVICE_AND_PRODUCT,
+  SourceId: undefined
+};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,
@@ -2550,7 +2667,8 @@ export const newEncounterPlan: modelTypes.EncounterPlan = {
   id: undefined,
   patientId: null,
   encounterId: null,
-  planInstructions: '',
+  goals: '',
+  treatmentPlan: '',
 
   createdBy: '',
   createdDate: null,
@@ -2624,6 +2742,7 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   isActive: true,
   functionalStatus: null,
   cognitiveCheck: null,
+  bloodGroup: null,
   createdDate: null,
   lastModifiedDate: null
 };
@@ -2710,21 +2829,12 @@ export const newPatientAdministrativeWarning: modelTypes.PatientAdministrativeWa
 };
 
 export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdministrativeWarningsCreateDTO =
-  {
-    patientId: undefined,
-    warningType: undefined,
-    description: ''
-  };
+{
+  patientId: undefined,
+  warningType: undefined,
+  description: ''
+};
 
-export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO =
-  {
-    id: undefined
-  };
-
-export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO =
-  {
-    id: undefined
-  };
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: undefined,
 
@@ -2753,7 +2863,7 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
   acceptedBy: null
 };
 
-export const newPolicyDefinition : modelTypes.PolicyDefinition = {
+export const newPolicyDefinition: modelTypes.PolicyDefinition = {
   id: undefined,
   facilityId: undefined,
   facilityName: '',
@@ -2763,14 +2873,14 @@ export const newPolicyDefinition : modelTypes.PolicyDefinition = {
   isActive: true,
 };
 
-export const newPolicyDefinitionCreateDTO : modelTypes.PolicyDefinitionCreateDTO = {
+export const newPolicyDefinitionCreateDTO: modelTypes.PolicyDefinitionCreateDTO = {
   facilityId: undefined,
   code: '',
   name: '',
   description: '',
 };
 
-export const newPolicyDefinitionUpdateDTO : modelTypes.PolicyDefinitionUpdateDTO = {
+export const newPolicyDefinitionUpdateDTO: modelTypes.PolicyDefinitionUpdateDTO = {
   id: undefined,
   facilityId: undefined,
   code: '',
@@ -2842,4 +2952,94 @@ export const newPatientEncounterDischarge: modelTypes.PatientEncounterDischarge 
   encounterId: null,
   dischargeType: null,
   dischargeAt: null
+};
+
+
+export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder = {
+  id: undefined,
+
+  patientId: null,
+  encounterId: null,
+
+  activeIngredientId: null,
+
+  instructionType: 'MANUAL_INSTRUCTIONS',
+  instructionText: null,
+
+  dose: null,
+  doseUnit: null,
+  route: null,
+  frequency: null,
+
+  isHighAlert: false,
+
+  status: null,
+
+  submittedDate: null,
+  submittedBy: null,
+
+  administeredDate: null,
+  administeredBy: null,
+
+  doubleCheckedDate: null,
+  doubleCheckedBy: null,
+
+  discardedDate: null,
+  discardedBy: null,
+  discardReason: null,
+
+  cancelledDate: null,
+  cancelledBy: null,
+  cancellationReason: null,
+};
+
+
+export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  toothNumber: undefined,
+  surface: '',
+  anesthesiaUsed: null,
+  dose: null,
+  unit: null,
+  fillingMaterial: null,
+  serviceId: undefined,
+  cdtCodeId: null,
+  notes: null,
+};
+export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
+  id: undefined,
+  encounter: null,
+  patient: null,
+
+  eyeOpening: null,
+  eyeOpeningScore: null,
+
+  verbalResponse: null,
+  verbalResponseScore: null,
+
+  motorResponse: null,
+  motorResponseScore: null,
+
+  totalScore: null,
+  scoreInterpretation: null
+};
+export const newPatientProblem: modelTypes.PatientProblem = {
+  id: undefined,
+  patient: null,
+  condition: null,
+  dateOfDiagnosis: null,
+  conditionStatus: null,
+  type: null,
+  dateOfResolution: null,
+  byPatient: true,
+  sourceOfInformation: null,
+  status: 'ACTIVE',
+  cancelledBy: null,
+  cancelledDate: null,
+  cancellationReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
 };

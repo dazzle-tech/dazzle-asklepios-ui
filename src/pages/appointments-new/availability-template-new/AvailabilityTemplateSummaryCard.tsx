@@ -13,6 +13,8 @@ import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTe
 import { useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
 import { useLazyGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 type DepartmentPoolCardProps = {
   template: any;
@@ -25,6 +27,7 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
   onEdit,
   ...props
 }) => {
+  const dispatch = useAppDispatch();
   const [showDetails, setShowDetails] = useState<boolean>(true);
 
   const [resourceName, setRresourceName] = useState<string>("");
@@ -49,15 +52,15 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
 
   const handleDeleteConfirm = async () => {
     if (!template?.id) {
-      setOpenConfirmDeleteModal(false);
+      dispatch(notify({ msg: 'Choose a template to delete it', sev: 'warning' }));
       return;
     }
     try {
       await deleteAvailabilityTemplate({ id: template.id }).unwrap();
       setOpenConfirmDeleteModal(false);
+       dispatch(notify({ msg: 'Template deleted Successfully', sev: 'success' }));
     } catch (error) {
-      console.error('Failed to delete availability template', error);
-      setOpenConfirmDeleteModal(false);
+      dispatch(notify({ msg: 'Failed to delete this template', sev: 'warning' }));
     }
   };
 
@@ -118,15 +121,10 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
 
   }, [template]);
 
-  useEffect(() => {
-    console.log("departmentName: ", departmentName);
-    console.log("resourceName: ", resourceName);
-  },[departmentName, resourceName]);
-
   return (
     <div
       className="availability-template-summary-card"
-      style={{ backgroundColor: hexToRGBA(template?.templateColor ?? "#6982F0", 0.2) }}
+      style={{ backgroundColor: hexToRGBA(template?.templateColor ?? "#6982F0", 0.15) }}
     >
       {/* Header */}
       <div

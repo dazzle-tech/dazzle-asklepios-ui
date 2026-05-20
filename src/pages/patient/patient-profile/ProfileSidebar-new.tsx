@@ -33,6 +33,7 @@ interface ProfileSidebarProps {
   title?: React.ReactNode;
   direction?: string;
   showButton?: boolean;
+  searchRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const PAGE_SIZE = 10;
@@ -45,7 +46,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   direction = 'left',
   showButton = true,
   refetchData,
-  setRefetchData
+  setRefetchData,
+  searchRef
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
@@ -179,6 +181,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   }, [refetchData]);
 
   useEffect(() => {
+    if (searchRef) {
+      searchRef.current = () => {
+        if (searchKeyword && String(searchKeyword).length >= 3) search(0);
+      };
+    }
+  }, [search, searchKeyword, searchRef]);
+
+  useEffect(() => {
     setPatients([]);
     setLinks({});
     setSearchKeyword(null);
@@ -211,16 +221,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         selectData={[
                           { label: <Translate>MRN</Translate>, value: 'patientMrn' },
                           { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-                          { label: <Translate>Full Name</Translate>, value: 'fullName' },
-                          {
-                            label: <Translate>Archiving Number</Translate>,
-                            value: 'archivingNumber'
-                          },
-                          {
-                            label: <Translate>Primary Phone Number</Translate>,
-                            value: 'phoneNumber'
-                          },
-                          { label: <Translate>Date of Birth</Translate>, value: 'dob' }
+                          { label: <Translate>Full Name</Translate>, value: 'fullName' }
                         ]}
                         selectDataLabel="label"
                         selectDataValue="value"
@@ -241,7 +242,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                             width={300}
                             record={{ dob: searchKeyword }}
                             setRecord={r => {
-                              console.log('DOB raw value:', r.dob, typeof r.dob);
                               setSearchKeyword(r.dob || null);
                             }}
                           />

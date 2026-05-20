@@ -26,7 +26,7 @@ const AddPayment = ({ isReadOnly }) => {
             title: (
                 <Checkbox />
             ),
-            render: (rowData: any) => (
+            render: () => (
                 <Checkbox />
             )
         },

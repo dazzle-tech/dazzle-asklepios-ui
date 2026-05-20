@@ -1,6 +1,5 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { setEncounter } from '@/reducers/patientSlice';
 import * as icons from '@rsuite/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
@@ -9,7 +8,6 @@ import { Checkbox, Grid, Input, Panel } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyCard from '@/components/MyCard';
 import MyTable from '@/components/MyTable';
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import {
   useCreateReviewOfSystemMutation,
   useDeleteReviewOfSystemByIdMutation,
@@ -25,14 +23,12 @@ import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 import Summary from './Summery';
 
-const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
+const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) => {
   const dispatch = useAppDispatch();
 
   const [openModel, setOpenModel] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
-  const [localEncounter, setLocalEncounter] = useState({ ...encounter });
-  const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
@@ -40,7 +36,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     parentValueKey: selectedSystem.key
   });
 
-  // ✅ New API: get all by encounter
+ 
   const {
     data: rosList,
     refetch: refetchRos,
@@ -50,7 +46,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
   const [createRos] = useCreateReviewOfSystemMutation();
   const [updateRos] = useUpdateReviewOfSystemMutation();
   const [deleteRos] = useDeleteReviewOfSystemByIdMutation();
-
+ 
   // mainData map: key = systemDetail (detailId), value = ros record
   const [mainData, setMainData] = useState<Record<string, any>>({});
 
@@ -64,22 +60,8 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     }
   }, [rosList]);
 
-  const saveChanges = async () => {
-    try {
-      await saveEncounterChanges(localEncounter).unwrap();
-      dispatch(notify({ msg: 'Findings Saved Successfully', sev: 'success' }));
-    } catch (error) {
-      console.error('Encounter save failed:', error);
-      dispatch(notify({ msg: 'Findings Save Failed', sev: 'error' }));
-    }
-  };
 
-  useEffect(() => {
-    if (saveEncounterChangesMutation.status === 'fulfilled') {
-      dispatch(setEncounter(saveEncounterChangesMutation.data));
-      setLocalEncounter(saveEncounterChangesMutation.data);
-    }
-  }, [saveEncounterChangesMutation]);
+
 
   const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
   const paginatedData = bodySystemsDetailLovQueryResponse?.object ?? [];
@@ -202,9 +184,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
       <Panel>
         <Grid fluid>
           <div className="top-div">
-            <div style={{ ...(props?.noTitle && { display: 'none' }) }}>
-              <Translate>Physical Examination & Findings</Translate>
-            </div>
+         
 
             <div className="bt-right">
               <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />} >
@@ -238,9 +218,8 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
           open={openModel}
           setOpen={setOpenModel}
           list={rosList}
-          encounter={localEncounter}
-          setEncounter={setLocalEncounter}
-          saveEncounter={saveChanges}
+          encounter={encounter}
+          setEncounter={setEncounter}
           system={bodySystemsLovQueryResponse}
         />
       </Panel>

@@ -1,4 +1,5 @@
 import CancellationModal from '@/components/CancellationModal';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -12,7 +13,7 @@ import {
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { newTelephonicConsultation } from '@/types/model-types-constructor-new';
 import { TelephonicConsultations } from '@/types/model-types-new';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,6 +26,9 @@ import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
 import Translate from '@/components/Translate';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { Loader } from 'rsuite';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -34,7 +38,7 @@ const TelephonicConsultation = props => {
   const isEditMode = props.edit ?? location.state?.edit ?? false;
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-   const isNurse = jobRole === 'NURSE';
+  const isNurse = jobRole === 'NURSE';
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
 
@@ -111,6 +115,27 @@ const TelephonicConsultation = props => {
     return node.closest('.rs-table-row') !== null && node.closest('.rs-table-row-header') === null;
   };
 
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'REQUESTED':
+        return '#E6A100';
+      case 'CONFIRMED':
+        return '#0DAA41';
+      case 'REJECTED':
+        return '#D64545';
+      case 'SUBMITTED':
+        return '#0B5ED7';
+      case 'READY':
+        return '#17A2B8';
+      case 'CANCELLED':
+        return '#D64545';
+      case 'NEW':
+        return '#17A2B8';
+      default:
+        return '#6c757d';
+    }
+  };
+
   const clearRowSelection = useCallback(() => {
     setActiveConsultation(null);
     setSelectedConsultations([]);
@@ -169,6 +194,39 @@ const TelephonicConsultation = props => {
     }
   };
 
+  const UserFullNameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName, isLoading } = useGetUserFullNameByLoginQuery(login!, {
+    skip: !login
+  });
+
+  if (!login) return <span>-</span>;
+  if (isLoading) return <Loader size="xs" />;
+
+  return <span>{fullName || login}</span>;
+};
+
+const UserDateCell = ({
+  login,
+  date
+}: {
+  login?: string | null;
+  date?: string | null;
+}) => {
+  if (!login && !date) {
+    return <span>-</span>;
+  }
+
+  return (
+    <>
+      <UserFullNameCell login={login} />
+      <br />
+      <span className="date-table-style">
+        {date ? formatDateWithoutSeconds(date) : ''}
+      </span>
+    </>
+  );
+};
+
   const columns = [
     {
       key: 'select',
@@ -204,14 +262,17 @@ const TelephonicConsultation = props => {
       title: 'Consultation Content',
       flexGrow: 4,
       render: (row: TelephonicConsultations) => (
-        <div className="consultation-content-container">{row.consultationContent}</div>
+        <ExpandableText text={row.consultationContent} lines={3} />
       )
     },
     {
       key: 'status',
       title: 'Status',
       flexGrow: 1,
-      render: (row: TelephonicConsultations) => <span>{row.status ?? ''}</span>
+      render: (rowData: TelephonicConsultations) => {
+        const status = String(rowData.status ?? '').toUpperCase();
+        return <MyBadgeStatus contant={formatEnumString(status)} color={getStatusColor(status)} />;
+      }
     },
     {
       key: 'attachments',
@@ -235,30 +296,38 @@ const TelephonicConsultation = props => {
       key: 'edit',
       title: '',
       flexGrow: 1,
-      render: (row: TelephonicConsultations) => (
-        <MdModeEdit
-          size={22}
-          fill="var(--primary-gray)"
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            setActiveConsultation(row);
-            setConsultationFormData(row);
-            setIsDetailsModalOpen(true);
-          }}
-        />
-      )
+      render: (row: TelephonicConsultations) => {
+        const status = String(row?.status ?? '').toUpperCase();
+        const editDisabled = status === 'CANCELLED';
+
+        return (
+          <MdModeEdit
+            size={22}
+            fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
+            title={editDisabled ? 'Edit not allowed for cancelled consultation' : 'Edit'}
+            style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+            className={clsx({ 'not-allowed-cell': editDisabled })}
+            onClick={() => {
+              if (editDisabled) return;
+
+              setActiveConsultation(row);
+              setConsultationFormData(row);
+              setIsDetailsModalOpen(true);
+            }}
+          />
+        );
+      }
     },
     {
       key: 'createdAt',
       title: 'CREATED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.createdDate ? (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
+        row?.createdBy || row?.createdDate ? (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         ) : (
           ' '
         )
@@ -268,12 +337,11 @@ const TelephonicConsultation = props => {
       title: 'CANCELLED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.cancelledAt ? (
-          <>
-            {row.cancelledBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
-          </>
+        row?.cancelledBy || row?.cancelledAt ? (
+          <UserDateCell
+            login={row.cancelledBy}
+            date={row.cancelledAt}
+          />
         ) : (
           ' '
         )
@@ -294,41 +362,43 @@ const TelephonicConsultation = props => {
         <MyButton
           prefixIcon={() => <BlockIcon />}
           onClick={() => setIsCancelModalOpen(true)}
-          disabled={selectedConsultations.length === 0 ||isNurse}
+          disabled={selectedConsultations.length === 0 || isNurse}
         >
           Cancel
         </MyButton>
 
         <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
-                <Translate>Show Cancelled</Translate>
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>
 
-      <div className={clsx('bt-right-2', { 'disabled-panel': isEditMode||isNurse })}>
+      <div className={clsx('bt-right-2', { 'disabled-panel': isEditMode || isNurse })}>
         <MyButton
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
             setActiveConsultation(null);
+
             setConsultationFormData({
               ...newTelephonicConsultation,
               encounterId: currentEncounter?.id,
-              patientId: currentPatient?.id
+              patientId: currentPatient?.id,
+              practitionerId: null
             });
+
             setIsDetailsModalOpen(true);
           }}
         >
-          Add Consultation 
+          Add Consultation
         </MyButton>
       </div>
     </div>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
@@ -357,8 +427,10 @@ const TelephonicConsultation = props => {
         consultationOrders={consultationFormData}
         open={isDetailsModalOpen}
         setOpen={setIsDetailsModalOpen}
-        editing={false}
-        edit={isEditMode}
+        editing={String(consultationFormData?.status ?? '').toUpperCase() !== 'NEW'}
+        edit={
+          isEditMode || String(consultationFormData?.status ?? '').toUpperCase() === 'CANCELLED'
+        }
         refetchCon={refetch}
       />
 

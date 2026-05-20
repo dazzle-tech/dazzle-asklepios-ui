@@ -88,13 +88,19 @@ const PAYMENT_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Payment data is required.',
   'patient.invalid': 'Invalid patient id.',
   'patient.notfound': 'Patient not found.',
+  'patient.required': 'Patient is required.',
   'encounter.invalid': 'Invalid encounter id.',
   'encounter.notfound': 'Encounter not found.',
+  'encounter.required': 'Encounter is required.',
+  'encounter.invalid.status':
+    'Encounter is not ready for payment (must be in Pending Payment status).',
+  'payment.duplicate.encounter': 'Payment already exists for this encounter.',
   'id.notfound': 'Payment record not found.',
   notfound: 'Payment record not found.',
   duplicate: 'Duplicate record.',
   'db.constraint': 'Database constraint violation while saving payment.',
-  'no.services': 'No services to pay for'
+  'no.services': 'No services to pay for',
+  'http.400': 'Please review the payment data. Some required values are missing or invalid.'
 };
 
 const PAYMENT_FIELD_LABELS: Record<string, string> = {
@@ -159,20 +165,52 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   }
 
   const messageProp: string = responseData?.message || '';
+  const detailProp: string = responseData?.detail || '';
+  const titleProp: string = responseData?.title || '';
+
   const errorKey =
     (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
     responseData?.errorKey;
 
+  if (errorKey && keyMap[errorKey]) {
+    dispatch(
+      notify({
+        msg: keyMap[errorKey] + traceSuffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (
+    messageProp === 'error.http.400' ||
+    detailProp.toLowerCase().includes('validation failure') ||
+    titleProp.toLowerCase() === 'bad request'
+  ) {
+    dispatch(
+      notify({
+        msg: 'Please review the payment form. Some values are missing or invalid.' + traceSuffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const stripErrorPrefix = (raw: string) =>
+    raw && raw.startsWith('error.') ? raw.substring(6) : raw;
+
+  const status = error?.status ?? error?.originalStatus;
+  const statusText = error?.error || error?.statusText;
+
   const humanReadableMessage =
-    (errorKey && keyMap[errorKey]) ||
     responseData?.detail ||
+    stripErrorPrefix(responseData?.message || '') ||
     responseData?.title ||
-    responseData?.message ||
-    'Unexpected error';
+    statusText ||
+    (status ? `Request failed (HTTP ${status})` : 'Unexpected error');
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
-
 const toDateOnlyOrNull = (value: any) => {
   if (!value) return null;
   const dateObj = value instanceof Date ? value : new Date(value);
@@ -340,7 +378,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     const savedExemptedByServiceIdRef = useRef<Map<number, boolean>>(new Map());
 
     const PaymentMethodsEnum = useEnumOptions('PaymentMethods', {
-      exclude: payment?.paymentTypes === 'OUT_OF_POCKET' ? ['INSURANCE_COVERAGE'] : []
+      // exclude: payment?.paymentTypes === 'CASH' ? ['INSURANCE_COVERAGE'] : []
+
+      exclude: ['INSURANCE_COVERAGE']
     });
 
     const patientInsuranceResponse = useGetInsurancesByPatientQuery(
@@ -638,13 +678,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       const markRequired = (field: string, message = 'Required') => {
         validationErrors.details[field] = [{ validationType: 'REJECT', message }];
       };
-
-      if (!payment?.paymentTypes) markRequired('paymentTypes');
-      if (!payment?.paymentMethods) markRequired('paymentMethods');
-
-      if (payment?.amount == null || String(payment.amount).trim() === '') markRequired('amount');
-      if (!payment?.currency) markRequired('currency');
-
       if (isInsurancePlan) {
         if (!payment?.insuranceKey && !payment?.planId) markRequired('planId');
       }
@@ -816,35 +849,48 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     };
 
     const handleConfirm = async () => {
+      const hasBillableServices = uiDueAmount > 0;
+
       const paymentDto: modelTypes.PatientPaymentDTO = {
         id: payment.id,
         patientId: payment.patientId,
         encounterId: payment.encounterId,
-        planId: payment.planId ?? null,
+        planId: hasBillableServices ? payment.planId ?? null : null,
 
-        paymentTypes: payment.paymentTypes,
-        paymentMethods: payment.paymentMethods,
+        paymentTypes: hasBillableServices ? payment.paymentTypes ?? null : null,
+        paymentMethods: hasBillableServices ? payment.paymentMethods ?? null : null,
 
-        amount: Number(payment.amount ?? 0),
-        currency: String(payment.currency ?? payment.facilityDefaultCurrency ?? ''),
-        facilityDefaultCurrency: String(payment.facilityDefaultCurrency ?? ''),
-        exchangeRate: payment.exchangeRate ?? null,
-        amountInFacilityCurrency: payment.amountInFacilityCurrency ?? null,
+        amount: hasBillableServices
+          ? payment.amount != null
+            ? Number(payment.amount)
+            : null
+          : null,
 
-        addToFreeBalance: Boolean(payment.addToFreeBalance),
-        useBalanceToSettleDebts: Boolean(payment.useBalanceToSettleDebts),
+        currency: hasBillableServices ? payment.currency ?? null : null,
+        facilityDefaultCurrency: hasBillableServices
+          ? payment.facilityDefaultCurrency ?? null
+          : null,
+        exchangeRate: hasBillableServices ? payment.exchangeRate ?? null : null,
+        amountInFacilityCurrency: hasBillableServices
+          ? payment.amountInFacilityCurrency ?? null
+          : null,
 
-        cardNumber: payment.cardNumber ?? null,
-        cardHolderName: payment.cardHolderName ?? null,
-        cardValidUntil: toDateOnlyOrNull(payment.cardValidUntil),
+        addToFreeBalance: hasBillableServices ? payment.addToFreeBalance ?? false : null,
+        useBalanceToSettleDebts: hasBillableServices
+          ? payment.useBalanceToSettleDebts ?? false
+          : null,
 
-        chequeNumber: payment.chequeNumber ?? null,
-        chequeBankName: payment.chequeBankName ?? null,
-        chequeDueDate: toDateOnlyOrNull(payment.chequeDueDate),
+        cardNumber: hasBillableServices ? payment.cardNumber ?? null : null,
+        cardHolderName: hasBillableServices ? payment.cardHolderName ?? null : null,
+        cardValidUntil: hasBillableServices ? toDateOnlyOrNull(payment.cardValidUntil) : null,
 
-        transferNumber: payment.transferNumber ?? null,
-        transferBankName: payment.transferBankName ?? null,
-        transferDate: toDateOnlyOrNull(payment.transferDate),
+        chequeNumber: hasBillableServices ? payment.chequeNumber ?? null : null,
+        chequeBankName: hasBillableServices ? payment.chequeBankName ?? null : null,
+        chequeDueDate: hasBillableServices ? toDateOnlyOrNull(payment.chequeDueDate) : null,
+
+        transferNumber: hasBillableServices ? payment.transferNumber ?? null : null,
+        transferBankName: hasBillableServices ? payment.transferBankName ?? null : null,
+        transferDate: hasBillableServices ? toDateOnlyOrNull(payment.transferDate) : null,
 
         services: (servicesRows ?? []).map(serviceRow => ({
           serviceId: Number((serviceRow as any).serviceId ?? 0),
@@ -964,6 +1010,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
+    const hasServices = servicesRows.length > 0;
+
     return (
       <Form fluid layout="inline" className="fields-container" dir={dir}>
         <MyInput
@@ -1030,7 +1078,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             const nextPayment = { ...updatedPayment };
 
             if (
-              nextPayment.paymentTypes === 'OUT_OF_POCKET' &&
+              nextPayment.paymentTypes === 'CASH' &&
               nextPayment.paymentMethods === 'INSURANCE_COVERAGE'
             ) {
               nextPayment.paymentMethods = null;
@@ -1044,7 +1092,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
             setPayment(nextPayment);
           }}
-          disabled={isReadOnly || isLocked}
+          disabled={isReadOnly || isLocked || !hasServices}
           required
           searchable={false}
           isEnum
@@ -1081,7 +1129,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
             setPayment(nextPayment);
           }}
-          disabled={isReadOnly || isLocked}
+          disabled={isReadOnly || isLocked || !hasServices}
           required
           searchable={false}
           isEnum
@@ -1358,7 +1406,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             fieldName="amount"
             record={payment}
             setRecord={setPayment}
-            disabled={isReadOnly || isLocked}
+            disabled={isReadOnly || isLocked || !hasServices}
             required
           />
 
@@ -1378,7 +1426,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
                 nextPayment.currency = nextPayment.facilityDefaultCurrency;
               setPayment(nextPayment);
             }}
-            disabled={isReadOnly || isLocked}
+            disabled={isReadOnly || isLocked || !hasServices}
             required
             searchable
           />

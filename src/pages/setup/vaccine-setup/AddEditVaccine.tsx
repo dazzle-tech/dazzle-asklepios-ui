@@ -7,7 +7,7 @@ import MyTable from '@/components/MyTable';
 import AdversEffects from '@/components/AdversEffectsComponent/AdversEffects';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import {
   useAddVaccineBrandMutation,
   useGetVaccineBrandsByVaccineQuery,
@@ -18,6 +18,7 @@ import { useAddVaccineMutation, useUpdateVaccineMutation } from '@/services/vacc
 
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { newVaccineBrand } from '@/types/model-types-constructor-new';
 import { VaccineBrand } from '@/types/model-types-new';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
@@ -48,7 +49,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  // Bean Validation / MethodArgumentNotValid / ConstraintViolation
   const isValidation =
     data?.message === 'error.validation' ||
     (typeof title === 'string' && title.toLowerCase().includes('argument not valid')) ||
@@ -126,11 +126,9 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   const keyMap: Record<string, string> = {
     'payload.required': 'Payload is required.',
     'db.constraint': 'Database constraint violation.',
-    // Vaccine
     'unique.name.type.roa': 'A vaccine with the same (name, type, roa) already exists.',
     'vaccine.notfound': 'Vaccine not found.',
     'vaccine.required': 'Vaccine id is required.',
-    // VaccineBrand
     'vaccineBrand.notfound': 'Vaccine brand not found.',
     'unique.name.unit.volume': 'A vaccine brand with the same (name, unit, volume) already exists.',
     'brand.unique.name': 'Brand name already exists for this vaccine.'
@@ -156,12 +154,15 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [openConfirmDeleteBrandModal, setOpenConfirmDeleteBrandModal] = useState<boolean>(false);
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
 
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(
+    vaccine?.facilityId?.id ?? vaccine?.facilityId ?? null
+  );
+
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
   const [sortBy, setSortBy] = useState<'id' | 'name'>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  // ===== hooks =====
   const {
     data: brandsPage,
     refetch: refetchVaccineBrand,
@@ -176,7 +177,11 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const links = brandsPage?.links || {};
 
   const { data: manufactureLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  const vaccineType = useEnumOptions('VaccineType');
+const vaccineType = useEnumOptions('VaccineType', {
+  labelOverrides: {
+    MRNA: 'mRNA'
+  }
+});
   const roa = useEnumOptions('RouteOfAdministration');
   const durationUnit = useEnumOptions('DurationUnit');
   const volumUnit = useEnumOptions('MeasurementUnit');
@@ -195,13 +200,24 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     }
   });
 
+  const { data: activeFacilities } = useGetActiveFacilitiesQuery({});
+  const currencyOptions = useEnumCapitalized('Currency');
+
+  const facilitiesOptions = (activeFacilities ?? []).map((f: any) => ({
+    label: f.name,
+    value: f.id,
+    currency: f.defaultCurrency
+  }));
+
+  const selectedFacilityCurrency =
+    facilitiesOptions.find((f: any) => f.value === selectedFacilityId)?.currency ?? '';
+
   const [addVaccineBrand] = useAddVaccineBrandMutation();
   const [updateVaccineBrand] = useUpdateVaccineBrandMutation();
   const [addVaccine, addVaccineResult] = useAddVaccineMutation();
   const [updateVaccine, updateVaccineResult] = useUpdateVaccineMutation();
   const [toggleVaccineBrandActive] = useToggleVaccineBrandActiveMutation();
 
-  // ===== helpers =====
   const getSelectValue = (val: any, valueKey: string) => {
     if (val == null) return val;
     if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val;
@@ -212,7 +228,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const isSelectedBrand = (rowData: VaccineBrand) =>
     rowData && vaccineBrand && vaccineBrand.id === rowData.id ? 'selected-row' : '';
 
-  // Effects: reflect vaccine save results
   useEffect(() => {
     if (addVaccineResult?.status === 'fulfilled' && addVaccineResult.data) {
       setVaccine(addVaccineResult.data);
@@ -227,7 +242,12 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     }
   }, [updateVaccineResult?.status]);
 
-  // ===== table icons/actions =====
+  useEffect(() => {
+    if (vaccine?.facilityId) {
+      setSelectedFacilityId(vaccine.facilityId?.id ?? vaccine.facilityId);
+    }
+  }, [vaccine?.facilityId]);
+
   const iconsForActions = (rowData: VaccineBrand) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -319,75 +339,76 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     }
   ];
 
-  // actions (main vaccine)
+  // ===== actions (main vaccine) =====
   const handleSave = async () => {
-  try {
-    const payload = stripUndefined({
-      ...(vaccine?.id ? { id: vaccine.id } : {}),
+    try {
+      const payload = stripUndefined({
+        ...(vaccine?.id ? { id: vaccine.id } : {}),
 
-      name: toNullIfEmpty(vaccine?.name),
-      atcCode: toNullIfEmpty(vaccine?.atcCode),
+        name: toNullIfEmpty(vaccine?.name),
+        atcCode: toNullIfEmpty(vaccine?.atcCode),
 
-      type: toNullIfEmpty(getSelectValue(vaccine?.type, 'value')),
-      roa: toNullIfEmpty(getSelectValue(vaccine?.roa, 'value')),
+        type: toNullIfEmpty(getSelectValue(vaccine?.type, 'value')),
+        roa: toNullIfEmpty(getSelectValue(vaccine?.roa, 'value')),
 
-      siteOfAdministration: toNullIfEmpty(vaccine?.siteOfAdministration),
-      postOpeningDuration: toNumberOrNull(vaccine?.postOpeningDuration),
+        siteOfAdministration: toNullIfEmpty(vaccine?.siteOfAdministration),
+        postOpeningDuration: toNumberOrNull(vaccine?.postOpeningDuration),
 
-      durationUnit: toNullIfEmpty(getSelectValue(vaccine?.durationUnit, 'value')),
-      numberOfDoses: toNullIfEmpty(getSelectValue(vaccine?.numberOfDoses, 'value')),
+        durationUnit: toNullIfEmpty(getSelectValue(vaccine?.durationUnit, 'value')),
+        numberOfDoses: toNullIfEmpty(getSelectValue(vaccine?.numberOfDoses, 'value')),
 
-      indications: vaccine?.indications ?? [],
-      possibleReactions: vaccine?.possibleReactions ?? [],
+        indications: vaccine?.indications ?? [],
+        possibleReactions: vaccine?.possibleReactions ?? [],
 
-      contraindicationsAndPrecautions: toNullIfEmpty(vaccine?.contraindicationsAndPrecautions),
-      storageAndHandling: toNullIfEmpty(vaccine?.storageAndHandling),
+        contraindicationsAndPrecautions: toNullIfEmpty(vaccine?.contraindicationsAndPrecautions),
+        storageAndHandling: toNullIfEmpty(vaccine?.storageAndHandling),
 
-      isActive: vaccine?.isActive ?? true
-    });
+        facilityId: selectedFacilityId ? { id: Number(selectedFacilityId) } : null,
+        price: toNumberOrNull(vaccine?.price),
 
-    const saved = vaccine?.id
-      ? await updateVaccine({ id: vaccine.id, data: payload as any }).unwrap()
-      : await addVaccine(payload as any).unwrap();
+        isActive: vaccine?.isActive ?? true
+      });
 
-    setVaccine(saved);
+      const saved = vaccine?.id
+        ? await updateVaccine({ id: vaccine.id, data: payload as any }).unwrap()
+        : await addVaccine(payload as any).unwrap();
 
-    dispatch(
-      notify({
-        msg: vaccine?.id
-          ? 'Vaccine Updated Successfully'
-          : 'Vaccine Added Successfully',
-        sev: 'success'
-      })
-    );
+      setVaccine(saved);
 
-    refetch?.();
-    setEdit_new(false);
-    setEditBrand(true);
+      dispatch(
+        notify({
+          msg: vaccine?.id ? 'Vaccine Updated Successfully' : 'Vaccine Added Successfully',
+          sev: 'success'
+        })
+      );
 
-  } catch (err: any) {
-    const msg = toHumanBackendError(err, {
-      name: 'Vaccine Name',
-      type: 'Type',
-      roa: 'ROA',
-      atcCode: 'ATC Code',
-      siteOfAdministration: 'Site of Administration',
-      postOpeningDuration: 'Post Opening Duration',
-      durationUnit: 'Duration Unit',
-      numberOfDoses: 'Number of Doses',
-      indications: 'Indications',
-      possibleReactions: 'Possible Reactions',
-      contraindicationsAndPrecautions: 'Contraindications & Precautions',
-      storageAndHandling: 'Storage & Handling',
-      isActive: 'Active'
-    });
+      refetch?.();
+      setEdit_new(false);
+      setEditBrand(true);
+    } catch (err: any) {
+      const msg = toHumanBackendError(err, {
+        name: 'Vaccine Name',
+        type: 'Type',
+        roa: 'ROA',
+        atcCode: 'ATC CODE',
+        siteOfAdministration: 'Site of Administration',
+        postOpeningDuration: 'Post Opening Duration',
+        durationUnit: 'Duration Unit',
+        numberOfDoses: 'Number of Doses',
+        indications: 'Indications',
+        possibleReactions: 'Possible Reactions',
+        contraindicationsAndPrecautions: 'Contraindications & Precautions',
+        storageAndHandling: 'Storage & Handling',
+        facilityId: 'Facility',
+        price: 'Price',
+        isActive: 'Active'
+      });
 
-    dispatch(notify({ msg, sev: 'error' }));
-  }
-};
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
 
-
-  // actions (brand) 
+  // ===== actions =====
   const handleSaveVaccineBrand = async () => {
     try {
       const payload = stripUndefined({
@@ -408,24 +429,10 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
           data: payload
         }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Vaccine Brand Updated Successfully',
-            sev: 'success'
-          })
-        );
+        dispatch(notify({ msg: 'Vaccine Brand Updated Successfully', sev: 'success' }));
       } else {
-        await addVaccineBrand({
-          vaccineId: vaccine?.id,
-          data: payload
-        }).unwrap();
-
-        dispatch(
-          notify({
-            msg: 'Vaccine Brand Added Successfully',
-            sev: 'success'
-          })
-        );
+        await addVaccineBrand({ vaccineId: vaccine?.id, data: payload }).unwrap();
+        dispatch(notify({ msg: 'Vaccine Brand Added Successfully', sev: 'success' }));
       }
 
       setVaccineBrand({ ...newVaccineBrand, vaccineId: vaccine?.id });
@@ -599,7 +606,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
                   record={vaccine}
                   setRecord={setVaccine}
                   disabled={!edit_new}
-                  menuMaxHeight={200}
                   required
                 />
               </div>
@@ -662,6 +668,61 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
                   setRecord={setVaccine}
                   disabled={!edit_new || (vaccine?.numberOfDoses && vaccine?.id)}
                   menuMaxHeight={200}
+                  required
+                />
+              </div>
+            </div>
+
+            <br />
+
+            <div className="container-of-two-fields-vaccine">
+              <div className="container-of-field-vaccine">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Facility"
+                  fieldType="select"
+                  fieldName="facilityId"
+                  selectData={facilitiesOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={{ facilityId: selectedFacilityId }}
+                  setRecord={(updated: any) => setSelectedFacilityId(updated.facilityId)}
+                  disabled={!edit_new}
+                  menuMaxHeight={200}
+                  required
+                />
+              </div>
+              <div className="container-of-field-vaccine" />
+            </div>
+
+            <br />
+
+            <div className="container-of-two-fields-vaccine">
+              <div className="container-of-field-vaccine">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Price"
+                  fieldName="price"
+                  fieldType="number"
+                  record={vaccine}
+                  setRecord={setVaccine}
+                  disabled={!edit_new}
+                  required
+                />
+              </div>
+              <div className="container-of-field-vaccine">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Currency"
+                  fieldType="select"
+                  fieldName="currency"
+                  selectData={currencyOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={{ currency: selectedFacilityCurrency }}
+                  setRecord={() => {}}
+                  searchable={false}
+                  disabled
                 />
               </div>
             </div>
@@ -823,12 +884,10 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     </Form>
   );
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <ChildModal
@@ -839,7 +898,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title={vaccine?.id ? 'Edit Vaccine' : 'New Vaccine'}
-      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
+      mainContent={stepNumber => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
       mainStep={[
         {
           title: 'Vaccine Details',
@@ -853,8 +912,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
       }
       childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-
-      mainSize="sm"
+      mainSize="45vw"
     />
   );
 };

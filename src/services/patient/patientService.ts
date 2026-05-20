@@ -37,6 +37,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 
 type PatientBasicInformationResponseVM = {
   firstName: string;
+  secondName?: string;
   lastName: string;
   medicalRecordNumber: string;
   dateOfBirth: string;
@@ -175,6 +176,33 @@ export const newPatientService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'Patient', id }, 'Patient']
     }),
 
+    sendPatientPasswordEmail: builder.mutation<void, Id>( {
+      query: id => ({
+        url: `/api/patient/${encodeURIComponent(String(id))}/send-create-password`,
+        method: 'POST'
+      })
+    }),
+
+    finishCreatePatientPassword: builder.mutation({
+      query: (keyAndPassword) => ({
+        url: '/api/patient/create-patient-password/finish',
+        method: 'POST',
+        body: keyAndPassword,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    }),
+
+    validateCreatePatientPasswordKey: builder.query({
+      query: (key: string) => ({
+        url: `/api/patient/create-patient-password/validate?key=${encodeURIComponent(key)}`,
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => response,
+      transformErrorResponse: (response: any) => response
+    }),
+
     getPatientsByAnyDocumentNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { number: string } & PagedParams
@@ -275,7 +303,21 @@ export const newPatientService = createApi({
         method: 'GET',
         responseHandler: (response) => response.blob()
       })
-    })
+    }),
+    getPatientLabelPdf: builder.query<Blob, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/label/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    }),
+    getPatientInformationPdf: builder.query<Blob, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/information/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    }),
   })
 });
 
@@ -301,6 +343,10 @@ export const {
   useLazyGetPatientsByAnyDocumentNumberQuery,
   useAddPatientMutation,
   useUpdatePatientMutation,
+  useSendPatientPasswordEmailMutation,
+  useFinishCreatePatientPasswordMutation,
+  useValidateCreatePatientPasswordKeyQuery,
+  useLazyValidateCreatePatientPasswordKeyQuery,
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
@@ -310,5 +356,8 @@ export const {
   useLazyGetPatientLabelQuery,
   useLazyGetPatientInformationReportQuery,
   useLazyGetPatientWristbandQuery,
-  useLazyGetPatientWristbandPdfQuery
+  useLazyGetPatientWristbandPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useLazyGetPatientInformationPdfQuery
+
 } = newPatientService;

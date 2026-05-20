@@ -3,7 +3,7 @@ import { Avatar, Divider, Form, Panel } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { useBookPatientAppointmentMutation } from '@/services/appointment/appointmentService';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -50,6 +50,7 @@ const BookPatient = ({
   readOnly = false
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
   const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -59,7 +60,6 @@ const BookPatient = ({
     if (!open) return;
     // Debug: inspect appointment payload when opening booking modal
     // eslint-disable-next-line no-console
-    console.log('BookPatient opened with appointmentData:', appointmentData, 'readOnly:', readOnly);
 
     const appointmentPriority =
       appointmentData?.priority ??
@@ -101,6 +101,13 @@ const BookPatient = ({
       return;
     }
 
+    const rawPatientOnAppointment =
+      appointmentData?.patientId ??
+      (typeof appointmentData?.patient === 'object'
+        ? appointmentData?.patient?.id ?? appointmentData?.patient?.key
+        : appointmentData?.patient);
+    const hasPatientOnAppointment = rawPatientOnAppointment != null && String(rawPatientOnAppointment) !== '';
+
     const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
     const appointmentDefaultService = appointmentData?.defaultServiceId || null;
     const appointmentReason = appointmentData?.reason || null;
@@ -112,6 +119,8 @@ const BookPatient = ({
 
     setRecord(prev => ({
       ...prev,
+      // Opening a free slot must start with no patient selected.
+      patientId: hasPatientOnAppointment ? prev.patientId : null,
       defaultPractitioner: appointmentDefaultPractitioner ?? prev.defaultPractitioner ?? null,
       defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
       reason: appointmentReason ?? prev.reason ?? '',
@@ -127,6 +136,13 @@ const BookPatient = ({
             null
           : null
     }));
+
+    if (!hasPatientOnAppointment) {
+      setSelectedPatient(null);
+      setPatientAction('select');
+      setQuickPatientModalOpen(false);
+      setPatientSidebarOpen(false);
+    }
   }, [open, appointmentData, readOnly]);
 
   const viewPatientId = useMemo(() => {
@@ -266,9 +282,9 @@ const BookPatient = ({
   );
   const selectedSlotDisplay = useMemo(() => {
     const rawStart =
-      appointmentData?.startDatetime
+      appointmentData?.startDatetime 
     const rawEnd =
-      appointmentData?.endDatetime
+      appointmentData?.endDatetime 
     const start = formatDateTime(rawStart);
     const end = formatDateTime(rawEnd);
     const startTime =
@@ -478,6 +494,28 @@ const BookPatient = ({
     return false;
   }, [readOnly, record?.service, record?.priority, record?.followUpEncounterId, bookingPatientId, appointmentDepartmentId]);
 
+  const patientChoiceButtonBase: React.CSSProperties = {
+    width: '100%',
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 400,
+    border: `1px solid ${mode === 'dark' ? 'var(--rs-border-primary)' : '#d6dde8'}`,
+    backgroundColor: mode === 'dark' ? 'var(--rs-bg-card)' : '#ffffff',
+    color: mode === 'dark' ? 'var(--rs-text-primary)' : '#2563EB',
+    transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    justifyContent: 'center'
+  };
+
+  const patientChoiceButtonActive: React.CSSProperties = {
+    border: 'none',
+    background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)',
+    color: '#ffffff',
+    boxShadow:
+      mode === 'dark'
+        ? '0 10px 24px rgba(37, 99, 235, 0.30)'
+        : '0 10px 24px rgba(37, 99, 235, 0.20)'
+  };
+
   const modalSteps = useMemo(
     () => [
       {
@@ -554,19 +592,39 @@ const BookPatient = ({
     setPatientSidebarOpen(false);
   };
 
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   const handleBooking = async () => {
-    if (readOnly) return;
+  if (readOnly) return;
+
+  try {
     if (!appointmentId || !record?.patientId) {
       dispatch(notify({ msg: 'Please enter patient id', sev: 'warning' }));
-      throw new Error('Missing patient id');
+      return
     }
+
     if (!record?.service) {
       dispatch(notify({ msg: 'Please select service', sev: 'warning' }));
-      throw new Error('Missing service');
+      return
     }
+
     if (record?.priority == null || String(record.priority).trim() === '') {
       dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
-      throw new Error('Missing priority');
+      return
+    }
+    if(appointmentData.requirePractitioner && !record.defaultPractitioner){
+      dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+      return
     }
     if (record.service === 'FOLLOW_UP') {
       if (!appointmentDepartmentId) {
@@ -576,20 +634,21 @@ const BookPatient = ({
             sev: 'warning'
           })
         );
-        throw new Error('Missing department for follow-up');
+        return
       }
+
       if (!Number(record.followUpEncounterId)) {
         dispatch(notify({ msg: 'Please select a previous encounter for follow-up.', sev: 'warning' }));
-        throw new Error('Missing follow-up encounter');
+        return
       }
     }
-
+    
     await bookPatientAppointment({
       id: appointmentId,
       patientId: Number(record.patientId),
       defaultService: record?.defaultService ? Number(record.defaultService) : null,
       defaultPractitioner: record?.defaultPractitioner ? Number(record.defaultPractitioner) : null,
-      reason: record?.reason || record?.service || null,
+      reason: record?.reason || null,
       note: record?.note || null,
       originType: record?.originType ? String(record.originType) : null,
       originName: record?.originName ? String(record.originName) : null,
@@ -605,7 +664,11 @@ const BookPatient = ({
     dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
     await Promise.resolve(onBooked?.());
     handleClose();
-  };
+  } catch (error: any) {
+      const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+  }
+};
 
   return (
     <>
@@ -649,16 +712,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'select' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'select'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'select' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'select' ? patientChoiceButtonActive : {})
                         }}
                       >
                         {selectedPatient ? 'Change Patient' : 'Select Patient'}
@@ -675,16 +730,8 @@ const BookPatient = ({
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
                         style={{
-                          width: '100%',
-                          height: 44,
-                          borderRadius: 10,
-                          fontWeight: 400,
-                          border: patientAction === 'quick' ? 'none' : '1px solid #d6dde8',
-                          background:
-                            patientAction === 'quick'
-                              ? 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)'
-                              : '#ffffff',
-                          color: patientAction === 'quick' ? '#ffffff' : '#2563EB'
+                          ...patientChoiceButtonBase,
+                          ...(patientAction === 'quick' ? patientChoiceButtonActive : {})
                         }}
                       >
                         Quick Patient
@@ -797,13 +844,13 @@ const BookPatient = ({
                   <SectionContainer
                     title="Selected Appointment Time"
                     content={
-                      <Panel bordered style={{ padding: 10, background: '#f8f4ea' }}>
+                      <Panel bordered style={{ padding: 10, background: mode === 'dark' ? 'var(--dark-black)' :'#f8f4ea' }}>
                         <div>
                           <div>
-                            <div style={{ fontSize: 16, fontWeight: 500, color: '#000000' }}>
+                            <div style={{ fontSize: 16, fontWeight: 500, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.dateTitle}
                             </div>
-                            <div style={{ fontSize: 12, color: '#000000' }}>
+                            <div style={{ fontSize: 12, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
                               {selectedSlotDisplay.timeRange}
                             </div>
                           </div>
@@ -830,6 +877,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
+                            required={appointmentData?.requirePractitioner}
                           />
                           <MyInput
                             fieldType="select"

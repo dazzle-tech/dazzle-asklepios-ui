@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Panel, Form as RsForm } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -18,18 +18,37 @@ import {
 } from '@/services/setup/formTemplateService';
 
 import { useGetDepartmentByFacilityQuery, useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import defaultV2Theme from "survey-core/themes";
+
+import { DefaultDark, DefaultLight } from "survey-creator-core/themes";
+import { DefaultDark as SurveyDark, DefaultLight as SurveyLight } from "survey-core/themes";
+
 import './styles.less';
 import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
+import { useAppSelector } from '@/hooks';
 
 const FormTemplateBuilderPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const mode = useSelector((state: any) => state.ui.mode);
+  const mode = useAppSelector((state: any) => state.ui.mode);
+  const styles = useMemo(() => getStyles(mode), [mode]);
 
   const params = useParams();
   const templateId = params.id ? Number(params.id) : null;
- const [creator, setCreator] = useState<SurveyCreator | null>(null);
+
+  const previewHandlerRef = useRef<((sender: any, options: any) => void) | null>(null);
+  const modeRef = useRef(mode);
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    if (params.id && isNaN(Number(params.id))) {
+      navigate('/error-403', { replace: true });
+    }
+  }, [params.id]);
+
+  const [creator, setCreator] = useState<SurveyCreator | null>(null);
   const [template, setTemplate] = useState<FormTemplate>({ ...newFormTemplate });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -38,7 +57,7 @@ const FormTemplateBuilderPage = () => {
   const [updateTemplate, updateMutation] = useUpdateFormTemplateMutation();
   const [loadTemplate] = useLazyGetFormTemplateQuery();
 
-  // Header setup like your other pages
+  // Header setup
   useEffect(() => {
     const title = templateId ? <Translate>Edit Form Template</Translate> : <Translate>New Form Template</Translate>;
     dispatch(setPageCode('FormTemplateBuilder'));
@@ -62,16 +81,39 @@ const FormTemplateBuilderPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // إنشاء الـ creator
   useEffect(() => {
     const c = new SurveyCreator({
       showLogicTab: true,
       isAutoSave: false,
     });
-     c.survey?.applyTheme(defaultV2Theme.DefaultLight); 
-    setCreator(c);
 
+    c.applyCreatorTheme(modeRef.current === 'dark' ? DefaultDark : DefaultLight);
+
+    const handlePreview = (sender: any, options: any) => {
+      options.survey.applyTheme(modeRef.current === 'dark' ? SurveyDark : SurveyLight);
+    };
+
+    previewHandlerRef.current = handlePreview;
+    c.onPreviewSurveyCreated.add(handlePreview);
+
+    setCreator(c);
     return () => setCreator(null);
   }, []);
+
+  useEffect(() => {
+    if (!creator) return;
+
+    creator.applyCreatorTheme(mode === 'dark' ? DefaultDark : DefaultLight);
+
+    if (creator.activeTab === 'preview') {
+      creator.activeTab = 'designer';
+      setTimeout(() => {
+        creator.activeTab = 'preview';
+      }, 0);
+    }
+
+  }, [mode, creator]);
 
   useEffect(() => {
     if (!creator) return;
@@ -115,7 +157,6 @@ const FormTemplateBuilderPage = () => {
     };
   }, [creator]);
 
-
   const tenant = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -126,19 +167,18 @@ const FormTemplateBuilderPage = () => {
 
   const selectedFacility = tenant?.selectedFacility || null;
   const selectedFacilityId = selectedFacility?.id ?? selectedFacility?.facilityId ?? null;
-  const selectedFacilityName = selectedFacility?.name ?? '';
 
   const { data: departmentListResponse, isFetching: deptFetching } =
     useGetDepartmentByFacilityQuery(
       { facilityId: selectedFacilityId, page: 0, size: 9999, sort: 'id,asc' },
       { skip: !selectedFacilityId }
     );
+
   useEffect(() => {
     if (selectedFacilityId && template?.facilityId !== selectedFacilityId) {
       setTemplate(prev => ({ ...prev, facilityId: selectedFacilityId }));
     }
   }, [selectedFacilityId]);
-
 
   useEffect(() => {
     if (!template?.departmentId) return;
@@ -192,7 +232,7 @@ const FormTemplateBuilderPage = () => {
         .unwrap()
         .then((created: any) => {
           dispatch(notify({ msg: "Template created successfully", sev: "success" }));
-          navigate(`../${created.id}`);
+          navigate(`/form-template/${created.id}`);
         })
         .catch((e: any) => {
           console.error(e);
@@ -209,36 +249,14 @@ const FormTemplateBuilderPage = () => {
     }
   };
 
-  // const handleSave = () => {
-  //   // ... validation + body
-  //   if (!template?.id) {
-  //     createTemplate(template)
-  //       .unwrap()
-  //       .then((created: any) => {
-  //         dispatch(notify({ msg: 'Template created successfully', sev: 'success' }));
-  //         navigate(`../${created.id}`);
-  //       })
-  //       .catch(() => dispatch(notify({ msg: 'Failed to create template', sev: 'error' })));
-  //   } else {
-  //     updateTemplate({ id: template.id as number,body : template })
-  //       .unwrap()
-  //       .then(() => dispatch(notify({ msg: 'Template updated successfully', sev: 'success' })))
-  //       .catch(() => dispatch(notify({ msg: 'Failed to update template', sev: 'error' })));
-  //   }
-  // };
-
   const saving = createMutation.isLoading || updateMutation.isLoading;
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-  
   return (
     <Panel className={mode === 'dark' ? 'dashboard-dark' : ''} dir={dir}>
-
       <div style={styles.contentCard}>
         <RsForm>
           <div className={'form-template-grid'}>
@@ -250,7 +268,6 @@ const FormTemplateBuilderPage = () => {
               setRecord={setTemplate}
               required
             />
-
 
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
@@ -270,7 +287,6 @@ const FormTemplateBuilderPage = () => {
               loading={deptFetching}
             />
 
-
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
               fieldLabel="Description"
@@ -279,10 +295,9 @@ const FormTemplateBuilderPage = () => {
               setRecord={setTemplate}
             />
 
-            <MyButton appearance="ghost" onClick={() => navigate('../form-template')} width="90px">
+            <MyButton appearance="ghost" onClick={() => navigate('/form-template')} width="90px">
               Back
             </MyButton>
-
 
             <MyButton
               color="var(--deep-blue)"
@@ -294,28 +309,17 @@ const FormTemplateBuilderPage = () => {
             </MyButton>
           </div>
 
-
-
-
           <br />
           <DividerLine />
         </RsForm>
 
-        {/* Builder */}
-        {/* <div style={styles.builderWrap}>
-          {!creator ? (
-            <div style={{ padding: 12 }}>Loading builder…</div>
-          ) : (
-            <SurveyCreatorComponent creator={creator} />
-          )}
-        </div> */}
         <div className="surveyjs-scope" style={styles.builderWrap}>
           {!creator ? (
             <div style={{ padding: 12 }}>Loading builder…</div>
           ) : (
             <div className="survey-scope">
-            <SurveyCreatorComponent creator={creator} />
-              </div>
+              <SurveyCreatorComponent creator={creator} />
+            </div>
           )}
         </div>
       </div>
@@ -325,15 +329,14 @@ const FormTemplateBuilderPage = () => {
 
 export default FormTemplateBuilderPage;
 
-/** small divider component to match your style */
 const DividerLine = () => (
-  <div style={{ height: 1, background: '#eef3f9', margin: '12px 0' }} />
+  <div style={{ height: 1, background: 'var(--rs-border-primary)', margin: '12px 0' }} />
 );
 
-const styles: Record<string, React.CSSProperties> = {
+const getStyles = (mode: string): Record<string, React.CSSProperties> => ({
   toolbarRow: {
-    background: '#ffffff',
-    border: '1px solid #e6edf5',
+    background: mode === 'dark' ? 'var(--dark-black)' : '#ffffff',
+    border: '1px solid var(--rs-border-primary)',
     borderRadius: 14,
     padding: 12,
     display: 'flex',
@@ -344,19 +347,18 @@ const styles: Record<string, React.CSSProperties> = {
   toolbarLeft: { display: 'flex', flexDirection: 'column' },
   pageTitle: { fontSize: 18, fontWeight: 800, color: '#1f2d3d' },
   breadcrumb: { fontSize: 12, color: '#7c8ea6', marginTop: 2 },
-
   contentCard: {
-    background: '#ffffff',
-    border: '1px solid #e6edf5',
+    background: mode === 'dark' ? 'var(--dark-black)' : '#ffffff',
+    border: '1px solid var(--rs-border-primary)',
     borderRadius: 14,
     padding: 12,
     minHeight: 'calc(100vh - 170px)'
   },
   builderWrap: {
-    height: 'calc(100vh - 320px)', // more space for fields above
+    height: 'calc(100vh - 320px)',
     minHeight: 520,
-    border: '1px solid #eef3f9',
+    border: '1px solid var(--rs-border-primary)',
     borderRadius: 14,
     overflow: 'hidden'
   }
-};
+});

@@ -174,8 +174,12 @@ const Practitioners = () => {
     }
   };
 
+  const PRACTITIONER_ERROR_MAP: Record<string, string> = {
+    "error.userexists": "User already exists",
+  };
 
-  // ──────────────────────────── CRUD HANDLERS ────────────────────────────
+
+    // ──────────────────────────── CRUD HANDLERS ────────────────────────────
   const handleAddNew = async () => {
     try {
       const payload = {
@@ -201,28 +205,70 @@ const Practitioners = () => {
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
       };
 
       const Response = await createPractitioner(payload).unwrap();
+
       dispatch(
         notify({ msg: "Practitioner added successfully", sev: "success" })
       );
+
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setPractitioner({ ...Response });
-    } catch (error) {
-      console.error("Error updating practitioner:", error);
 
+    } catch (error: any) {
+      console.log("FULL ERROR:", error);
 
-      if (error?.data?.fieldErrors?.length) {
-        const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+      const data = error?.data ?? {};
+
+      if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const messages = data.fieldErrors
+          .map((fe: any) => `${fe.field}: ${fe.message}`)
           .join("\n");
+
         dispatch(notify({ msg: messages, sev: "error" }));
-      } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
-      } else {
-        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+        return;
       }
+
+let backendKey = data?.properties?.message;
+
+if (!backendKey && typeof data?.properties === "string") {
+  const match = data.properties.match(/message=([^,}]+)/);
+  backendKey = match?.[1];
+}
+
+if (!backendKey && typeof data?.message === "string") {
+  backendKey = data.message;
+}
+
+if (!backendKey && typeof error === "string") {
+  const match = error.match(/error\.[a-zA-Z0-9]+/);
+  backendKey = match?.[0];
+}
+
+      // 🟩 mapping
+      if (backendKey && PRACTITIONER_ERROR_MAP[backendKey]) {
+        dispatch(
+          notify({
+            msg: PRACTITIONER_ERROR_MAP[backendKey],
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      // 🟦 fallback
+      dispatch(
+        notify({
+          msg:
+            backendKey ||
+            data?.detail ||
+            data?.title ||
+            "Something went wrong",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -251,10 +297,11 @@ const Practitioners = () => {
         jobRole: practitioner.jobRole || null,
         gender: practitioner.gender || null,
         isActive: practitioner.isActive,
-         parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
       };
 
       await updatePractitioner(payload).unwrap();
@@ -262,21 +309,54 @@ const Practitioners = () => {
       dispatch(
         notify({ msg: "Practitioner updated successfully", sev: "success" })
       );
+
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch (error) {
-      console.error("Error updating practitioner:", error);
 
+    } catch (error: any) {
+      console.log("FULL ERROR:", error);
 
-      if (error?.data?.fieldErrors?.length) {
-        const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+      const data = error?.data ?? {};
+
+      // 🟥 validation errors
+      if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const messages = data.fieldErrors
+          .map((fe: any) => `${fe.field}: ${fe.message}`)
           .join("\n");
+
         dispatch(notify({ msg: messages, sev: "error" }));
-      } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
-      } else {
-        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+        return;
       }
+
+      // 🟨 extract message (object أو string)
+      let backendKey = data?.properties?.message;
+
+      if (!backendKey && typeof data?.properties === "string") {
+        const match = data.properties.match(/message=([^,}]+)/);
+        backendKey = match?.[1];
+      }
+
+      // 🟩 mapping
+      if (backendKey && PRACTITIONER_ERROR_MAP[backendKey]) {
+        dispatch(
+          notify({
+            msg: PRACTITIONER_ERROR_MAP[backendKey],
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      // 🟦 fallback
+      dispatch(
+        notify({
+          msg:
+            backendKey ||
+            data?.detail ||
+            data?.title ||
+            "Something went wrong",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -360,10 +440,11 @@ const Practitioners = () => {
         const matched = list.find((x) => x.key === rowData?.subSpecialty);
         const subSpecName = matched?.lovDisplayVale ?? "No Sub Specialty";
 
+        
         return (
           <div style={{ display: "inline-block", position: "relative" }}>
             <Whisper
-              placement="topStart"  // 👈 يجعل tooltip فوق الكلمة مباشرة
+              placement="topStart" 
               trigger={isSpecialist ? "hover" : "none"}
               speaker={
                 isSpecialist ? (
@@ -431,7 +512,7 @@ const Practitioners = () => {
 
   // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
-    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldName="filter"
         fieldType="select"

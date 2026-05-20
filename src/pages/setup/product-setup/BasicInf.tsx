@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Col, Dropdown, Form, Input, InputGroup, Row } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetActiveIngredientQuery, useGetGenericMedicationQuery } from '@/services/medicationsSetupService';

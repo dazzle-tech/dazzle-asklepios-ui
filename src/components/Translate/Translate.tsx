@@ -1,53 +1,22 @@
 import { useAppSelector } from '@/hooks';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import "./styles.less";
-const Translate = props => {
-  const lang = useAppSelector(state => state.ui.lang);
-  const translations = useAppSelector(state => state.ui.translations);
- const toKey = (s: string) => {
-  if (typeof s === 'string') {
-  s = s.normalize('NFD');
-  return s
-    .replace(/\s+/g, '_')            // replace all spaces with underscores
-    .toUpperCase();
-} else {
-  // console.warn('Expected a string, got:', s);
-  return s;
-}
+
+const toKey = (s: string): string => {
+  if (typeof s !== 'string') return s;
+  return s.normalize('NFD').replace(/\s+/g, '_').toUpperCase();
 };
 
-  const [text, setText] = useState('');
-    useEffect(() => {
-    if (props.children) {
-      if (lang === '') {
-        setText(props.children);
-      } else {
-        if (translations[lang]?.[toKey(props?.children)]) {
-          setText(translations[lang][toKey(props?.children)]);
-        } else {
-          setText(props.children);
-        }
-      }
-    }
-  }, []);
+const Translate = ({ children }: { children?: any }) => {
+  const lang = useAppSelector(state => state.ui.lang);
+  const translations = useAppSelector(state => state.ui.translations);
 
-  useEffect(() => {
-    if (props.children) {
-      if (lang === '') {
-        setText(props.children);
-      } else {
-        if (translations[lang]?.[toKey(props?.children)]) {
-          setText(translations[lang][toKey(props.children)]);
-        } else {
-          setText(props.children);
-        }
-      }
-    }
-  }, [lang, props.children]);
+  if (typeof children !== 'string') return <>{children}</>;
 
-  return(
-   <>{text}</>
-  );
+  const key = toKey(children);
+  const translated = (lang && translations[lang]?.[key]) ? translations[lang][key] : children;
+
+  return <>{translated}</>;
 };
 
 export default Translate;

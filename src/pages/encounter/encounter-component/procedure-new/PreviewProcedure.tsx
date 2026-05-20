@@ -19,12 +19,10 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
   // LOV Queries
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
-  const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
   // Enums
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
@@ -76,7 +74,7 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
       }
     >
       <Form fluid>
-        <div className='margin-bottom-10' >
+        <div className="margin-bottom-10">
           <SectionContainer
             title="Procedure Details"
             content={
@@ -99,9 +97,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   width="100%"
                   fieldType="select"
                   fieldLabel="Category Type"
-                  selectData={CategoryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={categoryOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   fieldName="categoryKey"
                   record={procedure}
                   setRecord={() => {}}

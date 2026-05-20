@@ -171,7 +171,7 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
         <Form fluid dir={dir}>
           <MyInput
             column
-            width={400}
+            width={"100%"}
             height={200}
             fieldLabel="Progress Notes"
             fieldType="textarea"

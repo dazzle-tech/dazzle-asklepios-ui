@@ -144,10 +144,7 @@ const Preparation: React.FC = () => {
         width: 100,
         render: (row: any) => (
           <MyBadgeStatus
-            backgroundColor={
-              row.status === 'Pending' ? 'var(--background-gray)' : 'var(--light-green)'
-            }
-            color={row.status === 'Pending' ? 'var(--primary-gray)' : 'var(--primary-green)'}
+            color={row.status === 'Pending' ? '#969fb0' : '#45b887'}
             contant={row.status}
           />
         )

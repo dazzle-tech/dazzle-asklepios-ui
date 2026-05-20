@@ -6,7 +6,7 @@ import ActiveAllergies from './ActiveAllergies/ActiveAllergies';
 import MedicalWarnings from './MedicalWarnings/MedicalWarnings';
 import RecentTestResults from './RecentTestResults/RecentTestResults';
 import PreviuosVisitData from './PreviuosVisitData';
-import BodyDiagram from './BodyDiagram/BodyDiagram';
+// import BodyDiagram from './BodyDiagram/BodyDiagram';
 import { useLocation } from 'react-router-dom';
 import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
@@ -24,9 +24,14 @@ import PatientPlan from './PatientPlan';
 import PrimaryCareProviderTable from './PrimaryCareProviderTable/PrimaryCareProviderTable';
 // import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
-const PatientSummary = () => {
+const PatientSummary = ({
+  patient: patientProp,
+  encounter: encounterProp
+}: { patient?: any; encounter?: any } = {}) => {
   const location = useLocation();
-  const { patient, encounter } = location.state || {};
+  const stateData = location.state || {};
+  const patient = patientProp ?? stateData.patient;
+  const encounter = encounterProp ?? stateData.encounter;
   const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));
@@ -52,7 +57,7 @@ const PatientSummary = () => {
 
   const [columns, setColumns] = useState({
     col1: [
-      { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
+      // { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
       {
         id: 'c2',
         content: <PreviuosVisitData patient={patient} encounter={encounter} />,
@@ -70,12 +75,13 @@ const PatientSummary = () => {
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-
       {
         id: 'c9',
         content: <PatientPlan patient={patient} />,
         display: true
       },
+      { id: 'c11', content: <Procedures patient={patient} />, display: false },
+      { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
       // {
       //   id: 'c10',
       //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
@@ -83,8 +89,6 @@ const PatientSummary = () => {
       // }
     ],
     col3: [
-      { id: 'c11', content: <Procedures patient={patient} />, display: false },
-      { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
       {
         id: 'c13',
         content: (

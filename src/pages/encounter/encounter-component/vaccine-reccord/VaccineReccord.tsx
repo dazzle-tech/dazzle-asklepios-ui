@@ -264,7 +264,7 @@ const VaccineReccord = () => {
       )}
 
       <Form layout="inline" fluid className="form-content-vaccine-fields">
-        <Form layout="inline" fluid>
+        <div>
           <MyInput column disabled fieldType="text" fieldLabel="ATC Code" fieldName="atcCode" record={selectedVaccine} />
           <MyInput
             column
@@ -300,7 +300,7 @@ const VaccineReccord = () => {
             disabled
           />
           <MyInput column fieldLabel="Site of Administration" fieldName="siteOfAdministration" record={selectedVaccine} disabled />
-        </Form>
+        </div>
 
         <div className="cancel-checkbox-container">
           <Checkbox

@@ -47,6 +47,7 @@ import {
   initialListRequest,
   initialListRequestAllValues
 } from '@/types/types';
+import { useLazyGetLaboratoryReportPdfQuery } from '@/services/reports/laboratoryReportsService';
 
 type Props = {
   patient: any;
@@ -98,7 +99,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-
+  const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
   const [dateFilter, setDateFilter] = useState<any>({
     fromDate: null,
@@ -107,9 +108,8 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
-  const [generatePdf, { isLoading: isGeneratingPdf }] =
-    useGenerateLabResultsPdfMutation();
-
+  const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
+      useLazyGetLaboratoryReportPdfQuery();
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -208,6 +208,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
+      const fallback = "—"; 
+
+    
     if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
     }
@@ -223,7 +226,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         (v: any) =>
           String(v.lovCode) === String(lovDef.lovCode) &&
           String(v.key) === String(key)
-      )?.lovDisplayVale ?? key
+      )?.lovDisplayVale ?? fallback
     );
   };
 
@@ -262,44 +265,27 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     [allTests]
   );
 
-  const handleGeneratePdf = async () => {
-    if (!patientId || !normalizedResults.length) return;
 
+  const handleGeneratePdf = async (result: any) => {
+   if (!result?.id) return;
     try {
-      const pdfData = {
-        patientInfo: {
-          name: patient?.fullName,
-          mrn: patient?.patientMrn,
-          dob: patient?.dob,
-          gender: patient?.gender
-        },
-        results: normalizedResults
-      };
+      const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const file = await generatePdf(pdfData).unwrap();
-
-      const blob = new Blob([file], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `Lab_Results_${Date.now()}.pdf`;
+      link.href = fileURL;
+      link.download = `Result-${result.id}.pdf`;
+      document.body.appendChild(link);
       link.click();
-      window.URL.revokeObjectURL(url);
+      link.remove();
 
-      toaster.push(
-        <Message type="success" showIcon>
-          Report Generated Successfully
-        </Message>
-      );
-    } catch {
-      toaster.push(
-        <Message type="error" showIcon>
-          Failed To Generate Report
-        </Message>
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download report pdf', error);
     }
   };
-
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -340,7 +326,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       return {
         ...r,
         orderId: orderTest?.orderId ?? ' ',
-        testName: test?.name ?? ' ',
+        testName: profile?.name ?? ' ',
         resultValue: value,
         unit,
         normalRange: normalRangeValue
@@ -461,9 +447,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   const tableButtons = (
     <MyButton
-      onClick={handleGeneratePdf}
-      loading={isGeneratingPdf}
-      disabled={!patientId || !normalizedResults.length}
+      onClick={() => handleGeneratePdf(selectedResult)}
+      loading={isGeneratingReport}
+      disabled={selectedResult == null || !selectedResult.id}
       appearance='ghost'
       prefixIcon={() => (
         <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
@@ -488,6 +474,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         filters={filters}
         columns={columns}
         data={normalizedResults}
+        onRowClick={(row) => {
+          setSelectedResult(row);
+        }}
+        rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
           isOrdersFetching ||
           isResultsFetching ||

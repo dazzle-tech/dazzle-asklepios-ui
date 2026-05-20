@@ -46,11 +46,15 @@ import {
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
-
-import 'react-tabs/style/react-tabs.css';
-import './styles.less';
-import { skipToken } from '@tanstack/react-query';
+import {
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
+import {
+  useSearchAppointmentsQuery,
+  useGetAppointmentLogsQuery
+} from '@/services/appointment/appointmentService';
+import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -159,6 +163,55 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
 
+const safeFormatDateModule = (value: any) => {
+  if (!value) return '';
+  try {
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    const formattedDate = date.toLocaleDateString('en-GB');
+    const formattedTime = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    return `${formattedDate} ${formattedTime}`;
+  } catch {
+    return '';
+  }
+};
+
+type AppointmentTimeKind = 'appointment' | 'confirm' | 'checkin';
+
+const AppointmentLogTimeCell: React.FC<{
+  appointmentId: number | string | null | undefined;
+  kind: AppointmentTimeKind;
+}> = ({ appointmentId, kind }) => {
+  const { data: logs } = useGetAppointmentLogsQuery(
+    { appointmentId: appointmentId as number },
+    { skip: !appointmentId }
+  );
+
+  if (!appointmentId) return <>-</>;
+  if (!logs || logs.length === 0) return <>-</>;
+
+  const ascending = [...logs].reverse();
+
+  if (kind === 'appointment') {
+    return <>{safeFormatDateModule(ascending[0]?.startDatetime) || '-'}</>;
+  }
+
+  if (kind === 'confirm') {
+    const log = ascending.find((l: any) => String(l?.status ?? '').toUpperCase() === 'CONFIRMED');
+    return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
+  }
+
+  if (kind === 'checkin') {
+    const log = ascending.find((l: any) => String(l?.status ?? '').toUpperCase() === 'CHECKED_IN');
+    return <>{log ? safeFormatDateModule(log.logDate) : '-'}</>;
+  }
+
+  return <>-</>;
+};
+
 const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -183,7 +236,6 @@ const EncounterList = () => {
     discharge: false
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -193,8 +245,13 @@ const EncounterList = () => {
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
+
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
+  const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
   const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
     exclude: [
@@ -216,8 +273,8 @@ const EncounterList = () => {
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const today = new Date();
+  const todayStr = formatDate(today);
 
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
@@ -237,72 +294,42 @@ const EncounterList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-  const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
 
   const handlePatientSearchClick = useCallback(() => {
     setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
-    setSearchTick(prev => prev + 1);
   }, [patientSearchDraft]);
-
-  const filterParams = useMemo(() => {
-    if (!departmentId) return null;
-
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-    const chiefComplaint =
-      String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
-    const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
-    const normalizedPriorities =
-      uniqueNonEmpty(priorities) ??
-      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
-
-    return {
-      departmentId: departmentId,
-      fromDate,
-      toDate,
-      statusIn: normalizedStatusIn,
-      patientName,
-      mrn,
-      encounterReasons: normalizedEncounterReasons,
-      chiefComplaint,
-      priorities: normalizedPriorities,
-      hasPrescription,
-      hasOrder,
-      isObserved,
-      page,
-      size: pageSize,
-      sort: DEFAULT_SORT,
-      timestamp: searchTick
-    };
-  }, [
-    DEFAULT_STATUS,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    departmentId,
-    encounterReasons,
-    hasOrder,
-    isObserved,
-    page,
-    pageSize,
-    priorities,
-    record,
-    statusIn,
-    todayStr,
-    hasPrescription,
-    patientSearchApplied,
-    searchTick
-  ]);
 
   const {
     data: encountersPaged,
     isFetching: isEncountersFetching,
     isLoading: isEncountersLoading,
     refetch: refetchEncounters
-  } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
+  } = useFilterEncountersQuery(appliedFilters as any, {
+    skip: !appliedFilters
+  });
+  
+  const { data: appointmentsData } = useSearchAppointmentsQuery({
+    filter: {
+      facility: selectedDepartment?.facilityId,
+      department: departmentId
+    },
+    page: 0,
+    size: 50,
+    sort: 'id,desc'
+  });
+
+  const appointmentsMap = useMemo(() => {
+    const map: any = {};
+    (appointmentsData?.data ?? []).forEach((appt: any) => {
+      const patientId = appt?.patient?.id;
+      if (patientId) {
+        map[patientId] = appt;
+      }
+    });
+    return map;
+  }, [appointmentsData]);
 
   const todayCountsSkip = !departmentId;
   const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
@@ -336,11 +363,9 @@ const EncounterList = () => {
       .map(v => String(v));
     return Array.from(new Set(ids));
   }, [tableData]);
+
   useEffect(() => {
-    const pid =
-
-      encounter?.patient?.id;
-
+    const pid = encounter?.patient?.id;
     if (pid) triggerGetPatientById({ id: pid });
   }, [encounter?.patient?.id]);
 
@@ -386,7 +411,6 @@ const EncounterList = () => {
       return {
         ...row,
         key: row?.id,
-
         patientObject: {
           id: patientId,
           fullName,
@@ -397,7 +421,6 @@ const EncounterList = () => {
           sexAtBirth,
           isPrivatePatient: isPrivate
         },
-
         patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
@@ -405,15 +428,32 @@ const EncounterList = () => {
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
+  const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
+
   const startEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
+
+    const statusUpper = String(row?.status ?? '').toUpperCase();
+
+    if (statusUpper === 'ONGOING') {
+      return true;
+    }
+
+    if (startingEncounterIdsRef.current.has(encounterId)) {
+      return false;
+    }
+
+    startingEncounterIdsRef.current.add(encounterId);
+
     try {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
+    } finally {
+      startingEncounterIdsRef.current.delete(encounterId);
     }
   };
 
@@ -426,7 +466,8 @@ const EncounterList = () => {
       return true;
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
         'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
       };
 
@@ -437,13 +478,10 @@ const EncounterList = () => {
       return false;
     }
   };
+
   const fetchPatientForEncounter = async (enc: any) => {
-    const pid =
-      enc?.patient?.id ??
-      null;
-
+    const pid = enc?.patient?.id ?? null;
     if (!pid) return null;
-
     try {
       const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
       return fullPatient;
@@ -452,6 +490,7 @@ const EncounterList = () => {
       return null;
     }
   };
+
   const handleGoToVisit = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
@@ -468,12 +507,7 @@ const EncounterList = () => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
+    navigate('/encounter', {
       state: {
         info: 'toEncounter',
         fromPage: 'EncounterList',
@@ -481,16 +515,13 @@ const EncounterList = () => {
         encounter: encounterData
       }
     });
-
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
+
     if (!fullPatient) {
       dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
       return;
@@ -498,15 +529,14 @@ const EncounterList = () => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-    const targetPath = fullPatient?.isPrivatePatient
-      ? '/user-access-patient-private'
-      : '/nurse-station';
-    navigate(targetPath, {
+
+    navigate('/nurse-station', {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status?.toUpperCase() === 'CLOSED'
+        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        fromPage: 'EncounterList'
       }
     });
   };
@@ -519,30 +549,86 @@ const EncounterList = () => {
     setOpen(false);
   };
 
-  const handlePageChange = useCallback((_: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
   const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setPageSize(parseInt(event.target.value, 10));
+    const newSize = parseInt(event.target.value, 10);
+    setPageSize(newSize);
     setPage(0);
+
+    setAppliedFilters((prev: any) =>
+      prev
+        ? {
+          ...prev,
+          page: 0,
+          size: newSize
+        }
+        : prev
+    );
   }, []);
+
+  const handlePageChange = useCallback(
+    (_: unknown, newPage: number) => {
+      setPage(newPage);
+
+      setAppliedFilters((prev: any) =>
+        prev
+          ? {
+            ...prev,
+            page: newPage,
+            size: pageSize
+          }
+          : prev
+      );
+    },
+    [pageSize]
+  );
 
   const handleClearFilters = () => {
     const now = new Date();
-    setRecord({});
-    setDateFilter({ fromDate: now, toDate: now });
-    setStatusIn(DEFAULT_STATUS);
+
+    const clearedDateFilter = {
+      fromDate: new Date(now.getTime()),
+      toDate: new Date(now.getTime() + 1000)
+    };
+
+    setRecord({ chiefComplain: '' });
+    setDateFilter({ ...clearedDateFilter });
+    setStatusIn([...DEFAULT_STATUS]);
     setEncounterReasons([]);
     setPriorities([]);
     setHasPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
-    const clearedSearch = { searchByField: 'fullName', patientName: '' };
-    setPatientSearchDraft(clearedSearch);
-    setPatientSearchApplied(clearedSearch);
+
+    const clearedSearch = {
+      searchByField: 'fullName',
+      patientName: ''
+    };
+
+    setPatientSearchDraft({ ...clearedSearch });
+    setPatientSearchApplied({ ...clearedSearch });
+
     setPage(0);
-    setSearchTick(prev => prev + 1);
+
+    setAppliedFilters({
+      departmentId,
+      fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
+      toDate: toISODate(clearedDateFilter.toDate) ?? todayStr,
+      statusIn: [...DEFAULT_STATUS],
+      patientName: undefined,
+      mrn: undefined,
+      encounterReasons: undefined,
+      chiefComplaint: undefined,
+      priorities: undefined,
+      hasPrescription: undefined,
+      hasOrder: undefined,
+      isObserved: undefined,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+    setFiltersKey(prev => prev + 1);
   };
+
   const isAdmin = !!authSlice.user?.admin;
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
 
@@ -551,6 +637,59 @@ const EncounterList = () => {
   const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
   const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+
+  const safeFormatDate = (value: any) => {
+    if (!value) return '';
+    try {
+      const date = value instanceof Date ? value : new Date(value);
+      if (isNaN(date.getTime())) return '';
+      const formattedDate = date.toLocaleDateString('en-GB');
+      const formattedTime = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      return `${formattedDate} ${formattedTime}`;
+    } catch {
+      return '';
+    }
+  };
+
+  const handlePrintVisitReport = async (row: any) => {
+    const encounterId = row?.id ?? null;
+
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
+    }
+
+    try {
+      setPrintingVisitReportId(encounterId);
+
+      const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+
+      const fileURL = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = fileURL;
+      link.download = `visit-report-${encounterId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Error while downloading visit report',
+          sev: 'error',
+        })
+      );
+    } finally {
+      setPrintingVisitReportId(null);
+    }
+  };
+
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -596,7 +735,52 @@ const EncounterList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      width: 220,
+      render: (row: any) => {
+        const complaint = row?.chiefComplaint ?? '-';
+        const MAX_LENGTH = 20;
+
+        const shouldTruncate =
+          complaint !== '-' && String(complaint).length > MAX_LENGTH;
+
+        const displayText = shouldTruncate
+          ? `${String(complaint).substring(0, MAX_LENGTH)}...`
+          : complaint;
+
+        const content = (
+          <div
+            style={{
+              cursor: shouldTruncate ? 'pointer' : 'default'
+            }}
+          >
+            {displayText}
+          </div>
+        );
+
+        if (!shouldTruncate) {
+          return content;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 400,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {complaint}
+              </Tooltip>
+            }
+          >
+            {content}
+          </Whisper>
+        );
+      }
     },
     {
       key: 'hasPrescription',
@@ -627,6 +811,23 @@ const EncounterList = () => {
       key: 'encounterDate',
       title: 'DATE',
       render: (row: any) => row?.encounterDate ?? '-'
+    },
+    {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
     },
     {
       key: 'status',
@@ -755,7 +956,13 @@ const EncounterList = () => {
                   <MyButton
                     size="small"
                     backgroundColor="light-blue"
-                    onClick={() => setLocalEncounter(row)}
+                    disabled={printingVisitReportId === row?.id}
+                    loading={printingVisitReportId === row?.id}
+                    onClick={() => {
+                      if (printingVisitReportId === row?.id) return; 
+                      setLocalEncounter(row);
+                      handlePrintVisitReport(row);
+                    }}
                   >
                     <FontAwesomeIcon icon={faPrint} />
                   </MyButton>
@@ -766,66 +973,140 @@ const EncounterList = () => {
         );
       },
       expandable: false
+    },
+    {
+      key: 'appointmentTime',
+      title: 'APPOINTMENT TIME',
+      expandable: true,
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="appointment"
+        />
+      )
+    },
+    {
+      key: 'confirmTime',
+      title: 'CONFIRM TIME',
+      expandable: true,
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="confirm"
+        />
+      )
+    },
+    {
+      key: 'checkInTime',
+      title: 'CHECK-IN TIME',
+      expandable: true,
+      render: (row: any) => (
+        <AppointmentLogTimeCell
+          appointmentId={
+            row?.appointment?.id ?? row?.appointmentId ?? appointmentsMap[row?.patient?.id]?.id
+          }
+          kind="checkin"
+        />
+      )
+    },
+    {
+      key: 'seenByPhysicianTime',
+      title: 'SEEN BY PHYSICIAN',
+      expandable: true,
+      render: (row: any) => safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
 
   const filters = () => (
     <>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={v => {
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={v => {
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
+      <div key={filtersKey}>
+        <Form layout="inline" fluid className="date-filter-form">
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
 
-        <SearchPatientCriteria
-          record={patientSearchDraft}
-          setRecord={setPatientSearchDraft}
-          onSearchClick={handlePatientSearchClick}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
 
-        <MyInput
-          column
-          width={260}
-          fieldType="checkPicker"
-          fieldLabel="Encounter Status"
-          fieldName="statusIn"
-          selectData={EncounterStatusEnum}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={{ statusIn }}
-          setRecord={(v: any) => {
-            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
-            setPage(0);
-          }}
-        />
-      </Form>
+          <SearchPatientCriteria
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
+          />
 
+          <MyInput
+            column
+            width={260}
+            fieldType="checkPicker"
+            fieldLabel="Encounter Status"
+            fieldName="statusIn"
+            selectData={EncounterStatusEnum}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ statusIn }}
+            setRecord={(v: any) => {
+              setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+              setPage(0);
+            }}
+          />
+        </Form>
+      </div>
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
+        searchOnClick={() => {
+          const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+          const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+          const chiefComplaint = record?.chiefComplain?.trim()
+            ? record.chiefComplain.trim()
+            : undefined;
+          const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
+          const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
+          const normalizedPriorities =
+            uniqueNonEmpty(priorities) ??
+            uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+
+          setPage(0);
+
+          setAppliedFilters({
+            departmentId,
+            fromDate,
+            toDate,
+            statusIn: normalizedStatusIn,
+            patientName,
+            mrn,
+            encounterReasons: normalizedEncounterReasons,
+            chiefComplaint,
+            priorities: normalizedPriorities,
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page: 0,
+            size: pageSize,
+            sort: DEFAULT_SORT
+          });
+        }}
         content={
           <div className="advanced-filters">
-            <Form key={JSON.stringify(record)} fluid className="dissss">
+            <Form fluid className="dissss">
               <MyInput
                 fieldName="encounterReasons"
                 fieldType="checkPicker"
@@ -848,10 +1129,7 @@ const EncounterList = () => {
                 fieldName="chiefComplain"
                 fieldType="text"
                 record={record}
-                setRecord={v => {
-                  setRecord(v);
-                  setPage(0);
-                }}
+                setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
 
@@ -880,7 +1158,6 @@ const EncounterList = () => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
@@ -889,15 +1166,53 @@ const EncounterList = () => {
     };
   }, [dispatch, tableLoading]);
 
-  if (!departmentId) {
-    return (
-      <Panel>
-        <div className="encounter-list__no-department">
-          <p>Please select a department to view encounters.</p>
-        </div>
-      </Panel>
-    );
+  useEffect(() => {
+  if (!departmentId || appliedFilters) return;
+
+  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+
+  setAppliedFilters({
+    departmentId,
+    fromDate,
+    toDate,
+    statusIn: DEFAULT_STATUS,
+    patientName: undefined,
+    mrn: undefined,
+    encounterReasons: undefined,
+    chiefComplaint: undefined,
+    priorities: undefined,
+    hasPrescription: undefined,
+    hasOrder: undefined,
+    isObserved: undefined,
+    page: 0,
+    size: pageSize,
+    sort: DEFAULT_SORT
+  });
+}, [
+  departmentId,
+  appliedFilters,
+  dateFilter.fromDate,
+  dateFilter.toDate,
+  todayStr,
+  DEFAULT_STATUS,
+  pageSize
+]);
+
+useEffect(() => {
+  if (appliedFilters) {
+    refetchEncounters();
   }
+}, [appliedFilters, refetchEncounters]);
+
+  const didAutoRefetchRef = useRef(false);
+  useEffect(() => {
+    if (location.state?.shouldRefetch && !didAutoRefetchRef.current && departmentId) {
+      didAutoRefetchRef.current = true;
+      handleClearFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -980,9 +1295,7 @@ const EncounterList = () => {
             open={openNurseAssessment}
             setOpen={setOpenNurseAssessment}
             actionButtonFunction={async () => {
-
               await handleGoToPreVisitObservations(encounter);
-
             }}
             actionType="confirm"
             confirmationQuestion="Do you want to start Nurse Assessment?"

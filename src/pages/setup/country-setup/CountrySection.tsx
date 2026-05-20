@@ -14,7 +14,6 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { newCountry } from '@/types/model-types-constructor-new';
@@ -29,7 +28,7 @@ import {
   useUpdateCountryMutation
 } from '@/services/setup/country/countryService';
 
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 type Props = {
   onSelect: (c: Country | null) => void;
@@ -92,8 +91,11 @@ const COUNTRY_ERROR_MAP: Record<string, string> = {
 const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
   const dispatch = useAppDispatch();
 
-  const { data: lovResponse } = useGetLovValuesByCodeQuery('CNTRY');
-
+  const enumOptions = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumOptions.map(o => [o.value, o.label])),
+    [enumOptions]
+  );
   const [countryForEdit, setCountryForEdit] = useState<Country>({ ...newCountry });
 
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
@@ -368,9 +370,9 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
           fieldLabel=""
           fieldType="select"
           fieldName="value"
-          selectData={lovResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={enumOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={recordOfCountryFilter}
           setRecord={setRecordOfCountryFilter}
           menuMaxHeight={200}
@@ -437,8 +439,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       key: 'name',
       title: <Translate>Country Name</Translate>,
       flexGrow: 3,
-      render: (row: Country) =>
-        conjureValueBasedOnKeyFromList(lovResponse?.object ?? [], row.name, 'lovDisplayVale')
+      render: (row: Country) => enumLabelMap[row.name] || enumLabelMap[row.code] || row.name
     },
     { key: 'code', title: <Translate>Code</Translate>, flexGrow: 2 },
     {
@@ -509,10 +510,11 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                     fieldLabel="Country Name"
                     record={countryForEdit}
                     setRecord={setCountryForEdit}
-                    selectData={lovResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={enumOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     width={220}
+                    required
                   />
                   <MyInput
                     fieldName="code"
@@ -522,6 +524,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                     record={countryForEdit}
                     setRecord={setCountryForEdit}
                     width={120}
+                    required
                   />
                   <div className="margin-top-37">
                     <MyButton

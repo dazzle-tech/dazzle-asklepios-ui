@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetActivePlansByPayorQuery, useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
@@ -98,19 +98,19 @@ const InsuranceModal = ({
   refetchInsurance,
   editing,
   insuranceBrowsing,
-  relations,
   hideSaveBtn = false
 }) => {
   const dispatch = useAppDispatch();
+  const resolvedPatientId =
+    typeof patientKey === 'object' ? Number(patientKey?.id) : Number(patientKey);
 
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
   });
-
+console.log('Resolved Patient ID:', resolvedPatientId);
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const [relationsList, setRelationsList] = useState<any[]>();
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
 
   const [payorPage, setPayorPage] = useState(0);
@@ -121,7 +121,7 @@ const InsuranceModal = ({
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
-  // بعد
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
@@ -132,19 +132,21 @@ const InsuranceModal = ({
     sort: 'name,asc'
   });
 
-  const {
-    data: plansResponse,
-    isLoading: plansLoading,
-    isFetching: plansFetching
-  } = useGetAllActivePlansQuery(
-    {
-      payorId: Number(patientInsurance?.payorId) || 0,
-      page: planPage,
-      size: 20,
-      sort: 'name,asc'
-    },
-    { skip: !patientInsurance?.payorId }
-  );
+    const {
+      data: plansResponse,
+      isLoading: plansLoading,
+      isFetching: plansFetching
+    } = useGetActivePlansByPayorQuery(
+      {
+        payorId: Number(patientInsurance?.payorId),
+        page: planPage,
+        size: 20,
+        sort: 'name,asc'
+      },
+      {
+        skip: !patientInsurance?.payorId
+      }
+    );
 
   const {
     data: relativesResponse,
@@ -152,12 +154,12 @@ const InsuranceModal = ({
     isFetching: relativesFetching
   } = useGetRelativePatientsByCategoryQuery(
     {
-      patientId: patientKey?.id,
+      patientId: resolvedPatientId,
       categoryType: 'ADULT',
       page: relativePage,
       size: 5
     },
-    { skip: !patientKey?.id || !open }
+    { skip: !resolvedPatientId || !open }
   );
 
   useEffect(() => {
@@ -165,18 +167,21 @@ const InsuranceModal = ({
   }, [payorSearchKeyword]);
 
   useEffect(() => {
-    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
+    const currentPayorId = patientInsurance?.payorId
+      ? Number(patientInsurance.payorId)
+      : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
     setPlanPage(0);
 
-    if (prevPayorId !== undefined) {
-      setPatientInsurance(prevInsurance => ({ ...prevInsurance, planId: null }));
-    }
+    setPatientInsurance(prev => ({
+      ...prev,
+      planId: null
+    }));
 
     setPrevPayorId(currentPayorId);
-  }, [patientInsurance?.payorId, prevPayorId]);
+  }, [patientInsurance?.payorId]);
 
   useEffect(() => {
     if (!open) {
@@ -227,7 +232,7 @@ const InsuranceModal = ({
   const handleSave = async () => {
     const insuranceBody: PatientInsurance = {
       ...patientInsurance,
-      patientId: patientKey.id
+      patientId: resolvedPatientId
     };
 
     try {
@@ -258,15 +263,6 @@ const InsuranceModal = ({
   };
 
   useEffect(() => {
-    const namesAndIds =
-      relations?.map(relation => ({
-        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
-        id: relation.id
-      })) || [];
-    setRelationsList(namesAndIds);
-  }, [relations]);
-
-  useEffect(() => {
     if (open) {
       if (editing && editing.id) {
         setPatientInsurance({
@@ -284,7 +280,6 @@ const InsuranceModal = ({
       }
 
       setRelativePage(0);
-      setAllRelatives([]);
     }
   }, [open, editing]);
 
@@ -377,7 +372,7 @@ const InsuranceModal = ({
         <MyInput
           column
           required
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Policy Number"
           fieldName="policyNumber"
           record={patientInsurance}
@@ -386,7 +381,7 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Group Number"
           fieldName="groupNumber"
           record={patientInsurance}

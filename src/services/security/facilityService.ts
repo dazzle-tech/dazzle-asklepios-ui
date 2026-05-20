@@ -1,8 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery } from '../../newApi';
+import { BaseQuery, onQueryStarted } from '../../newApi';
 
 export const facilityService = createApi({
   reducerPath: 'facilityApi',
+   tagTypes: ['Facilities'],
   baseQuery: BaseQuery,
   endpoints: builder => ({
     addFacility: builder.mutation({
@@ -46,12 +47,23 @@ export const facilityService = createApi({
       })
     }),
 
-    getActiveFacilities: builder.query({
-      query: () => ({
-        url: '/api/setup/facility/active',
-        method: 'GET'
-      })
-    })
+   getActiveFacilities: builder.query({
+  query: () => {
+    return {
+      url: '/api/setup/facility/active',
+      method: 'GET'
+    };
+  },
+  transformResponse: (response: any) => {
+
+    return response?.data || response;
+  },
+transformErrorResponse: (error: any) => {
+  return error;
+},
+  // onQueryStarted: onQueryStarted,
+  providesTags: ['Facilities']
+})
   })
 });
 export const {
@@ -60,6 +72,7 @@ export const {
   useUpdateFacilityMutation,
   useGetAllFacilitiesQuery,
   useGetFacilityByIdQuery,
+  useLazyGetFacilityByIdQuery,
   useGetFacilityTypesQuery,
   useGetActiveFacilitiesQuery
 } = facilityService;

@@ -6,38 +6,37 @@ import {
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import type { ApAttachment } from '@/types/model-types';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBars,
   faBolt,
   faBroom,
   faCalendarCheck,
-  faCalendarDay,
   faCheckDouble,
   faEllipsisVertical,
   faHandHoldingDollar,
   faPersonCircleQuestion,
   faPrint,
   faShareNodes,
-  faThumbsUp,
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState,useEffect } from 'react';
+import React, { useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import { useLazyGetPatientInformationReportQuery } from '@/services/patient/patientService';
-import { printPatientInformationReport } from '@/utils/printPatientInformationReport';
+import {
+  useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -52,8 +51,8 @@ interface ProfileHeaderProps {
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
-  eligibilityChecked: boolean;
-  setEligibilityChecked: (val: boolean) => void;
+  // eligibilityChecked: boolean;
+  // setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -73,24 +72,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-  const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: relationshipLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-
-  const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
+  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
   const {
     data: profilePictureTicket,
-    refetch: refetchProfilePicture,
     isError
   } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
@@ -99,28 +95,116 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
 
 
-  const handlePrintInformation = async () => {
-    if (!localPatient?.id) return;
+const handlePrintInformation = async () => {
+  if (!localPatient?.id) return;
 
-    try {
-      const res = await triggerPatientInformationReport({
-        patientId: localPatient.id
-      }).unwrap();
+  try {
+    setPrintingType('information');
 
-      await printPatientInformationReport(
-        res,
-        countryLovQueryResponse?.object || [],
-        relationshipLovQueryResponse?.object || []
-      );
-    } catch (err: any) {
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Print failed',
-          sev: 'error'
-        })
-      );
+    const blob = await triggerGetPatientInformationPdf({
+      patientId: localPatient.id
+    }).unwrap();
+
+    const fileURL = window.URL.createObjectURL(blob);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
     }
-  };
+
+    setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
+  } catch (err: any) {
+    dispatch(
+      notify({
+        msg: err?.data?.message || 'Print failed',
+        sev: 'error'
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
+
+const handlePrintPatientLabel = async (rowData: any) => {
+  if (!rowData?.id) return;
+
+  try {
+    setPrintingType('label');
+
+    const blob = await triggerGetPatientLabelPdf({
+      patientId: rowData.id
+    }).unwrap();
+
+    const fileURL = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = `label-${rowData.medicalRecordNumber}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileURL);
+    }, 1000);
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Failed to download label pdf',
+        sev: 'error'
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
+
+const extractErrorMessage = (response: any): string => {
+  try {
+    const msg =
+      response?.data?.message ??
+      response?.data?.error ??
+      response?.message ??
+      response?.error;
+
+    if (typeof msg === 'string' && msg.trim()) {
+      return msg.replace(/^error\./i, '').trim();
+    }
+
+    if (response?.data && typeof response?.data === 'object') {
+      const detail = response.data.detail ?? response.data.description;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail.trim();
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+};
+
+const handleSendPasswordEmail = async () => {
+  if (!localPatient?.id) return;
+
+  try {
+    await sendPatientPasswordEmail(localPatient.id).unwrap();
+    dispatch(
+      notify({
+        msg: 'Password email sent successfully',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    const errorMsg = extractErrorMessage(error);
+    dispatch(
+      notify({
+        msg: errorMsg || 'Failed to send password email',
+        sev: 'error'
+      })
+    );
+  }
+};
 
   const contentOfMoreIconMenu = (
     <Popover>
@@ -219,28 +303,37 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  const contentOfPrintIconMenu = (
-    <Popover>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          disabled={!localPatient?.id}
-          onClick={async () => {
-            setOpenPrintMenu(false);
-            await handlePrintInformation();
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Information</Translate>
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Patient Label</Translate>
-          </div>
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Popover>
-  );
+ const contentOfPrintIconMenu = (
+  <Popover>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintInformation();
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
+
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintPatientLabel(localPatient);
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  </Popover>
+);
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -275,10 +368,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setQuickAppointmentModel(true);
   };
 
-  const handleScanDocumentClick = () => {
-    setOpenScanDocumentModal(true);
-  };
-
   const handleIdParsed = (parsedData: any) => {
     const updatedPatient: Partial<Patient> = {
       ...localPatient
@@ -304,36 +393,50 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  const closeMenus = useCallback(() => {
-    setOpenMoreMenu(false);
-    setOpenPrintMenu(false);
-  }, []);
-
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
       setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
       return;
     }
 
     if (profilePictureTicket && profilePictureTicket.url && !isError) {
       setPatientImageUrl(profilePictureTicket.url);
-      setPatientImage({ url: profilePictureTicket.url } as any);
       return;
     }
 
     setPatientImageUrl('');
-    setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
-useEffect(() => {
-  if (location.state?.eligibilityDone) {
-    setEligibilityChecked(true);
-  }
-}, [location.state]);
+// useEffect(() => {
+//   if (location.state?.eligibilityDone) {
+//     setEligibilityChecked(true);
+//   }
+// }, [location.state]);
 
+
+const whisperRef = useRef<any>(null);
+
+useEffect(() => {
+  if (quickPatientModalOpen || openScanDocumentModal) {
+    whisperRef.current?.close?.();
+  }
+}, [quickPatientModalOpen, openScanDocumentModal]);
+
+useEffect(() => {
+  const handleClick = (e: any) => {
+    if (e.target.closest('.rs-popover')) return;
+
+    setOpenMoreMenu(false);
+  };
+
+  document.addEventListener('mousedown', handleClick);
+
+  return () => {
+    document.removeEventListener('mousedown', handleClick);
+  };
+}, []);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -459,8 +562,8 @@ useEffect(() => {
 
               <MyButton
                 onClick={() => {
-                  setEligibilityChecked(true);
-                  navigate(`/patient-profile/${localPatient?.id}`);
+                  // setEligibilityChecked(true);
+                  // navigate(`/patient-profile/${localPatient?.id}`);
                 }}
               >
                 <Translate>Eligibility Check</Translate>
@@ -482,6 +585,16 @@ useEffect(() => {
 
               <MyButton
                 appearance="ghost"
+                disabled={!localPatient?.id || isSendingPasswordEmail}
+                onClick={handleSendPasswordEmail}
+              >
+                <Translate>
+                  {isSendingPasswordEmail ? 'Sending Password Email...' : 'Send Password Email'}
+                </Translate>
+              </MyButton>
+
+              <MyButton
+                appearance="ghost"
                 onClick={() => setQuickPatientModalOpen(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
               >
@@ -498,9 +611,9 @@ useEffect(() => {
               />
 
               <Whisper
+                ref={whisperRef}
                 trigger="click"
                 placement={isRTL ? 'bottomStart' : 'bottomEnd'}
-                container={() => document.body}
                 preventOverflow
                 rootClose
                 open={openMoreMenu}

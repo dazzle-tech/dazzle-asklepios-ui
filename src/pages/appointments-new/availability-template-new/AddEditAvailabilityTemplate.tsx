@@ -32,9 +32,10 @@ type AddEditAvailabilityTemplateProps = {
   open: boolean;
   setOpen: any;
   template: AvailabilityTemplateResponseVM;
+  setTemplate: (t: AvailabilityTemplateResponseVM) => void;
 };
 
-const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template }) => {
+const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, setTemplate }) => {
   const dispatch = useAppDispatch();
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
@@ -89,23 +90,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id,
   });
-  
+
   const { data: departmentServices = [] } = useGetDepartmentServicesQuery(
     { departmentId: record?.departmentId },
     { skip: !record?.departmentId }
   );
-  
-  
+
+
   const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
     { parentTemplateId: record?.id },
     { skip: !record?.id }
   );
-  const { data: templateById } = useGetAvailabilityTemplateQuery(
-    { id: template?.id },
-    { skip: !template?.id }
-  );
-
-  const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
+  const [getDepartment, { data: selectedDepartmentFullObject, isLoading }] = useLazyGetDepartmentByIdQuery();
 
 
   const [create] = useCreateAvailabilityTemplateMutation();
@@ -165,7 +161,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         setAllDepartments(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllDepartments([]);
     }
   };
@@ -197,7 +192,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllServices([]);
     }
   };
@@ -229,7 +223,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllPractitioners([]);
     }
   };
@@ -245,27 +238,12 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       .filter(Boolean);
   };
 
-  const getWorkingDaysFromFacility = () => {
+  const hasAnyWorkingDayEnabled = (days: any) =>
+    Array.isArray(days) && days.some((d: any) => d?.isWorking !== false);
+
+  const normalizeWorkingDays = (source: any[]) => {
     if (!dayOptions || dayOptions.length === 0) return null;
-
-    const facilities = facilityListResponse ?? [];
-    const selectedFacilityData = facilities.find(
-      (f: any) => String(f?.id) === String(selectedFacility?.id)
-    );
-
-    const facilityWorkingDays =
-      selectedFacilityFullObject?.workingDays ??
-      selectedFacilityData?.workingDays ??
-      [];
-
-    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
-
-    const source =
-      facilityWorkingDays && facilityWorkingDays.length > 0
-        ? facilityWorkingDays
-        : organizationWorkingDays;
-
-    if (!source || source.length === 0) return null;
+    if (!Array.isArray(source) || source.length === 0) return null;
 
     return dayOptions.map(day => {
       const found = source.find(
@@ -276,6 +254,39 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         isWorking: found ? found.isWorking !== false : false,
       };
     });
+  };
+
+  const getWorkingDaysFromHierarchy = () => {
+    const facilities = facilityListResponse ?? [];
+    const selectedFacilityData = facilities.find(
+      (f: any) => String(f?.id) === String(selectedFacility?.id)
+    );
+
+    const facilityWorkingDays =
+      selectedFacilityFullObject?.workingDays ??
+      selectedFacilityData?.workingDays ??
+      [];
+    const departmentWorkingDays =
+      String(selectedDepartmentFullObject?.id ?? '') === String(record?.departmentId ?? '')
+        ? selectedDepartmentFullObject?.workingDays ?? []
+        : [];
+    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+
+    if (
+      record?.departmentId &&
+      String(selectedDepartmentFullObject?.id ?? '') !== String(record?.departmentId ?? '')
+    ) {
+      return null;
+    }
+
+    const source =
+      hasAnyWorkingDayEnabled(departmentWorkingDays)
+        ? departmentWorkingDays
+        : hasAnyWorkingDayEnabled(facilityWorkingDays)
+          ? facilityWorkingDays
+          : organizationWorkingDays;
+
+    return normalizeWorkingDays(source);
   };
 
   const getServicesFromDepartment = (services = departmentServices) => {
@@ -296,11 +307,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     userChangedWorkingDaysRef.current = false;
 
     if (isEditMode) {
-      const source: any = templateById ?? template;
       setRecord({
-        ...source,
+        ...template,
         facilityId: selectedFacility?.id,
-        allowedServices: normalizeAllowedServices(source?.allowedServices),
+        allowedServices: normalizeAllowedServices(template?.allowedServices),
       });
     } else {
       setRecord({
@@ -315,13 +325,13 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
 
   useEffect(() => {
-    if (!open || !isEditMode || !templateById) return;
+    if (!open || !isEditMode || !template) return;
     setRecord(prev => ({
-      ...templateById,
+      ...template,
       facilityId: selectedFacility?.id,
-      allowedServices: normalizeAllowedServices(templateById?.allowedServices),
+      allowedServices: normalizeAllowedServices(template?.allowedServices),
     }));
-  }, [templateById]);
+  }, [template]);
 
   useEffect(() => {
     if (record?.id) {
@@ -330,7 +340,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     if (!record?.departmentId) {
       setRecord(prev => ({
         ...prev,
-        durationMinutes: 0
+        durationMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        defaultBufferAfterMinutes: 0,
+        parallelCapacityValue: 1
       }));
       return;
     }
@@ -340,7 +353,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       .then(res => {
         setRecord(prev => ({
           ...prev,
-          durationMinutes: res.defaultDurationMinutes
+          durationMinutes: res?.defaultDurationMinutes,
+          defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+          defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+          parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
         }));
       });
 
@@ -352,9 +368,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     if (isEditMode) return;
     if (userChangedWorkingDaysRef.current) return;
     if (!dayOptions || dayOptions.length === 0) return;
-    if (!selectedFacility?.id) return;
 
-    const workingDays = getWorkingDaysFromFacility();
+    const workingDays = getWorkingDaysFromHierarchy();
     if (!workingDays) return;
 
     setRecord(prev => ({ ...prev, workingDays }));
@@ -362,7 +377,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     openCount,
     selectedFacilityFullObject,
     facilityListResponse,
+    selectedDepartmentFullObject,
     organizationDefinitions,
+    record?.departmentId,
   ]);
 
 
@@ -460,6 +477,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     setRecord(prev => ({ ...prev, workingDays: nextWorkingDays }));
   };
 
+  // extract the error message from the bad request that coming from the backend
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
 
   const handleSaveMainInfo = async () => {
     if (!record?.templateName?.trim()) {
@@ -488,21 +517,25 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       resourceId: record?.departmentId,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
+      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
+      parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices) ? record.allowedServices : [],
     };
 
     try {
       if (template?.id) {
         const updated = await update({ id: template.id, ...payload }).unwrap();
-        setRecord(updated);
+        setTemplate(updated)
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       } else {
         const created = await create(payload).unwrap();
-        setRecord(created);
+        setTemplate(created)
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       }
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+      const errorMsg = extractErrorMessage(err) || 'Save Failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
 
@@ -658,12 +691,57 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                         </Col>
                         <Col md={12}>
                           <MyInput
+                            fieldName="parallelCapacityValue"
+                            fieldLabel="Parallel Capacity Value"
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                            min={1}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <MyInput
+                            fieldName="defaultBufferBeforeMinutes"
+                            fieldLabel='Slot Befor'
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                          />
+                        </Col>
+                         <Col md={12}>
+                          <MyInput
+                            fieldLabel='Slot After'
+                            fieldName="defaultBufferAfterMinutes"
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <MyInput
                             fieldName="versionNo"
                             fieldType="number"
                             record={record}
                             setRecord={setRecord}
                             width="100%"
                             disabled
+                          />
+                        </Col>
+                        <Col md={12}>
+                          <MyInput
+                            width="100%"
+                            fieldType="check"
+                            fieldName="requireConfirmation"
+                            record={record}
+                            setRecord={setRecord}
+                            showLabel={false}
                           />
                         </Col>
                       </Row>

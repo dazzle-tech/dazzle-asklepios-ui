@@ -16,7 +16,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
     const content = (
         <Form fluid layout='inline' className='fields-container'>
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Facility"
                 fieldName=""
@@ -24,7 +24,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 setRecord={""}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Date"
                 fieldType='date'
@@ -33,7 +33,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 setRecord={""}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Indication"
                 fieldName=""
@@ -42,7 +42,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
             <MyInput
                 column
-                width={200}
+                width={'100%'}
                 fieldLabel="Blood Product Transfused"
                 fieldType="select"
                 fieldName=""
@@ -54,7 +54,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 searchable={false}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Source of Blood"
                 fieldType="select"
@@ -68,7 +68,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
             <MyInput
                 column
-                width={150}
+                width={'100%'}
                 fieldLabel="Volume"
                 fieldType="number"
                 fieldName=""
@@ -79,7 +79,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
 
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Complication"
                 fieldType="textarea"

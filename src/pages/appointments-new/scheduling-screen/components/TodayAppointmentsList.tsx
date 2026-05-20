@@ -193,7 +193,7 @@ const TodayAppointmentsList = ({
       <div style={{ marginBottom: 8 }} />
       <div
         style={{
-          border: '1px solid #edf1f7',
+          border: '1px solid var(--rs-border-primary)',
           borderRadius: 10,
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -215,7 +215,7 @@ const TodayAppointmentsList = ({
                 alignItems: 'center',
                 gap: 6,
                 padding: '8px 6px',
-                borderBottom: idx === rightPanelAppointmentRows.length - 1 ? 'none' : '1px solid #f0f3f8'
+                borderBottom: idx === rightPanelAppointmentRows.length - 1 ? 'none' : '1px solid var(--rs-border-primary)'
               }}
             >
               <span style={{ fontSize: 11, color: '#7b8794' }}>{row.hourLabel}</span>

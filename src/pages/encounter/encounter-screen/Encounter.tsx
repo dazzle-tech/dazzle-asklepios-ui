@@ -4,9 +4,8 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
+import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-// import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
@@ -20,7 +19,7 @@ import {
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
@@ -40,16 +39,31 @@ import PatientHistorySummaryModal from '../encounter-component/patient-history/M
 import AiAssistantPopup from './AiAssistantPopup';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
-const Encounter = () => {
+type EncounterModalProps = {
+  patient?: any;
+  encounter?: any;
+  onSheetNavigate?: (relativePath: string) => void;
+  outletContent?: React.ReactNode;
+};
+
+const Encounter = ({
+  patient: modalPatient,
+  encounter: modalEncounter,
+  onSheetNavigate,
+  outletContent
+}: EncounterModalProps = {}) => {
+  const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [action, setAction] = useState(() => () => { });
+  const [action, setAction] = useState(() => () => {});
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
-
+  const propsData = inModal
+    ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
+    : (location.state || {});
+    
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
   const encounterId = propsData?.encounter?.id;
@@ -76,7 +90,6 @@ const Encounter = () => {
 
   const patientToSend = fetchedPatient ?? propsData?.patient;
 
-  const savedState = sessionStorage.getItem('encounterPageSource');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
@@ -86,8 +99,10 @@ const Encounter = () => {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
-  const [edit, setEdit] = useState(false);
-  const [fromPage, setFromPage] = useState(savedState);
+  const [edit, setEdit] = useState(() => {
+    return propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
+  });
+  const [fromPage, setFromPage] = useState(propsData?.fromPage || '');
   const [patientSideRefreshKey, setPatientSideRefreshKey] = useState(0);
 
   const handlePatientDiagnosisSaved = () => {
@@ -102,12 +117,12 @@ const Encounter = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
-  const buttonRef = useRef<HTMLDivElement>(null);
+  // const buttonRef = useRef<HTMLDivElement>(null);
 
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180,
+    x: typeof window !== 'undefined' ? window.innerWidth - 95 : 95,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -117,23 +132,23 @@ const Encounter = () => {
 
   const aiButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = e => {
-    setIsDragging(true);
-    setHasMoved(false);
-    setDragOffset({
-      x: e.clientX - buttonPosition.x,
-      y: e.clientY - buttonPosition.y
-    });
-    e.preventDefault();
-  };
+  // const handleMouseDown = (e: any) => {
+  //   setIsDragging(true);
+  //   setHasMoved(false);
+  //   setDragOffset({
+  //     x: e.clientX - buttonPosition.x,
+  //     y: e.clientY - buttonPosition.y
+  //   });
+  //   e.preventDefault();
+  // };
 
-  const handleMouseMove = e => {
+  const handleMouseMove = (e: any) => {
     if (!isDragging) return;
 
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -183,10 +198,14 @@ const Encounter = () => {
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
   useEffect(() => {
-    if (location.state && location.state.fromPage) {
+    if (location.state?.fromPage) {
       setFromPage(location.state.fromPage);
     }
   }, [location.state]);
+
+useEffect(() => {
+  setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
+}, [propsData?.viewMode, propsData?.readOnly]);
 
   useEffect(() => {
     if (
@@ -197,23 +216,37 @@ const Encounter = () => {
     } else if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
-  }, [completeEncounterMutation]);
+  }, [completeEncounterMutation, localEncounter?.encounterType, navigate]);
+
+  const currentFromPage = propsData?.fromPage || fromPage || '';
+
+  const sharedNavigationState = useMemo(
+    () => ({
+      patient: propsData?.patient,
+      encounter: propsData?.encounter,
+      edit,
+      fromPage: currentFromPage,
+      viewMode: propsData?.viewMode
+    }),
+    [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
+  );
 
   const handleGoBack = () => {
-    if (savedState === 'PatientEMR') {
+
+    if (currentFromPage === 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
-          localPatient: propsData.patient,
+          localPatient: propsData?.patient,
           fromPage: 'clinicalVisit'
         }
       });
     } else if (localEncounter?.encounterType == 'INPATIENT') {
       navigate('/inpatient-encounters-list');
-    } else if (propsData?.fromPage === 'DayCaseList') {
+    } else if (currentFromPage === 'DayCaseList') {
       navigate('/day-case-list');
-    } else if (propsData?.fromPage === 'ER_Department') {
+    } else if (currentFromPage === 'ER_Department') {
       navigate('/ER-department');
-    }  else if (propsData?.fromPage === 'Urgent_Care_List') {
+    } else if (currentFromPage === 'Urgent_Care_List') {
       navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
@@ -223,13 +256,14 @@ const Encounter = () => {
   const followUpDraftAppointmentData = React.useMemo(() => {
     if (!patientToSend) return null;
     return {
-      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null,
+      sourceEncounterId: encounterId ?? null
     };
-  }, [patientToSend]);
+  }, [patientToSend, encounterId]);
 
   const handleCompleteEncounter = async () => {
     try {
-      if (propsData.encounter) {
+      if (propsData?.encounter) {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
@@ -262,7 +296,7 @@ const Encounter = () => {
     if (!aiHasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
       );
 
       if (movedDistance > 5) setAiHasMoved(true);
@@ -316,16 +350,15 @@ const Encounter = () => {
 
   const divContent = `Patient Visit > ${currentHeader}`;
 
-useEffect(() => {
+  useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [currentHeader,dispatch]);
-
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [currentHeader, dispatch, divContent]);
 
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
@@ -358,6 +391,7 @@ useEffect(() => {
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
 
   useEffect(() => {
+    if (inModal) return;
     if (!location.pathname.includes('/encounter')) return;
 
     const encounterDeptId = propsData?.encounter?.departmentId;
@@ -365,12 +399,12 @@ useEffect(() => {
     if (!propsData?.encounter || !encounterDeptId || encounterDeptId !== selectedDeptId) {
       navigate('/encounter-list', { replace: true });
     }
-  }, [selectedDeptId, propsData?.encounter]);
+  }, [selectedDeptId, propsData?.encounter, location.pathname, navigate]);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
-        <div
+        {/* <div
           ref={buttonRef}
           className={`draggable-container ${isDragging ? 'grabbing' : 'grab'}`}
           style={{ left: `${buttonPosition.x}px`, top: `${buttonPosition.y}px` }}
@@ -402,37 +436,41 @@ useEffect(() => {
           </button>
 
           {!isDragging && <div className="draggable-pulse" />}
-        </div>
+        </div> */}
 
-        <div
-          ref={aiButtonRef}
-          className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
-          style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
-          onMouseDown={handleAiMouseDown}
-          onClick={handleAiClick}
-        >
-          <button
-            type="button"
-            className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
-            title="AI Assistant"
+        {!inModal && (
+          <div
+            ref={aiButtonRef}
+            className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
+            style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
+            onMouseDown={handleAiMouseDown}
+            onClick={handleAiClick}
           >
-            <FontAwesomeIcon icon={faRobot} />
-            <span className="ai-badge-2">AI</span>
-          </button>
+            <button
+              type="button"
+              className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
+              title="AI Assistant"
+            >
+              <FontAwesomeIcon icon={faRobot} />
+              <span className="ai-badge-2">AI</span>
+            </button>
 
-          {!isAiDragging && <div className="draggable-pulse" />}
-        </div>
+            {!isAiDragging && <div className="draggable-pulse" />}
+          </div>
+        )}
 
         <div className="left-box">
           <Panel>
             <div className="container-bt">
               <div className="left">
-                <BackButton onClick={handleGoBack} text="To Patients list" />
-                <MyButton
-                  backgroundColor={'var(--primary-gray)'}
-                  onClick={() => navigate(-1)}
-                  prefixIcon={() => <FaArrowLeft />}
-                />
+                {!inModal && <BackButton onClick={handleGoBack} text="To Patients list" />}
+                {!inModal && (
+                  <MyButton
+                    backgroundColor={'var(--primary-gray)'}
+                    onClick={() => navigate(-1)}
+                    prefixIcon={() => <FaArrowLeft />}
+                  />
+                )}
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -453,7 +491,8 @@ useEffect(() => {
                   />
                 </Form>
               </div>
-              <div className="right">
+
+              {!inModal && <div className="right">
                 {isMedicalHistoryTab && (
                   <MyButton
                     disabled={edit}
@@ -524,7 +563,9 @@ useEffect(() => {
                   appearance="ghost"
                 >
                   <Translate>
-                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Disposition' : 'Complete Visit'}
+                    {localEncounter?.encounterType === 'EMERGENCY'
+                      ? 'Disposition'
+                      : 'Complete Visit'}
                   </Translate>
                 </MyButton>
 
@@ -555,8 +596,9 @@ useEffect(() => {
                     backgroundColor="#8360BF"
                   />
                 )}
-              </div>
+              </div>}
             </div>
+
             <Divider />
 
             <Drawer
@@ -569,6 +611,7 @@ useEffect(() => {
               <Drawer.Header className="header-drawer">
                 <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
               </Drawer.Header>
+
               <Drawer.Body className="drawer-body">
                 <Form fluid>
                   <Row>
@@ -590,14 +633,19 @@ useEffect(() => {
                   <List.Item
                     className="drawer-item return-button"
                     onClick={() => {
-                      const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                      navigate(basePath, { state: location.state });
+                      if (onSheetNavigate) {
+                        onSheetNavigate('');
+                      } else {
+                        const basePath = location.pathname.split('/').slice(0, -1).join('/');
+                        navigate(basePath, { state: sharedNavigationState });
+                      }
                       setIsDrawerOpen(false);
                     }}
                   >
                     <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                     <Translate>Dashboard</Translate>
                   </List.Item>
+
                   {visibleSheets.map(({ code, name, icon, path }) => {
                     const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -607,29 +655,29 @@ useEffect(() => {
                         className="drawer-item"
                         onClick={() => {
                           setIsDrawerOpen(false);
-                          navigate(fullPath, {
-                            state: {
-                              patient: propsData.patient,
-                              encounter: propsData.encounter,
-                              edit
-                            }
-                          });
+                          if (onSheetNavigate) {
+                            const relativePath = path.startsWith('/') ? path.slice(1) : path;
+                            onSheetNavigate(relativePath);
+                          } else {
+                            navigate(fullPath, { state: sharedNavigationState });
+                          }
                         }}
                       >
-                        <Link
-                          to={fullPath}
-                          state={{
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }}
-                          className="inherit-link"
-                        >
-                          {icon}
-                          <span className="margin-left-10">
-                            <Translate>{name}</Translate>
+                        {onSheetNavigate ? (
+                          <span className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
                           </span>
-                        </Link>
+                        ) : (
+                          <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </Link>
+                        )}
                       </List.Item>
                     );
                   })}
@@ -639,15 +687,17 @@ useEffect(() => {
 
             <div className="content-with-sticky">
               <div className="main-content-area">
-                <Outlet
-                  context={{
-                    patient: propsData?.patient,
-                    encounter: propsData?.encounter,
-                    edit,
-                    setLocalEncounter,
-                    onDiagnosisSaved: handlePatientDiagnosisSaved
-                  }}
-                />
+                {outletContent !== undefined ? outletContent : (
+                  <Outlet
+                    context={{
+                      patient: propsData?.patient,
+                      encounter: propsData?.encounter,
+                      edit,
+                      setLocalEncounter,
+                      onDiagnosisSaved: handlePatientDiagnosisSaved
+                    }}
+                  />
+                )}
               </div>
 
               {expand && (
@@ -656,8 +706,8 @@ useEffect(() => {
                     expand={expand}
                     setExpand={setExpand}
                     windowHeight={windowHeight}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
+                    patient={propsData?.patient}
+                    encounter={propsData?.encounter}
                   />
                 </div>
               )}
@@ -678,7 +728,7 @@ useEffect(() => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-        patient={propsData?.patien}
+        patient={propsData?.patient}
       />
 
       <WarningiesModal
@@ -697,13 +747,14 @@ useEffect(() => {
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false);
+          setModalOpen(false);
+          setShowAppointmentOnly(false);
         }}
         patient={patientToSend}
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={() => { }}
+        onSave={() => {}}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />

@@ -318,6 +318,26 @@ const prettifyInlineBackendMessage = (message: string): string => {
       }
     };
 
+   
+    const handleActiveIngredientSaved = async () => {
+      try {
+       await refetch();
+       setBrandMedication((prev) => ({
+        ...prev,
+        hasActiveIngredient: true,
+       }));
+       if (isFiltered) {
+        setFilteredList((prev) =>
+        prev.map((item) =>
+          item.id === brandMedication.id
+            ? { ...item, hasActiveIngredient: true }
+            : item
+                )
+                );
+       }
+      } catch (error) {
+      }
+    };
     const normalizeBool = (v: any) => (v === true || v === "true" ? true : false);
 
     const handleFilterChange = async (field: string, value: string) => {
@@ -466,7 +486,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     };
 
     const filters = () => (
-      <Form layout="inline" fluid>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           fieldName="filter"
           fieldType="select"
@@ -690,6 +710,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
           brandMedication={brandMedication}
           open={openActiveIngredientPopup}
           setOpen={setOpenActiveIngredientPopup}
+          onSaved={handleActiveIngredientSaved}
         />
 
         <AddBrandSubstitute

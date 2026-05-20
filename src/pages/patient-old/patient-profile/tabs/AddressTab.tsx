@@ -5,10 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import PostalCodeModal from './postal-code-details/PostalCodeModal';
 import MyInput from '@/components/MyInput';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovValuesByCodeAndParentQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { FaClock } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
 interface AddressTabProps {
@@ -21,8 +19,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data for various fields
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const countryEnum = useEnumOptions('CountryName');
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
     parentValueKey: localPatient.countryLkey
@@ -43,9 +40,9 @@ const AddressTab: React.FC<AddressTabProps> = ({
         fieldLabel="Country"
         fieldType="select"
         fieldName="countryLkey"
-        selectData={countryLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={countryEnum}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localPatient}
         setRecord={setLocalPatient}
         menuMaxHeight={200}

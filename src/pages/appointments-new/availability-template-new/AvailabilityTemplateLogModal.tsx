@@ -3,6 +3,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { useGetAvailabilityTemplateLogsQuery } from '@/services/appointment/availabilityTemplateService';
+import { useGetUserQuery } from '@/services/userService';
 
 type Props = {
   open: boolean;
@@ -18,7 +19,9 @@ const resolveTemplateId = (template: any): number | null => {
 
 const AvailabilityTemplateLogModal: React.FC<Props> = ({ open, setOpen, template }) => {
   const templateId = useMemo(() => resolveTemplateId(template), [template]);
+  const { data: users = [] } = useGetUserQuery();
 
+  
   const {
     data: logs = [],
     isLoading,
@@ -40,57 +43,75 @@ const AvailabilityTemplateLogModal: React.FC<Props> = ({ open, setOpen, template
     return String(value);
   };
 
+  const usersMap = useMemo(() => {
+  const map: Record<string, string> = {};
+
+  users.forEach((u: any) => {
+    const fullName = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim();
+    map[u.login] = fullName || u.login;
+  });
+
+  return map;
+}, [users]);
+
+const getUserName = (login?: string | null) => {
+  if (!login) return '-';
+
+  return usersMap[login] || login;
+};
+
   const columns = useMemo(
     () => [
-      { key: 'id', title: 'ID', width: 90, render: (row: any) => formatValue(row?.id) },
-      { key: 'templateId', title: 'TEMPLATE ID', width: 130, render: (row: any) => formatValue(row?.templateId) },
-      { key: 'operationType', title: 'ACTION', width: 110, render: (row: any) => formatEnumString(row?.operationType) },
-      { key: 'logDate', title: 'LOG DATE', width: 180, render: (row: any) => formatDateWithoutSeconds(row?.logDate) },
-      { key: 'logBy', title: 'LOG BY', width: 140, render: (row: any) => formatValue(row?.logBy) },
-      { key: 'facilityId', title: 'FACILITY ID', width: 130, render: (row: any) => formatValue(row?.facilityId) },
-      { key: 'departmentId', title: 'DEPARTMENT ID', width: 140, render: (row: any) => formatValue(row?.departmentId) },
-      { key: 'templateName', title: 'TEMPLATE NAME', width: 200, render: (row: any) => formatValue(row?.templateName) },
-      { key: 'templateType', title: 'TEMPLATE TYPE', width: 140, render: (row: any) => formatEnumString(row?.templateType) },
-      { key: 'resourceId', title: 'RESOURCE ID', width: 120, render: (row: any) => formatValue(row?.resourceId) },
-      { key: 'templateColor', title: 'TEMPLATE COLOR', width: 140, render: (row: any) => formatValue(row?.templateColor) },
-      { key: 'status', title: 'STATUS', width: 120, render: (row: any) => formatEnumString(row?.status) },
-      { key: 'versionNo', title: 'VERSION NO', width: 120, render: (row: any) => formatValue(row?.versionNo) },
-      { key: 'copyFromTemplateId', title: 'COPY FROM TEMPLATE ID', width: 190, render: (row: any) => formatValue(row?.copyFromTemplateId) },
-      { key: 'parentTemplateId', title: 'PARENT TEMPLATE ID', width: 190, render: (row: any) => formatValue(row?.parentTemplateId) },
-      { key: 'durationMinutes', title: 'DURATION (MIN)', width: 150, render: (row: any) => formatValue(row?.durationMinutes) },
-      { key: 'defaultBufferBeforeMinutes', title: 'BUFFER BEFORE (MIN)', width: 190, render: (row: any) => formatValue(row?.defaultBufferBeforeMinutes) },
-      { key: 'defaultBufferAfterMinutes', title: 'BUFFER AFTER (MIN)', width: 180, render: (row: any) => formatValue(row?.defaultBufferAfterMinutes) },
-      { key: 'parallelCapacityValue', title: 'PARALLEL CAPACITY', width: 170, render: (row: any) => formatValue(row?.parallelCapacityValue) },
-      { key: 'defaultServiceId', title: 'DEFAULT SERVICE ID', width: 170, render: (row: any) => formatValue(row?.defaultServiceId) },
-      { key: 'numberOfResourcesExpected', title: 'NO. RESOURCES EXPECTED', width: 210, render: (row: any) => formatValue(row?.numberOfResourcesExpected) },
-      { key: 'requirePractitioner', title: 'REQUIRE PRACTITIONER', width: 190, render: (row: any) => formatValue(row?.requirePractitioner) },
-      { key: 'defaultPractitionerId', title: 'DEFAULT PRACTITIONER ID', width: 200, render: (row: any) => formatValue(row?.defaultPractitionerId) },
-      { key: 'requireBilling', title: 'REQUIRE BILLING', width: 160, render: (row: any) => formatValue(row?.requireBilling) },
-      { key: 'requirePreAssessment', title: 'REQUIRE PRE-ASSESSMENT', width: 190, render: (row: any) => formatValue(row?.requirePreAssessment) },
-      { key: 'allowPatientPortalBooking', title: 'ALLOW PORTAL BOOKING', width: 190, render: (row: any) => formatValue(row?.allowPatientPortalBooking) },
-      { key: 'requireConfirmation', title: 'REQUIRE CONFIRMATION', width: 190, render: (row: any) => formatValue(row?.requireConfirmation) },
-      { key: 'financialDetails', title: 'FINANCIAL DETAILS', width: 170, render: (row: any) => formatEnumString(row?.financialDetails) },
+      { key: 'id', title: 'ID', render: (row: any) => formatValue(row?.id) },
+      { key: 'templateId', title: 'TEMPLATE ID', render: (row: any) => formatValue(row?.templateId) },
+      { key: 'operationType', title: 'ACTION', render: (row: any) => formatEnumString(row?.operationType) },
+      { key: 'logDate', title: 'LOG DATE', render: (row: any) => formatDateWithoutSeconds(row?.logDate) },
+      { key: 'logBy', title: 'LOG BY', render: (row: any) => getUserName(row?.logBy) },
+      { key: 'facilityId', title: 'FACILITY ID', render: (row: any) => formatValue(row?.facilityId) },
+      { key: 'departmentId', title: 'DEPARTMENT ID', render: (row: any) => formatValue(row?.departmentId) },
+      { key: 'templateName', title: 'TEMPLATE NAME',  render: (row: any) => formatValue(row?.templateName) },
+      { key: 'templateType', title: 'TEMPLATE TYPE',  render: (row: any) => formatEnumString(row?.templateType) },
+      { key: 'resourceId', title: 'RESOURCE ID', render: (row: any) => formatValue(row?.resourceId) },
+      { key: 'templateColor', title: 'TEMPLATE COLOR', render: (row: any) => formatValue(row?.templateColor) },
+      { key: 'status', title: 'STATUS', render: (row: any) => formatEnumString(row?.status) },
+      { key: 'versionNo', title: 'VERSION NO', render: (row: any) => formatValue(row?.versionNo) },
+      { key: 'copyFromTemplateId', title: 'COPY FROM TEMPLATE ID', render: (row: any) => formatValue(row?.copyFromTemplateId) },
+      { key: 'parentTemplateId', title: 'PARENT TEMPLATE ID', render: (row: any) => formatValue(row?.parentTemplateId) },
+      { key: 'durationMinutes', title: 'DURATION (MIN)', render: (row: any) => formatValue(row?.durationMinutes) },
+      { key: 'defaultBufferBeforeMinutes', title: 'BUFFER BEFORE (MIN)', render: (row: any) => formatValue(row?.defaultBufferBeforeMinutes) },
+      { key: 'defaultBufferAfterMinutes', title: 'BUFFER AFTER (MIN)', render: (row: any) => formatValue(row?.defaultBufferAfterMinutes) },
+      { key: 'parallelCapacityValue', title: 'PARALLEL CAPACITY', render: (row: any) => formatValue(row?.parallelCapacityValue) },
+      { key: 'defaultServiceId', title: 'DEFAULT SERVICE ID', render: (row: any) => formatValue(row?.defaultServiceId) },
+      { key: 'numberOfResourcesExpected', title: 'NO. RESOURCES EXPECTED', render: (row: any) => formatValue(row?.numberOfResourcesExpected) },
+      { key: 'requirePractitioner', title: 'REQUIRE PRACTITIONER', render: (row: any) => formatValue(row?.requirePractitioner) },
+      { key: 'defaultPractitionerId', title: 'DEFAULT PRACTITIONER ID', render: (row: any) => formatValue(row?.defaultPractitionerId) },
+      { key: 'requireBilling', title: 'REQUIRE BILLING', render: (row: any) => formatValue(row?.requireBilling) },
+      { key: 'requirePreAssessment', title: 'REQUIRE PRE-ASSESSMENT',  render: (row: any) => formatValue(row?.requirePreAssessment) },
+      { key: 'allowPatientPortalBooking', title: 'ALLOW PORTAL BOOKING', render: (row: any) => formatValue(row?.allowPatientPortalBooking) },
+      { key: 'requireConfirmation', title: 'REQUIRE CONFIRMATION', render: (row: any) => formatValue(row?.requireConfirmation) },
+      { key: 'financialDetails', title: 'FINANCIAL DETAILS', render: (row: any) => formatEnumString(row?.financialDetails) },
       {
         key: 'workingDays',
         title: 'WORKING DAYS',
-        width: 260,
         render: (row: any) => {
           const value = row?.workingDays;
-          if (!value || (Array.isArray(value) && value.length === 0)) return '-';
-          try {
-            return JSON.stringify(value);
-          } catch {
-            return String(value);
-          }
+
+          if (!value || !Array.isArray(value)) return '-';
+
+          const workingDays = value
+            .filter((d: any) => d?.isWorking)
+            .map((d: any) => formatEnumString(d?.dayOfWeek));
+
+          return workingDays.length ? workingDays.join(', ') : '-';
         }
       },
-      { key: 'isActive', title: 'IS ACTIVE', width: 120, render: (row: any) => formatValue(row?.isActive) },
-      { key: 'createdBy', title: 'CREATED BY', width: 140, render: (row: any) => formatValue(row?.createdBy) },
-      { key: 'createdDate', title: 'CREATED DATE', width: 170, render: (row: any) => formatDateWithoutSeconds(row?.createdDate) },
-      { key: 'lastModifiedBy', title: 'LAST MODIFIED BY', width: 170, render: (row: any) => formatValue(row?.lastModifiedBy) },
-      { key: 'lastModifiedDate', title: 'LAST MODIFIED DATE', width: 190, render: (row: any) => formatDateWithoutSeconds(row?.lastModifiedDate) }
+      { key: 'isActive', title: 'IS ACTIVE', render: (row: any) => formatValue(row?.isActive) },
+      { key: 'createdBy', title: 'CREATED BY', render: (row: any) => getUserName(row?.createdBy) },
+      { key: 'createdDate', title: 'CREATED DATE', render: (row: any) => formatDateWithoutSeconds(row?.createdDate) },
+      { key: 'lastModifiedBy', title: 'LAST MODIFIED BY', render: (row: any) => getUserName(row?.lastModifiedBy) },
+      { key: 'lastModifiedDate', title: 'LAST MODIFIED DATE', render: (row: any) => formatDateWithoutSeconds(row?.lastModifiedDate) }
     ],
-    []
+    [usersMap]
   );
 
   const direction = localStorage.getItem('direction') || 'LTR';

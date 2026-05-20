@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useGetAllergiesQuery } from '@/services/observationService';
 import { useGetAllergensQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
@@ -14,6 +14,8 @@ import { FaTimes } from 'react-icons/fa'; // أيقونة X
 const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
   const [visible, setVisible] = useState(true);
   const [wasDragged, setWasDragged] = useState(false);
+  const fabRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLDivElement>(null);
 
   const listRequest = {
     ...initialListRequest,
@@ -72,8 +74,8 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
   return (
     <div dir={dir}>
        {visible ? (
-        <Draggable>
-          <div className="allergy-floating-fab">
+        <Draggable nodeRef={fabRef}>
+          <div ref={fabRef} className="allergy-floating-fab">
             <div className="fab-header">
               <span>Allergies</span>
               <FaTimes className="close-icon" onClick={() => setVisible(false)} />
@@ -91,13 +93,15 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
         </Draggable>
       ) : (
         <Draggable
+          nodeRef={toggleRef}
           onStart={() => setWasDragged(false)}
           onDrag={() => setWasDragged(true)}
           onStop={() => {
-            setTimeout(() => setWasDragged(false), 200); // Reset after small delay
+            setTimeout(() => setWasDragged(false), 200);
           }}
         >
           <div
+            ref={toggleRef}
             className="fab-toggle-button"
             onClick={() => {
               if (!wasDragged) {

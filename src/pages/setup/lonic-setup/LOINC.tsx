@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useDispatch } from "react-redux";
-import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import MyTable from "@/components/MyTable";
-import MyModal from "@/components/MyModal/MyModal";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import {
   useGetAllLoincQuery,
   useImportLoincMutation,
@@ -10,16 +10,16 @@ import {
   useLazyGetLoincByCodeQuery,
   useLazyGetLoincByDescriptionQuery,
   type ImportResult,
-  type Conflict,
-} from "@/services/setup/loincCodeService";
-import MyButton from "@/components/MyButton/MyButton";
-import { notify } from "@/utils/uiReducerActions";
-import { extractPaginationFromLink } from "@/utils/paginationHelper";
-import { Form } from "rsuite";
-import MyInput from "@/components/MyInput";
-import { useEnumOptions } from "@/services/enumsApi";
-import { formatEnumString } from "@/utils";
-import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
+  type Conflict
+} from '@/services/setup/loincCodeService';
+import MyButton from '@/components/MyButton/MyButton';
+import { notify } from '@/utils/uiReducerActions';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
+import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 
 const LOINCSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,21 +28,21 @@ const LOINCSetup: React.FC = () => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: "id,asc",
-    timestamp: Date.now(),
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
 
   // filtered pagination (client-driven page/size/sort during filtered mode only)
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
-    sort: "id,desc",
+    sort: 'id,desc'
   });
 
   // filtering state (original logic preserved)
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: "",
-    value: "",
+    filter: '',
+    value: ''
   });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -62,7 +62,7 @@ const LOINCSetup: React.FC = () => {
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
 
   // enum options
-  const loincCategoryOptions = useEnumOptions("LoincCategory");
+  const loincCategoryOptions = useEnumOptions('LoincCategory');
 
   // main list query (unfiltered)
   const { data: loincListResponse, isFetching, refetch } = useGetAllLoincQuery(paginationParams);
@@ -84,11 +84,11 @@ const LOINCSetup: React.FC = () => {
 
   // set page header
   useEffect(() => {
-    dispatch(setPageCode("LOINC"));
-    dispatch(setDivContent("LOINC List"));
+    dispatch(setPageCode('LOINC'));
+    dispatch(setDivContent('LOINC List'));
     return () => {
-      dispatch(setPageCode(""));
-      dispatch(setDivContent(""));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
     };
   }, [dispatch]);
 
@@ -97,12 +97,17 @@ const LOINCSetup: React.FC = () => {
     try {
       let resp: { data: any[]; totalCount: number; links?: any } | undefined;
 
-      if (recordOfFilter.filter === "category") {
+      if (recordOfFilter.filter === 'category') {
         resp = await fetchByCategory({ category: recordOfFilter.value, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === "code") {
+      } else if (recordOfFilter.filter === 'code') {
         resp = await fetchByCode({ code: recordOfFilter.value, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === "description") {
-        resp = await fetchByDescription({ description: recordOfFilter.value, page, size, sort }).unwrap();
+      } else if (recordOfFilter.filter === 'description') {
+        resp = await fetchByDescription({
+          description: recordOfFilter.value,
+          page,
+          size,
+          sort
+        }).unwrap();
       }
 
       setFilteredData(resp?.data ?? []);
@@ -115,7 +120,7 @@ const LOINCSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
     }
   };
@@ -137,7 +142,7 @@ const LOINCSetup: React.FC = () => {
 
     if (targetLink) {
       const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams((prev) => ({ ...prev, page, size, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
     }
   };
 
@@ -145,10 +150,10 @@ const LOINCSetup: React.FC = () => {
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
     if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, size: newSize, page: 0 }));
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
       fetchFilteredPage(0, newSize, filterPagination.sort);
     } else {
-      setPaginationParams((prev) => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
     }
   };
 
@@ -166,14 +171,16 @@ const LOINCSetup: React.FC = () => {
         dispatch(
           notify({
             msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
-            sev: "warning",
+            sev: 'warning'
           })
         );
       } else {
         dispatch(
           notify({
-            msg: `Imported successfully. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-            sev: "success",
+            msg: `Imported successfully. Inserted ${res.inserted}${
+              res.updated ? `, Updated ${res.updated}` : ''
+            }.`,
+            sev: 'success'
           })
         );
 
@@ -187,8 +194,8 @@ const LOINCSetup: React.FC = () => {
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || "Error importing LOINC file",
-          sev: "error",
+          msg: error?.data?.detail || 'Error importing LOINC file',
+          sev: 'error'
         })
       );
     }
@@ -198,14 +205,19 @@ const LOINCSetup: React.FC = () => {
   const handleReplaceAll = async () => {
     if (!lastUploadedFile) return;
     try {
-      const res: ImportResult = await importLoinc({ file: lastUploadedFile, overwrite: true }).unwrap();
+      const res: ImportResult = await importLoinc({
+        file: lastUploadedFile,
+        overwrite: true
+      }).unwrap();
       setConflictModalOpen(false);
       setConflicts(null);
       setLastUploadedFile(null);
       dispatch(
         notify({
-          msg: `Re-imported with overwrite. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-          sev: "success",
+          msg: `Re-imported with overwrite. Inserted ${res.inserted}${
+            res.updated ? `, Updated ${res.updated}` : ''
+          }.`,
+          sev: 'success'
         })
       );
 
@@ -217,8 +229,8 @@ const LOINCSetup: React.FC = () => {
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || "Overwrite failed",
-          sev: "error",
+          msg: error?.data?.detail || 'Overwrite failed',
+          sev: 'error'
         })
       );
     }
@@ -226,9 +238,9 @@ const LOINCSetup: React.FC = () => {
 
   // filter fields
   const filterFields = [
-    { label: "Category", value: "category" },
-    { label: "Code", value: "code" },
-    { label: "Description", value: "description" },
+    { label: 'Category', value: 'category' },
+    { label: 'Code', value: 'code' },
+    { label: 'Description', value: 'description' }
   ];
 
   // original filtering logic (unchanged)
@@ -238,33 +250,33 @@ const LOINCSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       if (!silent) refetch();
       return;
     }
     try {
       let resp: { data: any[]; totalCount: number; links?: any } | undefined;
 
-      if (fieldName === "category") {
+      if (fieldName === 'category') {
         resp = await fetchByCategory({
           category: value,
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
-      } else if (fieldName === "code") {
+      } else if (fieldName === 'code') {
         resp = await fetchByCode({
           code: value,
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
-      } else if (fieldName === "description") {
+      } else if (fieldName === 'description') {
         resp = await fetchByDescription({
           description: value,
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
       }
 
@@ -274,14 +286,14 @@ const LOINCSetup: React.FC = () => {
       setIsFiltered(true);
 
       // initialize filtered pagination at page 0 using current table size
-      setFilterPagination((prev) => ({ ...prev, page: 0, size: paginationParams.size }));
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setFilterPagination(prev => ({ ...prev, page: 0, size: paginationParams.size }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
     } catch {
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       if (!silent) refetch();
     }
   };
@@ -293,7 +305,7 @@ const LOINCSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,7 +313,7 @@ const LOINCSetup: React.FC = () => {
 
   // filters UI
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -309,14 +321,14 @@ const LOINCSetup: React.FC = () => {
         fieldName="filter"
         fieldType="select"
         record={recordOfFilter}
-        setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: "" })}
+        setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
         showLabel={false}
         placeholder="Select Filter"
         searchable={false}
         width="170px"
       />
 
-      {recordOfFilter.filter === "category" ? (
+      {recordOfFilter.filter === 'category' ? (
         <MyInput
           width={300}
           fieldName="value"
@@ -336,11 +348,11 @@ const LOINCSetup: React.FC = () => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder={
-            recordOfFilter.filter === "code"
-              ? "Enter Code"
-              : recordOfFilter.filter === "description"
-              ? "Enter description"
-              : "Enter value"
+            recordOfFilter.filter === 'code'
+              ? 'Enter Code'
+              : recordOfFilter.filter === 'description'
+              ? 'Enter description'
+              : 'Enter value'
           }
           width={300}
         />
@@ -358,52 +370,64 @@ const LOINCSetup: React.FC = () => {
 
   // table columns
   const columns = [
-    { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
+    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
     {
-      key: "category",
-      title: "Category",
-      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ""),
+      key: 'category',
+      title: 'Category',
+      render: (row: any) => (row?.category ? formatEnumString(row?.category) : '')
     },
-    { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
+    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
     {
-      key: "lastUpdated",
-      title: "Last Updated",
+      key: 'lastUpdated',
+      title: 'Last Updated',
       render: (row: any) => {
-        if (!row?.lastUpdated) return "";
+        if (!row?.lastUpdated) return '';
         const d = new Date(row.lastUpdated);
         return d.toLocaleDateString();
-      },
-    },
+      }
+    }
   ];
 
   // conflict modal columns
   const conflictColumns = [
-    { key: "code", title: "Code", render: (row: Conflict) => row.code },
-    { key: "incomingDescription", title: "Incoming Description", render: (row: Conflict) => row.incomingDescription },
+    { key: 'code', title: 'Code', render: (row: Conflict) => row.code },
     {
-      key: "incomingCategory",
-      title: "Incoming Category",
-      render: (row: Conflict) => (row.incomingCategory ? formatEnumString(row.incomingCategory) : ""),
+      key: 'incomingDescription',
+      title: 'Incoming Description',
+      render: (row: Conflict) => row.incomingDescription
     },
-    { key: "existingDescription", title: "Existing Description", render: (row: Conflict) => row.existingDescription },
     {
-      key: "existingCategory",
-      title: "Existing Category",
-      render: (row: Conflict) => (row.existingCategory ? formatEnumString(row.existingCategory) : ""),
+      key: 'incomingCategory',
+      title: 'Incoming Category',
+      render: (row: Conflict) =>
+        row.incomingCategory ? formatEnumString(row.incomingCategory) : ''
     },
+    {
+      key: 'existingDescription',
+      title: 'Existing Description',
+      render: (row: Conflict) => row.existingDescription
+    },
+    {
+      key: 'existingCategory',
+      title: 'Existing Category',
+      render: (row: Conflict) =>
+        row.existingCategory ? formatEnumString(row.existingCategory) : ''
+    }
   ];
 
   const pagedConflicts =
-    conflicts?.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize) || [];
+    conflicts?.slice(
+      conflictsPage * conflictsPageSize,
+      conflictsPage * conflictsPageSize + conflictsPageSize
+    ) || [];
 
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
@@ -414,16 +438,16 @@ const LOINCSetup: React.FC = () => {
           <div
             className="mb-3"
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              justifyContent: 'space-between',
+              flexWrap: 'wrap'
             }}
           >
             <div>{filters()}</div>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <MyButton onClick={() => setOpenCodesImportModal(true)}>
                 Import LOINC (Excel / CSV)
               </MyButton>

@@ -1,13 +1,7 @@
-
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import MyLabel from '@/components/MyLabel';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useEnumOptions } from '@/services/enumsApi';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Checkbox, Form, Loader } from 'rsuite';
 
 import {
   useGetPatientVaccineIdsQuery,
@@ -38,15 +32,15 @@ interface Props {
 
 const VaccineReccord: React.FC<Props> = ({ patient }) => {
 
-  const [showCancelled, setShowCancelled] = useState(false);
+  const [showCancelled] = useState(false);
 
-  const [selectedVaccine, setSelectedVaccine] = useState<any>(null);
+  const [selectedVaccine] = useState<any>(null);
   const selectedVaccineId = Number(selectedVaccine?.id);
 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const patientId = Number(patient?.key);
-  const { data: patientVaccineIdsResp, isFetching: isFetchingVaccineIds } = useGetPatientVaccineIdsQuery(
+  const { data: patientVaccineIdsResp } = useGetPatientVaccineIdsQuery(
     { patientId },
     { skip: !patientId }
   );
@@ -57,13 +51,13 @@ const VaccineReccord: React.FC<Props> = ({ patient }) => {
 
   const ids = (patientVaccineIds ?? []).filter(x => x !== null && x !== undefined);
 
-  const { data: vaccinesByIdsResp, isFetching: isFetchingVaccinesByIds } = useGetVaccinesByIdsQuery(
+  useGetVaccinesByIdsQuery(
     { ids },
     { skip: ids.length === 0 }
   );
 
   
-  const [triggerPatientVaccineDetails, { data: detailsResp, isFetching: isFetchingDetails }] =
+  const [triggerPatientVaccineDetails, { data: detailsResp }] =
     useLazyGetPatientVaccineDetailsQuery();
 
   const fetchDetailsForSelected = (opts?: { page?: number; size?: number; sort?: string }) => {
@@ -130,7 +124,7 @@ const VaccineReccord: React.FC<Props> = ({ patient }) => {
 
   const detailsRecords = useMemo(() => {
     if (!showCancelled) return allDetailsRecords;
-    return (allDetailsRecords ?? []).filter(isCancelledRow)
+    return (allDetailsRecords ?? []).filter(isCancelledRow);
   }, [allDetailsRecords, showCancelled]);
 
   const getBrandId = (row: any) => row?.vaccineBrandId ?? row?.brandId;

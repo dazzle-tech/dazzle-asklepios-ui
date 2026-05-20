@@ -1,124 +1,134 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
+import React, { useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
-const AddEditOutput = ({
-  open,
-  setOpen,
-  width,
-}) => {
 
-  // Fetch output Type Lov list response
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+const emptyOutputForm = {
+  date: null,
+  time: null,
+  outputType: null,
+  otherType: '',
+  volume: null,
+  notes: ''
+};
+
+const AddEditOutput = ({ open, setOpen, width }) => {
+  const [formData, setFormData] = useState<any>(emptyOutputForm);
+
   const { data: outputTypeLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_OUTPUT_TYPES');
 
-  // Modal content
-  const conjureFormContent = (stepNumber = 0) => {
-    switch (stepNumber) {
-      case 0:
-        return (
-          <Form fluid>
-            <Row>
-            <Col md={12}>
-            <MyInput
-                width="100%"
-                fieldName="date"
-                fieldType='date'
-                record=""
-                setRecord=""
-              />
-              </Col>
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="time"
-                fieldType='time'
-                record=""
-                setRecord=""
-              />
-              </Col>
-              </Row>
-              <br/>
-              <Row>
-                 <Col md={12}>
-              <MyInput
-                fieldName="outputType"
-                fieldType="select"
-                selectData={outputTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record=""
-                setRecord=""
-                width="100%"
-              />
-              </Col>
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="otherType"
-                record=""
-                setRecord=""
-              />
-              </Col>
-              </Row>
-              <br/>
-              <Row> 
-               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="volume"
-                rightAddon="ml"
-                fieldType='number'
-                record=""
-                setRecord=""
-              />
-              </Col>
-                <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName=""
-                fieldLabel="Created At\By"
-                record=""
-                setRecord=""
-                readonly
-              />
-              </Col>
-              </Row>
-              <br/>
-               <MyInput
-                width="100%"
-                fieldName="notes"
-                fieldType='textarea'
-                record=""
-                setRecord=""
-              />  
-          </Form>
-        );
-    }
+  const handleSave = () => {
+    // TODO: wire up save mutation
   };
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const content = (
+    <Form fluid>
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Date"
+            fieldName="date"
+            fieldType="date"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Time"
+            fieldName="time"
+            fieldType="time"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Output Type"
+            fieldName="outputType"
+            fieldType="select"
+            selectData={outputTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Other Type"
+            fieldName="otherType"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Volume"
+            fieldName="volume"
+            fieldType="number"
+            rightAddon="ml"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldLabel="Created At / By"
+            fieldName="createdAtBy"
+            record={formData}
+            setRecord={setFormData}
+            disabled
+          />
+        </Col>
+      </Row>
+      <br />
+      <MyInput
+        width="100%"
+        fieldLabel="Notes"
+        fieldName="notes"
+        fieldType="textarea"
+        record={formData}
+        setRecord={setFormData}
+      />
+    </Form>
+  );
 
   return (
-    <div dir={dir}>
     <MyModal
       open={open}
-      setOpen={setOpen}
+      setOpen={value => {
+        if (!value) setFormData(emptyOutputForm);
+        setOpen(value);
+      }}
       title="Output"
       position="right"
-      content={<div dir={dir}>{conjureFormContent()}</div>}
-      actionButtonLabel='Create'
-      actionButtonFunction=""
-      steps={[{ title: 'Output', icon:<FontAwesomeIcon icon={faSquarePollHorizontal} />}]}
+      content={<div dir={dir}>{content}</div>}
+      actionButtonLabel="Create"
+      actionButtonFunction={handleSave}
+      steps={[{ title: 'Output', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} /> }]}
       size={width > 600 ? '36vw' : '25vw'}
-    /></div>
+    />
   );
 };
+
 export default AddEditOutput;

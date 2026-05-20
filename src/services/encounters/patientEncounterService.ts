@@ -265,10 +265,19 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    getPreviousClosedEncounter: builder.query<PatientEncounter, { encounterId: Id }>({
+    getPreviousClosedEncounter: builder.query<PatientEncounter | null, { encounterId: Id }>({
       query: ({ encounterId }) => ({
         url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
-        method: 'GET'
+        method: 'GET',
+        responseHandler: async (response: Response) => {
+          const text = await response.text();
+          if (!text) return null;
+          try {
+            return JSON.parse(text);
+          } catch {
+            return null;
+          }
+        }
       }),
       providesTags: ['PatientEncounter']
     }),
@@ -331,7 +340,19 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-  })
+    getEncountersByIds: builder.query<PatientEncounter[], { ids: Id[] }>({
+  query: ({ ids }) => ({
+    url: `/api/patient/encounter/by-ids`,
+    method: 'POST',
+    body: ids
+  }),
+  providesTags: res =>
+    res
+      ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
+      : ['PatientEncounter']
+}),
+  }),
+
 });
 
 export const {
@@ -366,4 +387,6 @@ export const {
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
   useCountDepartmentDischargedByDateRangeQuery,
+  useGetEncountersByIdsQuery
+  ,useLazyGetEncountersByIdsQuery
 } = patientEncounterService;

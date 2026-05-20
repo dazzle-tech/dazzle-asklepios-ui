@@ -35,10 +35,10 @@ export const countryService = createApi({
       providesTags: ['Country']
     }),
 
-    getActiveCountries: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    getActiveCountries: builder.query<PagedResult<any>, PagedParams & { search?: string }>({
+      query: ({ page, size, sort = 'id,asc', search }) => ({
         url: '/api/setup/country/active',
-        params: { page, size, sort }
+        params: { page, size, sort, ...(search && { search }) }
       }),
       transformResponse: mapPaged,
       providesTags: ['Country']

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -8,17 +8,16 @@ import {
   useUpdatePatientDocumentMutation
 } from '@/services/patients/patientDocumentsService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { formatEnumString } from '@/utils';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
 
-const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
+const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
 
 const toHumanPatientDocumentError = (
   err,
@@ -76,7 +75,9 @@ const toHumanPatientDocumentError = (
       'This document number already exists for the selected type and country.',
     'document.type.country.exists':
       'This patient already has a document of this type for the selected country.',
-    notfound: 'Patient document not found.'
+    notfound: 'Patient document not found.',
+    'number.invalid.start': 'Document number has an invalid starting digit for the selected type.',
+    'number.invalid.length': 'ID number should not be less than 10 digits.'
   };
 
   return (keyMap[errorKey] || detail || title || message || 'Unexpected error') + traceId;
@@ -96,89 +97,39 @@ const AddExtraDetails = ({
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
 
-  // ✅ Keep only NATIONAL_ID and IQAMA — SOCIAL_CARD also excluded
   const patientDocumentEnum = useEnumOptions('DocumentType', {
     exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
   });
 
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const enumLabels = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
+    [enumLabels]
+  );
 
-  const PAGE_SIZE = 5;
-  const [docCountryCache, setDocCountryCache] = useState([]);
-  const [docCountryPage, setDocCountryPage] = useState(0);
-  const [docCountrySearch, setDocCountrySearch] = useState('');
-  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
-  const [docCountryOpen, setDocCountryOpen] = useState(false);
-  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
-  const [saudiCountryId, setSaudiCountryId] = useState(null);
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+  const countrySelectData = useMemo(
+    () =>
+      (activeCountriesResp?.data ?? []).map(c => ({
+        value: c.id,
+        label: enumLabelMap[c.name] || formatEnumString(c.name)
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeCountriesResp]
+  );
+  const countrySelectDataRef = useRef(countrySelectData);
+  countrySelectDataRef.current = countrySelectData;
 
-  const { data: docCountriesData } = useGetActiveCountriesQuery({
-    page: docCountryPage,
-    size: PAGE_SIZE,
-    ...(docCountrySearch && { search: docCountrySearch }),
-    sort: 'id,asc'
-  });
-
-  useEffect(() => {
-    if (!docCountriesData?.data) return;
-
-    const mapped = docCountriesData.data.map(c => ({
-      ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(
-          countryLovQueryResponse?.object ?? [],
-          c.name,
-          'lovDisplayVale'
-        ) || c.name
-    }));
-
-    setDocCountryCache(prev => (docCountryPage === 0 ? mapped : [...prev, ...mapped]));
-    setDocHasMoreCountries(docCountriesData.last === false);
-    setDocPaginationLoading(false);
-
-    // ✅ Capture Saudi Arabia's id once found in the loaded pages
-    const saudi = mapped.find(c => c.name === SAUDI_ARABIA_LOV_NAME);
-    if (saudi) {
-      setSaudiCountryId(saudi.id);
-    }
-  }, [docCountriesData, docCountryPage, countryLovQueryResponse]);
-
-  // ✅ Set defaults when modal opens for a new document
-  useEffect(() => {
-    if (open && !secondaryDocument.id) {
-      setSecondaryDocument(prev => ({
-        ...prev,
-        type: prev.type || 'NATIONAL_ID',
-        countryId: prev.countryId || saudiCountryId || null
-      }));
-    }
-  }, [open, saudiCountryId]);
-
-  // ✅ If Saudi id resolves after modal is already open, apply it
-  useEffect(() => {
-    if (open && !secondaryDocument.id && saudiCountryId && !secondaryDocument.countryId) {
-      setSecondaryDocument(prev => ({ ...prev, countryId: saudiCountryId }));
-    }
-  }, [saudiCountryId]);
-
-  const loadMoreDocCountries = () => {
-    if (!docHasMoreCountries || docPaginationLoading) return;
-    setDocPaginationLoading(true);
-    setDocCountryPage(p => p + 1);
-  };
-
-  const isSaudiCountry = () => {
-    if (!secondaryDocument.countryId) return false;
-    const selected = docCountryCache.find(c => c.id === secondaryDocument.countryId);
-    return selected?.name === SAUDI_ARABIA_LOV_NAME;
-  };
+  const saudiCountryId = useMemo(
+    () => (activeCountriesResp?.data ?? []).find(c => c.name === SAUDI_ARABIA_CODE)?.id ?? null,
+    [activeCountriesResp]
+  );
 
   const validateDocument = () => {
-    const { type, number } = secondaryDocument;
+    const { type, number, countryId } = secondaryDocument;
     const numberStr = String(number ?? '').trim();
-    const saudi = isSaudiCountry();
 
-    if (!saudi) return true;
+    if (countryId !== saudiCountryId) return true;
 
     if (type === 'NATIONAL_ID') {
       if (!numberStr.startsWith('1')) {
@@ -205,6 +156,16 @@ const AddExtraDetails = ({
     return true;
   };
 
+  useEffect(() => {
+    if (open && !secondaryDocument.id) {
+      setSecondaryDocument(prev => ({
+        ...prev,
+        type: prev.type || 'NATIONAL_ID',
+        countryId: prev.countryId || saudiCountryId || null
+      }));
+    }
+  }, [open, saudiCountryId]);
+
   const content = () => (
     <Form layout="inline" fluid className="patient-doc-secondary-container">
       <MyInput
@@ -228,36 +189,13 @@ const AddExtraDetails = ({
           column
           width={300}
           fieldLabel="Document Country"
-          fieldType="selectPagination"
+          fieldType="select"
           fieldName="countryId"
-          selectData={docCountryCache}
-          selectDataLabel="displayName"
-          selectDataValue="id"
-          searchKeyWard={docCountrySearch}
-          setSearchKeyWard={v => {
-            setDocCountrySearch(v);
-            setDocCountryPage(0);
-          }}
-          hasMore={docHasMoreCountries}
-          onFetchMore={loadMoreDocCountries}
-          loading={docPaginationLoading}
-          open={docCountryOpen}
-          onOpen={() => setDocCountryOpen(true)}
-          onClose={() => setDocCountryOpen(false)}
-          onSelectItem={item => {
-            setSecondaryDocument(prev => ({
-              ...prev,
-              countryId: item ? item.id : null
-            }));
-
-            if (!item) {
-              setDocCountrySearch('');
-              setDocCountryPage(0);
-            }
-
-            setDocCountryOpen(false);
-          }}
+          selectData={countrySelectData}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={secondaryDocument}
+          setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
         />
       )}
 
@@ -266,7 +204,7 @@ const AddExtraDetails = ({
           required
           column
           width={300}
-          fieldType="text"
+          fieldType="number"
           fieldLabel="Document Number"
           fieldName="number"
           record={secondaryDocument}
@@ -281,16 +219,12 @@ const AddExtraDetails = ({
           }
         />
       )}
-
-      {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
     </Form>
   );
 
   const handleClear = () => {
     setOpen(false);
     setSecondaryDocument({ ...newPatientDocument });
-    setDocCountrySearch('');
-    setDocCountryPage(0);
   };
 
   const handleSaveSecondaryDocument = async () => {
@@ -308,15 +242,11 @@ const AddExtraDetails = ({
           isPrimary: true
         }).unwrap();
       } else {
-        // ✅ Auto-mark as primary if this is the first document
-        const isFirstDocument =
-          !secondaryDocument.id && (!localPatient.documents || localPatient.documents.length === 0);
-
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
           number: String(secondaryDocument.number ?? '').trim(),
-          isPrimary: isFirstDocument ? true : false
+          isPrimary: secondaryDocument.type === 'NATIONAL_ID'
         };
 
         secondaryDocument.id

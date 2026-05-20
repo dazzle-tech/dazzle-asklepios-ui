@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
@@ -6,31 +6,35 @@ import Translate from '@/components/Translate';
 
 import { useGetPatientAddressesQuery } from '@/services/patients/AddressService';
 import { useGetCountriesQuery } from '@/services/setup/country/countryService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { Address } from '@/types/model-types-new';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 interface AddressChangeLogModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   patientId?: number;
-  countryLovQueryResponse?: any;
 }
 
 const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
   open,
   setOpen,
-  patientId,
-  countryLovQueryResponse
+  patientId
 }) => {
   const { data: addressesResult, isFetching } = useGetPatientAddressesQuery(
     { patientId: patientId as number },
     { skip: !patientId || !open }
   );
 
-  const { data: countryListResponse, isLoading: isCountriesLoading } = useGetCountriesQuery(
-    undefined,
+  const { isLoading: isCountriesLoading } = useGetCountriesQuery(
+    { page: 0, size: 1000 },
     { skip: !open }
+  );
+
+  const countryEnum = useEnumOptions('CountryName');
+  const countryLabelMap = useMemo(
+    () => Object.fromEntries(countryEnum.map(o => [o.value, o.label])),
+    [countryEnum]
   );
 
   const rows: Address[] = addressesResult?.data ?? [];
@@ -40,9 +44,7 @@ const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
 
   const pagedRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const handlePageChange = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  const handlePageChange = (_event: unknown, newPage: number) => setPage(newPage);
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -65,15 +67,14 @@ const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
       key: 'country',
       title: 'Country',
       width: 160,
-      render: (row: Address) => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            countryLovQueryResponse?.object ?? [],
-            row.locationJson?.country?.name,
-            'lovDisplayVale'
-          )}
-        </span>
-      )
+      render: (row: Address) => {
+        const country = row.locationJson?.country;
+        return (
+          <span>
+            {countryLabelMap[country?.code] || countryLabelMap[country?.name] || country?.name || ''}
+          </span>
+        );
+      }
     },
     {
       key: 'district',
@@ -142,9 +143,7 @@ const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
           onRowsPerPageChange={handleRowsPerPageChange}
         />
       )}
-      handleCancelFunction={() => {
-        setPage(0);
-      }}
+      handleCancelFunction={() => setPage(0)}
     />
   );
 };

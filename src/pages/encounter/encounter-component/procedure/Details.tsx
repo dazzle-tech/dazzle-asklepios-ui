@@ -15,6 +15,7 @@ import {
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
+import { useEnumOptions } from '@/services/enumsApi';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
@@ -41,9 +42,9 @@ const Details = ({
   const [editing, setEditing] = useState(false);
   const dispatch = useAppDispatch();
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
@@ -188,7 +189,65 @@ const Details = ({
     });
   };
 
+  const validateRequiredFields = (): boolean => {
+    const FIELD_LABELS: Record<string, string> = {
+      facilityKey: 'facility',
+      categoryKey: 'category type',
+      procedureNameKey: 'procedure name',
+      procedureLevelLkey: 'procedure level',
+      priorityLkey: 'priority',
+      scheduledDateTime: 'scheduled date time',
+      bodyPartLkey: 'body part'
+    };
+
+    const requiredFields = ['categoryKey', 'procedureNameKey', 'procedureLevelLkey', 'priorityLkey', 'scheduledDateTime', 'bodyPartLkey'];
+
+    const missing: string[] = [];
+
+    if (!procedure.currentDepartment) {
+      const facilityValue = procedure['facilityKey'];
+      const facilityEmpty =
+        facilityValue === null ||
+        facilityValue === undefined ||
+        facilityValue === '' ||
+        (typeof facilityValue === 'string' && facilityValue.trim() === '');
+      if (facilityEmpty) {
+        missing.push('facility');
+      }
+    }
+
+    requiredFields.forEach(field => {
+      const value = procedure[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      if (isEmpty) {
+        missing.push(FIELD_LABELS[field] ?? field);
+      }
+    });
+
+    if (missing.length > 0) {
+      const lines = missing.map(label => `• ${label}: is required`).join('\n');
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       await saveProcedures({
         ...procedure,
@@ -260,9 +319,9 @@ const Details = ({
                           width="100%"
                           fieldType="select"
                           fieldLabel="Category Type"
-                          selectData={CategoryLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
+                          selectData={categoryOptions ?? []}
+                          selectDataLabel="label"
+                          selectDataValue="value"
                           fieldName="categoryKey"
                           record={procedure}
                           setRecord={setProcedure}

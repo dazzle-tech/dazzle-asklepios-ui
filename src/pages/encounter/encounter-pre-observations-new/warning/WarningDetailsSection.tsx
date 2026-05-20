@@ -1,6 +1,6 @@
 import React from 'react';
 import './styles.less';
-import { Col, Form, Row } from 'rsuite';
+import { Col, Form, Row } from 'rsuite'; // Form kept for outer <Form fluid> wrapper
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import clsx from 'clsx';
@@ -100,33 +100,29 @@ const WarningDetailsSection = ({
 
                         <Row className="rows-gap">
                             <Col md={8}>
-                                <Form fluid>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="select"
-                                        fieldLabel="Source of Information"
-                                        selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        fieldName='sourceOfInformation'
-                                        record={warning}
-                                        setRecord={setWarning}
-                                        disabled
-                                    />
-                                </Form>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Source of Information"
+                                    selectData={sourceofinformationLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName='sourceOfInformation'
+                                    record={warning.byPatient ? { ...warning, sourceOfInformation: null } : warning}
+                                    setRecord={setWarning}
+                                    disabled
+                                />
                             </Col>
                             <Col md={8}>
-                                <Form fluid>
-                                    <MyInput
-                                        fieldLabel="BY Patient"
-                                        fieldName="byPatient"
-                                        width="100%"
-                                        fieldType="checkbox"
-                                        record={warning}
-                                        setRecord={setWarning}
-                                        disabled
-                                    />
-                                </Form>
+                                <MyInput
+                                    fieldLabel="BY Patient"
+                                    fieldName="byPatient"
+                                    width="100%"
+                                    fieldType="checkbox"
+                                    record={warning}
+                                    setRecord={setWarning}
+                                    disabled
+                                />
                             </Col>
                         </Row>
 

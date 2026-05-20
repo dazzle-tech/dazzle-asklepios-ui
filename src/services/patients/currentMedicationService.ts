@@ -4,7 +4,13 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { CurrentMedication } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
@@ -14,6 +20,7 @@ type PagedResult<T> = {
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
+
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
@@ -27,16 +34,34 @@ export const currentMedicationService = createApi({
   tagTypes: ['CurrentMedication'],
 
   endpoints: builder => ({
-    getCurrentMedications: builder.query<PagedResult<CurrentMedication>, { patientId: Id } & PagedParams>({
-      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+    getCurrentMedications: builder.query<
+      PagedResult<CurrentMedication>,
+      { patientId: Id } & PagedParams
+    >({
+      query: ({
+        patientId,
+        page,
+        size,
+        sort = 'id,desc',
+        showCancelled = false
+      }) => ({
         url: '/api/patient/current-medication',
-        params: { patientId, page, size, sort }
+        params: {
+          patientId,
+          page,
+          size,
+          sort,
+          showCancelled
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['CurrentMedication']
     }),
 
-    addCurrentMedication: builder.mutation<CurrentMedication, CurrentMedication>({
+    addCurrentMedication: builder.mutation<
+      CurrentMedication,
+      CurrentMedication
+    >({
       query: body => ({
         url: '/api/patient/current-medication',
         method: 'POST',
@@ -45,7 +70,10 @@ export const currentMedicationService = createApi({
       invalidatesTags: ['CurrentMedication']
     }),
 
-    updateCurrentMedication: builder.mutation<CurrentMedication, CurrentMedication>({
+    updateCurrentMedication: builder.mutation<
+      CurrentMedication,
+      CurrentMedication
+    >({
       query: body => ({
         url: '/api/patient/current-medication',
         method: 'PUT',
@@ -54,12 +82,40 @@ export const currentMedicationService = createApi({
       invalidatesTags: ['CurrentMedication']
     }),
 
-    deleteCurrentMedication: builder.mutation<void, { id: Id }>({
+    cancelCurrentMedication: builder.mutation<
+      CurrentMedication,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/current-medication/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['CurrentMedication']
+    }),
+
+    deleteCurrentMedication: builder.mutation<
+      void,
+      { id: Id }
+    >({
       query: ({ id }) => ({
         url: `/api/patient/current-medication/${id}`,
         method: 'DELETE'
       }),
       invalidatesTags: ['CurrentMedication']
+    }),
+
+    checkCurrentMedicationExists: builder.query<
+      boolean,
+      { patientId: Id; activeIngredientId: Id }
+    >({
+      query: ({ patientId, activeIngredientId }) => ({
+        url: '/api/patient/current-medication/exists',
+        params: {
+          patientId,
+          activeIngredientId
+        }
+      })
     })
   })
 });
@@ -69,5 +125,8 @@ export const {
   useLazyGetCurrentMedicationsQuery,
   useAddCurrentMedicationMutation,
   useUpdateCurrentMedicationMutation,
-  useDeleteCurrentMedicationMutation
+  useCancelCurrentMedicationMutation,
+  useDeleteCurrentMedicationMutation,
+  useCheckCurrentMedicationExistsQuery,
+  useLazyCheckCurrentMedicationExistsQuery
 } = currentMedicationService;

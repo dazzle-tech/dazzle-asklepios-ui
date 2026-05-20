@@ -4,12 +4,10 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faBolt, faPause } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
-import { Modal } from 'rsuite';
-
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
@@ -40,9 +38,6 @@ import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-ne
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import '../styles.less';
-import PatientPaymentInfo, {
-  PatientPaymentInfoHandle
-} from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 import {
   useCreateOrGetEmergencyTriageMutation,
@@ -57,9 +52,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';
 import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
-import { useGetActiveAssignmentsByEncounterIdsQuery } from '@/services/patients/emergency/encounterAssignToBedService';
-import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
-import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
+import { useAppSelector } from '@/hooks';
+import AddPaymentModal from './component/AddPaymentModal';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -76,6 +70,36 @@ const toNumberOrNaN = (v: unknown) => {
 const unwrapApiObject = <T,>(data: any): T | null => {
   if (!data) return null;
   return (data?.object ?? data) as T;
+};
+
+const toDateSafe = (value: any): Date | null => {
+  if (!value && value !== 0) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') {
+    const ms = value < 1e12 ? value * 1000 : value;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === 'string') {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+};
+
+const formatDateTime = (value: any): string => {
+  const d = toDateSafe(value);
+  if (!d) return '';
+  return d.toLocaleString();
+};
+
+const formatDuration = (ms: number | null): string => {
+  if (ms == null || !isFinite(ms) || ms < 0) return '';
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 };
 
 const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
@@ -97,14 +121,85 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
   );
 };
 
+const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const createdAt = latest?.createdDate ?? fallbackCreatedAt ?? null;
+  if (!createdAt) return <></>;
+  return <>{formatDateTime(createdAt)}</>;
+};
+
+const WaitingTimeCell = ({ encounterId, arrivalCreatedAt, fallbackTriageCreatedAt }: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const arrival = toDateSafe(arrivalCreatedAt);
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
+  if (!arrival || !triageStart) return <></>;
+  return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
+};
+
+const TriageCompletedAtCell = ({
+  encounterId,
+  fallbackUpdatedAt,
+  completedAt,
+  completedDate
+}: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const v = latest?.completedDate ?? completedDate ?? completedAt ?? fallbackUpdatedAt ?? null;
+  if (!v) return <></>;
+  return <>{formatDateTime(v)}</>;
+};
+
+const TriageTimeCell = ({
+  encounterId,
+  fallbackTriageCreatedAt,
+  fallbackUpdatedAt,
+  rowUpdatedAt,
+  completedAt,
+  completedDate
+}: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
+  const end = toDateSafe(
+    latest?.completedDate ??
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      null
+  );
+  if (!triageStart || !end) return <></>;
+  return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
+};
+
 const AssignBedAction = ({
   rowData,
   isPendingPayment,
+  isReceptionist,
   setLocalEncounter,
   setOpenBedAssignmentModal
 }: {
   rowData: any;
   isPendingPayment: boolean;
+  isReceptionist: boolean;
   setLocalEncounter: (row: any) => void;
   setOpenBedAssignmentModal: (open: boolean) => void;
 }) => {
@@ -123,7 +218,7 @@ const AssignBedAction = ({
   const statusUpper = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
   const isTriageStarted = statusUpper === 'TRIAGE_STARTED';
 
-  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel;
+  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel || isReceptionist;
 
   const speaker = isPendingPayment ? (
     <Tooltip>Please add payment first</Tooltip>
@@ -154,109 +249,185 @@ const AssignBedAction = ({
   );
 };
 
+const EncounterPriorityAction = ({
+  rowData,
+  encounterPriorityEnumOptions,
+  priorityDotColor,
+  isPendingPayment,
+  onUpdatePriority,
+  isReceptionist
+}: {
+  rowData: any;
+  encounterPriorityEnumOptions: any[];
+  priorityDotColor: Map<string, string>;
+  isPendingPayment: boolean;
+  onUpdatePriority: (rowData: any, priorityCode: string) => Promise<boolean>;
+  isReceptionist: boolean;
+}) => {
+  const whisperRef = useRef<any>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+  const mode = useSelector((state: any) => state.ui.mode);
+  const isDark = mode === 'dark';
+
+  const popoverBackground = isDark ? '#0f172a' : '#ffffff';
+  const popoverForeground = isDark ? '#e5e7eb' : '#111827';
+  const popoverBorder = isDark ? '#334155' : '#e5e7eb';
+  const mutedForeground = isDark ? '#94a3b8' : '#64748b';
+  const selectedBackground = isDark ? 'rgba(59, 130, 246, 0.16)' : '#eff6ff';
+  const selectedBorder = isDark ? '#3b82f6' : '#bfdbfe';
+
+  const selectedPriority = String(rowData?.priorityLevel ?? '');
+
+  const prioritySpeaker = (
+    <Popover
+      style={{
+        backgroundColor: popoverBackground,
+        color: popoverForeground,
+        border: `1px solid ${popoverBorder}`,
+        borderRadius: 12,
+        boxShadow: isDark ? '0 12px 32px rgba(0, 0, 0, 0.45)' : '0 12px 32px rgba(15, 23, 42, 0.12)'
+      }}
+    >
+      <div
+        style={{
+          minWidth: 220,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 8,
+          color: popoverForeground,
+          backgroundColor: 'transparent'
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            padding: '4px 6px 10px 6px',
+            borderBottom: `1px solid ${popoverBorder}`,
+            marginBottom: 8,
+            color: popoverForeground
+          }}
+        >
+          Priority
+        </div>
+
+        {!encounterPriorityEnumOptions?.length ? (
+          <div style={{ padding: 8, color: mutedForeground }}>
+            No priority options
+          </div>
+        ) : (
+          encounterPriorityEnumOptions.map((p: any) => {
+            const value = String(p?.value ?? '');
+            const label = String(p?.label ?? p?.value ?? '');
+            const isSelected = selectedPriority === value;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={async (e: any) => {
+                  e?.stopPropagation?.();
+                  if (!value || saving) return;
+
+                  try {
+                    setSaving(value);
+                    const ok = await onUpdatePriority(rowData, value);
+                    if (ok) {
+                      whisperRef.current?.close?.();
+                    }
+                  } finally {
+                    setSaving(null);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '10px 12px',
+                  marginBottom: 6,
+                  borderRadius: 8,
+                  border: isSelected ? `1px solid ${selectedBorder}` : `1px solid ${popoverBorder}`,
+                  backgroundColor: isSelected ? selectedBackground : 'transparent',
+                  color: popoverForeground,
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    minWidth: 0
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: priorityDotColor.get(value) ?? mutedForeground,
+                      flex: '0 0 auto'
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: popoverForeground
+                    }}
+                  >
+                    {label}
+                  </span>
+                </span>
+
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: isSelected ? popoverForeground : mutedForeground,
+                    minWidth: 16,
+                    textAlign: 'right'
+                  }}
+                >
+                  {saving === value ? '...' : isSelected ? '✓' : ''}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </Popover>
+  );
+
+  return (
+    <Whisper
+      ref={whisperRef}
+      trigger="click"
+      placement="leftStart"
+      enterable
+      speaker={isPendingPayment ? <Tooltip>Please add payment first</Tooltip> : prioritySpeaker}
+    >
+      <div
+        onClick={(e: any) => {
+          e?.stopPropagation?.();
+        }}
+        style={{ display: 'inline-flex', alignItems: 'center' }}
+      >
+        <MyButton size="small" disabled={isReceptionist}>
+          <FontAwesomeIcon icon={faCircleExclamation} />
+        </MyButton>
+      </div>
+    </Whisper>
+  );
+};
+
 const UrgentCareTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
-
-  const toDateSafe = (value: any): Date | null => {
-    if (!value && value !== 0) return null;
-    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
-    if (typeof value === 'number') {
-      const ms = value < 1e12 ? value * 1000 : value;
-      const d = new Date(ms);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    if (typeof value === 'string') {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-  };
-
-  const formatDateTime = (value: any): string => {
-    const d = toDateSafe(value);
-    if (!d) return '';
-    return d.toLocaleString();
-  };
-
-  const formatDuration = (ms: number | null): string => {
-    if (ms == null || !isFinite(ms) || ms < 0) return '';
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  };
-
-  const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-
-    const createdAt = latest?.createdDate ?? fallbackCreatedAt ?? null;
-    if (!createdAt) return <></>;
-    return <>{formatDateTime(createdAt)}</>;
-  };
-
-  const WaitingTimeCell = ({ encounterId, arrivalCreatedAt, fallbackTriageCreatedAt }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const arrival = toDateSafe(arrivalCreatedAt);
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
-    if (!arrival || !triageStart) return <></>;
-    return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
-  };
-
-  const TriageCompletedAtCell = ({
-    encounterId,
-    fallbackUpdatedAt,
-    completedAt,
-    completedDate
-  }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const v = latest?.completedDate ?? completedDate ?? completedAt ?? fallbackUpdatedAt ?? null;
-    if (!v) return <></>;
-    return <>{formatDateTime(v)}</>;
-  };
-
-  const TriageTimeCell = ({
-    encounterId,
-    fallbackTriageCreatedAt,
-    fallbackUpdatedAt,
-    rowUpdatedAt,
-    completedAt,
-    completedDate
-  }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
-    const end = toDateSafe(
-      latest?.completedDate ??
-      completedDate ??
-      completedAt ??
-      rowUpdatedAt ??
-      fallbackUpdatedAt ??
-      null
-    );
-    if (!triageStart || !end) return <></>;
-    return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
-  };
 
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -270,39 +441,38 @@ const UrgentCareTriage = () => {
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
-  const [getRoomsByIds, { data: roomsByIds = [], isLoading: isRoomsByIdsLoading }] =
-    useGetRoomsByIdsMutation();
-  const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
-    useGetBedsByIdsMutation();
+  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
 
   const navigate = useNavigate();
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
-const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
- const handlePrintWristband = async (rowData: any) => {
-  try {
-    const blob = await triggerGetPatientWristbandPdf({
-      patientId: rowData.patientId
-    }).unwrap();
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isReceptionist = jobRole === 'RECEPTIONIST';
 
-    const fileURL = window.URL.createObjectURL(blob);
+  const handlePrintWristband = async (rowData: any) => {
+    try {
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
 
-    const link = document.createElement('a');
-    link.href = fileURL;
-    link.download = `wristband-${rowData.patientId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+      const fileURL = window.URL.createObjectURL(blob);
 
-    setTimeout(() => {
-      window.URL.revokeObjectURL(fileURL);
-    }, 1000);
-  } catch (error) {
-    console.error('Failed to download wristband pdf', error);
-  }
-};
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
+    }
+  };
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -336,7 +506,6 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
   const [paymentRow, setPaymentRow] = useState<any>(null);
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
-  const paymentInfoRef = useRef<PatientPaymentInfoHandle>(null);
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
@@ -420,7 +589,20 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams || !hasSearched });
 
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
-  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus');
+  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'NEW',
+      'ONGOING',
+      'CANCELLED',
+      'CLOSED',
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'SENT_TO_ER',
+      'WAITING_LIST'
+    ]
+  });
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
 
   const encounterStatusLabelMap = useMemo(() => {
@@ -448,7 +630,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
     if (patientIdsForBulk.length === 0) return;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientByIdMap = useMemo(() => {
@@ -464,14 +646,6 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
   const normalizedRows = useMemo(() => {
     const rows = (encountersPaged?.data ?? []) as any[];
 
-    const buildPatientFullName = (p: any) => {
-      const v = String(p?.fullName ?? '').trim();
-      if (v) return v;
-      const parts = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName].filter(Boolean);
-      const joined = parts.join(' ').trim();
-      return joined || '-';
-    };
-
     return rows.map((encounterRow: any) => {
       const statusCode = String(encounterRow?.status ?? '').toUpperCase();
       const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
@@ -482,10 +656,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
       const patientFromEncounter = encounterRow?.patient ?? null;
       const patientMerged = patientFromEncounter || patientFromMap || null;
 
-      const fullName = patientMerged ? buildPatientFullName(patientMerged) : '-';
-
       const patientMrn = patientMerged?.medicalRecordNumber;
-
       const dateOfBirth = patientMerged?.dateOfBirth ?? patientMerged?.dob ?? null;
       const sexAtBirth = formatEnumString(patientMerged?.sexAtBirth) || '';
 
@@ -493,23 +664,20 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
         ...encounterRow,
         key: encounterRow?.id,
         patientId,
-
         patientObject: {
           id: patientId,
           medicalRecordNumber: patientMrn,
           firstName: patientMerged?.firstName ?? '',
+          secondName: patientMerged?.secondName ?? '',
           lastName: patientMerged?.lastName ?? '',
           privatePatient: Boolean(patientMerged?.isPrivatePatient ?? false),
           dateOfBirth,
           sexAtBirth
         },
-
         patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
         visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
-
         encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
         encounterStatus: encounterRow?.status ?? statusCode,
-
         plannedStartDate: encounterRow?.encounterDate ?? null,
         createdAt:
           encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
@@ -556,8 +724,9 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
         v.includes('CRITICAL') ||
         v.includes('STAT') ||
         v.includes('EMERG')
-      )
+      ) {
         return 0;
+      }
       return null;
     };
     const m = new Map<string, number>();
@@ -601,124 +770,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
     return copied;
   }, [normalizedRows, priorityOrderMap]);
 
-  const encounterIdsForLocations = useMemo(() => {
-    return Array.from(
-      new Set(
-        (sortedTableData ?? [])
-          .map((row: any) => row?.id)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [sortedTableData]);
-
-  const {
-    data: activeAssignments = [],
-    isLoading: isAssignmentsLoading,
-    isFetching: isAssignmentsFetching
-  } = useGetActiveAssignmentsByEncounterIdsQuery(
-    { encounterIds: encounterIdsForLocations },
-    {
-      skip: encounterIdsForLocations.length === 0
-    }
-  );
-
-  const roomIdsFromAssignments = useMemo(() => {
-    return Array.from(
-      new Set(
-        (activeAssignments ?? [])
-          .map((assignment: any) => assignment?.room?.id ?? assignment?.roomId ?? null)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [activeAssignments]);
-
-  const bedIdsFromAssignments = useMemo(() => {
-    return Array.from(
-      new Set(
-        (activeAssignments ?? [])
-          .map((assignment: any) => assignment?.bed?.id ?? assignment?.bedId ?? null)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [activeAssignments]);
-
-  useEffect(() => {
-    if (roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => { });
-  }, [roomIdsFromAssignments, getRoomsByIds]);
-
-  useEffect(() => {
-    if (bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => { });
-  }, [bedIdsFromAssignments, getBedsByIds]);
-
-  const roomsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (roomsByIds ?? []).forEach((room: any) => {
-      if (!room?.id) return;
-      map.set(String(room.id), room);
-    });
-    return map;
-  }, [roomsByIds]);
-
-  const bedsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (bedsByIds ?? []).forEach((bed: any) => {
-      if (!bed?.id) return;
-      map.set(String(bed.id), bed);
-    });
-    return map;
-  }, [bedsByIds]);
-
-  const activeAssignmentsMap = useMemo(() => {
-    const map = new Map<string, any[]>();
-
-    (activeAssignments ?? []).forEach((assignment: any) => {
-      const encounterId = assignment?.encounter?.id ?? assignment?.encounterId;
-      if (!encounterId) return;
-
-      const key = String(encounterId);
-      const currentList = map.get(key) ?? [];
-      currentList.push(assignment);
-      map.set(key, currentList);
-    });
-
-    return map;
-  }, [activeAssignments]);
-
-  const tableData = useMemo(() => {
-    return (sortedTableData ?? []).map((row: any) => {
-      const activeAssignmentsForEncounter = activeAssignmentsMap.get(String(row?.id)) ?? [];
-
-      const firstAssignment = activeAssignmentsForEncounter[0] ?? null;
-      const roomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
-      const bedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
-
-      const roomFromApi = roomId != null ? roomsMap.get(String(roomId)) : null;
-      const bedFromApi = bedId != null ? bedsMap.get(String(bedId)) : null;
-
-      return {
-        ...row,
-        activeAssignmentsForEncounter,
-        resolvedRoom: roomFromApi,
-        resolvedBed: bedFromApi,
-        apRoom: roomFromApi?.name
-          ? {
-            ...(row?.apRoom ?? {}),
-            key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-            name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-          }
-          : row?.apRoom,
-        apBed: bedFromApi?.name
-          ? {
-            ...(row?.apBed ?? {}),
-            key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-            name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-          }
-          : row?.apBed
-      };
-    });
-  }, [sortedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
+  const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
 
   const isSelected = (rowData: any) => {
     if (
@@ -812,111 +864,72 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
     return true;
   };
 
-  const handleUpdateEncounterPriority = async (
-    rowData: any,
-    priorityCode: string
-  ): Promise<boolean> => {
-    try {
-      const encounterId = rowData?.id ?? null;
-      if (!encounterId) return false;
-
-      await updateEncounter({
-        id: encounterId,
-        body: buildEncounterUpdateBody(rowData, { priorityLevel: priorityCode })
-      }).unwrap();
-      dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
-      refetchEncounter();
-      return true;
-    } catch (error) {
-      console.error('Priority update error:', error, { rowData });
-      dispatch(
-        notify({
-          msg:
-            (error as any)?.message ||
-            'Failed to update priority (missing required encounter fields?)',
-          sev: 'error'
-        })
-      );
-      return false;
+  const handleSetPaymentModalOpen = (open: boolean) => {
+    setPaymentModalOpen(open);
+    if (!open) {
+      setPaymentRow(null);
     }
   };
 
-  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
-    const whisperRef = useRef<any>(null);
-    const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
-    const isPendingPayment = isPendingPaymentStatus(rowData);
+  const handleSavePayment = async () => {
+    try {
+      const encounterId = paymentRow?.id ?? null;
+      if (encounterId) {
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
+        }).unwrap();
+      }
 
-    const prioritySpeaker = (
-      <Popover title="Priority" className="er-priority-popover">
-        <div className="er-priority-menu">
-          {(encounterPriorityEnumOptions ?? []).map((p: any) => (
-            <button
-              type="button"
-              key={p?.value}
-              className={
-                String(rowData?.priorityLevel ?? '') === String(p?.value ?? '')
-                  ? 'er-priority-item is-selected'
-                  : 'er-priority-item'
-              }
-              onClick={async (e: any) => {
-                e?.stopPropagation?.();
-                const ok = await handleUpdateEncounterPriority(rowData, String(p?.value ?? ''));
-                if (ok) {
-                  setLockHoverUntilLeave(true);
-                  whisperRef.current?.close?.();
-                }
-              }}
-            >
-              <span className="er-priority-left">
-                <span
-                  className="er-priority-dot"
-                  style={{
-                    backgroundColor: priorityDotColor.get(String(p?.value ?? '')) ?? '#98A2B4'
-                  }}
-                />
-                <span className="er-priority-label">{p?.label ?? p?.value ?? ''}</span>
-              </span>
-              {String(rowData?.priorityLevel ?? '') === String(p?.value ?? '') ? (
-                <span className="er-priority-check">✓</span>
-              ) : (
-                <span className="er-priority-check-placeholder" />
-              )}
-            </button>
-          ))}
-        </div>
-      </Popover>
-    );
-
-    return (
-      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Set priority</Tooltip>}>
-        <div style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <Whisper
-            ref={whisperRef}
-            trigger={
-              isPendingPayment
-                ? 'click'
-                : lockHoverUntilLeave
-                  ? 'click'
-                  : (['hover', 'click'] as any)
-            }
-            placement="leftStart"
-            speaker={prioritySpeaker}
-            enterable
-            delayClose={300}
-          >
-            <div
-              style={{ display: 'inline-flex', alignItems: 'center' }}
-              onMouseLeave={() => setLockHoverUntilLeave(false)}
-            >
-              <MyButton size="small" disabled={isPendingPayment}>
-                <FontAwesomeIcon icon={faCircleExclamation} />
-              </MyButton>
-            </div>
-          </Whisper>
-        </div>
-      </Whisper>
-    );
+      dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
+      refetchEncounter();
+      handleSetPaymentModalOpen(false);
+    } catch (e: any) {
+      dispatch(
+        notify({
+          msg:
+            e?.data?.message ||
+            e?.message ||
+            'Payment saved, but failed to update encounter status',
+          sev: 'error'
+        })
+      );
+    }
   };
+
+  const handleUpdateEncounterPriority = useCallback(
+    async (rowData: any, priorityCode: string): Promise<boolean> => {
+      try {
+        const encounterId = rowData?.id ?? null;
+        if (!encounterId) return false;
+
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(
+            {
+              ...rowData,
+              priorityLevel: priorityCode
+            },
+            { priorityLevel: priorityCode }
+          )
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
+        refetchEncounter();
+        return true;
+      } catch (error) {
+        console.error('Priority update error:', error, { rowData, priorityCode });
+        dispatch(
+          notify({
+            msg: (error as any)?.message || 'Failed to update priority',
+            sev: 'error'
+          })
+        );
+        return false;
+      }
+    },
+    [updateEncounter, dispatch, refetchEncounter]
+  );
 
   const handleGoToVisit = async (encounterData: any, patientData: any) => {
     try {
@@ -941,15 +954,11 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
       }
 
       const emergencyTriageNew =
-        typeof encounterId === 'number' &&
-          !Number.isNaN(encounterId) &&
-          !Number.isNaN(patientId)
+        typeof encounterId === 'number' && !Number.isNaN(encounterId) && !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
           : null;
 
       const targetPath = '/urgent-care-start-triage';
-
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
 
       if (!emergencyTriageNew) {
         console.warn(
@@ -971,7 +980,6 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
       console.error('Start triage error:', error, { encounterData, patientData });
 
       const errorKey = error?.message || error?.data?.message || '';
-
       let readableMessage = 'Failed to start triage';
 
       if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
@@ -1003,14 +1011,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
   }, [isFetching, manualSearchTriggered]);
 
   useEffect(() => {
-    if (
-      isLoading ||
-      isFetching ||
-      isAssignmentsLoading ||
-      isAssignmentsFetching ||
-      isRoomsByIdsLoading ||
-      isBedsByIdsLoading
-    ) {
+    if (isLoading || isFetching) {
       dispatch(showSystemLoader());
     } else {
       dispatch(hideSystemLoader());
@@ -1019,15 +1020,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
     return () => {
       dispatch(hideSystemLoader());
     };
-  }, [
-    isLoading,
-    isFetching,
-    isAssignmentsLoading,
-    isAssignmentsFetching,
-    isRoomsByIdsLoading,
-    isBedsByIdsLoading,
-    dispatch
-  ]);
+  }, [isLoading, isFetching, dispatch]);
 
   useEffect(() => {
     if (refetch) {
@@ -1201,19 +1194,27 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {[
+              rowData?.patientObject?.firstName,
+              rowData?.patientObject?.secondName,
+              rowData?.patientObject?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>
-                  {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                </p>
+                patientName
               )}
             </div>
           </Whisper>
@@ -1253,81 +1254,27 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
       dataKey: 'plannedStartDate'
     },
     {
-      key: 'location',
-      title: 'Location',
-      render: (row: any) => {
-        const statusUpper = String(row?.status ?? '').toUpperCase();
-
-        if (statusUpper === 'DISCHARGED') {
-          return <span className="location-table-style">Discharged</span>;
-        }
-
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
-        }
-
-        const assignments = row?.activeAssignmentsForEncounter ?? [];
-
-        const speaker = (
-          <Tooltip>
-            {assignments.length > 0 ? (
-              assignments.map((assignment: any, index: number) => {
-                const roomId = assignment?.room?.id ?? assignment?.roomId ?? null;
-                const bedId = assignment?.bed?.id ?? assignment?.bedId ?? null;
-
-                const room = roomId != null ? roomsMap.get(String(roomId)) : null;
-                const bed = bedId != null ? bedsMap.get(String(bedId)) : null;
-
-                return (
-                  <div key={assignment?.id ?? index}>
-                    Room {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {room?.name ?? assignment?.room?.name ?? '-'}
-                    <br />
-                    Bed {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {bed?.name ?? assignment?.bed?.name ?? '-'}
-                    <br />
-                    Admission Reason {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {assignment?.admissionReason ?? '-'}
-                  </div>
-                );
-              })
-            ) : (
-              <div>Admission Reason: -</div>
-            )}
-          </Tooltip>
-        );
-
-        const firstAssignment = assignments[0] ?? null;
-        const firstRoomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
-        const firstBedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
-
-        const firstRoom = firstRoomId != null ? roomsMap.get(String(firstRoomId)) : null;
-        const firstBed = firstBedId != null ? bedsMap.get(String(firstBedId)) : null;
-
-        return (
-          <Whisper trigger="hover" placement="top" speaker={speaker}>
-            <span className="location-table-style">
-              {firstRoom?.name ?? row?.apRoom?.name ?? row?.room?.name ?? '-'}
-              <br />
-              {firstBed?.name ?? row?.apBed?.name ?? row?.bed?.name ?? '-'}
-            </span>
-          </Whisper>
-        );
-      }
-    },
-    {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: (rowData: any) => (
-        <MyBadgeStatus
-          color="#98A2B4"
-          contant={
-            encounterStatusLabelMap.get(
-              String(rowData?.status ?? rowData?.encounterStatus ?? '')
-            ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
-          }
-        />
-      )
+      render: (rowData: any) => {
+        const statusCode = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
+        const statusColorMap: Record<string, string> = {
+          PENDING_PAYMENT: '#fd7e14',
+          WAITING_TRIAGE: '#b8860b',
+          TRIAGE_STARTED: '#6f42c1'
+        };
+        const color = statusColorMap[statusCode] ?? '#969fb0';
+        return (
+          <MyBadgeStatus
+            color={color}
+            contant={
+              encounterStatusLabelMap.get(
+                String(rowData?.status ?? rowData?.encounterStatus ?? '')
+              ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
+            }
+          />
+        );
+      }
     },
     {
       key: 'actions',
@@ -1342,7 +1289,9 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
           <Tooltip>Start Triage</Tooltip>
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const tooltipCancel = (
+          <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
+        );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1365,7 +1314,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
 
@@ -1408,11 +1357,18 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
               </div>
             </Whisper>
 
-            <EncounterPriorityAction rowData={rowData} />
+            <EncounterPriorityAction
+              rowData={rowData}
+              encounterPriorityEnumOptions={encounterPriorityEnumOptions}
+              priorityDotColor={priorityDotColor}
+              isPendingPayment={isPendingPayment}
+              onUpdatePriority={handleUpdateEncounterPriority}
+              isReceptionist={isReceptionist}
+            />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||
-              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+            String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
@@ -1423,7 +1379,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
-                    disabled={isPendingPayment}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
@@ -1444,6 +1400,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                      isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1453,7 +1410,14 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                         !rowData?.priorityLevel)
                     }
                   >
-                    <FontAwesomeIcon icon={faCirclePlay} />
+                    <FontAwesomeIcon
+                      icon={
+                        String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+                        'TRIAGE_STARTED'
+                          ? faPause
+                          : faCirclePlay
+                      }
+                    />
                   </MyButton>
                 </div>
               </Whisper>
@@ -1471,39 +1435,39 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                   disabled={true}
-                  // disabled={isPendingPayment }
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
               </div>
             </Whisper>
 
-
             <AssignBedAction
               rowData={rowData}
               isPendingPayment={isPendingPayment}
               setLocalEncounter={setLocalEncounter}
               setOpenBedAssignmentModal={setOpenBedAssignmentModal}
+              isReceptionist={isReceptionist}
             />
 
-            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
+            {['WAITING_TRIAGE', 'NEW', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
-                <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                  <div>
-                    <MyButton
-                      size="small"
-                      onClick={() => {
-                        setLocalEncounter(rowData);
-                        setOpen(true);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faRectangleXmark} />
-                    </MyButton>
-                  </div>
-                </Whisper>
-              )}
+              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                <div>
+                  <MyButton
+                    size="small"
+                    disabled={isReceptionist}
+                    onClick={() => {
+                      setLocalEncounter(rowData);
+                      setOpen(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faRectangleXmark} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
           </Form>
         );
       },
@@ -1625,14 +1589,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
           data={tableData}
           columns={tableColumns}
           rowClassName={isSelected}
-          loading={
-            isLoading ||
-            (manualSearchTriggered && isFetching) ||
-            isAssignmentsLoading ||
-            isAssignmentsFetching ||
-            isRoomsByIdsLoading ||
-            isBedsByIdsLoading
-          }
+          loading={isLoading || (manualSearchTriggered && isFetching)}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
           }}
@@ -1665,76 +1622,16 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
       </Panel>
 
-      <Modal
-        size="80vw"
+      <AddPaymentModal
         open={paymentModalOpen}
-        onClose={() => {
-          setPaymentModalOpen(false);
-          setPaymentRow(null);
-        }}
-      >
-        <Modal.Header>
-          <Modal.Title>Add Payment</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '75vh', overflow: 'auto' }}>
-          <PatientPaymentInfo
-            ref={paymentInfoRef}
-            localPatient={paymentRow?.patientObject ?? null}
-            localEncounter={paymentRow ?? null}
-            isReadOnly={false}
-            showInternalButtons={false}
-            payment={payment}
-            setPayment={setPayment}
-            patientInsurance={patientInsurance}
-            setPatientInsurance={setPatientInsurance}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <MyButton
-            appearance="ghost"
-            onClick={() => {
-              setPaymentModalOpen(false);
-              setPaymentRow(null);
-            }}
-          >
-            Close
-          </MyButton>
-          <MyButton
-            appearance="primary"
-            onClick={async () => {
-              const ok = await paymentInfoRef.current?.confirm?.();
-              if (!ok) return;
-
-              try {
-                const encounterId = paymentRow?.id ?? null;
-                if (encounterId) {
-                  await updateEncounter({
-                    id: encounterId,
-                    body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
-                  }).unwrap();
-                }
-
-                dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
-                refetchEncounter();
-                setPaymentModalOpen(false);
-                setPaymentRow(null);
-              } catch (e: any) {
-                dispatch(
-                  notify({
-                    msg:
-                      e?.data?.message ||
-                      e?.message ||
-                      'Payment saved, but failed to update encounter status',
-                    sev: 'error'
-                  })
-                );
-              }
-            }}
-          >
-            Save
-          </MyButton>
-        </Modal.Footer>
-      </Modal>
+        setOpen={handleSetPaymentModalOpen}
+        paymentRow={paymentRow}
+        payment={payment}
+        setPayment={setPayment}
+        patientInsurance={patientInsurance}
+        setPatientInsurance={setPatientInsurance}
+        onSave={handleSavePayment}
+      />
 
       <MyModal
         open={openEMRModal}

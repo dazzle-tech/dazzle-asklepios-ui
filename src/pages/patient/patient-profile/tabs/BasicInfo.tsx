@@ -124,7 +124,7 @@ const BasicInfo = ({
           width={170}
         />
       ) : null}
-      <MyInput
+       <MyInput
         vr={validationResult}
         column
         fieldLabel="Private Patient"

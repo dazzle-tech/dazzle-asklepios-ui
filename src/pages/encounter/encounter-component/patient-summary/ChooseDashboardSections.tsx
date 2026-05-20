@@ -66,14 +66,14 @@ const ChooseDashboardSections = ({
                 setRecord={setSelectedAll}
                 showLabel={false}
               />
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c1"
                 fieldLabel={<Translate>Body Diagram</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
-              />
+              /> */}
               <MyInput
                 fieldType="check"
                 fieldName="c2"
@@ -134,7 +134,7 @@ const ChooseDashboardSections = ({
                 fieldType="check"
                 fieldName="c9"
                 fieldLabel="Patient Plan"
-                showLabel={true}
+                showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
               />
@@ -166,7 +166,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c13"
-                fieldLabel={<Translate>Appointments Table</Translate>}
+                fieldLabel={<Translate>Primary Care Provider</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}

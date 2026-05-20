@@ -15,23 +15,23 @@ import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/d
 import { DiagnosticTest } from '@/types/model-types-new';
 
 import './styles.less';
+import { useAppSelector } from '@/hooks';
 
-interface FavoriteTestsProps {
-  user: number;
-}
 
-const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
+const FavoriteTests: React.FC = () => {
   const [favoriteTestIds, setFavoriteTestIds] = useState<number[]>([]);
-
+  const mode = useAppSelector((state) => state.ui.mode);
+  
   const [paginationParams] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
-
+const authSlice=useAppSelector((state) => state.auth);
+const user = authSlice?.user;
   const { data: diagnodticsTestList, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user });
+  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user?.id });
   const [addFavorite] = useAddFavoriteDiagnosticTestMutation();
   const [deleteFavorite] = useDeleteFavoriteDiagnosticTestMutation();
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -49,10 +49,10 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
 
     try {
       if (isFavorite) {
-        await deleteFavorite({ userId: user, testId }).unwrap();
+        await deleteFavorite({ userId: user.id, testId }).unwrap();
         setFavoriteTestIds(prev => prev.filter(id => id !== testId));
       } else {
-        await addFavorite({ userId: user, testId }).unwrap();
+        await addFavorite({ userId: user.id, testId }).unwrap();
         setFavoriteTestIds(prev => [...prev, testId]);
       }
     } catch (error) {
@@ -87,7 +87,7 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
 
   return (
   <div dir={dir}>
-    <div className="favorite-tests">
+    <div className={`favorite-tests ${mode}`}>
 
       <HStack spacing={10} style={{ marginBottom: 20 }}>
         <Button

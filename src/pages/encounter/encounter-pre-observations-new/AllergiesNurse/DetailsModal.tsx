@@ -21,17 +21,15 @@ import {
   useUpdatePatientAllergyMutation
 } from '@/services/encounters/patientAllergiesService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveAllergensQuery } from '@/services/setup/allergensService';
+import { useGetAllergensByTypeQuery } from '@/services/setup/allergensService';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import {
-  useGetActiveIngredientsByDrugClassQuery,
-  useGetActiveIngredientsQuery
-} from '@/services/setup/activeIngredients/activeIngredientsService';
+import { useGetActiveIngredientsByDrugClassQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { PatientAllergiesCreateDTO, PatientAllergiesUpdateDTO } from '@/types/model-types-new';
 import {
   newPatientAllergiesCreateDTO,
   newPatientAllergiesUpdateDTO
 } from '@/types/model-types-constructor-new';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const DetailsModal = ({
   open,
@@ -55,6 +53,12 @@ const DetailsModal = ({
     });
   const [reactions, setReactions] = useState({ reactions: [] });
   const [showAllFields, setShowAllFields] = useState(false);
+  const [allergenPaginationParams, setAllergenPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: 'name,asc'
+  });
+  const [allergenOptions, setAllergenOptions] = useState<any[]>([]);
   // fetch data
   const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
   const { data: reactionLovQueryResponse } = useGetLovValuesByCodeQuery('ALLRGY_REACTION_TYP');
@@ -62,16 +66,23 @@ const DetailsModal = ({
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: allgPropnLovQueryResponse } = useGetLovValuesByCodeQuery('ALLG_PROPN');
   const { data: criticalityLovQueryResponse } = useGetLovValuesByCodeQuery('CRITICALITY');
-  const { data: allergensListResponse } = useGetActiveAllergensQuery({
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
+  const selectedAllergenType = allerges?.id
+    ? patientAllergiesUpdateDTO?.allergenType
+    : patientAllergiesCreateDTO?.allergenType;
+
+  const { data: allergensListResponse, isFetching: isAllergensFetching } = useGetAllergensByTypeQuery(
+    {
+      type: selectedAllergenType,
+      page: allergenPaginationParams.page,
+      size: allergenPaginationParams.size,
+      sort: allergenPaginationParams.sort
+    },
+    {
+      skip: !selectedAllergenType
+    }
+  );
   const { data: medicationClassesListResponse, isLoading: isMedicationClassesLoaded } =
     useGetAllMedicationCategoriesClassesQuery({});
-  // const {
-  //   data: activeIngredientsAll,
-  // } = useGetActiveIngredientsQuery({});
   const drugClassId = !allerges?.id
     ? patientAllergiesCreateDTO.medicationClassId
     : patientAllergiesUpdateDTO.medicationClassId;
@@ -90,6 +101,95 @@ const DetailsModal = ({
   const isMedication = allerges?.id
     ? patientAllergiesUpdateDTO?.allergenType === 'MEDICATION'
     : patientAllergiesCreateDTO?.allergenType === 'MEDICATION';
+  const allergenHasMore = Boolean(allergensListResponse?.links?.next);
+  const selectedAllergenId = allerges?.id
+    ? patientAllergiesUpdateDTO?.allergenId
+    : patientAllergiesCreateDTO?.allergenId;
+  const selectedAllergenOption = (() => {
+    if (!selectedAllergenType) return null;
+
+    const allergenName =
+      (allerges as any)?.allergenName ||
+      (allerges as any)?.allergen?.name ||
+      (allerges as any)?.allergyObject?.allergenName;
+
+    if (!selectedAllergenId || !allergenName) return null;
+
+    return {
+      id: selectedAllergenId,
+      name: allergenName
+    };
+  })();
+
+  useEffect(() => {
+    setAllergenPaginationParams(prev => ({
+      ...prev,
+      page: 0
+    }));
+    setAllergenOptions([]);
+
+    if (!selectedAllergenType) {
+      const resetAllergenRecord = !allerges?.id
+        ? setPatientAllergiesCreateDTO
+        : setPatientAllergiesUpdateDTO;
+
+      resetAllergenRecord(prev => ({
+        ...prev,
+        allergenId: undefined
+      }));
+    }
+  }, [selectedAllergenType, open]);
+
+  useEffect(() => {
+    if (!selectedAllergenType) {
+      setAllergenOptions([]);
+      return;
+    }
+
+    if (!allergensListResponse?.data) return;
+
+    const rows = allergensListResponse.data ?? [];
+
+    setAllergenOptions(prev => {
+      if (allergenPaginationParams.page === 0) {
+        return rows;
+      }
+
+      const seen = new Set(prev.map((item: any) => String(item?.id)));
+      const merged = [...prev];
+
+      rows.forEach((item: any) => {
+        if (!seen.has(String(item?.id))) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+  }, [open, selectedAllergenType, allergensListResponse?.data, allergenPaginationParams.page]);
+
+  useEffect(() => {
+    if (!selectedAllergenType || !selectedAllergenId || !allergensListResponse?.links?.next) return;
+
+    const foundInOptions = allergenOptions.some(item => String(item?.id) === String(selectedAllergenId));
+
+    if (!foundInOptions) {
+      const { page } = extractPaginationFromLink(allergensListResponse.links.next);
+      setAllergenPaginationParams(prev => ({
+        ...prev,
+        page
+      }));
+    }
+  }, [
+    selectedAllergenId,
+    allergenOptions,
+    allergenPaginationParams.page,
+    allergensListResponse?.links?.next
+  ]);
+
+const isOtherType = allerges?.id
+  ? patientAllergiesUpdateDTO?.allergenType === 'OTHER'
+  : patientAllergiesCreateDTO?.allergenType === 'OTHER';
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -133,6 +233,7 @@ const DetailsModal = ({
                       loading={isMedicationClassesLoaded}
                       required
                     />
+
                     <MyInput
                       fieldType="checkPicker"
                       fieldLabel="Active Ingredient"
@@ -147,11 +248,23 @@ const DetailsModal = ({
                       loading={isMedicationClassesLoaded}
                     />
                   </>
+                ) : isOtherType ? (
+                  <MyInput
+                    fieldType="text"
+                    fieldLabel="Allergen"
+                    fieldName="allergenName"
+                    record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                    setRecord={
+                      !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                    }
+                    required
+                  />
                 ) : (
                   <MyInput
-                    fieldType="select"
+                    key={`allergen-${selectedAllergenType || 'none'}`}
+                    fieldType="selectPagination"
                     fieldLabel="Allergen"
-                    selectData={allergensListResponse?.data ?? []}
+                    selectData={allergenOptions}
                     selectDataLabel="name"
                     selectDataValue="id"
                     fieldName="allergenId"
@@ -159,7 +272,18 @@ const DetailsModal = ({
                     setRecord={
                       !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                     }
-                    searchable={false}
+                    searchable
+                    loading={Boolean(selectedAllergenType && isAllergensFetching)}
+                    hasMore={allergenHasMore}
+                    onFetchMore={() => {
+                      if (allergensListResponse?.links?.next) {
+                        const { page } = extractPaginationFromLink(allergensListResponse.links.next);
+                        setAllergenPaginationParams(prev => ({
+                          ...prev,
+                          page
+                        }));
+                      }
+                    }}
                     required
                   />
                 )}
@@ -401,6 +525,7 @@ const DetailsModal = ({
                       setRecord={
                         !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                       }
+                      allowEnterNewLine
                     />
                   </Row>
                 </>
@@ -436,96 +561,135 @@ const DetailsModal = ({
     });
   };
 
-  // handle Save patient allergy
-  const handleSave = async () => {
-    if (!allerges?.id) {
-      try {
-        let errorMsg = '';
-        if (!patientAllergiesCreateDTO.allergenType) {
-          if (!errorMsg) errorMsg = errorMsg + 'Allergen Type Can`t be empty';
-          else errorMsg = errorMsg + ', Allergen Type Can`t be empty';
-        }
-        if (!patientAllergiesCreateDTO.severity) {
-          if (!errorMsg) errorMsg = errorMsg + 'Severity Can`t be empty';
-          else errorMsg = errorMsg + ', Severity Can`t be empty';
-        }
-        if (
-          patientAllergiesCreateDTO.onsetDate &&
-          new Date(patientAllergiesCreateDTO.onsetDate) > new Date()
-        ) {
-          if (!errorMsg) errorMsg = errorMsg + 'Onset Date can`t be in the future';
-          else errorMsg = errorMsg + ', Onset Date can`t be in the future';
-        }
+    const handleSave = async () => {
+      if (!allerges?.id) {
+        try {
+          let errorMsg = '';
 
-        if (!errorMsg) {
-          await addPatientAllergy({
-            ...patientAllergiesCreateDTO,
-            allergicReactions: reactions.reactions.join(', '),
-            patientId: patient?.id,
-            encounterId: encounter?.id,
-            onsetDate: patientAllergiesCreateDTO?.onsetDate
-              ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString()
-              : ''
-          }).unwrap();
-          dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-          setOpen(false);
-          await fetchallerges();
-          dispatch(resetRefetchEncounter());
-          dispatch(setRefetchEncounter(true));
-          await handleClear();
-        } else {
+          if (!patientAllergiesCreateDTO.allergenType) {
+            errorMsg += 'Allergen Type Can`t be empty';
+          }
+
+          if (!patientAllergiesCreateDTO.severity) {
+            errorMsg += errorMsg ? ', Severity Can`t be empty' : 'Severity Can`t be empty';
+          }
+
+          // 🔥 NEW VALIDATION (OTHER)
+          if (isOtherType) {
+            const name = (patientAllergiesCreateDTO.allergenName || '').trim();
+            if (!name) {
+              errorMsg += errorMsg
+                ? ', Allergen free text is required'
+                : 'Allergen free text is required';
+            }
+          }
+
+          if (
+            patientAllergiesCreateDTO.onsetDate &&
+            new Date(patientAllergiesCreateDTO.onsetDate) > new Date()
+          ) {
+            errorMsg += errorMsg
+              ? ', Onset Date can`t be in the future'
+              : 'Onset Date can`t be in the future';
+          }
+
+          if (!errorMsg) {
+            const payload = {
+              ...patientAllergiesCreateDTO,
+              allergicReactions: reactions.reactions.join(', '),
+              patientId: patient?.id,
+              encounterId: encounter?.id,
+              onsetDate: patientAllergiesCreateDTO?.onsetDate
+                ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString()
+                : '',
+
+              // 🔥 أهم سطر
+              allergenId: isOtherType ? null : patientAllergiesCreateDTO.allergenId,
+              allergenName: isOtherType
+                ? patientAllergiesCreateDTO.allergenName
+                : undefined
+            };
+
+            await addPatientAllergy(payload).unwrap();
+
+            dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+            setOpen(false);
+            await fetchallerges();
+            dispatch(resetRefetchEncounter());
+            dispatch(setRefetchEncounter(true));
+            await handleClear();
+          } else {
+            dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+          }
+        } catch (error) {
+          const errorMsg = extractErrorMessage(error) || 'Save Failed';
           dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
-      } catch (error) {
-        console.log('error: ', error);
-        const errorMsg = extractErrorMessage(error) || 'Save Failed';
-        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
-      }
-    } else {
-      try {
-        let errorMsg = '';
-        if (!patientAllergiesUpdateDTO.allergenType) {
-          if (!errorMsg) errorMsg = errorMsg + 'Allergen Type Can`t be empty';
-          else errorMsg = errorMsg + ', Allergen Type Can`t be empty';
-        }
-        if (!patientAllergiesUpdateDTO.severity) {
-          if (!errorMsg) errorMsg = errorMsg + 'Severity Can`t be empty';
-          else errorMsg = errorMsg + ', Severity Can`t be empty';
-        }
-        if (
-          patientAllergiesCreateDTO.onsetDate &&
-          new Date(patientAllergiesCreateDTO.onsetDate) > new Date()
-        ) {
-          if (!errorMsg) errorMsg = errorMsg + 'Onset Date can`t be in the future';
-          else errorMsg = errorMsg + ', Onset Date can`t be in the future';
-        }
-        if (!errorMsg) {
-          const objToAdd = {
-            ...patientAllergiesUpdateDTO,
-            allergicReactions: reactions.reactions.join(', '),
-            onsetDate: patientAllergiesUpdateDTO?.onsetDate
-              ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString()
-              : ''
-          };
-          await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
-          dispatch(
-            notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' })
-          );
-          setOpen(false);
-          await fetchallerges();
-          dispatch(resetRefetchEncounter());
-          dispatch(setRefetchEncounter(true));
-          await handleClear();
-        } else {
+      } else {
+        try {
+          let errorMsg = '';
+
+          if (!patientAllergiesUpdateDTO.allergenType) {
+            errorMsg += 'Allergen Type Can`t be empty';
+          }
+
+          if (!patientAllergiesUpdateDTO.severity) {
+            errorMsg += errorMsg ? ', Severity Can`t be empty' : 'Severity Can`t be empty';
+          }
+
+          if (isOtherType) {
+            const name = (patientAllergiesUpdateDTO.allergenName || '').trim();
+            if (!name) {
+              errorMsg += errorMsg
+                ? ', Allergen is required'
+                : 'Allergen is required';
+            }
+          }
+
+          if (
+            patientAllergiesUpdateDTO.onsetDate &&
+            new Date(patientAllergiesUpdateDTO.onsetDate) > new Date()
+          ) {
+            errorMsg += errorMsg
+              ? ', Onset Date can`t be in the future'
+              : 'Onset Date can`t be in the future';
+          }
+
+          if (!errorMsg) {
+            const objToAdd = {
+              ...patientAllergiesUpdateDTO,
+              allergicReactions: reactions.reactions.join(', '),
+              onsetDate: patientAllergiesUpdateDTO?.onsetDate
+                ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString()
+                : '',
+
+              allergenId: isOtherType ? null : patientAllergiesUpdateDTO.allergenId,
+              allergenName: isOtherType
+                ? patientAllergiesUpdateDTO.allergenName
+                : undefined
+            };
+
+            const updatedAllergy = await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
+            setAllerges(updatedAllergy);
+
+            dispatch(
+              notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' })
+            );
+
+            setOpen(false);
+            await fetchallerges();
+            dispatch(resetRefetchEncounter());
+            dispatch(setRefetchEncounter(true));
+            await handleClear();
+          } else {
+            dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+          }
+        } catch (error) {
+          const errorMsg = extractErrorMessage(error) || 'Save Failed';
           dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
-      } catch (error) {
-        console.log('error: ', error);
-        const errorMsg = extractErrorMessage(error) || 'Save Failed';
-        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
-    }
-  };
+    };
 
   // Effects
   useEffect(() => {
@@ -534,6 +698,7 @@ const DetailsModal = ({
         id: allerges.id,
         allergenType: allerges.allergenType,
         allergenId: allerges.allergenId,
+        allergenName: allerges.allergenName,
         severity: allerges.severity,
         medicationClassId: allerges.medicationClassId,
         criticality: allerges.criticality,
@@ -552,6 +717,20 @@ const DetailsModal = ({
     else setPatientAllergiesCreateDTO({ ...newPatientAllergiesCreateDTO });
     setReactions({ reactions: [] });
   }, [allerges]);
+
+useEffect(() => {
+  if (!isOtherType) {
+    setPatientAllergiesCreateDTO(prev => ({
+      ...prev,
+      allergenName: ''
+    }));
+
+    setPatientAllergiesUpdateDTO(prev => ({
+      ...prev,
+      allergenName: ''
+    }));
+  }
+}, [patientAllergiesCreateDTO.allergenType, patientAllergiesUpdateDTO.allergenType]);
 
   useEffect(() => {
     if (allerges?.id && patientAllergiesUpdateDTO.allergicReactions) {
@@ -630,6 +809,10 @@ const DetailsModal = ({
       handleClear();
     }
   }, [openToAdd]);
+
+  useEffect(() => {
+    setShowAllFields(!!allerges?.id);
+  }, [allerges?.id]);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';

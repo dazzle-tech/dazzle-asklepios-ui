@@ -26,6 +26,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
 import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { PhoneNumberInput } from '@/components';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -41,7 +42,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
   'patient.department.date.duplicate':
-    'This patient already has an encounter in this department on the selected date.',
+    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
   'patient.emergency.notAllowed.withOngoing':
@@ -69,6 +70,16 @@ const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   encounterDate: 'Date',
   departmentDailySequenceNumber: 'Department Daily Sequence'
 };
+
+const QUICK_PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'sexAtBirth', label: 'Gender' },
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
+  { key: 'email', label: 'Email' },
+  { key: 'dateOfBirth', label: 'DOB' }
+];
 
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? err ?? {};
@@ -265,6 +276,19 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
         return merged;
       });
+
+      if (page === 0) {
+        setSelectedDepartmentId(prevSelectedDepartmentId => {
+          if (prevSelectedDepartmentId !== null && prevSelectedDepartmentId !== undefined) {
+            return prevSelectedDepartmentId;
+          }
+
+          const firstDepartmentId = rows?.[0]?.id;
+          return firstDepartmentId !== undefined && firstDepartmentId !== null
+            ? Number(firstDepartmentId)
+            : null;
+        });
+      }
     } catch (error) {
       console.error('fetchDepartments error:', error);
 
@@ -309,7 +333,62 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
     }
   }, [open]);
 
+  const isPhoneValid = (phone: any) => {
+    if (!phone) return false;
+
+    const value = String(phone).trim();
+
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return false;
+
+    return true;
+  };
+
+  const validateMandatoryFields = () => {
+    if (isUnknown) return true;
+
+    const missingFields = QUICK_PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
+      if (key === 'primaryMobileNumber') {
+        return !isPhoneValid(value);
+      }
+
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateMandatoryFields()) {
+      return;
+    }
+
+    if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
+      if (!selectedFacilityId || !selectedDepartmentId) {
+        dispatch(
+          notify({
+            msg: 'Please select a department before saving.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
     try {
       let savedPatient: Patient;
 
@@ -345,16 +424,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
         const facilityId = selectedFacilityId;
         const departmentId = selectedDepartmentId;
-
-        if (!departmentId || !facilityId) {
-          dispatch(
-            notify({
-              msg: 'Please select a department before saving.',
-              sev: 'warning'
-            })
-          );
-          return;
-        }
 
         const practitionerId = 0;
 
@@ -430,7 +499,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -441,7 +510,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -452,7 +521,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -469,18 +538,18 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           setRecord={setLocalPatient}
           disabled={isUnknown}
           searchable={false}
-          width={200}
+          width={"100%"}
         />
 
-        <MyInput
+       <PhoneNumberInput
           required
-          vr={validationResult}
           column
           fieldName="primaryMobileNumber"
           record={localPatient}
           setRecord={setLocalPatient}
+          fieldLabel="Primary Mobile Number" 
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -490,7 +559,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           fieldName="email"
           record={localPatient}
           setRecord={setLocalPatient}
-          width={200}
+          width={"100%"}
         />
 
         <MyInput
@@ -502,8 +571,10 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           fieldName="dateOfBirth"
           record={localPatient}
           setRecord={setLocalPatient}
+          disableFutureDates
+          showWarningIfBeforeYear1900
           disabled={isUnknown}
-          width={200}
+          width={"100%"}
         />
 
         <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
@@ -514,7 +585,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           <>
             <MyInput
               column
-              width={200}
+              width={"100%"}
               required
               fieldLabel="Encounter Type"
               fieldType="select"
@@ -536,7 +607,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
 
             <MyInput
-              width={200}
+              width={"100%"}
               required
               column
               fieldType="selectPagination"

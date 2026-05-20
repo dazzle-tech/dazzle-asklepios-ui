@@ -5,15 +5,21 @@ import './styles.less';
 
 import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
+import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
+import clsx from 'clsx';
 
 const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
   //add new patient edits
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+
+  const viewMode = location.state?.viewMode;
+  const edit =
+    viewMode === 'readOnly' ||
+    (props.edit ?? location.state?.edit ?? false);
 
   const vm = useDiagnosticsOrder({ patient, encounter, edit });
 
@@ -60,14 +66,17 @@ const DiagnosticsOrder = (props: any) => {
   }, []);
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-    <div dir={dir}>
+      <div
+    dir={dir}
+    className={clsx({ 'disabled-panel': edit })}
+  >
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}
@@ -113,6 +122,7 @@ const DiagnosticsOrder = (props: any) => {
         setOrderTest={vm.setOrderTest}
         setTestCardModal={vm.setTestCardModal}
         handleEdit={vm.handleEdit}
+        onRescheduleAppointment={vm.handleOpenRescheduleAppointments}
         resolveReasonLabel={vm.resolveReasonLabel}
         previewDiagnosticsOrder={vm.previewDiagnosticsOrder}
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
@@ -167,6 +177,15 @@ const DiagnosticsOrder = (props: any) => {
         handleRecallFavoriteTest={vm.handleRecallFavoriteTest}
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
+        handleLoadMore={vm.handleLoadMore}
+      />
+
+      <RescheduleAppointmentsLookupModal
+        open={vm.rescheduleAppointmentsModalOpen}
+        setOpen={vm.setRescheduleAppointmentsModalOpen}
+        orderTest={vm.selectedOrderTestForReschedule}
+        facilityId={vm.selectedDepartment?.facilityId}
+        onClose={() => vm.setSelectedOrderTestForReschedule(null)}
       />
     </div>
   );

@@ -7,7 +7,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
-import { PatientServiceAndProduct } from '@/types/model-types-new';
+import { PatientServiceAndProduct, ServiceSource } from '@/types/model-types-new';
 import {
   useDeletePatientServiceOrProductMutation,
   useGetPatientServicesAndProductsByEncounterQuery,
@@ -284,6 +284,13 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       ),
     },
     {
+      key: 'serviceSource',
+      title: 'service Source',
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{formatEnumString(rowData.serviceSource)} Page</span>
+      ),
+    },
+    {
       key: 'name',
       title: 'Name',
       isLink: true,
@@ -298,6 +305,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         <span>{rowData.unitPrice != null ? Number(rowData.unitPrice).toFixed(2) : '-'}</span>
       ),
     },
+
     {
       key: 'currency',
       title: 'Currency',
@@ -311,7 +319,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       title: '',
       render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          {!rowData?.isBilled && <MdModeEdit
+          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
@@ -322,7 +330,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
             }}
           />}
 
-          {!rowData?.isBilled && <MdDelete
+          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"
@@ -337,15 +345,15 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     },
   ];
 
-useEffect(() => {
-  dispatch(setPageCode('serviceandproducts'));
-  dispatch(setDivContent('Service and Products'));
+  useEffect(() => {
+    dispatch(setPageCode('serviceandproducts'));
+    dispatch(setDivContent('Service and Products'));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   return (
     <div>

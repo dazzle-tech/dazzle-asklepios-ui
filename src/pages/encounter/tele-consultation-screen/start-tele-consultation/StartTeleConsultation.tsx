@@ -35,7 +35,6 @@ import Procedures from '../../encounter-component/patient-summary/Procedures/Pro
 import TeleScreenProcedures from './TeleScreenProcedures';
 import TeleScreenOperationRequests from './TeleScreenOperationRequests';
 import TeleScreenConsultation from './TeleScreenConsultation';
-import TeleScreenSelectTests from './TeleScreenDiagnosticsOrder';
 import TeleScreenMedicationOrder from './TeleScreenMedicationOrder';
 import ContinuousObservations from '../../continuous-observations/ContinuousObservations';
 import PatientHistorySummary from '../../encounter-component/patient-history/MedicalHistory/PatientHistorySummary';
@@ -312,14 +311,7 @@ const StartTeleConsultation = () => {
             refetch={() => {}}
           />
         )}
-        {showSelectTestsModal && (
-          <TeleScreenSelectTests
-            open={showSelectTestsModal}
-            setOpen={setShowSelectTestsModal}
-            patient={patient}
-            encounter={encounter}
-          />
-        )}
+       
         
       </div>
       {/* Extra Sections  // hide  */}

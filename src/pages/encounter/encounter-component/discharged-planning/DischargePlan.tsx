@@ -31,7 +31,6 @@ import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
-  useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
 
 import { useGetProceduresQuery } from '@/services/procedureService';
@@ -157,10 +156,10 @@ const DischargePlanning = () => {
     ]
   });
 
-  const {
-    data: orderTestList,
-    isLoading: loadTests
-  } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  // const {
+  //   data: orderTestList,
+  //   isLoading: loadTests
+  // } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
 
   const [prescriptionsListRequest] = useState({
     ...initialListRequest,
@@ -188,10 +187,10 @@ const DischargePlanning = () => {
     ]
   });
 
-  const {
-    data: diagnosticTestsResponse,
-    isFetching: isDiagnosticTestsFetching
-  } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
+  // const {
+  //   data: diagnosticTestsResponse,
+  //   isFetching: isDiagnosticTestsFetching
+  // } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
   const readinessStatus = useEnumOptions("ReadinessStatus");
 
@@ -207,7 +206,7 @@ const DischargePlanning = () => {
     loadTests ||
     isPrescriptionsFetching ||
     isGenericMedicationsFetching ||
-    isDiagnosticTestsFetching ||
+    // isDiagnosticTestsFetching ||
     loadingExisting;
 
   // ------------------ UPSERT / UPDATE ------------------
@@ -403,14 +402,14 @@ const DischargePlanning = () => {
         };
       }) || [];
 
-    const diagnosticTestsData =
-      diagnosticTestsResponse?.object?.map((test: any) => ({
-        testName: test?.test?.testName || '',
-        processingStatus:
-          test?.processingStatusLvalue?.lovDisplayVale ||
-          test?.processingStatusLkey ||
-          ''
-      })) || [];
+    // const diagnosticTestsData =
+    //   diagnosticTestsResponse?.object?.map((test: any) => ({
+    //     testName: test?.test?.testName || '',
+    //     processingStatus:
+    //       test?.processingStatusLvalue?.lovDisplayVale ||
+    //       test?.processingStatusLkey ||
+    //       ''
+    //   })) || [];
 
     return {
       patient: patientData,
@@ -421,7 +420,7 @@ const DischargePlanning = () => {
       // reviewSystems: reviewSystemsData,
       procedures: proceduresData,
       prescriptions: prescriptionsData,
-      diagnosticTests: diagnosticTestsData
+      // diagnosticTests: diagnosticTestsData
     };
   };
 

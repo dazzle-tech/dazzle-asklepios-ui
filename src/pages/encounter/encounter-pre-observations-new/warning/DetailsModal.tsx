@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { useAddPatientWarningMutation, useUpdatePatientWarningMutation } from '@/services/encounters/patientWarningsService';
+import {
+  useAddPatientWarningMutation,
+  useUpdatePatientWarningMutation
+} from '@/services/encounters/patientWarningsService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { newPatientWarningsCreateDTO, newPatientWarningsUpdateDTO } from '@/types/model-types-constructor-new';
+import {
+  newPatientWarningsCreateDTO,
+  newPatientWarningsUpdateDTO
+} from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import { faChevronDown, faChevronUp, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -35,6 +41,8 @@ const DetailsModal = ({
     ...newPatientWarningsUpdateDTO
   });
   const [showAllFields, setShowAllFields] = useState(false);
+  const originalWarningRef = useRef<any>(null);
+  const savedRef = useRef(false);
 
   // Lists (LOVs + enums)
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
@@ -46,7 +54,7 @@ const DetailsModal = ({
   const [updatePatientWarning] = useUpdatePatientWarningMutation();
 
   // extract error message from the error coming from the backend
-  const extractErrorMessage = (response) => {
+  const extractErrorMessage = response => {
     try {
       const msg = response?.data?.message;
       if (typeof msg === 'string') return msg.replace(/^error\./i, '');
@@ -59,6 +67,14 @@ const DetailsModal = ({
   const handleClear = () => {
     setPatientWarningsCreateDTO({ ...newPatientWarningsCreateDTO });
     setPatientWarningsUpdateDTO({ ...newPatientWarningsUpdateDTO });
+  };
+
+  const handleUpdateDTOWithSync = (newDto) => {
+    setPatientWarningsUpdateDTO(newDto);
+    if (warning?.id && open) {
+      const { id, ...fieldsToSync } = newDto;
+      setWarning(prev => ({ ...prev, ...fieldsToSync }));
+    }
   };
 
   const handleSave = async () => {
@@ -77,7 +93,9 @@ const DetailsModal = ({
       }
 
       if (dto.onsetDate && new Date(dto.onsetDate) > new Date()) {
-        errorMsg += errorMsg ? ', Onset Date can`t be in the future' : 'Onset Date can`t be in the future';
+        errorMsg += errorMsg
+          ? ', Onset Date can`t be in the future'
+          : 'Onset Date can`t be in the future';
       }
 
       if (errorMsg) {
@@ -86,41 +104,36 @@ const DetailsModal = ({
       }
 
       if (isCreate) {
-        console.log("cre: ", {
-          ...patientWarningsCreateDTO,
-          patientId: patient?.id,
-          encounterId: encounter?.id,
-          onsetDate: patientWarningsCreateDTO?.onsetDate ? new Date(patientWarningsCreateDTO?.onsetDate).toISOString() : ''
-        })
         await addPatientWarning({
           ...patientWarningsCreateDTO,
           patientId: patient?.id,
           encounterId: encounter?.id,
-          onsetDate: patientWarningsCreateDTO?.onsetDate ? new Date(patientWarningsCreateDTO?.onsetDate).toISOString() : ''
+          onsetDate: patientWarningsCreateDTO?.onsetDate
+            ? new Date(patientWarningsCreateDTO?.onsetDate).toISOString()
+            : ''
         }).unwrap();
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       } else {
-        console.log("pda: ", {
-           ...patientWarningsUpdateDTO,
-            onsetDate: patientWarningsUpdateDTO?.onsetDate ? new Date(patientWarningsUpdateDTO?.onsetDate).toISOString() : ''
-          })
-        await updatePatientWarning({
+        const updatedWarning = await updatePatientWarning({
           id: warning.id,
           dto: {
-           ...patientWarningsUpdateDTO,
-            onsetDate: patientWarningsUpdateDTO?.onsetDate ? new Date(patientWarningsUpdateDTO?.onsetDate).toISOString() : ''
+            ...patientWarningsUpdateDTO,
+            onsetDate: patientWarningsUpdateDTO?.onsetDate
+              ? new Date(patientWarningsUpdateDTO?.onsetDate).toISOString()
+              : ''
           }
         }).unwrap();
+        setWarning(updatedWarning);
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       }
 
+      savedRef.current = true;
       setOpen(false);
       await fetchWarnings();
       dispatch(resetRefetchEncounter());
       dispatch(setRefetchEncounter(true));
       handleClear();
     } catch (error) {
-      console.log("error: ", error);
       const errorMsg = extractErrorMessage(error) || 'Save Failed';
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
@@ -134,46 +147,44 @@ const DetailsModal = ({
     >
       <Form fluid>
         <Row className="rows-gap">
-          <Form fluid>
-            <Col md={8}>
-              <MyInput
-                fieldType="select"
-                fieldLabel="Warning Type"
-                selectData={warningTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName="warningType"
-                record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
-                required
-                width="100%"
-              />
-            </Col>
-            <Col md={8}>
-              <MyInput
-                required
-                fieldName="warning"
-                record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
-                width="100%"
-              />
-            </Col>
-            <Col md={8}>
-              <MyInput
-                fieldType="select"
-                fieldLabel="Severity"
-                selectData={severityEnumResponse ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                fieldName="severity"
-                record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
-                searchable={false}
-                required
-                width="100%"
-              />
-            </Col>
-          </Form>
+          <Col md={8}>
+            <MyInput
+              fieldType="select"
+              fieldLabel="Warning Type"
+              selectData={warningTypeLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldName="warningType"
+              record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
+              required
+              width="100%"
+            />
+          </Col>
+          <Col md={8}>
+            <MyInput
+              required
+              fieldName="warning"
+              record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
+              width="100%"
+            />
+          </Col>
+          <Col md={8}>
+            <MyInput
+              fieldType="select"
+              fieldLabel="Severity"
+              selectData={severityEnumResponse ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              fieldName="severity"
+              record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
+              setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
+              searchable={false}
+              required
+              width="100%"
+            />
+          </Col>
         </Row>
         <br />
         <Row className="rows-gap">
@@ -199,7 +210,9 @@ const DetailsModal = ({
                   fieldType="date"
                   fieldName="onsetDate"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={
+                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
+                  }
                   disabled={
                     !warning?.id
                       ? patientWarningsCreateDTO?.onsetDateUndefined
@@ -213,7 +226,9 @@ const DetailsModal = ({
                   fieldName="onsetDateUndefined"
                   fieldType="checkbox"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={
+                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
+                  }
                 />
               </Col>
             </Row>
@@ -221,7 +236,9 @@ const DetailsModal = ({
               <Col md={12}>
                 <MyInput
                   disabled={
-                    !warning?.id ? patientWarningsCreateDTO?.byPatient : patientWarningsUpdateDTO?.byPatient
+                    !warning?.id
+                      ? patientWarningsCreateDTO?.byPatient
+                      : patientWarningsUpdateDTO?.byPatient
                   }
                   width="100%"
                   fieldType="select"
@@ -231,7 +248,9 @@ const DetailsModal = ({
                   selectDataValue="key"
                   fieldName="sourceOfInformation"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={
+                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
+                  }
                 />
               </Col>
               <Col md={12}>
@@ -241,7 +260,9 @@ const DetailsModal = ({
                   width="100%"
                   fieldType="checkbox"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={
+                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
+                  }
                 />
               </Col>
             </Row>
@@ -254,7 +275,8 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="note"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
+                  allowEnterNewLine
                 />
               </Col>
               <Col md={12}>
@@ -264,7 +286,8 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="actionTaken"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : handleUpdateDTOWithSync}
+                  allowEnterNewLine
                 />
               </Col>
             </Row>
@@ -276,6 +299,23 @@ const DetailsModal = ({
 
   // Effects
   useEffect(() => {
+    if (open) {
+      savedRef.current = false;
+      if (warning?.id) {
+        originalWarningRef.current = { ...warning };
+      } else {
+        originalWarningRef.current = null;
+      }
+    } else {
+      if (!savedRef.current && originalWarningRef.current) {
+        setWarning(originalWarningRef.current);
+      }
+      originalWarningRef.current = null;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     if (warning?.id) {
       setPatientWarningsUpdateDTO({
         id: warning.id,
@@ -289,47 +329,53 @@ const DetailsModal = ({
         note: warning.note,
         actionTaken: warning.actionTaken
       });
+      const hasMoreDetails =
+        warning.onsetDate ||
+        warning.onsetDateUndefined ||
+        warning.byPatient ||
+        warning.sourceOfInformation ||
+        warning.note ||
+        warning.actionTaken;
+      setShowAllFields(!!hasMoreDetails);
     } else {
       setPatientWarningsCreateDTO({ ...newPatientWarningsCreateDTO });
+      setShowAllFields(false);
     }
-  }, [warning]);
+  }, [warning?.id, open]);
 
   useEffect(() => {
-     if (warning?.id) {
-      if(patientWarningsUpdateDTO.onsetDateUndefined){
-        setPatientWarningsUpdateDTO({...patientWarningsUpdateDTO, onsetDate: ''})
+    if (warning?.id) {
+      if (patientWarningsUpdateDTO.onsetDateUndefined) {
+        handleUpdateDTOWithSync({ ...patientWarningsUpdateDTO, onsetDate: '' });
       }
-     }
-     else{
-      if(patientWarningsCreateDTO.onsetDateUndefined){
-        setPatientWarningsCreateDTO({...patientWarningsCreateDTO, onsetDate: ''})
+    } else {
+      if (patientWarningsCreateDTO.onsetDateUndefined) {
+        setPatientWarningsCreateDTO({ ...patientWarningsCreateDTO, onsetDate: '' });
       }
-     }
-  },[patientWarningsCreateDTO.onsetDateUndefined, patientWarningsUpdateDTO.onsetDateUndefined]);
+    }
+  }, [patientWarningsCreateDTO.onsetDateUndefined, patientWarningsUpdateDTO.onsetDateUndefined]);
 
   useEffect(() => {
-     if (warning?.id) {
-      if(patientWarningsUpdateDTO.byPatient){
-        setPatientWarningsUpdateDTO({...patientWarningsUpdateDTO, sourceOfInformation: null})
+    if (warning?.id) {
+      if (patientWarningsUpdateDTO.byPatient) {
+        handleUpdateDTOWithSync({ ...patientWarningsUpdateDTO, sourceOfInformation: null });
       }
-     }
-     else{
-      if(patientWarningsCreateDTO.byPatient){
-        setPatientWarningsCreateDTO({...patientWarningsCreateDTO, sourceOfInformation: null})
+    } else {
+      if (patientWarningsCreateDTO.byPatient) {
+        setPatientWarningsCreateDTO({ ...patientWarningsCreateDTO, sourceOfInformation: null });
       }
-     }
-  },[patientWarningsCreateDTO.byPatient, patientWarningsUpdateDTO.byPatient]);
+    }
+  }, [patientWarningsCreateDTO.byPatient, patientWarningsUpdateDTO.byPatient]);
 
   useEffect(() => {
     if (openToAdd) handleClear();
   }, [openToAdd]);
 
-  
-      // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal

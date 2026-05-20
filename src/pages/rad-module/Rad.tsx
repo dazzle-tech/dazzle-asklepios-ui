@@ -26,12 +26,12 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
+import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
     await fn();
-  } catch {}
+  } catch { }
 };
 
 const startOfDay = (date: Date) => {
@@ -64,6 +64,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [patient, setPatient] = useState({ ...newPatient });
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
@@ -211,21 +212,27 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         setEncounter({ ...newPatientEncounter });
       });
   }, [order?.encounterId]);
+
   useEffect(() => {
-    if (!order?.encounterId) {
-      setEncounter({ ...newPatientEncounter });
+    if (!order?.patientId) {
+      setPatient({ ...newPatient });
       return;
     }
 
-    getEncounterById({ id: order.encounterId })
+    getBulkPatientBasicInfo([Number(order.patientId)])
       .unwrap()
-      .then((res: any) => {
-        setEncounter(res ?? { ...newPatientEncounter });
+      .then((res: any[]) => {
+        if (res?.length > 0) {
+          setPatient(res[0]);
+        } else {
+          setPatient({ ...newPatient });
+        }
       })
       .catch(() => {
-        setEncounter({ ...newPatientEncounter });
+        setPatient({ ...newPatient });
       });
-  }, [order?.encounterId]);
+  }, [order?.patientId]);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -267,6 +274,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       </div>
       <div dir={dir}>
         <div className="container">
+
           <div className="left-boxs">
             <Row>
               <Col xs={14}>
@@ -276,13 +284,14 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                   setOrder={setOrder}
                   dateFilter={dateFilter}
                   loading={globalLoading}
+                  orderNumberFilter={orderNumberFilter}
                 />
               </Col>
 
               <Col xs={10}>
-                <Form fluid layout="inline">
+                <Form fluid className="filter-form-radiology-filters">
                   <MyInput
-                    width={230}
+                    width="8vw"
                     placeholder="From Date"
                     fieldType="date"
                     fieldName="fromDate"
@@ -291,7 +300,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={230}
+                    width="8vw"
                     placeholder="To Date"
                     fieldType="date"
                     fieldName="toDate"
@@ -299,13 +308,37 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     setRecord={setDateFilter}
                     showLabel={false}
                   />
+                  <MyInput
+                    width="8vw"
+                    placeholder="Order ID"
+                    fieldType="text"
+                    fieldName="orderNumber"
+                    record={{ orderNumber: orderNumberFilter }}
+                    setRecord={(val: any) =>
+                      setOrderNumberFilter(val.orderNumber ?? '')
+                    }
+                    showLabel={false}
+                  />
                 </Form>
 
-                {test?.id && <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />}
+                {test?.id && (
+                  <Row>
+                    <Col md={24}>
+                      <MyStepper
+                        stepsList={stepsDataComputed}
+                        activeStep={activeStep}
+                      />
+                    </Col>
+                  </Row>
+                )}
               </Col>
             </Row>
 
-            <Tabs activeKey={activeKey} onSelect={key => setActiveKey(key)} appearance="subtle">
+            <Tabs
+              activeKey={activeKey}
+              onSelect={key => setActiveKey(key)}
+              appearance="subtle"
+            >
               <Tabs.Tab eventKey="1" title="Tests">
                 <Tests
                   ref={TestsRef}
@@ -327,8 +360,10 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
               showDiagnosis={true}
               showVisitDetails={false}
               showBalance={false}
+              showCloseButton={false}
             />
           </div>
+
         </div>
       </div>
     </>

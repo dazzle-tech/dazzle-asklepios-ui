@@ -34,7 +34,7 @@ const AddIntervalModal = ({
     parentTemplate,
     ...props
 }: {
-    
+
     open: boolean;
     setOpen: any;
     resource: any;
@@ -128,7 +128,7 @@ const AddIntervalModal = ({
             };
         });
     }, [open, templateAllowedServices]);
-    
+
     useEffect(() => {
         setRecord(prev => {
             if (prev?.slotStrategy !== 'AS_DEPARTMENT_POOL') return prev;
@@ -184,8 +184,8 @@ const AddIntervalModal = ({
                                         const fieldName = `service_${serviceValue}`;
                                         const selectedServiceValues = Array.isArray(record?.allowedServices)
                                             ? record.allowedServices
-                                                  .map((s: any) => s?.service)
-                                                  .filter((v: any) => typeof v === 'string' && v.length > 0)
+                                                .map((s: any) => s?.service)
+                                                .filter((v: any) => typeof v === 'string' && v.length > 0)
                                             : [];
                                         const isChecked = selectedServiceValues.includes(serviceValue);
                                         return (
@@ -255,6 +255,7 @@ const AddIntervalModal = ({
                                     selectDataValue="value"
                                     width="15vw"
                                     disabled={props?.readOnly}
+                                    required
                                 />
 
                                 <MyInput
@@ -266,22 +267,112 @@ const AddIntervalModal = ({
                                     rightAddon="min"
                                     fieldLabel='Duration'
                                     disabled={record?.slotStrategy === 'AS_DEPARTMENT_POOL' || props?.readOnly}
+                                    required
                                 />
                             </Form>
                         </div>
 
 
-
+                        {!isEditMode && (
+                            <div style={{ marginTop: 12 }}>
+                                <MyInput
+                                    fieldName="applyToAllWorkingDays"
+                                    fieldType="check"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    label="Apply to all working days in this template"
+                                    disabled={props?.readOnly}
+                                />
+                            </div>
+                        )}
                         <Divider />
-                       
+
                     </Form>
                 );
             default:
                 return null;
         }
     };
+    const isValidTimeFormat = (time?: string) => {
+        // يقبل HH:mm أو HH:mm:ss
+        return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(time || '');
+    };
+
+    const timeToSeconds = (time: string) => {
+        const parts = time.split(':').map(Number);
+
+        const hours = parts[0] || 0;
+        const minutes = parts[1] || 0;
+        const seconds = parts[2] || 0;
+
+        return hours * 3600 + minutes * 60 + seconds;
+    };
+
+    const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
 
     const handleSave = async () => {
+
+        const errors = [];
+
+        if (!record?.startTime) {
+            errors.push('Start Time is required');
+        }
+
+        if (!record?.endTime) {
+            errors.push('End Time is required');
+        }
+        if (record?.startTime && !isValidTimeFormat(record.startTime)) {
+            errors.push('Start Time format is invalid (HH:mm or HH:mm:ss)');
+        }
+
+        if (record?.endTime && !isValidTimeFormat(record.endTime)) {
+            errors.push('End Time format is invalid (HH:mm or HH:mm:ss)');
+        }
+
+        if (!record?.slotStrategy) {
+            errors.push('Slot Strategy is required');
+        }
+
+        if (
+            record?.slotStrategy !== 'AS_DEPARTMENT_POOL' &&
+            !record?.slotDurationMinutes
+        ) {
+            errors.push('Slot Duration is required');
+        }
+
+        if (
+            record?.startTime &&
+            record?.endTime &&
+            isValidTimeFormat(record.startTime) &&
+            isValidTimeFormat(record.endTime)
+        ) {
+            const start = timeToSeconds(record.startTime);
+            const end = timeToSeconds(record.endTime);
+
+            if (start >= end) {
+                errors.push('End Time must be after Start Time');
+            }
+        }
+
+        if (errors.length > 0) {
+            dispatch(
+                notify({
+                    msg: errors.join(' ,'),
+                    sev: 'warning'
+                })
+            );
+            return;
+        }
         const rawSlotDuration = (record as any)?.slotDurationMinutes;
         const parsedSlotDuration = Number(rawSlotDuration);
         const normalizedSlotDuration = Number.isFinite(parsedSlotDuration)
@@ -306,12 +397,12 @@ const AddIntervalModal = ({
                 .unwrap()
                 .then(() => {
                     dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+                    setOpen(false);
                 })
                 .catch(() => {
-                    dispatch(notify({ msg: 'Failed to update', sev: 'warning' }));
+                    dispatch(notify({ msg: 'Could not update interval. Please check for overlapping times or invalid input.', sev: 'warning' }));
                 });
 
-            setOpen(false);
             return;
         }
 
@@ -319,27 +410,28 @@ const AddIntervalModal = ({
             ...(record as AvailabilityTemplateIntervalCreateDTO),
             templateId: resource?.id ?? (record as AvailabilityTemplateIntervalCreateDTO).templateId,
             dayOfWeek: day,
-            slotDurationMinutes: Number(record?.slotDurationMinutes)
+            slotDurationMinutes: Number(record?.slotDurationMinutes),
+            applyToAllWorkingDays: Boolean((record as any)?.applyToAllWorkingDays)
         };
-        console.log("internalToAdd: ", payload);
         await createAvailabilityTemplateInterval(payload)
             .unwrap()
             .then(() => {
                 dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
+                setOpen(false);
             })
-            .catch(() => {
-                dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+            .catch((error) => {
+                const errorMsg = extractErrorMessage(error) || 'Could not save interval. Please check for overlapping times or invalid input.';
+                dispatch(notify({ msg: errorMsg, sev: 'warning' }));
             });
-        setOpen(false);
     };
-    
+
 
 
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
-            title={props?.readOnly? 'View Interval' : isEditMode ? "Edit Interval" : "Add Interval"}
+            title={props?.readOnly ? 'View Interval' : isEditMode ? "Edit Interval" : "Add Interval"}
             size="40vw"
             content={conjureFormContent}
             actionButtonLabel={isEditMode ? "Update" : "Save"}

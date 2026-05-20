@@ -12,7 +12,6 @@ import {
   useUpdateSurgicalHistoryMutation
 } from '@/services/patients/surgicalHistoryService';
 
-import { newSurgicalHistory } from '@/types/model-types-constructor-new';
 import { SurgicalHistory } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -98,7 +97,13 @@ type SurgicalHistoryForm = Omit<
 };
 
 const emptySurgicalHistoryForm: SurgicalHistoryForm = {
-  ...newSurgicalHistory,
+  surgery: '',
+  facility: '',
+  anesthesiaType: null,
+  complications: null,
+  implantsOrDevicesDescription: '',
+  hasImplantsOrDevices: false,
+  patientId: null,
   dateOfSurgery: null,
   adverseReactionsToAnesthesia: []
 };
@@ -126,6 +131,10 @@ const toStringArray = (value: string | string[] | null | undefined) => {
     .filter(Boolean);
 };
 
+// Strip undefined fields so they don't override safe defaults when spread
+const stripUndefined = (obj: Record<string, any>) =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+
 const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
@@ -143,7 +152,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...emptySurgicalHistoryForm,
-        ...initialData,
+        ...stripUndefined(initialData),
         patientId: Number(patient?.id),
         dateOfSurgery: toDate(initialData.dateOfSurgery),
         adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
@@ -193,32 +202,41 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const handleSave = async () => {
     const errors = validateBeforeSave();
     if (errors.length) {
-      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
+      dispatch(notify({ msg: errors.map(e => `• ${e}`).join('\n'), sev: 'warning' }));
       return;
     }
 
-    const payload = {
-      ...formData,
+    const payload: any = {
       patientId: Number(patient?.id),
+      surgery: formData.surgery?.trim() || '',
+      facility: formData.facility?.trim() || '',
+      anesthesiaType: formData.anesthesiaType || null,
       dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
+      complications: formData.complications || null,
+      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia?.length
+        ? formData.adverseReactionsToAnesthesia.join(',')
+        : null,
       hasImplantsOrDevices: openImplants.open,
       implantsOrDevicesDescription: openImplants.open
-        ? formData.implantsOrDevicesDescription
-        : null,
-      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia.length
-        ? formData.adverseReactionsToAnesthesia.join(',')
+        ? (formData.implantsOrDevicesDescription?.trim() || null)
         : null
     };
+
+    if (formData.id) {
+      payload.id = formData.id;
+    }
 
     try {
       if (formData.id) {
         await updateSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history added successfully', sev: 'success' }));
+        setFormData({ ...emptySurgicalHistoryForm, patientId: Number(patient?.id) });
+        setOpenImplants({ open: false });
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, SURGICAL_HISTORY_ERROR_MAP);
     }
@@ -229,7 +247,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         required
         fieldLabel="Surgery"
@@ -238,17 +256,18 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         required
         fieldLabel="Date of surgery"
         fieldType="date"
         fieldName="dateOfSurgery"
+        disableFutureDates
         record={formData}
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         required
         fieldLabel="Facility"
@@ -258,7 +277,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         required
         fieldLabel="Anesthesia Type"
@@ -272,7 +291,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         fieldLabel="Complications"
         fieldType="select"
@@ -285,7 +304,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'28vw'}
         column
         fieldLabel="Adverse Reactions"
         fieldType="checkPicker"
@@ -295,10 +314,34 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
+        renderValue={() => ''}
       />
 
       <MyInput
-        width={200}
+        width={'28vw'}
+        column
+        fieldLabel="Adverse Reactions Details"
+        fieldType="textarea"
+        fieldName="adverseReactionsDetails"
+        record={{
+          ...formData,
+          adverseReactionsDetails: (formData.adverseReactionsToAnesthesia || [])
+            .map(selectedKey => {
+              const item = (adverseLov?.object ?? []).find(
+                lov => lov.key === selectedKey
+              );
+              return item?.lovDisplayVale || selectedKey;
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => {}}
+        disabled
+      />
+
+
+      <MyInput
+        width={'14vw'}
         column
         fieldLabel="Implants or Devices"
         fieldType="checkbox"
@@ -308,7 +351,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         fieldLabel="Implants/Devices Description"
         fieldName="implantsOrDevicesDescription"

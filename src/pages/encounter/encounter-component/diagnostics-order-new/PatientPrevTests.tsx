@@ -90,15 +90,11 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
 const queryParams =
   !patientId || isOrdersFetching || !orderIds.length
     ? skipToken
-    : showCancelled
-    ? {
-        status: DiagnosticOrderTestStatus.CANCELLED,
-        orderIdIn: orderIds,
-        ...cleanedFilters
-      }
     : {
-        excludeStatus: DiagnosticOrderTestStatus.CANCELLED,
         orderIdIn: orderIds,
+        ...(showCancelled
+          ? {}
+          : { excludeStatus: DiagnosticOrderTestStatus.CANCELLED }),
         ...cleanedFilters
       };
 

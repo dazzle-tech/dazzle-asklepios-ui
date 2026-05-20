@@ -26,16 +26,16 @@ import { newProgressNote } from '@/types/model-types-constructor-new';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import { MdHistory } from 'react-icons/md';
 import ProgressNoteLogsModal from './ProgressNoteLogsModal';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 const ProgressNotes: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const location = useLocation();
-  const { patient, encounter, edit } = (location.state || {}) as {
-    patient?: any;
-    encounter?: any;
-    edit?: boolean;
-  };
+const { patient, encounter } = (location.state || {})
+
+const viewMode = location.state?.viewMode
+const edit = viewMode === 'readOnly'
 
   const [openAddModal, setOpenAddModal] = useState(false);
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
@@ -98,6 +98,27 @@ const ProgressNotes: React.FC = () => {
 
   const isSelected = (row: ProgressNote) => (selectedNote?.id === row.id ? 'selected-row' : '');
 
+    const UserDateCell: React.FC<{
+      login?: string;
+      date?: string;
+    }> = ({ login, date }) => {
+      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+        skip: !login
+      });
+
+      if (!date) return null;
+
+      return (
+        <>
+          {fullName || login}
+          <br />
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(date)}
+          </span>
+        </>
+      );
+    };
+
   const columns = useMemo(
     () => [
       {
@@ -105,35 +126,30 @@ const ProgressNotes: React.FC = () => {
         title: 'Progress Notes',
         dataKey: 'noteText',
         flexGrow: 2,
-        render: (row: ProgressNote) => <ExpandableText text={row.noteText} lines={3} />
+        render: (row: ProgressNote) => (
+          <ExpandableText text={row.noteText} lines={3} />
+        )
       },
       {
         key: 'created',
         title: <Translate>CREATED AT / BY</Translate>,
-        render: (row: ProgressNote) =>
-          row.createdDate ? (
-            <>
-              {row.createdBy}
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
+        )
       },
-
       {
         key: 'cancelled',
         title: 'CANCELLED AT / BY',
         expandable: true,
-        render: (row: ProgressNote) =>
-          row.cancelledDate ? (
-            <>
-              {row.cancelledBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.cancelledDate)}
-              </span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.cancelledBy}
+            date={row.cancelledDate}
+          />
+        )
       },
       {
         key: 'cancellationReason',
@@ -145,33 +161,37 @@ const ProgressNotes: React.FC = () => {
         key: 'lastModified',
         title: 'LAST MODIFIED AT / BY',
         expandable: true,
-        render: (row: ProgressNote) =>
-          row.lastModifiedDate ? (
-            <>
-              {row.lastModifiedBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.lastModifiedDate)}
-              </span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.lastModifiedBy}
+            date={row.lastModifiedDate}
+          />
+        )
       },
       {
         key: 'edit',
         title: 'ACTIONS',
         width: 120,
         render: (row: ProgressNote) => {
-          const isEdited = row.lastModifiedDate && row.createdDate !== row.lastModifiedDate;
+          const isEdited =
+            row.lastModifiedDate &&
+            row.createdDate !== row.lastModifiedDate;
 
           return (
             <div style={{ display: 'flex', gap: 6 }}>
               <MdModeEdit
                 size={22}
                 onClick={() => {
+                  if (row.cancelledDate) return;
+
                   setSelectedNote(row);
                   setOpenAddModal(true);
                 }}
-                style={{ cursor: 'pointer', color: 'gray' }}
+                style={{
+                  cursor: row.cancelledDate ? 'not-allowed' : 'pointer',
+                  color: row.cancelledDate ? '#ccc' : 'gray',
+                  opacity: row.cancelledDate ? 0.5 : 1
+                }}
               />
 
               <MdHistory
@@ -209,7 +229,10 @@ const ProgressNotes: React.FC = () => {
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div dir={dir}>
+    <div
+      dir={dir}
+      className={edit ? 'disabled-panel' : ''}>
+        
       <AddProgressNotes
         open={openAddModal}
         setOpen={setOpenAddModal}

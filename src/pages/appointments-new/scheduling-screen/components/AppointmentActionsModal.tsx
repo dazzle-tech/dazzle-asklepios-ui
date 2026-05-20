@@ -110,22 +110,19 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         payorName: '',
         planName: ''
     });
-    const getApiErrorMessage = (error: any, fallback: string) => {
-      const raw =
-        error?.data?.message ||
-        error?.data?.detail ||
-        error?.data?.errorKey ||
-        error?.message ||
-        fallback;
-      const text = String(raw || fallback).trim();
-      if (text.includes('error.alreadycancelled')) return 'Appointment is already canceled.';
-      if (text.includes('error.alreadyconfirmed')) return 'Appointment is already confirmed.';
-      if (text.includes('error.alreadynoshow')) return 'Appointment is already marked as no-show.';
-      if (text.includes('error.alreadycheckedin')) return 'Appointment is already checked-in.';
-      return text;
-    };
 
     // Get current logged-in facility from localStorage or auth slice
+     const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
     const currentLoggedInFacility = useMemo(() => {
         // Try to get from auth slice first
         if (authSlice?.tenant?.selectedFacility) {
@@ -158,6 +155,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       localAppointmentData?.status ||
       localAppointmentData?.appointmentStatus;
     const currentStatus = normalizeStatus(statusValue);
+    const requireConfirmation = Boolean(
+      appointment?.appointmentData?.requireConfirmation ??
+      localAppointmentData?.requireConfirmation
+    );
     const isDirectReasonStatus =
       currentStatus === 'CANCELED' ||
       currentStatus === 'CANCELLED' ||
@@ -167,6 +168,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       currentStatus === 'COMPLETED' ||
       currentStatus === 'INSERVICE' ||
       currentStatus === 'CHECKEDIN';
+    const isCheckInEligibleStatus =
+      currentStatus === 'BOOKED' ||
+      currentStatus === 'CONFIRMED';
+    const canCheckIn =
+      !isViewOnlyActionsStatus &&
+      isCheckInEligibleStatus &&
+      (!requireConfirmation || currentStatus === 'CONFIRMED');
     const isReasonViewOnly =
       Boolean(resonType) && (isDirectReasonStatus || isViewOnlyActionsStatus);
 
@@ -176,18 +184,43 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
         return;
       }
-      if (currentStatus !== 'CONFIRMED') {
-        dispatch(notify({ msg: 'Please confirm the appointment before check-in', sev: 'warning' }));
+      if (currentStatus == 'CHECKEDIN') {
+        dispatch(notify({ msg: 'Appointment already checked in', sev: 'warning' }));
+        return;
+      }
+      if (!isCheckInEligibleStatus) {
+        dispatch(notify({ msg: 'Only booked or confirmed appointments can be checked in', sev: 'warning' }));
+        return;
+      }
+      if (requireConfirmation && currentStatus !== 'CONFIRMED') {
+        dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
         return;
       }
 
       try {
         await checkInAppointment({ id }).unwrap();
-        dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
+        try {
+          const encounterByAppointment = await getEncounterByAppointment({ appointmentId: id }).unwrap();
+          if (typeof encounterByAppointment === 'string' && !isNaN(Number(encounterByAppointment))) {
+            const encounterId = Number(encounterByAppointment);
+            const fullEncounter = await getEncounterById({ id: encounterId }).unwrap();
+            setCreatedEncounter(fullEncounter as PatientEncounter);
+          } else if (encounterByAppointment && typeof encounterByAppointment === 'object') {
+            setCreatedEncounter(encounterByAppointment as unknown as PatientEncounter);
+          }
+        } catch {
+          // keep modal flow; encounter may still be available by background query.
+        }
+        setLocalAppoitmentData((prev: any) => ({
+          ...prev,
+          appointmentStatus: 'CHECKEDIN',
+          status: 'CHECKEDIN'
+        }));
+        dispatch(notify({ msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' }));
         onStatusChange();
-        onActionsModalClose();
       } catch (error: any) {
-        dispatch(notify({ msg: 'An error occurred while checking in the appointment', sev: 'warn' }));
+         const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
     };
   
@@ -225,11 +258,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         return Number(appointmentData?.key || appointmentData?.id || 0);
     }, [appointment?.appointmentData, localAppointmentData]);
 
-    // Fetch encounter for confirmed appointments
+    // Fetch encounter for the selected appointment
     const { data: encounterByAppointmentResponse } = useGetEncountersByAppointmentQuery(
         { appointmentId: appointmentId },
         { 
-            skip: !appointmentId || !isActionsModalOpen || currentStatus !== "CONFIRMED"
+            skip: !appointmentId || !isActionsModalOpen,
+            pollingInterval: isActionsModalOpen ? 5000 : 0,
+            refetchOnMountOrArgChange: true
         }
     );
 
@@ -269,46 +304,38 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         if (!isActionsModalOpen) return;
         // Debug: inspect appointment payload when opening actions modal
         // eslint-disable-next-line no-console
-        console.log('AppointmentActionsModal opened with appointment:', appointment);
     }, [isActionsModalOpen, appointment]);
 
-    // Set encounter when fetched for confirmed appointment
     useEffect(() => {
-        if (encounterByAppointmentResponse && currentStatus === "CONFIRMED") {
-            // The API returns a string (encounter ID), but we need the full encounter object
-            // If it's just an ID string, we might need to fetch the full encounter
-            // For now, we'll try to use it as is - if it's an ID, we'll need to handle it differently
-            const encounterId = encounterByAppointmentResponse;
-            
-            // If the response is a string (ID), we'll need to construct a minimal encounter object
-            // or fetch the full encounter. For now, let's assume the API might return the full object
-            // despite the type saying string. We'll handle both cases.
-            if (typeof encounterId === 'string' && !isNaN(Number(encounterId))) {
-                // It's an ID string - construct a minimal encounter object with required fields
-                // The payment component will use the encounter ID primarily
-                const patientAny = localAppointmentData?.patient as any;
-                const minimalEncounter: any = {
-                    id: Number(encounterId),
-                    patientId: Number(patientAny?.id ?? localAppointmentData?.patient?.key ?? 0),
-                    facilityId: Number(localAppointmentData?.facilityKey || 0),
-                    departmentId: Number(localAppointmentData?.departmentKey || localAppointmentData?.resourceKey || 0),
-                    appointmentId: appointmentId,
-                    encounterType: localAppointmentData?.resourceTypeLkey || 'CLINIC',
-                    encounterReason: localAppointmentData?.visitTypeLkey || 'APPOINTMENT',
-                    priorityLevel: 'NORMAL',
-                    status: 'NEW',
-                    encounterDate: new Date(),
-                    hasPrescription: false,
-                    hasOrder: false,
-                    isObserved: false
-                };
-                setCreatedEncounter(minimalEncounter as PatientEncounter);
-            } else if (typeof encounterId === 'object' && encounterId !== null) {
-                // It's already an encounter object
-                setCreatedEncounter(encounterId as PatientEncounter);
+      if (!isActionsModalOpen) return;
+      const refreshInterval = setInterval(() => {
+        onStatusChange?.();
+      }, 5000);
+      return () => clearInterval(refreshInterval);
+    }, [isActionsModalOpen, onStatusChange]);
+
+    // Set encounter when fetched for selected appointment
+    useEffect(() => {
+        const hydrateEncounter = async () => {
+            if (!encounterByAppointmentResponse) return;
+            const encounterRef = encounterByAppointmentResponse as any;
+            if (typeof encounterRef === 'string' && !isNaN(Number(encounterRef))) {
+                try {
+                    const fullEncounter = await getEncounterById({ id: Number(encounterRef) }).unwrap();
+                    setCreatedEncounter(fullEncounter as PatientEncounter);
+                } catch {
+                    setCreatedEncounter(null);
+                }
+                return;
             }
-        }
-    }, [encounterByAppointmentResponse, currentStatus, localAppointmentData, appointmentId]);
+            if (typeof encounterRef === 'object' && encounterRef !== null) {
+                setCreatedEncounter(encounterRef as PatientEncounter);
+                return;
+            }
+            setCreatedEncounter(null);
+        };
+        void hydrateEncounter();
+    }, [encounterByAppointmentResponse, getEncounterById]);
 
     useEffect(() => {
         if (localAppointmentData) {
@@ -363,62 +390,68 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 status: "CONFIRMED"
             }));
             
-            dispatch(notify({ msg: 'Appointment Confirmed and Encounter Created Successfully', sev: 'success' }));
+            dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
             onStatusChange();
             onActionsModalClose();
         } catch (error: any) {
             // Extract error message from API response
-            const rawMessage =
-              error?.data?.message ||
-              error?.data?.errorKey ||
-              error?.message ||
-              'An error occurred while confirming the appointment';
-
-            // Friendly mapping for backend error keys (like the screenshot)
-            const errorMessage =
-              String(rawMessage).trim() === 'error.patient.department.date.duplicate'
-                ? 'This patient already has an appointment in this department for the selected date.'
-                : String(rawMessage);
-            
-            // Always show error message to user
-            dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+             const errorMsg = extractErrorMessage(error) || 'Save Failed';
+             dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
 
-    const handleOpenPaymentModal = () => {
-        if (!createdEncounter) {
-            dispatch(notify({ msg: 'Please confirm the appointment first to create an encounter', sev: 'warning' }));
+    const normalizeEncounterStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
+    const isEncounterPendingPayment = normalizeEncounterStatus((createdEncounter as any)?.status) === 'PENDINGPAYMENT';
+    const canOpenAddPayment = currentStatus === 'CHECKEDIN' && isEncounterPendingPayment;
+    const loadEncounterByAppointmentId = async (id: number) => {
+        const encounterByAppointment = await getEncounterByAppointment({ appointmentId: id }).unwrap();
+        if (typeof encounterByAppointment === 'string' && !isNaN(Number(encounterByAppointment))) {
+            const encounterId = Number(encounterByAppointment);
+            const fullEncounter = await getEncounterById({ id: encounterId }).unwrap();
+            setCreatedEncounter(fullEncounter as PatientEncounter);
+            return fullEncounter as PatientEncounter;
+        }
+        if (encounterByAppointment && typeof encounterByAppointment === 'object') {
+            setCreatedEncounter(encounterByAppointment as unknown as PatientEncounter);
+            return encounterByAppointment as unknown as PatientEncounter;
+        }
+        return null;
+    };
+    const handleOpenPaymentModal = async () => {
+        if (currentStatus !== 'CHECKEDIN') {
+            dispatch(notify({ msg: 'Add payment is available only for checked-in appointments', sev: 'warning' }));
             return;
         }
-        
-        // Ensure payment draft is initialized with current patient and encounter
-        if (resolvedPatient && createdEncounter) {
-            const patientAny = resolvedPatient as any;
-            const patientId = Number(patientAny?.id ?? localAppointmentData.patient?.key ?? 0);
-            const encounterId = Number((createdEncounter as any)?.id ?? 0);
-            
-            setPaymentDraft((prev: any) => ({
-                ...prev,
-                patientId: patientId,
-                encounterId: encounterId
-            }));
+        if (!isEncounterPendingPayment) {
+            dispatch(notify({ msg: 'Add payment is allowed only when encounter status is Pending Payment', sev: 'warning' }));
+            return;
         }
-        
+        const id = getAppointmentId();
+        if (!id) {
+            dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+            return;
+        }
+
+        const encounter = await loadEncounterByAppointmentId(id).catch(() => null);
+        if (!encounter) {
+            dispatch(notify({ msg: 'No encounter found for this appointment', sev: 'warning' }));
+            return;
+        }
+
         setPaymentModalOpen(true);
     };
 
     const handlePaymentConfirm = async () => {
         if (!paymentRef.current) return;
-        
         try {
             const success = await paymentRef.current.confirm();
             if (success) {
                 dispatch(notify({ msg: 'Payment confirmed successfully', sev: 'success' }));
                 setPaymentModalOpen(false);
-                onStatusChange(); // Refresh appointment list
+                onStatusChange();
             }
         } catch (error: any) {
-            // Error handling is done inside PatientPaymentInfo component
+            // Error handling is managed inside PatientPaymentInfo.
         }
     };
 
@@ -443,7 +476,8 @@ const handleNonShow = async () => {
     setOtherReason(null);
     setResonKey(null);
   } catch (error: any) {
-    dispatch(notify({ msg: getApiErrorMessage(error, 'An error occurred while updating appointment status'), sev: 'warning' }));
+    const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     return;
   }
 };
@@ -470,7 +504,8 @@ const handleCancel = async () => {
     setOtherReason(null);
     setResonKey(null);
   } catch (error: any) {
-    dispatch(notify({ msg: getApiErrorMessage(error, 'An error occurred while canceling appointment'), sev: 'warning' }));
+     const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     return;
   }
 };
@@ -479,7 +514,7 @@ const handleCancel = async () => {
         <Form fluid layout="inline">
             <MyButton
               width="250px"
-              disabled={currentStatus !== "CONFIRMED" || isViewOnlyActionsStatus}
+              disabled={!canCheckIn}
               onClick={handleCheckIn}
               color="cyan"
               appearance="primary"
@@ -495,8 +530,14 @@ const handleCancel = async () => {
             >
                 Confirm
             </MyButton>
-            <MyButton width="250px" disabled={true} onClick={() => editAppointment()} color="violet" appearance="primary">
-                Change
+            <MyButton
+              width="250px"
+              disabled={!(currentStatus === 'BOOKED' || currentStatus === 'CONFIRMED')}
+              onClick={() => editAppointment(appointment?.appointmentData || localAppointmentData)}
+              color="violet"
+              appearance="primary"
+            >
+                Reschedule
             </MyButton>
             <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
@@ -573,7 +614,7 @@ const handleCancel = async () => {
                         <MyButton 
                             appearance="ghost" 
                             prefixIcon={() => <FontAwesomeIcon icon={faSackDollar} />}
-                            disabled={true}
+                            disabled={!canOpenAddPayment}
                             onClick={handleOpenPaymentModal}
                         >
                             Add Payment

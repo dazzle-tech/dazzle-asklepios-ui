@@ -15,6 +15,7 @@ import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { MdDelete } from "react-icons/md";
 import { Divider, Form } from 'rsuite';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
 
 const RequestTestModal = ({
@@ -121,84 +122,82 @@ const RequestTestModal = ({
     };
 
     const handleSave = async () => {
-        if (!record?.type || !record?.name) {
-            dispatch(
-                notify({
-                    msg: 'Please fill required fields',
-                    sev: 'warning',
-                })
-            );
-            return;
+      if (!record?.type || !record?.name || !record?.indication?.trim()) {
+        dispatch(
+          notify({
+            msg: 'Please fill required fields',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      try {
+        if (editMode && editingId) {
+          const updated = await updateRequest({
+            id: editingId,
+            body: {
+              id: editingId,
+              name: record.name,
+              type: record.type,
+              indication: record.indication ?? ''
+            }
+          }).unwrap();
+
+          dispatch(
+            notify({
+              msg: 'Test request updated successfully',
+              sev: 'success'
+            })
+          );
+
+          setRecord({
+            type: updated?.type ?? record.type,
+            name: updated?.name ?? record.name,
+            indication:
+              updated?.indication !== null && updated?.indication !== undefined
+                ? updated.indication
+                : record.indication ?? ''
+          });
+
+          setEditMode(false);
+          setEditingId(null);
+        } else {
+          await createRequest({
+            name: record.name,
+            type: record.type,
+            indication: record.indication ?? '',
+            fromDepartmentId,
+            fromFacilityId
+          }).unwrap();
+
+          dispatch(
+            notify({
+              msg: 'Test request created successfully',
+              sev: 'success'
+            })
+          );
+
+          setRecord({
+            type: null,
+            name: '',
+            indication: ''
+          });
         }
 
-        try {
-            if (editMode && editingId) {
-                const updated = await updateRequest({
-                    id: editingId,
-                    body: {
-                        id: editingId,
-                        name: record.name,
-                        type: record.type,
-                        indication: record.indication ?? ''
-                    },
-                }).unwrap();
+        await refetch();
 
-                dispatch(
-                    notify({
-                        msg: 'Test request updated successfully',
-                        sev: 'success',
-                    })
-                );
-                setRecord({
-                    type: updated?.type ?? record.type,
-                    name: updated?.name ?? record.name,
-                    indication:
-                        updated?.indication !== null && updated?.indication !== undefined
-                            ? updated.indication
-                            : record.indication ?? '',
-                });
-
-                setEditMode(false);
-                setEditingId(null);
-            }
-
-            else {
-                await createRequest({
-                    name: record.name,
-                    type: record.type,
-                    indication: record.indication ?? '',
-                    fromDepartmentId,
-                    fromFacilityId,
-                }).unwrap();
-
-                dispatch(
-                    notify({
-                        msg: 'Test request created successfully',
-                        sev: 'success',
-                    })
-                );
-
-                setRecord({
-                    type: null,
-                    name: '',
-                    indication: '',
-                });
-            }
-
-            await refetch();
-
-            onSuccess?.();
-        } catch (e: any) {
-            dispatch(
-                notify({
-                    msg:
-                        e?.data?.message?.startsWith('error.')
-                            ? e.data.message.replace('error.', '')
-                            : 'Operation failed',
-                    sev: 'error',
-                })
-            );
-        }
+        onSuccess?.();
+      } catch (e: any) {
+        dispatch(
+          notify({
+            msg: e?.data?.message?.startsWith('error.')
+              ? e.data.message.replace('error.', '')
+              : 'Operation failed',
+            sev: 'error'
+          })
+        );
+      }
     };
 
     useEffect(() => {
@@ -236,6 +235,29 @@ const RequestTestModal = ({
         setViewModalOpen(true);
     };
 
+        const UserDateCell = ({
+        login,
+        date
+        }: {
+        login?: string;
+        date?: string;
+        }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+            skip: !login
+        });
+
+        if (!date && !login) return null;
+
+        return (
+            <>
+            {fullName || login || ''}
+            <br />
+            <span className="date-table-style">
+                {date ? formatDateWithoutSeconds(date) : ''}
+            </span>
+            </>
+        );
+        };
 
     const tableColumns: ColumnConfig[] = [
         {
@@ -273,7 +295,7 @@ const RequestTestModal = ({
         },
         {
             key: 'indication',
-            title: <Translate>Indication</Translate>,
+            title: <Translate>Request Reason</Translate>,
         },
         {
             key: 'status',
@@ -312,19 +334,20 @@ const RequestTestModal = ({
             ),
         },
         {
-            key: 'createdAtBy', title: 'Requested by/at', dataKey: 'createdByAt', width: 150, expandable: true,
-            render: (row: any) =>
-                row?.createdDate ? (
-                    <>
-                        {row?.createdBy}
-                        <br />
-                        <span className="date-table-style">
-                            {formatDateWithoutSeconds(row.createdDate)}
-                        </span>{' '}
-                    </>
-                ) : (
-                    ' '
-                )
+        key: 'createdAtBy',
+        title: 'Requested by/at',
+        dataKey: 'createdByAt',
+        width: 150,
+        expandable: true,
+        render: (row: any) =>
+            row?.createdDate ? (
+            <UserDateCell
+                login={row?.createdBy}
+                date={row?.createdDate}
+            />
+            ) : (
+            ' '
+            )
         },
     ];
 
@@ -445,7 +468,7 @@ const RequestTestModal = ({
                                 fieldType="textarea"
                                 record={record}
                                 setRecord={setRecord}
-                                fieldLabel="Indication"
+                                fieldLabel="Request Reason"
                                 placeholder="Enter clinical indication"
                                 width="100%"
                                 required

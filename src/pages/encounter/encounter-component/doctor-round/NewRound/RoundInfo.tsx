@@ -1,43 +1,33 @@
 import React, { useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { Col, Form } from 'rsuite';
+import { Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useGetPractitionersQuery } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyButton from '@/components/MyButton/MyButton';
 import CheckIcon from '@rsuite/icons/Check';
-const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNewRound, ...props }) => {
-  const [physicanListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'job_role_lkey',
-        operator: 'match',
-        value: '157153854130600'
-      }
-    ],
-    pageSize: 1000
-  });
+const RoundInfo = ({
+  doctorRound,
+  setDoctorRound,
+  saveAndComplete,
+  handleStartNewRound,
+  ...props
+}) => {
   // Fetch practitioners list response
-  const { data: practitionerListResponse } = useGetPractitionersQuery(physicanListRequest);
-  // Fetch shifts lov response
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  ); // Fetch shifts lov response
   const { data: shiftsLovQueryResponse } = useGetLovValuesByCodeQuery('SHIFTS');
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Form fluid layout="inline" className="container-of-round-info" dir={dir}>
+    <div className="container-of-round-info" dir={dir}>
       <div>
         <Col xs={32}>
           <MyInput
@@ -47,7 +37,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             fieldType="datetime"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -56,12 +46,12 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             fieldLabel="Lead Physician"
             fieldName="practitionerKey"
             fieldType="select"
-            selectData={practitionerListResponse?.object ?? []}
+            selectData={practitionerListResponse?.data ?? []}
             selectDataLabel="practitionerFullName"
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -75,24 +65,24 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key || props?.view}
+            disabled={!!doctorRound?.key || !!props?.view}
           />
         </Col>
-        <Col xs={32} className={props?.view ? "hidden-class" : ""}>
+        <Col xs={32} className={props?.view ? 'hidden-class' : ''}>
           <div className="search-btn">
             <MyButton
               prefixIcon={() => <CheckIcon />}
               color="var(--deep-blue)"
               onClick={handleStartNewRound}
-              disabled={doctorRound?.key}
+              disabled={!!doctorRound?.key}
             >
               Start New Round
             </MyButton>
           </div>
         </Col>
       </div>
-      <div className={props?.view ? "hidden-class" : ""}>{saveAndComplete()}</div>
-    </Form>
+      <div className={props?.view ? 'hidden-class' : ''}>{saveAndComplete()}</div>
+    </div>
   );
 };
 export default RoundInfo;

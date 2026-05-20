@@ -20,7 +20,7 @@ import Translate from "@/components/Translate";
 
 import { useGetActiveIngredientsQuery } from "@/services/setup/activeIngredients/activeIngredientsService";
 
-const AddActiveIngredient = ({ open, setOpen, brandMedication }) => {
+const AddActiveIngredient = ({ open, setOpen, brandMedication, onSaved }) => {
   const [BrandActive, setBrandActive] = useState({
     ...newBrandMedicationActiveIngredient,
   });
@@ -47,10 +47,10 @@ const handleSave = async () => {
       brandId: brandMedication?.id
     }).unwrap();
 
+    await onSaved?.();
     setBrandActive({ ...newBrandMedicationActiveIngredient });
 
   } catch (error) {
-    console.error("❌ Error while saving Active Ingredient:", error);
   }
 };
 
@@ -60,7 +60,6 @@ const handleDelete = async (id) => {
     setBrandActive({ ...newBrandMedicationActiveIngredient });
 
   } catch (error) {
-    console.error("❌ Delete Error:", error);
   }
 };
 

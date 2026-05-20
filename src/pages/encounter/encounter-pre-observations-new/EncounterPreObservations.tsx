@@ -21,59 +21,57 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import { useEnumOptions } from '@/services/enumsApi';
-import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
+import { useLazyGetNurseSummaryReportPdfQuery } from '@/services/observationServiceNew';
 import './styles.less';
+import clsx from 'clsx';
 
-const NurseStation = () => {
+type NurseStationModalProps = {
+  patient?: any;
+  encounter?: any;
+  onSheetNavigate?: (relativePath: string) => void;
+  outletContent?: React.ReactNode;
+};
+
+const NurseStation = ({
+  patient: modalPatient,
+  encounter: modalEncounter,
+  onSheetNavigate,
+  outletContent
+}: NurseStationModalProps = {}) => {
+  const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
+  const propsData = inModal
+    ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
+    : location.state;
+  const fromPage = propsData?.fromPage;
+  const pageSource = fromPage || '';
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
 
-const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
+  const viewMode = propsData?.viewMode;
+  const isFromEMR =
+    location.state?.fromPage === 'PatientEMR' ||
+    location.pathname.includes('emr');
 
-  // === LOVs ===
-  const { data: bloodPressureMeasurementSiteLov } =
-    useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  console.log('encounterPriorityLovQueryResponse', encounterPriorityLovQueryResponse);
-  // === Enums ===
-  const patientConditions = useEnumOptions('Condition');
-  const encounterTypeOptions = useEnumOptions('EncounterType');
-  const EncounterReasonEnum = useEnumOptions('EncounterReason');
-  const ageGroupOptions = useEnumOptions('AgeGroupType');
-  const genderEnum = useEnumOptions('Gender');
+  const edit =
+    isFromEMR ||
+    viewMode === 'readOnly' ||
+    location.state?.edit ||
+    localEncounter?.status === 'CLOSED';
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
-    exclude: [
-      'DISCHARGED',
-      'IN_OPERATION',
-      'CONFIRM_RETURN',
-      'TEMP_DC',
-      'TRIAGE_STARTED',
-      'SENT_TO_ER',
-      'WAITING_TRIAGE',
-      'WAITING_LIST',
-      'PENDING_PAYMENT'
-    ]
-  });
+  const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [edit, setEdit] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [triggerNurseSummaryReport] = useLazyGetNurseSummaryReportQuery();
+  const [triggerNurseSummaryReportPdf] = useLazyGetNurseSummaryReportPdfQuery();
 
-  // Nurse sheets
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId
   );
@@ -89,58 +87,53 @@ const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
     );
   }, [allowedSheetCodes, searchTerm.term]);
 
-const headersMap = useMemo(() => {
-  const map: Record<string, string> = {};
+  const headersMap = useMemo(() => {
+    const map: Record<string, string> = {};
 
-  MedicalSheets.forEach(ms => {
-    const fullPath = ms.path.startsWith('/nurse-station')
-      ? ms.path
-      : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+    MedicalSheets.forEach(ms => {
+      const fullPath = ms.path.startsWith('/nurse-station')
+        ? ms.path
+        : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
 
-    map[fullPath] = ms.name;
-  });
+      map[fullPath] = ms.name;
+    });
 
-  return map;
-}, []);
-
-useEffect(() => {
-  setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
-}, [location.pathname, headersMap]);
-
-
-const divContent = `Nurse Station > ${currentHeader}`;
-
-useEffect(() => {
-  dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContent));
-
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [currentHeader, dispatch]);
-
+    return map;
+  }, []);
 
   useEffect(() => {
-    if (!propsData?.encounter) {
-      navigate('/encounter-list');
-      return;
-    }
-    setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
-  }, [propsData, localEncounter]);
+    setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+  }, [location.pathname, headersMap]);
 
-  // Complete encounter
+  const divContent = `Nurse Station > ${currentHeader}`;
+
+  useEffect(() => {
+    dispatch(setPageCode('Nurse_Station'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [currentHeader, dispatch, divContent]);
+
+
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+
   useEffect(() => {
     if (
-      localEncounter?.encounterType == 'INPATIENT' &&
+      localEncounter?.encounterType === 'INPATIENT' &&
       completeEncounterMutation.status === 'fulfilled'
     ) {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
-      navigate('/encounter-list');
+      if (pageSource === 'Urgent_Care_List') {
+        navigate('/urgent-care-department-list', { state: { shouldRefetch: true } });
+      } else {
+        navigate('/encounter-list', { state: { shouldRefetch: true } });
+      }
     }
-  }, [completeEncounterMutation]);
+  }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -171,207 +164,233 @@ useEffect(() => {
   };
 
   const handleGoBack = () => {
+    if (pageSource === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list', {
+        state: {
+          fromPage: 'NurseStation',
+          patient: propsData?.patient,
+          encounter: propsData?.encounter
+        }
+      });
+      return;
+    }
+
     navigate('/encounter-list');
   };
 
   const handleGenerateReport = async (): Promise<void> => {
+    const encounterId = localEncounter?.id ?? localEncounter?.key;
+
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
+    }
+
     try {
-      const encounterId = localEncounter?.id ?? localEncounter?.key;
-
-      if (!encounterId) {
-        dispatch(
-          notify({
-            msg: 'Encounter id is missing',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const res = await triggerNurseSummaryReport({ encounterId }).unwrap();
-
-      await printNurseSummaryReport(
-        res,
-        bloodPressureMeasurementSiteLov?.object || [],
-        patientConditions || [],
-        encounterPriorityLovQueryResponse?.object,
-        EncounterReasonEnum,
-        encounterTypeOptions,
-        ageGroupOptions,
-        EncounterStatusEnum,
-        genderEnum
-      );
+      const blob = await triggerNurseSummaryReportPdf({ encounterId }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `nurse-summary-${encounterId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
     } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.message || 'Error while generating report',
-          sev: 'error'
-        })
-      );
-      throw error;
+      dispatch(notify({ msg: error?.data?.message || 'Error while generating report', sev: 'error' }));
     }
   };
 
   return (
-    <div className="container">
-      {/* LEFT SIDE */}
-      <div className="left-box">
-        <Panel>
-          {/* TOP BAR */}
-          <div className="container-bt">
-            <div className="left">
-              <BackButton onClick={handleGoBack} text="To Encounters list" />
-              <MyButton
-                backgroundColor={'var(--primary-gray)'}
-                onClick={() => navigate(-1)}
-                prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
-              />
+      <div className="container">
+        <div className="left-box">
+          <Panel>
+            <div className="container-bt">
+              <div className="left">
+                {!inModal && (
+                  <BackButton
+                    onClick={handleGoBack}
+                    text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
+                  />
+                )}
+                {!inModal && (
+                  <MyButton
+                    backgroundColor={'var(--primary-gray)'}
+                    onClick={() => navigate(-1)}
+                    prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
+                  />
+                )}
 
-              <Form fluid>
-                <MyInput
-                  width="100%"
-                  placeholder="Medical Sheets"
-                  fieldName="term"
-                  record={searchTerm}
-                  setRecord={setSearchTerm}
-                  showLabel={false}
-                  enterClick={() => setIsDrawerOpen(true)}
-                  rightAddon={
-                    <FaSearch className="icons-style-2" onClick={() => setIsDrawerOpen(true)} />
-                  }
-                />
-              </Form>
+                <Form fluid>
+                  <MyInput
+                    width="100%"
+                    placeholder="Medical Sheets"
+                    fieldName="term"
+                    record={searchTerm}
+                    setRecord={setSearchTerm}
+                    showLabel={false}
+                    enterClick={() => setIsDrawerOpen(true)}
+                    rightAddon={
+                      <FaSearch className="icons-style-2" onClick={() => setIsDrawerOpen(true)} />
+                    }
+                  />
+                </Form>
+              </div>
+
+              {!inModal && (
+                <div className="right">
+                  <MyButton
+                    loading={isGeneratingReport}
+                    disabled={isGeneratingReport}
+                    onClick={async () => {
+                      try {
+                        setIsGeneratingReport(true);
+                        await handleGenerateReport();
+                      } finally {
+                        setIsGeneratingReport(false);
+                      }
+                    }}
+                  >
+                    Generate Report
+                  </MyButton>
+                  <MyButton
+                    disabled={edit}
+                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                    onClick={handleCompleteEncounter}
+                    appearance="ghost"
+                  >
+                    <Translate>Complete Visit</Translate>
+                  </MyButton>
+                </div>
+              )}
             </div>
 
-            <div className="right">
-              <MyButton
-                loading={isGeneratingReport}
-                disabled={isGeneratingReport}
-                onClick={async () => {
-                  try {
-                    setIsGeneratingReport(true);
-                    await handleGenerateReport();
-                  } finally {
-                    setIsGeneratingReport(false);
-                  }
-                }}
-              >
-                Generate Report
-              </MyButton>
-              <MyButton
-                disabled={edit}
-                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                onClick={handleCompleteEncounter}
-                appearance="ghost"
-              >
-                <Translate>Complete Visit</Translate>
-              </MyButton>
-            </div>
-          </div>
+            <Divider />
 
-          <Divider />
+            <Drawer
+              open={isDrawerOpen}
+              onClose={() => setIsDrawerOpen(false)}
+              placement="left"
+              style={{ zIndex: 999999999999 }}
+              className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
+            >
+              <Drawer.Header className="header-drawer">
+                <Drawer.Title>Nurse Station Sheets</Drawer.Title>
+              </Drawer.Header>
 
-          {/* DRAWER */}
-          <Drawer
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            placement="left"
-            style={{ zIndex: 999999999999 }}
-            className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
-          >
-            <Drawer.Header className="header-drawer">
-              <Drawer.Title>Nurse Station Sheets</Drawer.Title>
-            </Drawer.Header>
+              <Drawer.Body className="drawer-body">
+                <Form fluid>
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
+                        width="100%"
+                        placeholder="Search screens..."
+                        fieldName={'term'}
+                        record={searchTerm}
+                        setRecord={setSearchTerm}
+                        showLabel={false}
+                        rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                      />
+                    </Col>
+                  </Row>
+                </Form>
 
-            <Drawer.Body className="drawer-body">
-              <Form fluid>
-                <Row>
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      placeholder="Search screens..."
-                      fieldName={'term'}
-                      record={searchTerm}
-                      setRecord={setSearchTerm}
-                      showLabel={false}
-                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                    />
-                  </Col>
-                </Row>
-              </Form>
-              <List hover className="drawer-list-style">
-                <List.Item
-                  className="drawer-item return-button"
-                  onClick={() => {
-                    navigate('/nurse-station', { state: location.state });
-                    setIsDrawerOpen(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                  <Translate>Dashboard</Translate>
-                </List.Item>
+                <List hover className="drawer-list-style">
+                  <List.Item
+                    className="drawer-item return-button"
+                    onClick={() => {
+                      if (onSheetNavigate) {
+                        onSheetNavigate('');
+                      } else {
+                        navigate('/nurse-station', { state: location.state });
+                      }
+                      setIsDrawerOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
+                    <Translate>Dashboard</Translate>
+                  </List.Item>
 
-                {visibleSheets.map(({ code, name, icon, path }) => {
-                  const clean = path.startsWith('/') ? path.slice(1) : path;
-                  const fullPath = `/nurse-station/${clean}`;
+                  {visibleSheets.map(({ code, name, icon, path }) => {
+                    const clean = path.startsWith('/') ? path.slice(1) : path;
+                    const fullPath = `/nurse-station/${clean}`;
 
-                  return (
-                    <List.Item
-                      key={code}
-                      className="drawer-item"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        navigate(fullPath, {
-                          state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
+                    return (
+                      <List.Item
+                        key={code}
+                        className="drawer-item"
+                        onClick={() => {
+                          setIsDrawerOpen(false);
+                          if (onSheetNavigate) {
+                            onSheetNavigate(clean);
+                          } else {
+                            navigate(fullPath, {
+                              state: {
+                                patient: propsData?.patient,
+                                encounter: propsData?.encounter,
+                                edit,
+                                fromPage: propsData?.fromPage
+                              }
+                            });
                           }
-                        });
-                      }}
-                    >
-                      <Link
-                        to={fullPath}
-                        state={{
-                          patient: propsData.patient,
-                          encounter: propsData.encounter,
-                          edit
                         }}
-                        className="inherit-link"
                       >
-                        {icon}
-                        <span className="margin-left-10">
-                          <Translate>{name}</Translate>
-                        </span>
-                      </Link>
-                    </List.Item>
-                  );
-                })}
-              </List>
-            </Drawer.Body>
-          </Drawer>
+                        {onSheetNavigate ? (
+                          <span className="inherit-link">
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </span>
+                        ) : (
+                          <Link
+                            to={fullPath}
+                            state={{
+                              patient: propsData?.patient,
+                              encounter: propsData?.encounter,
+                              edit,
+                              fromPage: propsData?.fromPage
+                            }}
+                            className="inherit-link"
+                          >
+                            {icon}
+                            <span className="margin-left-10">
+                              <Translate>{name}</Translate>
+                            </span>
+                          </Link>
+                        )}
+                      </List.Item>
+                    );
+                  })}
+                </List>
+              </Drawer.Body>
+            </Drawer>
+                <div
+                className={clsx('column-container', { 'disabled-panel': edit && !inModal })}
+                style={edit && !inModal ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+                >
+            <div className="content-with-sticky">
+              <div className="main-content-area">
+                {outletContent !== undefined ? outletContent : (
+                  <Outlet
+                    context={{
+                      patient: propsData?.patient,
+                      encounter: propsData?.encounter,
+                      edit,
+                      setLocalEncounter
+                    }}
+                  />
+                )}
+                </div>
+              </div>
+                </div>
+          </Panel>
+        </div>
 
-          {/* CONTENT */}
-          <div className="content-with-sticky">
-            <div className="main-content-area">
-              <Outlet
-                context={{
-                  patient: propsData?.patient,
-                  encounter: propsData?.encounter,
-                  edit,
-                  setLocalEncounter
-                }}
-              />
-            </div>
-          </div>
-        </Panel>
+        <div className="right-box">
+          <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
+        </div>
       </div>
-
-      {/* RIGHT SIDE */}
-      <div className="right-box">
-        <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
-      </div>
-    </div>
   );
 };
 

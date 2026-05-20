@@ -23,9 +23,32 @@ import {
 } from '@/types/model-types-new';
 
 const handleCrudError = (err: any, dispatch: any) => {
-  const msg = err?.data?.message || err?.data?.title || 'Unexpected error';
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  dispatch(notify({ msg, sev: 'warning' }));
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const normalizeMsg = (msg: string) => {
+      const m = (msg || '').toLowerCase();
+      if (m.includes('must not be null')) return 'is required';
+      if (m.includes('must not be blank')) return 'must not be blank';
+      if (m.includes('size must be between')) return 'length is out of range';
+      if (m.includes('must be greater')) return 'value is too small';
+      if (m.includes('must be less')) return 'value is too large';
+      if (m.includes('must be a date in the past or in the present')) return 'cannot be a future date';
+      return msg || 'invalid value';
+    };
+
+    const lines = data.fieldErrors.map((fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`);
+
+    dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'warning' }));
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const humanMsg = data?.detail || data?.title || messageProp || 'Unexpected error';
+
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
 const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
@@ -95,6 +118,7 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
 
         await updateCurrentMedication(payload).unwrap();
         dispatch(notify({ msg: 'Medication updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         const payload: CurrentMedicationCreate = {
           patientId: Number(patient?.id),
@@ -105,9 +129,14 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
 
         await addCurrentMedication(payload).unwrap();
         dispatch(notify({ msg: 'Medication added successfully', sev: 'success' }));
+        setFormData({
+          id: undefined,
+          patientId: Number(patient?.id),
+          activeIngredientId: undefined,
+          instructions: '',
+          startDate: null
+        });
       }
-
-      setOpen(false);
     } catch (err) {
       handleCrudError(err, dispatch);
     }
@@ -145,6 +174,7 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
             fieldLabel="Start Date"
             fieldType="date"
             fieldName="startDate"
+            disableFutureDates
             record={formData}
             setRecord={setFormData}
             required

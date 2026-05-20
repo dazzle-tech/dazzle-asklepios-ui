@@ -10,10 +10,12 @@ import {
   useLazyGetLatestVitalSignsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import {
-  useGetLatestBodyMeasurementsByPatientIdQuery,
-  useLazyGetLatestBodyMeasurementsByPatientIdQuery
+  useGetLatestBodyMeasurementsByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
-import { useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import {
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import {
   useGetPrimaryDocumentByPatientQuery,
@@ -24,6 +26,7 @@ import {
   useLazyGetLatestPatientObservationsComplaintsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { useGetCurrentMedicationsQuery } from '@/services/patients/currentMedicationService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
@@ -63,9 +66,16 @@ const PatientSide = ({
   showVisitDetails = true,
   showAllergiesWarnings = true,
   showBalance = true,
-  showCurrentMeds = true
+  showCurrentMeds = true,
+  showCloseButton = true,
+  onClose = null
 }) => {
   const profileImageFileInputRef = useRef(null);
+
+  const { data: freshPatient } = useGetPatientByIdQuery(
+    { id: patient?.id },
+    { skip: !patient?.id }
+  );
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
@@ -127,15 +137,14 @@ const PatientSide = ({
     );
 
   const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
-
-  const { data: latestBodyMeasurements, refetch: refetchLatestBodyMeasurements } =
-    useGetLatestBodyMeasurementsByPatientIdQuery(
-      { patientId: patient?.id },
-      {
-        skip: !patient?.id
-      }
-    );
-  const [triggerGetLatestBodyMeasurements] = useLazyGetLatestBodyMeasurementsByPatientIdQuery();
+  const {
+    data: latestBodyMeasurements,
+    refetch: refetchLatestBodyMeasurements
+  } = useGetLatestBodyMeasurementsByPatientIdQuery(
+    { patientId: patient?.id },
+    { skip: !patient?.id }
+  );
+  const [triggerExistsPrimaryDiagnosis] = useLazyExistsPatientDiagnosisByEncounterIdQuery();
   const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
   const {
     data: latestPatientObservationsComplaints,
@@ -178,10 +187,10 @@ const PatientSide = ({
   // ─────────────────────────────────────────────────────────────────────────
 
   const patientConditionItems =
-    latestPatientObservationsComplaints?.patientConditions
-      ?.split(',')
-      .map(item => item.trim())
-      .filter(Boolean) || [];
+    (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
+      .split(',')
+      .map((item: string) => item.trim())
+      .filter(Boolean);
 
   const getPatientConditionColors = () => {
     return {
@@ -263,6 +272,13 @@ const PatientSide = ({
     }
 
     try {
+      const exists = await triggerExistsPrimaryDiagnosis({ encounterId }).unwrap();
+      if (!exists) {
+        setPrimaryDiagnosis(null);
+        setPrimaryDiagnosisError(null);
+        return;
+      }
+
       const resp = await triggerGetPrimaryDiagnosis({
         encounterId,
         timestamp: Date.now()
@@ -290,7 +306,7 @@ const PatientSide = ({
     if (refetchList) {
       if (patient?.id) {
         triggerGetPrimaryDocument(patient?.id);
-        triggerGetLatestBodyMeasurements({ patientId: patient?.id });
+        refetchLatestBodyMeasurements();
       }
 
       if (encounter?.id) {
@@ -303,7 +319,6 @@ const PatientSide = ({
     refetchList,
     triggerGetPrimaryDocument,
     triggerGetLatestVitalSigns,
-    triggerGetLatestBodyMeasurements,
     triggerGetLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id
@@ -317,9 +332,11 @@ const PatientSide = ({
 
       if (encounter?.id) {
         refetchLatestVitalSigns();
-        refetchLatestBodyMeasurements();
         refetchLatestPatientObservationsComplaints();
         loadPrimaryDiagnosis(Number(encounter.id));
+      }
+      if (patient?.id) {
+        refetchLatestBodyMeasurements();
       }
 
       dispatch(resetRefetchPatientSide());
@@ -328,7 +345,6 @@ const PatientSide = ({
     refetchPatientSide,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
-    refetchLatestBodyMeasurements,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -345,7 +361,7 @@ const PatientSide = ({
           refetchAllergies(),
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
-          encounter?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
+          patient?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
           encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
           encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
         ]);
@@ -363,7 +379,6 @@ const PatientSide = ({
     refetchAllergies,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
-    refetchLatestBodyMeasurements,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -445,6 +460,22 @@ const PatientSide = ({
   const height = toNumber(latestBodyMeasurements?.height);
   const headCircumference = toNumber(latestBodyMeasurements?.headCircumference);
 
+  const BLOOD_GROUP_LABELS: Record<string, string> = {
+    A_POSITIVE: 'A+',
+    A_NEGATIVE: 'A-',
+    B_POSITIVE: 'B+',
+    B_NEGATIVE: 'B-',
+    AB_POSITIVE: 'AB+',
+    AB_NEGATIVE: 'AB-',
+    O_POSITIVE: 'O+',
+    O_NEGATIVE: 'O-',
+    UNKNOWN: 'Unknown'
+  };
+  const bloodGroupRaw = (freshPatient as any)?.bloodGroup ?? (patient as any)?.bloodGroup ?? '';
+  const bloodGroupLabel = bloodGroupRaw
+    ? BLOOD_GROUP_LABELS[String(bloodGroupRaw)] ?? String(bloodGroupRaw)
+    : '';
+
   const bmi =
     weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
   const bsa =
@@ -464,16 +495,21 @@ const PatientSide = ({
 
   return (
     <Panel className="patient-panel" dir={dir}>
-      {setPatient && (
+      {showCloseButton && setPatient && (
         <div className="patient-panel-close-btn">
           <IoMdClose
             size={22}
             className="icons-style"
-            onClick={() => setPatient({ ...newPatient })}
+            onClick={() => {
+              if (typeof onClose === 'function') {
+                onClose();
+              } else {
+                setPatient({ ...newPatient });
+              }
+            }}
           />
         </div>
       )}
-
       <div className="div-avatar">
         <Avatar
           circle
@@ -584,6 +620,15 @@ const PatientSide = ({
               <Text className="info-value">
                 <Translate>{textOr(formatEnumString(patient?.sexAtBirth), '')}</Translate>
               </Text>
+            </div>
+          </div>
+
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Blood Group</Translate>
+              </Text>
+              <Text className="info-value">{textOr(bloodGroupLabel, '')}</Text>
             </div>
           </div>
 

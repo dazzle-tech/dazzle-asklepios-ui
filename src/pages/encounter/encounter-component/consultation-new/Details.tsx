@@ -25,8 +25,19 @@ import { Consultation, ConsultationUpdatePayload } from '@/types/model-types-new
 import { useLazyGetSpecialistPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 
+const ENUM_CLASS_TO_FIELD_LABEL: Record<string, string> = {
+  ConsultationLevel: 'priority level',
+  ConsultationMethod: 'consultation method',
+  ConsultationType: 'consultation type',
+  DestinationType: 'destination type'
+};
+
 const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
-  const data = err?.data ?? {};
+  // Normalize: RTK Query onQueryStarted wraps as { error: { status, data } }
+  // while .unwrap() throws { status, data } directly. Support both.
+  const normalized = err?.error ?? err ?? {};
+  const data = normalized?.data ?? err?.data ?? {};
+  const rawStatus = normalized?.status ?? err?.status;
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
@@ -50,6 +61,12 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     return msg || 'invalid value';
   };
 
+  // RTK Query network/fetch errors
+  if (rawStatus === 'FETCH_ERROR' || rawStatus === 'PARSING_ERROR') {
+    dispatch(notify({ msg: 'Network error. Please check your connection and try again.' + suffix, sev: 'warning' }));
+    return;
+  }
+
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const lines = data.fieldErrors.map((fe: any) => {
       const rawField = String(fe.field ?? '');
@@ -67,6 +84,22 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
   }
 
   const messageProp: string = data?.message || '';
+  const detailProp: string = data?.detail || '';
+  const httpStatus: number | undefined =
+    typeof rawStatus === 'number' ? rawStatus : typeof data?.status === 'number' ? data.status : undefined;
+
+  // RFC 7807: "No enum constant" in detail → invalid enum value sent
+  if (detailProp.includes('No enum constant')) {
+    const match = detailProp.match(/No enum constant [^.]+\.([A-Za-z]+)\.(\w+)/);
+    if (match) {
+      const enumClass = match[1];
+      const fieldLabel = ENUM_CLASS_TO_FIELD_LABEL[enumClass] ?? enumClass;
+      dispatch(notify({ msg: `${fieldLabel} has an invalid value. Please re-select and try again.` + suffix, sev: 'warning' }));
+    } else {
+      dispatch(notify({ msg: 'An invalid value was submitted. Please review your selections.' + suffix, sev: 'warning' }));
+    }
+    return;
+  }
 
   if (
     messageProp.includes('ConstraintViolationImpl') ||
@@ -84,8 +117,8 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       const normalized = message.includes('must not be null')
         ? 'is required'
         : message.includes('must not be blank')
-        ? 'must not be blank'
-        : message;
+          ? 'must not be blank'
+          : message;
 
       violations.push(`• ${fieldLabel}: ${normalized}`);
     }
@@ -101,7 +134,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     }
   }
 
-  if (err?.status === 400 || data?.status === 400) {
+  if (httpStatus === 400) {
     const message = messageProp.toLowerCase();
 
     for (const [fieldKey, fieldLabel] of Object.entries(FIELD_LABELS)) {
@@ -166,13 +199,27 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
 
   const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
 
+  // Plain JS Error object (e.g. TypeError thrown before/after network call)
+  const jsMessage = err instanceof Error ? err.message : null;
+  if (err?.status === 404 || data?.status === 404) {
+    const detail = String(data?.detail ?? '');
+    if (detail.toLowerCase().includes('department not found')) {
+      dispatch(notify({ msg: 'Department not found. Please ensure your department is configured correctly.' + suffix, sev: 'warning' }));
+      return;
+    }
+  }
+
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
+    detailProp ||
     data?.title ||
-    data?.message ||
-    'Unexpected error';
+    messageProp ||
+    (typeof normalized?.error === 'string' ? normalized.error : null) ||
+    jsMessage ||
+    (httpStatus === 500 ? 'A server error occurred. Please try again later.' : null) ||
+    'An unexpected error occurred. Please try again.';
 
+  console.error('[Consultation] Unhandled error:', { rawStatus, httpStatus, data, err });
   dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
@@ -206,10 +253,14 @@ const Details = ({
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
+
+  const resolvedFromFacilityId = encounter?.facilityId || selectedDepartment?.facilityId;
+  const resolvedFromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
+
   const [formData, setFormData] = useState<Consultation>({
     ...newConsultation,
-    fromFacilityId: selectedDepartment.facilityId,
-    fromDepartmentId: selectedDepartment.departmentId
+    fromFacilityId: resolvedFromFacilityId,
+    fromDepartmentId: resolvedFromDepartmentId
   });
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
@@ -247,7 +298,6 @@ const Details = ({
   const hasPractitioners = practitionersResult?.data?.data?.totalElements
     ? practitionersResult.data.data.totalElements > allPractitioners.length
     : false;
-  console.log('practitionersResult====>', practitionersResult);
   useEffect(() => {
     if (!open) return;
 
@@ -262,6 +312,8 @@ const Details = ({
         ...newConsultation,
         patientId: patient?.id,
         encounterId: encounter?.id,
+        fromFacilityId: resolvedFromFacilityId,
+        fromDepartmentId: resolvedFromDepartmentId,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
@@ -344,6 +396,8 @@ const Details = ({
       ...newConsultation,
       patientId: patient?.id,
       encounterId: encounter?.id,
+      fromFacilityId: resolvedFromFacilityId,
+      fromDepartmentId: resolvedFromDepartmentId,
       destinationType: 'DEPARTMENT',
       toFacilityId: null,
       toDepartmentId: null,
@@ -354,14 +408,72 @@ const Details = ({
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!formData.toFacilityId) {
+      fieldErrors.push({ field: 'toFacilityId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'DEPARTMENT' && !formData.toDepartmentId) {
+      fieldErrors.push({ field: 'toDepartmentId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'CONSULTANT') {
+      if (!formData.consultantSpeciality) {
+        fieldErrors.push({ field: 'consultantSpeciality', message: 'must not be null' });
+      }
+      if (!formData.practitionerId) {
+        fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+      }
+    }
+
+    if (!formData.consultationMethod) {
+      fieldErrors.push({ field: 'consultationMethod', message: 'must not be null' });
+    }
+
+    if (!formData.consultationType) {
+      fieldErrors.push({ field: 'consultationType', message: 'must not be null' });
+    }
+
+    if (!formData.consultationLevel) {
+      fieldErrors.push({ field: 'consultationLevel', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+        data: {
+          fieldErrors
+        },
+        status: 400
+      }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, CONSULTATION_ERROR_MAP);
+      return;
+    }
+
     try {
       if (formData.id) {
-        const updatePayload: ConsultationUpdatePayload = {
+        const updateToDepartmentId =
+          formData.destinationType === 'CONSULTANT' && !formData.toDepartmentId
+            ? resolvedFromDepartmentId
+            : formData.toDepartmentId;
+
+        await updateConsultation({
           id: formData.id,
           destinationType: formData.destinationType,
           toFacilityId: formData.toFacilityId,
-          toDepartmentId: formData.toDepartmentId,
+          toDepartmentId: updateToDepartmentId,
           consultantSpeciality: formData.consultantSpeciality,
           practitionerId: formData.practitionerId,
           consultationMethod: formData.consultationMethod,
@@ -371,26 +483,35 @@ const Details = ({
           notes: formData.notes,
           extraDocument: formData.extraDocument,
           approvalNumber: formData.approvalNumber
-        };
-        await updateConsultation(updatePayload).unwrap();
+        }).unwrap();
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
+        const effectiveToDepartmentId =
+          formData.destinationType === 'CONSULTANT' && !formData.toDepartmentId
+            ? resolvedFromDepartmentId
+            : formData.toDepartmentId;
+
         await createConsultation({
           ...formData,
-          status: 'REQUESTED',
-          fromFacilityId: selectedDepartment.facilityId,
-          fromDepartmentId: selectedDepartment.departmentId
+          fromFacilityId: resolvedFromFacilityId,
+          fromDepartmentId: resolvedFromDepartmentId,
+          toDepartmentId: effectiveToDepartmentId,
+          status: 'REQUESTED'
         }).unwrap();
+
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
 
       setOpen(false);
       handleClear();
+      try { refetchCon?.(); } catch (_) { /* query not yet started */ }
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
       return;
     }
 
+    setOpen(false);
+    handleClear();
     refetchCon?.();
   };
 
@@ -646,7 +767,15 @@ const Details = ({
                           selectDataLabel={['firstName', 'lastName']}
                           selectDataValue="id"
                           record={formData}
-                          setRecord={setFormData}
+                          setRecord={newData => {
+                            const selectedPrac = allPractitioners.find(
+                              (p: any) => String(p.id) === String(newData.practitionerId)
+                            );
+                            setFormData({
+                              ...newData,
+                              toDepartmentId: (selectedPrac as any)?.departmentId ?? newData.toDepartmentId ?? null
+                            });
+                          }}
                           loading={practitionersResult?.isFetching}
                           searchable
                           hasMore={hasPractitioners}
@@ -761,7 +890,7 @@ const Details = ({
                     />
                     <MyInput
                       width={'12vw'}
-                      fieldType="number"
+                      fieldType="textnumber"
                       fieldLabel="Approval Number"
                       fieldName="approvalNumber"
                       record={formData}
@@ -805,7 +934,7 @@ const Details = ({
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />

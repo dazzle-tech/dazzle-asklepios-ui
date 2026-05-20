@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -54,9 +54,11 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetActiveCommunitiesQuery } from '@/services/setup/country/districtCommunityService';
 import { useGetActiveAreasQuery } from '@/services/setup/country/communityAreaService';
-import { useCreateAddressMutation, useUpdateAddressMutation } from '@/services/patients/AddressService';
+import {
+  useCreateAddressMutation,
+  useUpdateAddressMutation
+} from '@/services/patients/AddressService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 
 import {
   useAddPatientInsuranceMutation,
@@ -65,6 +67,7 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+import { PhoneNumberInput } from '@/components';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -79,12 +82,10 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-  'patient.department.date.duplicate':
-    'This patient already has an encounter in this department on the selected date.',
+  'patient.department.date.duplicate': 'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
-  'patient.emergency.notAllowed.withOngoing':
-    'Patient currently treated by another doctor',
+  'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
@@ -244,7 +245,9 @@ const toHumanPatientDocumentError = (
     'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
-    notfound: 'Patient document not found.'
+    notfound: 'Patient document not found.',
+    'number.invalid.start': 'Document number has an invalid starting digit for the selected type.',
+    'number.invalid.length': 'ID number should not be less than 10 digits.'
   };
 
   if (keyMap[errorKey]) {
@@ -377,16 +380,14 @@ const normalizeInsuranceFieldErrorMessage = (message: string): string => {
   return message || 'invalid value';
 };
 
-const getInsuranceFieldLabel = (field: string): string =>
-  INSURANCE_FIELD_LABELS[field] ?? field;
+const getInsuranceFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
 
 const toHumanInsuranceError = (
   error: any,
   keyMap: Record<string, string> = INSURANCE_ERROR_MAP
 ): string => {
   const responseData = error?.data ?? {};
-  const traceId =
-    responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
   const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
   if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
@@ -414,6 +415,40 @@ const toHumanInsuranceError = (
   );
 };
 
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
+
+const PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'dateOfBirth', label: 'DOB' },
+  { key: 'sexAtBirth', label: 'Gender' },
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
+  { key: 'email', label: 'Email' }
+];
+
+const validatePatientNameFields = (patient: Patient): string | null => {
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+    if (!value) continue;
+    if (INVALID_TRAILING_CHARS.test(value)) {
+      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+    }
+  }
+  return null;
+};
+
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -437,8 +472,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
-  const patientDocumentEnum = useEnumOptions('DocumentType');
+  const patientDocumentEnum = useEnumOptions('DocumentType', {
+    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+  });
+
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
   const genderEnum = useEnumOptions('Gender');
 
@@ -451,7 +488,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage, setDeptPage] = useState(0);
+  const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');
@@ -535,13 +572,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     if (!selectedFacilityId) return;
 
     try {
-      console.log('[TRACE] fetchDepartments:start', {
-        facilityId: selectedFacilityId,
-        encounterType: 'EMERGENCY',
-        page,
-        size: deptSize
-      });
-
       const result = await triggerDepartments({
         facilityId: selectedFacilityId,
         encounterType: 'EMERGENCY',
@@ -551,13 +581,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }).unwrap();
 
       const rows = result?.data ?? [];
-
-      console.log('[TRACE] fetchDepartments:success', {
-        page,
-        count: rows.length,
-        rows,
-        links: result?.links
-      });
 
       setAllDepartments(prev => {
         if (page === 0) return rows;
@@ -573,6 +596,19 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
         return merged;
       });
+
+      if (page === 0) {
+        setSelectedDepartmentId(prevSelectedDepartmentId => {
+          if (prevSelectedDepartmentId !== null && prevSelectedDepartmentId !== undefined) {
+            return prevSelectedDepartmentId;
+          }
+
+          const firstDepartmentId = rows?.[0]?.id;
+          return firstDepartmentId !== undefined && firstDepartmentId !== null
+            ? Number(firstDepartmentId)
+            : null;
+        });
+      }
     } catch (error) {
       console.error('[TRACE] fetchDepartments:error', error);
       if (page === 0) setAllDepartments([]);
@@ -602,9 +638,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   }, [payorSearchKeyword]);
 
   useEffect(() => {
-    const currentPayorId = patientInsurance?.payorId
-      ? Number(patientInsurance.payorId)
-      : undefined;
+    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
@@ -647,44 +681,69 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
-  const [docCountryCache, setDocCountryCache] = useState<any[]>([]);
-  const [docCountryPage, setDocCountryPage] = useState(0);
-  const [docCountrySearch, setDocCountrySearch] = useState('');
-  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
-  const [, setDocCountryOpen] = useState(false);
-  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+  const enumLabels = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
+    [enumLabels]
+  );
 
-  const { data: docCountriesData } = useGetActiveCountriesQuery({
-    page: docCountryPage,
-    size: PAGE_SIZE,
-    ...(docCountrySearch && { search: docCountrySearch }),
-    sort: 'id,asc'
-  });
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+  const countrySelectData = useMemo(
+    () =>
+      (activeCountriesResp?.data ?? []).map(c => ({
+        value: c.id,
+        label: enumLabelMap[c.name] || formatEnumString(c.name)
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeCountriesResp]
+  );
+  const countrySelectDataRef = useRef(countrySelectData);
+  countrySelectDataRef.current = countrySelectData;
+
+  const saudiCountryId = useMemo(
+    () => (activeCountriesResp?.data ?? []).find(c => c.name === 'SAUDI_ARABIA')?.id ?? null,
+    [activeCountriesResp]
+  );
 
   useEffect(() => {
-    if (!docCountriesData?.data) return;
+    if (open && !secondaryDocument.id) {
+      setSecondaryDocument(prev => ({
+        ...prev,
+        type: prev.type || 'NATIONAL_ID',
+        countryId: prev.countryId || saudiCountryId || null
+      }));
+    }
+  }, [open, saudiCountryId]);
 
-    const mapped = docCountriesData.data.map((c: any) => ({
-      ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
-        c.name
-    }));
+  const validateDocument = () => {
+    const { type, number, countryId } = secondaryDocument as any;
+    const numberStr = String(number ?? '').trim();
 
-    if (docCountryPage === 0) {
-      setDocCountryCache(mapped);
-    } else {
-      setDocCountryCache(prev => [...prev, ...mapped]);
+    if (countryId !== saudiCountryId) return true;
+
+    if (type === 'NATIONAL_ID') {
+      if (!numberStr.startsWith('1')) {
+        dispatch(notify({ msg: 'Saudi National ID number must start with 1.', sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
     }
 
-    setDocHasMoreCountries(!!docCountriesData.links?.next);
-    setDocPaginationLoading(false);
-  }, [docCountriesData, docCountryPage, countryLov]);
+    if (type === 'IQAMA' || type === 'BORDER_NUMBER') {
+      if (!numberStr.startsWith('2')) {
+        dispatch(notify({ msg: `Saudi ${type} number must start with 2.`, sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
+    }
 
-  const loadMoreDocCountries = () => {
-    if (!docHasMoreCountries) return;
-    setDocPaginationLoading(true);
-    setDocCountryPage(prev => prev + 1);
+    return true;
   };
 
   type ExtendedAddress = Address & {
@@ -815,13 +874,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
     const mapped = addrCountriesResponse.data.map((c: any) => ({
       ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
-        c.name
+      displayName: c.displayName || c.name
     }));
 
     setAddrCountryCache(prev => (addrCountryPage === 0 ? mapped : [...prev, ...mapped]));
-  }, [addrCountriesResponse, addrCountryPage, countryLov]);
+  }, [addrCountriesResponse, addrCountryPage]);
 
   useEffect(() => {
     if (!addrDistrictsResponse?.data) return;
@@ -894,7 +951,52 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  const isPhoneValid = (phone: any) => {
+    if (!phone) return false;
+
+    const digits = String(phone).replace(/\D/g, '');
+
+    return digits.length > 3;
+  };
+
+  const validateMandatoryPatientFields = (): boolean => {
+    const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
+
+      if (key === 'primaryMobileNumber') {
+        return !isPhoneValid(value);
+      }
+
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async (): Promise<Patient | null> => {
+    if (!validateMandatoryPatientFields()) {
+      return null;
+    }
+
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return null;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
@@ -932,6 +1034,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const handleSavePatientAndQuick = async () => {
+    if (!validateMandatoryPatientFields()) {
+      return;
+    }
+
     const facilityId = selectedFacilityId;
     const departmentId = selectedDepartmentId;
 
@@ -942,6 +1048,12 @@ const CreateNewPatient = ({ open, setOpen }) => {
           sev: 'error'
         })
       );
+      return;
+    }
+
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
       return;
     }
 
@@ -965,7 +1077,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
       const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
         facilityId: Number(facilityId),
         departmentId: Number(departmentId),
-        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceType: (practitionerId > 0
+          ? 'PRACTITIONER'
+          : 'DEPARTMENT') as modelTypes.TemplateType,
         resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
         patientId: Number(saved?.id ?? 0),
         service: 'URGENT_VISIT' as modelTypes.EncounterReason,
@@ -1020,6 +1134,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const isNoDocument =
       secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
+    if (!isNoDocument && !validateDocument()) {
+      return;
+    }
+
     if (isNoDocument) {
       try {
         await addNoDocument({
@@ -1041,8 +1159,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      isPrimary: secondaryDocument.isPrimary ?? false,
-      number: secondaryDocument.number
+      isPrimary: secondaryDocument.type === 'NATIONAL_ID',
+      number: String(secondaryDocument.number ?? '').trim()
     };
 
     try {
@@ -1119,7 +1237,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       setPlanPage(0);
       setRelativePage(0);
       setAllRelatives([]);
-      setDocCountryOpen(false);
     }
   }, [open]);
 
@@ -1172,6 +1289,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldName="dateOfBirth"
               record={localPatient}
               setRecord={setLocalPatient}
+              disableFutureDates
+              showWarningIfBeforeYear1900
             />
 
             <MyInput
@@ -1187,15 +1306,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-
-            <MyInput
-              width={200}
-              column
+            <PhoneNumberInput
               required
+              column
               fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
               required
@@ -1256,103 +1374,78 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                 />
+                <MyInput
+                  width={200}
+                  column
+                  fieldType="checkbox"
+                  fieldName="isPrivatePatient"
+                  fieldLabel="Private Patient"
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                />
               </>
             )}
-
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
           </Form>
         );
 
       case 1:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline" fluid className="patient-doc-secondary-container">
             <span className="custom-text">Patient Document</span>
 
             <MyInput
-              width={200}
               required
               column
+              width={300}
               fieldLabel="Document Type"
               fieldType="select"
               fieldName="type"
               selectData={patientDocumentEnum ?? []}
               selectDataLabel="label"
               selectDataValue="value"
+              searchable={false}
               record={secondaryDocument}
-              setRecord={setSecondaryDocument}
+              setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
             />
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
                 required
                 column
-                width={200}
+                width={300}
                 fieldLabel="Document Country"
-                fieldType="selectPagination"
+                fieldType="select"
                 fieldName="countryId"
-                selectData={docCountryCache}
-                selectDataLabel="displayName"
-                selectDataValue="id"
-                searchKeyWard={docCountrySearch}
-                setSearchKeyWard={setDocCountrySearch}
-                hasMore={docHasMoreCountries}
-                onFetchMore={loadMoreDocCountries}
-                loading={docPaginationLoading}
-                onSelectItem={(item: any) => {
-                  setSecondaryDocument(prev => ({
-                    ...prev,
-                    countryId: item.id
-                  }));
-                }}
+                selectData={countrySelectData}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={secondaryDocument}
+                setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
               />
             )}
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
-                width={200}
                 required
                 column
+                width={300}
+                fieldType="number"
                 fieldLabel="Document Number"
                 fieldName="number"
-                disabled={
-                  secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-                }
                 record={secondaryDocument}
-                setRecord={newRecord => {
-                  setSecondaryDocument({
-                    ...secondaryDocument,
-                    ...newRecord,
+                setRecord={r =>
+                  setSecondaryDocument(prev => ({
+                    ...prev,
                     number:
-                      secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                      prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
-                        : newRecord.number
-                  });
-                }}
+                        : String(r.number ?? '')
+                  }))
+                }
               />
             )}
 
-            <MyInput
-              width={200}
-              column
-              fieldLabel="Primary Document"
-              fieldType="checkbox"
-              fieldName="isPrimary"
-              disabled={
-                secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-              }
-              record={secondaryDocument}
-              setRecord={setSecondaryDocument}
-            />
+            {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
           </Form>
         );
 
@@ -1360,18 +1453,18 @@ const CreateNewPatient = ({ open, setOpen }) => {
         return (
           <Form layout="inline">
             <span className="custom-text">Contact Information</span>
-
-            <MyInput
-              width={200}
+            <PhoneNumberInput
               column
-              fieldLabel="Secondary Mobile Number"
               fieldName="secondMobileNumber"
+              fieldLabel="Secondary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
               width={200}
               column
+              fieldType="textnumber"
               fieldName="homePhone"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -1544,7 +1637,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
                   disabled={!address.districtId}
                   onFetchMore={() => {
                     if (addrCommunitiesResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(addrCommunitiesResponse.links.next);
+                      const { page } = extractPaginationFromLink(
+                        addrCommunitiesResponse.links.next
+                      );
                       setAddrCommunityPage(page);
                     }
                   }}
@@ -1709,7 +1804,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Policy Number"
               fieldName="policyNumber"
               record={patientInsurance}
@@ -1719,7 +1814,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               column
               width={200}
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Group Number"
               fieldName="groupNumber"
               record={patientInsurance}

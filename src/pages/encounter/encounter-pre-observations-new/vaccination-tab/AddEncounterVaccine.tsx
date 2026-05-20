@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
@@ -205,7 +205,7 @@ const AddEncounterVaccine = ({
 
   const [vaccine, setVaccine] = useState<Vaccine>({ ...vaccineObject });
   const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...vaccineBrandObject });
-  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...vaccineDoseObjet });
+  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...(newVaccineDose as VaccineDose) });
   const [vaccineToDose, setVaccineToDose] = useState<VaccineDose>({
     ...newVaccineDose,
     doseNumber: ''
@@ -218,7 +218,7 @@ const AddEncounterVaccine = ({
     vaccineBrandId: vaccineBrandObject?.id ?? null
   });
   const [dosePicker, setDosePicker] = useState<{ vaccineDoseId: number | null }>({
-    vaccineDoseId: vaccineDoseObjet?.id ?? null
+    vaccineDoseId: null
   });
   const [administrationReaction, setAdministrationReactions] = useState<{
     administrationReactionsLkey: string | null;
@@ -488,6 +488,27 @@ const AddEncounterVaccine = ({
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  // ── Form-safe records: replace null with '' so <input value> is never null ──
+  const vaccineForForm = useMemo(
+    () => ({ ...vaccine, postOpeningDuration: vaccine.postOpeningDuration ?? '' }),
+    [vaccine]
+  );
+  const vaccineBrandForForm = useMemo(
+    () => ({ ...vaccineBrand, volume: vaccineBrand?.volume ?? '' }),
+    [vaccineBrand]
+  );
+  const evForForm = useMemo(
+    () => ({
+      ...(encounterVaccination as any),
+      vaccineLotNumber: encounterVaccination.vaccineLotNumber ?? '',
+      administeredLocation: (encounterVaccination as any).administeredLocation ?? '',
+      externalFacilityName: (encounterVaccination as any).externalFacilityName ?? '',
+      administrationReactions: encounterVaccination.administrationReactions ?? '',
+      notes: encounterVaccination.notes ?? ''
+    }),
+    [encounterVaccination]
+  );
+
   return (
     <AdvancedModal
       open={open}
@@ -680,7 +701,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Volume"
               fieldName="volume"
-              record={vaccineBrand}
+              record={vaccineBrandForForm}
               setRecord={setVaccineBrand}
             />
             <MyInput
@@ -715,7 +736,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Vaccine Lot Number"
               fieldName="vaccineLotNumber"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
             <MyInput
@@ -747,7 +768,7 @@ const AddEncounterVaccine = ({
                 setVaccineDose({ ...(newVaccineDose as VaccineDose), ...(item as VaccineDose) });
                 setDosePicker({ vaccineDoseId: item.id as number });
               }}
-              placeholder={vaccineDose?.doseNumber ? String(vaccineDose.doseNumber) : 'Select'}
+              placeholder="Select"
               disabled={isDisabledField}
             />
             <MyInput
@@ -774,7 +795,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Administered Location"
               fieldName="administeredLocation"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
 
@@ -793,11 +814,12 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="External Facility Name"
               fieldName="externalFacilityName"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
               disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
             <MyInput
+              width={"100%"}
               column
               required
               fieldLabel="Date Administered"
@@ -831,7 +853,7 @@ const AddEncounterVaccine = ({
                 fieldType="textarea"
                 fieldLabel="Administration Reactions"
                 fieldName="administrationReactions"
-                record={encounterVaccination}
+                record={evForForm}
                 setRecord={setEncounterVaccination}
                 rows={4}
               />
@@ -842,7 +864,7 @@ const AddEncounterVaccine = ({
               fieldType="textarea"
               fieldLabel="Notes"
               fieldName="notes"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
               rows={6}
             />
@@ -867,7 +889,7 @@ const AddEncounterVaccine = ({
               disabled
               fieldLabel="Post Opening Duration"
               fieldName="postOpeningDuration"
-              record={vaccine}
+              record={vaccineForForm}
               setRecord={setVaccine}
             />
             <MyInput

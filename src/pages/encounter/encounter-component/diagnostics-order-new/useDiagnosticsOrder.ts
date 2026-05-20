@@ -98,18 +98,22 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [collectSampleModal, setCollectSampleModal] = useState(false);
   const [testCardModal, setTestCardModal] = useState(false);
+  const [rescheduleAppointmentsModalOpen, setRescheduleAppointmentsModalOpen] = useState(false);
+  const [selectedOrderTestForReschedule, setSelectedOrderTestForReschedule] = useState<any>(null);
   const [reson, setReson] = useState<{ cancellationReason: string }>({
     cancellationReason: ''
   });
 
   const [bulkDepartmentModalOpen, setBulkDepartmentModalOpen] = useState(false);
 
-  const [paginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: 5,
     sort: 'id,asc',
-    timestamp: Date.now()
+    // timestamp: Date.now()
+
   });
+
 
   const [filters, setFilters] = useState({
     testName: '',
@@ -127,7 +131,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const normalizeOrderTest = (rowData: any) => ({
     ...rowData,
-    reasonLkey: rowData.reasonLkey ?? rowData.reason
+    reason: rowData.reason
   });
 
   // Lookups
@@ -156,16 +160,39 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
-const testsList = testsResponse?.data ?? [];
+  const [allTests, setAllTests] = useState<any[]>([]);
 
-const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
-  page: 0,
-  size: 1000,
-  sort: 'id,asc'
-});
 
-const ageGroupsList = ageGroupsResponse?.data ?? [];
+
+  const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
+
+  const testsList = allTests;
+
+  useEffect(() => {
+    if (!testsResponse?.data) return;
+
+    setAllTests(prev => {
+      const existingIds = new Set(prev.map(x => x.id));
+      const newData = testsResponse.data.filter(x => !existingIds.has(x.id));
+      return [...prev, ...newData];
+    });
+  }, [testsResponse]);
+
+  const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+
+  const handleLoadMore = () => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: prev.page + 1
+    }));
+  };
+
+  const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
@@ -233,6 +260,14 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   const orderTestList = orderTestsResponse?.data ?? [];
 
+  useEffect(() => {
+    if (!orderId) return;
+    const refreshTimer = setInterval(() => {
+      void orderTestRefetch();
+    }, 15000);
+    return () => clearInterval(refreshTimer);
+  }, [orderId, orderTestRefetch]);
+
   // Favorites
   const userId = authSlice?.user?.id;
 
@@ -242,6 +277,25 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   const favoriteTestIds = useMemo(() => favoriteLinks?.map((f: any) => f.testId) ?? [], [favoriteLinks]);
 
+  const orderTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (orderTestList ?? [])
+            .map((ot: any) => ot.testId)
+            .filter(Boolean)
+        )
+      ),
+    [orderTestList]
+  );
+
+  const { data: diagnosticTestsByIdsResponse } = useGetDiagnosticTestsByIdsQuery(
+    orderTestIds.length ? { ids: orderTestIds } : skipToken
+  );
+
+
+
+  
   const { data: favoriteTests, isFetching: loadingFavorites } = useGetDiagnosticTestsByIdsQuery(
     favoriteTestIds.length ? { ids: favoriteTestIds } : skipToken
   );
@@ -318,9 +372,10 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
+          reason: orderTest?.reason,
           notes: orderTest?.notes,
-          orderType: resolveOrderType(test)
+          orderType: resolveOrderType(test),
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -330,8 +385,10 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
-          notes: orderTest?.notes
+          reason: orderTest?.reason,
+          notes: orderTest?.notes,
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
+
         };
 
         await updateOrderTest({ id: orderTestId, body: updatePayload }).unwrap();
@@ -471,7 +528,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
       ).toUpperCase();
 
       if (patientGender && testGender !== patientGender) {
-      warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
+        warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
       }
     }
 
@@ -557,9 +614,24 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
         pickTestId(item)
       );
 
+      const existingTestIds = new Set(
+        orderTestList
+          .filter(t => t.status !== DiagnosticOrderTestStatus.CANCELLED)
+          .map(t => String(t.testId))
+      );
+
+      let added: string[] = [];
+      let duplicates: string[] = [];
+
       await Promise.all(
         validTests.map(async item => {
           const testId = pickTestId(item);
+          const testName = item.name || item.testName || 'Test';
+
+          if (existingTestIds.has(String(testId))) {
+            duplicates.push(testName);
+            return;
+          }
 
           try {
             await createOrderTest({
@@ -567,13 +639,31 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
               testId,
               orderType: item.type || 'LABORATORY'
             }).unwrap();
+
+            added.push(testName);
           } catch (e) {
             console.warn('❌ Failed test:', testId, e);
           }
         })
       );
 
-      dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
+      if (added.length) {
+        dispatch(
+          notify({
+            msg: ` ${added.join(', ')} added successfully`,
+            sev: 'success'
+          })
+        );
+      }
+
+      if (duplicates.length) {
+        dispatch(
+          notify({
+            msg: `⚠ ${duplicates.join(', ')} already added`,
+            sev: 'warning'
+          })
+        );
+      }
 
       await orderTestRefetch();
 
@@ -653,7 +743,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
       await ordersRefetch();
       await orderTestRefetch();
-     
+
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
     } catch (error) {
@@ -665,12 +755,29 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
   const handleEdit = (rowData: any) => {
     setOrderTest({
       ...rowData,
-      reasonLkey: rowData.reasonLkey ?? rowData.reason
+      reason: rowData.reason ?? rowData.reason
     });
 
     if (!ReasonLovQueryResponse?.object?.length) return;
 
     setOpenDetailsModel(true);
+  };
+
+  const handleOpenRescheduleAppointments = (rowData: any) => {
+    const resourceId = Number(
+      rowData?.test?.id ?? rowData?.testId ?? rowData?.diagnosticTestId ?? rowData?.resourceId
+    );
+    if (!resourceId) {
+      dispatch(
+        notify({
+          msg: 'Missing diagnostic test id for this order test.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setSelectedOrderTestForReschedule(rowData);
+    setRescheduleAppointmentsModalOpen(true);
   };
 
   const handleRecallFavoriteTest = async (t: any) => {
@@ -702,8 +809,16 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
     }
   };
 
+
+
   // Normalization + sorting
-  const testsMap = useMemo(() => new Map((testsList ?? []).map((t: any) => [t.id, t])), [testsList]);
+    const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
+      [diagnosticTestsByIds]
+    );
+
 
   const STATUS_PRIORITY: Record<string, number> = {
     NEW: 1,
@@ -725,6 +840,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
         return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
       });
   }, [orderTestList, testsMap]);
+
 
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
@@ -826,6 +942,10 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
     setCollectSampleModal,
     testCardModal,
     setTestCardModal,
+    rescheduleAppointmentsModalOpen,
+    setRescheduleAppointmentsModalOpen,
+    selectedOrderTestForReschedule,
+    setSelectedOrderTestForReschedule,
     bulkDepartmentModalOpen,
     setBulkDepartmentModalOpen,
 
@@ -847,6 +967,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
     CloseConfirmDeleteModel,
     handleCancle,
     handleEdit,
+    handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
 
     // helpers
@@ -864,6 +985,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
     // refetch
     ordersRefetch,
-    orderTestRefetch
+    orderTestRefetch,
+    handleLoadMore
   };
 };

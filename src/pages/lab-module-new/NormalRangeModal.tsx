@@ -16,15 +16,14 @@ type Props = {
 
 const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
 
-const [getProfilesByIds, { data: profileTests, isLoading }] =
-  useGetDiagnosticTestProfilesByIdsMutation();
+  const [getProfilesByIds, { data: profileTests, isLoading }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
   useEffect(() => {
-  if (profileTestId) {
-    getProfilesByIds([profileTestId]);
-  }
-}, [profileTestId]);
-    const profileTest = profileTests?.[0];
-  console.log("Profile Test Details:", profileTest);
+    if (profileTestId) {
+      getProfilesByIds([profileTestId]);
+    }
+  }, [profileTestId]);
+  const profileTest = profileTests?.[0];
   // list of value new function
   const { data: allLovValues } =
     useGetLovAllValuesQuery({ ...initialListRequestAllValues });
@@ -101,14 +100,31 @@ const [getProfilesByIds, { data: profileTests, isLoading }] =
       title: <Translate>CRITICAL VALUE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (r.criticalValue != null) return r.criticalValue;
-        if (r.criticalValueLessThan != null)
+        if (!r.criticalValue) {
+          return ' ';
+        }
+
+        const hasLessThan =
+          r.criticalValueLessThan !== null &&
+          r.criticalValueLessThan !== undefined;
+
+        const hasMoreThan =
+          r.criticalValueMoreThan !== null &&
+          r.criticalValueMoreThan !== undefined;
+
+        if (hasLessThan && hasMoreThan) {
+          return `< ${r.criticalValueLessThan}  OR  > ${r.criticalValueMoreThan}`;
+        }
+        if (hasLessThan) {
           return `< ${r.criticalValueLessThan}`;
-        if (r.criticalValueMoreThan != null)
+        }
+        if (hasMoreThan) {
           return `> ${r.criticalValueMoreThan}`;
+        }
+
         return ' ';
       }
-    }
+    }    
   ];
 
   // Direction handling for RTL/LTR
@@ -127,6 +143,7 @@ const [getProfilesByIds, { data: profileTests, isLoading }] =
         position='center'
         size="40vw"
         bodyheight='auto'
+        hideActionBtn
         content={
           <div dir={dir}>
             <MyTable

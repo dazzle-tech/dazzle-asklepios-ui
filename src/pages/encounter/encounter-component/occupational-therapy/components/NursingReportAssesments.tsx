@@ -3,6 +3,7 @@ import MyLabel from '@/components/MyLabel';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
@@ -26,7 +27,7 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
   const { data: positionStatusLovQueryResponse } = useGetLovValuesByCodeQuery('POSITION_STATUS');
   const { data: bodyMovementLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_MOVEMENT');
   const { data: levelOfConscLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const countryEnum = useEnumOptions('CountryName');
   const { data: speechAssLovQueryResponse } = useGetLovValuesByCodeQuery('SPEECH_ASSESSMENT');
   const { data: moodLovQueryResponse } = useGetLovValuesByCodeQuery('MOOD_BEHAVIOR');
   return (
@@ -248,9 +249,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                   fieldLabel="Family Location"
                   fieldType="select"
                   fieldName="familyLocationLkey"
-                  selectData={countryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={countryEnum}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={generalAssessment}
                   setRecord={setGeneralAssessment}
                   disabled={isDisabledField}

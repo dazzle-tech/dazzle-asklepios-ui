@@ -180,6 +180,23 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 0
     }),
+    getLovValuesByKey: builder.query({
+  query: (lovKey: string) => ({
+    url: `/setup/lov-value-list/by-key?key=${lovKey}`
+  }),
+  
+  onQueryStarted: onQueryStarted,
+  keepUnusedDataFor: 0
+}),
+getLovValuesBulkByKeys: builder.query({
+  query: (lovKeys: string[]) => ({
+    url: `/setup/lov-value-list/bulk-by-keys?${lovKeys
+      .map(key => `lov_keys=${key}`)
+      .join("&")}`
+  }),
+  onQueryStarted: onQueryStarted,
+  keepUnusedDataFor: 0
+}),
     saveLovValue: builder.mutation({
       query: (lovValue: ApLovValues) => ({
         url: `/setup/save-lov-value`,
@@ -413,24 +430,7 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    getPractitioners: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/practitioner-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    savePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/save-practitioner`,
-        method: 'POST',
-        body: practitioner
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+
     getDepartments: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/department-list?${fromListRequestToQueryParams(listRequest)}`
@@ -850,29 +850,7 @@ export const setupService = createApi({
       },
     }),
 
-    removePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/remove-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
-
-    deactiveActivePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/deactive-avtice-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
+ 
     saveAgeGroup: builder.mutation({
       query: (agegroup: ApAgeGroup) => ({
         url: `/setup/save-age-group`,
@@ -1226,8 +1204,8 @@ export const setupService = createApi({
         },
         url: `/reference-data/get-lov-defult-value`
       }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      // onQueryStarted: onQueryStarted,
+      // keepUnusedDataFor: 5
 
     }),   
      saveRoom: builder.mutation({
@@ -1511,10 +1489,6 @@ export const {
   useGetLovValuesByCodeAndParentQuery,
   useGetMetadataQuery,
   useGetMetadataFieldsQuery,
-  useGetPractitionersQuery,
-  useSavePractitionerMutation,
-  useRemovePractitionerMutation,
-  useDeactiveActivePractitionerMutation,
   useGetDepartmentsQuery,
   useSaveDepartmentMutation,
   useGetAllergensQuery,
@@ -1632,5 +1606,8 @@ export const {
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
   useLazyGetCandidatesByDepartmentKeyQuery,
- useGetIcdByIdQuery
+ useGetIcdByIdQuery,
+ useGetLovValuesByKeyQuery,
+ useGetLovValuesBulkByKeysQuery,
+ useLazyGetLovValuesBulkByKeysQuery,
 } = setupService;

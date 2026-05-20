@@ -1,67 +1,158 @@
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useState } from 'react';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
+import MyInput from '@/components/MyInput';
+import CancellationModal from '@/components/CancellationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import {
+  useCancelSurgicalHistoryMutation,
+  useGetSurgicalHistoryQuery
+} from '@/services/patients/surgicalHistoryService';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import AddSurgicalHistory from './AddSurgicalHistory';
 
-import {
-  useDeleteSurgicalHistoryMutation,
-  useGetSurgicalHistoryQuery
-} from '@/services/patients/surgicalHistoryService';
+import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
-import { useAppDispatch } from '@/hooks';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
-
-import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import '../styles.less';
+import Translate from '@/components/Translate';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
 const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
-  const dispatch = useAppDispatch();
-
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
 
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
 
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
+
+  const dispatch = useAppDispatch();
+
+  const [showCancelled, setShowCancelled] = useState(false);
+
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({
+    id: null,
+    status: '',
+    cancellationReason: ''
+  });
 
   const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
-  const { data, isFetching } = useGetSurgicalHistoryQuery(
-    { patientId, page, size, sort: 'id,desc' },
-    { skip: !isValidPatientId }
-  );
 
-  const [deleteSurgicalHistory] = useDeleteSurgicalHistoryMutation();
+
+const { data, isFetching } = useGetSurgicalHistoryQuery(
+  {
+    patientId,
+    page,
+    size,
+    sort: 'id,desc',
+    showCancelled
+  },
+  { skip: !isValidPatientId }
+);
+
+
+const [cancelSurgicalHistory] = useCancelSurgicalHistoryMutation();
+
+
+const filteredData = data?.data ?? [];
+
 
   const handleEdit = (row: any) => {
     setSelectedRow(row);
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
+  const openCancelDialog = (row: any) => {
+  setCancelObject({
+    id: row.id,
+    status: row.status || 'ACTIVE',
+    cancellationReason: ''
+  });
 
+  setOpenCancelModal(true);
+};
+
+  const handleCancel = async () => {
     try {
-      await deleteSurgicalHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+      await cancelSurgicalHistory({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Surgical History cancelled successfully.',
+          sev: 'success'
+        })
+      );
+
+      setOpenCancelModal(false);
+
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Surgical History.';
+
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
     }
   };
+
+const UserFullNameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+    skip: !login
+  });
+
+  if (!login) {
+    return <span>-</span>;
+  }
+
+  return <span>{fullName || login}</span>;
+};
+
+const UserDateCell = ({
+  login,
+  date
+}: {
+  login?: string | null;
+  date?: string | null;
+}) => {
+  if (!login && !date) {
+    return <span>-</span>;
+  }
+
+  return (
+    <>
+      <UserFullNameCell login={login} />
+      <br />
+      <span className="date-table-style">
+        {date ? formatDateWithoutSeconds(date) : ''}
+      </span>
+    </>
+  );
+};
 
   const columns = [
     { key: 'surgery', title: 'SURGERY', flexGrow: 3 },
@@ -92,6 +183,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
       title: 'COMPLICATIONS',
       flexGrow: 3,
       render: (row: any) => {
+        console.log("rowwwwws:",row);
         const value = conjureValueBasedOnKeyFromList(
           complicationsLov?.object ?? [],
           row?.complications,
@@ -102,6 +194,79 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
       }
     },
     {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 3,
+      render: (row: any) => {
+        const status = row?.status ?? 'ACTIVE';
+
+        return (
+          <MyBadgeStatus
+            contant={formatEnumString(status)}
+            color={
+              status === 'CANCELLED'
+                ? '#dc3545'
+                : status === 'ACTIVE'
+                  ? '#28a745'
+                  : '#6c757d'
+            }
+          />
+        );
+      }
+    },
+    {
+      key: 'createdDate',
+      title: <Translate>CREATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
+      )
+    },
+    {
+      key: 'lastModifiedDate',
+      title: <Translate>UPDATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
+    },
+    {
+  key: 'cancelledDate',
+  title: <Translate>CANCELLED AT / BY</Translate>,
+  expandable: true,
+  render: (row: any) =>
+    row?.status === 'CANCELLED' ? (
+      <UserDateCell
+        login={row?.cancelledBy}
+        date={row?.cancelledDate}
+      />
+    ) : (
+      <span>-</span>
+    )
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>CANCELLATION REASON</Translate>,
+      expandable: true,
+      flexGrow: 4,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' && row?.cancellationReason ? (
+          <ExpandableText
+            text={row.cancellationReason}
+            lines={3}
+            maxChars={30}
+          />
+        ) : (
+          '-'
+        )
+    },
+    {
       key: 'hasImplantsOrDevices',
       title: 'IMPLANTS / DEVICES',
       flexGrow: 3,
@@ -109,30 +274,33 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     },
     ...(!toShowData
       ? [
-          {
-            key: 'actions',
-            title: '',
-            flexGrow: 1,
-            render: row => (
-              <div className="flex-gap-12">
-                <MdModeEdit
-                  size={22}
-                  fill="var(--primary-gray)"
-                  className="pointer"
-                  onClick={() => handleEdit(row)}
-                />
-                <MdDelete
-                  size={22}
-                  className="pointer"
-                  fill="var(--primary-pink)"
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
-              </div>
-            )
-          }
+        {
+          key: 'actions',
+          title: '',
+          flexGrow: 1,
+          render: (row: any) => (
+            <div className="flex-gap-12">
+              {row?.status !== 'CANCELLED' && (
+                <>
+                  <MdModeEdit
+                    size={22}
+                    fill="var(--primary-gray)"
+                    className="pointer"
+                    onClick={() => handleEdit(row)}
+                  />
+
+                  <MdDelete
+                    size={22}
+                    fill="var(--rs-red-500, #f44336)"
+                    className="pointer"
+                    title="Cancel"
+                    onClick={() => openCancelDialog(row)}
+                  />
+                </>
+              )}
+            </div>
+          )
+        }
         ]
       : [])
   ];
@@ -143,65 +311,96 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     setPage(0);
   };
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="medical-container-div" dir={dir}>
-      <SectionContainer
-        title="Surgical History"
-        action={
-          !toShowData && (
-            <MyButton
-              disabled={edit}
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setSelectedRow(null);
-                setOpen(true);
-              }}
-            >
-              Add
-            </MyButton>
-          )
-        }
-        content={
-          <>
-            <MyTable
-              height={450}
-              data={data?.data ?? []}
-              loading={isFetching}
-              columns={columns}
-              page={page}
-              rowsPerPage={size}
-              totalCount={data?.totalCount ?? 0}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-            />
+    <div className="medical-main-container" dir={dir}>
+      <div className="medical-container-div" dir={dir}>
+        <SectionContainer
+          title="Surgical History"
+          action={
+            !toShowData && (
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  setSelectedRow(null);
+                  setOpen(true);
+                }}
+              >
+                Add
+              </MyButton>
+            )
+          }
+          content={
+            <>
 
-            <AddSurgicalHistory
-              open={open}
-              setOpen={() => {
-                setOpen(false);
-                setSelectedRow(null);
-              }}
-              initialData={selectedRow}
-              patient={patient}
-            />
+            {!toShowData && (
+              <div className="margin-bottom-10">
+                <MyInput
+                  fieldType="check"
+                  fieldLabel="Show Cancelled"
+                  showLabel={false}
+                  fieldName="showCancelled"
+                  record={{ showCancelled }}
+                  setRecord={(record: any) => {
+                    setShowCancelled(record.showCancelled);
+                  }}
+                />
+              </div>
+            )}
+              <MyTable
+                height={450}
+                data={filteredData}
+                totalCount={data?.totalCount ?? 0}
+                loading={isFetching}
+                columns={columns}
+                page={page}
+                rowsPerPage={size}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+              />
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Surgical History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
-          </>
-        }
-      />
+              <CancellationModal
+                open={openCancelModal}
+                setOpen={() => {
+                  setOpenCancelModal(false);
+                  setCancelObject({
+                    id: null,
+                    status: '',
+                    cancellationReason: ''
+                  });
+                }}
+                handleCancle={handleCancel}
+                object={cancelObject}
+                setObject={setCancelObject}
+                title="Surgical History"
+                fieldName="cancellationReason"
+                fieldLabel="Cancellation Reason"
+                statusField="status"
+                statusKey="CANCELLED"
+                withReason
+                required
+                size="33vw"
+              />
+
+              <AddSurgicalHistory
+                open={open}
+                setOpen={() => {
+                  setOpen(false);
+                  setSelectedRow(null);
+                }}
+                initialData={selectedRow}
+                patient={patient}
+              />
+            </>
+          }
+        />
+      </div>
     </div>
   );
 };
