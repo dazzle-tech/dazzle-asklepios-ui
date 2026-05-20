@@ -94,8 +94,6 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
-  'patient.department.date.duplicate':
-    'This patient already has an encounter for this department on this date.',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
   'db.constraint': 'Database constraint violated while saving patient encounter.'
