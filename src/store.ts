@@ -200,6 +200,7 @@ import { radiologyReportService } from './services/reports/radiologyReportServic
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
+import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
@@ -271,6 +272,7 @@ export const store = configureStore({
     [setupService.reducerPath]: setupService.reducer,
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
+    [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -729,6 +731,7 @@ export const store = configureStore({
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         PolicyDefinitionService.middleware,
+        SkillDefinitionService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,

@@ -214,6 +214,7 @@ import Enums from './pages/setup/Enums';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import PayerSetup from './pages/setup/payer-setup';
 import PolicyDefinitions from './pages/setup/policy-definition';
+import SkillDefinitions from './pages/setup/skill-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
@@ -773,6 +774,8 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
+              <Route path="skill-definition" element={<SkillDefinitions />} />
+
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
