@@ -25,7 +25,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   Button,
-  DatePicker,
   Divider,
   Drawer,
   Form,
@@ -1575,6 +1574,29 @@ const FollowupAppointmentModal = ({
                                 disabled={true}
                                 searchable={false}
                                 required
+                              />
+                            </div>
+                            <div className="input-wrapper" style={{ flex: 3 }}>
+                              <MyInput
+                                width={'15vw'}
+                                column
+                                fieldLabel="Preferred date"
+                                fieldType="date"
+                                fieldName="preferredDate"
+                                record={{ preferredDate: selectedDate ? selectedDate.toISOString().slice(0, 10) : null }}
+                                setRecord={(newRecord: any) => {
+                                  const dateValue = newRecord?.preferredDate;
+                                  if (!dateValue) {
+                                    setSelectedDate(null);
+                                    return;
+                                  }
+                                  const parsed = new Date(dateValue);
+                                  setSelectedDate(Number.isFinite(parsed.getTime()) ? parsed : null);
+                                }}
+                                disabled={showOnly}
+                                placeholder="Select preferred date"
+                                cleanable={false}
+                                disablePastDates
                               />
                             </div>
                           </div>

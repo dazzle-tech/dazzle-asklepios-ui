@@ -32,8 +32,11 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import { useLazyGetPatientInformationPdfQuery, useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
-import { FaCodeMerge } from 'react-icons/fa6';
+import {
+  useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -79,6 +82,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
   const {
@@ -155,6 +159,53 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setPrintingType(null);
     }
   };
+
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg =
+        response?.data?.message ??
+        response?.data?.error ??
+        response?.message ??
+        response?.error;
+
+      if (typeof msg === 'string' && msg.trim()) {
+        return msg.replace(/^error\./i, '').trim();
+      }
+
+      if (response?.data && typeof response?.data === 'object') {
+        const detail = response.data.detail ?? response.data.description;
+        if (typeof detail === 'string' && detail.trim()) {
+          return detail.trim();
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  };
+
+  const handleSendPasswordEmail = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      await sendPatientPasswordEmail(localPatient.id).unwrap();
+      dispatch(
+        notify({
+          msg: 'Password email sent successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      const errorMsg = extractErrorMessage(error);
+      dispatch(
+        notify({
+          msg: errorMsg || 'Failed to send password email',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -484,6 +535,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                   </Whisper>
                 )}
+
                 {localPatient.patientStatus === 'MERGED' && (
                   <Whisper
                     placement="bottom"
@@ -500,6 +552,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                   </Whisper>
                 )}
+
               </div>
             </AvatarGroup>
 
@@ -526,10 +579,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </MyButton> */}
 
               <MyButton
-                  disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => {
                   // setEligibilityChecked(true);
-                  // navigate(`/patient-profile/${localPatient?.id}`);
+                  // navigate(/patient-profile/${localPatient?.id});
                 }}
               >
                 <Translate>Eligibility Check</Translate>
@@ -553,6 +606,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
               <MyButton
                 appearance="ghost"
+                disabled={!localPatient?.id || isSendingPasswordEmail}
+                onClick={handleSendPasswordEmail}
+              >
+                <Translate>
+                  {isSendingPasswordEmail ? 'Sending Password Email...' : 'Send Password Email'}
+                </Translate>
+              </MyButton>
+
+              <MyButton
+                appearance="ghost"
                 onClick={() => setQuickPatientModalOpen(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
               >
@@ -562,7 +625,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
                 <Translate>Quick Appointment</Translate>
               </MyButton>
-
               <AdministrativeWarningsModal
                 localPatient={localPatient}
                 validationResult={validationResult}

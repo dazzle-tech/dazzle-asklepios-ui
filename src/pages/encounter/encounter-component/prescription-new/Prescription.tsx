@@ -20,7 +20,7 @@ import {
   useGetPatientPrescriptionMedicationsQuery,
   useDeletePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   conjureValueBasedOnKeyFromList,
@@ -744,6 +744,30 @@ const Prescription = (props: Props) => {
     setOpenToAdd(true);
   };
 
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string;
+    date?: string;
+  }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+      skip: !login
+    });
+
+    if (!login && !date) return null;
+
+    return (
+      <>
+        <span>{fullName || login || ''}</span>
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : ''}
+        </span>
+      </>
+    );
+  };
+
   // Table columns
   const tableColumns: any[] = [
     {
@@ -916,11 +940,10 @@ const Prescription = (props: Props) => {
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdDate)}</span>
-        </>
+        <UserDateCell
+          login={rowData.createdBy}
+          date={rowData.createdDate}
+        />
       )
     },
     {
@@ -928,13 +951,10 @@ const Prescription = (props: Props) => {
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.lastModifiedBy}</span>
-          <br />
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.lastModifiedBy}
+          date={rowData.lastModifiedDate}
+        />
       )
     }
   ];

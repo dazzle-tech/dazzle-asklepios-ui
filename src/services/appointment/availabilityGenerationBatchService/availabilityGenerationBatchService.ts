@@ -67,6 +67,29 @@ export const availabilityGenerationBatchService = createApi({
       providesTags: ['AvailabilityGenerationBatch']
     }),
 
+    getAvailabilityGenerationBatchesByTemplateExcludingBatch: builder.query<
+      PagedResult<AvailabilityGenerationBatch>,
+      { templateId: Id; batchId: Id } & PagedParams
+    >({
+      query: ({ templateId, batchId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/availability-generation-batches/template/${templateId}/exclude/${batchId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: AvailabilityGenerationBatch[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AvailabilityGenerationBatch']
+    }),
+
     getAvailabilityGenerationBatchById: builder.query<AvailabilityGenerationBatch, Id>({
       query: id => ({
         url: `/api/patient/availability-generation-batches/${id}`,
@@ -84,6 +107,8 @@ export const {
   useApplyAvailabilityTemplateMutation,
   useGetAvailabilityGenerationBatchesByTemplateQuery,
   useLazyGetAvailabilityGenerationBatchesByTemplateQuery,
+  useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
+  useLazyGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
   useGetAvailabilityGenerationBatchByIdQuery,
   useLazyGetAvailabilityGenerationBatchByIdQuery
 } = availabilityGenerationBatchService;

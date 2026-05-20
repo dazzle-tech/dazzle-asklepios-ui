@@ -228,19 +228,15 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
           <div dir={dir}>
             <Form fluid>
               <MyInput
-                fieldType="select"
+                fieldType="text"
                 fieldName="facilityName"
                 fieldLabel="External Laboratory"
                 record={externalTestState}
                 setRecord={setExternalTestState}
-                selectData={facilities}
-                selectDataLabel="name"
-                selectDataValue="name"
-                searchable
-                loading={isFacilitiesFetching}
                 required
                 width="100%"
                 disabled={isAlreadyExternal}
+                placeholder="Enter external laboratory name"
               />
 
               <MyInput

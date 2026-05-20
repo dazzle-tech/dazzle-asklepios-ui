@@ -195,6 +195,24 @@
   border-radius: 12px 12px 0 0;
 }
 
+.appointments-slot-summary-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appointments-slot-summary-bar-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.appointments-slot-summary-actions {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
 .appointments-slot-summary-scope {
   display: flex;
   flex-wrap: wrap;
@@ -500,6 +518,55 @@
   cursor: pointer;
   user-select: none;
   font-weight: 600;
+}
+
+.schedule-fab-root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.schedule-fab-root .schedule-fab-main-toggle {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+.schedule-fab-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.schedule-fab-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border: 2px solid #f27a24;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  color: #c2410c;
+  padding: 0;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.schedule-fab-secondary-btn:hover {
+  background: #fff7ed;
 }
 
 .appointments-filters-wrap .rs-divider-horizontal {

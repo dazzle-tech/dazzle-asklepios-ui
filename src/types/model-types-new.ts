@@ -507,6 +507,26 @@ export interface AppointmentFromTemplateSearchFilterDTO {
   patientId?: number | null;
 }
 
+/** GET `/appointments/bulk-reschedule/preview/{batchId}` — BulkReschedulePreviewVM */
+export interface BulkReschedulePreviewVM {
+  affectedAppointmentCount?: number | null;
+}
+
+/** POST `/appointments/bulk-reschedule` — BulkAppointmentRescheduleDTO */
+export interface BulkAppointmentRescheduleDTO {
+  originalAvailabilityGenerationBatchId: number;
+  replacementAvailabilityGenerationBatchId: number;
+}
+
+/** POST `/appointments/bulk-reschedule` — BulkAppointmentRescheduleResponseVM */
+export interface BulkAppointmentRescheduleResponseVM {
+  success: boolean;
+  /** When mapping fails, backend may return ids that could not be matched to replacement slots */
+  unmatchedAppointmentIds?: number[] | null;
+  unmatchedOldAppointmentIds?: number[] | null;
+  message?: string | null;
+}
+
 export type AppointmentRequestStatus = string;
 
 export interface AppointmentRequestResponseVM {
@@ -542,6 +562,7 @@ export interface AppointmentRequestResponseVM {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestCreateDTO {
@@ -556,6 +577,7 @@ export interface AppointmentRequestCreateDTO {
   priority: EncounterPriority;
   reason?: string | null;
   note?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestUpdateDTO {
@@ -4556,4 +4578,24 @@ export interface GlasgowComaScaleAssessment {
 
   totalScore?: number | null;
   scoreInterpretation?: string | null;
+}
+export interface PatientProblem {
+  id?: number;
+  patient?: any | null;
+
+  condition: string | null;
+  dateOfDiagnosis?: string | Date | null;
+  conditionStatus: string | null;
+  type: string | null;
+  dateOfResolution?: string | Date | null;
+  byPatient: boolean | null;
+  sourceOfInformation?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
 }
