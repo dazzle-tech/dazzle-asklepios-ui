@@ -11,14 +11,18 @@ type Props = {
 };
 
 const minutesOfLocalDay = (d: Date) => d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+const normalizeLocalDayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+const normalizeLocalDayEnd = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
 const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment }: Props) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dateFrom, setDateFrom] = useState<Date>(new Date());
+  const [dateTo, setDateTo] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<'agenda'>('agenda');
   const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
   const [slots, setSlots] = useState<any[]>([]);
   const [timeFrom, setTimeFrom] = useState<Date | null>(null);
   const [timeTo, setTimeTo] = useState<Date | null>(null);
+  const dateRangeInvalid = dateFrom != null && dateTo != null && dateTo < dateFrom;
 
   const facilityId = useMemo(
     () => request?.facilityId ?? request?.facility_id ?? request?.facilityKey ?? request?.facility_key ?? null,
@@ -38,7 +42,9 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
     if (!open) return;
     const preferred = request?.preferredDate ?? request?.preferred_date ?? null;
     const next = preferred ? new Date(preferred) : new Date();
-    setSelectedDate(Number.isNaN(next.getTime()) ? new Date() : next);
+    const normalized = Number.isNaN(next.getTime()) ? new Date() : next;
+    setDateFrom(normalized);
+    setDateTo(normalized);
   }, [open, request]);
 
   useEffect(() => {
@@ -49,20 +55,18 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
     }
     setTimeFrom(null);
     setTimeTo(null);
-  }, [open, selectedDate]);
+  }, [open, dateFrom, dateTo]);
 
   useEffect(() => {
-    if (!open || !facilityId || !departmentId || !selectedDate) {
+    if (!open || !facilityId || !departmentId || !dateFrom || !dateTo || dateRangeInvalid) {
       setSlots([]);
       return;
     }
 
     const load = async () => {
       try {
-        const isSameLocalDay = (a: Date, b: Date) =>
-          a.getFullYear() === b.getFullYear() &&
-          a.getMonth() === b.getMonth() &&
-          a.getDate() === b.getDate();
+        const rangeStart = normalizeLocalDayStart(dateFrom);
+        const rangeEnd = normalizeLocalDayEnd(dateTo);
 
         const res = await searchAppointments({
           filter: {
@@ -89,7 +93,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
               a?.appointmentStart ?? a?.appointment_start ?? a?.startDatetime ?? a?.start_datetime;
             const d = startRaw ? new Date(startRaw) : null;
             if (!d || Number.isNaN(d.getTime())) return false;
-            return isSameLocalDay(d, selectedDate);
+            return d >= rangeStart && d <= rangeEnd;
           })
           .sort((x: any, y: any) => {
             const xs = new Date(x?.appointmentStart ?? x?.startDatetime ?? 0).getTime();
@@ -104,7 +108,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
     };
 
     void load();
-  }, [open, facilityId, departmentId, selectedDate, searchAppointments]);
+  }, [open, facilityId, departmentId, dateFrom, dateTo, dateRangeInvalid, searchAppointments]);
 
   const filteredSlots = useMemo(() => {
     if (!timeFrom && !timeTo) return slots;
@@ -137,19 +141,47 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
       actionButtonLabel=""
       content={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <ButtonGroup size="sm">
               <Button appearance={currentView === 'agenda' ? 'primary' : 'subtle'} onClick={() => setCurrentView('agenda')}>
                 Agenda
               </Button>
             </ButtonGroup>
-            <DatePicker
-              oneTap
-              value={selectedDate}
-              onChange={d => setSelectedDate(d ?? new Date())}
-              format="yyyy-MM-dd"
-              style={{ width: 180 }}
-            />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <DatePicker
+                  oneTap
+                  value={dateFrom}
+                  onChange={d => setDateFrom(d ?? new Date())}
+                  format="yyyy-MM-dd"
+                  placeholder="From"
+                  style={{
+                    width: 180,
+                    borderColor: dateRangeInvalid ? '#ef4444' : undefined
+                  }}
+                />
+                <Text size="sm" style={{ color: '#94a3b8' }}>
+                  to
+                </Text>
+                <DatePicker
+                  oneTap
+                  value={dateTo}
+                  onChange={d => setDateTo(d ?? new Date())}
+                  format="yyyy-MM-dd"
+                  placeholder="To"
+                  style={{
+                    width: 180,
+                    borderColor: dateRangeInvalid ? '#ef4444' : undefined
+                  }}
+                />
+              </div>
+              {dateRangeInvalid ? (
+                <Text size="sm" style={{ color: '#dc2626', maxWidth: 368, textAlign: 'right' }}>
+                  The To date must be the same as or later than the From date.
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <Stack spacing={10} alignItems="center" wrap style={{ padding: '4px 0' }}>
@@ -165,7 +197,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
               style={{ width: 110 }}
             />
             <Text size="sm" style={{ color: '#94a3b8' }}>
-              –
+              -
             </Text>
             <TimePicker
               format="HH:mm"
@@ -184,12 +216,8 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
             <div style={{ maxHeight: '58vh', overflowY: 'auto', border: '1px solid #dbe2ea', borderRadius: 8 }}>
               {isFetching ? (
                 <div style={{ fontSize: 13, color: '#64748b', padding: 12 }}>Loading free appointments...</div>
-              ) : slots.length === 0 ? (
-                <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>No NEW appointments for selected date.</div>
-              ) : filteredSlots.length === 0 ? (
-                <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>
-                  No slots match the selected time range. Try widening From / To or clear the time filter.
-                </div>
+              ) : slots.length === 0 && !dateRangeInvalid ? (
+                <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>No NEW appointments for selected date range.</div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
@@ -204,7 +232,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSlots.map((slot: any) => {
+                    {dateRangeInvalid ? null : filteredSlots.map((slot: any) => {
                       const startRaw =
                         slot?.appointmentStart ?? slot?.appointment_start ?? slot?.startDatetime ?? slot?.start_datetime;
                       const endRaw =
@@ -259,16 +287,28 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
             <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, padding: 8 }}>
               <Stack justifyContent="space-between" alignItems="center" style={{ marginBottom: 6 }}>
                 <Text style={{ fontWeight: 600 }}>
-                  {selectedDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  {dateFrom.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </Text>
-                <Button size="xs" appearance="subtle" onClick={() => setSelectedDate(new Date())}>
+                <Button
+                  size="xs"
+                  appearance="subtle"
+                  onClick={() => {
+                    const today = new Date();
+                    setDateFrom(today);
+                    setDateTo(today);
+                  }}
+                >
                   Today
                 </Button>
               </Stack>
               <RsCalendar
                 compact
-                value={selectedDate}
-                onChange={d => setSelectedDate(d)}
+                value={dateFrom}
+                onChange={d => {
+                  if (!d) return;
+                  setDateFrom(d);
+                  setDateTo(d);
+                }}
                 style={{ width: '100%', height: 260, fontSize: 12 }}
               />
             </div>
@@ -280,4 +320,3 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
 };
 
 export default ApproveRequestAgendaModal;
-
