@@ -56,11 +56,6 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
     selection while the modal is still open. */
   const userChangedWorkingDaysRef = useRef(false);
 
-  /* Becomes true when the user picks a new department (in create mode).
-    The services auto-fill effect guards on this so it only fires after
-    a real department change, not on initial modal open. */
-  const hasChangedDepartmentRef = useRef(false);
-
   /* Tracks whether the modal is already open. Used by the merged [open, template]
     effect to distinguish "modal just opened" from "template prop changed while
     the modal was already open". */
@@ -199,7 +194,6 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
     // the flags would stay true and block the auto-fill.
     userChangedServicesRef.current = false;
     userChangedWorkingDaysRef.current = false;
-    hasChangedDepartmentRef.current = true;
     // Clear services that were relevant to the previous department.
     setRecord((prev: any) => ({ ...prev, ...next, allowedServices: [], defaultServiceId: null }));
   };
@@ -267,7 +261,6 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
     if (justOpened) {
       userChangedServicesRef.current = false;
       userChangedWorkingDaysRef.current = false;
-      hasChangedDepartmentRef.current = false;
     }
 
     if (isEditMode) {
@@ -321,37 +314,22 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
   }, [selectedDepartmentFullObject]);
 
   // Auto-fills working days using the dept → facility → org hierarchy (create mode only).
-  // Runs whenever any of its data sources change so it reacts to:
-  //   • the user picking a different department (record.departmentId changes)
-  //   • the department full object arriving async (selectedDepartmentFullObject changes)
-  //   • facility or org data loading for the first time
-  //
-  // Guards:
-  //   • !open          → don't run when modal is closed
-  //   • isEditMode     → don't overwrite an existing template's saved days
-  //   • userChangedWorkingDaysRef → don't overwrite what the user manually picked
-  //   • !dayOptions    → enum not loaded yet, normalizeWorkingDays would return nothing useful
-  //   • !workingDays   → getWorkingDaysFromHierarchy returned null (dept data still loading)
+  // Fires when any data source changes: dept data arrives, facility loads, org loads.
+  // No need to list record.departmentId or facilityListResponse separately —
+  // selectedDepartmentFullObject already reacts to departmentId, and
+  // selectedFacilityFullObject covers what facilityListResponse would provide.
   useEffect(() => {
     if (!open || isEditMode || userChangedWorkingDaysRef.current || !dayOptions?.length) return;
     const workingDays = getWorkingDaysFromHierarchy();
     if (!workingDays) return;
     setRecord((prev: any) => ({ ...prev, workingDays }));
-  }, [open, selectedFacilityFullObject, facilityListResponse, selectedDepartmentFullObject, organizationDefinitions, record?.departmentId]);
+  }, [open, selectedDepartmentFullObject, selectedFacilityFullObject, organizationDefinitions]);
 
-  // Auto-fills allowed services from departmentServices after the user picks a department.
-  // Runs on [departmentServices] so it fires as soon as the API response arrives.
-  //
-  // Guards:
-  //   • !open                      → don't run when modal is closed
-  //   • isEditMode                 → don't overwrite saved services
-  //   • userChangedServicesRef     → don't overwrite what the user manually toggled
-  //   • !record.departmentId       → no department selected yet
-  //   • !hasChangedDepartmentRef   → only apply after a real department change, not on
-  //                                  initial open (where the dept services from the
-  //                                  previous session might still be cached in RTK)
+  // Auto-fills allowed services once the department's services arrive.
+  // In create mode, record.departmentId starts as null (set by open effect),
+  // so this can't fire on initial open — it only fires after the user picks a dept.
   useEffect(() => {
-    if (!open || isEditMode || userChangedServicesRef.current || !record?.departmentId || !hasChangedDepartmentRef.current) return;
+    if (!open || isEditMode || userChangedServicesRef.current || !record?.departmentId) return;
     const services = Array.isArray(departmentServices)
       ? departmentServices
           .map((s: any) => s?.service)

@@ -53,11 +53,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState<AvailabilityTemplateCreateDTO | AvailabilityTemplateUpdateDTO>({ ...newAvailabilityTemplateCreateDTO });
 
-  /* Becomes true when the modal opens and stays true until the resourceId effect
-     resolves its async fetch. Used to know whether a working-days overwrite came
-     from the initial load (should use editRecord days) or from the user picking
-     a new resource (should use resource/parent days). */
-  const justOpenedRef = useRef(false);
+  // Becomes true when the user actively picks a resource (or changes templateType).
+  // False on every fresh open — so the resourceId effect knows to use the saved
+  // editRecord days instead of the resource's current days on initial load.
+  const userChangedResourceRef = useRef(false);
 
   // Becomes true when the user manually ticks/unticks an allowed service.
   // Prevents the services auto-fill effects from overwriting user selections.
@@ -327,54 +326,39 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
     loadRooms({ page: 0 });
   }, [record?.departmentId]);
 
-  // Primary open/reset effect.
-  // Runs when the modal opens or when the key props change while it's open.
-  // Sets justOpenedRef = true so the resourceId effect (which fires asynchronously)
-  // knows it's still the initial load and should not overwrite editRecord's days.
+  // Open/reset effect — runs on every open and whenever key props change while open.
+  // Resets all intent flags so auto-fill logic starts fresh each session.
+  // Also applies working days directly so the form is correct before the
+  // async resourceId fetch resolves.
   useEffect(() => {
     if (!open) return;
-    justOpenedRef.current = true;
+    userChangedResourceRef.current = false;
     allowedServicesTouchedRef.current = false;
     workingDaysTouchedRef.current = false;
 
     if (editRecord?.id) {
-      // Edit mode: hydrate record from the existing child template.
-      // getEditTimingValues normalizes field name differences between
-      // the API response shape and the DTO shape.
       setRecord({
         ...editRecord,
         resourceId: editRecord?.resourceId,
         allowedServices: normalizeAllowedServices(editRecord?.allowedServices),
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
-        workingDays: editRecordWorkingDays,
         ...getEditTimingValues(editRecord),
       });
+      applyWorkingDays(editRecord?.workingDays ?? []);
       return;
     }
 
-    // Create mode: start from blank DTO, inherit context from the parent template.
-    // Working days default to parent template's days; the resourceId effect may
-    // override them once the user picks a PRACTITIONER resource.
+    // Create mode: inherit context from the parent template.
     setRecord({
       ...newAvailabilityTemplateCreateDTO,
       parentTemplateId: mainTemplate?.id,
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId,
-      workingDays: mainTemplate?.workingDays ?? [],
       parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
     });
     applyWorkingDays(mainTemplate?.workingDays ?? []);
   }, [open, editRecord, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (editRecord?.id) {
-      applyWorkingDays(editRecord?.workingDays ?? []);
-    } else {
-      applyWorkingDays(mainTemplate?.workingDays ?? []);
-    }
-  }, [open]);
 
   useEffect(() => {
     allowedServicesTouchedRef.current = false;
@@ -435,6 +419,11 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
   //
   // isEditingRecord guard in applyResourceDefaults: if we're editing, the timing
   // fields should come from the saved editRecord, not the resource's current defaults.
+  //
+  // cancelled flag: prevents a stale fetch (started in a previous effect run) from
+  // writing state after the effect has re-run or the modal has closed/reopened.
+  // wasJustOpened is captured synchronously so it reflects the state at the moment
+  // this effect runs, not whenever the async callback eventually resolves.
   useEffect(() => {
     if (!record?.resourceId) {
       // Resource was cleared — reset timing to parent defaults in create mode.
@@ -452,6 +441,12 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
       return;
     }
 
+    // Capture synchronously — the open effect already ran and reset
+    // userChangedResourceRef.current = false, so this reads false on initial open
+    // and true whenever the user actively picked a resource.
+    const userChangedResource = userChangedResourceRef.current;
+    let cancelled = false;
+
     const applyResourceDefaults = (res: any) => {
       if (!isEditingRecord) {
         setRecord(prev => ({
@@ -462,41 +457,45 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
           parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
         }));
       }
-      // Once the async fetch resolves, the "just opened" window is over —
-      // future resourceId changes should be treated as user-initiated picks.
-      justOpenedRef.current = false;
     };
 
     if (record?.templateType === 'PRACTITIONER') {
       getPractitioner(record.resourceId)
         .unwrap()
         .then(res => {
+          if (cancelled) return;
+
           const practitionerDays = res?.workingDays ?? [];
           const hasWorkingDays = practitionerDays.some((d: any) => d?.isWorking === true);
           // Fallback: if practitioner has no working days, use parent template's days.
           const finalWorkingDays = hasWorkingDays ? practitionerDays : (mainTemplate?.workingDays ?? []);
 
-          if (isEditingRecord && justOpenedRef.current) {
-            // Initial load of edit mode: preserve the already-saved days, not the
-            // practitioner's current days (they may have changed since saving).
+          if (isEditingRecord && !userChangedResource) {
+            // Initial open in edit mode: the open effect already applied the saved days,
+            // don't overwrite them with the practitioner's current days.
             applyWorkingDays(editRecordWorkingDays);
           } else {
+            // User actively picked this practitioner → use their days.
             applyWorkingDays(finalWorkingDays);
           }
 
           applyResourceDefaults(res);
-          if (!isEditingRecord) {
+
+          // Update defaultPractitionerId only when user actively changed the resource,
+          // not on initial open of an existing record (the saved value is already correct).
+          if (!isEditingRecord || userChangedResource) {
             setRecord(prev => ({ ...prev, defaultPractitionerId: res?.id }));
           }
         })
         .catch(() => {
+          if (cancelled) return;
           if (!isEditingRecord) applyWorkingDays(mainTemplate?.workingDays ?? []);
-          justOpenedRef.current = false;
         });
     } else if (record?.templateType === 'SERVICE') {
       getService(record.resourceId)
         .unwrap()
         .then(res => {
+          if (cancelled) return;
           applyResourceDefaults(res);
           if (!isEditingRecord) applyWorkingDays(mainTemplate?.workingDays ?? []);
         });
@@ -504,6 +503,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
       getRoom({ id: record.resourceId })
         .unwrap()
         .then(res => {
+          if (cancelled) return;
           applyResourceDefaults(res);
           if (!isEditingRecord) applyWorkingDays(mainTemplate?.workingDays ?? []);
         });
@@ -511,6 +511,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
       getDiagnosticTest(String(record.resourceId))
         .unwrap()
         .then(res => {
+          if (cancelled) return;
           if (!isEditingRecord) {
             setRecord(prev => ({
               ...prev,
@@ -521,16 +522,21 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
             }));
           }
           if (!isEditingRecord) applyWorkingDays(mainTemplate?.workingDays ?? []);
-          justOpenedRef.current = false;
         });
     } else if (record?.templateType === 'CATALOG') {
       getCatalog(record.resourceId)
         .unwrap()
         .then(res => {
+          if (cancelled) return;
           applyResourceDefaults(res);
           if (!isEditingRecord) applyWorkingDays(mainTemplate?.workingDays ?? []);
         });
     }
+
+    // Cleanup: mark any in-flight fetch from this run as stale.
+    // Fires when deps change (user picks a new resource) or when component re-renders
+    // with different deps — prevents the old fetch's callback from writing state.
+    return () => { cancelled = true; };
   }, [record?.resourceId, record?.templateType, isEditingRecord, editRecordWorkingDays]);
 
   // ─── Resource Select Renderer ─────────────────────────────────────────────────
@@ -612,7 +618,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
           selectDataLabel="label"
           selectDataValue="value"
           record={record}
-          setRecord={setRecord}
+          setRecord={handleResourceChange}
           loading={config.loading}
           hasMore={config.hasMore}
           onFetchMore={config.onLoadMore}
@@ -622,6 +628,15 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
         />
       </Col>
     );
+  };
+
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+  // Called when the user picks a resource from the dropdown.
+  // Marks userChangedResourceRef so the resourceId effect knows to apply
+  // the resource's days (not the saved editRecord days).
+  const handleResourceChange = (next: any) => {
+    userChangedResourceRef.current = true;
+    setRecord(prev => ({ ...prev, ...next }));
   };
 
   // ─── Save Handler ─────────────────────────────────────────────────────────────
@@ -678,8 +693,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                       fieldName="templateType"
                       record={record}
                       setRecord={(next) => {
+                        // Changing templateType is a user action — mark resource as changed
+                        // so the resourceId effect won't preserve the old editRecord days.
                         workingDaysTouchedRef.current = false;
-                        justOpenedRef.current = false;
+                        userChangedResourceRef.current = true;
                         setRecord(prev => ({
                           ...prev,
                           ...next,
