@@ -451,28 +451,33 @@ const UrgentCareTriage = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
 
-  const handlePrintWristband = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPatientWristbandPdf({
-        patientId: rowData.patientId
-      }).unwrap();
+ const handlePrintWristband = async (rowData: any) => {
+  try {
+    const blob = await triggerGetPatientWristbandPdf({
+      patientId: rowData.patientId,
+    }).unwrap();
 
-      const fileURL = window.URL.createObjectURL(blob);
+    const fileURL = window.URL.createObjectURL(
+      new Blob([blob], { type: 'application/pdf' })
+    );
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `wristband-${rowData.patientId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    const printWindow = window.open(fileURL, '_blank');
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download wristband pdf', error);
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.focus();
+        // optional: auto-open print dialog
+        // printWindow.print();
+      };
     }
-  };
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileURL);
+    }, 60_000);
+  } catch (error) {
+    console.error('Failed to preview wristband pdf', error);
+  }
+};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
