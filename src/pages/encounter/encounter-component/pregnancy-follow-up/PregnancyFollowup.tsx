@@ -45,6 +45,7 @@ const PregnancyFollowup = () => {
 
       {/* Tabs section for different views */}
         <MyTab
+          lazy
           data={tabData.map(tab => ({
             ...tab,
             content: <div dir={dir}>{tab.content}</div>

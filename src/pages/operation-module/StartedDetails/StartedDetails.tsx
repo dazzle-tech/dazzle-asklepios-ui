@@ -213,6 +213,7 @@ const StartedDetails = ({
               </Form>
               <Divider />
               <MyTab 
+              lazy
                data={tabData}
                activeTab={activeTab}
                setActiveTab={setActiveTab}

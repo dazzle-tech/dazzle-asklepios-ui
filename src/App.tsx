@@ -14,7 +14,7 @@ import MyToast from './components/MyToast/MyToast';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import Translate from './components/Translate';
-import { useAppSelector } from './hooks';
+import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
 import locales from './locales';
 import Error403Page from './pages/authentication/403';
@@ -214,10 +214,12 @@ import Enums from './pages/setup/Enums';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import PayerSetup from './pages/setup/payer-setup';
 import PolicyDefinitions from './pages/setup/policy-definition';
+import SkillDefinitions from './pages/setup/skill-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import PatientMergeConfig from '@/pages/setup/patient-merge-config/PatientMergeConfig';
+import { setSelectedDepartment } from './reducers/authSlice';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -356,10 +358,28 @@ const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-
+const dispatch = useAppDispatch();
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
+ useEffect(() => {
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === 'selectedDepartment') {
+      const newDepartment = event.newValue
+        ? JSON.parse(event.newValue)
+        : null;
 
+      dispatch(setSelectedDepartment(newDepartment));
+
+      window.location.reload();
+    }
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+  };
+}, [dispatch]);
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
@@ -774,6 +794,8 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
+              <Route path="skill-definition" element={<SkillDefinitions />} />
+
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />

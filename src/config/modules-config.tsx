@@ -238,6 +238,8 @@ export const MODULES: Module[] =
           viewOrder: 24,
           navPath: 'patient-merge-config'
         },
+        { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
+
       ],
     },
 

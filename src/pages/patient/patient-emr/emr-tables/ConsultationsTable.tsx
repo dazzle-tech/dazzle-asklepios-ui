@@ -233,7 +233,7 @@ const ClinicalConsultationsTables = ({ patient }) => {
     }
   ];
 
-  return <MyTab data={tabData} />;
+  return <MyTab data={tabData} lazy/>;
 };
 
 export default ClinicalConsultationsTables;

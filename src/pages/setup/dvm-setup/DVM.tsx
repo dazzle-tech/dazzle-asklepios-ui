@@ -458,6 +458,7 @@ const DVM = () => {
       </div>
       <hr />
       <MyTab 
+      lazy
        data={Tabdata}
       />
     </Panel>

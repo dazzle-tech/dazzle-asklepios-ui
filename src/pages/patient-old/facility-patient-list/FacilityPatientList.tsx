@@ -56,6 +56,7 @@ const FacilityPatientList = () => {
         />
       </div>
       <MyTab 
+        lazy
        data={tabData}
       />
     </>

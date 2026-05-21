@@ -4370,6 +4370,34 @@ export type PolicyDefinitionUpdateDTO = {
   name: string;
   description?: string | null;
 };
+
+export type SkillDefinition = {
+  id?: number;
+  facilityId?: number;
+  facilityName?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+  type?: string;
+};
+
+export type SkillDefinitionCreateDTO = {
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  type: string;
+};
+
+export type SkillDefinitionUpdateDTO = {
+  id: number;
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  type: string;
+};
 export type PatientDiagnosisFlag = {
   encounterId: number;
   hasPrimaryDiagnoses: boolean;

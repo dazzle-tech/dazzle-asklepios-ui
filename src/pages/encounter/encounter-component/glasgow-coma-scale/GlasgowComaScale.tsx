@@ -136,6 +136,7 @@ const GlasgowComaScale = ({
   const viewMode = viewModeProp ?? state?.viewMode;
 
   const edit = viewMode === 'readOnly';
+  const viewOnly = viewMode === 'View';
 
   const [openCancellationReasonModal, setOpenCancellationReasonModal] =
     useState(false);
@@ -590,13 +591,12 @@ const GlasgowComaScale = ({
       ? 'rtl'
       : 'ltr';
 
-  return (
+return (
     <div
       dir={dir}
       className={edit ? 'disabled-panel' : ''}
     >
       <Panel dir={dir}>
-
         <div className="gcs-table-header">
           <Checkbox
             checked={showCanceled}
@@ -609,6 +609,7 @@ const GlasgowComaScale = ({
                 timestamp: Date.now()
               }));
             }}
+            disabled={edit}
           >
             <Translate>Show Cancelled</Translate>
           </Checkbox>
@@ -624,6 +625,7 @@ const GlasgowComaScale = ({
               setOpenPopup(true);
             }}
             width="109px"
+            disabled={edit || viewOnly}
           >
             Add New
           </MyButton>
@@ -642,9 +644,7 @@ const GlasgowComaScale = ({
           rowsPerPage={paginationParams.size}
           onPageChange={handlePageChange}
           onRowsPerPageChange={(e: any) => {
-            const newSize = Number(
-              e.target.value
-            );
+            const newSize = Number(e.target.value);
 
             setPaginationParams({
               ...paginationParams,
@@ -659,9 +659,7 @@ const GlasgowComaScale = ({
 
         <CancellationModal
           open={openCancellationReasonModal}
-          setOpen={
-            setOpenCancellationReasonModal
-          }
+          setOpen={setOpenCancellationReasonModal}
           object={gcsAssessment}
           setObject={setGcsAssessment}
           handleCancle={handleCancel}

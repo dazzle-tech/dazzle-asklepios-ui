@@ -404,6 +404,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
         </Stack>
         <MyTab 
          data={TabData}
+         lazy
         />
       </Panel>
     </Panel>

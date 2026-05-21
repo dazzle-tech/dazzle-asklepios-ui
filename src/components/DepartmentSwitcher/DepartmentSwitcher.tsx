@@ -317,7 +317,7 @@ const DepartmentSwitcher = ({
   );
 
   return (
-    <Whisper
+   <Whisper
       placement={placement}
       trigger={trigger}
       open={controlled ? open : undefined}

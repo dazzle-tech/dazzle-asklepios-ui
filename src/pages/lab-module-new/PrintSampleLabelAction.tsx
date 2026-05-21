@@ -5,28 +5,57 @@ import { Whisper, Tooltip } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-import { useLazyGetSampleLabelQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
-import { printSampleLabel } from '@/utils/printSampleLabel';
+import { useLazyGetSampleLabelsPdfQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 
 export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
   const dispatch = useAppDispatch();
-  const [trigger, { isFetching }] = useLazyGetSampleLabelQuery();
+  const [trigger, { isFetching }] = useLazyGetSampleLabelsPdfQuery();
+const onPrint = async (e: any) => {
+  e.stopPropagation();
 
-  const onPrint = async (e: any) => {
-    e.stopPropagation();
-    try {
-      const res = await trigger({ orderTestId: rowData.id }).unwrap();
-      await printSampleLabel(res);
-    } catch (err: any) {
+  try {
+    const result = await trigger({ orderTestId: rowData.id }).unwrap();
+
+    if (!result) {
       dispatch(
         notify({
-          msg: err?.data?.message || 'Print failed',
-          sev: 'error'
+          msg: 'No collected sample found',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+
+    const url = window.URL.createObjectURL(
+      new Blob([result], { type: 'application/pdf' })
+    );
+
+    const printWindow = window.open(url, '_blank');
+
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.focus();
+
+      };
+    } else {
+      dispatch(
+        notify({
+          msg: 'Please allow pop-ups to preview the sample label',
+          sev: 'warning',
         })
       );
     }
-  };
 
+    setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+  } catch (err: any) {
+    dispatch(
+      notify({
+        msg: err?.data?.message || 'Print failed',
+        sev: 'error',
+      })
+    );
+  }
+};
   return (
     <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Sample Label</Tooltip>}>
       <span style={{ display: 'inline-block' }}>

@@ -33,6 +33,7 @@ const ERTabsDepartmentAndWaitingList = () => {
   return (
     <Panel>
       <MyTab 
+      lazy
        data={tabData}
       />
     </Panel>
