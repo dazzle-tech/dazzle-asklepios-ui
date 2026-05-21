@@ -4598,3 +4598,27 @@ export interface GlasgowComaScaleAssessment {
   totalScore?: number | null;
   scoreInterpretation?: string | null;
 }
+
+// ------------------- Waseel Eligibility -------------------
+
+export interface EligibilityCheckRequest {
+  patientId?: number | null;
+  patientInsuranceId?: number | null;
+  serviceDate?: string | null;
+  benefits?: boolean | null;
+  discovery?: boolean | null;
+  validation?: boolean | null;
+  transfer?: boolean | null;
+  emergency?: boolean | null;
+  destinationId?: string | null;
+}
+
+export interface EligibilityCheckResult {
+  eligibilityRequestId?: number | null;
+  apiStatus?: string | null;
+  statusCode?: string | null;
+  message?: string | null;
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  requestStatus?: string | null;
+}

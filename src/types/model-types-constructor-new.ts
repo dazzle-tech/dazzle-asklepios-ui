@@ -3045,3 +3045,25 @@ export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessmen
   totalScore: null,
   scoreInterpretation: null
 };
+
+export const newEligibilityCheckRequest: modelTypes.EligibilityCheckRequest = {
+  patientId: null,
+  patientInsuranceId: null,
+  serviceDate: null,
+  benefits: null,
+  discovery: null,
+  validation: null,
+  transfer: null,
+  emergency: null,
+  destinationId: null
+};
+
+export const newEligibilityCheckResult: modelTypes.EligibilityCheckResult = {
+  eligibilityRequestId: null,
+  apiStatus: null,
+  statusCode: null,
+  message: null,
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  requestStatus: null
+};
