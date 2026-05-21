@@ -213,7 +213,25 @@ const Lab = () => {
           fecthSample={fecthSample}
           loading={globalLoading}
           refetchAllLabData={refetchAllLabData}
-          onTestsLoaded={setVisibleTests}
+          onTestsLoaded={(tests: any[]) => {
+  const selectedDate = new Date(dateFilter.fromDate);
+
+  const selectedYear = selectedDate.getFullYear();
+  const selectedMonth = selectedDate.getMonth();
+  const selectedDay = selectedDate.getDate();
+
+  const filtered = (tests ?? []).filter(test => {
+    const createdDate = new Date(test.createdDate);
+
+    return (
+      createdDate.getFullYear() === selectedYear &&
+      createdDate.getMonth() === selectedMonth &&
+      createdDate.getDate() === selectedDay
+    );
+  });
+
+  setVisibleTests(filtered);
+                                            }}
         />
       )
     },

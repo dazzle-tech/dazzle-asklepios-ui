@@ -72,19 +72,49 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   });
   //add new patient edits
 
-  const { data: todayRadTestsResponse } = useFilterDiagnosticOrderTestsQuery({
-    page: 0,
-    size: 1000,
-    orderType: 'RADIOLOGY',
-    receivedDepartmentId: authSlice.selectedDepartment?.departmentId,
-    createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
-    createdDateTo: endOfDay(dateFilter.toDate).toISOString()
-  });
+    const formatLocalDateTime = (date: Date) => {
+      const d = new Date(date);
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    };
+  
+    const { data: todayRadTestsResponse } = useFilterDiagnosticOrderTestsQuery({
+      page: 0,
+      size: 1000,
+      hasRadiology: true,
+      receivedDepartmentId: authSlice.selectedDepartment?.departmentId,
+      createdDateFrom: formatLocalDateTime(startOfDay(dateFilter.fromDate)),
+      createdDateTo: formatLocalDateTime(endOfDay(dateFilter.toDate))
+    });
+
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
-  useEffect(() => {
-    setVisibleRadTests(todayRadTestsResponse?.data ?? []);
-  }, [todayRadTestsResponse]);
+    useEffect(() => {
+      const selectedDate = new Date(dateFilter.fromDate);
+
+      const selectedYear = selectedDate.getFullYear();
+      const selectedMonth = selectedDate.getMonth();
+      const selectedDay = selectedDate.getDate();
+
+      const filtered = (todayRadTestsResponse?.data ?? []).filter(test => {
+        const createdDate = new Date(test.createdDate);
+
+        return (
+          createdDate.getFullYear() === selectedYear &&
+          createdDate.getMonth() === selectedMonth &&
+          createdDate.getDate() === selectedDay
+        );
+      });
+      
+      setVisibleRadTests(filtered);
+    }, [todayRadTestsResponse, dateFilter.fromDate]);
 
   useEffect(() => {
     dispatch(setPageCode('Rad'));

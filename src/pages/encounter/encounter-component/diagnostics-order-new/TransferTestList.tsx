@@ -153,11 +153,20 @@ const TransferTestList = ({
     setChecked([]);
   };
 
-  const handleAllRight = () => {
-    setRightItems([...rightItems, ...leftItems]);
-    setLeftItems([]);
-    setChecked([]);
-  };
+    const handleAllRight = () => {
+      setRightItems([...rightItems, ...filteredLeft]);
+
+      setLeftItems(
+        leftItems.filter(
+          item =>
+            !filteredLeft.some(
+              filtered => getItemKey(filtered) === getItemKey(item)
+            )
+        )
+      );
+
+      setChecked([]);
+    };
 
   const handleAllLeft = () => {
     setLeftItems([...leftItems, ...rightItems]);
