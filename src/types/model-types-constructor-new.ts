@@ -245,6 +245,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
   workingDays: [],
+  nationalNumber:null
 };
 
 // ------------------- Language Translation -------------------

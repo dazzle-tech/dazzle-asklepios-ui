@@ -206,6 +206,8 @@ const Practitioners = () => {
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
         workingDays: practitioner.workingDays ?? [],
+        nationalNumber:practitioner.nationalNumber
+        
       };
 
       const Response = await createPractitioner(payload).unwrap();
@@ -302,6 +304,7 @@ if (!backendKey && typeof error === "string") {
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
         workingDays: practitioner.workingDays ?? [],
+        nationalNumber:practitioner?.nationalNumber
       };
 
       await updatePractitioner(payload).unwrap();
