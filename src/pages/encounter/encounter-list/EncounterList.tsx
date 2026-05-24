@@ -805,11 +805,21 @@ const EncounterList = () => {
       title: 'PRIORITY',
       render: (row: any) => formatEnumString(row?.priorityLevel) ?? ''
     },
-    {
-      key: 'encounterDate',
-      title: 'DATE',
-      render: (row: any) => row?.encounterDate ?? '-'
-    },
+   {
+  key: 'encounterDate',
+  title: 'DATE',
+  render: (row: any) => {
+    if (!row?.encounterDate) {
+      return '-';
+    }
+
+    const time = row?.encounterTime
+      ? row.encounterTime.slice(0, 5)
+      : '';
+
+    return `${row.encounterDate} ${time}`;
+  }
+},
     {
       key: 'startedDate',
       title: 'STARTED DATE',
