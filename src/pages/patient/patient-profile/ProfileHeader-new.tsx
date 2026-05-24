@@ -7,7 +7,7 @@ import {
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient, Address, PatientDocument } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, conjureValueBasedOnIDFromList } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -26,7 +26,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import {
@@ -38,7 +38,8 @@ import {
   Stack,
   Tooltip,
   Whisper,
-  Input
+  Input,
+  SelectPicker
 } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
@@ -48,7 +49,9 @@ import {
   useLazyGetPatientLabelPdfQuery
 } from '@/services/patient/patientService';
 import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
-
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -96,6 +99,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [openCchiModal, setOpenCchiModal] = useState(false);
   const [cchiDocumentId, setCchiDocumentId] = useState('');
 
+  const [openEligibilityModal, setOpenEligibilityModal] = useState(false);
+  const [selectedPatientInsuranceId, setSelectedPatientInsuranceId] = useState<number | null>(
+    null
+  );
+
+  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
@@ -103,15 +113,142 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
     useLazyGetPatientFromCchiQuery();
 
+  const [checkEligibility, { isLoading: isCheckingEligibility }] =
+    useCheckEligibilityMutation();
+
+  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances } =
+    useGetInsurancesByPatientQuery(
+      {
+        patientId: patientId!,
+        page: 0,
+        size: 100,
+        sort: 'id,desc'
+      },
+      {
+        skip: !patientId || !openEligibilityModal
+      }
+    );
+
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+
+  const patientInsurancesList = useMemo(
+    () => patientInsuranceResponse?.data?.data ?? [],
+    [patientInsuranceResponse?.data?.data]
+  );
+
+  const insurancePickerOptions = useMemo(
+    () =>
+      patientInsurancesList.map((insurance: any) => {
+        const payorName =
+          conjureValueBasedOnIDFromList(payorsList, insurance?.payorId, 'name') ||
+          `Payor #${insurance?.payorId}`;
+        const policyNumber = insurance?.policyNumber ?? '';
+        const primarySuffix = insurance?.isPrimary ? ' (Primary)' : '';
+
+        return {
+          label: `${payorName} - ${policyNumber}${primarySuffix}`,
+          value: Number(insurance?.id)
+        };
+      }),
+    [patientInsurancesList, payorsList]
+  );
+
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-
-  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
   const { data: profilePictureTicket, isError } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
+
+  useEffect(() => {
+    if (!openEligibilityModal || selectedPatientInsuranceId != null) return;
+
+    const primaryInsurance = patientInsurancesList.find((insurance: any) => insurance?.isPrimary);
+    const defaultInsurance = primaryInsurance ?? patientInsurancesList[0];
+    const defaultId = defaultInsurance?.id != null ? Number(defaultInsurance.id) : null;
+
+    if (defaultId != null && !Number.isNaN(defaultId)) {
+      setSelectedPatientInsuranceId(defaultId);
+    }
+  }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
+
+  const handleOpenEligibilityModal = () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedPatientInsuranceId(null);
+    setOpenEligibilityModal(true);
+  };
+
+  const handleCheckEligibility = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!selectedPatientInsuranceId) {
+      dispatch(
+        notify({
+          msg: 'Please select an insurance',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const result = await checkEligibility({
+        patientId: Number(localPatient.id),
+        patientInsuranceId: selectedPatientInsuranceId,
+        serviceDate: new Date().toISOString().split('T')[0],
+        benefits: true,
+        validation: true,
+        discovery: false,
+        transfer: false,
+        emergency: false
+      }).unwrap();
+
+      setOpenEligibilityModal(false);
+      setSelectedPatientInsuranceId(null);
+
+      dispatch(
+        notify({
+          msg:
+            result.message ||
+            `Eligibility check ${result.requestStatus ?? 'completed'} successfully`,
+          sev: result.requestStatus === 'SUCCESS' ? 'success' : 'info'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ||
+            error?.data?.detail ||
+            'Failed to check eligibility',
+          sev: 'error'
+        })
+      );
+    }
+  };
 
 const handleFetchPatientFromCchi = async () => {
   if (!cchiDocumentId?.trim()) {
@@ -420,10 +557,10 @@ const handleFetchPatientFromCchi = async () => {
   const whisperRef = useRef<any>(null);
 
   useEffect(() => {
-    if (quickPatientModalOpen || openScanDocumentModal || openCchiModal) {
+    if (quickPatientModalOpen || openScanDocumentModal || openCchiModal || openEligibilityModal) {
       whisperRef.current?.close?.();
     }
-  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal]);
+  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
 
   useEffect(() => {
     const handleClick = (e: any) => {
@@ -557,10 +694,9 @@ const handleFetchPatientFromCchi = async () => {
               }}
             >
               <MyButton
-                onClick={() => {
-                  // setEligibilityChecked(true);
-                  // navigate(`/patient-profile/${localPatient?.id}`);
-                }}
+                disabled={!localPatient?.id || isCheckingEligibility}
+                loading={isCheckingEligibility}
+                onClick={handleOpenEligibilityModal}
               >
                 <Translate>Eligibility Check</Translate>
               </MyButton>
@@ -651,6 +787,68 @@ const handleFetchPatientFromCchi = async () => {
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+      />
+
+      <MyModal
+        open={openEligibilityModal}
+        setOpen={(open: boolean) => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(open);
+            if (!open) {
+              setSelectedPatientInsuranceId(null);
+            }
+          }
+        }}
+        title={<Translate>Eligibility Check</Translate>}
+        size="35vw"
+        bodyheight="200px"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isCheckingEligibility ? 'Checking...' : 'Check Eligibility'}
+        isDisabledActionBtn={
+          isCheckingEligibility ||
+          isFetchingInsurances ||
+          insurancePickerOptions.length === 0 ||
+          !selectedPatientInsuranceId
+        }
+        actionButtonFunction={handleCheckEligibility}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(false);
+            setSelectedPatientInsuranceId(null);
+          }
+        }}
+        content={
+          <Form fluid>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Insurance</Translate>
+              </Form.ControlLabel>
+
+              {isFetchingInsurances ? (
+                <Translate>Loading insurances...</Translate>
+              ) : insurancePickerOptions.length === 0 ? (
+                <Translate>
+                  No insurance found for this patient. Please add insurance first.
+                </Translate>
+              ) : (
+                <SelectPicker
+                  block
+                  searchable
+                  cleanable={false}
+                  data={insurancePickerOptions}
+                  value={selectedPatientInsuranceId}
+                  disabled={isCheckingEligibility}
+                  onChange={value =>
+                    setSelectedPatientInsuranceId(value != null ? Number(value) : null)
+                  }
+                  placeholder="Select insurance"
+                />
+              )}
+            </Form.Group>
+          </Form>
+        }
       />
 
       <MyModal
