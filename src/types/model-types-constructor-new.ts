@@ -2888,6 +2888,35 @@ export const newPolicyDefinitionUpdateDTO: modelTypes.PolicyDefinitionUpdateDTO 
   name: '',
   description: ''
 };
+export const newPolicyAssignment: modelTypes.PolicyAssignment = {
+  id: undefined,
+  policyId: undefined,
+  policy: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isActive: true,
+  isRequired: false,
+};
+
+export const newPolicyAssignmentCreateDTO: modelTypes.PolicyAssignmentCreateDTO = {
+  policyId: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isRequired: false,
+};
+
+export const newPolicyAssignmentUpdateDTO: modelTypes.PolicyAssignmentUpdateDTO = {
+  id: undefined,
+  policyId: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isActive: true,
+  isRequired: false,
+};
+
 export const newSkillDefinition: modelTypes.SkillDefinition = {
   id: undefined,
   facilityId: undefined,

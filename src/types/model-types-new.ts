@@ -4367,6 +4367,31 @@ export type PolicyDefinitionUpdateDTO = {
   description?: string | null;
 };
 
+export type PolicyResourceType = string;
+
+export type PolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policy?: PolicyDefinition;
+  facilityId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isActive?: boolean;
+  isRequired?: boolean;
+};
+
+export type PolicyAssignmentCreateDTO = {
+  policyId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isRequired: boolean;
+};
+
+export type PolicyAssignmentUpdateDTO = {
+  id: number;
+  isRequired: boolean;
+};
+
 export type SkillDefinition = {
   id?: number;
   facilityId?: number;

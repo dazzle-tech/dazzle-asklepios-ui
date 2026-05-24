@@ -2,6 +2,7 @@ import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from "@/components/Translate";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import { useEnumOptions } from "@/services/enumsApi";
@@ -26,6 +27,9 @@ import { FaUndo } from "react-icons/fa";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useDispatch } from "react-redux";
 import { Form, Panel, Tooltip, Whisper } from "rsuite";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import AddEditPractitioner from "./AddEditPractitioner";
 import "./styles.less";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
@@ -47,6 +51,9 @@ const Practitioners = () => {
   ] = useState<boolean>(false);
   const [stateOfDeleteModal, setStateOfDeleteModal] =
     useState<string>("deactivate");
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedPractitionerForPolicyAssignment, setSelectedPractitionerForPolicyAssignment] =
+    useState<Practitioner | null>(null);
   const [recordOfFilter, setRecordOfFilter] = useState({
     filter: "",
     value: "",
@@ -416,6 +423,17 @@ if (!backendKey && typeof error === "string") {
           }}
         />
       )}
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedPractitionerForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
     </div>
   );
 
@@ -658,6 +676,26 @@ if (!backendKey && typeof error === "string") {
         handleAddNew={handleAddNew}
         handleUpdate={handleUpdate}
         width={width}
+      />
+
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Practitioner Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedPractitionerForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="PRACTITIONER"
+              resourceId={selectedPractitionerForPolicyAssignment.id ?? 0}
+              facilityId={selectedPractitionerForPolicyAssignment.facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
       />
 
       <DeletionConfirmationModal
