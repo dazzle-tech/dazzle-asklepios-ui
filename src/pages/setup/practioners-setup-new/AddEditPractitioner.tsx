@@ -367,7 +367,7 @@ const AddEditPractitioner = ({
                         />
                       }
                     />
-                    {practitioner?.userId && (
+                    {practitioner?.userId > 0 && (
                       <div style={{ marginBottom: 12 }}>
                         <MyButton color="red" size="xs" onClick={handleUnlinkUser}>
                           Unlink User
@@ -428,6 +428,16 @@ const AddEditPractitioner = ({
                       <MyInput
                         column
                         fieldName="phoneNumber"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width={'100%'}
+                      />
+                    </div>
+                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                      <MyInput
+                        column
+                        fieldLabel='National ID'
+                        fieldName="nationalNumber"
                         record={practitioner}
                         setRecord={setPractitioner}
                         width={'100%'}

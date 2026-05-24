@@ -635,6 +635,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  nationalNumber?:string | null;
 }
 
 /* =========================
