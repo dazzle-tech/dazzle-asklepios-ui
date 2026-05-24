@@ -7,13 +7,14 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { useAppDispatch } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import {
   useCreatePolicyAssignmentMutation,
   useGetPolicyAssignmentsByResourceQuery,
   useTogglePolicyAssignmentActiveMutation,
+  useUpdatePolicyAssignmentMutation,
 } from '@/services/setup/policyAssignment/policyAssignmentService';
 import {
   useGetAllActivePolicyDefinitionsQuery,
@@ -90,6 +91,17 @@ const PolicyAssignmentManager = ({
   const [createPolicyAssignment, { isLoading: isCreatingAssignment }] = useCreatePolicyAssignmentMutation();
   const [togglePolicyAssignmentActive, { isLoading: isTogglingAssignment }] =
     useTogglePolicyAssignmentActiveMutation();
+  const [openEditModal, setOpenEditModal] = useState(false);
+
+  const [selectedPolicyAssignment, setSelectedPolicyAssignment] =
+    useState<PolicyAssignment | null>(null);
+
+  const [editPolicyAssignmentRequest, setEditPolicyAssignmentRequest] =
+    useState<any>({
+      isRequired: false,
+    });
+  const [updatePolicyAssignment, { isLoading: isUpdatingAssignment }] =
+    useUpdatePolicyAssignmentMutation();
 
   useEffect(() => {
     setAssignmentRequest(prev => ({
@@ -156,7 +168,74 @@ const PolicyAssignmentManager = ({
       dispatch(hideSystemLoader());
     }
   };
+  const handleOpenEditPolicyAssignment = (assignment: PolicyAssignment) => {
+    setSelectedPolicyAssignment(assignment);
 
+    setEditPolicyAssignmentRequest({
+      ...assignment,
+      isRequired: assignment.isRequired ?? false,
+    });
+
+    setOpenEditModal(true);
+  };
+  const handleUpdatePolicyAssignment = async () => {
+    if (!selectedPolicyAssignment?.id) {
+      dispatch(
+        notify({
+          msg: 'Missing policy assignment id.',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+
+    const policyDefinitionId =
+      (selectedPolicyAssignment as any).policy?.id;
+
+    if (!policyDefinitionId) {
+      dispatch(
+        notify({
+          msg: 'Missing policy definition id.',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      await updatePolicyAssignment({
+        id: selectedPolicyAssignment.id,
+        isRequired: editPolicyAssignmentRequest.isRequired ?? false,
+      }).unwrap();
+
+      setOpenEditModal(false);
+      setSelectedPolicyAssignment(null);
+
+      await refetchAssignments();
+
+      dispatch(
+        notify({
+          msg: 'Policy assignment was successfully updated.',
+          sev: 'success',
+        })
+      );
+
+      onSaved?.();
+    } catch (error) {
+      const errorMsg =
+        extractErrorMessage(error) || 'Unable to update policy assignment.';
+      dispatch(
+        notify({
+          msg: errorMsg,
+          sev: 'error',
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
   const tableColumns = [
     {
       key: 'policyCode',
@@ -182,32 +261,50 @@ const PolicyAssignmentManager = ({
       key: 'actions',
       title: <Translate>Actions</Translate>,
       render: (row: PolicyAssignment) => {
-        const disabled = isTogglingAssignment;
-        return row.isActive ? (
-          <MdDelete
-            title="Deactivate"
-            size={24}
-            fill={disabled ? 'var(--rs-gray-400)' : 'var(--primary-pink)'}
-            className="icons-style"
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-            onClick={() => {
-              if (!disabled) handleToggleActive(row);
-            }}
-          />
-        ) : (
-          <FontAwesomeIcon
-            icon={faRotateRight}
-            title="Activate"
-            className="icons-style"
-            color={disabled ? 'var(--rs-gray-400)' : 'var(--primary-gray)'}
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-            size="lg"
-            onClick={() => {
-              if (!disabled) handleToggleActive(row);
-            }}
-          />
+        const disabled = isTogglingAssignment || isUpdatingAssignment;
+
+        return (
+          <div className="container-of-icons">
+            <MdModeEdit
+              className="icons-style"
+              title="Edit"
+              size={24}
+              fill="var(--primary-gray)"
+              style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+              onClick={() => {
+                if (!disabled) {
+                  handleOpenEditPolicyAssignment(row);
+                }
+              }}
+            />
+
+            {row.isActive ? (
+              <MdDelete
+                title="Deactivate"
+                size={24}
+                fill={disabled ? 'var(--rs-gray-400)' : 'var(--primary-pink)'}
+                className="icons-style"
+                style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+                onClick={() => {
+                  if (!disabled) handleToggleActive(row);
+                }}
+              />
+            ) : (
+              <FontAwesomeIcon
+                icon={faRotateRight}
+                title="Activate"
+                className="icons-style"
+                color={disabled ? 'var(--rs-gray-400)' : 'var(--primary-gray)'}
+                style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+                size="lg"
+                onClick={() => {
+                  if (!disabled) handleToggleActive(row);
+                }}
+              />
+            )}
+          </div>
         );
-      }
+      },
     }
   ];
 
@@ -230,7 +327,34 @@ const PolicyAssignmentManager = ({
           </MyButton>
         }
       />
-
+      <MyModal
+        open={openEditModal}
+        setOpen={setOpenEditModal}
+        title="Edit Policy Assignment"
+        bodyheight="30vh"
+        size="35vw"
+        hideBack
+        content={
+          <Form fluid>
+            <MyInput
+              fieldName="isRequired"
+              fieldType="checkbox"
+              record={editPolicyAssignmentRequest}
+              setRecord={updated =>
+                setEditPolicyAssignmentRequest({
+                  ...editPolicyAssignmentRequest,
+                  isRequired: updated.isRequired,
+                })
+              }
+              showLabel
+              label="Required"
+            />
+          </Form>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={handleUpdatePolicyAssignment}
+        isDisabledActionBtn={isUpdatingAssignment}
+      />
       <MyModal
         open={openAssignModal}
         setOpen={setOpenAssignModal}
