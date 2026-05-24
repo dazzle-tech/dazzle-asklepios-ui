@@ -172,6 +172,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   setRecord={setService}
                   width="100%"
                   required
+                  showZero
                 />
                </div>
                {service?.appointable && (
@@ -183,6 +184,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   setRecord={setService}
                   width="100%"
                   required={service.appointable}
+                  showZero
                 />
                </div>
                )}
@@ -198,6 +200,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   setRecord={setService}
                   width="100%"
                   required={service.appointable}
+                  showZero
                 />
                </div>
               <div className="container-of-field-service">
@@ -208,6 +211,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   setRecord={setService}
                   width="100%"
                   required={service.appointable}
+                  showZero
                 />
                </div>
              </div>

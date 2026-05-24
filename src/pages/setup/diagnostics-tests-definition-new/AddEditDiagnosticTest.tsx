@@ -610,6 +610,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   setRecord={setDiagnosticsTest}
                   width="100%"
                   required
+                  showZero
                 />
               </div>
               {diagnosticsTest?.appointable && (
@@ -621,6 +622,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                       setRecord={setDiagnosticsTest}
                       width="100%"
                       required={diagnosticsTest?.appointable}
+                      showZero
                     />
                   </div>
                 )}
@@ -635,6 +637,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   setRecord={setDiagnosticsTest}
                   width="100%"
                   required={diagnosticsTest?.appointable}
+                  showZero
                 />
               </div>
               <div className="container-of-field-diagnostic">
@@ -645,6 +648,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   setRecord={setDiagnosticsTest}
                   width="100%"
                   required={diagnosticsTest?.appointable}
+                  showZero
                 />
               </div>
             </div>
