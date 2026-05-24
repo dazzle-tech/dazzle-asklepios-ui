@@ -255,6 +255,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
                   }
                   width="100%"
                   required
+                  showZero
                 />
               </Col>
               {(
@@ -272,7 +273,8 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
                       }
                       width="100%"
                       required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
-                    />
+                    showZero
+                   />
                   </Col>
                 )}
             </Row>
@@ -292,6 +294,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
                       }
                       width="100%"
                       required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                      showZero
                     />
                   </Col>
                   <Col md={12}>
@@ -304,6 +307,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
                       }
                       width="100%"
                       required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                      showZero
                     />
                   </Col>
                 </Row>

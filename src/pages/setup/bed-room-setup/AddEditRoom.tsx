@@ -647,6 +647,7 @@ const AddEditRoom: React.FC<Props> = ({
         fieldType="number"
         record={room}
         setRecord={setRoom}
+        showZero
       />
 
       <MyInput

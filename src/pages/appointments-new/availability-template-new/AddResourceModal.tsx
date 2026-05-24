@@ -734,18 +734,18 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                 </Row>
                 <Row>
                   <Col md={12}>
-                    <MyInput fieldName="durationMinutes" fieldLabel="duration" fieldType="number" record={record} setRecord={setRecord} width="100%" rightAddon="min" disabled={readOnly} />
+                    <MyInput fieldName="durationMinutes" fieldLabel="duration" fieldType="number" record={record} setRecord={setRecord} width="100%" rightAddon="min" disabled={readOnly} showZero/>
                   </Col>
                   <Col md={12}>
-                    <MyInput fieldName="parallelCapacityValue" fieldLabel="Parallel Capacity Value" fieldType="number" record={record} setRecord={setRecord} width="100%" min={1} disabled={readOnly} />
+                    <MyInput fieldName="parallelCapacityValue" fieldLabel="Parallel Capacity Value" fieldType="number" record={record} setRecord={setRecord} width="100%" min={1} disabled={readOnly} showZero/>
                   </Col>
                 </Row>
                 <Row>
                   <Col md={12}>
-                    <MyInput fieldName="defaultBufferBeforeMinutes" fieldLabel="Slot Before" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled={readOnly} />
+                    <MyInput fieldName="defaultBufferBeforeMinutes" fieldLabel="Slot Before" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled={readOnly} showZero/>
                   </Col>
                   <Col md={12}>
-                    <MyInput fieldLabel="Slot After" fieldName="defaultBufferAfterMinutes" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled={readOnly} />
+                    <MyInput fieldLabel="Slot After" fieldName="defaultBufferAfterMinutes" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled={readOnly} showZero/>
                   </Col>
                 </Row>
                 <Row>

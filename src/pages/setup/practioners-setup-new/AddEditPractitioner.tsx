@@ -552,14 +552,15 @@ const AddEditPractitioner = ({
                   <>
                     <Row>
                       <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="parallelCapacityValue"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required
-                        />
+                      <MyInput
+                        fieldType="number"
+                        fieldName="parallelCapacityValue"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width="100%"
+                        showZero
+                        required
+                      />
                       </Col>
                       {practitioner?.appointable && (
                         <Col md={12}>
@@ -569,6 +570,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>
@@ -583,6 +585,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>
@@ -593,6 +596,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>
