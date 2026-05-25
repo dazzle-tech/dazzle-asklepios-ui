@@ -217,11 +217,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-         parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
+        parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
-        
+        modality: diagnosticsTest?.modality
+
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
@@ -335,10 +336,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-       parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
+        parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality
+
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
@@ -478,15 +481,15 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const divContent = 'Diagnostics Tests Definition';
 
 
-useEffect(() => {
-  dispatch(setPageCode('Diagnostics_Tests'));
-  dispatch(setDivContent(divContent));
+  useEffect(() => {
+    dispatch(setPageCode('Diagnostics_Tests'));
+    dispatch(setDivContent(divContent));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.id === diagnosticsTest.id) {
@@ -762,17 +765,17 @@ useEffect(() => {
 
 
   useEffect(() => {
-  if (selectedProfile) {
-    setOpenProfileModal(true);
-  }
-}, [selectedProfile]);
+    if (selectedProfile) {
+      setOpenProfileModal(true);
+    }
+  }, [selectedProfile]);
 
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
