@@ -724,7 +724,7 @@ export const MODULES: Module[] =
       viewOrder: 2,
       screens: [
 
-        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "" },
+        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
   ],
     }
 
