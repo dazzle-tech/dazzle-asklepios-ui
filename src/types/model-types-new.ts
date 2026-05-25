@@ -387,6 +387,8 @@ export interface AvailabilityGenerationBatchApplyDTO {
   deferredAt?: string | null;
   scope: string;
   holidayHandlingMode?: string | null;
+  policyAssignmentIds?: number[];
+
 }
 
 export interface ApplyAvailabilityTemplateResponseVM {

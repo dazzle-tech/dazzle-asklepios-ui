@@ -1067,7 +1067,8 @@ export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGene
   deferred: false,
   deferredAt: null,
   scope: '',
-  holidayHandlingMode: null
+  holidayHandlingMode: null,
+  policyAssignmentIds: []
 };
 
 export const newApplyAvailabilityTemplateResponseVM: modelTypes.ApplyAvailabilityTemplateResponseVM = {
