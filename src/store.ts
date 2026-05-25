@@ -220,7 +220,7 @@ import { uccMedicationOrderService } from './services/medicalsheetsEncounter/ucc
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
-import { appointmentPolicyAssignmentService } from './services/appointment/appointmnetPolicyAssignment/appointmentPolicyAssignmentService';
+import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;

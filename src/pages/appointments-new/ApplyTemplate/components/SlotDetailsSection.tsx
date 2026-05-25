@@ -19,7 +19,7 @@ import { useGetPractitionerByIdQuery } from "@/services/setup/practitioner/Pract
 import { useGetAvailabilityGenerationBatchByIdQuery } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import { useGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
 import { useAppSelector } from "@/hooks";
-import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from "@/services/appointment/appointmnetPolicyAssignment/appointmentPolicyAssignmentService";
+import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from "@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService";
 
 const SlotDetailsSection: React.FC<{
   dto?: AvailabilityGenerationBatchApplyDTO;
