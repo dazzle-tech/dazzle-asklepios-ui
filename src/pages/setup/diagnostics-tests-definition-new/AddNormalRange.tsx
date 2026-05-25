@@ -92,7 +92,7 @@ const AddNormalRange = ({
       <div className="container-of-two-fields-diagnostic">
         <div className="container-of-field-diagnostic">
           <MyInput
-            width="%100%"
+            width="100%"
             fieldLabel="Gender"
             fieldType="select"
             fieldName="gender"
