@@ -220,6 +220,7 @@ import { uccMedicationOrderService } from './services/medicalsheetsEncounter/ucc
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
+import { appointmentPolicyAssignmentService } from './services/appointment/appointmnetPolicyAssignment/appointmentPolicyAssignmentService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -274,6 +275,7 @@ export const store = configureStore({
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
     [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
+    [appointmentPolicyAssignmentService.reducerPath]: appointmentPolicyAssignmentService.reducer,
     [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
 
     // inventory
@@ -734,6 +736,7 @@ export const store = configureStore({
         organizationHolidaysService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
+        appointmentPolicyAssignmentService.middleware,
         SkillDefinitionService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,

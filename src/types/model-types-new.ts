@@ -4393,6 +4393,24 @@ export type PolicyAssignmentUpdateDTO = {
   id: number;
   isRequired: boolean;
 };
+export type AppointmentPolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+};
+export type AppointmentPolicyAssignmentResponseVM = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+  policyName?:string;
+  policyCode?:string;
+};
 
 export type SkillDefinition = {
   id?: number;

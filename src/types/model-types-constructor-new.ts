@@ -2918,6 +2918,15 @@ export const newPolicyAssignmentUpdateDTO: modelTypes.PolicyAssignmentUpdateDTO 
   isRequired: false,
 };
 
+export const newAppointmentPolicyAssignment: modelTypes.AppointmentPolicyAssignment = {
+  id: undefined,
+  policyId: undefined,
+  policyAssignmentId: undefined,
+  appointment: undefined,
+  isApplied: false,
+  isRequired: false,
+};
+
 export const newSkillDefinition: modelTypes.SkillDefinition = {
   id: undefined,
   facilityId: undefined,
