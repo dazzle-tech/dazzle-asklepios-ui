@@ -724,7 +724,7 @@ export const MODULES: Module[] =
       viewOrder: 2,
       screens: [
 
-        { name: "Waseel Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "" },
+        { name: "Waseel Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "waseel-pre-authorization-requests" },
   ],
     },
 

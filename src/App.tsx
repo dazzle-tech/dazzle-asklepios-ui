@@ -219,6 +219,7 @@ import OrganizationDefinition from './pages/system-configurations/organization-d
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import { setSelectedDepartment } from './reducers/authSlice';
+import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -689,6 +690,7 @@ const dispatch = useAppDispatch();
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
+              <Route path="waseel-pre-authorization-requests" element={<WaseelPreAuthorizationRequests />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="inpatient-encounters-list" element={<InpatientList />} />
               <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
