@@ -371,12 +371,6 @@ aside {
   --card-yellow: #ffc300;
   --card-gray: #adadad;
 
-
-
-
-
-
-
 }
 
 .rs-form-inline .rs-form-control-label {
@@ -557,6 +551,12 @@ input[disabled] {
   padding-left: 0 !important;
 }
 
-
+ // for one health theme (we will remove it later)
+:root,
+.rs-theme-light,
+.rs-theme-dark {
+  --rs-radio-checked-bg: var(--primary-blue);
+  --rs-state-focus-shadow: 0 0 0 3px rgba(0, 98, 100, 0.2);
+}
 
 
