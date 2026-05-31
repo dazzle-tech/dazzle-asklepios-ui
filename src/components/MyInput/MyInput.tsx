@@ -27,11 +27,26 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy"
+    editable
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy HH:mm"
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const focusNextField = (e: any) => {
@@ -1008,11 +1023,7 @@ const MyInput = ({
               }
               disabled={props.disabled}
               name={fieldName}
-              accepter={DatePicker}
-              format="dd-MM-yyyy"
-              editable
-              cleanable={false}
-              oneTap
+              accepter={CustomDatePicker}
               defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
                 const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
