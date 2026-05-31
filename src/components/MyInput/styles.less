@@ -1,19 +1,23 @@
-   .rs-calendar-table-cell-selected .rs-calendar-table-cell-content {
-    background-color: var(--primary-blue) !important;
-}
-.rs-calendar-table-cell-is-today .rs-calendar-table-cell-content {
-    box-shadow: inset 0 0 0 1px var(--primary-blue) !important;
-}
-.rs-calendar-table-cell-content:hover{
- background-color: #98c6c8 !important;
- color: var(--primary-blue) !important;
-}
 .my-input-container {
- 
-   .rs-toggle-checked .rs-toggle-presentation {
+
+  // for one health theme (we will remove it later)
+  .rs-input:focus,
+  .rs-input:focus-visible,
+  .rs-input-group:focus-within,
+  .rs-input-group.rs-input-group-focus,
+  .rs-picker-date .rs-picker-toggle:focus,
+  .rs-picker-date .rs-picker-toggle:focus-visible,
+  .rs-picker-toggle:focus,
+  .rs-picker-toggle:focus-visible {
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 98, 100, 0.2) !important;
+    outline: none !important;
+  }
+
+  .rs-toggle-checked .rs-toggle-presentation {
     // for one health theme
-      background-color: var(--primary-blue) !important; 
-    }  
+    background-color: var(--primary-blue) !important;
+  }
 
   .label-placement .rs-badge-content {
     top: -5px;
@@ -349,4 +353,20 @@
   width: auto !important;
 
   min-width: 100% !important;
+}
+
+.rs-calendar-table-cell-selected .rs-calendar-table-cell-content {
+  // for one health theme (we will remove it later)
+  background-color: var(--primary-blue) !important;
+}
+
+.rs-calendar-table-cell-is-today .rs-calendar-table-cell-content {
+  // for one health theme (we will remove it later)
+  box-shadow: inset 0 0 0 1px var(--primary-blue) !important;
+}
+
+.rs-calendar-table-cell-content:hover {
+  // for one health theme (we will remove it later)
+  background-color: #98c6c8 !important;
+  color: var(--primary-blue) !important;
 }
