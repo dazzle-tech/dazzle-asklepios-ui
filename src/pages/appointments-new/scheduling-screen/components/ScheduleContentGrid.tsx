@@ -31,6 +31,7 @@ type Props = {
   rightPanelDate: Date;
   todayAppointmentsList: any[];
   isFetchingTodayAppointments: boolean;
+  isSearchingAppointments?: boolean;
   rightPanelAppointmentRows: any[];
   todayTimelineRows: any[];
   handleViewAppointment: (appointmentData?: any) => void;
@@ -63,26 +64,50 @@ const ScheduleContentGrid = ({
   rightPanelDate,
   todayAppointmentsList,
   isFetchingTodayAppointments,
+  isSearchingAppointments = false,
   rightPanelAppointmentRows,
   todayTimelineRows,
   handleViewAppointment,
   dispatch
 }: Props) => {
-  const toLocalDateKey = React.useCallback(
-    (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
-    []
-  );
-
   const calendarEvents = React.useMemo(() => {
-    if (currentView !== 'day') return finalAppointments ?? [];
-    const selectedDateKey = toLocalDateKey(currentCalendarDate);
-    return (finalAppointments ?? []).filter((appt: any) => {
-      const start = appt?.start ? new Date(appt.start) : null;
-      if (!start || Number.isNaN(start.getTime())) return false;
-      return toLocalDateKey(start) === selectedDateKey;
+    return finalAppointments ?? [];
+  }, [finalAppointments]);
+
+  const dayViewResources = React.useMemo(() => {
+    if (currentView !== 'day') return visibleResources ?? [];
+
+    const resourcesByKey = new Map<string, any>();
+
+    (visibleResources ?? []).forEach((resource: any) => {
+      const key = String(resource?.key ?? resource?.resourceId ?? '').trim();
+      if (!key) return;
+      resourcesByKey.set(key, {
+        ...resource,
+        key,
+        resourceId: key,
+        resourceName: String(resource?.resourceName ?? resource?.name ?? `Resource ${key}`)
+      });
     });
-  }, [finalAppointments, currentView, currentCalendarDate, toLocalDateKey]);
+
+    (finalAppointments ?? []).forEach((appt: any) => {
+      const key = String(
+        appt?.resourceId ?? appt?.filterResourceId ?? appt?.appointmentData?.resourceId ?? appt?.appointmentData?.departmentId ?? ''
+      ).trim();
+      if (!key || resourcesByKey.has(key)) return;
+      const name = String(
+        appt?.tooltipResourceName ??
+          appt?.appointmentData?.resourceName ??
+          appt?.appointmentData?.departmentName ??
+          appt?.appointmentData?.resource?.resourceName ??
+          appt?.appointmentData?.resource?.name ??
+          `Resource ${key}`
+      ).trim();
+      resourcesByKey.set(key, { key, resourceName: name });
+    });
+
+    return Array.from(resourcesByKey.values());
+  }, [currentView, visibleResources, finalAppointments]);
 
   const maxTime = React.useMemo(() => {
     const candidateEndMinutes: number[] = [];
@@ -101,11 +126,63 @@ const ScheduleContentGrid = ({
     return value;
   }, [calendarEvents]);
 
+  const isLoading = isSearchingAppointments || isFetchingTodayAppointments;
+
   return (
     <div
       className="appointments-content-grid"
-      style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}
+      style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1, position: 'relative' }}
     >
+      {isLoading && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(2px)',
+            borderRadius: '4px'
+          }}
+        >
+          <Panel
+            style={{
+              padding: '30px',
+              textAlign: 'center',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              borderRadius: '8px'
+            }}
+          >
+            <div style={{ marginBottom: '12px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '4px solid #f0f0f0',
+                  borderTop: '4px solid #0284c7',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto',
+                }}
+              />
+            </div>
+            <Text strong style={{ fontSize: '14px', color: '#333' }}>
+              Loading appointments...
+            </Text>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+          </Panel>
+        </div>
+      )}
       <div
         className="appointments-calendar-pane"
         style={{ minHeight: 0, height: '100%', overflowX: 'auto', overflowY: 'hidden' }}
@@ -131,8 +208,8 @@ const ScheduleContentGrid = ({
           max={maxTime}
           showMultiDayTimes
           {...(currentView === 'day' && {
-            resources: visibleResources ?? [],
-            resourceIdAccessor: 'key',
+            resources: dayViewResources ?? [],
+            resourceIdAccessor: 'resourceId',
             resourceTitleAccessor: 'resourceName'
           })}
           formats={formats}
