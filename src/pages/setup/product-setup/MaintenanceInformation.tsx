@@ -47,7 +47,9 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                         fieldName="maintenanceScheduleLkey"
                         fieldType="select"
                         selectData={timeUnitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={product}
                         setRecord={setProduct}

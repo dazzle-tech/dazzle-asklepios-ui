@@ -152,7 +152,9 @@ const DetailsModal = ({
               fieldType="select"
               fieldLabel="Warning Type"
               selectData={warningTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               fieldName="warningType"
               record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
@@ -244,7 +246,9 @@ const DetailsModal = ({
                   fieldType="select"
                   fieldLabel="Source of Information"
                   selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="sourceOfInformation"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}

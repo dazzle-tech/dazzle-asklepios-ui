@@ -172,7 +172,9 @@ const AddNormalRange = ({
             fieldName="resultUnit"
             fieldType="select"
             selectData={ValueUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticsTestProfile}
             setRecord={() => { }}
@@ -263,7 +265,9 @@ const AddNormalRange = ({
                 fieldLabel="LOVS"
                 selectData={lovQueryResponse.object}
                 fieldType="multyPicker"
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 fieldName="lovKeys"
                 record={diagnosticTestNormalRange}

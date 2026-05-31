@@ -999,7 +999,9 @@ const DetailsModal = ({
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName="durationType"
                             record={safeRecord}
@@ -1087,7 +1089,9 @@ const DetailsModal = ({
                             placeholder="Select Indication Use"
                             fieldLabel="Indication Use"
                             selectData={indicationLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
                             record={safeRecord}
@@ -1118,7 +1122,9 @@ const DetailsModal = ({
                             fieldType="checkPicker"
                             fieldLabel="Administration Instructions"
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName="administrationInstructions"
                             record={adminInstructions}

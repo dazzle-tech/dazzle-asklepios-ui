@@ -413,7 +413,9 @@ const AddEditUom = ({
               record={uomUnit}
               setRecord={setUomUnit}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               placeholder="Unit"
               selectData={UOMLovResponseData?.object ?? []}
               menuMaxHeight={200}

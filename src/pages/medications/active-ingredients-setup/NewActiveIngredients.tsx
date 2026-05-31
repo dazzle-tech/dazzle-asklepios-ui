@@ -233,7 +233,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     fieldName="medicalCategoryLkey"
                     fieldType="select"
                     selectData={MedicationCategorLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -246,7 +248,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     fieldName="drugClassLkey"
                     fieldType="select"
                     selectData={MedicationClassLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -259,7 +263,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     fieldName="drugTypeLkey"
                     fieldType="select"
                     selectData={MedicationTypesLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -284,7 +290,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     fieldName="otc"
                     fieldLabel="OTC"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -305,7 +313,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     width={400}
                     fieldName="Antimicrobial"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -316,7 +326,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     width={400}
                     fieldName="highAlert"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -327,7 +339,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     width={400}
                     fieldName="AbortiveMedication"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -338,7 +352,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     width={400}
                     fieldName="LaborInducingMed"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -363,7 +379,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                       fieldName="controlledLkey"
                       fieldType="select"
                       selectData={ControlledMedicationsCategoriesLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={activeIngredient}
                       isabled={!editing}
@@ -377,7 +395,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                     width="100%"
                     fieldName="blackBoxWarning"
                     fieldType="checkbox"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -389,7 +409,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                       width="100%"
                       fieldName=""
                       fieldType="textarea"
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={activeIngredient}
                       isabled={!editing}

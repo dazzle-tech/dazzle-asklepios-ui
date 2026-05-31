@@ -466,6 +466,8 @@ const   DayCaseList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
+                    disableByField='isValid'
+
           />
         </div>
       </Form>
@@ -486,6 +488,8 @@ const   DayCaseList = () => {
                 setRecord={setRecord}
                 searchable={false}
                 width={150}
+                        disableByField='isValid'
+
               />
               {/* Chief Complain Text */}
               <MyInput
@@ -534,6 +538,8 @@ const   DayCaseList = () => {
                 placeholder="Select Priority"
                 fieldLabel="Priority"
                 searchable={false}
+                        disableByField='isValid'
+
               />
             </Form>
           </div>

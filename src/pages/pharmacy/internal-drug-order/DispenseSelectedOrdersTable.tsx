@@ -452,7 +452,9 @@ const DispenseSelectedOrdersTable = () => {
           fieldName=""
           fieldLabel="Order Status"
           selectData={orderstatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={{}}

@@ -162,7 +162,9 @@ const StartedDetails = ({
                       fieldType="select"
                       fieldLabel="Body Part "
                       selectData={bodypartLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       fieldName={'bodyPartLkey'}
                       record={operation}
@@ -176,7 +178,9 @@ const StartedDetails = ({
                       fieldType="select"
                       fieldLabel="Side"
                       selectData={sideLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       fieldName={'sideLkey'}
                       record={operation}
@@ -188,7 +192,9 @@ const StartedDetails = ({
                       disabled={true}
                       fieldType="select"
                       selectData={anesthTypesLov?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       width="100%"
                       fieldName="plannedAnesthesiaTypeLkey"

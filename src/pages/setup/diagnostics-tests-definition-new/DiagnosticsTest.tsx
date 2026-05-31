@@ -2,6 +2,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -23,6 +24,8 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
 import { Form, Panel } from 'rsuite';
@@ -30,6 +33,7 @@ import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import Coding from './Coding';
 import DefaultProfileIndicator from './DefaultProfileIndicator';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import Profile from './Profile';
 import './styles.less';
 
@@ -52,6 +56,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
   const [openTemplateModal, setOpenTemplateModal] = useState<boolean>(false);
   const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedDiagnosticTestForPolicyAssignment, setSelectedDiagnosticTestForPolicyAssignment] =
+    useState<DiagnosticTest | null>(null);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
@@ -581,6 +588,18 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           />
         )}
 
+        <FontAwesomeIcon
+          icon={faClipboardList}
+          title="Policy Assignment"
+          className="icons-style"
+          color="var(--primary-gray)"
+          size="lg"
+          onClick={() => {
+            setSelectedDiagnosticTestForPolicyAssignment(rowData);
+            setOpenPolicyAssignmentModal(true);
+          }}
+        />
+
         {/* Profile or Normal Range */}
         {rowData?.type === 'LABORATORY' && (
           <RiFileList2Fill
@@ -894,6 +913,30 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         diagnosticsTest={diagnosticsTest}
         selectedProfile={selectedProfile}
         openNormalRanges={openNormalRangesDirectly}
+      />
+
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        content={
+          selectedDiagnosticTestForPolicyAssignment?.id ? (
+            <PolicyAssignmentManager
+              resourceType="DIAGNOSTIC_TEST"
+              resourceId={selectedDiagnosticTestForPolicyAssignment.id}
+              facilityId={selectedDiagnosticTestForPolicyAssignment.facilityId}
+              showHeader={false}
+              onSaved={() => {
+                refetchDiagnostics();
+              }}
+            />
+          ) : (
+            <div style={{ padding: 16 }}>Please select a diagnostic test.</div>
+          )
+        }
       />
 
       {openTemplateModal && diagnosticsTest?.id && (

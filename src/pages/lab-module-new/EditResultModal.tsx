@@ -155,7 +155,9 @@ const handleSave = async () => {
               record={form}
               setRecord={setForm}
               selectData={resolveLovOptions()}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               width={"20vw"}
             />

@@ -320,7 +320,9 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
               fieldLabel="Measurment Site"
               fieldName="measurementSite"
               selectData={bloodPressureMeasurementSiteLov?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={vitalSigns}
               setRecord={setVitalSigns}

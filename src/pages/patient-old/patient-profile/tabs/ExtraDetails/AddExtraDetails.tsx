@@ -48,7 +48,9 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
                 fieldType="select"
                 fieldName="documentTypeLkey"
                 selectData={docTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={secondaryDocument}
                 setRecord={newRecord =>

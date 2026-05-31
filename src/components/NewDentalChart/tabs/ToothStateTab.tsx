@@ -117,6 +117,8 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
               selectData={toothSurfaceLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
+                      disableByField='isValid'
+
             />
           </Box>
           <Box className="tooth-status-form-row">

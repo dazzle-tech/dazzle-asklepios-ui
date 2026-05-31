@@ -452,7 +452,9 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         fieldType="select"
         fieldName="genderLkey"
         selectData={genderLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}

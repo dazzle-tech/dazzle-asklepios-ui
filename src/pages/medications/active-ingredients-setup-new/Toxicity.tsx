@@ -78,7 +78,9 @@ const Toxicity = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={valueUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             fieldName="toxicityMaximumDosePerUnit"
             fieldLabel="Per"

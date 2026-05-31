@@ -387,6 +387,8 @@ export interface AvailabilityGenerationBatchApplyDTO {
   deferredAt?: string | null;
   scope: string;
   holidayHandlingMode?: string | null;
+  policyAssignmentIds?: number[];
+
 }
 
 export interface ApplyAvailabilityTemplateResponseVM {
@@ -4367,6 +4369,58 @@ export type PolicyDefinitionUpdateDTO = {
   code: string;
   name: string;
   description?: string | null;
+};
+
+export type PolicyResourceType = string;
+
+export type PolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policy?: PolicyDefinition;
+  facilityId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isActive?: boolean;
+  isRequired?: boolean;
+};
+
+export type PolicyAssignmentCreateDTO = {
+  policyId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isRequired: boolean;
+};
+
+export type PolicyAssignmentUpdateDTO = {
+  id: number;
+  isRequired: boolean;
+};
+export type AppointmentPolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+};
+export type AppointmentPolicyAssignmentResponseVM = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+  policyName?:string;
+  policyCode?:string;
+};
+
+export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
+  id: number;
+  isApplied: boolean;
+};
+
+export type AppointmentPolicyAssignmentAppliedBulkUpdateDTO = {
+  updates: AppointmentPolicyAssignmentAppliedUpdateDTO[];
 };
 
 export type SkillDefinition = {

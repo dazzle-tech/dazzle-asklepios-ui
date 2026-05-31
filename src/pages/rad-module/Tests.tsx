@@ -971,7 +971,9 @@ const Tests = forwardRef<any, Props>(
             width={200}
             placeholder="Select Category"
             selectData={radCategoriesLovQueryResponse?.object}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={testKeyFilter}
             setRecord={setTestKeyFilter}

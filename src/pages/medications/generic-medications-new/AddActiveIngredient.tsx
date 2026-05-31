@@ -170,7 +170,9 @@ const handleDelete = async (id) => {
                   fieldName="unit"
                   fieldType="select"
                   selectData={unitLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={BrandActive}
                   setRecord={setBrandActive}

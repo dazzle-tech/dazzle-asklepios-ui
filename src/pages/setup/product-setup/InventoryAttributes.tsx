@@ -55,7 +55,9 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                     fieldName="inventoryTypeLkey"
                     fieldType="select"
                     selectData={lotSerialLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={product}
                     setRecord={setProduct}

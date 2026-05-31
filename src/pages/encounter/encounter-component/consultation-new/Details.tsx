@@ -707,6 +707,8 @@ const Details = ({
                               }
                             }}
                             required
+                                    disableByField='isValid'
+
                           />
 
                           <button
@@ -819,6 +821,8 @@ const Details = ({
                       setRecord={setFormData}
                       searchable={false}
                       required
+                              disableByField='isValid'
+
                     />
                     <MyInput
                       width={'12vw'}
@@ -832,6 +836,8 @@ const Details = ({
                       setRecord={setFormData}
                       searchable={false}
                       required
+                              disableByField='isValid'
+
                     />
                     <MyInput
                       width={'12vw'}
