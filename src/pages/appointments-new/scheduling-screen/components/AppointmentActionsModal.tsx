@@ -15,7 +15,6 @@ import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyInput from "@/components/MyInput";
 import {
-  useCreateEncounterMutation,
   useGetEncountersByAppointmentQuery,
   useLazyGetEncountersByAppointmentQuery,
   useLazyGetEncounterByIdQuery
@@ -30,6 +29,13 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 import AppointmentLogsModal from "./AppointmentLogsModal";
+import { ShieldCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  useBulkUpdateAppointmentPolicyAssignmentsAppliedMutation,
+  useGetAppointmentPolicyAssignmentsByAppointmentIdQuery
+} from "@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService";
+import type { AppointmentPolicyAssignmentAppliedUpdateDTO } from "@/types/model-types-new";
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
     const [cancelAppointment] = useCancelAppointmentMutation();
@@ -44,6 +50,11 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
     const [reasonKey, setResonKey] = useState<any>(null)
     const [openAppointmentLogsModal, setOpenAppointmentLogsModal] = useState<boolean>(false);
+    const [policySettingsModalOpen, setPolicySettingsModalOpen] = useState(false);
+    const [policyAppliedDraft, setPolicyAppliedDraft] = useState<Record<number, boolean>>({});
+    const [isSavingPolicies, setIsSavingPolicies] = useState(false);
+    const mode = useAppSelector((state: any) => state.ui.mode);
+    const isDark = mode === 'dark';
     const [otherReason, setOtherReason] = useState<any>(null)
     const reasonOptions = useMemo(
       () => (resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object) ?? [],
@@ -72,7 +83,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       () => String(otherReason?.otherReason || '').trim().length > 0,
       [otherReason]
     );
-    const [createEncounter] = useCreateEncounterMutation();
+    const [bulkUpdateAppointmentPolicyAssignmentsApplied] =
+      useBulkUpdateAppointmentPolicyAssignmentsAppliedMutation();
     const [getEncounterByAppointment] = useLazyGetEncountersByAppointmentQuery();
     const [getEncounterById] = useLazyGetEncounterByIdQuery();
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -147,6 +159,12 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const getAppointmentId = () =>
       Number(localAppointmentData?.id || localAppointmentData?.key || appointment?.appointmentData?.id || appointment?.appointmentData?.key || 0);
+
+    const appointmentId = useMemo(() => {
+      const appointmentData = appointment?.appointmentData || localAppointmentData;
+      return Number(appointmentData?.key || appointmentData?.id || 0);
+    }, [appointment?.appointmentData, localAppointmentData]);
+
     const normalizeStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     // Always prefer the latest clicked appointment payload from props to avoid stale local state.
     const statusValue =
@@ -178,22 +196,47 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const isReasonViewOnly =
       Boolean(resonType) && (isDirectReasonStatus || isViewOnlyActionsStatus);
 
-    const handleCheckIn = async () => {
+    // Fetch policies for the selected appointment
+    const { data: appointmentPolicyAssignments = [] } =
+      useGetAppointmentPolicyAssignmentsByAppointmentIdQuery(appointmentId, {
+        skip: !appointmentId || !isActionsModalOpen
+      });
+
+    const getPolicyParts = (policyAssignment: any) => {
+      const code = policyAssignment?.policyCode ?? '';
+      const name = policyAssignment?.policyName ?? '';
+
+      if (code || name) {
+        return {
+          code: code || '-',
+          name: name || code || `Policy #${policyAssignment?.policyId ?? '-'}`
+        };
+      }
+
+      return {
+        code: '-',
+        name: `Policy #${policyAssignment?.policyId ?? '-'}`
+      };
+    };
+
+    const buildPolicyAppliedDraft = (policies: any[]) =>
+      policies.reduce<Record<number, boolean>>((acc, policyAssignment) => {
+        const id = Number(policyAssignment?.id);
+        if (Number.isFinite(id) && id > 0) {
+          acc[id] = Boolean(policyAssignment?.isApplied);
+        }
+        return acc;
+      }, {});
+
+    const openPolicySettingsModal = (policies: any[]) => {
+      setPolicyAppliedDraft(buildPolicyAppliedDraft(policies));
+      setPolicySettingsModalOpen(true);
+    };
+
+    const performCheckIn = async () => {
       const id = getAppointmentId();
       if (!id) {
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
-        return;
-      }
-      if (currentStatus == 'CHECKEDIN') {
-        dispatch(notify({ msg: 'Appointment already checked in', sev: 'warning' }));
-        return;
-      }
-      if (!isCheckInEligibleStatus) {
-        dispatch(notify({ msg: 'Only booked or confirmed appointments can be checked in', sev: 'warning' }));
-        return;
-      }
-      if (requireConfirmation && currentStatus !== 'CONFIRMED') {
-        dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
         return;
       }
 
@@ -219,8 +262,66 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' }));
         onStatusChange();
       } catch (error: any) {
-         const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+      }
+    };
+
+    const handleCheckIn = async () => {
+      const id = getAppointmentId();
+      if (!id) {
+        dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+        return;
+      }
+      if (currentStatus == 'CHECKEDIN') {
+        dispatch(notify({ msg: 'Appointment already checked in', sev: 'warning' }));
+        return;
+      }
+      if (!isCheckInEligibleStatus) {
+        dispatch(notify({ msg: 'Only booked or confirmed appointments can be checked in', sev: 'warning' }));
+        return;
+      }
+      if (requireConfirmation && currentStatus !== 'CONFIRMED') {
+        dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
+        return;
+      }
+
+      if (appointmentPolicyAssignments.length > 0) {
+        openPolicySettingsModal(appointmentPolicyAssignments);
+        return;
+      }
+
+      await performCheckIn();
+    };
+
+    const handleSavePolicySettings = async () => {
+      const updates: AppointmentPolicyAssignmentAppliedUpdateDTO[] = appointmentPolicyAssignments
+        .map((policyAssignment: any) => {
+          const id = Number(policyAssignment?.id);
+          if (!Number.isFinite(id) || id <= 0) return null;
+          return {
+            id,
+            isApplied: Boolean(policyAppliedDraft[id])
+          };
+        })
+        .filter(Boolean) as AppointmentPolicyAssignmentAppliedUpdateDTO[];
+
+      if (updates.length === 0) {
+        dispatch(notify({ msg: 'No policies to save', sev: 'warning' }));
+        return;
+      }
+
+      setIsSavingPolicies(true);
+      try {
+        await bulkUpdateAppointmentPolicyAssignmentsApplied({ updates }).unwrap();
+        dispatch(notify({ msg: 'Policy settings saved successfully', sev: 'success' }));
+        setPolicySettingsModalOpen(false);
+        await performCheckIn();
+      } catch (error: any) {
+        const errorMsg = extractErrorMessage(error) || 'Failed to save policy settings';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+      } finally {
+        setIsSavingPolicies(false);
       }
     };
   
@@ -252,12 +353,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       return mrn ? `${patientName} (${mrn})` : patientName;
     }, [localAppointmentData, appointment?.appointmentData, appointment?.title, resolvedPatient]);
 
-    // Get appointment ID for fetching encounter
-    const appointmentId = useMemo(() => {
-        const appointmentData = appointment?.appointmentData || localAppointmentData;
-        return Number(appointmentData?.key || appointmentData?.id || 0);
-    }, [appointment?.appointmentData, localAppointmentData]);
-
     // Fetch encounter for the selected appointment
     const { data: encounterByAppointmentResponse } = useGetEncountersByAppointmentQuery(
         { appointmentId: appointmentId },
@@ -275,6 +370,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setResonType(null);
             setResonKey(null);
             setOtherReason(null);
+            setPolicySettingsModalOpen(false);
+            setPolicyAppliedDraft({});
         }
     }, [appointment])
 
@@ -593,6 +690,123 @@ const handleCancel = async () => {
             </div>
         </Form>
     );
+
+    const policySettingsModalContent = (
+        <div style={{ width: '100%', maxWidth: 520 }}>
+            <div
+                style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: isDark ? '#f9fafb' : '#374151',
+                    marginBottom: 10
+                }}
+            >
+                Policies List
+            </div>
+            <div
+                style={{
+                    border: isDark ? '1px solid #3d3d3d' : '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    backgroundColor: isDark ? 'var(--extra-dark-black)' : '#fff'
+                }}
+            >
+                {appointmentPolicyAssignments.map((policyAssignment: any, index: number) => {
+                    const policy = getPolicyParts(policyAssignment);
+                    const assignmentId = Number(policyAssignment?.id);
+                    const applied = Boolean(policyAppliedDraft[assignmentId]);
+
+                    return (
+                        <div
+                            key={`checkin-policy-${assignmentId || policyAssignment?.policyId || index}`}
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: '34px 120px 1fr auto 90px',
+                                alignItems: 'center',
+                                gap: 10,
+                                minHeight: 46,
+                                padding: '8px 12px',
+                                borderBottom:
+                                    index === appointmentPolicyAssignments.length - 1
+                                        ? 'none'
+                                        : isDark
+                                            ? '1px solid #3d3d3d'
+                                            : '1px solid #e5e7eb',
+                                backgroundColor: isDark ? 'var(--extra-dark-black)' : '#fff'
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: 26,
+                                    height: 26,
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: isDark ? '#27272a' : '#f3f4f6',
+                                    color: isDark ? '#d1d5db' : '#374151'
+                                }}
+                            >
+                                <ShieldCheck size={16} />
+                            </div>
+
+                            <div
+                                style={{
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: isDark ? '#f9fafb' : '#374151',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis'
+                                }}
+                                title={policy.code}
+                            >
+                                {policy.code}
+                            </div>
+
+                            <div
+                                style={{
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    color: isDark ? '#f9fafb' : '#374151',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis'
+                                }}
+                                title={policy.name}
+                            >
+                                {policy.name}
+                            </div>
+
+                            <Switch
+                                checked={applied}
+                                onCheckedChange={(checked) => {
+                                    if (!Number.isFinite(assignmentId) || assignmentId <= 0) return;
+                                    setPolicyAppliedDraft(prev => ({
+                                        ...prev,
+                                        [assignmentId]: checked
+                                    }));
+                                }}
+                                className={applied ? 'data-[state=checked]:bg-emerald-500' : undefined}
+                            />
+
+                            <div
+                                style={{
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    color: applied ? '#059669' : isDark ? '#9ca3af' : '#6b7280',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {applied ? 'Applied' : 'Not Applied'}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+
     return (
         <div>
             <MyModal
@@ -667,7 +881,21 @@ const handleCancel = async () => {
                 }
             />
 
-            <AppointmentLogsModal 
+            <MyModal
+                open={policySettingsModalOpen}
+                setOpen={setPolicySettingsModalOpen}
+                title="Policy Settings"
+                size="560px"
+                bodyheight="auto"
+                position="center"
+                content={policySettingsModalContent}
+                actionButtonLabel="Save"
+                actionButtonFunction={handleSavePolicySettings}
+                isDisabledActionBtn={isSavingPolicies}
+                hideBack={true}
+            />
+
+            <AppointmentLogsModal
             open={openAppointmentLogsModal}
             setOpen={setOpenAppointmentLogsModal}
             appointment={appointment}

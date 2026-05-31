@@ -6,8 +6,10 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
+import MyModal from '@/components/MyModal/MyModal';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSheetPlastic, faRotateRight, faUserNurse } from '@fortawesome/free-solid-svg-icons';
+import { faSheetPlastic, faRotateRight, faUserNurse, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -81,6 +83,9 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [openScreensNursePopup, setOpenScreensNursePopup] = useState(false);
   const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState(false);
+  const [selectedDepartmentForPolicyAssignment, setSelectedDepartmentForPolicyAssignment] =
+    useState<Department | null>(null);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
@@ -554,7 +559,17 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           setOpenAddServicePopup(true);
         }}
       />
-
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedDepartmentForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
     </div>
   );
 
@@ -765,6 +780,25 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         department={department}
         showScreen={showService}
         setShowScreen={setShowService}
+      />
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Department Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedDepartmentForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="DEPARTMENT"
+              resourceId={selectedDepartmentForPolicyAssignment.id ?? 0}
+              facilityId={facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}

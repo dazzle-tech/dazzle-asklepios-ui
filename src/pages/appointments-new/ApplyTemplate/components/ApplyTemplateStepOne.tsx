@@ -11,9 +11,14 @@ import PreviewSlotsSection from "./PreviewSlotsSection";
 import SlotDetailsSection from "./SlotDetailsSection";
 import { Form } from "rsuite";
 import { addMonths, isAfter, isBefore, startOfMinute } from "date-fns";
-import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
-import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
-import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
+import type {
+  AvailabilityGenerationBatchApplyDTO,
+  AvailabilityTemplateResponseVM,
+} from "@/types/model-types-new";
+import {
+  formatLocalDateForApi,
+  parseApplyTemplateDateTime,
+} from "../applyTemplateDateUtils";
 
 type ApplyTemplateStepOneProps = {
   selectedTemplate?: AvailabilityTemplateResponseVM | null;
@@ -26,63 +31,114 @@ export type ApplyTemplateStepOneHandle = {
   validate: () => { ok: boolean; messages: string[] };
 };
 
-function validateDateRange(startRaw: unknown, endRaw: unknown): { ok: boolean; message: string } {
+function validateDateRange(
+  startRaw: unknown,
+  endRaw: unknown
+): { ok: boolean; message: string } {
   const start = parseApplyTemplateDateTime(startRaw);
   const end = parseApplyTemplateDateTime(endRaw);
+
   if (!start || !end) {
-    return { ok: false, message: "From and To date and time are required." };
+    return {
+      ok: false,
+      message: "From and To date and time are required.",
+    };
   }
+
   const nowMinute = startOfMinute(new Date());
+
   if (isBefore(start, nowMinute)) {
-    return { ok: false, message: "From must be the current time or in the future (not in the past)." };
+    return {
+      ok: false,
+      message: "From must be the current time or in the future (not in the past).",
+    };
   }
+
   if (isBefore(end, start)) {
-    return { ok: false, message: "To must be on or after From." };
+    return {
+      ok: false,
+      message: "To must be on or after From.",
+    };
   }
+
   const maxEnd = addMonths(start, 2);
+
   if (isAfter(end, maxEnd)) {
-    return { ok: false, message: "The range between From and To must not exceed 2 months." };
+    return {
+      ok: false,
+      message: "The range between From and To must not exceed 2 months.",
+    };
   }
+
   return { ok: true, message: "" };
 }
 
 const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
-  { selectedTemplate, dto, setDto, onValidationChange }: ApplyTemplateStepOneProps,
+  {
+    selectedTemplate,
+    dto,
+    setDto,
+    onValidationChange,
+  }: ApplyTemplateStepOneProps,
   ref: React.ForwardedRef<ApplyTemplateStepOneHandle>
 ) {
   const mode = useAppSelector((state: any) => state.ui.mode);
-  const [selectedPreviewCell, setSelectedPreviewCell] = React.useState<{ dateKey: string; timeLabel: string } | null>(null);
-  const [selectedPreviewCellSlots, setSelectedPreviewCellSlots] = React.useState<any[]>([]);
-  const [selectedPreviewSlot, setSelectedPreviewSlot] = React.useState<any | null>(null);
+
+  const [selectedPreviewCell, setSelectedPreviewCell] = React.useState<{
+    dateKey: string;
+    timeLabel: string;
+  } | null>(null);
+
+  const [selectedPreviewCellSlots, setSelectedPreviewCellSlots] =
+    React.useState<any[]>([]);
+
+  const [selectedPreviewSlot, setSelectedPreviewSlot] =
+    React.useState<any | null>(null);
+
   const facilityId = selectedTemplate?.facilityId ?? null;
   const departmentId = selectedTemplate?.departmentId ?? null;
-  const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
+
+  const selectedDepartment = useAppSelector(
+    (s) => (s as any)?.auth?.selectedDepartment
+  );
+
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ??
     selectedDepartment?.facility?.id ??
     selectedDepartment?.facility?.facilityId ??
     null;
-  const { data: facilityData } = useGetFacilityByIdQuery(facilityId as any, { skip: !facilityId });
-  const { data: departmentData } = useGetDepartmentByIdQuery(departmentId as any, { skip: !departmentId });
 
-  const [internalFormState, setInternalFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
-    templateId: selectedTemplate?.id ?? 0,
-    startDate: null as any,
-    endDate: null as any,
-    deferred: false,
-    deferredAt: null,
-    scope: "DEPARTMENT",
-    holidayHandlingMode: null,
-  } as AvailabilityGenerationBatchApplyDTO);
+  const { data: facilityData } = useGetFacilityByIdQuery(facilityId as any, {
+    skip: !facilityId,
+  });
+
+  const { data: departmentData } = useGetDepartmentByIdQuery(departmentId as any, {
+    skip: !departmentId,
+  });
+
+  const [internalFormState, setInternalFormState] =
+    React.useState<AvailabilityGenerationBatchApplyDTO>({
+      templateId: selectedTemplate?.id ?? 0,
+      startDate: null as any,
+      endDate: null as any,
+      deferred: false,
+      deferredAt: null,
+      scope: "DEPARTMENT",
+      holidayHandlingMode: null,
+      policyAssignmentIds: [],
+    } as AvailabilityGenerationBatchApplyDTO);
+
   const formState = dto ?? internalFormState;
   const setFormState = setDto ?? setInternalFormState;
 
   React.useEffect(() => {
     const nextId = selectedTemplate?.id ?? 0;
+
     setFormState((prev) => {
       if (prev.templateId === nextId) {
         return prev;
       }
+
       return {
         ...prev,
         templateId: nextId,
@@ -91,6 +147,7 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
         scope: "DEPARTMENT" as any,
         childTemplateId: null as any,
         holidayHandlingMode: null,
+        policyAssignmentIds: [],
       } as AvailabilityGenerationBatchApplyDTO;
     });
   }, [selectedTemplate?.id, setFormState]);
@@ -104,18 +161,31 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
     facilityId != null && Number(facilityId) > 0
       ? Number(facilityId)
       : Number(facilityIdFromAuth ?? 0);
+
   const fromDate = formatLocalDateForApi(formState.startDate);
   const toDate = formatLocalDateForApi(formState.endDate);
+
   const shouldFetchHolidays =
-    facilityIdForHolidays > 0 && Boolean(fromDate) && Boolean(toDate) && dateRangeValidation.ok;
+    facilityIdForHolidays > 0 &&
+    Boolean(fromDate) &&
+    Boolean(toDate) &&
+    dateRangeValidation.ok;
+
   const {
     data: holidaysInRange = [],
     isFetching: isFetchingHolidays,
     isError: isHolidaysQueryError,
   } = useGetActiveHolidaysInRangeQuery(
-    { fromDate, toDate, facilityId: facilityIdForHolidays },
-    { skip: !shouldFetchHolidays }
+    {
+      fromDate,
+      toDate,
+      facilityId: facilityIdForHolidays,
+    },
+    {
+      skip: !shouldFetchHolidays,
+    }
   );
+
   const holidayHandlingModeSet = Boolean(
     String((formState as any)?.holidayHandlingMode ?? "").trim()
   );
@@ -127,15 +197,18 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
       hasAnyInterval: false,
     });
 
-  const handleTemplateIntervalsStatus = React.useCallback((s: EffectiveTemplateIntervalsStatus) => {
-    setTemplateIntervalsStatus((prev) =>
-      prev.effectiveTemplateId === s.effectiveTemplateId &&
+  const handleTemplateIntervalsStatus = React.useCallback(
+    (s: EffectiveTemplateIntervalsStatus) => {
+      setTemplateIntervalsStatus((prev) =>
+        prev.effectiveTemplateId === s.effectiveTemplateId &&
         prev.isLoading === s.isLoading &&
         prev.hasAnyInterval === s.hasAnyInterval
-        ? prev
-        : s
-    );
-  }, []);
+          ? prev
+          : s
+      );
+    },
+    []
+  );
 
   React.useEffect(() => {
     setTemplateIntervalsStatus({
@@ -147,18 +220,26 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
 
   const collectStepOneValidationMessages = React.useCallback((): string[] => {
     const messages: string[] = [];
-    const scope = String((formState as any)?.scope ?? "").trim().toUpperCase();
+
+    const scope = String((formState as any)?.scope ?? "")
+      .trim()
+      .toUpperCase();
+
     const isScopeSelected = scope.length > 0;
     const isSpecificResource = scope === "SPECIFIC_RESOURCE";
-    const hasSelectedResourceTemplate = Number((formState as any)?.childTemplateId ?? 0) > 0;
+    const hasSelectedResourceTemplate =
+      Number((formState as any)?.childTemplateId ?? 0) > 0;
+
     if (!isScopeSelected) {
       messages.push("Please select an apply scope.");
     } else if (isSpecificResource && !hasSelectedResourceTemplate) {
       messages.push("Please select a resource template for Specific resource scope.");
     }
+
     if (!dateRangeValidation.ok) {
       messages.push(dateRangeValidation.message);
     }
+
     if (templateIntervalsStatus.isLoading) {
       messages.push("Please wait while availability intervals are loaded.");
     } else if (
@@ -167,16 +248,21 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
     ) {
       messages.push("The effective template has no configured availability intervals.");
     }
+
     if (shouldFetchHolidays && !isHolidaysQueryError) {
       if (isFetchingHolidays) {
         messages.push("Please wait while holidays in the selected range are checked.");
       } else {
         const count = (holidaysInRange as unknown[])?.length ?? 0;
+
         if (count > 0 && !holidayHandlingModeSet) {
-          messages.push("Please select how to handle holidays (exclude or include as exception).");
+          messages.push(
+            "Please select how to handle holidays (exclude or include as exception)."
+          );
         }
       }
     }
+
     return messages;
   }, [
     formState,
@@ -197,7 +283,11 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
     () => ({
       validate: () => {
         const messages = collectStepOneValidationMessages();
-        return { ok: messages.length === 0, messages };
+
+        return {
+          ok: messages.length === 0,
+          messages,
+        };
       },
     }),
     [collectStepOneValidationMessages]
@@ -216,14 +306,33 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
   }, [departmentData]);
 
   const templateOptions = selectedTemplate
-    ? [{ id: selectedTemplate.id, label: selectedTemplate.templateName }]
+    ? [
+        {
+          id: selectedTemplate.id,
+          label: selectedTemplate.templateName,
+        },
+      ]
     : [];
-  const facilityOptions = selectedTemplate?.facilityId && facilityName
-    ? [{ id: selectedTemplate.facilityId, label: facilityName }]
-    : [];
-  const departmentOptions = selectedTemplate?.departmentId && departmentName
-    ? [{ id: selectedTemplate.departmentId, label: departmentName }]
-    : [];
+
+  const facilityOptions =
+    selectedTemplate?.facilityId && facilityName
+      ? [
+          {
+            id: selectedTemplate.facilityId,
+            label: facilityName,
+          },
+        ]
+      : [];
+
+  const departmentOptions =
+    selectedTemplate?.departmentId && departmentName
+      ? [
+          {
+            id: selectedTemplate.departmentId,
+            label: departmentName,
+          },
+        ]
+      : [];
 
   return (
     <>
@@ -275,8 +384,10 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
             fieldName="facilityId"
             fieldLabel="Facility"
             fieldType="select"
-            record={{ facilityId: selectedTemplate?.facilityId ?? null }}
-            setRecord={() => { }}
+            record={{
+              facilityId: selectedTemplate?.facilityId ?? null,
+            }}
+            setRecord={() => {}}
             selectData={facilityOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -290,8 +401,10 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
             fieldName="departmentId"
             fieldLabel="Department"
             fieldType="select"
-            record={{ departmentId: selectedTemplate?.departmentId ?? null }}
-            setRecord={() => { }}
+            record={{
+              departmentId: selectedTemplate?.departmentId ?? null,
+            }}
+            setRecord={() => {}}
             selectData={departmentOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -305,8 +418,10 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
             fieldName="durationMinutes"
             fieldLabel="Duration (Minutes)"
             fieldType="number"
-            record={{ durationMinutes: selectedTemplate?.durationMinutes ?? null }}
-            setRecord={() => { }}
+            record={{
+              durationMinutes: selectedTemplate?.durationMinutes ?? null,
+            }}
+            setRecord={() => {}}
             width="100%"
             disabled
           />
@@ -315,14 +430,22 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
 
       <div
         className="grid gap-4 overflow-x-hidden bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]"
-        style={mode === "dark" ? { backgroundColor: "var(--extra-dark-black)" } : undefined}
+        style={
+          mode === "dark"
+            ? {
+                backgroundColor: "var(--extra-dark-black)",
+              }
+            : undefined
+        }
       >
         <ApplyConfigurationSection
           dto={formState}
           setDto={setFormState}
           onEffectiveTemplateIntervalsStatus={handleTemplateIntervalsStatus}
           templateFacilityId={selectedTemplate?.facilityId ?? null}
+          selectedTemplate={selectedTemplate}
         />
+
         <PreviewSlotsSection
           templateId={selectedTemplate?.id}
           templateDurationMinutes={selectedTemplate?.durationMinutes ?? null}
@@ -330,14 +453,21 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
           dto={formState}
           setDto={setFormState}
           selectedCellKey={
-            selectedPreviewCell ? `${selectedPreviewCell.dateKey}|${selectedPreviewCell.timeLabel}` : null
+            selectedPreviewCell
+              ? `${selectedPreviewCell.dateKey}|${selectedPreviewCell.timeLabel}`
+              : null
           }
           onSlotCellSelect={({ dateKey, timeLabel, slots }) => {
-            setSelectedPreviewCell({ dateKey, timeLabel });
+            setSelectedPreviewCell({
+              dateKey,
+              timeLabel,
+            });
+
             setSelectedPreviewCellSlots(slots ?? []);
             setSelectedPreviewSlot((slots ?? [])[0] ?? null);
           }}
         />
+
         <SlotDetailsSection
           dto={formState}
           setDto={setFormState}

@@ -2,8 +2,12 @@ import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import { FaUndo, FaBed, FaConciergeBell } from 'react-icons/fa';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import MyModal from '@/components/MyModal/MyModal';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -116,6 +120,8 @@ const RoomSection = () => {
   );
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
   const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState(false);
+  const [selectedRoomForPolicyAssignment, setSelectedRoomForPolicyAssignment] = useState<Room | null>(null);
   const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
 
   const [roomPagination, setRoomPagination] = useState({
@@ -505,6 +511,20 @@ const RoomSection = () => {
         }}
       />
 
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        className="icons-style"
+        title="Policy Assignment"
+        size="lg"
+        color="var(--primary-gray)"
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('rowData', rowData);
+          setSelectedRoomForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
+
       {rowData?.isActive ? (
         <MdDelete
           className="icons-style"
@@ -545,7 +565,7 @@ const RoomSection = () => {
       key: 'facilityId',
       title: <Translate>Facility</Translate>,
       flexGrow: 4,
-      render: (rowData: Room) => <span>{rowData.facility?.name ?? 'N/A'}</span>
+      render: (rowData: any) => <span>{rowData.facility?.name ?? 'N/A'}</span>
     },
     {
       key: 'floor',
@@ -556,7 +576,7 @@ const RoomSection = () => {
       key: 'departmentId',
       title: <Translate>Department</Translate>,
       flexGrow: 4,
-      render: (rowData: Room) => <span>{rowData.department?.name ?? 'N/A'}</span>
+      render: (rowData: any) => <span>{rowData.department?.name ?? 'N/A'}</span>
     },
     {
       key: 'type',
@@ -652,6 +672,30 @@ const RoomSection = () => {
         room={room}
         setRoom={setRoom}
         refetchRoom={refetchActiveList}
+      />
+
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={(value) => {
+          setOpenPolicyAssignmentModal(value);
+          if (!value) {
+            setSelectedRoomForPolicyAssignment(null);
+          }
+        }}
+        title="Policy Assignment"
+        bodyheight="55vh"
+        size="60vw"
+        content={
+          selectedRoomForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="ROOM"
+              resourceId={selectedRoomForPolicyAssignment.id ?? 0}
+              facilityId={selectedRoomForPolicyAssignment.facility?.id ?? 0}
+              showHeader={false}
+
+            />
+          ) : null
+        }
       />
 
       <AddService
