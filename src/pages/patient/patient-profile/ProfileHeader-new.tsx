@@ -136,22 +136,19 @@ const handlePrintPatientLabel = async (rowData: any) => {
     }).unwrap();
 
     const fileURL = window.URL.createObjectURL(blob);
+    const win = window.open(fileURL, '_blank');
 
-    const link = document.createElement('a');
-    link.href = fileURL;
-    link.download = `label-${rowData.medicalRecordNumber}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    if (win) {
+      win.focus();
+    }
 
     setTimeout(() => {
       window.URL.revokeObjectURL(fileURL);
-    }, 1000);
+    }, 10000);
   } catch (error: any) {
     dispatch(
       notify({
-        msg: error?.data?.message || 'Failed to download label pdf',
+        msg: error?.data?.message || 'Failed to open label pdf',
         sev: 'error'
       })
     );
