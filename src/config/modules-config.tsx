@@ -717,6 +717,18 @@ export const MODULES: Module[] =
 
       ],
     },
+    {
+      name: "Waseel Integration",
+      description: null,
+      icon: "FaRegIdBadge",
+      viewOrder: 2,
+      screens: [
+
+        { name: "Waseel Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "waseel-pre-authorization-requests" },
+
+        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
+  ],
+    },
 
 
 
