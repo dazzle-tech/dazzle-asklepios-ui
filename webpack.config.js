@@ -112,13 +112,13 @@ module.exports = {
 
   plugins: [
     new HtmlwebpackPlugin({
-      title: 'OneHealth',
+      title: 'Clinicle',
       filename: 'index.html',
       template: './src/index.html',
       inject: true,
       hash: true,
       publicPath: isProduction ? './' : '/',
-      favicon: './public/r-and-d-projects.atlassian1.png',
+      favicon: './public/clinicle.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
