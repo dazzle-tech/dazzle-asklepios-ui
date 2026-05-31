@@ -1,11 +1,11 @@
 .tabs-style {
-
-  .rs-nav {
-    white-space: wrap;
-
-    .rs-nav-item {
-      border-bottom: 1px solid var(--rs-border-primary);
-    }
+.rs-nav-item.rs-nav-item-active {
+  // for one health theme
+    color: var(--primary-blue) !important; 
+}
+ .rs-nav-subtle .rs-nav-item-active::before {
+  // for one health theme
+    background-color: var(--primary-blue) !important;
   }
 }
 
@@ -14,3 +14,5 @@
     background-color: transparent !important;
   }
 }
+
+
