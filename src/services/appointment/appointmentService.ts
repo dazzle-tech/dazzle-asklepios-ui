@@ -173,6 +173,33 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentsByStatusBetweenDatesWithoutPagination: builder.query<
+      AppointmentFromTemplate[],
+      {
+        status: AppointmentStatus[];
+        startDatetime: string;
+        endDatetime: string;
+      }
+    >({
+      query: ({ status, startDatetime, endDatetime }) => {
+        const query = new URLSearchParams();
+        (status ?? []).forEach(s => {
+          if (s) query.append('status', s);
+        });
+        query.set('startDatetime', startDatetime);
+        query.set('endDatetime', endDatetime);
+        return {
+          url: `${APPOINTMENT_BASE_URL}/by-status-and-dates/without-pagination?${query.toString()}`,
+          method: 'GET'
+        };
+      },
+      transformResponse: (response: AppointmentFromTemplate[]) => response ?? [],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     getAppointmentsByBatchId: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { batchId: Id } & PagedParams
@@ -253,6 +280,22 @@ export const appointmentFromTemplateService = createApi({
           links: parseLinkHeader(headers?.get('Link'))
         };
       },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    filterAppointmentsWithoutPagination: builder.query<
+      AppointmentFromTemplate[],
+      { filter: AppointmentFromTemplateSearchFilterDTO }
+    >({
+      query: ({ filter }) => ({
+        url: `${APPOINTMENT_BASE_URL}/search/without-pagination`,
+        method: 'POST',
+        body: filter
+      }),
+      transformResponse: (response: AppointmentFromTemplate[]) => response ?? [],
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       },
@@ -348,6 +391,8 @@ export const {
   useRescheduleDiagnosticTestAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
+  useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
+  useLazyGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
   useGetAppointmentsByBatchIdQuery,
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,
@@ -356,6 +401,8 @@ export const {
   useLazyGetAppointmentByIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
+  useFilterAppointmentsWithoutPaginationQuery,
+  useLazyFilterAppointmentsWithoutPaginationQuery,
   useCancelAppointmentMutation,
   useNoShowAppointmentMutation,
   useConfirmAppointmentMutation,

@@ -91,11 +91,6 @@ function getAppointmentPatientId(row: any): number | null {
     row?.patient?.patient_id;
   const numeric = Number(raw);
   const result = Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-  console.log("[BulkRescheduleModal] getAppointmentPatientId", {
-    raw,
-    result,
-    row,
-  });
   return result;
 }
 
@@ -372,15 +367,6 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     { skip: patientIds.length === 0 },
   );
 
-  useEffect(() => {
-    console.log("[BulkRescheduleModal] patientIds", {
-      patientIds,
-      isArray: Array.isArray(patientIds),
-      isSet: patientIds instanceof Set,
-      patients,
-    });
-  }, [patientIds, patients]);
-
   const patientMap = useMemo(() => {
     const map = new Map<number, any>();
     patients?.forEach((p) => map.set(Number(p.id), p));
@@ -467,14 +453,6 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             getPatientFullName(row?.patient) ||
             String(row?.patientName ?? "").trim();
           const name = nameFromService || nameFromRow || "—";
-          console.log("[BulkRescheduleModal] render patient", {
-            row,
-            patientId,
-            patient,
-            nameFromService,
-            nameFromRow,
-            name,
-          });
           return <span>{name}</span>;
         },
       },
