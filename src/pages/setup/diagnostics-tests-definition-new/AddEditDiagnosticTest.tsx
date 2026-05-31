@@ -350,7 +350,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               <div className="container-of-field-diagnostic">
                 <MyInput
                   required
-                  width="%100%"
+                  width="100%"
                   fieldLabel="Test Type"
                   fieldType="select"
                   fieldName="type"
@@ -478,7 +478,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               <div className="container-of-field-diagnostic">
                 <MyInput
                   disabled={true}
-                  width="%100%"
+                  width="100%"
                   fieldLabel="Currency"
                   fieldType="select"
                   fieldName="currency"
