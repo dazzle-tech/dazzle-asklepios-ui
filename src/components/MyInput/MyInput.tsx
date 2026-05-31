@@ -34,7 +34,7 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
     cleanable={false}
     block
     ref={ref}
-    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+    // menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
   />
 ));
 
@@ -45,7 +45,7 @@ const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
     cleanable={false}
     block
     ref={ref}
-    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+    // menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
   />
 ));
 
