@@ -4412,6 +4412,15 @@ export type AppointmentPolicyAssignmentResponseVM = {
   policyCode?:string;
 };
 
+export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
+  id: number;
+  isApplied: boolean;
+};
+
+export type AppointmentPolicyAssignmentAppliedBulkUpdateDTO = {
+  updates: AppointmentPolicyAssignmentAppliedUpdateDTO[];
+};
+
 export type SkillDefinition = {
   id?: number;
   facilityId?: number;
