@@ -287,7 +287,9 @@ const ERDashboardTable = () => {
             record={record}
             setRecord={setRecord}
             selectData={emergencyLevelLov}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
           />
           <MyInput

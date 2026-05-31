@@ -385,7 +385,9 @@ setWarehouseProductListRequest(prev => ({
                         fieldName="typeLkey"
                         fieldType="select"
                         selectData={productTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={selectedProduct}
                         setRecord={setSelectedProduct}
@@ -477,7 +479,9 @@ setWarehouseProductListRequest(prev => ({
                         fieldName="inventoryTypeLkey"
                         fieldType="select"
                         selectData={lotSerialLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={selectedProduct}
                         setRecord={setSelectedProduct}

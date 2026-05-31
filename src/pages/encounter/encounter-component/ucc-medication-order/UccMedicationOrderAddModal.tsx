@@ -307,7 +307,9 @@ useEffect(() => {
                       fieldType="select"
                       fieldLabel="Unit"
                       selectData={unitLov?.object || []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       fieldName="unit"
                       record={record}
@@ -320,7 +322,9 @@ useEffect(() => {
                       fieldType="select"
                       fieldLabel="Frequency"
                       selectData={frequencyLov?.object || []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       fieldName="frequency"
                       record={record}

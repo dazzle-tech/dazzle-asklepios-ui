@@ -279,7 +279,9 @@ const filters = (<>                <Form layout='inline' fluid>
                         fieldType="select"
                         fieldName="documentTypeLkey"
                         selectData={[]}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={searchPatient}
                         setRecord={setSearchPatient}
@@ -290,7 +292,9 @@ const filters = (<>                <Form layout='inline' fluid>
                         fieldType="select"
                         fieldName="warehouseLkey"
                         selectData={[]}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={insurancePatient}
                         setRecord={setInsurancePatient}

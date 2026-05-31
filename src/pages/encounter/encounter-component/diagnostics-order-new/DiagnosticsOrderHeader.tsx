@@ -207,6 +207,8 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                       : []
                 }
                 selectDataLabel="lovDisplayVale"
+                        disableByField='isValid'
+
                 selectDataValue="key"
                 record={filters}
                 setRecord={setFilters}

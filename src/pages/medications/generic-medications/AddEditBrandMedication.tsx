@@ -445,7 +445,9 @@ const AddEditBrandMedication = ({
                   fieldName="manufacturerLkey"
                   fieldType="select"
                   selectData={GenericMedicationLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={genericMedication}
                   setRecord={setGenericMedication}
@@ -458,7 +460,9 @@ const AddEditBrandMedication = ({
                   fieldName="dosageFormLkey"
                   fieldType="select"
                   selectData={doseageFormLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={genericMedication}
                   setRecord={setGenericMedication}
@@ -474,7 +478,9 @@ const AddEditBrandMedication = ({
                   fieldLabel="Rout"
                   selectData={medRoutLovQueryResponse?.object ?? []}
                   fieldType="checkPicker"
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="roaList"
                   record={genericMedication}
@@ -553,7 +559,9 @@ const AddEditBrandMedication = ({
                   fieldName="costCategoryLkey"
                   fieldType="select"
                   selectData={categoryCostLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={genericMedication}
                   setRecord={setGenericMedication}
@@ -709,7 +717,9 @@ const AddEditBrandMedication = ({
               record={genericActive}
               setRecord={setGenericActive}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               placeholder="Unit"
               selectData={UOMLovResponseData?.object ?? []}
               menuMaxHeight={200}

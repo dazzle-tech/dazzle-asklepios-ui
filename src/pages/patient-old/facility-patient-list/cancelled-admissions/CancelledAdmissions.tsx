@@ -118,7 +118,9 @@ const content = (
             fieldType="select"
             fieldName="encounterTypeLkey"
             selectData={encounterTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={searchPatient}
             setRecord={setSearchPatient}

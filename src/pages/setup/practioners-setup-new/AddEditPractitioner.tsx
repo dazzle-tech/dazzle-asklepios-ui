@@ -471,7 +471,9 @@ const AddEditPractitioner = ({
                         fieldType="select"
                         fieldName="educationalLevel"
                         selectData={eduLvlLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={practitioner}
                         setRecord={setPractitioner}
@@ -497,7 +499,9 @@ const AddEditPractitioner = ({
                           fieldType="select"
                           fieldName="subSpecialty"
                           selectData={subSpecialityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           record={practitioner}
                           setRecord={setPractitioner}

@@ -459,7 +459,9 @@ const Profile = ({
                     fieldName="resultUnit"
                     fieldType="select"
                     selectData={unitsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={diagnosticsTestProfile}
                     setRecord={setDiagnosticsTestProfile}

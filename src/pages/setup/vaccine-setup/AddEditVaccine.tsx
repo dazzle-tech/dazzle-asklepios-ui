@@ -839,7 +839,9 @@ const vaccineType = useEnumOptions('VaccineType', {
         fieldType="select"
         fieldName="manufacture"
         selectData={manufactureLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={vaccineBrand}
         setRecord={setVaccineBrand}

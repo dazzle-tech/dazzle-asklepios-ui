@@ -38,7 +38,9 @@ const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
               fieldName="shiftType"
               fieldType="select"
               selectData={shiftsTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={shift}
               setRecord={setShift}

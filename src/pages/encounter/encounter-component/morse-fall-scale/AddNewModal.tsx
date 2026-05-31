@@ -86,7 +86,9 @@ const AddNewModal = ({
                   fieldLabel="History of falling Within last 3 months"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={morseFallScale}
                   setRecord={setMorseFallScale}
@@ -99,7 +101,9 @@ const AddNewModal = ({
                   fieldLabel="Secondary diagnosis"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={morseFallScale}
                   setRecord={setMorseFallScale}
@@ -113,7 +117,9 @@ const AddNewModal = ({
               fieldLabel="IV/Heparin lock"
               fieldType="select"
               selectData={booleanLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={morseFallScale}
               setRecord={setMorseFallScale}

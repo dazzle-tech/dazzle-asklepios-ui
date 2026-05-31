@@ -30,7 +30,9 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
               fieldName=""
               fieldType="select"
               selectData={questionnaireTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               fieldLabel="Type"
               selectDataValue="key"
               record=""

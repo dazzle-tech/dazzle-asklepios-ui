@@ -39,7 +39,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'emp1', lovDisplayVale: 'Mohammed' },
               { key: 'emp2', lovDisplayVale: 'Layla' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -54,7 +56,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'HR', lovDisplayVale: 'HR Department' },
               { key: 'IT', lovDisplayVale: 'IT Department' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -69,7 +73,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'cat1', lovDisplayVale: 'Furniture' },
               { key: 'cat2', lovDisplayVale: 'Electronics' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -92,7 +98,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'sup1', lovDisplayVale: 'Supplier One' },
               { key: 'sup2', lovDisplayVale: 'Supplier Two' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -103,7 +111,9 @@ const AddPurchasing = ({ open, setOpen }) => {
             fieldLabel="Urgency Level"
             fieldType="select"
             selectData={urgencyLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={{}}
             setRecord={''}
@@ -123,7 +133,9 @@ const AddPurchasing = ({ open, setOpen }) => {
             fieldName="Currency"
             fieldLabel="Currency"
             selectData={currencyLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={{}}
             setRecord={''}
@@ -137,7 +149,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'business', lovDisplayVale: 'Business Need' },
               { key: 'mandatory', lovDisplayVale: 'Mandatory Purchase' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -154,7 +168,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'd1', lovDisplayVale: 'Procurement' },
               { key: 'd2', lovDisplayVale: 'Operations' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -171,7 +187,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'PO123', lovDisplayVale: 'PO123' },
               { key: 'PO124', lovDisplayVale: 'PO124' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -185,7 +203,9 @@ const AddPurchasing = ({ open, setOpen }) => {
               { key: 'main', lovDisplayVale: 'Main Store' },
               { key: 'branch', lovDisplayVale: 'Branch Store' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -207,7 +227,9 @@ const AddPurchasing = ({ open, setOpen }) => {
             fieldName="Purchase Requistation type"
             fieldType="select"
             selectData={purchaseLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={{}}
             setRecord={''}

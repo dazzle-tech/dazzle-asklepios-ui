@@ -106,6 +106,8 @@ const Assessment = ({
               fieldType="select"
               selectData={patientStatusLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={doctorRound}
               setRecord={setDoctorRound}

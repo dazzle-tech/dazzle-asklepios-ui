@@ -467,7 +467,9 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                     fieldType="select"
                     fieldName="baselineEcgFindingsLkey"
                     selectData={baselineEcgLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={selectedRowData}
                     setRecord={setSelectedRowData}
@@ -513,7 +515,9 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                     fieldType="select"
                     fieldName="bruceProtocolStageLkey"
                     selectData={bruceProtocolLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={selectedRowData}
                     setRecord={setSelectedRowData}
@@ -525,7 +529,9 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                     fieldType="select"
                     fieldName="segmentChangeLkey"
                     selectData={segmentChangeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={selectedRowData}
                     setRecord={setSelectedRowData}
@@ -546,7 +552,9 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                     fieldType="select"
                     fieldName="typeLkey"
                     selectData={typeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={selectedRowData}
                     setRecord={setSelectedRowData}
@@ -558,7 +566,9 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                     fieldType="select"
                     fieldName="testOutcomeLkey"
                     selectData={testOutcomeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={selectedRowData}
                     setRecord={setSelectedRowData}

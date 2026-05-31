@@ -135,7 +135,9 @@ const OrderModal: React.FC<OrderModalProps> = ({
                   { lovDisplayVale: 'Analgesic', key: 'analgesic' },
                   { lovDisplayVale: 'Antihypertensive', key: 'antihypertensive' }
                 ]}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 searchable={false}
                 width={200}
@@ -174,7 +176,9 @@ const OrderModal: React.FC<OrderModalProps> = ({
                     { lovDisplayVale: 'IV', key: 'iv' }
                   ]
                 }
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 searchable={false}
                 width={200}
@@ -205,7 +209,9 @@ const OrderModal: React.FC<OrderModalProps> = ({
                       { lovDisplayVale: 'Days', key: 'days' }
                     ]
                   }
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   searchable={false}
                   showLabel={false}

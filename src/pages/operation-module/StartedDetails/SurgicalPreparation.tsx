@@ -95,7 +95,9 @@ const SurgicalPreparation = ({ operation, editable, activeTab, setActiveTab }) =
                                     fieldType="select"
 
                                     selectData={positionLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName="positionLkey"
                                     searchable={false}

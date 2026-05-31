@@ -201,7 +201,9 @@ const PrescriptionInstructions = () => {
           fieldName="value"
           fieldType="select"
           selectData={frequencyLov?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}

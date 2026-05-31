@@ -474,7 +474,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="route"
                 fieldType="select"
                 selectData={routeLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -487,7 +489,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="frequency"
                 fieldType="select"
                 selectData={freqLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -513,7 +517,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             fieldName="physicalLimitation"
             fieldType="select"
             selectData={physicalLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -527,7 +533,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             fieldName="diagnosedEatingDisorders"
             fieldType="select"
             selectData={diagnoseLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}

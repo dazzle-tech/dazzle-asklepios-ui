@@ -1305,6 +1305,8 @@ const BookPatient = ({
                             width="100%"
                             searchable={false}
                             disabled={readOnly}
+                                    disableByField='isValid'
+
                           />
 
                           <MyInput

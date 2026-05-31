@@ -299,7 +299,9 @@ const AddEditTransaction = ({
                   fieldName="transTypeLkey"
                   fieldType="select"
                   selectData={transTypeListResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -331,7 +333,9 @@ const AddEditTransaction = ({
                       ? transReasonInListResponse?.object ?? []
                       : transReasonOutListResponse?.object ?? []
                   }
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -625,7 +629,9 @@ const AddEditTransaction = ({
                   fieldName="transTypeLkey"
                   fieldType="select"
                   selectData={transTypeListResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -661,7 +667,9 @@ const AddEditTransaction = ({
                       ? transReasonInListResponse?.object ?? []
                       : transReasonOutListResponse?.object ?? []
                   }
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}

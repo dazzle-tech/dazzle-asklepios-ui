@@ -146,6 +146,8 @@ const AddAudiometryPuretone = ({
           setRecord={setAudiometryPuretone}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <Panel header={'Right Ear'} bordered>
           <Form fluid layout="inline" className="fields-container">
@@ -274,6 +276,8 @@ const AddAudiometryPuretone = ({
           setRecord={setAudiometryPuretone}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           column
@@ -288,6 +292,8 @@ const AddAudiometryPuretone = ({
           setRecord={setAudiometryPuretone}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           column

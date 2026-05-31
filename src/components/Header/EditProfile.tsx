@@ -80,6 +80,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
                         selectDataValue="key"
                         record={user}
                         setRecord={setUser}
+                                disableByField='isValid'
+
                     />
                     <MyInput
                         disabled={!editing}

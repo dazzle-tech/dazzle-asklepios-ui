@@ -411,6 +411,8 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
                         record={filters}
                         setRecord={setFilters}
                         searchable={false}
+                                disableByField='isValid'
+
                     />
 
                     <div className="show-rejected-view-appointment-request">

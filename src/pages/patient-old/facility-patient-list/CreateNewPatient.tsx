@@ -259,7 +259,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="genderLkey"
               selectData={genderLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -298,7 +300,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="documentTypeLkey"
               selectData={docTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -311,7 +315,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="documentCountryLkey"
               selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -362,7 +368,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="preferredContactLkey"
               selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -389,7 +397,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="countryLkey"
               selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -401,7 +411,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="stateProvinceRegionLkey"
               selectData={cityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -413,7 +425,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="cityLkey"
               selectData={cityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}

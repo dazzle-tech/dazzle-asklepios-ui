@@ -218,7 +218,9 @@ const DrugDrugInteractions = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={severityLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width={200}
             fieldName="severityLkey"

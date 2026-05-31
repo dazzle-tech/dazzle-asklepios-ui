@@ -54,7 +54,9 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
             fieldName="category"
             fieldType="select"
             selectData={radCategoriesLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestRadiology}
             setRecord={setDiagnosticTestRadiology}
@@ -90,7 +92,9 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
             fieldName="turnaroundTimeUnit"
             selectData={timeUnitLovQueryResponse?.object ?? []}
             fieldType="select"
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestRadiology}
             setRecord={setDiagnosticTestRadiology}

@@ -60,7 +60,7 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     ...generalAssessment,
                     patientKey: patient.key,
                     encounterKey: encounter.key,
-                     supportingMembers: tagField,
+                    supportingMembers: tagField,
                     updatedBy: authSlice.user.key,
 
                 }).unwrap();
@@ -125,11 +125,11 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
         }
 
     }, [generalAssessment]);
-        useEffect(() => {
-            if (!open) {
-                handleClearField();
-            }
-        }, [open]);
+    useEffect(() => {
+        if (!open) {
+            handleClearField();
+        }
+    }, [open]);
     // Modal Content 
     const content = (
         <div className={clsx('', { 'disabled-panel': edit })}>
@@ -142,6 +142,9 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="positionStatusLkey"
                     selectData={positionStatusLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -156,6 +159,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="bodyMovementsLkey"
                     selectData={bodyMovementLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -170,6 +175,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="levelOfConsciousnessLkey"
                     selectData={levelOfConscLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -184,6 +191,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="facialExpressionLkey"
                     selectData={levelOfConscLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -198,6 +207,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="speechLkey"
                     selectData={speechAssLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -211,6 +222,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     fieldName="moodBehaviorLkey"
                     selectData={moodLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
@@ -270,9 +283,9 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
                     disabled={isDisabledField} />
-    
-            <MyLabel label={<h6>Supporting Members</h6>} />
-            
+
+                <MyLabel label={<h6>Supporting Members</h6>} />
+
                 <MyInput
                     column
                     width={200}
@@ -290,25 +303,25 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
                     disabled={isDisabledField} />
-                    <div className='repositioning-container'>
+                <div className='repositioning-container'>
 
-                <MyTagInput  tags={tags} setTags={setTags} labelText="Supporting Members"  width='200px' fontSize="13px"/>
+                    <MyTagInput tags={tags} setTags={setTags} labelText="Supporting Members" width='200px' fontSize="13px" />
 
-                <MyInput
-                    column
-                    width={200}
-                    fieldLabel="Family Location"
-                    fieldType="select"
-                    fieldName="familyLocationLkey"
-                    selectData={countryEnum}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={generalAssessment}
-                    setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
-                    searchable={false}
-                />
-        </div>
+                    <MyInput
+                        column
+                        width={200}
+                        fieldLabel="Family Location"
+                        fieldType="select"
+                        fieldName="familyLocationLkey"
+                        selectData={countryEnum}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        record={generalAssessment}
+                        setRecord={setGeneralAssessment}
+                        disabled={isDisabledField}
+                        searchable={false}
+                    />
+                </div>
 
             </Form>
         </div>

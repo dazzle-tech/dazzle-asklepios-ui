@@ -447,7 +447,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         fieldName="defaultProfileResultUnit"
                         fieldType="select"
                         selectData={unitsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={diagnosticsTest}
                         setRecord={setDiagnosticsTest}
@@ -495,7 +497,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               width="100%"
               fieldName="specialNotes"
               fieldType="textarea"
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={diagnosticsTest}
               setRecord={setDiagnosticsTest}
@@ -506,7 +510,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   width="100%"
                   fieldName="genderSpecific"
                   fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
@@ -535,7 +541,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   width="100%"
                   fieldName="specialPopulation"
                   fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
@@ -548,7 +556,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                     fieldLabel="Special Pouplation"
                     selectData={SpecialPopulationLovQueryResponse?.object ?? []}
                     fieldType="checkPicker"
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName="testKey"
                     record={diagnosticTestSpecialPopulation}
@@ -565,7 +575,9 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   width="100%"
                   fieldName="ageSpecific"
                   fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}

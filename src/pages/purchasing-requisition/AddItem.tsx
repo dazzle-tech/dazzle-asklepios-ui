@@ -243,7 +243,9 @@ const AddItem = ({ open, setOpen }) => {
             { key: 'ORD-1801', lovDisplayVale: 'ORD-1801 | Hand Sanitizer 250ml' },
             { key: 'ORD-1850', lovDisplayVale: 'ORD-1850 | Blood Pressure Monitor' }
           ]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
         />
 
@@ -252,7 +254,9 @@ const AddItem = ({ open, setOpen }) => {
           fieldName="unitOfMeasurement"
           fieldType="select"
           selectData={UOMLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}
@@ -322,7 +326,9 @@ const AddItem = ({ open, setOpen }) => {
             { key: 'asset', lovDisplayVale: 'Asset' },
             { key: 'consumable', lovDisplayVale: 'Consumable' }
           ]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={editRow || record}
           setRecord={setRecord}
