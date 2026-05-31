@@ -165,6 +165,8 @@ const AddChiefComplain = ({
           setRecord={setChiefComplain}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           column
@@ -179,6 +181,8 @@ const AddChiefComplain = ({
           setRecord={setChiefComplain}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           column
@@ -193,6 +197,8 @@ const AddChiefComplain = ({
           setRecord={setChiefComplain}
           disabled={isDisabledField}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           column

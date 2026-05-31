@@ -113,7 +113,9 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
               <MyInput
                 fieldType="select"
                 selectData={anesthTypesLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 width="100%"
                 fieldName="plannedAnesthesiaTypeLkey"
@@ -205,7 +207,9 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
                   <MyInput
                     fieldType="select"
                     selectData={sidesLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width="100%"
                     fieldName="nasalPatencyLkey"
@@ -217,7 +221,9 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
                   <MyInput
                     fieldType="select"
                     selectData={mallampatiLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width="100%"
                     fieldName="mallampatiClassificationLkey"
@@ -229,7 +235,9 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
                   <MyInput
                     fieldType="select"
                     selectData={airwaygrandsLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width="100%"
                     fieldName="airwayGradesLkey"
@@ -243,7 +251,9 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
                   <MyInput
                     fieldType="select"
                     selectData={airwayapprochLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width="100%"
                     fieldName="plannedAirwayApproachLkey"

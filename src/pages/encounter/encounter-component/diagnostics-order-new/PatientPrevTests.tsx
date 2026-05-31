@@ -225,6 +225,8 @@ const {
                   : []
             }
             selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
             selectDataValue="key"
             record={filters}
             setRecord={setFilters}

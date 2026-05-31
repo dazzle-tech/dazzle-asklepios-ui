@@ -307,7 +307,9 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                             fieldType="select"
                             fieldName="latestpainlevelLkey"
                             selectData={painDegreesLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             record={patientObservationSummary}
                             setRecord={setPatientObservationSummary}

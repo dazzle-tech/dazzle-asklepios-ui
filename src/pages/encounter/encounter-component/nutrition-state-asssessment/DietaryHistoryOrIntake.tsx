@@ -110,7 +110,9 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
             fieldType="select"
             fieldName="oralIntakeType"
             selectData={fluidIntakeTypesLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             record={object}

@@ -94,7 +94,9 @@ const ActiveProblemsSection = () => {
             record={record}
             setRecord={(newVal) => setRecord(prev => ({ ...prev, ...newVal }))}
             selectData={problemsLovResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             searchable={false}
           />
@@ -115,7 +117,9 @@ const ActiveProblemsSection = () => {
             fieldName="severity"
             fieldType="select"
             selectData={severityLovResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}

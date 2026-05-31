@@ -418,7 +418,9 @@ const prettifyInlineBackendMessage = (message: string): string => {
               fieldName="value"
               fieldType="select"
               selectData={brandMedicationLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={recordOfFilter}
               showLabel={false}
@@ -433,7 +435,9 @@ const prettifyInlineBackendMessage = (message: string): string => {
               fieldName="value"
               fieldType="select"
               selectData={doseageFormLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={recordOfFilter}
               showLabel={false}

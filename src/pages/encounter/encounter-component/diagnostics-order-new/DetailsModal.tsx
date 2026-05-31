@@ -144,6 +144,8 @@ const DetailsModal = ({
                   fieldLabel="Reason"
                   selectData={ReasonLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                          disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="reason"
                   record={orderTest}

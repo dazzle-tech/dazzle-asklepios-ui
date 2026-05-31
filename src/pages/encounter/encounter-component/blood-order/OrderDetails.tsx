@@ -28,6 +28,8 @@ const OrderDetails = ({ bloodorder, setBloodOrder }) => {
             record={bloodorder}
             setRecord={setBloodOrder}
             width="100%"
+                    disableByField='isValid'
+
           />
         </Col>
         <Col md={12}>
@@ -74,6 +76,8 @@ const OrderDetails = ({ bloodorder, setBloodOrder }) => {
             record={bloodorder}
             setRecord={setBloodOrder}
             width="100%"
+                    disableByField='isValid'
+
           />
         </Col>
         <Col md={12}>

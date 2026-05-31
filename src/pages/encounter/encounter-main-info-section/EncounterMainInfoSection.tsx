@@ -72,7 +72,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
           fieldType="select"
           fieldName="documentTypeLkey"
           selectData={docTypeLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={patient}
           disabled={true}
@@ -85,7 +87,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
           fieldType="select"
           fieldName="genderLkey"
           selectData={genderLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={patient}
           disabled={true}
@@ -162,7 +166,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldLabel="Visit Type"
         fieldName="visitTypeLkey"
         selectData={encounterTypeLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={encounter}
       />
@@ -173,7 +179,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldLabel="Priority"
         fieldName="encounterPriorityLkey"
         selectData={encounterPriorityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={encounter}
       />
@@ -184,7 +192,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldLabel="Reason"
         fieldName="reasonLkey"
         selectData={encounterReasonLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={encounter}
       />
@@ -195,7 +205,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldLabel="Origin"
         fieldName="admissionOrigin"
         selectData={patOriginLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={encounter}
       />
@@ -206,7 +218,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldLabel="Payment Type"
         fieldName="paymentTypeLkey"
         selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={encounter}
       />

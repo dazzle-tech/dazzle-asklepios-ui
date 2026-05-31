@@ -287,7 +287,9 @@ const InformationDesk: React.FC = () => {
           fieldType="select"
           fieldName="encounterTypeLkey"
           selectData={encounterTypeLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchPatient}
           setRecord={setSearchPatient}
@@ -323,7 +325,9 @@ const InformationDesk: React.FC = () => {
           fieldType="select"
           fieldName="bedStatusLkey"
           selectData={bedStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchPatient}
           setRecord={setSearchPatient}
@@ -373,7 +377,9 @@ const InformationDesk: React.FC = () => {
               fieldType="select"
               fieldName="genderLkey"
               selectData={genderLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={searchPatient}
               placeholder=" "

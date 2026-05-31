@@ -583,7 +583,9 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                                 fieldName="route"
                                 fieldType="select"
                                 selectData={routeLov?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
+                                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
@@ -596,7 +598,9 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                                 fieldName="frequency"
                                 fieldType="select"
                                 selectData={freqLov?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
+                                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
@@ -611,7 +615,9 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                             fieldName="physicalLimitation"
                             fieldType="select"
                             selectData={physicalLov?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             record={previewRow}
                             disabled
@@ -624,7 +630,9 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                             fieldName="diagnosedEatingDisorders"
                             fieldType="select"
                             selectData={diagnoseLov?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             record={previewRow}
                             disabled

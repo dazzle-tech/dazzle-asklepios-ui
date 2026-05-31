@@ -147,7 +147,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="positionStatusLkey"
             selectData={positionStatusLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}
@@ -161,7 +163,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="bodyMovementsLkey"
             selectData={bodyMovementLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}
@@ -175,7 +179,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="levelOfConsciousnessLkey"
             selectData={levelOfConscLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}
@@ -189,7 +195,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="facialExpressionLkey"
             selectData={facialLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}
@@ -203,7 +211,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="speechLkey"
             selectData={speechAssLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}
@@ -217,7 +227,9 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="moodBehaviorLkey"
             selectData={moodLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={generalAssessment}
             setRecord={setGeneralAssessment}

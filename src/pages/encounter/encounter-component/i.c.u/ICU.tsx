@@ -54,208 +54,212 @@ const ICU: React.FC = () => {
 
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
-    return (
-  <div className="icu-main-container" dir={dir}>
-    <div className="icu-first-section-container">
-      <SectionContainer
-        title={
-          <h5 className="h3-icu-screen-handle">
-            <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
-          <Translate>
-            Admission Information
-          </Translate>
-          </h5>
-        } content={
-          <Form>
-            <div className="icu-first-section-content-container">
-              <MyInput
-                width={"12vw"}
-                fieldType="select"
-                fieldLabel="Source"
-                fieldName="source"
-                record={record}
-                setRecord={setRecord}
-                selectData={[
-                  { key: "emergency", lovDisplayVale: "Emergency" },
-                  { key: "day_case", lovDisplayVale: "Day Case" },
-                  { key: "inpatient", lovDisplayVale: "Inpatient" },
-                ]}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-              />
-
-              <MyInput
-                width={"12vw"}
-                fieldType="text"
-                fieldLabel="Primary ICU Diagnosis"
-                fieldName="primaryIcuDiagnosis"
-                record={record}
-                setRecord={setRecord}
-              />
-
-              <MyInput
-                width={"12vw"}
-                fieldType="text"
-                fieldLabel="Reason for ICU"
-                fieldName="icuReason"
-                record={record}
-                setRecord={setRecord}
-              />
-              <MyInput
-                width={"12vw"}
-                fieldType="select"
-                fieldLabel="Isolation Precautions"
-                fieldName="isolationPrecautionLkey"
-                record={record}
-                setRecord={setRecord}
-                selectData={isolationPrecautionLovResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-              />
-              <div style={{ marginTop: '2vw' }}>
-
-                {record.isolationPrecautionLkey && (
-                  <MyBadgeStatus
-                    contant={
-                      isolationPrecautionLovResponse?.object?.find(
-                        (item) => item.key === record.isolationPrecautionLkey
-                      )?.lovDisplayVale
-                    }
-                    color={getColor(
-                      isolationPrecautionLovResponse?.object?.find(
-                        (item) => item.key === record.isolationPrecautionLkey
-                      )?.lovDisplayVale
-                    )}
-                  />
-                )}
-              </div>
-
-
-              <MyInput
-                width={"12vw"}
-                fieldType="number"
-                fieldLabel="ICU Day Count"
-                fieldName="icuDayCount"
-                record={record}
-                setRecord={setRecord}
-              /></div>
-          </Form>}
-        minHeight={"auto"}
-      />
-    </div>
-
-    <div className="icu-second-section-container">
-      <SectionContainer
-        title={
-          <h5 className="h3-icu-screen-handle">
-            <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
-          <Translate>
-            Vital Signs
-          </Translate>
-          </h5>
-        }
-        content={<>
-          <div className="second-section-add-button">
-            <MyButton
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => setOpenVitalModal(true)}
-            >
-              Add
-            </MyButton>
-
-            <MyButton
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => setOpenVitalGraphModal(true)}
-            >
-              Show Graphs
-            </MyButton>
-          </div>
-          <VitalSignICU />
-          <div className="second-section-abgs-handle">
-            <SectionContainer
-              title={<h5 className="h3-icu-screen-handle">
-                <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+  return (
+    <div className="icu-main-container" dir={dir}>
+      <div className="icu-first-section-container">
+        <SectionContainer
+          title={
+            <h5 className="h3-icu-screen-handle">
+              <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
               <Translate>
-                ABGS
+                Admission Information
               </Translate>
-              </h5>
-              }
-              content={<>        <div className="second-section-add-button">
-                <MyButton
-                  prefixIcon={() => <PlusIcon />}
-                  onClick={() => setOpenABGGraphModal(true)}
-                >
-                  Show Graphs
-                </MyButton>
-              </div>
+            </h5>
+          } content={
+            <Form>
+              <div className="icu-first-section-content-container">
+                <MyInput
+                  width={"12vw"}
+                  fieldType="select"
+                  fieldLabel="Source"
+                  fieldName="source"
+                  record={record}
+                  setRecord={setRecord}
+                  selectData={[
+                    { key: "emergency", lovDisplayVale: "Emergency" },
+                    { key: "day_case", lovDisplayVale: "Day Case" },
+                    { key: "inpatient", lovDisplayVale: "Inpatient" },
+                  ]}
+                  selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
 
-                <AbgICU /></>}
-              minHeight={"auto"} />
-          </div>
-        </>} />
+                  selectDataValue="key"
+                />
+
+                <MyInput
+                  width={"12vw"}
+                  fieldType="text"
+                  fieldLabel="Primary ICU Diagnosis"
+                  fieldName="primaryIcuDiagnosis"
+                  record={record}
+                  setRecord={setRecord}
+                />
+
+                <MyInput
+                  width={"12vw"}
+                  fieldType="text"
+                  fieldLabel="Reason for ICU"
+                  fieldName="icuReason"
+                  record={record}
+                  setRecord={setRecord}
+                />
+                <MyInput
+                  width={"12vw"}
+                  fieldType="select"
+                  fieldLabel="Isolation Precautions"
+                  fieldName="isolationPrecautionLkey"
+                  record={record}
+                  setRecord={setRecord}
+                  selectData={isolationPrecautionLovResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
+                  selectDataValue="key"
+                />
+                <div style={{ marginTop: '2vw' }}>
+
+                  {record.isolationPrecautionLkey && (
+                    <MyBadgeStatus
+                      contant={
+                        isolationPrecautionLovResponse?.object?.find(
+                          (item) => item.key === record.isolationPrecautionLkey
+                        )?.lovDisplayVale
+                      }
+                      color={getColor(
+                        isolationPrecautionLovResponse?.object?.find(
+                          (item) => item.key === record.isolationPrecautionLkey
+                        )?.lovDisplayVale
+                      )}
+                    />
+                  )}
+                </div>
 
 
-    </div>
+                <MyInput
+                  width={"12vw"}
+                  fieldType="number"
+                  fieldLabel="ICU Day Count"
+                  fieldName="icuDayCount"
+                  record={record}
+                  setRecord={setRecord}
+                /></div>
+            </Form>}
+          minHeight={"auto"}
+        />
+      </div>
+
+      <div className="icu-second-section-container">
+        <SectionContainer
+          title={
+            <h5 className="h3-icu-screen-handle">
+              <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+              <Translate>
+                Vital Signs
+              </Translate>
+            </h5>
+          }
+          content={<>
+            <div className="second-section-add-button">
+              <MyButton
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => setOpenVitalModal(true)}
+              >
+                Add
+              </MyButton>
+
+              <MyButton
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => setOpenVitalGraphModal(true)}
+              >
+                Show Graphs
+              </MyButton>
+            </div>
+            <VitalSignICU />
+            <div className="second-section-abgs-handle">
+              <SectionContainer
+                title={<h5 className="h3-icu-screen-handle">
+                  <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+                  <Translate>
+                    ABGS
+                  </Translate>
+                </h5>
+                }
+                content={<>        <div className="second-section-add-button">
+                  <MyButton
+                    prefixIcon={() => <PlusIcon />}
+                    onClick={() => setOpenABGGraphModal(true)}
+                  >
+                    Show Graphs
+                  </MyButton>
+                </div>
+
+                  <AbgICU /></>}
+                minHeight={"auto"} />
+            </div>
+          </>} />
 
 
-    <div className="icu-first-section-container">
-      <SectionContainer
-        title={
-          <h5 className="h3-icu-screen-handle">
-            <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
-          <Translate>
-            Repositioning
-          </Translate>
-          </h5>}
-        content={<Repositioning
-          edit={edit}
-          patient={patient}
-          encounter={encounter}
-        />}
-        minHeight={"auto"}
+      </div>
+
+
+      <div className="icu-first-section-container">
+        <SectionContainer
+          title={
+            <h5 className="h3-icu-screen-handle">
+              <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+              <Translate>
+                Repositioning
+              </Translate>
+            </h5>}
+          content={<Repositioning
+            edit={edit}
+            patient={patient}
+            encounter={encounter}
+          />}
+          minHeight={"auto"}
+        />
+      </div>
+
+      <ICUTabs />
+
+      <MyModal
+        open={openVitalModal}
+        setOpen={setOpenVitalModal}
+        title="Vital Signs"
+        position="right"
+        content={<ModalContent />}
+        actionButtonLabel="Save"
+        actionButtonFunction={() => alert("Saved vitals")}
+        size="50vw"
       />
-    </div>
 
-    <ICUTabs />
+      <MyModal
+        open={openVitalGraphModal}
+        setOpen={setOpenVitalGraphModal}
+        title="Vital Signs"
+        position="right"
+        content={<VitalsignGraphs />}
+        actionButtonLabel="Save"
+        actionButtonFunction={() => alert("Saved vitals")}
+        size="50vw"
+      />
 
-    <MyModal
-      open={openVitalModal}
-      setOpen={setOpenVitalModal}
-      title="Vital Signs"
-      position="right"
-      content={<ModalContent />}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => alert("Saved vitals")}
-      size="50vw"
-    />
-
-    <MyModal
-      open={openVitalGraphModal}
-      setOpen={setOpenVitalGraphModal}
-      title="Vital Signs"
-      position="right"
-      content={<VitalsignGraphs />}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => alert("Saved vitals")}
-      size="50vw"
-    />
-
-    <MyModal
-      open={openABGGraphModal}
-      setOpen={setOpenABGGraphModal}
-      title="Vital Signs"
-      position="right"
-      content={<ABGGraphs />}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => alert("Saved vitals")}
-      size="50vw"
-    />
-  </div>);
+      <MyModal
+        open={openABGGraphModal}
+        setOpen={setOpenABGGraphModal}
+        title="Vital Signs"
+        position="right"
+        content={<ABGGraphs />}
+        actionButtonLabel="Save"
+        actionButtonFunction={() => alert("Saved vitals")}
+        size="50vw"
+      />
+    </div>);
 };
 
 export default ICU;

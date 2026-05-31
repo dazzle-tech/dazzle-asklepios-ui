@@ -34,7 +34,9 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
             fieldName="interventionType"
             fieldType="select"
             selectData={fluidIntakeTypesLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={object}
             setRecord={setObject}

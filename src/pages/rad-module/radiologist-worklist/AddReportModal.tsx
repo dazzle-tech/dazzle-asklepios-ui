@@ -264,7 +264,9 @@ const AddReportModal = ({
                   fieldLabel='Severity'
                   fieldType="select"
                   selectData={severityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={report}
                   setRecord={setReport}

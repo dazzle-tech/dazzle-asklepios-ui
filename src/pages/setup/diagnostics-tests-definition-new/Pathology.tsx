@@ -61,7 +61,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="category"
             selectData={categoryLovQueryResponse?.object ?? []}
             fieldType="select"
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -74,7 +76,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="specimenType"
             fieldType="select"
             selectData={specimensLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -91,7 +95,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="analysisProcedure"
             fieldType="select"
             selectData={procedurwLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -114,7 +120,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
         fieldName="timeUnit"
         selectData={timeUnitLovQueryResponse?.object ?? []}
         fieldType="select"
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={diagnosticTestPathology}
         setRecord={setDiagnosticTestPathology}

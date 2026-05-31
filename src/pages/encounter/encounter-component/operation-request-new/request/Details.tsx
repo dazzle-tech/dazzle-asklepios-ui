@@ -169,7 +169,9 @@ const Details = ({
                     <MyInput
                       fieldType="select"
                       selectData={orderPriorityLov?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       width="100%"
                       fieldName="priorityLkey"
@@ -208,7 +210,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={procedureLevelLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="operationLevelLkey"
@@ -222,7 +226,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={operationOrderTypeLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="operationTypeLkey"
@@ -241,7 +247,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={bodyPartsLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="bodyPartLkey"
@@ -255,7 +263,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={sidesLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="sideOfProcedureLkey"
@@ -270,7 +280,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={anesthTypesLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="plannedAnesthesiaTypeLkey"

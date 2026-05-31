@@ -274,7 +274,9 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
               fieldName="type"
               selectData={typeLov?.object ?? []}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               record={formData}
               setRecord={setFormData}
               searchable={false}
@@ -317,7 +319,9 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
               fieldName="sourceOfInformation"
               selectData={sourceLov?.object ?? []}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               record={formData}
               setRecord={setFormData}
               searchable={false}

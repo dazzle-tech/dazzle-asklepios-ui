@@ -580,6 +580,8 @@ const handleCancel = async () => {
                     setRecord={setResonKey}
                     cleanable
                     disabled={isReasonViewOnly}
+                            disableByField='isValid'
+
                 />
                 <MyInput
                     width="100%"

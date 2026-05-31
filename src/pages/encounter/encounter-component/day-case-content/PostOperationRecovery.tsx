@@ -64,7 +64,9 @@ const PostOperationRecovery = () => {
                                         selectData={scoreLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         record={postOperationAssessment}
-                                        setRecord={setPostOperationAssessment} />
+                                        setRecord={setPostOperationAssessment}
+                                                disableByField='isValid'
+ />
                                     <MyInput
                                         column
                                         width={100}
@@ -136,6 +138,8 @@ const PostOperationRecovery = () => {
                                         fieldName={"oxygenSaturationLkey"}
                                         record={postOperationAssessment}
                                         setRecord={setPostOperationAssessment}
+                                                disableByField='isValid'
+
                                     />
                                     <MyInput
                                         column
@@ -147,7 +151,12 @@ const PostOperationRecovery = () => {
                                         fieldLabel={<Translate>Consciousness</Translate>}
                                         fieldName={"consciousnessLkey"}
                                         record={postOperationAssessment}
-                                        setRecord={setPostOperationAssessment} />
+                                        setRecord={setPostOperationAssessment}
+                                                disableByField='isValid'
+                                                        disableByField='isValid'
+
+
+                                         />
                                     <MyInput
                                         column
                                         width={200}
@@ -158,7 +167,9 @@ const PostOperationRecovery = () => {
                                         fieldLabel={<Translate>Circulation</Translate>}
                                         fieldName={"circulationLkey"}
                                         record={postOperationAssessment}
-                                        setRecord={setPostOperationAssessment} />
+                                        setRecord={setPostOperationAssessment} 
+                                                disableByField='isValid'
+/>
                                     <MyInput
                                         width={200}
                                         column
@@ -169,7 +180,9 @@ const PostOperationRecovery = () => {
                                         fieldLabel={<Translate>Respiration</Translate>}
                                         fieldName={"respirationLkey"}
                                         record={postOperationAssessment}
-                                        setRecord={setPostOperationAssessment} />
+                                        setRecord={setPostOperationAssessment}
+                                                disableByField='isValid'
+/>
                                     <MyInput
                                         column
                                         width={200}
@@ -179,7 +192,9 @@ const PostOperationRecovery = () => {
                                         fieldType="select"
                                         fieldName={"activityLkey"}
                                         record={postOperationAssessment}
-                                        setRecord={setPostOperationAssessment} />
+                                        setRecord={setPostOperationAssessment} 
+                                                disableByField='isValid'
+/>
                                     <MyInput
                                         column
                                         width={200}

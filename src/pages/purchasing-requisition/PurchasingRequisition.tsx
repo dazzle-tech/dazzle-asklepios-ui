@@ -448,7 +448,9 @@ const PurchasingRequisition = () => {
                     { key: 'Initiated Department', lovDisplayVale: 'Initiated Department' },
                     { key: 'Item Category', lovDisplayVale: 'Item Category' }
                   ]}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={record}
                   setRecord={setRecord}

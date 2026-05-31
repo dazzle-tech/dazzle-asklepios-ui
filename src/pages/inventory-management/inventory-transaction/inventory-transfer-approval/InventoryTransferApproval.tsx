@@ -322,7 +322,9 @@ useEffect(() => {
           fieldType="select"
           fieldName="documentTypeLkey"
           selectData={[]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchPatient}
           setRecord={setSearchPatient}
@@ -333,7 +335,9 @@ useEffect(() => {
           fieldType="select"
           fieldName="warehouseLkey"
           selectData={[]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={insurancePatient}
           setRecord={setInsurancePatient}

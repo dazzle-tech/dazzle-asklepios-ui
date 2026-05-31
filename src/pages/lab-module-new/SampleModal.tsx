@@ -279,7 +279,9 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
                     fieldName="unitLkey"
                     fieldType="select"
                     selectData={valueUnitLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={sample}
                     setRecord={setSample}
@@ -314,7 +316,9 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
                     fieldType="select"
                     fieldName="sourceOfSample"
                     selectData={sampleSourceLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={sample}
                     setRecord={setSample}
