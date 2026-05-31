@@ -331,15 +331,15 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
 
   useEffect(() => {
 
-  if (!diagnosticsTest?.appointable) {
-    
+    if (!diagnosticsTest?.appointable) {
+
       setDiagnosticsTest(prev => ({
         ...prev,
         defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
       }));
-    
-  }
-}, [diagnosticsTest?.appointable]);
+
+    }
+  }, [diagnosticsTest?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -447,9 +447,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         fieldName="defaultProfileResultUnit"
                         fieldType="select"
                         selectData={unitsLovQueryResponse?.object ?? []}
-                         selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                        selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
                         record={diagnosticsTest}
                         setRecord={setDiagnosticsTest}
@@ -459,173 +457,179 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               </>
             )}
             <br />
-            <MyInput
-              required
-              width="100%"
-              fieldName="internalCode"
-              record={diagnosticsTest}
-              setRecord={setDiagnosticsTest}
-            />
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
+
                 <MyInput
                   required
                   width="100%"
-                  fieldName="price"
-                  fieldType='number'
+                  fieldName="internalCode"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
               </div>
               <div className="container-of-field-diagnostic">
+                
                 <MyInput
-                  disabled={true}
+                  required={diagnosticsTest.type==="RADIOLOGY"?true:false}
                   width="100%"
-                  fieldLabel="Currency"
-                  fieldType="select"
-                  fieldName="currency"
-                  selectData={Currency ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
+                  fieldName="modality"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
-              </div>
-            </div>
-            <br />
-            <MyInput
-              width="100%"
-              fieldName="specialNotes"
-              fieldType="textarea"
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                </div>
 
-              selectDataValue="key"
-              record={diagnosticsTest}
-              setRecord={setDiagnosticsTest}
-            />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="genderSpecific"
-                  fieldType="checkbox"
-                   selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                  selectDataValue="key"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
               </div>
-              {diagnosticsTest.genderSpecific && (
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
-                    width="%100"
-                    fieldLabel="Gender"
+                    required
+                    width="100%"
+                    fieldName="price"
+                    fieldType='number'
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    disabled={true}
+                    width="100%"
+                    fieldLabel="Currency"
                     fieldType="select"
-                    fieldName="gender"
-                    selectData={genders ?? []}
+                    fieldName="currency"
+                    selectData={Currency ?? []}
                     selectDataLabel="label"
                     selectDataValue="value"
                     record={diagnosticsTest}
                     setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="specialPopulation"
-                  fieldType="checkbox"
-                   selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                  selectDataValue="key"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
               </div>
-              {diagnosticsTest.specialPopulation && (
+              <br />
+              <MyInput
+                width="100%"
+                fieldName="specialNotes"
+                fieldType="textarea"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
-                    fieldLabel="Special Pouplation"
-                    selectData={SpecialPopulationLovQueryResponse?.object ?? []}
-                    fieldType="checkPicker"
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                    fieldName="genderSpecific"
+                    fieldType="checkbox"
+                    selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    fieldName="testKey"
-                    record={diagnosticTestSpecialPopulation}
-                    setRecord={setDiagnosticTestSpecialPopulation}
-                    menuMaxHeight={150}
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="ageSpecific"
-                  fieldType="checkbox"
-                   selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                  selectDataValue="key"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
+                {diagnosticsTest.genderSpecific && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Gender"
+                      fieldType="select"
+                      fieldName="gender"
+                      selectData={genders ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                    />
+                  </div>
+                )}
               </div>
-              {diagnosticsTest.ageSpecific && (
+              <br />
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
-                    fieldLabel="Age Group"
-                    selectData={ageGroups ?? []}
-                    fieldType="checkPicker"
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    fieldName="ageGroupList"
-                    record={ageGroupList}
-                    setRecord={setAgeGroupList}
-                    menuMaxHeight={100}
+                    fieldName="specialPopulation"
+                    fieldType="checkbox"
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="appointable"
-                  fieldType="checkbox"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
+                {diagnosticsTest.specialPopulation && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Special Pouplation"
+                      selectData={SpecialPopulationLovQueryResponse?.object ?? []}
+                      fieldType="checkPicker"
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="testKey"
+                      record={diagnosticTestSpecialPopulation}
+                      setRecord={setDiagnosticTestSpecialPopulation}
+                      menuMaxHeight={150}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    width="100%"
+                    fieldName="ageSpecific"
+                    fieldType="checkbox"
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+                {diagnosticsTest.ageSpecific && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Age Group"
+                      selectData={ageGroups ?? []}
+                      fieldType="checkPicker"
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      fieldName="ageGroupList"
+                      record={ageGroupList}
+                      setRecord={setAgeGroupList}
+                      menuMaxHeight={100}
+                    />
+                  </div>
+                )}
+              </div>
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    width="100%"
+                    fieldName="appointable"
+                    fieldType="checkbox"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+              </div>
 
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  fieldType="number"
-                  fieldName="parallelCapacityValue"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                  width="100%"
-                  required
-                  showZero
-                />
-              </div>
-              {diagnosticsTest?.appointable && (
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    fieldType="number"
+                    fieldName="parallelCapacityValue"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                    width="100%"
+                    required
+                    showZero
+                  />
+                </div>
+                {diagnosticsTest?.appointable && (
                   <div className="container-of-field-diagnostic">
                     <MyInput
                       fieldType="number"
@@ -638,33 +642,33 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                     />
                   </div>
                 )}
-            </div>
-             {diagnosticsTest?.appointable && (
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  fieldType="number"
-                  fieldName="defaultBufferBeforeMinutes"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                  width="100%"
-                  required={diagnosticsTest?.appointable}
-                  showZero
-                />
               </div>
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  fieldType="number"
-                  fieldName="defaultBufferAfterMinutes"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                  width="100%"
-                  required={diagnosticsTest?.appointable}
-                  showZero
-                />
-              </div>
-            </div>
-             )}
+              {diagnosticsTest?.appointable && (
+                <div className="container-of-two-fields-diagnostic">
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferBeforeMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                      showZero
+                    />
+                  </div>
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferAfterMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                      showZero
+                    />
+                  </div>
+                </div>
+              )}
           </Form>
         );
       case 1:

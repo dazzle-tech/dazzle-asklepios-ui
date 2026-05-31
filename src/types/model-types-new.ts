@@ -811,6 +811,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  modality:string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;

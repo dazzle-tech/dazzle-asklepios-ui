@@ -228,6 +228,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality
 
       };
 
@@ -346,6 +347,8 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality
+
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
