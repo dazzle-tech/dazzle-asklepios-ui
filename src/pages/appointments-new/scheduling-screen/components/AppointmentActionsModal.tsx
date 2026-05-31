@@ -889,7 +889,7 @@ const handleCancel = async () => {
                 bodyheight="auto"
                 position="center"
                 content={policySettingsModalContent}
-                actionButtonLabel="Save Changes"
+                actionButtonLabel="Save"
                 actionButtonFunction={handleSavePolicySettings}
                 isDisabledActionBtn={isSavingPolicies}
                 hideBack={true}
