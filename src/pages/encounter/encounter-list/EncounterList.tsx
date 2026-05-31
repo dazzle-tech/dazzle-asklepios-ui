@@ -307,7 +307,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-
+  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -666,11 +666,14 @@ const EncounterList = () => {
       const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
 
       const fileURL = window.URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
+      const link = document.createElement('a');
 
-      if (win) {
-        win.focus();
-      }
+      link.href = fileURL;
+      link.download = `visit-report-${encounterId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
     } catch (error: any) {
@@ -802,21 +805,21 @@ const EncounterList = () => {
       title: 'PRIORITY',
       render: (row: any) => formatEnumString(row?.priorityLevel) ?? ''
     },
-    {
-      key: 'encounterDate',
-      title: 'DATE',
-      render: (row: any) => {
-        if (!row?.encounterDate) {
-          return '-';
-        }
+   {
+  key: 'encounterDate',
+  title: 'DATE',
+  render: (row: any) => {
+    if (!row?.encounterDate) {
+      return '-';
+    }
 
-        const time = row?.encounterTime
-          ? row.encounterTime.slice(0, 5)
-          : '';
+    const time = row?.encounterTime
+      ? row.encounterTime.slice(0, 5)
+      : '';
 
-        return `${row.encounterDate} ${time}`;
-      }
-    },
+    return `${row.encounterDate} ${time}`;
+  }
+},
     {
       key: 'startedDate',
       title: 'STARTED DATE',
@@ -964,7 +967,7 @@ const EncounterList = () => {
                     disabled={printingVisitReportId === row?.id}
                     loading={printingVisitReportId === row?.id}
                     onClick={() => {
-                      if (printingVisitReportId === row?.id) return;
+                      if (printingVisitReportId === row?.id) return; 
                       setLocalEncounter(row);
                       handlePrintVisitReport(row);
                     }}
@@ -1172,43 +1175,43 @@ const EncounterList = () => {
   }, [dispatch, tableLoading]);
 
   useEffect(() => {
-    if (!departmentId || appliedFilters) return;
+  if (!departmentId || appliedFilters) return;
 
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-    setAppliedFilters({
-      departmentId,
-      fromDate,
-      toDate,
-      statusIn: DEFAULT_STATUS,
-      patientName: undefined,
-      mrn: undefined,
-      encounterReasons: undefined,
-      chiefComplaint: undefined,
-      priorities: undefined,
-      hasPrescription: undefined,
-      hasOrder: undefined,
-      isObserved: undefined,
-      page: 0,
-      size: pageSize,
-      sort: DEFAULT_SORT
-    });
-  }, [
+  setAppliedFilters({
     departmentId,
-    appliedFilters,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    todayStr,
-    DEFAULT_STATUS,
-    pageSize
-  ]);
+    fromDate,
+    toDate,
+    statusIn: DEFAULT_STATUS,
+    patientName: undefined,
+    mrn: undefined,
+    encounterReasons: undefined,
+    chiefComplaint: undefined,
+    priorities: undefined,
+    hasPrescription: undefined,
+    hasOrder: undefined,
+    isObserved: undefined,
+    page: 0,
+    size: pageSize,
+    sort: DEFAULT_SORT
+  });
+}, [
+  departmentId,
+  appliedFilters,
+  dateFilter.fromDate,
+  dateFilter.toDate,
+  todayStr,
+  DEFAULT_STATUS,
+  pageSize
+]);
 
-  useEffect(() => {
-    if (appliedFilters) {
-      refetchEncounters();
-    }
-  }, [appliedFilters, refetchEncounters]);
+useEffect(() => {
+  if (appliedFilters) {
+    refetchEncounters();
+  }
+}, [appliedFilters, refetchEncounters]);
 
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {

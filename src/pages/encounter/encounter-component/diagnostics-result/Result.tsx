@@ -109,7 +109,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
   const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetLaboratoryReportPdfQuery();
+      useLazyGetLaboratoryReportPdfQuery();
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -208,9 +208,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
-    const fallback = "—";
+      const fallback = "—"; 
 
-
+    
     if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
     }
@@ -267,16 +267,17 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
 
   const handleGeneratePdf = async (result: any) => {
-    if (!result?.id) return;
+   if (!result?.id) return;
     try {
       const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
       const fileURL = window.URL.createObjectURL(blob);
 
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      }
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `Result-${result.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       setTimeout(() => {
         window.URL.revokeObjectURL(fileURL);
@@ -309,7 +310,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       } else {
         value =
           r.resultValueNumber !== null &&
-            r.resultValueNumber !== undefined
+          r.resultValueNumber !== undefined
             ? String(r.resultValueNumber)
             : '';
 

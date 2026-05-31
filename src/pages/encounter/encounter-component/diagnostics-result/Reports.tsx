@@ -167,11 +167,12 @@ const Reports = ({ patient }) => {
       const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
       const fileURL = window.URL.createObjectURL(blob);
 
-const win = window.open(fileURL, '_blank');
-
-if (win) {
-  win.focus();
-}
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `Report-${selectedReport.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       setTimeout(() => {
         window.URL.revokeObjectURL(fileURL);

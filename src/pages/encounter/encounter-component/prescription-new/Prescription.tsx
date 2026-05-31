@@ -135,13 +135,13 @@ const Prescription = (props: Props) => {
   const patientId = patient?.id
     ? Number(patient.id)
     : patient?.key
-      ? Number(patient.key)
-      : undefined;
+    ? Number(patient.key)
+    : undefined;
   const encounterId = encounter?.id
     ? Number(encounter.id)
     : encounter?.key
-      ? Number(encounter.key)
-      : undefined;
+    ? Number(encounter.key)
+    : undefined;
 
   // List prescriptions
   const {
@@ -619,8 +619,8 @@ const Prescription = (props: Props) => {
     const rowsToCancel = selectedRows.length
       ? selectedRows
       : patientPrescriptionMedicationObject?.id
-        ? [patientPrescriptionMedicationObject]
-        : [];
+      ? [patientPrescriptionMedicationObject]
+      : [];
 
     if (!rowsToCancel.length) {
       dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
@@ -653,11 +653,12 @@ const Prescription = (props: Props) => {
 
       const fileURL = window.URL.createObjectURL(blob);
 
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      }
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `prescription-${rowData.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       setTimeout(() => {
         window.URL.revokeObjectURL(fileURL);
@@ -1006,7 +1007,7 @@ const Prescription = (props: Props) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
@@ -1117,7 +1118,7 @@ const Prescription = (props: Props) => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => { }}
+        setOrderMedication={() => {}}
         drugKey={null}
         editing={false}
         existingMedications={patientPrescriptionMedications}
@@ -1148,17 +1149,18 @@ const Prescription = (props: Props) => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments
+        title={`Attachments - ${
+          selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-              (item: any) =>
-                String(item.id) ===
-                String(
-                  (selectedMedicationForAttachments as any)?.medicationsId ??
-                  (selectedMedicationForAttachments as any)?.genericMedicationsId
-                )
-            )?.name || 'Medication'
+                (item: any) =>
+                  String(item.id) ===
+                  String(
+                    (selectedMedicationForAttachments as any)?.medicationsId ??
+                      (selectedMedicationForAttachments as any)?.genericMedicationsId
+                  )
+              )?.name || 'Medication'
             : 'Medication'
-          }`}
+        }`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1167,7 +1169,7 @@ const Prescription = (props: Props) => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
