@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Panel } from 'rsuite';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 
@@ -15,22 +16,62 @@ import {
   useGetFormTemplatesQuery,
   useLazyGetFormTemplatesQuery
 } from '@/services/setup/formTemplateService';
-import { useLazyGetFormEntriesByTemplateQuery } from '@/services/setup/formEntriesService';
+import {
+  useLazyGetFormEntriesByTemplateQuery,
+  useLazyGetFormEntriesByPatientQuery,
+  useLazyGetFormEntriesByEncounterQuery,
+  type PagedResult
+} from '@/services/setup/formEntriesService';
+import type { FormEntry } from '@/types/model-types-new';
 
 import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
 
-const EMPTY_PAGED_RESULT = {
+const EMPTY_PAGED_RESULT: PagedResult<FormEntry> = {
   data: [],
   totalCount: 0,
   links: {}
 };
 
+const SCOPED_FETCH_SIZE = 1000;
+
+const filterEntriesByTemplate = (entries: FormEntry[], templateId: number) =>
+  entries.filter((entry) => Number(entry.templateId) === Number(templateId));
+
+const paginateEntries = (entries: FormEntry[], page: number, size: number): PagedResult<FormEntry> => {
+  const start = page * size;
+  return {
+    data: entries.slice(start, start + size),
+    totalCount: entries.length,
+    links: {}
+  };
+};
+
+const resolveNumericId = (entity: any): number | null => {
+  if (!entity) return null;
+  const raw = entity.id ?? entity.key;
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isNaN(n) ? null : n;
+};
+
 const FormTemplatesUseScreen = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const mode = useSelector((state: any) => state.ui.mode);
   const authSlice = useAppSelector((s) => s.auth);
+  const reduxPatient = useAppSelector((s) => s.patient.patient);
+  const reduxEncounter = useAppSelector((s) => s.patient.encounter);
+
+  const locationState = (location.state || {}) as { patient?: any; encounter?: any };
+  const patient = locationState.patient ?? reduxPatient;
+  const encounter = locationState.encounter ?? reduxEncounter;
+
+  const patientId = resolveNumericId(patient);
+  const encounterId = resolveNumericId(encounter);
+  const inEncounterRoute = location.pathname.includes('/encounter');
+  const isVisitContext = Boolean(encounterId || (patientId && inEncounterRoute));
 
   const selectedDepartmentId = authSlice.selectedDepartment?.departmentId;
 
@@ -79,7 +120,22 @@ const FormTemplatesUseScreen = () => {
   );
 
   const [loadTemplate] = useLazyGetFormTemplatesQuery();
-  const [loadEntries, entriesQueryState] = useLazyGetFormEntriesByTemplateQuery();
+  const [loadEntriesByTemplate, entriesByTemplateState] = useLazyGetFormEntriesByTemplateQuery();
+  const [loadEntriesByPatient, entriesByPatientState] = useLazyGetFormEntriesByPatientQuery();
+  const [loadEntriesByEncounter, entriesByEncounterState] = useLazyGetFormEntriesByEncounterQuery();
+
+  const entriesQueryState = useMemo(() => {
+    if (encounterId) return entriesByEncounterState;
+    if (isVisitContext && patientId) return entriesByPatientState;
+    return entriesByTemplateState;
+  }, [
+    encounterId,
+    isVisitContext,
+    patientId,
+    entriesByEncounterState,
+    entriesByPatientState,
+    entriesByTemplateState
+  ]);
 
   useEffect(() => {
     dispatch(setPageCode('UseFormTemplates'));
@@ -92,18 +148,55 @@ const FormTemplatesUseScreen = () => {
   }, [dispatch]);
 
   const fetchEntries = async (templateId: number, params = entryParams) => {
+    if (inEncounterRoute && !patientId && !encounterId) {
+      setEntriesResp(EMPTY_PAGED_RESULT);
+      return;
+    }
+
     try {
-      const resp = await loadEntries({
-        templateId,
+      const queryBase = {
         page: params.page,
         size: params.size,
         sort: params.sort,
         timestamp: Date.now()
+      };
+
+      if (encounterId) {
+        const resp = await loadEntriesByEncounter({
+          encounterId,
+          page: 0,
+          size: SCOPED_FETCH_SIZE,
+          sort: params.sort,
+          timestamp: Date.now()
+        }).unwrap();
+        const filtered = filterEntriesByTemplate(resp?.data ?? [], templateId);
+        setEntriesResp(paginateEntries(filtered, params.page, params.size));
+        return;
+      }
+
+      if (isVisitContext && patientId) {
+        const resp = await loadEntriesByPatient({
+          patientId,
+          page: 0,
+          size: SCOPED_FETCH_SIZE,
+          sort: params.sort,
+          timestamp: Date.now()
+        }).unwrap();
+        const filtered = filterEntriesByTemplate(resp?.data ?? [], templateId);
+        setEntriesResp(paginateEntries(filtered, params.page, params.size));
+        return;
+      }
+
+      const resp = await loadEntriesByTemplate({
+        templateId,
+        ...queryBase
       }).unwrap();
       setEntriesResp(resp ?? EMPTY_PAGED_RESULT);
     } catch (e) {
       setEntriesResp(EMPTY_PAGED_RESULT);
-      dispatch(notify({ msg: 'Failed to load saved forms', sev: 'error' }));
+      if (patientId) {
+        dispatch(notify({ msg: 'Failed to load saved forms', sev: 'error' }));
+      }
     }
   };
 
@@ -367,6 +460,8 @@ const FormTemplatesUseScreen = () => {
         open={useOpen}
         setOpen={setUseOpen}
         templateRow={selectedTemplate}
+        patientId={isVisitContext ? patientId : null}
+        encounterId={isVisitContext ? encounterId : null}
         onSaved={async (savedEntry: any) => {
           if (savedEntry) {
             setEntriesResp((prev: any) => ({
