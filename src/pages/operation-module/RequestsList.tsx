@@ -503,8 +503,7 @@ const RequestList = ({
 
 
   return (
-    <Row>
-      <Col md={24}>
+      <>
         <MyTable
           filters={filters()}
           columns={columns}
@@ -515,7 +514,6 @@ const RequestList = ({
             setRequest(rowData);
           }}
         />
-      </Col>
       <CancellationModal
         open={openCancelModal}
         setOpen={setOpenCancelModal}
@@ -526,7 +524,7 @@ const RequestList = ({
         fieldLabel={'Cancelled Reason'}
         title={'Cancellation'}
       ></CancellationModal>
-    </Row>
+    </>
   );
 };
 export default RequestList;

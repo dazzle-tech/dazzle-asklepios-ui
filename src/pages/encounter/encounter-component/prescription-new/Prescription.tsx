@@ -968,13 +968,7 @@ const handlePrintPrescriptionPdf = async (rowData: any) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (
-    <div dir={dir}>
-      {uniqueBrandIds.map((id: string) => (
-        <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
-      ))}
-
-      <div className="bt-div">
+ const tablefilters =(      <div className="bt-div">
         <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
           <Form fluid>
             <MyInput
@@ -1065,17 +1059,22 @@ const handlePrintPrescriptionPdf = async (rowData: any) => {
           disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
         />
-      </div>
+      </div>);
 
-      <Divider />
-
-      <div className="bt-div">
+  const tablebuttons = (<div className="bt-div">
         <div className="bt-right">
           <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
             Show cancelled
           </Checkbox>
         </div>
-      </div>
+      </div>);
+
+  return (
+    <div dir={dir}>
+      {uniqueBrandIds.map((id: string) => (
+        <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
+      ))}
+      <Divider />
 
       <div ref={tableContainerRef}>
         <MyTable
@@ -1100,6 +1099,8 @@ const handlePrintPrescriptionPdf = async (rowData: any) => {
             }
           }}
           loading={isLoadingPrescriptionMedications}
+          filters={tablefilters}
+          tableButtons={tablebuttons}
           rowClassName={isSelected}
         />
       </div>
