@@ -102,22 +102,34 @@ const handlePrintInformation = async () => {
     setPrintingType('information');
 
     const blob = await triggerGetPatientInformationPdf({
-      patientId: localPatient.id
+      patientId: localPatient.id,
     }).unwrap();
 
-    const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
     const win = window.open(fileURL, '_blank');
 
     if (win) {
       win.focus();
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
     }
 
-    setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
+    // لا تعمل revokeObjectURL هون
   } catch (err: any) {
     dispatch(
       notify({
         msg: err?.data?.message || 'Print failed',
-        sev: 'error'
+        sev: 'error',
       })
     );
   } finally {
@@ -132,24 +144,34 @@ const handlePrintPatientLabel = async (rowData: any) => {
     setPrintingType('label');
 
     const blob = await triggerGetPatientLabelPdf({
-      patientId: rowData.id
+      patientId: rowData.id,
     }).unwrap();
 
-    const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
     const win = window.open(fileURL, '_blank');
 
     if (win) {
       win.focus();
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
     }
 
-    setTimeout(() => {
-      window.URL.revokeObjectURL(fileURL);
-    }, 10000);
+    // لا تعمل revokeObjectURL هون
   } catch (error: any) {
     dispatch(
       notify({
         msg: error?.data?.message || 'Failed to open label pdf',
-        sev: 'error'
+        sev: 'error',
       })
     );
   } finally {

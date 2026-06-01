@@ -41,55 +41,64 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
   }, [open]);
 
   const handleDownloadSickLeavePdf = async () => {
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
-    }
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
 
-    if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
-      dispatch(notify({ msg: 'Please enter both start date and end date', sev: 'warning' }));
-      return;
-    }
+  if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
+    dispatch(notify({ msg: 'Please enter both start date and end date', sev: 'warning' }));
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      dispatch(showSystemLoader());
+  try {
+    setIsLoading(true);
+    dispatch(showSystemLoader());
 
-      const blob = await postSickLeaveReportPdf({
-        encounterId,
-        request: {
-          fromDate: sickLeaveForm.fromDate,
-          toDate: sickLeaveForm.toDate,
-          notes: sickLeaveForm.notes
-        }
-      }).unwrap();
+    const blob = await postSickLeaveReportPdf({
+      encounterId,
+      request: {
+        fromDate: sickLeaveForm.fromDate,
+        toDate: sickLeaveForm.toDate,
+        notes: sickLeaveForm.notes,
+      },
+    }).unwrap();
 
-    
-      const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      const win = window.open(fileURL, '_blank');
+    const win = window.open(fileURL, '_blank');
 
-      if (win) {
-        win.focus();
-      }
-
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
-
-      dispatch(notify({ msg: 'Sick leave report PDF Print successfully', sev: 'success' }));
-      setOpen(false);
-    } catch (error: any) {
-        console.error('Error while printing sick leave report PDF:', error);
+    if (win) {
+      win.focus();
+    } else {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Error while printing sick leave report PDF',
-          sev: 'error',
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
         })
       );
-    } finally {
-      setIsLoading(false);
-      dispatch(hideSystemLoader());
     }
-  };
+
+    // لا تعمل revokeObjectURL هون
+    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
+
+    dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
+    setOpen(false);
+  } catch (error: any) {
+    console.error('Error while printing sick leave report PDF:', error);
+
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while printing sick leave report PDF',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setIsLoading(false);
+    dispatch(hideSystemLoader());
+  }
+};
 
   return (
     <MyModal
