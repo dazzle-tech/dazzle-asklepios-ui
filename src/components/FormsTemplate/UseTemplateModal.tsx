@@ -14,6 +14,7 @@ type UseTemplateModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   templateRow: any;
+  fromEncounter?: boolean;
   patientId?: number | null;
   encounterId?: number | null;
   onSaved?: (savedEntry: any) => void | Promise<void>;
@@ -23,6 +24,7 @@ const UseTemplateModal = ({
   open,
   setOpen,
   templateRow,
+  fromEncounter = false,
   patientId = null,
   encounterId = null,
   onSaved
@@ -93,6 +95,43 @@ const UseTemplateModal = ({
       return;
     }
 
+    const resolvedPatientId =
+      patientId != null && !Number.isNaN(Number(patientId)) ? Number(patientId) : null;
+    const resolvedEncounterId =
+      encounterId != null && !Number.isNaN(Number(encounterId)) ? Number(encounterId) : null;
+
+    if (fromEncounter) {
+      if (!resolvedPatientId && !resolvedEncounterId) {
+        dispatch(
+          notify({
+            msg: 'Patient and encounter are required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!resolvedPatientId) {
+        dispatch(
+          notify({
+            msg: 'Patient is required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!resolvedEncounterId) {
+        dispatch(
+          notify({
+            msg: 'Encounter is required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
     try {
       const saved = await createEntry({
         title: entryTitle.trim(),
@@ -100,8 +139,8 @@ const UseTemplateModal = ({
         facilityId,
         departmentId,
         dataJson: JSON.stringify(data),
-        patientId: patientId ?? null,
-        encounterId: encounterId ?? null
+        patientId: fromEncounter ? resolvedPatientId : resolvedPatientId ?? null,
+        encounterId: fromEncounter ? resolvedEncounterId : resolvedEncounterId ?? null
       }).unwrap();
 
       await onSaved?.(saved);
