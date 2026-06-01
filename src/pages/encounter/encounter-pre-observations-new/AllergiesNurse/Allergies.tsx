@@ -333,13 +333,7 @@ const Allergies = (props: AllergiesProps) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (
-    <div
-      dir={dir}
-      className={clsx({ 'disabled-panel': edit })}
-      style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
-    >
-      <div className="bt-div-2">
+  const tablebuttons = (      <div className="bt-div-2">
         <div className="bt-left-2">
           <MyButton
             prefixIcon={() => <CloseOutlineIcon />}
@@ -387,7 +381,15 @@ const Allergies = (props: AllergiesProps) => {
             Add Allergy
           </MyButton>
         </div>
-      </div>
+      </div>);
+
+  return (
+    <div
+      dir={dir}
+      className={clsx({ 'disabled-panel': edit })}
+      style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+    >
+
       <div className="container-of-table-and-section-patient-allergy">
         <MyTable
           columns={tableColumns}
@@ -401,6 +403,7 @@ const Allergies = (props: AllergiesProps) => {
               setOpenToAdd(false);
             }
           }}
+          tableButtons={tablebuttons}
           rowClassName={isSelected}
           loading={isLoading}
           page={paginationParams.page}
