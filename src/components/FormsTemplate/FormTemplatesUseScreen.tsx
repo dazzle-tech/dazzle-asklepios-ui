@@ -121,7 +121,7 @@ const FormTemplatesUseScreen = () => {
     if (warnMissingEncounterContext()) return;
     setSelectedTemplate(row);
     setUseOpen(true);
-  };
+  }
 
   const selectedDepartmentId = authSlice.selectedDepartment?.departmentId;
 

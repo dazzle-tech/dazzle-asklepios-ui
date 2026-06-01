@@ -353,7 +353,6 @@ const UserFullNameCell = ({ login }: { login?: string | null }) => {
           if (!proceduresByIds && procedureIds.length > 0) {
             return <TableLoader />;
           }
-
           const proc = proceduresMap.get(Number(rowData.procedureId));
           return proc?.name ?? '';
         }

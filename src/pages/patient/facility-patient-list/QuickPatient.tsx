@@ -482,13 +482,9 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   const quickPatientContent = useMemo(
     () => (
       <Form
-        fluid
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12
-        }}
+        fluid 
       >
+       <div className="my-modal-responsive-form-handle">
         <MyInput
           required
           vr={validationResult}
@@ -633,6 +629,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
           </>
         )}
+        </div>
       </Form>
     ),
     [

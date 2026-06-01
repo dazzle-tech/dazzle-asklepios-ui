@@ -178,28 +178,46 @@ const NurseStation = ({
     navigate('/encounter-list');
   };
 
-  const handleGenerateReport = async (): Promise<void> => {
-    const encounterId = localEncounter?.id ?? localEncounter?.key;
+ const handleGenerateReport = async (): Promise<void> => {
+  const encounterId = localEncounter?.id ?? localEncounter?.key;
 
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
+
+  try {
+    const blob = await triggerNurseSummaryReportPdf({ encounterId }).unwrap();
+
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
     }
 
-    try {
-      const blob = await triggerNurseSummaryReportPdf({ encounterId }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      }
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
-    } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.message || 'Error while generating report', sev: 'error' }));
-    }
-  };
-
+    // لا تعمل revokeObjectURL هون
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while generating report',
+        sev: 'error',
+      })
+    );
+  }
+};
   return (
     <div className="container">
       <div className="left-box">

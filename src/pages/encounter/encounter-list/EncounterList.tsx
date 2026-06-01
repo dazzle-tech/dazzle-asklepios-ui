@@ -652,38 +652,53 @@ const EncounterList = () => {
     }
   };
 
-  const handlePrintVisitReport = async (row: any) => {
-    const encounterId = row?.id ?? null;
+const handlePrintVisitReport = async (row: any) => {
+  const encounterId = row?.id ?? null;
 
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
-    }
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
 
-    try {
-      setPrintingVisitReportId(encounterId);
+  try {
+    setPrintingVisitReportId(encounterId);
 
-      const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      const fileURL = window.URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
+    const blob = await triggerVisitReportPdf({
+      encounterId,
+      timezone,
+    }).unwrap();
 
-      if (win) {
-        win.focus();
-      }
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
-    } catch (error: any) {
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Error while downloading visit report',
-          sev: 'error',
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
         })
       );
-    } finally {
-      setPrintingVisitReportId(null);
     }
-  };
+
+    // مهم: لا تعمل revokeObjectURL هون
+    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while opening visit report',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setPrintingVisitReportId(null);
+  }
+};
 
   const tableColumns = [
     {
@@ -1345,6 +1360,7 @@ const EncounterList = () => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
+
         </Panel>
       </div>
     </>

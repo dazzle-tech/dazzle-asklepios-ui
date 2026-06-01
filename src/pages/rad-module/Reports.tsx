@@ -32,6 +32,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
+import '../lab-module-new/ReviewResultsIcon.less';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
@@ -342,12 +343,9 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                         <Whisper speaker={<Tooltip>Review</Tooltip>}>
                             <FontAwesomeIcon
                                 icon={faStar}
-                                className='icon-radiologist-worklist-size'
-                                style={{
-                                    cursor: 'pointer',
-                                    color: isReviewed ? '#ffea00' : '#999',
-                                    opacity: isReviewed ? 1 : 0.6
-                                }}
+                                className={`review-icon-base ${
+                                    isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
+                                }`}
                                 onClick={() => {
                                     handleReview(row);
                                 }} />

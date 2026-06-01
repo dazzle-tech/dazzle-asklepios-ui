@@ -334,7 +334,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
           <div className="vital-signs-handle-position-row">
             <MyInput
               required
-              width="100%"
+              width="10vw"
               fieldType="number"
               fieldName="heartRate"
               rightAddon="bpm"
@@ -346,7 +346,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
             <MyInput
               required
-              width="100%"
+              width="10vw"
               fieldType="number"
               rightAddon="C"
               fieldName="temperature"
@@ -360,7 +360,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
           <div className="vital-signs-handle-position-row">
             <MyInput
               required
-              width="100%"
+              width="10vw"
               fieldType="number"
               rightAddon=" % "
               fieldName="oxygenSaturation"
@@ -372,7 +372,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
             <MyInput
               required
-              width="100%"
+              width="10vw"
               fieldType="number"
               rightAddon="bpm"
               rightAddonwidth={45}

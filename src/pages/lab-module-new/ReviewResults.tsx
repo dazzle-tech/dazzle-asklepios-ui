@@ -47,6 +47,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import './ReviewResultsIcon.less';
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -509,12 +510,9 @@ const ReviewResults = forwardRef<any, any>(
                 <span>
                   <FontAwesomeIcon
                     icon={faStar}
-                    style={{
-                      fontSize: '1em',
-                      cursor: 'pointer',
-                      color: isReviewed ? '#ffea00ff' : '#999',
-                      opacity: isReviewed ? 1 : 0.6
-                    }}
+                    className={`review-icon-base ${
+                      isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
+                    }`}
                     onClick={async (e) => {
                       e.stopPropagation();
                       setSelectedResultId(rowData.id);

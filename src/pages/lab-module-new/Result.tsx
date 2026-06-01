@@ -519,6 +519,31 @@ const Result = forwardRef<any, Props>(
       }
     };
 
+    const UserFullNameCell = ({ login }: { login?: string | null }) => {
+      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+        skip: !login
+      });
+
+      return <>{fullName || login || '-'}</>;
+    };
+
+    const UserDateCell = ({
+      login,
+      date
+    }: {
+      login?: string | null;
+      date?: string | null;
+    }) => (
+      <>
+        <UserFullNameCell login={login} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : '-'}
+        </span>
+      </>
+    );
+
+
     const columns: ColumnConfig[] = [
       {
         key: 'select',
@@ -832,13 +857,10 @@ const Result = forwardRef<any, Props>(
         title: <Translate>REJECTED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.rejectedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.rejectedAt ? formatDateWithoutSeconds(row.rejectedAt) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.rejectedBy}
+            date={row.rejectedAt}
+          />
         )
       },
       {
@@ -846,13 +868,10 @@ const Result = forwardRef<any, Props>(
         title: <Translate>APPROVED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.approvedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.approvedAt ? formatDateWithoutSeconds(row.approvedDate) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.approvedBy}
+            date={row.approvedAt}
+          />
         )
       }
     ];
