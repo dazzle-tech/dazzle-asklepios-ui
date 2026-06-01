@@ -250,12 +250,11 @@ const ERTriage = () => {
 
       const fileURL = window.URL.createObjectURL(blob);
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `wristband-${rowData.patientId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const win = window.open(fileURL, '_blank');
+
+if (win) {
+  win.focus();
+}
 
       setTimeout(() => {
         window.URL.revokeObjectURL(fileURL);
