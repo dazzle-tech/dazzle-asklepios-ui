@@ -41,9 +41,46 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
   }, [open]);
 
   const handleDownloadSickLeavePdf = async () => {
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
+
+  if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
+    dispatch(notify({ msg: 'Please enter both start date and end date', sev: 'warning' }));
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    dispatch(showSystemLoader());
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const blob = await postSickLeaveReportPdf({
+  encounterId,
+  timezone,
+  request: {
+    fromDate: sickLeaveForm.fromDate,
+    toDate: sickLeaveForm.toDate,
+    notes: sickLeaveForm.notes,
+  },
+}).unwrap();
+
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
     }
 
     if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {

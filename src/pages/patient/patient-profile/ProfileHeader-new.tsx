@@ -112,7 +112,6 @@ const handlePrintInformation = async () => {
       win.focus();
     }
 
-    setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
   } catch (err: any) {
     dispatch(
       notify({

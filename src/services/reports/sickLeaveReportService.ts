@@ -39,16 +39,27 @@ export const sickLeaveReportService = createApi({
     }),
 
     postSickLeaveReportPdf: builder.mutation<
-      Blob,
-      { encounterId: number; request: SickLeaveReportRequestDTO }
-    >({
-      query: ({ encounterId, request }) => ({
-        url: `/api/analytics/sick-leave-report/${encounterId}/pdf`,
-        method: 'POST',
-        body: request,
-        responseHandler: (response) => response.blob(),
-      }),
-    }),
+  Blob,
+  {
+    encounterId: number;
+    timezone: string;
+    request: {
+      fromDate: string;
+      toDate: string;
+      notes?: string;
+    };
+  }
+>({
+  query: ({ encounterId, timezone, request }) => ({
+    url: `/api/analytics/sick-leave-report/${encounterId}/pdf`,
+    method: 'POST',
+    params: {
+      timezone,
+    },
+    body: request,
+    responseHandler: response => response.blob(),
+  }),
+}),
   }),
 });
 

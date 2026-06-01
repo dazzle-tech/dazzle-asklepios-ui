@@ -25,13 +25,19 @@ export const observationServiceNew = createApi({
         method: 'GET'
       })
     }),
-    getVisitReportPdf: builder.query<Blob, { encounterId: number }>({
-      query: ({ encounterId }) => ({
-        url: `/api/analytics/visit-report/${encounterId}/pdf`,
-        method: 'GET',
-        responseHandler: response => response.blob()
-      })
-    })
+   getVisitReportPdf: builder.query<
+  Blob,
+  { encounterId: number; timezone: string }
+>({
+  query: ({ encounterId, timezone }) => ({
+    url: `/api/analytics/visit-report/${encounterId}/pdf`,
+    method: 'GET',
+    params: {
+      timezone,
+    },
+    responseHandler: response => response.blob(),
+  }),
+}),
   })
 });
 
