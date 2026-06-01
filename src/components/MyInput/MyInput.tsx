@@ -34,7 +34,7 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
     cleanable={false}
     block
     ref={ref}
-    // menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
   />
 ));
 
@@ -45,7 +45,7 @@ const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
     cleanable={false}
     block
     ref={ref}
-    // menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
   />
 ));
 
@@ -111,6 +111,7 @@ type MyInputProps = {
   defaultSelectValue?: any;
   virtualized?: boolean;
   menuMaxHeight?: number;
+  menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
   creatable?: boolean;
