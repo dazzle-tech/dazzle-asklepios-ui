@@ -229,3 +229,33 @@
   background: var(--table-header-bg-dark);
   }
 }
+
+
+@media (max-width: 680px) {
+  .my-table-wrapper,
+  .my-table-content-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .my-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .my-table-container table {
+    min-width: 680px;
+  }
+
+  .my-table-filters {
+    overflow-x: auto;
+  }
+
+  .my-table-buttons-wrapper {
+    justify-content: flex-end;
+    overflow-x: auto;
+  }
+}
