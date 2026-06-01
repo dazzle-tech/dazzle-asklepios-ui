@@ -24,6 +24,7 @@ import { MdOutlineDescription } from 'react-icons/md';
 import { Form, Tooltip, Whisper } from 'rsuite';
 import ApproveRequestModal from './ApproveRequestModal';
 import './style.less';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 type Props = {
   page?: number;
@@ -183,6 +184,29 @@ const RequestedTestTable: React.FC<Props> = ({
     }
   };
 
+    const UserFullNameCell = ({ login }: { login?: string | null }) => {
+      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+        skip: !login
+      });
+
+      return <>{fullName || login || '-'}</>;
+    };
+
+    const UserDateCell = ({
+      login,
+      date
+    }: {
+      login?: string | null;
+      date?: string | null;
+    }) => (
+      <>
+        <UserFullNameCell login={login} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : '-'}
+        </span>
+      </>
+    );
 
   const tableColumns = useMemo(
     () => [
@@ -296,18 +320,12 @@ const RequestedTestTable: React.FC<Props> = ({
         dataKey: 'createdByAt',
         width: 150,
         expandable: true,
-        render: (row: any) =>
-          row?.createdDate ? (
-            <>
-              {row?.createdBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.createdDate)}
-              </span>
-            </>
-          ) : (
-            ' '
-          )
+        render: (row: any) => (
+          <UserDateCell
+            login={row?.createdBy}
+            date={row?.createdDate}
+          />
+        )
       }
     ],
     [hideActions]
