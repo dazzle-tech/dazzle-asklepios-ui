@@ -1345,6 +1345,7 @@ const EncounterList = () => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
+
         </Panel>
       </div>
     </>
