@@ -737,6 +737,24 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
+const UserDateCell = ({
+  login,
+  date
+}: {
+  login?: string | null;
+  date?: string | null;
+}) => (
+  <>
+    <div>
+      <UserFullName login={login ?? undefined} />
+    </div>
+
+    <div className="date-table-style">
+      {date ? formatDateWithoutSeconds(date) : '-'}
+    </div>
+  </>
+);
+
     const columns: ColumnConfig[] = [
       {
         key: 'check',
@@ -979,6 +997,56 @@ const Tests = forwardRef<any, Props>(
             </HStack>
           );
         }
+      },
+      {
+        key: 'acceptedAtBy',
+        title: <Translate>ACCEPTED BY/AT</Translate>,
+        expandable: true,
+        width: 180,
+        render: (rowData: any) => (
+          <UserDateCell
+            login={rowData.acceptedBy}
+            date={rowData.acceptedAt}
+          />
+        )
+      },
+      {
+        key: 'rejectedAtBy',
+        title: <Translate>REJECTED BY/AT</Translate>,
+        expandable: true,
+        width: 180,
+        render: (rowData: any) => (
+          <UserDateCell
+            login={rowData.rejectedBy}
+            date={rowData.rejectedAt}
+          />
+        )
+      },
+      {
+        key: 'rejectedReason',
+        title: <Translate>REJECT REASON</Translate>,
+        expandable: true,
+        width: 220,
+        render: (rowData: any) => rowData.rejectedReason ?? '-'
+      },
+      {
+        key: 'undoAcceptAtBy',
+        title: <Translate>UNDO ACCEPT BY/AT</Translate>,
+        expandable: true,
+        width: 180,
+        render: (rowData: any) => (
+          <UserDateCell
+            login={rowData.undoAcceptBy}
+            date={rowData.undoAcceptDate}
+          />
+        )
+      },
+      {
+        key: 'undoAcceptReason',
+        title: <Translate>UNDO ACCEPT REASON</Translate>,
+        expandable: true,
+        width: 220,
+        render: (rowData: any) => rowData.undoAcceptReason ?? '-'
       }
     ];
 

@@ -43,6 +43,7 @@ import AddReportModal from './AddReportModal';
 import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -439,6 +440,40 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     }
   };
 
+const UserFullNameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+    skip: !login
+  });
+
+  if (!login) {
+    return <span>-</span>;
+  }
+
+  return <span>{fullName || login}</span>;
+};
+
+const UserDateCell = ({
+  login,
+  date
+}: {
+  login?: string | null;
+  date?: string | null;
+}) => {
+  if (!login && !date) {
+    return <span>-</span>;
+  }
+
+  return (
+    <>
+      <UserFullNameCell login={login} />
+      <br />
+      <span className="date-table-style">
+        {date ? formatDateWithoutSeconds(date) : '-'}
+      </span>
+    </>
+  );
+};
+
   const columns: ColumnConfig[] = useMemo(
     () => [
       {
@@ -637,11 +672,10 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         title: 'Order By / At',
         width: 200,
         render: row => (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
       {

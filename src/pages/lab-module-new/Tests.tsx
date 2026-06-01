@@ -39,6 +39,7 @@ import './styles.less';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import PrintSampleLabelAction from './PrintSampleLabelAction';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 type Props = {
   order: any;
@@ -488,6 +489,30 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
+    const UserFullNameCell = ({ login }: { login?: string | null }) => {
+      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+        skip: !login
+      });
+
+      return <>{fullName || login || '-'}</>;
+    };
+
+    const UserDateCell = ({
+      login,
+      date
+    }: {
+      login?: string | null;
+      date?: string | null;
+    }) => (
+      <>
+        <UserFullNameCell login={login} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : '-'}
+        </span>
+      </>
+    );
+
     const columns: ColumnConfig[] = [
       {
         key: 'check',
@@ -548,11 +573,10 @@ const Tests = forwardRef<any, Props>(
         width: 120,
         align: 'center',
         render: (rowData: any) => (
-          <>
-            <span>{rowData.createdBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
-          </>
+          <UserDateCell
+            login={rowData.createdBy}
+            date={rowData.createdAt}
+          />
         )
       },
       {
@@ -750,17 +774,17 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) => <PrintSampleLabelAction rowData={rowData} />
       },
+      
       {
         key: 'acceptedatby',
         dataKey: '',
         title: <Translate>ACCEPTED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData.acceptedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
-          </>
+          <UserDateCell
+            login={rowData.acceptedBy}
+            date={rowData.acceptedAt}
+          />
         )
       },
       {
@@ -769,11 +793,10 @@ const Tests = forwardRef<any, Props>(
         title: <Translate>REJECTED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData.rejectedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
-          </>
+          <UserDateCell
+            login={rowData.rejectedBy}
+            date={rowData.rejectedAt}
+          />
         )
       },
       {
@@ -796,13 +819,10 @@ const Tests = forwardRef<any, Props>(
         title: <Translate>UNDO ACCEPT AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData.undoAcceptBy ?? '—'}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.undoAcceptDate ? formatDateWithoutSeconds(rowData.undoAcceptDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData.undoAcceptBy}
+            date={rowData.undoAcceptDate}
+          />
         )
       },
       {
