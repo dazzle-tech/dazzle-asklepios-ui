@@ -68,10 +68,60 @@ const FormTemplatesUseScreen = () => {
   const patient = locationState.patient ?? reduxPatient;
   const encounter = locationState.encounter ?? reduxEncounter;
 
-  const patientId = resolveNumericId(patient);
+  const patientId =
+    resolveNumericId(patient) ??
+    resolveNumericId(encounter?.patient) ??
+    (encounter?.patientId != null && encounter.patientId !== ''
+      ? Number(encounter.patientId)
+      : null);
   const encounterId = resolveNumericId(encounter);
   const inEncounterRoute = location.pathname.includes('/encounter');
-  const isVisitContext = Boolean(encounterId || (patientId && inEncounterRoute));
+  const isFromEncounter = inEncounterRoute;
+  const isPatientScoped = Boolean(patientId);
+  const isEncounterScoped = Boolean(encounterId);
+  const hasEncounterContext = isFromEncounter && Boolean(patientId && encounterId);
+
+  const warnMissingEncounterContext = (): boolean => {
+    if (!isFromEncounter) return false;
+
+    if (!patientId && !encounterId) {
+      dispatch(
+        notify({
+          msg: 'Patient and encounter are required to use forms from encounter',
+          sev: 'warning'
+        })
+      );
+      return true;
+    }
+
+    if (!patientId) {
+      dispatch(
+        notify({
+          msg: 'Patient is required to use forms from encounter',
+          sev: 'warning'
+        })
+      );
+      return true;
+    }
+
+    if (!encounterId) {
+      dispatch(
+        notify({
+          msg: 'Encounter is required to use forms from encounter',
+          sev: 'warning'
+        })
+      );
+      return true;
+    }
+
+    return false;
+  };
+
+  const handleOpenUseTemplate = (row: any) => {
+    if (warnMissingEncounterContext()) return;
+    setSelectedTemplate(row);
+    setUseOpen(true);
+  }
 
   const selectedDepartmentId = authSlice.selectedDepartment?.departmentId;
 
@@ -125,13 +175,12 @@ const FormTemplatesUseScreen = () => {
   const [loadEntriesByEncounter, entriesByEncounterState] = useLazyGetFormEntriesByEncounterQuery();
 
   const entriesQueryState = useMemo(() => {
-    if (encounterId) return entriesByEncounterState;
-    if (isVisitContext && patientId) return entriesByPatientState;
+    if (hasEncounterContext) return entriesByEncounterState;
+    if (isPatientScoped) return entriesByPatientState;
     return entriesByTemplateState;
   }, [
-    encounterId,
-    isVisitContext,
-    patientId,
+    hasEncounterContext,
+    isPatientScoped,
     entriesByEncounterState,
     entriesByPatientState,
     entriesByTemplateState
@@ -148,7 +197,7 @@ const FormTemplatesUseScreen = () => {
   }, [dispatch]);
 
   const fetchEntries = async (templateId: number, params = entryParams) => {
-    if (inEncounterRoute && !patientId && !encounterId) {
+    if (isFromEncounter && (!patientId || !encounterId)) {
       setEntriesResp(EMPTY_PAGED_RESULT);
       return;
     }
@@ -161,7 +210,7 @@ const FormTemplatesUseScreen = () => {
         timestamp: Date.now()
       };
 
-      if (encounterId) {
+      if (hasEncounterContext && encounterId) {
         const resp = await loadEntriesByEncounter({
           encounterId,
           page: 0,
@@ -174,7 +223,7 @@ const FormTemplatesUseScreen = () => {
         return;
       }
 
-      if (isVisitContext && patientId) {
+      if (isPatientScoped && patientId) {
         const resp = await loadEntriesByPatient({
           patientId,
           page: 0,
@@ -216,7 +265,14 @@ const FormTemplatesUseScreen = () => {
 
     fetchEntries(selectedTemplate.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTemplate?.id, entryParams.page, entryParams.size, entryParams.sort]);
+  }, [
+    selectedTemplate?.id,
+    entryParams.page,
+    entryParams.size,
+    entryParams.sort,
+    patientId,
+    encounterId
+  ]);
 
   const ensureTemplateLoaded = async () => {
     const alreadySelected =
@@ -342,10 +398,7 @@ const FormTemplatesUseScreen = () => {
           <MyButton
             color="var(--deep-blue)"
             width="90px"
-            onClick={() => {
-              setSelectedTemplate(row);
-              setUseOpen(true);
-            }}
+            onClick={() => handleOpenUseTemplate(row)}
           >
             Use
           </MyButton>
@@ -460,26 +513,17 @@ const FormTemplatesUseScreen = () => {
         open={useOpen}
         setOpen={setUseOpen}
         templateRow={selectedTemplate}
-        patientId={isVisitContext ? patientId : null}
-        encounterId={isVisitContext ? encounterId : null}
-        onSaved={async (savedEntry: any) => {
-          if (savedEntry) {
-            setEntriesResp((prev: any) => ({
-              ...prev,
-              data: [savedEntry, ...(prev?.data ?? [])],
-              totalCount: (prev?.totalCount ?? 0) + 1
-            }));
-          }
+        fromEncounter={isFromEncounter}
+        patientId={patientId}
+        encounterId={encounterId}
+        onSaved={async () => {
+          if (!selectedTemplate?.id) return;
 
-          if (selectedTemplate?.id) {
-            setTimeout(async () => {
-              await fetchEntries(selectedTemplate.id, {
-                ...entryParams,
-                page: 0,
-                timestamp: Date.now()
-              });
-            }, 500);
-          }
+          await fetchEntries(selectedTemplate.id, {
+            ...entryParams,
+            page: 0,
+            timestamp: Date.now()
+          });
         }}
       />
 
