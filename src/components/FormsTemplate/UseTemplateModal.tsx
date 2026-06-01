@@ -10,7 +10,23 @@ import { notify } from '@/utils/uiReducerActions';
 import { useGetFormTemplateQuery } from '@/services/setup/formTemplateService';
 import { useCreateFormEntryMutation } from '@/services/setup/formEntriesService';
 
-const UseTemplateModal = ({ open, setOpen, templateRow, onSaved }: any) => {
+type UseTemplateModalProps = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  templateRow: any;
+  patientId?: number | null;
+  encounterId?: number | null;
+  onSaved?: (savedEntry: any) => void | Promise<void>;
+};
+
+const UseTemplateModal = ({
+  open,
+  setOpen,
+  templateRow,
+  patientId = null,
+  encounterId = null,
+  onSaved
+}: UseTemplateModalProps) => {
     const dispatch = useDispatch();
     const templateId = templateRow?.id;
 
@@ -53,24 +69,58 @@ const UseTemplateModal = ({ open, setOpen, templateRow, onSaved }: any) => {
         return;
     }
 
-    const facilityId = templateRow.facilityId;
-    const departmentId = templateRow.departmentId;
+    const facilityId = templateRow.facilityId != null ? Number(templateRow.facilityId) : null;
+    const departmentId =
+      templateRow.departmentId != null ? Number(templateRow.departmentId) : null;
+
+    if (!facilityId || Number.isNaN(facilityId)) {
+      dispatch(
+        notify({
+          msg: 'Template facility is missing. Please re-select the form template.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!departmentId || Number.isNaN(departmentId)) {
+      dispatch(
+        notify({
+          msg: 'Template department is missing. Please re-select the form template.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
     try {
-       const saved=  await createEntry({
-            title: entryTitle.trim(),
-            templateId: templateRow.id,
-            facilityId,
-            departmentId,
-            dataJson: JSON.stringify(data)
-        }).unwrap();
+      const saved = await createEntry({
+        title: entryTitle.trim(),
+        templateId: Number(templateRow.id),
+        facilityId,
+        departmentId,
+        dataJson: JSON.stringify(data),
+        patientId: patientId ?? null,
+        encounterId: encounterId ?? null
+      }).unwrap();
 
-        await onSaved?.(saved);
+      await onSaved?.(saved);
 
-        dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
-        setOpen(false);
-    } catch (e) {
-        dispatch(notify({ msg: 'Failed to save form', sev: 'error' }));
+      dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
+      setOpen(false);
+    } catch (e: any) {
+      const serverMsg =
+        e?.data?.message ||
+        e?.data?.detail ||
+        e?.data?.title ||
+        (Array.isArray(e?.data?.fieldErrors) && e.data.fieldErrors[0]?.message);
+
+      dispatch(
+        notify({
+          msg: serverMsg || 'Failed to save form',
+          sev: 'error'
+        })
+      );
     }
 };
 

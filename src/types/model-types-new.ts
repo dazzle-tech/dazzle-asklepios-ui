@@ -2356,6 +2356,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface PatientInsurance {
   id?: number;
@@ -2763,7 +2765,11 @@ export interface FormEntry {
   templateId: number | null;
   facilityId: number | null;
   departmentId: number | null;
+  patientId?: number | null;
+  encounterId?: number | null;
   dataJson: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface FormEntryCreateVM {
@@ -2772,6 +2778,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface OrganizationDefinition {
   id?: number;
