@@ -267,24 +267,32 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
 
   const handleGeneratePdf = async (result: any) => {
-    if (!result?.id) return;
-    try {
-      const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
+  if (!result?.id) return;
 
-      const win = window.open(fileURL, '_blank');
+  try {
+    const blob = await fetchLaboratoryResultPdfData({
+      resultId: result.id,
+    }).unwrap();
 
-      if (win) {
-        win.focus();
-      }
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download report pdf', error);
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      console.error('Popup blocked. Please allow popups for this site.');
     }
-  };
+
+    // لا تعمل revokeObjectURL هون
+  } catch (error) {
+    console.error('Failed to open report pdf', error);
+  }
+};
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);

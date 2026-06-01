@@ -243,26 +243,29 @@ const ERTriage = () => {
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
   const handlePrintWristband = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPatientWristbandPdf({
-        patientId: rowData.patientId
-      }).unwrap();
+  try {
+    const blob = await triggerGetPatientWristbandPdf({
+      patientId: rowData.patientId,
+    }).unwrap();
 
-      const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
 
-      const win = window.open(fileURL, '_blank');
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-if (win) {
-  win.focus();
-}
+    const win = window.open(fileURL, '_blank');
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download wristband pdf', error);
+    if (win) {
+      win.focus();
+    } else {
+      console.error('Popup blocked. Please allow popups for this site.');
     }
-  };
+
+  } catch (error) {
+    console.error('Failed to open wristband pdf', error);
+  }
+};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');

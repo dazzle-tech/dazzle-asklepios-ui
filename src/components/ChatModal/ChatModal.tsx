@@ -8,9 +8,13 @@ import MyModal from "../MyModal/MyModal";
 import "./styles.less";
 import { formatDateWithoutSeconds } from "@/utils";
 import { useSelector } from "react-redux";
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+
+
 const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName,
     disabled = false
 }) => {
+
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
     const mode = useSelector((state: any) => state.ui.mode);
@@ -24,6 +28,14 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
 
         return () => clearTimeout(timeout);
     }, [list]);
+
+        const UserFullName = ({ login }: { login?: string }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+            skip: !login
+        });
+
+        return <>{fullName || login || '-'}</>;
+        };
 
 
     return (
@@ -49,7 +61,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
 
                                         <div className="message-meta">
                                             <span className="message-user">
-                                                {msg.createdBy}
+                                                <UserFullName login={msg.createdBy} />
                                             </span>
                                             <span className="dot">•</span>
                                             <span className="message-date">

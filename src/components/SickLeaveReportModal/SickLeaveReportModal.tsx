@@ -57,15 +57,15 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
 
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-const blob = await postSickLeaveReportPdf({
-  encounterId,
-  timezone,
-  request: {
-    fromDate: sickLeaveForm.fromDate,
-    toDate: sickLeaveForm.toDate,
-    notes: sickLeaveForm.notes,
-  },
-}).unwrap();
+    const blob = await postSickLeaveReportPdf({
+      encounterId,
+      timezone,
+      request: {
+        fromDate: sickLeaveForm.fromDate,
+        toDate: sickLeaveForm.toDate,
+        notes: sickLeaveForm.notes,
+      },
+    }).unwrap();
 
     const pdfBlob = new Blob([blob], { type: 'application/pdf' });
     const fileURL = window.URL.createObjectURL(pdfBlob);
@@ -83,50 +83,22 @@ const blob = await postSickLeaveReportPdf({
       );
     }
 
-    if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
-      dispatch(notify({ msg: 'Please enter both start date and end date', sev: 'warning' }));
-      return;
-    }
+    dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
+    setOpen(false);
+  } catch (error: any) {
+    console.error('Error while printing sick leave report PDF:', error);
 
-    try {
-      setIsLoading(true);
-      dispatch(showSystemLoader());
-
-      const blob = await postSickLeaveReportPdf({
-        encounterId,
-        request: {
-          fromDate: sickLeaveForm.fromDate,
-          toDate: sickLeaveForm.toDate,
-          notes: sickLeaveForm.notes
-        }
-      }).unwrap();
-
-    
-      const fileURL = window.URL.createObjectURL(blob);
-
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      }
-
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
-
-      dispatch(notify({ msg: 'Sick leave report PDF Print successfully', sev: 'success' }));
-      setOpen(false);
-    } catch (error: any) {
-        console.error('Error while printing sick leave report PDF:', error);
-      dispatch(
-        notify({
-          msg: error?.data?.message || 'Error while printing sick leave report PDF',
-          sev: 'error',
-        })
-      );
-    } finally {
-      setIsLoading(false);
-      dispatch(hideSystemLoader());
-    }
-  };
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while printing sick leave report PDF',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setIsLoading(false);
+    dispatch(hideSystemLoader());
+  }
+};
 
   return (
     <MyModal

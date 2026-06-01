@@ -652,7 +652,7 @@ const EncounterList = () => {
     }
   };
 
- const handlePrintVisitReport = async (row: any) => {
+const handlePrintVisitReport = async (row: any) => {
   const encounterId = row?.id ?? null;
 
   if (!encounterId) {
@@ -686,6 +686,8 @@ const EncounterList = () => {
       );
     }
 
+    // مهم: لا تعمل revokeObjectURL هون
+    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
   } catch (error: any) {
     dispatch(
       notify({

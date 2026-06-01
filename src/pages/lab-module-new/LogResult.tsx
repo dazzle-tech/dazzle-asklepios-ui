@@ -7,6 +7,7 @@ import { initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React from 'react';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 type Props = {
   open: boolean;
@@ -37,6 +38,13 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     return lov?.lovDisplayVale ?? value;
   };
 
+  const UserFullNameCell = ({ login }: { login?: string | null }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+      skip: !login
+    });
+
+    return <>{fullName || login || '-'}</>;
+  };
 
   const columns = [
     {
@@ -59,44 +67,42 @@ const LogResult = ({ open, setOpen, result }: Props) => {
       flexGrow: 2,
       fullText: true,
       render: (row: any) => {
-        if (!row.resultBy) return null;
-
         return (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {row.resultBy}
+            <UserFullNameCell login={row.resultBy} />
           </div>
         );
       }
     }
   ];
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
 
-  <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Result Logs"
-      size="40vw"
-      position='right'
-      content={
-      <div dir={dir}>
-        <MyTable
-          height={400}
-          loading={isFetching}
-          data={logs ?? []}
-          columns={columns}
-        />
-      </div>
-      }
-    />
-  </div>
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Result Logs"
+        size="40vw"
+        position='right'
+        content={
+          <div dir={dir}>
+            <MyTable
+              height={400}
+              loading={isFetching}
+              data={logs ?? []}
+              columns={columns}
+            />
+          </div>
+        }
+      />
+    </div>
   );
 };
 
