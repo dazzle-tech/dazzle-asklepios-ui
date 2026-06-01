@@ -161,30 +161,43 @@ const Reports = ({ patient }) => {
   );
 
  
- const handleGenerateReport = async () => {
-   if (!selectedReport?.id) return;
-    try {
-      const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
+const handleGenerateReport = async () => {
+  if (!selectedReport?.id) return;
 
-const win = window.open(fileURL, '_blank');
+  try {
+    const blob = await fetchRadiologyReportPdfData({
+      reportId: selectedReport.id,
+    }).unwrap();
 
-if (win) {
-  win.focus();
-}
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
       dispatch(
         notify({
-          msg: 'Failed to generate report PDF',
-          sev: 'error'
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
         })
       );
     }
-  };
+
+    // لا تعمل revokeObjectURL هنا
+  } catch (error) {
+    dispatch(
+      notify({
+        msg: 'Failed to generate report PDF',
+        sev: 'error',
+      })
+    );
+  }
+};
   const reportColumns: ColumnConfig[] = [
     {
       key: 'orderId',
