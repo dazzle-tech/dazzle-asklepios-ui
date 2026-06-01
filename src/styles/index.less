@@ -371,6 +371,10 @@ aside {
   --card-yellow: #ffc300;
   --card-gray: #adadad;
 
+  --one-health-theme-hover: #eaf7f6;
+  --one-health-theme-hover-dark: #1f3b3a
+
+
 }
 
 .rs-form-inline .rs-form-control-label {
@@ -551,9 +555,28 @@ input[disabled] {
 :root,
 .rs-theme-light,
 .rs-theme-dark {
+  --rs-input-focus-border: var(--primary-blue);
+  --rs-color-focus-ring: rgb(from var(--primary-blue) r g b / 25%);
+  --rs-state-focus-outline: 3px solid rgb(from var(--primary-blue) r g b / 25%);
+  --rs-state-focus-shadow: 0 0 0 3px rgb(from var(--primary-blue) r g b / 25%);
   --rs-checkbox-checked-bg: var(--primary-blue);
   --rs-radio-checked-bg: var(--primary-blue);
-  --rs-state-focus-shadow: 0 0 0 3px rgba(0, 98, 100, 0.2);
 }
 
-
+// for one health theme (we will remove it later)
+.rs-theme-light .rs-dropdown-item:hover, .light .rs-dropdown-item:hover{
+  background-color: var(--one-health-theme-hover) !important;
+}
+// for one health theme (we will remove it later)
+.rs-theme-light .rs-dropdown-item.rs-dropdown-item-active,
+.light .rs-dropdown-item.rs-dropdown-item-active{
+  background-color: var(--one-health-theme-hover) !important;
+}
+// for one health theme (we will remove it later)
+.rs-theme-dark .rs-dropdown-item.rs-dropdown-item-active, .dark .rs-dropdown-item.rs-dropdown-item-active{
+  background-color: var(--one-health-theme-hover-dark) !important;
+}
+// for one health theme (we will remove it later)
+.rs-dropdown-item-active .rs-dropdown-item-content{
+  color: var(--primary-blue) !important;
+}
