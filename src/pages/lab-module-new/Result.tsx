@@ -64,6 +64,7 @@ import EditResultModal from './EditResultModal';
 import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
 import MyButton from '@/components/MyButton/MyButton';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type SortType = 'asc' | 'desc';
 
@@ -518,31 +519,6 @@ const Result = forwardRef<any, Props>(
         setSelectedResultIds([]);
       }
     };
-
-    const UserFullNameCell = ({ login }: { login?: string | null }) => {
-      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-        skip: !login
-      });
-
-      return <>{fullName || login || '-'}</>;
-    };
-
-    const UserDateCell = ({
-      login,
-      date
-    }: {
-      login?: string | null;
-      date?: string | null;
-    }) => (
-      <>
-        <UserFullNameCell login={login} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDateWithoutSeconds(date) : '-'}
-        </span>
-      </>
-    );
-
 
     const columns: ColumnConfig[] = [
       {

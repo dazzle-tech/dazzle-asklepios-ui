@@ -25,6 +25,7 @@ import { Form, Tooltip, Whisper } from 'rsuite';
 import ApproveRequestModal from './ApproveRequestModal';
 import './style.less';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   page?: number;
@@ -183,30 +184,6 @@ const RequestedTestTable: React.FC<Props> = ({
       );
     }
   };
-
-    const UserFullNameCell = ({ login }: { login?: string | null }) => {
-      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-        skip: !login
-      });
-
-      return <>{fullName || login || '-'}</>;
-    };
-
-    const UserDateCell = ({
-      login,
-      date
-    }: {
-      login?: string | null;
-      date?: string | null;
-    }) => (
-      <>
-        <UserFullNameCell login={login} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDateWithoutSeconds(date) : '-'}
-        </span>
-      </>
-    );
 
   const tableColumns = useMemo(
     () => [

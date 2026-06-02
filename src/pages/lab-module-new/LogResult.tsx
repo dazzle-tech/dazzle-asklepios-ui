@@ -8,6 +8,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React from 'react';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   open: boolean;
@@ -38,14 +39,6 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     return lov?.lovDisplayVale ?? value;
   };
 
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-      skip: !login
-    });
-
-    return <>{fullName || login || '-'}</>;
-  };
-
   const columns = [
     {
       key: 'result',
@@ -69,7 +62,7 @@ const LogResult = ({ open, setOpen, result }: Props) => {
       render: (row: any) => {
         return (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <UserFullNameCell login={row.resultBy} />
+            <UserDateCell login={row.resultBy} />
           </div>
         );
       }

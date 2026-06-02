@@ -8,6 +8,7 @@ import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React from 'react';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   open: boolean;
@@ -21,19 +22,6 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
     useGetRadiologyImageStatusLogQuery(
       report?.id ?? skipToken
     );
-
-    
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) {
-    return <span>-</span>;
-  }
-
-  return <span>{fullName || login}</span>;
-};
 
 
   const columns = [
@@ -55,7 +43,7 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
       key: 'by',
       title: <Translate>BY</Translate>,
       flexGrow: 1,
-      render: (row: any) => <UserFullNameCell login={row.statusBy} />
+      render: (row: any) => <UserDateCell login={row.statusBy} />
     }
   ];
 
