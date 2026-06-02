@@ -40,6 +40,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import PrintSampleLabelAction from './PrintSampleLabelAction';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   order: any;
@@ -488,30 +489,6 @@ const Tests = forwardRef<any, Props>(
         setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
       }
     };
-
-    const UserFullNameCell = ({ login }: { login?: string | null }) => {
-      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-        skip: !login
-      });
-
-      return <>{fullName || login || '-'}</>;
-    };
-
-    const UserDateCell = ({
-      login,
-      date
-    }: {
-      login?: string | null;
-      date?: string | null;
-    }) => (
-      <>
-        <UserFullNameCell login={login} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDateWithoutSeconds(date) : '-'}
-        </span>
-      </>
-    );
 
     const columns: ColumnConfig[] = [
       {

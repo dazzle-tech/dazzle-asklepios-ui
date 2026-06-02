@@ -20,6 +20,7 @@ import { useLazyGetFormEntriesByTemplateQuery } from '@/services/setup/formEntri
 import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
+import UserDateCell from '../UserDateCell/UserDateCell';
 
 const EMPTY_PAGED_RESULT = {
   data: [],
@@ -185,57 +186,6 @@ const FormTemplatesUseScreen = () => {
 
   const isTemplateSelected = (rowData: any) =>
     rowData?.id === selectedTemplate?.id ? 'selected-row' : '';
-
-  const formatDateTime = (date?: string) => {
-    if (!date) return '';
-
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return date;
-
-    return d.toLocaleString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-      skip: !login
-    });
-
-    if (!login) {
-      return <span>-</span>;
-    }
-
-    return <span>{fullName || login}</span>;
-  };
-
-  const UserDateCell = ({
-    login,
-    date
-  }: {
-    login?: string | null;
-    date?: string | null;
-  }) => {
-    if (!login && !date) {
-      return <span>-</span>;
-    }
-
-    return (
-      <>
-        <UserFullNameCell login={login} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDateTime(date) : '-'}
-        </span>
-      </>
-    );
-  };
-
 
   const templateColumns = [
     { key: 'name', title: <Translate>Template</Translate>, flexGrow: 4 },
