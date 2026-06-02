@@ -48,6 +48,7 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import './ReviewResultsIcon.less';
+import UserDateCell from '@/components/userdetalesCell';
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -267,7 +268,7 @@ const ReviewResults = forwardRef<any, any>(
                   [String(order.id)]: order
                 }));
               })
-              .catch(() => {});
+              .catch(() => { });
           }
         }
 
@@ -280,7 +281,7 @@ const ReviewResults = forwardRef<any, any>(
                 [String(test.id)]: test
               }));
             })
-            .catch(() => {});
+            .catch(() => { });
         }
       });
     }, [results]);
@@ -320,7 +321,7 @@ const ReviewResults = forwardRef<any, any>(
                 [String(order.id)]: order
               }));
             })
-            .catch(() => {});
+            .catch(() => { });
         }
       });
     }, [orderTestsMap]);
@@ -510,9 +511,8 @@ const ReviewResults = forwardRef<any, any>(
                 <span>
                   <FontAwesomeIcon
                     icon={faStar}
-                    className={`review-icon-base ${
-                      isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
-                    }`}
+                    className={`review-icon-base ${isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
+                      }`}
                     onClick={async (e) => {
                       e.stopPropagation();
                       setSelectedResultId(rowData.id);
@@ -532,64 +532,76 @@ const ReviewResults = forwardRef<any, any>(
               </Whisper>
             );
           }
-        }
+        },
+        {
+          key: 'reviewDate',
+          title: 'Review By/At',
+          expandable: true,
+          flexGrow: 2,
+          render: (row: any) => (
+            <UserDateCell
+              login={row.reviewBy}
+              date={row.reviewDate}
+            />
+          )
+        },
       ],
       [patientsMap, normalizedResults]
     );
 
-  const filters = () => (
-    <Form fluid key={filtersKey}>
-      <div className="results-table-filters-review-results-main-container">
-        <MyInput
-          fieldType="date"
-          fieldLabel="Approval From Date"
-          fieldName="fromDate"
-          record={approvalDate}
-          setRecord={setApprovalDate}
-        />
+    const filters = () => (
+      <Form fluid key={filtersKey}>
+        <div className="results-table-filters-review-results-main-container">
+          <MyInput
+            fieldType="date"
+            fieldLabel="Approval From Date"
+            fieldName="fromDate"
+            record={approvalDate}
+            setRecord={setApprovalDate}
+          />
 
-        <MyInput
-          fieldType="date"
-          fieldLabel="Approval To Date"
-          fieldName="toDate"
-          record={approvalDate}
-          setRecord={setApprovalDate}
-        />
+          <MyInput
+            fieldType="date"
+            fieldLabel="Approval To Date"
+            fieldName="toDate"
+            record={approvalDate}
+            setRecord={setApprovalDate}
+          />
 
-        <MyInput
-          fieldType="date"
-          fieldLabel="Order From Date"
-          fieldName="fromDate"
-          record={orderDate}
-          setRecord={setOrderDate}
-        />
+          <MyInput
+            fieldType="date"
+            fieldLabel="Order From Date"
+            fieldName="fromDate"
+            record={orderDate}
+            setRecord={setOrderDate}
+          />
 
-        <MyInput
-          fieldType="date"
-          fieldLabel="Order To Date"
-          fieldName="toDate"
-          record={orderDate}
-          setRecord={setOrderDate}
-        />
-      <div className='check-box-review-results-handle'>
-        <MyInput
-          fieldType="check"
-          fieldLabel="Show Reviewed Results"
-          showLabel={false}
-          fieldName="showReview"
-          record={{ showReview }}
-          setRecord={(obj: any) => setShowReview(!!obj.showReview)}
-        />
-      </div>
-      </div>
+          <MyInput
+            fieldType="date"
+            fieldLabel="Order To Date"
+            fieldName="toDate"
+            record={orderDate}
+            setRecord={setOrderDate}
+          />
+          <div className='check-box-review-results-handle'>
+            <MyInput
+              fieldType="check"
+              fieldLabel="Show Reviewed Results"
+              showLabel={false}
+              fieldName="showReview"
+              record={{ showReview }}
+              setRecord={(obj: any) => setShowReview(!!obj.showReview)}
+            />
+          </div>
+        </div>
 
-      <AdvancedSearchFilters
-        searchFilter={false}
-        showAdvancedButton={false}
-        clearOnClick={resetFilters}
-      />
-    </Form>
-  );
+        <AdvancedSearchFilters
+          searchFilter={false}
+          showAdvancedButton={false}
+          clearOnClick={resetFilters}
+        />
+      </Form>
+    );
 
     const isSelected = (rowData: any) =>
       selectedResultId === rowData.id ? 'selected-row' : '';
@@ -625,72 +637,72 @@ const ReviewResults = forwardRef<any, any>(
         })
         .catch(() => setOrderIdIn([]));
     }, [orderDate]);
-    
-// Direction handling for RTL/LTR
+
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-    <div dir={dir}>
-      <Panel defaultExpanded>
-        <MyTable
-          filters={filters()}
-          columns={columns}
-          data={normalizedResults}
-          loading={loading || isFetching}
-          page={page}
-          rowsPerPage={size}
-          totalCount={totalCount}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          rowClassName={isSelected}
-          onRowsPerPageChange={(e) => {
-            setSize(Number(e.target.value));
-            setPage(0);
-          }}
-          onRowClick={async (row: any) => {
-            const orderTest = orderTestsMap[String(row.orderTestId)];
-            const order = ordersMap[String(orderTest?.orderId)];
+      <div dir={dir}>
+        <Panel defaultExpanded>
+          <MyTable
+            filters={filters()}
+            columns={columns}
+            data={normalizedResults}
+            loading={loading || isFetching}
+            page={page}
+            rowsPerPage={size}
+            totalCount={totalCount}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowClassName={isSelected}
+            onRowsPerPageChange={(e) => {
+              setSize(Number(e.target.value));
+              setPage(0);
+            }}
+            onRowClick={async (row: any) => {
+              const orderTest = orderTestsMap[String(row.orderTestId)];
+              const order = ordersMap[String(orderTest?.orderId)];
 
-            const patientId = order?.patientId;
-            if (!patientId) return;
+              const patientId = order?.patientId;
+              if (!patientId) return;
 
-            const rawPatient = patientsMap[String(patientId)];
-            if (!rawPatient) return;
+              const rawPatient = patientsMap[String(patientId)];
+              if (!rawPatient) return;
 
-            setSelectedResultId(row.id);
-            setPatient(rawPatient);
+              setSelectedResultId(row.id);
+              setPatient(rawPatient);
 
-            const encounterId = order?.encounterId;
-            if (!encounterId) {
-              setEncounter({...newPatientEncounter});
-              return;
-            }
-            console.log("Order's encounterId", encounterId);
+              const encounterId = order?.encounterId;
+              if (!encounterId) {
+                setEncounter({ ...newPatientEncounter });
+                return;
+              }
+              console.log("Order's encounterId", encounterId);
 
-            try {
-              const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
-         
-              setEncounter?.(encounter);
-            } catch (err) {
-              console.error('Failed to fetch encounter', err);
-              setEncounter({...newPatientEncounter});
-            }
-          }}
-        />
+              try {
+                const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
 
-        <ChatModal
-          open={openNotesModal}
-          setOpen={setOpenNotesModal}
-          title="Comments"
-          list={openNotesModal ? notesResponse ?? [] : []}
-          fieldShowName="note"
-          handleSendMessage={{}}
-          disabled
-        />
-      </Panel>
-    </div>
+                setEncounter?.(encounter);
+              } catch (err) {
+                console.error('Failed to fetch encounter', err);
+                setEncounter({ ...newPatientEncounter });
+              }
+            }}
+          />
+
+          <ChatModal
+            open={openNotesModal}
+            setOpen={setOpenNotesModal}
+            title="Comments"
+            list={openNotesModal ? notesResponse ?? [] : []}
+            fieldShowName="note"
+            handleSendMessage={{}}
+            disabled
+          />
+        </Panel>
+      </div>
     );
   }
 );

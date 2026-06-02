@@ -32,7 +32,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
-import '../lab-module-new/ReviewResultsIcon.less';
+import '@/pages/lab-module-new/ReviewResultsIcon.less';
+import UserDateCell from '@/components/userdetalesCell';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
@@ -343,38 +344,58 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                         <Whisper speaker={<Tooltip>Review</Tooltip>}>
                             <FontAwesomeIcon
                                 icon={faStar}
-                                className={`review-icon-base ${
-                                    isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
-                                }`}
+                                className={`review-icon-base ${isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
+                                    }`}
                                 onClick={() => {
                                     handleReview(row);
                                 }} />
                         </Whisper>
                     );
                 }
-            }
+            },
+            {
+                key: 'reviewDate',
+                title: <Translate>Review Date</Translate>,
+                render: row => {
+                    if (!row.reviewDate) return '—';
+                    const date = new Date(row.reviewDate);
+                    return date.toLocaleString();
+                }
+            },
+            {
+                key: 'reviewDate',
+                title: 'Review By/At',
+                expandable: true,
+                flexGrow: 2,
+                render: (row: any) => (
+                    <UserDateCell
+                        login={row.reviewBy}
+                        date={row.reviewDate}
+                    />
+                )
+            },
         ],
         [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds]
     );
 
     const resetFilters = () => {
-    const today = new Date();
+        const today = new Date();
 
-    setApprovalDate({
-        fromDate: new Date(today),
-        toDate: new Date(today)
-    });
+        setApprovalDate({
+            fromDate: new Date(today),
+            toDate: new Date(today)
+        });
 
-    setOrderDate({
-        fromDate: null,
-        toDate: null
-    });
+        setOrderDate({
+            fromDate: null,
+            toDate: null
+        });
 
-    setShowReviewed(false);
-    setOrderIdIn(null);
-    setPage(0);
+        setShowReviewed(false);
+        setOrderIdIn(null);
+        setPage(0);
 
-    setFiltersKey(prev => prev + 1);
+        setFiltersKey(prev => prev + 1);
     };
 
     const filters = (
@@ -508,7 +529,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     }, [approvalDate, orderDate, showReviewed]);
 
 
-// Direction handling for RTL/LTR
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
@@ -581,7 +602,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     disableDefaultTemplate
                 />
             )}
-            </div>
+        </div>
     );
 };
 

@@ -218,7 +218,7 @@ const Tests = forwardRef<any, Props>(
       order?.id
         ? {
           orderId: order.id,
-          status: 'SUBMITTED',
+          excludeStatus: 'NEW',
           receivedDepartmentId: selectedDepartment?.departmentId,
           page: pageIndex,
           size: rowsPerPage,
@@ -520,6 +520,18 @@ const Tests = forwardRef<any, Props>(
       )?.lovDisplayVale;
 
 
+
+
+    const isRescheduledTest = (rowData: any) => {
+      const rowStatus = String(
+        rowData?.status ??
+        rowData?.processingStatus ??
+        ''
+      ).toUpperCase();
+
+      return rowStatus.includes('RESCHEDULE');
+    };
+
     const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
         prev.includes(rowId)
@@ -529,7 +541,9 @@ const Tests = forwardRef<any, Props>(
     };
 
     const allRowIds = useMemo(
-      () => pagedData.map(row => row.id),
+      () => pagedData
+        .filter(row => !isRescheduledTest(row))
+        .map(row => row.id),
       [pagedData]
     );
 
@@ -552,7 +566,7 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-    const ThreeDotsMenu = ({ rowData }: { rowData: any }) => {
+    const ThreeDotsMenu = ({ rowData, disabled = false }: { rowData: any; disabled?: boolean }) => {
       const isAccepted =
         rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
 
@@ -563,7 +577,7 @@ const Tests = forwardRef<any, Props>(
 
       const isPaused = imageStatus === 'PAUSED';
 
-      if (!isAccepted) {
+      if (disabled || !isAccepted) {
         return (
           <FontAwesomeIcon
             className='icon-radiologist-worklist-size'
@@ -659,7 +673,8 @@ const Tests = forwardRef<any, Props>(
         .filter(
           t =>
             selectedRows.includes(t.id) &&
-            canAcceptTest(t)
+            canAcceptTest(t) &&
+            !isRescheduledTest(t)
         )
         .map(t => t.id);
 
@@ -701,7 +716,8 @@ const Tests = forwardRef<any, Props>(
         .filter(
           t =>
             selectedRows.includes(t.id) &&
-            canRejectTest(t)
+            canRejectTest(t) &&
+            !isRescheduledTest(t)
         )
         .map(t => t.id);
 
@@ -771,10 +787,16 @@ const UserDateCell = ({
         render: (rowData: any) => {
           const rowId = rowData.id;
 
+          const isRescheduled = isRescheduledTest(rowData);
+
           return (
             <Checkbox
               checked={selectedRows.includes(rowId)}
-              onChange={() => handleCheckboxChange(rowId)}
+              disabled={isRescheduled}
+              onChange={() => {
+                if (isRescheduled) return;
+                handleCheckboxChange(rowId);
+              }}
               onClick={e => e.stopPropagation()}
             />
           );
@@ -876,20 +898,33 @@ const UserDateCell = ({
         }
       },
       {
-        key: 'patientArrived',
-        title: <Translate>PATIENT ARRIVED</Translate>,
-        render: (rowData: any) => {
-          return (
-            <HStack spacing={10}>
-              <FontAwesomeIcon
-                className='icon-radiologist-worklist-size'
-                icon={faHospitalUser}
-                onClick={() => setOpenArrivalModal(true)}
-              />
-            </HStack>
-          );
-        }
-      },
+  key: 'patientArrived',
+  title: <Translate>PATIENT ARRIVED</Translate>,
+  render: (rowData: any) => {
+    const isRescheduled = String(rowData?.status ?? '')
+      .toUpperCase()
+      .includes('RESCHEDULE');
+
+    return (
+      <HStack spacing={10}>
+        <FontAwesomeIcon
+          className='icon-radiologist-worklist-size'
+          icon={faHospitalUser}
+          onClick={() => {
+            if (!isRescheduled) {
+              setOpenArrivalModal(true);
+            }
+          }}
+          color={isRescheduled ? '#bdbdbd' : undefined}
+          style={{
+            cursor: isRescheduled ? 'not-allowed' : 'pointer',
+            opacity: isRescheduled ? 0.5 : 1
+          }}
+        />
+      </HStack>
+    );
+  }
+},
       {
         key: 'status',
         title: <Translate>STATUS</Translate>,
@@ -911,22 +946,29 @@ const UserDateCell = ({
         width: 180,
         align: 'center',
         render: (rowData: any) => {
+          const isRescheduled = isRescheduledTest(rowData);
+
           const canAccept =
+            !isRescheduled &&
             rowData.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
 
           const canUndoAccept =
+            !isRescheduled &&
             rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED &&
             !rowData.imageStatus;
 
           const canReject =
+            !isRescheduled &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.ACCEPTED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_READY &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
-          const rowStatus = String(rowData?.status ?? '').toUpperCase();
-          const isRescheduled = rowStatus.includes('RESCHEDULE');
-          const actionColor = isRescheduled ? '#b9c0cc' : 'var(--primary-gray)';
-          const actionCursor = isRescheduled ? 'not-allowed' : 'pointer';
+
+          const rescheduleTooltip = isRescheduled
+            ? 'This test rescheduled'
+            : 'Reschedule appointment';
+          const rescheduleColor = isRescheduled ? 'orange' : 'var(--primary-gray)';
+          const rescheduleCursor = isRescheduled ? 'not-allowed' : 'pointer';
 
           return (
             <HStack spacing={8}>
@@ -980,20 +1022,22 @@ const UserDateCell = ({
                   />
                 </span>
               </Whisper>
-              <Whisper placement="top" speaker={<Tooltip>Reschedule appointment</Tooltip>}>
+              <Whisper placement="top" speaker={<Tooltip>{rescheduleTooltip}</Tooltip>}>
                 <FontAwesomeIcon
                   icon={faCalendarCheck}
                   className="icons-styles"
-                  color={actionColor}
+                  color={rescheduleColor}
                   onClick={() => {
-                    if (!isRescheduled) {
-                      handleOpenRescheduleAppointments(rowData);
-                    }
+                    if (isRescheduled) return;
+                    handleOpenRescheduleAppointments(rowData);
                   }}
-                  style={{ cursor: actionCursor }}
+                  style={{
+                    cursor: rescheduleCursor,
+                    opacity: 1
+                  }}
                 />
               </Whisper>
-              <ThreeDotsMenu rowData={rowData} />
+              <ThreeDotsMenu rowData={rowData} disabled={isRescheduled} />
             </HStack>
           );
         }
@@ -1083,7 +1127,8 @@ const UserDateCell = ({
       return normalizedOrderTests.some(
         t =>
           selectedRows.includes(t.id) &&
-          canAcceptTest(t)
+          canAcceptTest(t) &&
+          !isRescheduledTest(t)
       );
     }, [normalizedOrderTests, selectedRows]);
 
