@@ -83,9 +83,17 @@ const formatAppointmentRequestApproveError = (e: unknown): string => {
   return `Could not approve the appointment request${stMsg}.`;
 };
 
+const getAvailabilityTemplateName = (appointment: any): string => {
+  return String(
+   
+      appointment?.availabilityGenerationBatch?.template?.templateName ??
+    
+      ''
+  ).trim();
+};
+
 const APPOINTMENT_REQUEST_APPROVE_STATUS = 'APPROVED';
 
-// ← ثابتة كـ array (لا تتغير)
 const SCHEDULE_LEGEND_ITEMS: {
   label: string;
   color: string;
@@ -545,9 +553,10 @@ const ScheduleScreen = () => {
         ]
           .filter(Boolean)
           .join(' | ');
+        const templateName = getAvailabilityTemplateName(appointment);
         return {
           id: appointment?.key ?? appointment?.id,
-          title: slotTitle || fallbackTitle || 'Appointment',
+          title: slotTitle || fallbackTitle || templateName || 'Appointment',
           start: startDate,
           end: endDate,
           text: appointment.notes || 'No additional details available',
@@ -1137,11 +1146,6 @@ const ScheduleScreen = () => {
   }, [visibleAppointments, attachments]);
 
   useEffect(() => {
-    if (!finalAppointments || finalAppointments.length === 0) return;
-    console.log('ScheduleScreen finalAppointments:', finalAppointments);
-  }, [finalAppointments]);
-
-  useEffect(() => {
     if (!ActionsModalOpen) return;
     const selectedId = selectedEvent?.id;
     if (!selectedId) return;
@@ -1303,8 +1307,11 @@ const ScheduleScreen = () => {
 
   const getTooltipContent = (event: any) => {
     const resourceName = getTooltipResourceDisplay(event);
-    const titleStr = String(event?.title ?? '').trim();
+    const rawTitleStr = String(event?.title ?? '').trim();
     const fromToStr = String(event?.fromTo ?? '').trim();
+    const templateName = getAvailabilityTemplateName(event?.appointmentData);
+    const titleStr =
+      rawTitleStr.toLowerCase() === 'appointment' && templateName ? templateName : rawTitleStr;
     const head =
       currentView === 'month' ? [titleStr, fromToStr].filter(Boolean).join(' - ') : titleStr;
     const res = String(resourceName ?? '').trim();
@@ -1318,7 +1325,7 @@ const ScheduleScreen = () => {
     if (head) parts.push(head);
     if (res && !headHasResourceSegment) parts.push(res);
     const out = parts.join(' | ').trim();
-    return out || head || res || 'Appointment';
+    return out || head || res || templateName || 'Appointment';
   };
 
   const [currentCalView, setCurrentCalView] = useState('month');
