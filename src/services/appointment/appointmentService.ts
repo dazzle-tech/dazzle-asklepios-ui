@@ -89,8 +89,19 @@ export const appointmentFromTemplateService = createApi({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/book-patient`,
         method: 'PUT',
-        body
+        body,
+        // Backend sometimes returns malformed JSON with HTTP 200.
+        // Read as text first to avoid RTKQ PARSING_ERROR on successful booking.
+        responseHandler: 'text'
       }),
+      transformResponse: (response: string) => {
+        if (!response) return {} as AppointmentFromTemplate;
+        try {
+          return JSON.parse(response) as AppointmentFromTemplate;
+        } catch {
+          return {} as AppointmentFromTemplate;
+        }
+      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
