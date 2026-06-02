@@ -1,12 +1,11 @@
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import { Divider } from 'rsuite';
 import { Model } from 'survey-core';
 import { Survey } from 'survey-react-ui';
 
 const EntryPreviewModal = ({ open, setOpen, template, entry }: any) => {
-    const printRef = useRef<HTMLDivElement | null>(null);
 const survey = useMemo(() => {
     try {
         const rawFormJson =
@@ -43,29 +42,6 @@ const survey = useMemo(() => {
     }
 }, [template, entry?.dataJson]);
 
-    // ✅ add print css once
-    useEffect(() => {
-        const styleId = 'print-area-style';
-        if (document.getElementById(styleId)) return;
-
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.innerHTML = `
-      @media print {
-        body * { visibility: hidden !important; }
-        .print-area, .print-area * { visibility: visible !important; }
-        .print-area { position: absolute; left: 0; top: 0; width: 100%; }
-      }
-    `;
-        document.head.appendChild(style);
-    }, []);
-
-    const handlePrint = () => {
-        // ensure element exists and survey rendered
-        if (!printRef.current) return;
-        setTimeout(() => window.print(), 150);
-    };
-
     const content = () => (
         <div style={{ padding: 12 }}>
             <div style={{ fontWeight: 800, fontSize: 16 }}>
@@ -73,10 +49,7 @@ const survey = useMemo(() => {
             </div>
             <Divider />
 
-            {/* ✅ This is the printable area */}
             <div
-                ref={printRef}
-                className="print-area"
                 style={{
                     height: '70vh',
                     overflow: 'auto',
@@ -103,8 +76,7 @@ const survey = useMemo(() => {
             content={content}
             steps={[]}
             size="85vw"
-            actionButtonLabel="Print"
-            actionButtonFunction={handlePrint}
+            hideActionBtn
         />
     );
 };
