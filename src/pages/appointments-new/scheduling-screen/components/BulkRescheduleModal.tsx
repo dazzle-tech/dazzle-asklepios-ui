@@ -11,7 +11,7 @@ import MyStepper from "@/components/MyStepper";
 import MyTable from "@/components/MyTable";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import Translate from "@/components/Translate";
-import { useAppDispatch } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import {
   useGetAvailabilityGenerationBatchesByTemplateQuery,
   useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
@@ -25,6 +25,12 @@ import {
   useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
 } from "@/services/appointment/availabilityTemplateService";
 import { useGetPatientsByIdsQuery } from "@/services/patient/patientService";
+import { useGetAppointableDepartmentsQuery } from "@/services/security/departmentService";
+import { useGetAppointablePractitionerByLoggedInFacilityQuery } from "@/services/setup/practitioner/PractitionerService";
+import { useGetAppointableCatalogsByLoggedInFacilityQuery } from "@/services/setup/catalog/catalogService";
+import { useGetAllActiveAppointableDiagnosticTestsQuery } from "@/services/setup/diagnosticTest/diagnosticTestService";
+import { useGetAppointableServicesByLoggedInFacilityQuery } from "@/services/setup/serviceService";
+import { useGetRoomsByIdsMutation } from "@/services/setup/room/roomService";
 import type {
   AvailabilityGenerationBatch,
   AvailabilityTemplateResponseVM,
@@ -91,11 +97,6 @@ function getAppointmentPatientId(row: any): number | null {
     row?.patient?.patient_id;
   const numeric = Number(raw);
   const result = Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-  console.log("[BulkRescheduleModal] getAppointmentPatientId", {
-    raw,
-    result,
-    row,
-  });
   return result;
 }
 
@@ -117,6 +118,71 @@ function getPatientFullName(patient: any): string {
       patient?.fullName ?? patient?.full_name ?? patient?.name ?? "",
     ).trim()
   );
+}
+
+function normalizeResourceTypeKey(value: any): string {
+  return String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[-\s]+/g, "_");
+}
+
+function getAppointmentResourceType(row: any): string {
+  return normalizeResourceTypeKey(row?.resourceType ?? "");
+}
+function getTemplateResourceType(row: any): string {
+  return normalizeResourceTypeKey(row?.templateType ?? row?.resourceType ?? "");
+}
+
+function getCanonicalResourceTypeKey(value: any): string {
+  const key = normalizeResourceTypeKey(value);
+  if (!key) return key;
+  if (key.includes("DEPARTMENT")) return "DEPARTMENT";
+  if (key.includes("PRACTITIONER")) return "PRACTITIONER";
+  if (key.includes("CATALOG")) return "CATALOG";
+  if (
+    key.includes("DIAGNOSTIC") ||
+    key.includes("LAB") ||
+    key.includes("RADIOLOGY") ||
+    key.includes("TEST")
+  )
+    return "DIAGNOSTIC_TEST";
+  if (key.includes("SERVICE")) return "SERVICE";
+  if (key.includes("ROOM")) return "ROOM";
+  return key;
+}
+
+function getAppointmentDepartmentId(row: any): number | string | null {
+  return (
+    row?.departmentId ??
+    row?.department_id ??
+    row?.department?.id ??
+    row?.department?.departmentId ??
+    row?.department?.department_id ??
+    row?.appointmentData?.departmentId ??
+    row?.appointmentData?.department_id ??
+    row?.appointmentData?.department?.id ??
+    row?.appointmentData?.department?.departmentId ??
+    row?.appointmentData?.department?.department_id ??
+    null
+  );
+}
+
+function getAppointmentResourceId(row: any): number | string | null {
+  return (
+    row?.resourceId ??
+    row?.resource?.id ??
+    row?.resource?.key ??
+    row?.resource?.resourceId ??
+    row?.appointmentData?.resourceId ??
+    row?.appointmentData?.resource?.id ??
+    row?.appointmentData?.resource?.key ??
+    null
+  );
+}
+
+function getRowResourceId(row: any): number | string | null {
+  return getAppointmentResourceId(row);
 }
 
 function extractErrorMessage(response: any): string {
@@ -353,7 +419,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const appointmentPreviewRows = useMemo(() => {
     if (!showFreeAppointments) return bulkPreviewRows;
-    return bulkPreviewRows.filter((row) => normalizeApptStatus(row) === "NEW");
+    return bulkPreviewRows.filter((row) => isFreeSlotStatus(normalizeApptStatus(row)));
   }, [bulkPreviewRows, showFreeAppointments]);
 
   useEffect(() => {
@@ -372,20 +438,191 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     { skip: patientIds.length === 0 },
   );
 
-  useEffect(() => {
-    console.log("[BulkRescheduleModal] patientIds", {
-      patientIds,
-      isArray: Array.isArray(patientIds),
-      isSet: patientIds instanceof Set,
-      patients,
-    });
-  }, [patientIds, patients]);
-
   const patientMap = useMemo(() => {
     const map = new Map<number, any>();
     patients?.forEach((p) => map.set(Number(p.id), p));
     return map;
   }, [patients]);
+
+  const selectedFacility = useAppSelector(
+    (state: any) => state.auth?.tenant?.selectedFacility,
+  );
+
+  const appointmentPreviewResourceTypes = useMemo(() => {
+    const types = new Set<string>();
+    appointmentPreviewRows.forEach((row: any) => {
+      const rt = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+      if (rt) types.add(rt);
+    });
+    return types;
+  }, [appointmentPreviewRows]);
+
+  const templateResourceTypes = useMemo(() => {
+    const types = new Set<string>();
+    const addType = (row: any) => {
+      const rt = getCanonicalResourceTypeKey(
+        getTemplateResourceType(row) || getAppointmentResourceType(row),
+      );
+      if (rt) types.add(rt);
+    };
+    publishedTemplates.forEach(addType);
+    (departmentActiveTemplatesPage?.data ?? []).forEach(addType);
+    return types;
+  }, [publishedTemplates, departmentActiveTemplatesPage?.data]);
+
+  const allResourceTypes = useMemo(() => {
+    const types = new Set<string>(appointmentPreviewResourceTypes);
+    templateResourceTypes.forEach((type) => types.add(type));
+    return types;
+  }, [appointmentPreviewResourceTypes, templateResourceTypes]);
+
+  const roomResourceIds = useMemo(() => {
+    const ids = new Set<string>();
+    const addRoomId = (row: any) => {
+      const rt = getCanonicalResourceTypeKey(
+        getTemplateResourceType(row) || getAppointmentResourceType(row),
+      );
+      if (rt === "ROOM") {
+        const id = getRowResourceId(row);
+        if (id != null) ids.add(String(id));
+      }
+    };
+    appointmentPreviewRows.forEach(addRoomId);
+    publishedTemplates.forEach(addRoomId);
+    (departmentActiveTemplatesPage?.data ?? []).forEach(addRoomId);
+    return Array.from(ids).map((value) => {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : value;
+    });
+  }, [appointmentPreviewRows, publishedTemplates, departmentActiveTemplatesPage?.data]);
+
+  const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
+    selectedFacility?.id
+      ? {
+          facilityId: selectedFacility.id,
+          page: 0,
+          size: 200,
+          sort: "id,asc",
+        }
+      : skipToken,
+  );
+
+  const { data: appointablePractitionersResponse } =
+    useGetAppointablePractitionerByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("PRACTITIONER") },
+    );
+
+  const { data: appointableCatalogsResponse } =
+    useGetAppointableCatalogsByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("CATALOG") },
+    );
+
+  const { data: appointableDiagnosticTestsResponse } =
+    useGetAllActiveAppointableDiagnosticTestsQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("DIAGNOSTIC_TEST") },
+    );
+
+  const { data: appointableServicesResponse } =
+    useGetAppointableServicesByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("SERVICE") },
+    );
+
+  const departmentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    ((appointableDepartmentsResponse as any)?.data ?? []).forEach((d: any) => {
+      const id = d?.id ?? d?.departmentId ?? d?.key;
+      const name = d?.name ?? d?.departmentName;
+      if (id != null && name) map.set(String(id), String(name));
+    });
+    return map;
+  }, [appointableDepartmentsResponse]);
+
+  const [getRoomsByIds, { data: roomsByIds = [] }] = useGetRoomsByIdsMutation();
+
+  useEffect(() => {
+    if (roomResourceIds.length === 0) return;
+    void getRoomsByIds({ ids: roomResourceIds });
+  }, [getRoomsByIds, roomResourceIds]);
+
+  const getDepartmentNameFromRow = useCallback(
+    (row: any): string | undefined => {
+      const deptId = getAppointmentDepartmentId(row);
+      return (
+        row?.departmentName ??
+        row?.department?.name ??
+        row?.department?.departmentName ??
+        row?.appointmentData?.departmentName ??
+        row?.appointmentData?.department?.name ??
+        row?.appointmentData?.department?.departmentName ??
+        (deptId != null ? departmentNameById.get(String(deptId)) : undefined)
+      );
+    },
+    [departmentNameById],
+  );
+
+  const resourceNameByTypeAndId = useMemo(() => {
+    const departmentMap = new Map<string, string>();
+    ((appointableDepartmentsResponse as any)?.data ?? []).forEach((d: any) => {
+      const id = d?.id ?? d?.key;
+      const name = d?.name ?? d?.departmentName;
+      if (id != null && name) departmentMap.set(String(id), String(name));
+    });
+
+    const practitionerMap = new Map<string, string>();
+    ((appointablePractitionersResponse as any)?.data ?? []).forEach((p: any) => {
+      const id = p?.id ?? p?.key;
+      const name = [p?.firstName, p?.lastName].filter(Boolean).join(" ") || p?.fullName;
+      if (id != null && name) practitionerMap.set(String(id), String(name));
+    });
+
+    const catalogMap = new Map<string, string>();
+    ((appointableCatalogsResponse as any)?.data ?? []).forEach((c: any) => {
+      const id = c?.id ?? c?.key;
+      const name = c?.name ?? c?.catalogName;
+      if (id != null && name) catalogMap.set(String(id), String(name));
+    });
+
+    const diagnosticTestMap = new Map<string, string>();
+    ((appointableDiagnosticTestsResponse as any)?.data ?? []).forEach((t: any) => {
+      const id = t?.id ?? t?.key;
+      const name = t?.name ?? t?.testName;
+      if (id != null && name) diagnosticTestMap.set(String(id), String(name));
+    });
+
+    const serviceMap = new Map<string, string>();
+    ((appointableServicesResponse as any)?.data ?? []).forEach((s: any) => {
+      const id = s?.id ?? s?.key;
+      const name = s?.name ?? s?.serviceName;
+      if (id != null && name) serviceMap.set(String(id), String(name));
+    });
+
+    const roomMap = new Map<string, string>();
+    (roomsByIds ?? []).forEach((room: any) => {
+      const id = room?.id ?? room?.key;
+      const name = room?.name ?? room?.roomName;
+      if (id != null && name) roomMap.set(String(id), String(name));
+    });
+
+    return {
+      DEPARTMENT: departmentMap,
+      PRACTITIONER: practitionerMap,
+      CATALOG: catalogMap,
+      DIAGNOSTIC_TEST: diagnosticTestMap,
+      SERVICE: serviceMap,
+      ROOM: roomMap,
+    };
+  }, [
+    appointableDepartmentsResponse,
+    appointablePractitionersResponse,
+    appointableCatalogsResponse,
+    appointableDiagnosticTestsResponse,
+    appointableServicesResponse,
+    roomsByIds,
+  ]);
 
   const replacementCandidates = useMemo(() => {
     if (!selectedOriginTemplate) return [];
@@ -453,6 +690,52 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: 'resourceType',
+        title: <Translate>Resource Type</Translate>,
+        flexGrow: 1,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+          return (
+            <span>
+              {formatEnumString(resourceTypeKey) || '—'}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'department',
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : undefined);
+          return <span>{String(deptName ?? '—')}</span>;
+        },
+      },
+      {
+        key: 'resource',
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : '—');
+          return <span>{String(rname ?? '—')}</span>;
+        },
+      },
+      {
         key: "patient",
         title: <Translate>Patient</Translate>,
         flexGrow: 2,
@@ -467,19 +750,11 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             getPatientFullName(row?.patient) ||
             String(row?.patientName ?? "").trim();
           const name = nameFromService || nameFromRow || "—";
-          console.log("[BulkRescheduleModal] render patient", {
-            row,
-            patientId,
-            patient,
-            nameFromService,
-            nameFromRow,
-            name,
-          });
           return <span>{name}</span>;
         },
       },
     ],
-    [patientMap],
+    [patientMap, departmentNameById, resourceNameByTypeAndId],
   );
 
   const templatePickColumns = useMemo(
@@ -513,6 +788,38 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: "department",
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : "-");
+          return <span>{String(deptName)}</span>;
+        },
+      },
+      {
+        key: "resource",
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getTemplateResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : "-");
+          return <span>{String(rname)}</span>;
+        },
+      },
+      {
         key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
@@ -524,7 +831,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
     ],
-    [originTemplateId],
+    [originTemplateId, departmentNameById, resourceNameByTypeAndId],
   );
 
   const replacementTemplatePickColumns = useMemo(
@@ -558,6 +865,38 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: "department",
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : "-");
+          return <span>{String(deptName)}</span>;
+        },
+      },
+      {
+        key: "resource",
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getTemplateResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : "-");
+          return <span>{String(rname)}</span>;
+        },
+      },
+      {
         key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
@@ -569,7 +908,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
     ],
-    [replacementTemplateId],
+    [replacementTemplateId, departmentNameById, resourceNameByTypeAndId],
   );
 
   const batchPickColumnsOrigin = useMemo(

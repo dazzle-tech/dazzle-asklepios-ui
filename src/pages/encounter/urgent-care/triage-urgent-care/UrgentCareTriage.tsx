@@ -450,8 +450,7 @@ const UrgentCareTriage = () => {
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
-
- const handlePrintWristband = async (rowData: any) => {
+const handlePrintWristband = async (rowData: any) => {
   try {
     const blob = await triggerGetPatientWristbandPdf({
       patientId: rowData.patientId,
@@ -464,16 +463,8 @@ const UrgentCareTriage = () => {
     const printWindow = window.open(fileURL, '_blank');
 
     if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.focus();
-        // optional: auto-open print dialog
-        // printWindow.print();
-      };
+      printWindow.focus();
     }
-
-    setTimeout(() => {
-      window.URL.revokeObjectURL(fileURL);
-    }, 60_000);
   } catch (error) {
     console.error('Failed to preview wristband pdf', error);
   }

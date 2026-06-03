@@ -581,7 +581,9 @@ useEffect(() => {
               fieldLabel="Emergency Level"
               fieldName="key"
               selectData={emergencyLevellovqueryresponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={emergencyLevel}
               setRecord={setEmergencyLevel}
@@ -619,7 +621,9 @@ useEffect(() => {
               fieldLabel="Encounter Status"
               fieldName="key"
               selectData={encounterStatusLov?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={encounterStatus}
               setRecord={setEncounterStatus}

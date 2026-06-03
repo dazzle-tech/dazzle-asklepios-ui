@@ -307,7 +307,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-  
+
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -652,41 +652,53 @@ const EncounterList = () => {
     }
   };
 
-  const handlePrintVisitReport = async (row: any) => {
-    const encounterId = row?.id ?? null;
+const handlePrintVisitReport = async (row: any) => {
+  const encounterId = row?.id ?? null;
 
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
-    }
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
 
-    try {
-      setPrintingVisitReportId(encounterId);
+  try {
+    setPrintingVisitReportId(encounterId);
 
-      const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      const fileURL = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+    const blob = await triggerVisitReportPdf({
+      encounterId,
+      timezone,
+    }).unwrap();
 
-      link.href = fileURL;
-      link.download = `visit-report-${encounterId}.pdf`;
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    const win = window.open(fileURL, '_blank');
 
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
-    } catch (error: any) {
+    if (win) {
+      win.focus();
+    } else {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Error while downloading visit report',
-          sev: 'error',
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
         })
       );
-    } finally {
-      setPrintingVisitReportId(null);
     }
-  };
+
+    // مهم: لا تعمل revokeObjectURL هون
+    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while opening visit report',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setPrintingVisitReportId(null);
+  }
+};
 
   const tableColumns = [
     {
@@ -805,21 +817,21 @@ const EncounterList = () => {
       title: 'PRIORITY',
       render: (row: any) => formatEnumString(row?.priorityLevel) ?? ''
     },
-   {
-  key: 'encounterDate',
-  title: 'DATE',
-  render: (row: any) => {
-    if (!row?.encounterDate) {
-      return '-';
-    }
+    {
+      key: 'encounterDate',
+      title: 'DATE',
+      render: (row: any) => {
+        if (!row?.encounterDate) {
+          return '-';
+        }
 
-    const time = row?.encounterTime
-      ? row.encounterTime.slice(0, 5)
-      : '';
+        const time = row?.encounterTime
+          ? row.encounterTime.slice(0, 5)
+          : '';
 
-    return `${row.encounterDate} ${time}`;
-  }
-},
+        return `${row.encounterDate} ${time}`;
+      }
+    },
     {
       key: 'startedDate',
       title: 'STARTED DATE',
@@ -967,7 +979,7 @@ const EncounterList = () => {
                     disabled={printingVisitReportId === row?.id}
                     loading={printingVisitReportId === row?.id}
                     onClick={() => {
-                      if (printingVisitReportId === row?.id) return; 
+                      if (printingVisitReportId === row?.id) return;
                       setLocalEncounter(row);
                       handlePrintVisitReport(row);
                     }}
@@ -1175,43 +1187,43 @@ const EncounterList = () => {
   }, [dispatch, tableLoading]);
 
   useEffect(() => {
-  if (!departmentId || appliedFilters) return;
+    if (!departmentId || appliedFilters) return;
 
-  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-  setAppliedFilters({
+    setAppliedFilters({
+      departmentId,
+      fromDate,
+      toDate,
+      statusIn: DEFAULT_STATUS,
+      patientName: undefined,
+      mrn: undefined,
+      encounterReasons: undefined,
+      chiefComplaint: undefined,
+      priorities: undefined,
+      hasPrescription: undefined,
+      hasOrder: undefined,
+      isObserved: undefined,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+  }, [
     departmentId,
-    fromDate,
-    toDate,
-    statusIn: DEFAULT_STATUS,
-    patientName: undefined,
-    mrn: undefined,
-    encounterReasons: undefined,
-    chiefComplaint: undefined,
-    priorities: undefined,
-    hasPrescription: undefined,
-    hasOrder: undefined,
-    isObserved: undefined,
-    page: 0,
-    size: pageSize,
-    sort: DEFAULT_SORT
-  });
-}, [
-  departmentId,
-  appliedFilters,
-  dateFilter.fromDate,
-  dateFilter.toDate,
-  todayStr,
-  DEFAULT_STATUS,
-  pageSize
-]);
+    appliedFilters,
+    dateFilter.fromDate,
+    dateFilter.toDate,
+    todayStr,
+    DEFAULT_STATUS,
+    pageSize
+  ]);
 
-useEffect(() => {
-  if (appliedFilters) {
-    refetchEncounters();
-  }
-}, [appliedFilters, refetchEncounters]);
+  useEffect(() => {
+    if (appliedFilters) {
+      refetchEncounters();
+    }
+  }, [appliedFilters, refetchEncounters]);
 
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {
@@ -1348,6 +1360,7 @@ useEffect(() => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
+
         </Panel>
       </div>
     </>

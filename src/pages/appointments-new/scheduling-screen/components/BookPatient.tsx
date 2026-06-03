@@ -685,13 +685,24 @@ const BookPatient = ({
 
   const extractErrorMessage = (response: any): string => {
     try {
-      const msg = response?.data?.message;
+      const data = response?.data ?? response?.error?.data ?? null;
+      const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
+      const path = data?.path ?? data?.detail ?? data?.instance ?? '';
+      const rawMessage =
+        data?.message ??
+        data?.error ??
+        response?.error?.message ??
+        response?.message ??
+        response?.toString?.() ??
+        '';
+      const message =
+        typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
 
-      if (typeof msg === 'string') {
-        return msg.replace(/^error\./i, '');
-      }
+      const parts = [message];
+      if (status) parts.push(`HTTP ${status}`);
+      if (path && typeof path === 'string') parts.push(path);
 
-      return '';
+      return parts.filter(Boolean).join(' | ');
     } catch {
       return '';
     }
@@ -757,11 +768,26 @@ const BookPatient = ({
       }).unwrap();
 
       dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
-
-      await Promise.resolve(onBooked?.());
-
       handleClose();
+
+      try {
+        await Promise.resolve(onBooked?.());
+      } catch {
+        // Booking is already persisted; avoid showing a false "Save Failed" message.
+        dispatch(
+          notify({
+            msg: 'Appointment booked successfully, but refresh did not complete.',
+            sev: 'warning'
+          })
+        );
+      }
     } catch (error: any) {
+      // Keep a detailed payload in console for debugging backend/transform failures.
+      console.error('Book appointment failed:', {
+        appointmentId,
+        patientId: record?.patientId,
+        error
+      });
       const errorMsg = extractErrorMessage(error) || 'Save Failed';
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
@@ -1305,6 +1331,8 @@ const BookPatient = ({
                             width="100%"
                             searchable={false}
                             disabled={readOnly}
+                                    disableByField='isValid'
+
                           />
 
                           <MyInput

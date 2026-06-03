@@ -219,6 +219,7 @@ import { currentMedicationService } from './services/patients/currentMedicationS
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 
@@ -559,6 +560,7 @@ export const store = configureStore({
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
+    [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer
   },
@@ -752,6 +754,7 @@ export const store = configureStore({
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
+        sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware
       ) as any
 });

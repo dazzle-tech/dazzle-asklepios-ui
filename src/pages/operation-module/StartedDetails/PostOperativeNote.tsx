@@ -340,7 +340,9 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                     width="100%"
                                     fieldType="select"
                                     selectData={statuslovqueryresponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName="recoveryConditionLkey"
                                     record={operativeNote}
@@ -353,7 +355,9 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                         width="100%"
                                         fieldType="select"
                                         selectData={outcomelovqueryresponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                         selectDataValue="key"
                                         fieldName="surgeryStatusLkey"
                                         record={operativeNote}

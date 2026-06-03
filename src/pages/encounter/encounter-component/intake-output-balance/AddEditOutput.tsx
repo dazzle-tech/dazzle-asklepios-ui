@@ -61,7 +61,9 @@ const AddEditOutput = ({ open, setOpen, width }) => {
             fieldName="outputType"
             fieldType="select"
             selectData={outputTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={formData}
             setRecord={setFormData}

@@ -136,7 +136,9 @@ const AddEditFacility = ({
                 fieldType="select"
                 fieldName="cityLkey"
                 selectData={cityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={address}
                 setRecord={setAddress}
@@ -154,7 +156,9 @@ const AddEditFacility = ({
                 fieldType="select"
                 fieldName="stateProvinceRegionLkey"
                 selectData={stateLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={address}
                 setRecord={setAddress}

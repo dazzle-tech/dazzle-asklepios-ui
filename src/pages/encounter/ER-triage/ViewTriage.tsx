@@ -210,7 +210,9 @@ const ViewTriage = () => {
                                 fieldType="select"
                                 fieldName="lifeSavingLkey"
                                 selectData={booleanLovQuery?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
+                                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                 selectDataValue="key"
                                 record={emergencyTriage}
                                 setRecord={setEmergencyTriage}
@@ -228,7 +230,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="unresponsiveLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -247,7 +251,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="highRiskLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -261,7 +267,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="avpuScaleLkey"
                                     selectData={levelOfConscLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -275,7 +283,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="painScoreLkey"
                                     selectData={painScoreLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -296,7 +306,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="labsLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -310,7 +322,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="imagingLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -324,7 +338,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="ivFluidsLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -338,7 +354,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="medicationLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -352,7 +370,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="ecgLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -366,7 +386,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="consultationLkey"
                                     selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -421,7 +443,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="rightEyePupilSizeLkey"
                                     selectData={sizeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
@@ -454,7 +478,9 @@ const ViewTriage = () => {
                                     fieldType="select"
                                     fieldName="leftEyePupilSizeLkey"
                                     selectData={sizeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}

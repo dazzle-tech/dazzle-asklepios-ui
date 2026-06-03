@@ -409,7 +409,9 @@ const RequestList = ({
             fieldLabel="Operation Name"
             fieldName="key"
             selectData={operationLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -422,7 +424,9 @@ const RequestList = ({
             fieldLabel="Status"
             fieldName="key"
             selectData={statusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -440,7 +444,9 @@ const RequestList = ({
                   fieldName="accessTypeLkey"
                   fieldType="select"
                   selectData={operationorderLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   fieldLabel="Operation Type"
                   selectDataValue="key"
                   record={record}
@@ -455,7 +461,9 @@ const RequestList = ({
                   record={record}
                   setRecord={setRecord}
                   selectData={proclevelLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldLabel="Operation Level"
                   searchable={false}
@@ -476,7 +484,9 @@ const RequestList = ({
                   record={record}
                   setRecord={setRecord}
                   selectData={priorityLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldLabel="Priority"
                   searchable={false}
@@ -493,8 +503,7 @@ const RequestList = ({
 
 
   return (
-    <Row>
-      <Col md={24}>
+      <>
         <MyTable
           filters={filters()}
           columns={columns}
@@ -505,7 +514,6 @@ const RequestList = ({
             setRequest(rowData);
           }}
         />
-      </Col>
       <CancellationModal
         open={openCancelModal}
         setOpen={setOpenCancelModal}
@@ -516,7 +524,7 @@ const RequestList = ({
         fieldLabel={'Cancelled Reason'}
         title={'Cancellation'}
       ></CancellationModal>
-    </Row>
+    </>
   );
 };
 export default RequestList;

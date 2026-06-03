@@ -35,7 +35,9 @@ const WarningDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Warning Type"
                                     selectData={warningTypeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName="warningType"
                                     record={warning}
@@ -105,7 +107,9 @@ const WarningDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Source of Information"
                                     selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='sourceOfInformation'
                                     record={warning.byPatient ? { ...warning, sourceOfInformation: null } : warning}

@@ -73,7 +73,9 @@ const Instructions = ({
                 fieldType="select"
                 fieldLabel="Unit"
                 selectData={unitLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 fieldName="unit"
                 record={customeinst}
@@ -86,7 +88,9 @@ const Instructions = ({
                 fieldType="select"
                 fieldLabel="Frequency"
                 selectData={FrequencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 fieldName="frequency"
                 record={customeinst}
@@ -99,7 +103,9 @@ const Instructions = ({
                 fieldType="select"
                 fieldLabel="ROA"
                 selectData={filteredList ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 fieldName="roa"
                 record={customeinst}

@@ -270,7 +270,9 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         fieldType="select"
         fieldName="warningType"
         selectData={filteredLovData ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={{ warningType }}
         setRecord={(val: any) => setWarningType(val.warningType)}

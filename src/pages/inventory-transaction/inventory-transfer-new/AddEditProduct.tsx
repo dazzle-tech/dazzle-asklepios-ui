@@ -435,7 +435,9 @@ const AddEditProduct = ({ open, setOpen, transferProduct, setTransferProduct, tr
                         fieldName="inventoryTypeLkey"
                         fieldType="select"
                         selectData={lotSerialLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={selectedProduct}
                         setRecord={setSelectedProduct}

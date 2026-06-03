@@ -170,6 +170,8 @@ const getRowClassName = rowData => {
                 fieldType="select"
                 selectData={dietOrderTypeLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
+                        disableByField='isValid'
+
                 selectDataValue="key"
                 record={form}
                 setRecord={prev => {
@@ -238,6 +240,8 @@ const getRowClassName = rowData => {
                   fieldType="select"
                   selectData={durationLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                          disableByField='isValid'
+
                   selectDataValue="key"
                   record={form}
                   setRecord={setForm}
@@ -265,6 +269,8 @@ const getRowClassName = rowData => {
                   fieldType="select"
                   selectData={durationLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                          disableByField='isValid'
+
                   selectDataValue="key"
                   record={form}
                   setRecord={setForm}
@@ -349,6 +355,8 @@ const getRowClassName = rowData => {
               fieldType="select"
               selectData={mealTypeLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -362,6 +370,8 @@ const getRowClassName = rowData => {
               fieldType="select"
               selectData={portionSizeLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -380,6 +390,8 @@ const getRowClassName = rowData => {
               fieldType="select"
               selectData={dietCategoryLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -478,6 +490,8 @@ const getRowClassName = rowData => {
                 { key: 'formula2', lovDisplayVale: 'Formula 2' }
               ]}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -490,6 +504,8 @@ const getRowClassName = rowData => {
               fieldType="select"
               selectData={deliveryMethodLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -579,6 +595,8 @@ const getRowClassName = rowData => {
               fieldType="select"
               selectData={lineTypeMethodLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={form}
               setRecord={setForm}
@@ -805,6 +823,8 @@ useEffect(() => {
                       fieldType="select"
                       selectData={dietOrderTypeLovQueryResponse?.object ?? []}
                       selectDataLabel="lovDisplayVale"
+                              disableByField='isValid'
+
                       selectDataValue="key"
                       record={form}
                       setRecord={setForm}
@@ -862,6 +882,8 @@ useEffect(() => {
                         fieldType="select"
                         selectData={durationLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
+
                         selectDataValue="key"
                         record={form}
                         setRecord={setForm}
@@ -889,6 +911,8 @@ useEffect(() => {
                         fieldType="select"
                         selectData={durationLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
+
                         selectDataValue="key"
                         record={form}
                         setRecord={setForm}

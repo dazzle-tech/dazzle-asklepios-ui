@@ -271,7 +271,9 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
                   record={consultationData}
                   setRecord={setConsultationData}
                   selectData={subSpecialityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={150}
                   fieldLabel="Specialty"
@@ -283,7 +285,9 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
                   record={consultationData}
                   setRecord={setConsultationData}
                   selectData={priorityLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={150}
                   fieldLabel="Consultation Urgency"

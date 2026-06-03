@@ -407,7 +407,9 @@ const Recovery = () => {
             record={record}
             setRecord={setRecord}
             selectData={definedOperationsLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             placeholder="Operation Name"
             fieldLabel="Operation Name"
@@ -421,7 +423,9 @@ const Recovery = () => {
             record={record}
             setRecord={setRecord}
             selectData={procStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             placeholder="Status"
             fieldLabel="Status"
@@ -461,7 +465,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={opTypeLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Operation Type"
                 fieldLabel="Operation Type"
@@ -476,7 +482,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={opLevelLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Operation Level"
                 fieldLabel="Operation Level"
@@ -501,7 +509,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={orderPriorityLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Order Priority"
                 fieldLabel="Order Priority"

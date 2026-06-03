@@ -243,7 +243,9 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
                                     fieldName="typeLkey"
                                     fieldType="select"
                                     selectData={productTypeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={selectedProduct}
                                     setRecord={setSelectedProduct}

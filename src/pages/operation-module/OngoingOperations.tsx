@@ -341,7 +341,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
                         fieldLabel="Operation Name"
                         fieldName="key"
                         selectData={operationLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -354,7 +356,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
                         fieldLabel="Status"
                         fieldName="key"
                         selectData={statusLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -372,7 +376,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
                                     fieldName="accessTypeLkey"
                                     fieldType="select"
                                     selectData={operationorderLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     fieldLabel="Operation Type"
                                     selectDataValue="key"
                                     record={record}
@@ -387,7 +393,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={proclevelLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Operation Level"
                                     searchable={false}
@@ -408,7 +416,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={priorityLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Priority"
                                     searchable={false}

@@ -334,6 +334,8 @@ const TreatmentPlanTab = ({
               selectDataValue="key"
               record={activePlannedTreatment}
               setRecord={setActivePlannedTreatment}
+                      disableByField='isValid'
+
             />
             <MyInput
               width={400}

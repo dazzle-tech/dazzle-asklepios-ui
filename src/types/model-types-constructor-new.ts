@@ -339,7 +339,11 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  modality:null
 };
+
+
+
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
 {

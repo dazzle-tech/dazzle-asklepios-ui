@@ -145,7 +145,9 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               setRecord={setRecord}
               label="1 Point Risk Factors"
               selectData={onePointLOV}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="valueCode"
               searchable
             /></div>
@@ -160,7 +162,9 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               setRecord={setRecord}
               label="2 Point Risk Factors"
               selectData={twoPointsLOV}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="valueCode"
               searchable
             /></div>
@@ -175,7 +179,9 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               setRecord={setRecord}
               label="3 Point Risk Factors"
               selectData={threePointsLOV}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="valueCode"
               searchable
             /></div>
@@ -190,7 +196,9 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               setRecord={setRecord}
               fieldLabel="5 Point Risk Factors"
               selectData={fivePointsLOV}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="valueCode"
               searchable
             /></div>

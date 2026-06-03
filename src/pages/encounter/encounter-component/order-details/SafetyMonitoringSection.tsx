@@ -83,7 +83,9 @@ const SafetyMonitoringSection = ({
                   setRecord={canEdit ? setFormData : undefined}
                   fieldLabel="Unit"
                   selectData={timeUnitsData}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={140}
                   showLabel={false}

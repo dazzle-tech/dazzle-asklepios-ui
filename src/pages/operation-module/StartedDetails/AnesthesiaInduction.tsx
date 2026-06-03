@@ -183,7 +183,9 @@ const AnesthesiaInduction = ({ operation, patient, encounter, editable, activeTa
                                                     disabled={true}
                                                     fieldType="select"
                                                     selectData={anesthTypesLov?.object ?? []}
-                                                    selectDataLabel="lovDisplayVale"
+                                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                                     selectDataValue="key"
                                                     width="100%"
                                                     fieldName="plannedAnesthesiaTypeLkey"
@@ -310,7 +312,9 @@ const AnesthesiaInduction = ({ operation, patient, encounter, editable, activeTa
                                     width="100%"
                                     fieldType="multyPicker"
                                     selectData={medadvirsedLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName="adverseEventsLkey"
                                     record={anesthesiaInduction}

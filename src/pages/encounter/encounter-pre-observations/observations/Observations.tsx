@@ -334,7 +334,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                             fieldType="select"
                             fieldName="encounterPriorityLkey"
                             selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             record={localEncounter}
                             setRecord={setLocalEncounter}
@@ -451,7 +453,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           fieldType="select"
                           fieldName="latestpainlevelLkey"
                           selectData={painDegreesLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           record={patientObservationSummary}
                           setRecord={setPatientObservationSummary}

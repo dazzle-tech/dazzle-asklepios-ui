@@ -68,6 +68,14 @@ body {
 
 .form-of-filters-set-up{display: flex;
 flex-direction: row;
+flex-wrap: wrap;
+box-sizing: border-box;
+gap: 1vw;}
+
+.my-modal-responsive-form-handle{display: flex;
+flex-direction: row;
+flex-wrap: wrap;
+box-sizing: border-box;
 gap: 1vw;}
 
 p,
@@ -165,6 +173,8 @@ html.surveyjs-mode {
   border-radius: 0px;
   border: none;
 }
+
+
 
 .react-tabs__tab--selected,
 .react-tabs__tab--selected:active {
@@ -422,8 +432,14 @@ aside {
 }
 
 .rs-content {
-  margin-top: 0 !important;
+  margin-top: 0;
   padding-top: 0 !important;
+}
+
+@media (max-width: 650px) {
+  .rs-content {
+    margin-top: var(--header-height, 70px) !important;
+  }
 }
 
 .custom-date-input .rs-input-group-inside {

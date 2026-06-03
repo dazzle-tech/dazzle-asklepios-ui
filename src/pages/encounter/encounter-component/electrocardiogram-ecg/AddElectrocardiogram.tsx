@@ -153,6 +153,8 @@ const AddElectrocardiogram = ({
               fieldName="stSegmentChangesLkey"
               selectData={segmentChangesLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={electrocardiogramEcg}
               setRecord={setElectrocardiogramEcg}
@@ -166,6 +168,8 @@ const AddElectrocardiogram = ({
               fieldName="waveAbnormalitiesLkey"
               selectData={waveAbnormalitiesLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+                      disableByField='isValid'
+
               selectDataValue="key"
               record={electrocardiogramEcg}
               setRecord={setElectrocardiogramEcg}

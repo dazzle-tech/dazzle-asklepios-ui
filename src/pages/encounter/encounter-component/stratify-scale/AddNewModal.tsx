@@ -48,7 +48,9 @@ const AddNewModal = ({
                   fieldLabel="History of falls"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={stratifyScale}
                   setRecord={setStratifyScale}
@@ -61,7 +63,9 @@ const AddNewModal = ({
                   fieldLabel="Agitated confusion"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={stratifyScale}
                   setRecord={setStratifyScale}
@@ -75,7 +79,9 @@ const AddNewModal = ({
               fieldLabel={<Translate>Urinary frequency, urgency or incontinence</Translate>}
               fieldType="select"
               selectData={booleanLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={stratifyScale}
               setRecord={setStratifyScale}
@@ -88,7 +94,9 @@ const AddNewModal = ({
                   fieldLabel="Visual impairment"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={stratifyScale}
                   setRecord={setStratifyScale}
@@ -101,7 +109,9 @@ const AddNewModal = ({
                   fieldLabel="Transfer and mobility problems"
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={stratifyScale}
                   setRecord={setStratifyScale}

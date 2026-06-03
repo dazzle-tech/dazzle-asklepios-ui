@@ -139,7 +139,9 @@ const modalContent = (
             record={data}
             setRecord={setData}
             selectData={reasonOptions}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="valueCode"
           />
           <MyInput
@@ -176,7 +178,9 @@ const modalContent = (
   record={data}
   setRecord={setData}
   selectData={deliveryOptions}
-  selectDataLabel="lovDisplayVale"
+   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
   selectDataValue="valueCode"
 />
 
@@ -189,7 +193,9 @@ const modalContent = (
     record={data}
     setRecord={setData}
     selectData={anesthesiaOptions}
-    selectDataLabel="lovDisplayVale"
+     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
     selectDataValue="valueCode"
   />
 )}
@@ -249,7 +255,9 @@ const modalContent = (
                     updateBabyField(idx, { ...baby, ...newBaby })
                   }
                   selectData={genderOptions}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="valueCode"
                 />
                 <MyInput

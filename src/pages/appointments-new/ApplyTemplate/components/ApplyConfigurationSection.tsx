@@ -22,6 +22,8 @@ import { useGetEffectiveActivePolicyAssignmentsQuery } from "@/services/setup/po
 import { useAppSelector } from "@/hooks";
 import { formatEnumString } from "@/utils";
 import { formatLocalDateForApi } from "../applyTemplateDateUtils";
+import MyModal from "@/components/MyModal/MyModal";
+import MyButton from "@/components/MyButton/MyButton";
 
 export type EffectiveTemplateIntervalsStatus = {
   effectiveTemplateId: number;
@@ -378,16 +380,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
     }
   );
 
-  /**
-   * This keeps removed policies removed.
-   * Without this, the auto-fill effect would add removed policies again.
-   */
-  const [removedPolicyAssignmentIds, setRemovedPolicyAssignmentIds] =
-    React.useState<number[]>([]);
+  const [isPolicyPickerOpen, setIsPolicyPickerOpen] = React.useState(false);
+  const [policyPickerSelectionIds, setPolicyPickerSelectionIds] = React.useState<number[]>([]);
 
   React.useEffect(() => {
-    setRemovedPolicyAssignmentIds([]);
-
     setDto(
       (prev) =>
       ({
@@ -419,6 +415,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
   React.useEffect(() => {
     if (!shouldFetchPolicyAssignments) {
+      setPolicyPickerSelectionIds([]);
       setDto(
         (prev) =>
         ({
@@ -426,38 +423,31 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
           policyAssignmentIds: [],
         } as any)
       );
-
       return;
     }
 
-    const activeIds = (activePolicyAssignments as PolicyAssignment[])
-      .map((policyAssignment) => Number(policyAssignment.id))
-      .filter(Boolean)
-      .filter((id) => !removedPolicyAssignmentIds.includes(id));
+    const availableIds = new Set(
+      (activePolicyAssignments as PolicyAssignment[])
+        .map((policyAssignment) => Number(policyAssignment.id))
+        .filter(Boolean)
+    );
 
     setDto((prev) => {
       const currentIds = (((prev as any)?.policyAssignmentIds ?? []) as number[])
         .map((id) => Number(id))
-        .filter(Boolean);
+        .filter((id) => id > 0);
+      const nextIds = currentIds.filter((id) => availableIds.has(id));
 
-      const currentKey = currentIds.slice().sort().join(",");
-      const nextKey = activeIds.slice().sort().join(",");
-
-      if (currentKey === nextKey) {
+      if (nextIds.length === currentIds.length) {
         return prev;
       }
 
       return {
         ...(prev as any),
-        policyAssignmentIds: activeIds,
+        policyAssignmentIds: nextIds,
       } as any;
     });
-  }, [
-    activePolicyAssignments,
-    removedPolicyAssignmentIds,
-    shouldFetchPolicyAssignments,
-    setDto,
-  ]);
+  }, [activePolicyAssignments, shouldFetchPolicyAssignments, setDto]);
 
   const selectedPolicyAssignments = React.useMemo(() => {
     return (activePolicyAssignments as PolicyAssignment[]).filter(
@@ -466,15 +456,49 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
     );
   }, [activePolicyAssignments, selectedPolicyAssignmentIds]);
 
-  const handleRemovePolicyAssignment = (policyAssignmentId: number) => {
-    setRemovedPolicyAssignmentIds((prev) => {
-      if (prev.includes(policyAssignmentId)) {
-        return prev;
-      }
+  const availablePolicyAssignments = React.useMemo(() => {
+    return (activePolicyAssignments as PolicyAssignment[]).filter(
+      (policyAssignment) =>
+        !selectedPolicyAssignmentIds.includes(Number(policyAssignment.id))
+    );
+  }, [activePolicyAssignments, selectedPolicyAssignmentIds]);
 
-      return [...prev, policyAssignmentId];
+  const canOpenPolicyPicker =
+    shouldFetchPolicyAssignments &&
+    !isLoadingPolicyAssignments &&
+    (activePolicyAssignments as PolicyAssignment[]).length > 0;
+
+  const openPolicyPicker = () => {
+    if (!canOpenPolicyPicker) return;
+    setPolicyPickerSelectionIds([]);
+    setIsPolicyPickerOpen(true);
+  };
+
+  const handleAddSelectedPolicies = () => {
+    if (policyPickerSelectionIds.length === 0) {
+      setIsPolicyPickerOpen(false);
+      return;
+    }
+
+    setDto((prev) => {
+      const currentIds = (((prev as any)?.policyAssignmentIds ?? []) as number[])
+        .map((id) => Number(id))
+        .filter((id) => id > 0);
+      const uniqueIds = Array.from(
+        new Set([...currentIds, ...policyPickerSelectionIds.map((id) => Number(id)).filter((id) => id > 0)])
+      );
+
+      return {
+        ...(prev as any),
+        policyAssignmentIds: uniqueIds,
+      } as any;
     });
 
+    setIsPolicyPickerOpen(false);
+    setPolicyPickerSelectionIds([]);
+  };
+
+  const handleRemovePolicyAssignment = (policyAssignmentId: number) => {
     setDto(
       (prev) =>
       ({
@@ -595,6 +619,13 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
             >
               Policies to Apply
             </p>
+            <MyButton
+              onClick={openPolicyPicker}
+              disabled={!canOpenPolicyPicker}
+              appearance="subtle"
+            >
+              Add Policy
+            </MyButton>
           </div>
 
           <div
@@ -667,7 +698,9 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
                       : undefined
                   }
                 >
-                  No active policies found.
+                  {(activePolicyAssignments as PolicyAssignment[]).length > 0
+                    ? "No policies selected. Click Add Policy to choose."
+                    : "No active policies found."}
                 </div>
               )}
 
@@ -728,6 +761,54 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
               )}
           </div>
         </div>
+        <MyModal
+          open={isPolicyPickerOpen}
+          setOpen={setIsPolicyPickerOpen}
+          title="Select Policies"
+          size="520px"
+          bodyheight="50vh"
+          content={
+            <div className="space-y-2">
+              {availablePolicyAssignments.length === 0 && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                  No additional policies available for this resource.
+                </div>
+              )}
+              {availablePolicyAssignments.map((policyAssignment: any) => {
+                const policyCode = getPolicyCode(policyAssignment);
+                const policyName = getPolicyName(policyAssignment);
+                const assignmentId = Number(policyAssignment.id);
+                const isChecked = policyPickerSelectionIds.includes(assignmentId);
+                return (
+                  <label
+                    key={`policy-picker-${assignmentId}`}
+                    className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPolicyPickerSelectionIds((prev) => {
+                          if (checked) return Array.from(new Set([...prev, assignmentId]));
+                          return prev.filter((id) => id !== assignmentId);
+                        });
+                      }}
+                      className="mt-0.5"
+                    />
+                    <span className="text-slate-700">
+                      <span className="font-semibold">{policyCode || policyName}</span>
+                      {policyCode ? ` - ${policyName}` : ""}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          }
+          cancelButtonLabel="Cancel"
+          actionButtonLabel="Add Selected"
+          actionButtonFunction={handleAddSelectedPolicies}
+        />
 
         <div style={isDark ? { backgroundColor: "var(--extra-dark-black)" } : undefined}>
           <div className="mb-3 flex items-center justify-between gap-3">

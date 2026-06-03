@@ -13,13 +13,43 @@ type LinkMap = {
   last?: string | null;
 };
 
-type PagedResult<T> = {
+export type PagedResult<T> = {
   data: T[];
   totalCount: number;
   links?: LinkMap;
 };
+
 const unwrapObjectOrReturn = <T>(response: any): T => {
   return (response?.object ?? response) as T;
+};
+
+const toPagedResult = (response: any, meta: any): PagedResult<FormEntry> => {
+  const headers = meta?.response?.headers;
+  const raw = unwrapObjectOrReturn<any>(response);
+
+  if (Array.isArray(raw)) {
+    return {
+      data: raw as FormEntry[],
+      totalCount: Number(headers?.get("X-Total-Count") ?? raw.length ?? 0),
+      links: parseLinkHeader(headers?.get("Link")),
+    };
+  }
+
+  return {
+    data: raw?.data ?? [],
+    totalCount: Number(raw?.totalCount ?? headers?.get("X-Total-Count") ?? 0),
+    links: raw?.links ?? parseLinkHeader(headers?.get("Link")),
+  };
+};
+
+const pagedEndpointOptions = {
+  serializeQueryArgs: ({ endpointName, queryArgs }: any) => {
+    const { timestamp, ...rest } = queryArgs || {};
+    return `${endpointName}-${JSON.stringify(rest)}`;
+  },
+  forceRefetch({ currentArg, previousArg }: any) {
+    return currentArg?.timestamp !== previousArg?.timestamp;
+  },
 };
 
 export const FormEntriesService = createApi({
@@ -28,42 +58,58 @@ export const FormEntriesService = createApi({
   tagTypes: ["FormEntry"],
   endpoints: (builder) => ({
     // GET /api/setup/form-entries?templateId=&page=&size=&sort=
-    getFormEntriesByTemplate: builder.query<PagedResult<FormEntry>, { templateId: number | string } & PagedParams>({
-  query: ({ templateId, page, size, sort = "id,desc" }) => ({
-    url: `/api/setup/form-entries`,
-    method: "GET",
-    params: { templateId, page, size, sort },
-  }),
-  transformResponse: (response: any, meta) => {
-    const headers = meta?.response?.headers;
-    const raw = unwrapObjectOrReturn<any>(response);
+    getFormEntriesByTemplate: builder.query<
+      PagedResult<FormEntry>,
+      { templateId: number | string } & PagedParams
+    >({
+      query: ({ templateId, page, size, sort = "id,desc" }) => ({
+        url: `/api/setup/form-entries`,
+        method: "GET",
+        params: { templateId, page, size, sort },
+      }),
+      transformResponse: toPagedResult,
+      providesTags: (r, e, arg) => [
+        { type: "FormEntry", id: `tpl-${arg.templateId}` },
+        "FormEntry",
+      ],
+      ...pagedEndpointOptions,
+    }),
 
-    if (Array.isArray(raw)) {
-      return {
-        data: raw,
-        totalCount: Number(headers?.get("X-Total-Count") ?? raw.length ?? 0),
-        links: parseLinkHeader(headers?.get("Link")),
-      };
-    }
+    // GET /api/setup/form-entries/by-patient/{patientId}
+    getFormEntriesByPatient: builder.query<
+      PagedResult<FormEntry>,
+      { patientId: number | string } & PagedParams
+    >({
+      query: ({ patientId, page, size, sort = "id,desc" }) => ({
+        url: `/api/setup/form-entries/by-patient/${patientId}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: toPagedResult,
+      providesTags: (r, e, arg) => [
+        { type: "FormEntry", id: `patient-${arg.patientId}` },
+        "FormEntry",
+      ],
+      ...pagedEndpointOptions,
+    }),
 
-    return {
-      data: raw?.data ?? [],
-      totalCount: Number(raw?.totalCount ?? headers?.get("X-Total-Count") ?? 0),
-      links: raw?.links ?? parseLinkHeader(headers?.get("Link")),
-    };
-  },
-  providesTags: (r, e, arg) => [
-    { type: "FormEntry", id: `tpl-${arg.templateId}` },
-    "FormEntry"
-  ],
-  serializeQueryArgs: ({ endpointName, queryArgs }) => {
-    const { timestamp, ...rest } = queryArgs || ({} as any);
-    return `${endpointName}-${JSON.stringify(rest)}`;
-  },
-  forceRefetch({ currentArg, previousArg }) {
-    return currentArg?.timestamp !== previousArg?.timestamp;
-  },
-}),
+    // GET /api/setup/form-entries/by-encounter/{encounterId}
+    getFormEntriesByEncounter: builder.query<
+      PagedResult<FormEntry>,
+      { encounterId: number | string } & PagedParams
+    >({
+      query: ({ encounterId, page, size, sort = "id,desc" }) => ({
+        url: `/api/setup/form-entries/by-encounter/${encounterId}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: toPagedResult,
+      providesTags: (r, e, arg) => [
+        { type: "FormEntry", id: `encounter-${arg.encounterId}` },
+        "FormEntry",
+      ],
+      ...pagedEndpointOptions,
+    }),
 
     // POST /api/setup/form-entries
     createFormEntry: builder.mutation<FormEntry, FormEntryCreateVM>({
@@ -73,27 +119,42 @@ export const FormEntriesService = createApi({
         body,
       }),
       invalidatesTags: (r, e, body: any) => {
-        const templateId = body?.templateId;
-        return templateId
-          ? [{ type: "FormEntry", id: `tpl-${templateId}` }, "FormEntry"]
-          : ["FormEntry"];
+        const tags: any[] = ["FormEntry"];
+        if (body?.templateId) {
+          tags.push({ type: "FormEntry", id: `tpl-${body.templateId}` });
+        }
+        if (body?.patientId) {
+          tags.push({ type: "FormEntry", id: `patient-${body.patientId}` });
+        }
+        if (body?.encounterId) {
+          tags.push({ type: "FormEntry", id: `encounter-${body.encounterId}` });
+        }
+        return tags;
       },
     }),
+
     // PUT /api/setup/form-entries/{id}
-updateFormEntry: builder.mutation<FormEntry, { id: number; title: string; dataJson: string }>({
-  query: ({ id, title, dataJson }) => ({
-    url: `/api/setup/form-entries/${id}`,
-    method: "PUT",
-    body: { title, dataJson },
-  }),
-  invalidatesTags: ["FormEntry"],
-}),
+    updateFormEntry: builder.mutation<
+      FormEntry,
+      { id: number; title: string; dataJson: string }
+    >({
+      query: ({ id, title, dataJson }) => ({
+        url: `/api/setup/form-entries/${id}`,
+        method: "PUT",
+        body: { title, dataJson },
+      }),
+      invalidatesTags: ["FormEntry"],
+    }),
   }),
 });
 
 export const {
   useGetFormEntriesByTemplateQuery,
   useLazyGetFormEntriesByTemplateQuery,
+  useGetFormEntriesByPatientQuery,
+  useLazyGetFormEntriesByPatientQuery,
+  useGetFormEntriesByEncounterQuery,
+  useLazyGetFormEntriesByEncounterQuery,
   useCreateFormEntryMutation,
-  useUpdateFormEntryMutation
+  useUpdateFormEntryMutation,
 } = FormEntriesService;

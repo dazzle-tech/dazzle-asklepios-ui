@@ -30,7 +30,9 @@ const AddEditMdtNote = ({
                 fieldName="shift"
                 fieldType="select"
                 selectData={shiftsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={mdtNote}
                 setRecord={setMdtNote}
@@ -40,7 +42,9 @@ const AddEditMdtNote = ({
                 fieldName="role"
                 fieldType="select"
                 selectData={rolesLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={mdtNote}
                 setRecord={setMdtNote}

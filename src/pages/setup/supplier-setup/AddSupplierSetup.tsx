@@ -49,7 +49,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Approved Category"
                 fieldName="approvedCategory"
                 selectData={approvedCategoryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={{}}
                 setRecord={''}
@@ -208,7 +210,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Payment Terms"
                 fieldName={'paymentTerms'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -219,7 +223,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Currency"
                 fieldName={'currency'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -242,7 +248,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                   { label: 'Price List B', key: 'B' },
                   { label: 'Price List C', key: 'C' }
                 ]}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -299,7 +307,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Invoice Currency"
                 fieldName={'invoiceCurrency'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}

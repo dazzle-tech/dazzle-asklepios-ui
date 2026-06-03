@@ -57,6 +57,8 @@ const AddEditPlan = ({
                 record={plan}
                 setRecord={setPlan}
                 width="100%"
+                        disableByField='isValid'
+
               />
               </div>
               <div className='container-of-field-plan'>
@@ -78,6 +80,8 @@ const AddEditPlan = ({
                 record=""
                 setRecord=""
                 width="100%"
+                        disableByField='isValid'
+
               />
               <div className='container-of-fields-plan'>
                 <div className='container-of-field-plan'>
@@ -129,6 +133,8 @@ const AddEditPlan = ({
                 record={plan}
                 setRecord={setPlan}
                 width="100%"
+                        disableByField='isValid'
+
               />
           </Form>
         );

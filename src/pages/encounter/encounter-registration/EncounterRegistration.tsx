@@ -492,7 +492,9 @@ const EncounterRegistration = () => {
                       fieldType="select"
                       fieldName="PaymentMethod"
                       selectData={paymentMethodLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={{}}
                       setRecord={newValue => {
@@ -539,7 +541,9 @@ const EncounterRegistration = () => {
                       fieldType="select"
                       fieldName="Currency"
                       selectData={currencyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={{}}
                       setRecord={''}
@@ -793,7 +797,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="documentTypeLkey"
                     selectData={docTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={patientSlice.patient}
                     setRecord={undefined}
@@ -864,7 +870,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -901,7 +909,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
                     selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -913,7 +923,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="reasonLkey"
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -924,7 +936,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="admissionOrigin"
                     selectData={patOriginLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -953,7 +967,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="encounterStatusLkey"
                     selectData={bookingstatusLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1004,7 +1020,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="paymentTypeLkey"
                     selectData={paymentTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1017,7 +1035,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="InsuranceProvider"
                     selectData={InsuranceProviderLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1048,7 +1068,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="InsurancePlanType"
                     selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1184,7 +1206,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Relation"
                     fieldName="relationTypeLkey"
                     selectData={relationsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}

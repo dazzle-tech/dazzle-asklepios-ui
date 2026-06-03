@@ -74,7 +74,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="positionStatusLkey"
                 selectData={positionStatusLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
@@ -88,7 +90,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="bodyMovementsLkey"
                 selectData={bodyMovementLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
@@ -102,7 +106,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="levelOfConsciousnessLkey"
                 selectData={levelOfConscLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
@@ -116,7 +122,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="facialExpressionLkey"
                 selectData={levelOfConscLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
@@ -130,7 +138,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="speechLkey"
                 selectData={speechAssLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
@@ -144,7 +154,9 @@ const NursingReportAssesments: React.FC = ({ patient, encounter }) => {
                 fieldType="select"
                 fieldName="moodBehaviorLkey"
                 selectData={moodLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={generalAssessment}
                 setRecord={setGeneralAssessment}
