@@ -29,6 +29,7 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 import AppointmentLogsModal from "./AppointmentLogsModal";
+import CompletePatientProfileBeforeCheckInModal from "./CompletePatientProfileBeforeCheckInModal";
 import { ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -36,6 +37,20 @@ import {
   useGetAppointmentPolicyAssignmentsByAppointmentIdQuery
 } from "@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService";
 import type { AppointmentPolicyAssignmentAppliedUpdateDTO } from "@/types/model-types-new";
+
+const buildPaymentDraft = (patientId: number, encounterId: number) => ({
+  ...newPatientPayments,
+  patientId,
+  encounterId,
+  useBalanceToSettleDebts: false,
+  dept: 0
+});
+
+const buildInsuranceDraft = () => ({
+  ...newPatientInsurance,
+  payorName: '',
+  planName: ''
+});
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
     const [cancelAppointment] = useCancelAppointmentMutation();
@@ -51,6 +66,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [reasonKey, setResonKey] = useState<any>(null)
     const [openAppointmentLogsModal, setOpenAppointmentLogsModal] = useState<boolean>(false);
     const [policySettingsModalOpen, setPolicySettingsModalOpen] = useState(false);
+    const [completeProfileModalOpen, setCompleteProfileModalOpen] = useState(false);
+    const [profileCompletedForCheckIn, setProfileCompletedForCheckIn] = useState(false);
     const [policyAppliedDraft, setPolicyAppliedDraft] = useState<Record<number, boolean>>({});
     const [isSavingPolicies, setIsSavingPolicies] = useState(false);
     const mode = useAppSelector((state: any) => state.ui.mode);
@@ -90,6 +107,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [createdEncounter, setCreatedEncounter] = useState<PatientEncounter | null>(null);
     const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
+    const paymentContextKeyRef = useRef<string>('');
     const appointmentPatientId = useMemo(() => {
       const appointmentData: any = appointment?.appointmentData || localAppointmentData || {};
       const patientRaw = appointmentData?.patient;
@@ -100,28 +118,31 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       const parsed = Number(candidate);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
     }, [appointment?.appointmentData, localAppointmentData]);
-    const { data: fetchedPatientById } = useGetPatientByIdQuery(
+    const { data: fetchedPatientById, isFetching: isFetchingPatient } = useGetPatientByIdQuery(
       { id: appointmentPatientId as number },
-      { skip: !isActionsModalOpen || !appointmentPatientId }
+      { skip: !isActionsModalOpen || !appointmentPatientId, refetchOnMountOrArgChange: true }
     );
     const resolvedPatient: any =
       fetchedPatientById ||
       ((appointment?.appointmentData || localAppointmentData)?.patient ?? null);
+
+    const isPatientProfileIncomplete = useMemo(() => {
+      if (profileCompletedForCheckIn) return false;
+      if (!appointmentPatientId) return false;
+
+      const patientRecord = fetchedPatientById ?? resolvedPatient;
+      if (!patientRecord) return false;
+
+      return patientRecord?.isCompletedPatient !== true;
+    }, [
+      profileCompletedForCheckIn,
+      appointmentPatientId,
+      fetchedPatientById,
+      resolvedPatient
+    ]);
     
-    // Payment draft state
-    const [paymentDraft, setPaymentDraft] = useState<any>({
-        ...newPatientPayments,
-        patientId: 0,
-        encounterId: 0,
-        useBalanceToSettleDebts: false,
-        dept: 0
-    });
-    
-    const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>({
-        ...newPatientInsurance,
-        payorName: '',
-        planName: ''
-    });
+    const [paymentDraft, setPaymentDraft] = useState<any>(() => buildPaymentDraft(0, 0));
+    const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>(() => buildInsuranceDraft());
 
     // Get current logged-in facility from localStorage or auth slice
      const extractErrorMessage = (response: any): string => {
@@ -164,6 +185,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       const appointmentData = appointment?.appointmentData || localAppointmentData;
       return Number(appointmentData?.key || appointmentData?.id || 0);
     }, [appointment?.appointmentData, localAppointmentData]);
+
+    useEffect(() => {
+      setProfileCompletedForCheckIn(false);
+    }, [appointmentPatientId, appointmentId, isActionsModalOpen]);
 
     const normalizeStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     // Always prefer the latest clicked appointment payload from props to avoid stale local state.
@@ -267,7 +292,20 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       }
     };
 
-    const handleCheckIn = async () => {
+    /** Policies modal (if any), then check-in API. */
+    const proceedWithCheckIn = async () => {
+      if (appointmentPolicyAssignments.length > 0) {
+        openPolicySettingsModal(appointmentPolicyAssignments);
+        return;
+      }
+      await performCheckIn();
+    };
+
+    /**
+     * Full check-in pipeline: validate appointment → ensure patient profile is complete
+     * → policies (if assigned) → check-in.
+     */
+    const runCheckInFlow = async (options?: { skipProfileCompletionCheck?: boolean }) => {
       const id = getAppointmentId();
       if (!id) {
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
@@ -285,13 +323,34 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
         return;
       }
-
-      if (appointmentPolicyAssignments.length > 0) {
-        openPolicySettingsModal(appointmentPolicyAssignments);
+      if (!appointmentPatientId) {
+        dispatch(notify({ msg: 'Please assign a patient before check-in', sev: 'warning' }));
         return;
       }
 
-      await performCheckIn();
+      const shouldCheckProfile = !options?.skipProfileCompletionCheck;
+
+      if (shouldCheckProfile && isFetchingPatient) {
+        dispatch(notify({ msg: 'Loading patient profile, please try again', sev: 'warning' }));
+        return;
+      }
+
+      if (shouldCheckProfile && isPatientProfileIncomplete) {
+        setCompleteProfileModalOpen(true);
+        return;
+      }
+
+      await proceedWithCheckIn();
+    };
+
+    const handleCheckIn = async () => {
+      await runCheckInFlow();
+    };
+
+    const handleProfileCompletedAndContinueCheckIn = async () => {
+      setProfileCompletedForCheckIn(true);
+      setCompleteProfileModalOpen(false);
+      await runCheckInFlow({ skipProfileCompletionCheck: true });
     };
 
     const handleSavePolicySettings = async () => {
@@ -363,6 +422,11 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         }
     );
 
+    const resetPaymentState = (patientId = 0, encounterId = 0) => {
+      setPaymentDraft(buildPaymentDraft(patientId, encounterId));
+      setPatientInsuranceDraft(buildInsuranceDraft());
+    };
+
     useEffect(() => {
         if (appointment) {
             setLocalAppoitmentData(appointment.appointmentData);
@@ -372,8 +436,29 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setOtherReason(null);
             setPolicySettingsModalOpen(false);
             setPolicyAppliedDraft({});
+            setPaymentModalOpen(false);
+            setCreatedEncounter(null);
+            resetPaymentState();
         }
-    }, [appointment])
+    }, [appointment]);
+
+    useEffect(() => {
+      const contextKey = String(appointmentId || '');
+      if (!contextKey) return;
+      if (paymentContextKeyRef.current === contextKey) return;
+      paymentContextKeyRef.current = contextKey;
+      setPaymentModalOpen(false);
+      setCreatedEncounter(null);
+      resetPaymentState();
+    }, [appointmentId]);
+
+    useEffect(() => {
+      if (!isActionsModalOpen) {
+        paymentContextKeyRef.current = '';
+        setPaymentModalOpen(false);
+        resetPaymentState();
+      }
+    }, [isActionsModalOpen]);
 
     useEffect(() => {
       if (!isActionsModalOpen || !isDirectReasonStatus) return;
@@ -439,21 +524,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             // Handle local appointment data if needed
         }
     }, [localAppointmentData]);
-
-    // Update payment draft when encounter is created or patient changes
-    useEffect(() => {
-        if (createdEncounter && resolvedPatient) {
-            const patientAny = resolvedPatient as any;
-            const patientId = Number(patientAny?.id ?? localAppointmentData.patient?.key ?? 0);
-            const encounterId = Number((createdEncounter as any)?.id ?? 0);
-            
-            setPaymentDraft((prev: any) => ({
-                ...prev,
-                patientId: patientId,
-                encounterId: encounterId
-            }));
-        }
-    }, [createdEncounter, resolvedPatient, localAppointmentData?.patient]);
 
     const handleConfirm = async () => {
         try {
@@ -535,6 +605,18 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             return;
         }
 
+        const patientAny = resolvedPatient as any;
+        const patientId = Number(
+          patientAny?.id ??
+            patientAny?.key ??
+            localAppointmentData?.patient?.id ??
+            localAppointmentData?.patient?.key ??
+            appointmentPatientId ??
+            0
+        );
+        const encounterId = Number((encounter as any)?.id ?? 0);
+
+        resetPaymentState(patientId, encounterId);
         setPaymentModalOpen(true);
     };
 
@@ -545,6 +627,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             if (success) {
                 dispatch(notify({ msg: 'Payment confirmed successfully', sev: 'success' }));
                 setPaymentModalOpen(false);
+                resetPaymentState();
                 onStatusChange();
             }
         } catch (error: any) {
@@ -855,7 +938,10 @@ const handleCancel = async () => {
             {/* Payment Modal */}
             <MyModal
                 open={paymentModalOpen}
-                setOpen={setPaymentModalOpen}
+                setOpen={(open: boolean) => {
+                  setPaymentModalOpen(open);
+                  if (!open) resetPaymentState();
+                }}
                 title="Add Payment"
                 size="70vw"
                 bodyheight="80vh"
@@ -866,6 +952,7 @@ const handleCancel = async () => {
                 content={
                     createdEncounter && resolvedPatient ? (
                         <PatientPaymentInfo
+                            key={`appointment-payment-${appointmentId}-${Number((createdEncounter as any)?.id ?? 0)}`}
                             ref={paymentRef}
                             localPatient={resolvedPatient}
                             localEncounter={createdEncounter}
@@ -895,6 +982,13 @@ const handleCancel = async () => {
                 actionButtonFunction={handleSavePolicySettings}
                 isDisabledActionBtn={isSavingPolicies}
                 hideBack={true}
+            />
+
+            <CompletePatientProfileBeforeCheckInModal
+              open={completeProfileModalOpen}
+              setOpen={setCompleteProfileModalOpen}
+              patientId={appointmentPatientId}
+              onCompleted={handleProfileCompletedAndContinueCheckIn}
             />
 
             <AppointmentLogsModal
