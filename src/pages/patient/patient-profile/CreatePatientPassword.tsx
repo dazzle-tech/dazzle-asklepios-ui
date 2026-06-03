@@ -7,12 +7,16 @@ import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.png';
 import ErrorPage from '@/components/ErrorPage';
 import config from '../../../../app-config';
+import { useBranding } from '@/hooks/useBranding';
+
+
 import './CreatePatientPassword.less';
 
 const CreatePatientPassword = () => {
   const [searchParams] = useSearchParams();
   const key = searchParams.get('key');
   const navigate = useNavigate();
+  const branding = useBranding();
 
   const [formValue, setFormValue] = useState({ newPassword: '', confirmPassword: '' });
   const [formError, setFormError] = useState<Record<string, any>>({});
@@ -316,8 +320,7 @@ const CreatePatientPassword = () => {
       >
         <div className="bodySignInDiv">
           <Panel className="logo-panel">
-            <img src={Logo} alt="Tenant Logo" />
-          </Panel>
+            <img src={branding.logo || Logo} alt="Logo" />          </Panel>
 
           <Panel className="sign-in-panel">
             {isPasswordCreated ? (

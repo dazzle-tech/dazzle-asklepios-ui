@@ -222,6 +222,7 @@ import { laboratoryReportsService } from './services/reports/laboratoryReportsSe
 import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { systemConfigService } from '@/services/systemConfigService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -562,7 +563,11 @@ export const store = configureStore({
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
 
-    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer
+    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
+  
+  [systemConfigService.reducerPath]: systemConfigService.reducer,
+
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -755,7 +760,8 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
-        glasgowComaScaleAssessmentService.middleware
+        glasgowComaScaleAssessmentService.middleware,
+        systemConfigService.middleware
       ) as any
 });
 
