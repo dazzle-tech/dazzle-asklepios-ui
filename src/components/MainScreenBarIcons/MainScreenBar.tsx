@@ -44,7 +44,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const mode = useAppSelector(state => state.ui.mode);
+  const mode = useAppSelector(state => state.ui);
+  console.log("mmdd: ", mode.mode)
   const uiSlice = useAppSelector(state => state.ui);
   const authSlice = useAppSelector(state => state.auth);
 
@@ -104,7 +105,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item
+        {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
             navigate('/incident-portal');
@@ -117,7 +118,24 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             />
             MedCare Incident Portal
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
+        
+        {authSlice.user?.jobRole === 'PHYSICIAN' && (
+          <Dropdown.Item
+            onClick={() => {
+              setOpenMoreMenu(false);
+              navigate('/my-consultations');
+            }}
+          >
+            <div className="container-of-icon-and-key1">
+              <FontAwesomeIcon
+                className="header-screen-bar-icon-size-handle"
+                icon={faUserDoctor}
+              />
+              My Consultations
+            </div>
+          </Dropdown.Item>
+        )}
 
         {width < 600 && (
           <Dropdown.Item

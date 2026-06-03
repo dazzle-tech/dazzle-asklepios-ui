@@ -344,7 +344,9 @@ const Details = ({
                           fieldType="select"
                           fieldLabel="Procedure Level"
                           selectData={ProcedureLevelLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="procedureLevelLkey"
                           record={procedure}
@@ -357,7 +359,9 @@ const Details = ({
                           fieldType="select"
                           fieldLabel="Priority"
                           selectData={priorityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="priorityLkey"
                           record={procedure}
@@ -424,7 +428,9 @@ const Details = ({
                           fieldType="select"
                           fieldLabel="Body Part"
                           selectData={bodypartLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="bodyPartLkey"
                           record={procedure}
@@ -435,7 +441,9 @@ const Details = ({
                           fieldType="select"
                           fieldLabel="Side"
                           selectData={sideLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="sideLkey"
                           record={procedure}

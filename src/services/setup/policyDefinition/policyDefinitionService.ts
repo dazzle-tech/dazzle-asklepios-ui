@@ -69,11 +69,45 @@ export const PolicyDefinitionService = createApi({
       },
       providesTags: ["PolicyDefinition"],
     }),
+     // List all active(paginated)
+    getAllActivePolicyDefinitions: builder.query<PagedResult<PolicyDefinition>, PagedParams>({
+      query: ({ page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/active",
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
 
     // List by facility (paginated)
     getPolicyDefinitionsByFacility: builder.query<PagedResult<PolicyDefinition>, { facilityId: number } & PagedParams>({
       query: ({ facilityId, page, size, sort = "id,desc" }) => ({
         url: "/api/setup/policy-definition/by-facility",
+        method: "GET",
+        params: { facilityId, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+      // active List by facility (paginated)
+    getActivePolicyDefinitionsByFacility: builder.query<PagedResult<PolicyDefinition>, { facilityId: number } & PagedParams>({
+      query: ({ facilityId, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/active/by-facility",
         method: "GET",
         params: { facilityId, page, size, sort },
       }),
@@ -184,4 +218,8 @@ export const {
   useCreatePolicyDefinitionMutation,
   useUpdatePolicyDefinitionMutation,
   useTogglePolicyDefinitionActiveMutation,
+  useGetActivePolicyDefinitionsByFacilityQuery,
+  useLazyGetActivePolicyDefinitionsByFacilityQuery, 
+  useGetAllActivePolicyDefinitionsQuery,
+  useLazyGetAllActivePolicyDefinitionsQuery,
 } = PolicyDefinitionService;

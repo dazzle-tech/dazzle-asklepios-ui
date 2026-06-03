@@ -43,7 +43,9 @@ const OrderFilters = ({ orderstatusLovQueryResponse }) => {
               { lovDisplayVale: 'Cancelled', key: 'cancelled' }
             ]
           }
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={{}}

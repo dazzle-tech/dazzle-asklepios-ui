@@ -139,7 +139,9 @@ const AddTreadmillStress = ({
                   fieldType="select"
                   fieldName="baselineEcgFindingsLkey"
                   selectData={baselineECGFindingsLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={treadmillStress}
                   setRecord={setTreadmillStress}
@@ -188,7 +190,9 @@ const AddTreadmillStress = ({
                   fieldType="select"
                   fieldName="bruceProtocolStageLkey"
                   selectData={numbersLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={treadmillStress}
                   setRecord={setTreadmillStress}
@@ -201,7 +205,9 @@ const AddTreadmillStress = ({
                   fieldType="select"
                   fieldName="segmentChangeLkey"
                   selectData={cardiacLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={treadmillStress}
                   setRecord={setTreadmillStress}
@@ -223,7 +229,9 @@ const AddTreadmillStress = ({
                   fieldType="select"
                   fieldName="typeLkey"
                   selectData={arrythmiasLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={treadmillStress}
                   setRecord={setTreadmillStress}
@@ -235,7 +243,9 @@ const AddTreadmillStress = ({
                   fieldType="select"
                   fieldName="testOutcomeLkey"
                   selectData={treadmillLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={treadmillStress}
                   setRecord={setTreadmillStress}

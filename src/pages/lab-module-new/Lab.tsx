@@ -4,7 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Col, Form, Row, Tabs } from 'rsuite';
+import {Form, Row} from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
 import MyInput from '@/components/MyInput';
@@ -291,8 +291,6 @@ const Lab = () => {
             <div dir={dir}>
               <div className="container">
                 <div className="left-boxs">
-                  <Row>
-                    <Col xs={14}>
                       <Orders
                         ref={OrdersRef}
                         order={order}
@@ -301,8 +299,6 @@ const Lab = () => {
                         loading={globalLoading}
                         orderNumberFilter={orderNumberFilter}
                       />
-                    </Col>
-                    <Col xs={10}>
                       <Form fluid className="filter-form-lab-filters">
                         <MyInput
                           width={"8vw"}
@@ -334,15 +330,9 @@ const Lab = () => {
                       </Form>
 
                       {test.id && (
-                        <Row>
-                          <Col md={24}>
                             <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
-                          </Col>
-                        </Row>
                       )}
                       {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
-                    </Col>
-                  </Row>
                   <MyTab
                     data={innerTabsData}
                     activeTab={activeKey2}

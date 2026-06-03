@@ -10,11 +10,23 @@ import { formatInstantForApi } from "./applyTemplateDateUtils";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
-function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO): ApplyAvailabilityTemplateRequest {
+function buildApplyAvailabilityPayload(
+  dto: AvailabilityGenerationBatchApplyDTO
+): 
+ApplyAvailabilityTemplateRequest {
   const scope = String((dto as any)?.scope ?? "").trim().toUpperCase();
   const childId = Number((dto as any)?.childTemplateId ?? 0);
+
   const effectiveTemplateId =
-    scope === "SPECIFIC_RESOURCE" && childId > 0 ? childId : Number(dto.templateId ?? 0);
+    scope === "SPECIFIC_RESOURCE" && childId > 0
+      ? childId
+      : Number(dto.templateId ?? 0);
+
+  const policyAssignmentIds =
+    (((dto as any)?.policyAssignmentIds ?? []) as number[])
+      .map(id => Number(id))
+      .filter(Boolean);
+
   return {
     templateId: effectiveTemplateId,
     startDate: formatInstantForApi(dto.startDate),
@@ -23,6 +35,7 @@ function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO)
     deferredAt: dto.deferredAt ? formatInstantForApi(dto.deferredAt) : null,
     scope: dto.scope,
     holidayHandlingMode: dto.holidayHandlingMode ?? null,
+    policyAssignmentIds,
   };
 }
 
@@ -59,6 +72,7 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
     deferredAt: null,
     scope: "DEPARTMENT",
     holidayHandlingMode: null,
+    policyAssignmentIds: [],
   } as AvailabilityGenerationBatchApplyDTO);
   const isControlled = typeof open === "boolean" && typeof setOpen === "function";
   const modalOpen = isControlled ? open : internalOpen;
@@ -142,6 +156,7 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       childTemplateId: null as any,
       scope: "DEPARTMENT",
       holidayHandlingMode: null,
+      policyAssignmentIds: [],
     }));
   }, [selectedTemplate?.id]);
 

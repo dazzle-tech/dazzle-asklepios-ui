@@ -63,7 +63,9 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
                     fieldType="select"
                     fieldName="typeLkey"
                     selectData={typeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={patientTemporaryDischarge}
                     setRecord={setPatientTemporaryDischarge}

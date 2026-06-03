@@ -62,6 +62,8 @@ const RoundInfo = ({
             fieldType="select"
             selectData={shiftsLovQueryResponse?.object ?? []}
             selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}

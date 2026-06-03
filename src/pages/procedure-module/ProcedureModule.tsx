@@ -591,7 +591,9 @@ const ProcedureModule: React.FC = () => {
           fieldType="select"
           fieldName="Priority"
           selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
@@ -603,7 +605,9 @@ const ProcedureModule: React.FC = () => {
           fieldType="select"
           fieldName="Level"
           selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={record}
           setRecord={setRecord}

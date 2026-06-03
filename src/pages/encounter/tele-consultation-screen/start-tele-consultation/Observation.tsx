@@ -308,7 +308,9 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                         fieldType="select"
                         fieldName="priorityLkey"
                         selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientObservationSummary}
                         setRecord={setPatientObservationSummary}
@@ -423,7 +425,9 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                         fieldType="select"
                         fieldName="latestpainlevelLkey"
                         selectData={painDegreesLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientObservationSummary}
                         setRecord={setPatientObservationSummarySafe}

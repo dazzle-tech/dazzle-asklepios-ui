@@ -60,6 +60,8 @@ const PreOperationAssessment = () => {
                                         fieldName="painScoreLkey"
                                         selectData={scoreLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
+                                                disableByField='isValid'
+
                                         record={preOperationAssessment}
                                         setRecord={setPreOperationAssessment} />
                                     <MyInput
@@ -128,6 +130,8 @@ const PreOperationAssessment = () => {
                                         fieldName="asaClassificationLkey"
                                         selectData={ASALovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
+                                                disableByField='isValid'
+
                                         record={preOperationAssessment}
                                         setRecord={setPreOperationAssessment} />
                                 </Form>

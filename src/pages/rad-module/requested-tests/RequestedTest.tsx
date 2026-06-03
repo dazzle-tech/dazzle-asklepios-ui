@@ -24,6 +24,8 @@ import { MdOutlineDescription } from 'react-icons/md';
 import { Form, Tooltip, Whisper } from 'rsuite';
 import ApproveRequestModal from './ApproveRequestModal';
 import './style.less';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   page?: number;
@@ -183,7 +185,6 @@ const RequestedTestTable: React.FC<Props> = ({
     }
   };
 
-
   const tableColumns = useMemo(
     () => [
       {
@@ -296,18 +297,12 @@ const RequestedTestTable: React.FC<Props> = ({
         dataKey: 'createdByAt',
         width: 150,
         expandable: true,
-        render: (row: any) =>
-          row?.createdDate ? (
-            <>
-              {row?.createdBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.createdDate)}
-              </span>
-            </>
-          ) : (
-            ' '
-          )
+        render: (row: any) => (
+          <UserDateCell
+            login={row?.createdBy}
+            date={row?.createdDate}
+          />
+        )
       }
     ],
     [hideActions]

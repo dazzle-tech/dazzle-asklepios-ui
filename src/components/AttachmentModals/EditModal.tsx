@@ -112,6 +112,8 @@ const EditModal: React.FC<EditModalProps> = ({
                         record={editFormData}
                         setRecord={setEditFormData}
                         searchable={true}
+                                disableByField='isValid'
+
                     />
                     <MyInput
                         width={450}

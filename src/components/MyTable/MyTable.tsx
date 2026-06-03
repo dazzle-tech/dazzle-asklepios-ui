@@ -119,7 +119,7 @@ const MyTable: React.FC<MyTableProps> = ({
           }}
           className="my-table-container"
         >
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" sx={{ minWidth: 680 }}>
             <TableHead className="my-table-header">
               <TableRow>
                 {expandableColumns.length > 0 && <TableCell />}

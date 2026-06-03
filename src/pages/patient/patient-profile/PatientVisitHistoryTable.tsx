@@ -3,6 +3,7 @@ import { Tooltip, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 
 import {
   useGetEncountersByPatientQuery,
@@ -357,6 +358,27 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                       }}
                     >
                       <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isPendingPayment && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Cancel</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenCancelModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faCircleXmark} />
                     </MyButton>
                   </span>
                 </Whisper>

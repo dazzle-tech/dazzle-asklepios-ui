@@ -60,7 +60,9 @@ const PregnancyLactation = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={pregnancyCategoriesLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             fieldName="pregnancyCategoryLkey"
@@ -74,7 +76,9 @@ const PregnancyLactation = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={breastfeedingCategoriesLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             fieldName="lactationRiskLkey"

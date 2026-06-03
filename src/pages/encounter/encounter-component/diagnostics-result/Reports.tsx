@@ -161,31 +161,43 @@ const Reports = ({ patient }) => {
   );
 
  
- const handleGenerateReport = async () => {
-   if (!selectedReport?.id) return;
-    try {
-      const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
+const handleGenerateReport = async () => {
+  if (!selectedReport?.id) return;
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `Report-${selectedReport.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  try {
+    const blob = await fetchRadiologyReportPdfData({
+      reportId: selectedReport.id,
+    }).unwrap();
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
       dispatch(
         notify({
-          msg: 'Failed to generate report PDF',
-          sev: 'error'
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
         })
       );
     }
-  };
+
+    // لا تعمل revokeObjectURL هنا
+  } catch (error) {
+    dispatch(
+      notify({
+        msg: 'Failed to generate report PDF',
+        sev: 'error',
+      })
+    );
+  }
+};
   const reportColumns: ColumnConfig[] = [
     {
       key: 'orderId',
@@ -365,7 +377,6 @@ const Reports = ({ patient }) => {
           prefixIcon={() => (
             <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
           )}
-          style={{ marginLeft: 'auto' }}
         >
           <Translate>Generate Report</Translate>
         </MyButton>

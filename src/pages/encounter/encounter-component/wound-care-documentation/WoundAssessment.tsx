@@ -54,7 +54,9 @@ const WoundAssessment = ({object, setObject}) => {
         record={object}
         setRecord={setObject}
         selectData={nmbersLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         menuMaxHeight={200}
       />

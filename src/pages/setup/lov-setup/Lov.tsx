@@ -193,21 +193,7 @@ const Lov = () => {
         onClick={() => setLovPopupOpen(true)}
       />
       {/* deactivate/activate  when click on one of these icon */}
-      {!rowData?.deletedAt ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-        />
-      ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={20}
-          fill="var(--primary-gray)"
-        />
-      )}
+   
     </div>
   );
   //Table columns

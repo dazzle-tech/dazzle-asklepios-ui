@@ -109,7 +109,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
   const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-      useLazyGetLaboratoryReportPdfQuery();
+    useLazyGetLaboratoryReportPdfQuery();
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -208,9 +208,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
-      const fallback = "—"; 
+    const fallback = "—";
 
-    
+
     if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
     }
@@ -267,25 +267,32 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
 
   const handleGeneratePdf = async (result: any) => {
-   if (!result?.id) return;
-    try {
-      const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
+  if (!result?.id) return;
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `Result-${result.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  try {
+    const blob = await fetchLaboratoryResultPdfData({
+      resultId: result.id,
+    }).unwrap();
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download report pdf', error);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      console.error('Popup blocked. Please allow popups for this site.');
     }
-  };
+
+    // لا تعمل revokeObjectURL هون
+  } catch (error) {
+    console.error('Failed to open report pdf', error);
+  }
+};
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -310,7 +317,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       } else {
         value =
           r.resultValueNumber !== null &&
-          r.resultValueNumber !== undefined
+            r.resultValueNumber !== undefined
             ? String(r.resultValueNumber)
             : '';
 
@@ -401,7 +408,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
           className='icon-radiologist-worklist-size'
           style={{
             cursor: 'pointer',
-            color: row.hasNote ? '#1675e0' : 'gray'
+            color: row.hasNote ? 'var(--primary-blue)' : 'gray'
           }}
           onClick={() => {
             setSelectedResultId(row.id);
@@ -454,7 +461,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       prefixIcon={() => (
         <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
       )}
-      style={{ marginLeft: 'auto' }}
     >
       Generate Complete Report
     </MyButton>

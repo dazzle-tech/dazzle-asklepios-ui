@@ -550,7 +550,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldLabel="Visit Type"
         fieldName="visitTypeLkey"
         selectData={visitTypeLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={() => {}} // No updates allowed
@@ -565,7 +567,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldLabel="Priority"
         fieldName="encounterPriorityLkey"
         selectData={encounterPriorityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={setLocalEncounter}
@@ -578,7 +582,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldType="select"
         fieldName="reasonLkey"
         selectData={encounterReasonLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={setLocalEncounter}
@@ -591,7 +597,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldType="select"
         fieldName="originLkey"
         selectData={patOriginLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={setLocalEncounter}

@@ -200,6 +200,7 @@ import { radiologyReportService } from './services/reports/radiologyReportServic
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
+import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
@@ -218,7 +219,10 @@ import { currentMedicationService } from './services/patients/currentMedicationS
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
+import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { systemConfigService } from '@/services/systemConfigService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -272,6 +276,8 @@ export const store = configureStore({
     [setupService.reducerPath]: setupService.reducer,
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
+    [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
+    [appointmentPolicyAssignmentService.reducerPath]: appointmentPolicyAssignmentService.reducer,
     [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
 
     // inventory
@@ -555,8 +561,13 @@ export const store = configureStore({
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
+    [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
 
-    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer
+    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
+  
+  [systemConfigService.reducerPath]: systemConfigService.reducer,
+
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -731,6 +742,8 @@ export const store = configureStore({
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         PolicyDefinitionService.middleware,
+        PolicyAssignmentService.middleware,
+        appointmentPolicyAssignmentService.middleware,
         SkillDefinitionService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
@@ -746,7 +759,9 @@ export const store = configureStore({
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
-        glasgowComaScaleAssessmentService.middleware
+        sickLeaveReportService.middleware,
+        glasgowComaScaleAssessmentService.middleware,
+        systemConfigService.middleware
       ) as any
 });
 

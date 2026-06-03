@@ -139,7 +139,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
       actionButtonLabel={readOnly ? undefined : "Save"}
       actionButtonFunction={readOnly ? undefined : handleSave}
       size="50vw"
-      bodyheight="37vw"
+      // bodyheight="37vw"
       content={
         <Form fluid>
           <div dir={dir}>

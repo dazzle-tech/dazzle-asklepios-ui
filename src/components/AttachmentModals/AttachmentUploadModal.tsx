@@ -252,6 +252,8 @@ const AttachmentUploadModal = ({
           record={selectedAttachType}
           setRecord={setSelectedAttachType}
           searchable={false}
+                  disableByField='isValid'
+
         />
         <MyInput
           width={550}

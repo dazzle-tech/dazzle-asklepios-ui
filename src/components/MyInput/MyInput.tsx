@@ -27,11 +27,26 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy"
+    editable
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy HH:mm"
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const focusNextField = (e: any) => {
@@ -62,7 +77,9 @@ type MyInputProps = {
   | 'date'
   | 'number'
   | 'check'
-  | 'textnumber';
+  | 'textnumber'
+  | 'color'
+  ;
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -96,6 +113,7 @@ type MyInputProps = {
   defaultSelectValue?: any;
   virtualized?: boolean;
   menuMaxHeight?: number;
+  menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
   creatable?: boolean;
@@ -121,6 +139,7 @@ type MyInputProps = {
   step?: number;
   allowDecimal?: boolean;
   disabledItemValues?: boolean;
+  disableByField?: string;
 };
 
 const MyInput = ({
@@ -316,19 +335,19 @@ const MyInput = ({
     return spaceBelow > 250 ? 'bottomStart' : 'topStart';
   };
 
-const resolveContainer = () => {
-  const pickerElement = pickerRef.current as HTMLElement | null;
+  const resolveContainer = () => {
+    const pickerElement = pickerRef.current as HTMLElement | null;
 
-  return (
-    pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
-    pickerElement?.closest('.child-right-modal .rs-modal-body') ||
-    pickerElement?.closest('.right-modal .rs-modal-body') ||
-    pickerElement?.closest('.rs-modal-body') ||
-    pickerElement?.closest('.rs-drawer-body') ||
-    pickerElement?.closest('.rs-content') ||
-    document.body
-  ) as HTMLElement;
-};
+    return (
+      pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
+      pickerElement?.closest('.child-right-modal .rs-modal-body') ||
+      pickerElement?.closest('.right-modal .rs-modal-body') ||
+      pickerElement?.closest('.rs-modal-body') ||
+      pickerElement?.closest('.rs-drawer-body') ||
+      pickerElement?.closest('.rs-content') ||
+      document.body
+    ) as HTMLElement;
+  };
 
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
@@ -338,7 +357,13 @@ const resolveContainer = () => {
     const combined = parts.join(' ').trim();
     return combined || fallback;
   };
-
+  const getDisabledValues = (dataList: any[], valueKey: string) =>
+    props.disabledItemValues
+      ? dataList.map(item => item[valueKey])
+      : props.disableByField
+        ? dataList
+          .filter(item => item?.[props.disableByField] === false).map(item => item[valueKey])
+        : [];
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -725,14 +750,7 @@ const resolveContainer = () => {
                 props?.virtualized ?? true
               }
 
-              disabledItemValues={
-                props.disabledItemValues
-                  ? dataList.map(
-                    item =>
-                      item[valueKey]
-                  )
-                  : []
-              }
+              disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
         );
@@ -758,7 +776,6 @@ const resolveContainer = () => {
               block
               disabled={props.disabled}
 
-              // 🔥🔥🔥 نفس الحل
               accepter={SelectPicker}
               searchable={true}
               searchBy={(keyword, label, item) => {
@@ -837,11 +854,23 @@ const resolveContainer = () => {
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               container={resolveContainer()}
-            />
+              disabledItemValues={getDisabledValues(dataList, valueKey)} />
           </div>
         );
       }
-
+     case 'color':
+  return (
+    <input
+      type="color"
+      value={record?.[fieldName] || '#1976d2'}
+      onChange={(e) =>
+        setRecord({
+          ...record,
+          [fieldName]: e.target.value
+        })
+      }
+    />
+  );
       case 'multyPicker':
         return (
           <div ref={pickerRef}>
@@ -871,12 +900,7 @@ const resolveContainer = () => {
                 setIsMultyPickerOpen(true);
               }}
               onClose={() => setIsMultyPickerOpen(false)}
-              disabledItemValues={
-                props.disabledItemValues
-                  ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
-                  : []
-              }
-            />
+              disabledItemValues={getDisabledValues(dataList, valueKey)} />
           </div>
         );
 
@@ -894,12 +918,12 @@ const resolveContainer = () => {
         const filteredData = !localSearch
           ? dataList
           : dataList.filter(item => {
-              const text = isArrayLabel
-                ? buildCombinedLabel(item, labelKeys, '')
-                : String(item?.[primaryLabelKey] ?? '');
+            const text = isArrayLabel
+              ? buildCombinedLabel(item, labelKeys, '')
+              : String(item?.[primaryLabelKey] ?? '');
 
-              return text.toLowerCase().includes(localSearch.toLowerCase());
-            });
+            return text.toLowerCase().includes(localSearch.toLowerCase());
+          });
 
         const longestLabel = dataList.reduce((longest, item) => {
           const text = isArrayLabel
@@ -921,9 +945,8 @@ const resolveContainer = () => {
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${
-                inputColor ? `input-${inputColor}` : ''
-              }`}
+              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
+                }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
@@ -935,6 +958,7 @@ const resolveContainer = () => {
               data={filteredData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
+              menuClassName={clsx('my-input-picker-popup', props?.menuClassName)}
               value={record ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
@@ -997,16 +1021,11 @@ const resolveContainer = () => {
                 width: popupWidth
               }}
               virtualized={props?.virtualized ?? true}
-              disabledItemValues={
-                props.disabledItemValues
-                  ? dataList.map(item => item[valueKey])
-                  : []
-              }
-            />
+              disabledItemValues={getDisabledValues(dataList, valueKey)} />
           </div>
         );
       }
-      
+
       case 'date':
         return (
           <div ref={pickerRef}>
@@ -1020,11 +1039,7 @@ const resolveContainer = () => {
               }
               disabled={props.disabled}
               name={fieldName}
-              accepter={DatePicker}
-              format="dd-MM-yyyy"
-              editable
-              cleanable={false}
-              oneTap
+              accepter={CustomDatePicker}
               defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
                 const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;

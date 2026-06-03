@@ -7,6 +7,8 @@ import {
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React from 'react';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   open: boolean;
@@ -20,6 +22,7 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
     useGetRadiologyImageStatusLogQuery(
       report?.id ?? skipToken
     );
+
 
   const columns = [
     {
@@ -40,9 +43,12 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
       key: 'by',
       title: <Translate>BY</Translate>,
       flexGrow: 1,
-      render: (row: any) => row.statusBy ?? '—',
+      render: (row: any) => <UserDateCell login={row.statusBy} />
     }
   ];
+
+
+
 
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

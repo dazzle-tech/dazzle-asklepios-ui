@@ -17,7 +17,6 @@ import type { Department, Practitioner } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import PatientQuickAppointment from '../../patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
-import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Tooltip, Whisper, Form } from 'rsuite';
@@ -27,6 +26,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import EncounterModalContent from './EncounterModalContent';
 import NurseStationModalContent from './NurseStationModalContent';
+import UrgentCareViewTriage from '@/pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
 
 type Props = {
   localPatient: any;
@@ -35,12 +35,11 @@ type Props = {
 
 const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentType }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
-
+  const [openTriageModal, setOpenTriageModal] = useState(false);
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
 
@@ -111,15 +110,13 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
     setOpenNurseModal(true);
   };
 
-  const handleViewTriage = (row: any) => {
-    navigate('/urgent-care-view-triage', {
-      state: {
-        patient: localPatient,
-        encounter: row,
-        fromPage: 'PatientEMR'
-      }
-    });
-  };
+const handleViewTriage = (row: any) => {
+  dispatch(setPatient(localPatient));
+  dispatch(setEncounter(row));
+
+  setModalRow(row);
+  setOpenTriageModal(true);
+};
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -276,6 +273,25 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
           onEncounterSaved={handleEncounterSaved}
         />
       )}
+
+      <MyModal
+        open={openTriageModal}
+        setOpen={setOpenTriageModal}
+        title="View Triage"
+        size="95vw"
+        bodyheight="80vh"
+        hideActionBtn
+        cancelButtonLabel="Close"
+        enforceFocus={false}
+        content={
+          modalRow ? (
+            <UrgentCareViewTriage
+              patient={localPatient}
+              encounter={modalRow}
+            />
+          ) : null
+        }
+      />
 
       <MyModal
         open={openEncounterModal}

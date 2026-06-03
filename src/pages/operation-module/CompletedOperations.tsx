@@ -317,7 +317,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                         fieldLabel="Operation Name"
                         fieldName="key"
                         selectData={operationLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -330,7 +332,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                         fieldLabel="Status"
                         fieldName="key"
                         selectData={statusLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -348,7 +352,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     fieldName="accessTypeLkey"
                                     fieldType="select"
                                     selectData={operationorderLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     fieldLabel="Operation Type"
                                     selectDataValue="key"
                                     record={record}
@@ -363,7 +369,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={proclevelLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Operation Level"
                                     searchable={false}
@@ -384,7 +392,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={priorityLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Priority"
                                     searchable={false}

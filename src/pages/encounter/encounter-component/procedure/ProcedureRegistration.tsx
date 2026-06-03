@@ -69,7 +69,9 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                 width="100%"
                 fieldType="select"
                 selectData={consentLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 fieldName="consentFormLkey"
                 record={proReg}

@@ -106,19 +106,25 @@
 
         &.even-row {
           .MuiTableCell-root {
-            background-color: var(--light-gray);
+            // for one health theme (don`t remove the commented color)
+            // background-color: var(--light-gray);
+            background-color: #f7fbfb;
           }
         }
 
         &:hover {
           .MuiTableCell-root {
-            background-color: rgba(#415be7, 0.05);
+            // for one health theme (don`t remove the commented color)
+            // background-color: rgba(#415be7, 0.05);
+            background-color: #eaf7f6;
           }
         }
 
         &.selected-row {
           .MuiTableCell-root {
-            background-color: #dfe9fc;
+            // for one health theme (don`t remove the commented color)
+            // background-color: #dfe9fc;
+            background-color: #d5efed;
           }
         }
       }
@@ -192,9 +198,10 @@
 .my-table-wrapper.dark {
   .MuiTableHead-root {
     .MuiTableRow-root {
-      .MuiTableCell-root {
+      .MuiTableCell-root,
+      .MuiTableCell-stickyHeader {
         color: #b0c4de;
-        background-color: var(--table-header-bg-dark);
+        background: var(--table-header-bg-dark) !important;
       }
     }
   }
@@ -227,5 +234,35 @@
   }
   .MuiTablePagination-root {
   background: var(--table-header-bg-dark);
+  }
+}
+
+
+@media (max-width: 680px) {
+  .my-table-wrapper,
+  .my-table-content-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .my-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .my-table-container table {
+    min-width: 680px;
+  }
+
+  .my-table-filters {
+    overflow-x: auto;
+  }
+
+  .my-table-buttons-wrapper {
+    justify-content: flex-end;
+    overflow-x: auto;
   }
 }

@@ -469,7 +469,9 @@ const MAR = () => {
             fieldType="select"
             fieldName="status"
             selectData={marDoseStatusLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={medication}
             setRecord={setMedication}

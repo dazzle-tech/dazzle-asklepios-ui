@@ -31,7 +31,9 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
           fieldName="types"
           fieldType="checkPicker"
           selectData={warningsLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           fieldLabel="Type"
           selectDataValue="key"
           record={typeFilter}

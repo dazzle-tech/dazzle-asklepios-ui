@@ -24,6 +24,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './familyHistory.less';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -117,41 +118,6 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
         );
       }
     };
-
-
-const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) {
-    return <span>-</span>;
-  }
-
-  return <span>{fullName || login}</span>;
-};
-
-const UserDateCell = ({
-  login,
-  date
-}: {
-  login?: string | null;
-  date?: string | null;
-}) => {
-  if (!login && !date) {
-    return <span>-</span>;
-  }
-
-  return (
-    <>
-      <UserFullNameCell login={login} />
-      <br />
-      <span className="date-table-style">
-        {date ? formatDateWithoutSeconds(date) : ''}
-      </span>
-    </>
-  );
-};
 
 
   // TABLE COLUMNS

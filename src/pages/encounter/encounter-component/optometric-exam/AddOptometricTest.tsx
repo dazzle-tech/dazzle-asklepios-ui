@@ -234,7 +234,9 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                 fieldType="select"
                 fieldName="medicalHistoryLkey"
                 selectData={medicalHistoryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={optometricExam}
                 setRecord={setOptometricExam}
@@ -249,7 +251,9 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     fieldType="select"
                     fieldName="performedWithLkey"
                     selectData={performedWithLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={optometricExam}
                     setRecord={setOptometricExam}
@@ -263,7 +267,9 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     fieldType="select"
                     fieldName="pinholeTestResultLkey"
                     selectData={improvmentsStatusLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={optometricExam}
                     setRecord={setOptometricExam}
@@ -388,7 +394,9 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     fieldType="select"
                     fieldName="deficiencyTypeLkey"
                     selectData={colorBlindTestLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={optometricExam}
                     setRecord={setOptometricExam}
@@ -523,7 +531,9 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     fieldType="select"
                     fieldName="glaucomaRiskAssessmentLkey"
                     selectData={lowModHighLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={optometricExam}
                     setRecord={setOptometricExam}

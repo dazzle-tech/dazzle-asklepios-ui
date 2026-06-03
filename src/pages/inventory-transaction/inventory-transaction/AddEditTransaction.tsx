@@ -263,7 +263,9 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                                     fieldName="transTypeLkey"
                                     fieldType="select"
                                     selectData={transTypeListResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={transaction}
                                     setRecord={setTransaction}
@@ -293,7 +295,9 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                                     fieldName="transReasonLkey"
                                     fieldType="select"
                                     selectData={transaction.transTypeLkey === '6509244814441399' ? transReasonInListResponse?.object ?? [] : transReasonOutListResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={transaction}
                                     setRecord={setTransaction}
@@ -511,7 +515,9 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                                     fieldName="transTypeLkey"
                                     fieldType="select"
                                     selectData={transTypeListResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={transaction}
                                     setRecord={setTransaction}
@@ -547,7 +553,9 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                                                 ? transReasonInListResponse?.object ?? []
                                                 : transReasonOutListResponse?.object ?? []
                                     }
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     record={transaction}
                                     setRecord={setTransaction}
