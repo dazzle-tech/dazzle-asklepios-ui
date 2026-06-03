@@ -74,6 +74,7 @@ import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTempl
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import Accounting from './pages/billing-module';
 import CreatePassword from './pages/create-password/CreatePassword';
+import InsuranceEligibilityRequests from './pages/Waseel integration/insurance-eligibility-requests';
 import CreatePatientPassword from './pages/patient/patient-profile/CreatePatientPassword';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
@@ -804,6 +805,10 @@ const dispatch = useAppDispatch();
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
               <Route path="billing-claims" element={<Claimscreen />} />
+              <Route
+                path="insurance-eligibility-requests"
+                element={<InsuranceEligibilityRequests />}
+              />
 
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
