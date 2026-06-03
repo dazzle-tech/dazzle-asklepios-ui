@@ -1773,11 +1773,16 @@ export interface PayorPlan {
 
 export interface PayorPlanItem {
   id?: number;
-  payorId: number;
+  planId: number;
   itemType: string;
   amount?: number | null;
   coverageType: string;
   isActive: boolean;
+  preAuthorization?: boolean;
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }
