@@ -408,7 +408,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
           className='icon-radiologist-worklist-size'
           style={{
             cursor: 'pointer',
-            color: row.hasNote ? '#1675e0' : 'gray'
+            color: row.hasNote ? 'var(--primary-blue)' : 'gray'
           }}
           onClick={() => {
             setSelectedResultId(row.id);
@@ -461,7 +461,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       prefixIcon={() => (
         <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
       )}
-      style={{ marginLeft: 'auto' }}
     >
       Generate Complete Report
     </MyButton>

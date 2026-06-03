@@ -377,7 +377,6 @@ const handleGenerateReport = async () => {
           prefixIcon={() => (
             <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
           )}
-          style={{ marginLeft: 'auto' }}
         >
           <Translate>Generate Report</Translate>
         </MyButton>
