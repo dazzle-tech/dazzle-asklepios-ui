@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider, useSelector } from 'react-redux';
 import { HashRouter } from 'react-router-dom';
@@ -47,24 +47,41 @@ const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { data: systemConfig } = useGetSystemConfigQuery();
 
-  React.useEffect(() => {
-    if (systemConfig?.SYSTEM_TITLE) {
-      document.title = systemConfig.SYSTEM_TITLE;
+ useEffect(() => {
+  const applySystemConfig = (config: any) => {
+    if (config?.SYSTEM_TITLE) {
+      document.title = config.SYSTEM_TITLE;
     }
 
-    if (systemConfig?.PRIMARY_COLOR) {
-      document.documentElement.style.setProperty('--primary-color', systemConfig.PRIMARY_COLOR);
-      document.documentElement.style.setProperty('--primary-blue', systemConfig.PRIMARY_COLOR);
+    if (config?.PRIMARY_COLOR) {
+      document.documentElement.style.setProperty('--primary-color', config.PRIMARY_COLOR);
+      document.documentElement.style.setProperty('--primary-blue', config.PRIMARY_COLOR);
     }
 
-    if (systemConfig?.FONT_FAMILY) {
-      document.documentElement.style.setProperty('--font-family', systemConfig.FONT_FAMILY);
+    if (config?.FONT_FAMILY) {
+      document.documentElement.style.setProperty('--font-family', config.FONT_FAMILY);
     }
 
-    if (systemConfig?.FAVICON) {
-      setFavicon(systemConfig.FAVICON);
+    if (config?.FAVICON) {
+      setFavicon(config.FAVICON);
     }
-  }, [systemConfig]);
+  };
+
+  const cachedSystemConfig = localStorage.getItem('systemConfig');
+
+  if (cachedSystemConfig) {
+    try {
+      applySystemConfig(JSON.parse(cachedSystemConfig));
+    } catch {
+      localStorage.removeItem('systemConfig');
+    }
+  }
+
+  if (systemConfig) {
+    localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
+    applySystemConfig(systemConfig);
+  }
+}, [systemConfig]);
 
   const primaryColor = systemConfig?.PRIMARY_COLOR || '#1976d2';
   const fontFamily = systemConfig?.FONT_FAMILY || 'Inter';
