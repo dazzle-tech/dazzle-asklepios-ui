@@ -38,6 +38,20 @@ import {
 } from "@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService";
 import type { AppointmentPolicyAssignmentAppliedUpdateDTO } from "@/types/model-types-new";
 
+const buildPaymentDraft = (patientId: number, encounterId: number) => ({
+  ...newPatientPayments,
+  patientId,
+  encounterId,
+  useBalanceToSettleDebts: false,
+  dept: 0
+});
+
+const buildInsuranceDraft = () => ({
+  ...newPatientInsurance,
+  payorName: '',
+  planName: ''
+});
+
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
     const [cancelAppointment] = useCancelAppointmentMutation();
     const [noShowAppointment] = useNoShowAppointmentMutation();
@@ -93,6 +107,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [createdEncounter, setCreatedEncounter] = useState<PatientEncounter | null>(null);
     const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
+    const paymentContextKeyRef = useRef<string>('');
     const appointmentPatientId = useMemo(() => {
       const appointmentData: any = appointment?.appointmentData || localAppointmentData || {};
       const patientRaw = appointmentData?.patient;
@@ -126,20 +141,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       resolvedPatient
     ]);
     
-    // Payment draft state
-    const [paymentDraft, setPaymentDraft] = useState<any>({
-        ...newPatientPayments,
-        patientId: 0,
-        encounterId: 0,
-        useBalanceToSettleDebts: false,
-        dept: 0
-    });
-    
-    const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>({
-        ...newPatientInsurance,
-        payorName: '',
-        planName: ''
-    });
+    const [paymentDraft, setPaymentDraft] = useState<any>(() => buildPaymentDraft(0, 0));
+    const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>(() => buildInsuranceDraft());
 
     // Get current logged-in facility from localStorage or auth slice
      const extractErrorMessage = (response: any): string => {
@@ -419,6 +422,11 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         }
     );
 
+    const resetPaymentState = (patientId = 0, encounterId = 0) => {
+      setPaymentDraft(buildPaymentDraft(patientId, encounterId));
+      setPatientInsuranceDraft(buildInsuranceDraft());
+    };
+
     useEffect(() => {
         if (appointment) {
             setLocalAppoitmentData(appointment.appointmentData);
@@ -428,8 +436,29 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setOtherReason(null);
             setPolicySettingsModalOpen(false);
             setPolicyAppliedDraft({});
+            setPaymentModalOpen(false);
+            setCreatedEncounter(null);
+            resetPaymentState();
         }
-    }, [appointment])
+    }, [appointment]);
+
+    useEffect(() => {
+      const contextKey = String(appointmentId || '');
+      if (!contextKey) return;
+      if (paymentContextKeyRef.current === contextKey) return;
+      paymentContextKeyRef.current = contextKey;
+      setPaymentModalOpen(false);
+      setCreatedEncounter(null);
+      resetPaymentState();
+    }, [appointmentId]);
+
+    useEffect(() => {
+      if (!isActionsModalOpen) {
+        paymentContextKeyRef.current = '';
+        setPaymentModalOpen(false);
+        resetPaymentState();
+      }
+    }, [isActionsModalOpen]);
 
     useEffect(() => {
       if (!isActionsModalOpen || !isDirectReasonStatus) return;
@@ -495,21 +524,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             // Handle local appointment data if needed
         }
     }, [localAppointmentData]);
-
-    // Update payment draft when encounter is created or patient changes
-    useEffect(() => {
-        if (createdEncounter && resolvedPatient) {
-            const patientAny = resolvedPatient as any;
-            const patientId = Number(patientAny?.id ?? localAppointmentData.patient?.key ?? 0);
-            const encounterId = Number((createdEncounter as any)?.id ?? 0);
-            
-            setPaymentDraft((prev: any) => ({
-                ...prev,
-                patientId: patientId,
-                encounterId: encounterId
-            }));
-        }
-    }, [createdEncounter, resolvedPatient, localAppointmentData?.patient]);
 
     const handleConfirm = async () => {
         try {
@@ -591,6 +605,18 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             return;
         }
 
+        const patientAny = resolvedPatient as any;
+        const patientId = Number(
+          patientAny?.id ??
+            patientAny?.key ??
+            localAppointmentData?.patient?.id ??
+            localAppointmentData?.patient?.key ??
+            appointmentPatientId ??
+            0
+        );
+        const encounterId = Number((encounter as any)?.id ?? 0);
+
+        resetPaymentState(patientId, encounterId);
         setPaymentModalOpen(true);
     };
 
@@ -601,6 +627,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             if (success) {
                 dispatch(notify({ msg: 'Payment confirmed successfully', sev: 'success' }));
                 setPaymentModalOpen(false);
+                resetPaymentState();
                 onStatusChange();
             }
         } catch (error: any) {
@@ -911,7 +938,10 @@ const handleCancel = async () => {
             {/* Payment Modal */}
             <MyModal
                 open={paymentModalOpen}
-                setOpen={setPaymentModalOpen}
+                setOpen={(open: boolean) => {
+                  setPaymentModalOpen(open);
+                  if (!open) resetPaymentState();
+                }}
                 title="Add Payment"
                 size="70vw"
                 bodyheight="80vh"
@@ -922,6 +952,7 @@ const handleCancel = async () => {
                 content={
                     createdEncounter && resolvedPatient ? (
                         <PatientPaymentInfo
+                            key={`appointment-payment-${appointmentId}-${Number((createdEncounter as any)?.id ?? 0)}`}
                             ref={paymentRef}
                             localPatient={resolvedPatient}
                             localEncounter={createdEncounter}
