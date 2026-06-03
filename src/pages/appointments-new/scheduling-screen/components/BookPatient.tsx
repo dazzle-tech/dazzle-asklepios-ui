@@ -176,6 +176,13 @@ const BookPatient = ({
     }
   }, [open, appointmentData, readOnly]);
 
+  useEffect(() => {
+    if (open) return;
+
+    setPatientSidebarOpen(false);
+    setQuickPatientModalOpen(false);
+  }, [open]);
+
   const viewPatientId = useMemo(() => {
     if (!readOnly || !appointmentData) return null;
 
@@ -953,7 +960,7 @@ const BookPatient = ({
 
   return (
     <>
-      {patientSidebarOpen && (
+      {open && patientSidebarOpen && (
         <div className="book-patient-sidebar-overlay" style={patientSidebarStyle ?? undefined}>
           <ProfileSidebar
             expand={true}
