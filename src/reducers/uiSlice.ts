@@ -1,6 +1,8 @@
 import { uiService } from '@/services/uiService';
 import { createSlice } from '@reduxjs/toolkit';
 const savedLang = localStorage.getItem('lang') || 'en';
+const savedModeRaw = localStorage.getItem('mode');
+const savedMode = savedModeRaw === 'dark' || savedModeRaw === 'light' ? savedModeRaw : 'light';
 
 // Be defensive when reading from localStorage in case it’s corrupted
 let savedTranslations: Record<string, string> = {};
@@ -15,7 +17,7 @@ const initialState = {
   msg: null,
   msgLife: 2000,
   lang: savedLang,
-  mode: 'light',
+  mode: savedMode,
   translations: savedTranslations,
   // {
 
@@ -239,6 +241,7 @@ export const uiSlice = createSlice({
     },
     setMode: (state, action) => {
       state.mode = action.payload;
+      localStorage.setItem('mode', action.payload);
     },
     // setLang: (state, action) => {
     //   state.lang = action.payload;
