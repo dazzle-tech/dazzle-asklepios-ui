@@ -20,7 +20,7 @@ import {
   useGetBrandMedicationsByActiveIdsMutation
 } from '@/services/setup/brandmedication/BrandMedicationService';
 import './styles.less';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { conjureValueBasedOnKeyFromList, extractErrorMessage } from '@/utils';
 import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -62,7 +62,7 @@ const DetailsModal = ({
   const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [tags, setTags] = React.useState<any[]>([]);
-  const [tagsLoaded, setTagsLoaded] = useState(false); 
+  const [tagsLoaded, setTagsLoaded] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const searchWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -333,8 +333,8 @@ const DetailsModal = ({
     const aiList = selectedGeneric?.activeIngredients?.length
       ? selectedGeneric.activeIngredients
       : selectedActiveIngredient
-      ? [selectedActiveIngredient]
-      : [];
+        ? [selectedActiveIngredient]
+        : [];
 
     if (!aiList.length) {
       setTestsByAiId({});
@@ -534,15 +534,14 @@ const DetailsModal = ({
     }
 
     const indicationIcd = prescriptionMedication?.indicationIcd;
-    const indicationManual = String(prescriptionMedication?.indicationManually ?? '').trim();
-    const hasIndication =
-      (indicationIcd !== null &&
-        indicationIcd !== undefined &&
-        String(indicationIcd).trim() !== '') ||
-      indicationManual.length > 0;
+    const hasIcd10 =
+      indicationIcd !== null &&
+      indicationIcd !== undefined &&
+      String(indicationIcd).trim() !== '' &&
+      String(indicationIcd).trim() !== '0';
 
-    if (!hasIndication) {
-      dispatch(notify({ msg: 'Indication Is missing', sev: 'warning' }));
+    if (!hasIcd10) {
+      dispatch(notify({ msg: 'Please select ICD-10', sev: 'warning' }));
       return;
     }
 
@@ -568,8 +567,8 @@ const DetailsModal = ({
         selectedOption === OPTION_MANUAL
           ? String(inst ?? '')
           : selectedOption === OPTION_PREDEFINED
-          ? String(inst ?? '')
-          : null,
+            ? String(inst ?? '')
+            : null,
       dose:
         selectedOption === OPTION_CUSTOM
           ? customeinst?.dose ?? null
@@ -661,7 +660,6 @@ const DetailsModal = ({
         setOpen(false);
       }
     } catch (error: any) {
-      console.log('Save prescription medication error:', error);
       if (error?.originalStatus === 409) return;
 
       const isChronicConflict =
@@ -679,12 +677,12 @@ const DetailsModal = ({
         return;
       }
 
-      let errorMessage = 'Save failed';
-      if (error?.data) {
-        if (typeof error.data === 'string') errorMessage = error.data;
-        else if (error.data?.message) errorMessage = error.data.message;
-      }
-      dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Save failed',
+          sev: 'warning'
+        })
+      );
     }
   };
 
@@ -799,9 +797,7 @@ const DetailsModal = ({
           </span>
         }
         size="80vw"
-        leftTitle={
-          <Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>
-        }
+        leftTitle={selectedGeneric ? String(selectedGeneric.name) : 'Select Generic'}
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
@@ -999,8 +995,8 @@ const DetailsModal = ({
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
-                             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
                             selectDataValue="key"
                             fieldName="durationType"
@@ -1089,8 +1085,8 @@ const DetailsModal = ({
                             placeholder="Select Indication Use"
                             fieldLabel="Indication Use"
                             selectData={indicationLovQueryResponse?.object ?? []}
-                             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
@@ -1122,8 +1118,8 @@ const DetailsModal = ({
                             fieldType="checkPicker"
                             fieldLabel="Administration Instructions"
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
-                             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
                             selectDataValue="key"
                             fieldName="administrationInstructions"
@@ -1138,17 +1134,17 @@ const DetailsModal = ({
                             value={
                               adminInstructions?.administrationInstructions?.length
                                 ? adminInstructions.administrationInstructions
-                                    .map(key => {
-                                      return (
-                                        conjureValueBasedOnKeyFromList(
-                                          administrationInstructionsLovQueryResponse?.object ?? [],
-                                          key,
-                                          'lovDisplayVale'
-                                        ) || String(key)
-                                      );
-                                    })
-                                    .filter(Boolean)
-                                    .join('\n')
+                                  .map(key => {
+                                    return (
+                                      conjureValueBasedOnKeyFromList(
+                                        administrationInstructionsLovQueryResponse?.object ?? [],
+                                        key,
+                                        'lovDisplayVale'
+                                      ) || String(key)
+                                    );
+                                  })
+                                  .filter(Boolean)
+                                  .join('\n')
                                 : ''
                             }
                             className="indication-display-field"
@@ -1222,7 +1218,7 @@ const DetailsModal = ({
       <MyModal
         open={openOrderModel}
         setOpen={setOpenOrderModel}
-        size={'full'}
+        size="full"
         title="Add Order"
         content={
           <div dir={dir}>
