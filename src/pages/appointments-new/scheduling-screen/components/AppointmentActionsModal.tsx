@@ -29,6 +29,7 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 import AppointmentLogsModal from "./AppointmentLogsModal";
+import CompletePatientProfileBeforeCheckInModal from "./CompletePatientProfileBeforeCheckInModal";
 import { ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -51,6 +52,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [reasonKey, setResonKey] = useState<any>(null)
     const [openAppointmentLogsModal, setOpenAppointmentLogsModal] = useState<boolean>(false);
     const [policySettingsModalOpen, setPolicySettingsModalOpen] = useState(false);
+    const [completeProfileModalOpen, setCompleteProfileModalOpen] = useState(false);
+    const [profileCompletedForCheckIn, setProfileCompletedForCheckIn] = useState(false);
     const [policyAppliedDraft, setPolicyAppliedDraft] = useState<Record<number, boolean>>({});
     const [isSavingPolicies, setIsSavingPolicies] = useState(false);
     const mode = useAppSelector((state: any) => state.ui.mode);
@@ -100,13 +103,28 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       const parsed = Number(candidate);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
     }, [appointment?.appointmentData, localAppointmentData]);
-    const { data: fetchedPatientById } = useGetPatientByIdQuery(
+    const { data: fetchedPatientById, isFetching: isFetchingPatient } = useGetPatientByIdQuery(
       { id: appointmentPatientId as number },
-      { skip: !isActionsModalOpen || !appointmentPatientId }
+      { skip: !isActionsModalOpen || !appointmentPatientId, refetchOnMountOrArgChange: true }
     );
     const resolvedPatient: any =
       fetchedPatientById ||
       ((appointment?.appointmentData || localAppointmentData)?.patient ?? null);
+
+    const isPatientProfileIncomplete = useMemo(() => {
+      if (profileCompletedForCheckIn) return false;
+      if (!appointmentPatientId) return false;
+
+      const patientRecord = fetchedPatientById ?? resolvedPatient;
+      if (!patientRecord) return false;
+
+      return patientRecord?.isCompletedPatient !== true;
+    }, [
+      profileCompletedForCheckIn,
+      appointmentPatientId,
+      fetchedPatientById,
+      resolvedPatient
+    ]);
     
     // Payment draft state
     const [paymentDraft, setPaymentDraft] = useState<any>({
@@ -164,6 +182,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       const appointmentData = appointment?.appointmentData || localAppointmentData;
       return Number(appointmentData?.key || appointmentData?.id || 0);
     }, [appointment?.appointmentData, localAppointmentData]);
+
+    useEffect(() => {
+      setProfileCompletedForCheckIn(false);
+    }, [appointmentPatientId, appointmentId, isActionsModalOpen]);
 
     const normalizeStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     // Always prefer the latest clicked appointment payload from props to avoid stale local state.
@@ -267,7 +289,20 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       }
     };
 
-    const handleCheckIn = async () => {
+    /** Policies modal (if any), then check-in API. */
+    const proceedWithCheckIn = async () => {
+      if (appointmentPolicyAssignments.length > 0) {
+        openPolicySettingsModal(appointmentPolicyAssignments);
+        return;
+      }
+      await performCheckIn();
+    };
+
+    /**
+     * Full check-in pipeline: validate appointment → ensure patient profile is complete
+     * → policies (if assigned) → check-in.
+     */
+    const runCheckInFlow = async (options?: { skipProfileCompletionCheck?: boolean }) => {
       const id = getAppointmentId();
       if (!id) {
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
@@ -285,13 +320,34 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Appointment requires confirmation before check-in', sev: 'warning' }));
         return;
       }
-
-      if (appointmentPolicyAssignments.length > 0) {
-        openPolicySettingsModal(appointmentPolicyAssignments);
+      if (!appointmentPatientId) {
+        dispatch(notify({ msg: 'Please assign a patient before check-in', sev: 'warning' }));
         return;
       }
 
-      await performCheckIn();
+      const shouldCheckProfile = !options?.skipProfileCompletionCheck;
+
+      if (shouldCheckProfile && isFetchingPatient) {
+        dispatch(notify({ msg: 'Loading patient profile, please try again', sev: 'warning' }));
+        return;
+      }
+
+      if (shouldCheckProfile && isPatientProfileIncomplete) {
+        setCompleteProfileModalOpen(true);
+        return;
+      }
+
+      await proceedWithCheckIn();
+    };
+
+    const handleCheckIn = async () => {
+      await runCheckInFlow();
+    };
+
+    const handleProfileCompletedAndContinueCheckIn = async () => {
+      setProfileCompletedForCheckIn(true);
+      setCompleteProfileModalOpen(false);
+      await runCheckInFlow({ skipProfileCompletionCheck: true });
     };
 
     const handleSavePolicySettings = async () => {
@@ -895,6 +951,13 @@ const handleCancel = async () => {
                 actionButtonFunction={handleSavePolicySettings}
                 isDisabledActionBtn={isSavingPolicies}
                 hideBack={true}
+            />
+
+            <CompletePatientProfileBeforeCheckInModal
+              open={completeProfileModalOpen}
+              setOpen={setCompleteProfileModalOpen}
+              patientId={appointmentPatientId}
+              onCompleted={handleProfileCompletedAndContinueCheckIn}
             />
 
             <AppointmentLogsModal
