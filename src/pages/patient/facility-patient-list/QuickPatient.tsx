@@ -661,7 +661,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             icon: <FontAwesomeIcon icon={faBoltLightning} />
           }
         ]}
-        size="30vw"
+        size="33vw"
+        bodyheight="70vh"
         position="right"
         actionButtonLabel="Create"
         actionButtonFunction={handleSave}

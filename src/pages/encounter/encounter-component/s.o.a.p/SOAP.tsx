@@ -186,11 +186,13 @@ const SOAP = props => {
           <SectionContainer
             title={<Translate>Patient Diagnosis</Translate>}
             content={
+              <div style={{ width: '100%' }}>
               <PatientDiagnosis
                 patient={patient}
                 encounter={localEncounter}
                 onDiagnosisSaved={onDiagnosisSaved}
               />
+              </div>
             }
           />
 

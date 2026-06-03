@@ -174,6 +174,8 @@ html.surveyjs-mode {
   border: none;
 }
 
+
+
 .react-tabs__tab--selected,
 .react-tabs__tab--selected:active {
   color: var(--primary-blue) !important;
@@ -426,8 +428,14 @@ aside {
 }
 
 .rs-content {
-  margin-top: 0 !important;
+  margin-top: 0;
   padding-top: 0 !important;
+}
+
+@media (max-width: 650px) {
+  .rs-content {
+    margin-top: var(--header-height, 70px) !important;
+  }
 }
 
 .custom-date-input .rs-input-group-inside {
