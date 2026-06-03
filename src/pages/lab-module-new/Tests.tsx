@@ -594,7 +594,7 @@ const Tests = forwardRef<any, Props>(
                 style={{
                   fontSize: '1em',
                   cursor: 'pointer',
-                  color: hasNote ? '#1675e0' : 'var(--primary-gray)'
+                  color: hasNote ? 'var(--primary-blue)' : 'var(--primary-gray)'
                 }}
                 onClick={() => {
                   setTest(rowData);

@@ -6,6 +6,7 @@ import * as errors from '@/images/errors';
 import { MODULES } from '@/config/modules-config';
 import './styles.less';
 import { formatEnumString } from '@/utils';
+import MyButton from '@/components/MyButton/MyButton';
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
@@ -86,9 +87,9 @@ const ErrorDepartmentTypePage = () => {
           </div>
         </div>
 
-        <button className="error-page__button" onClick={() => navigate('/')}>
+        <MyButton onClick={() => navigate('/')}>
           Take me home
-        </button>
+        </MyButton>
       </div>
     </div>
   );

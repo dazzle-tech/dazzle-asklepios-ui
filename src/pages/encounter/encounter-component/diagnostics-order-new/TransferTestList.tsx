@@ -3,7 +3,6 @@ import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
 import {
-  Checkbox,
   CircularProgress,
   List,
   ListItemButton,
@@ -196,10 +195,30 @@ const TransferTestList = ({
               onClick={handleToggle(item)}
               disabled={!!isFetching}
             >
-              <ListItemIcon>
-                <Checkbox checked={checked.includes(key)} />
+              <ListItemIcon
+                onClick={e => e.stopPropagation()}
+                sx={{ minWidth: 'auto' }}
+              >
+                <MyInput
+                  className="transfer-test-list-check"
+                  fieldType="check"
+                  showLabel={false}
+                  fieldLabel={getItemName(item)}
+                  fieldName="selected"
+                  record={{ selected: checked.includes(key) }}
+                  setRecord={r => {
+                    const isChecked = !!r.selected;
+                    setChecked(prev =>
+                      isChecked
+                        ? prev.includes(key)
+                          ? prev
+                          : [...prev, key]
+                        : prev.filter(k => k !== key)
+                    );
+                  }}
+                  disabled={!!isFetching}
+                />
               </ListItemIcon>
-              <ListItemText primary={getItemName(item)} />
             </ListItemButton>
           );
         })}
@@ -214,9 +233,6 @@ const filteredCatalogs = useMemo(() => {
     return String(catalog.type).toUpperCase() === String(searchType.type).toUpperCase();
   });
 }, [catalogs, searchType?.type]);
-
-console.log('catalogs:', catalogs);
-console.log('selected type:', searchType.type);
 
   useEffect(() => {
     setSearchType(prev => ({
