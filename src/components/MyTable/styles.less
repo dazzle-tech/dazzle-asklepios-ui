@@ -121,13 +121,15 @@
           }
         }
 
-        &.selected-row {
-          .MuiTableCell-root {
-            // for one health theme (don`t remove the commented color)
-            // background-color: #dfe9fc;
-            background-color: var(--one-health-theme-select);
-          }
-        }
+  &.selected-row,
+&.selected-row:hover,
+&.selected-row.even-row,
+&.Mui-selected,
+&.Mui-selected:hover {
+  .MuiTableCell-root {
+    background-color: var(--one-health-theme-select) !important;
+  }
+}
       }
 
       // Expanded row
