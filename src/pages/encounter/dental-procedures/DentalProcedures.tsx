@@ -636,7 +636,10 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
+                            disableByField='isValid'
+
                   />
+                  
                 </Col>
               </Row>
 
@@ -679,6 +682,8 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
+                            disableByField='isValid'
+
                   />
                 </Col>
 

@@ -48,6 +48,7 @@ import {
   formatEnumString
 } from '@/utils';
 import AddBulkServicesToConsultationModal from '@/pages/encounter/encounter-pre-observations-new/Service&Products/AddBulkServicesToConsultationModal';
+import UserDateCell from '../UserDateCell/UserDateCell';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -512,20 +513,21 @@ const MyConsultations = () => {
       return;
     }
 
-    try {
-      await rejectConsultation({
-        id: Number(selectedRow.id),
-        body: { reason, rejectedBy: Number(loggedInUser.id) }
-      }).unwrap();
+  try {
+    await rejectConsultation({
+      id: Number(selectedRow.id),
+      body: { reason, rejectedBy: Number(loggedInUser.id) }
+    }).unwrap();
+    sessionStorage.setItem('consultation_updated', String(Date.now()));
 
-      dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
-      refetchConsultations();
-      setOpenRejectModal(false);
-      setRejectForm({ reason: '' });
-      setSelectedRow(null);
-    } catch {
-      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
-    }
+    dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
+    refetchConsultations();
+    setOpenRejectModal(false);
+    setRejectForm({ reason: '' });
+    setSelectedRow(null);
+  } catch {
+  dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
+}
   }, [
     dispatch,
     loggedInUser?.id,
@@ -796,13 +798,10 @@ const MyConsultations = () => {
         expandable: true,
         flexGrow: 2,
         render: (row: any) => (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">
-              {row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
       {
@@ -820,48 +819,36 @@ const MyConsultations = () => {
         title: 'Confirmed By/At',
         expandable: true,
         flexGrow: 2,
-        render: (row: any) => {
-          const confirmedAt = row.confirmedDate ?? row.confirmedAt;
-          return (
-            <>
-              {resolveUserName(row.confirmedBy)}
-              <br />
-              <span className="date-table-style">{formatDateTime(confirmedAt)}</span>
-            </>
-          );
-        }
+        render: (row: any) => (
+          <UserDateCell
+            login={row.confirmedBy}
+            date={row.confirmedDate ?? row.confirmedAt}
+          />
+        )
       },
       {
         key: 'responseByAt',
         title: 'Response By/At',
         expandable: true,
         flexGrow: 2,
-        render: (row: any) => {
-          const responseAt = row.responseDate ?? row.responseAt;
-          return (
-            <>
-              {resolveUserName(row.responseBy)}
-              <br />
-              <span className="date-table-style">{formatDateTime(responseAt)}</span>
-            </>
-          );
-        }
+        render: (row: any) => (
+          <UserDateCell
+            login={row.responseBy}
+            date={row.responseDate ?? row.responseAt}
+          />
+        )
       },
       {
         key: 'rejectedByAt',
-        expandable: true,
         title: 'Rejected By/At',
+        expandable: true,
         flexGrow: 2,
-        render: (row: any) => {
-          const rejectedAt = row.rejectedDate ?? row.rejectedAt;
-          return (
-            <>
-              {resolveUserName(row.rejectedBy)}
-              <br />
-              <span className="date-table-style">{formatDateTime(rejectedAt)}</span>
-            </>
-          );
-        }
+        render: (row: any) => (
+          <UserDateCell
+            login={row.rejectedBy}
+            date={row.rejectedDate ?? row.rejectedAt}
+          />
+        )
       },
       {
         key: 'rejectReason',
@@ -875,16 +862,12 @@ const MyConsultations = () => {
         title: 'Submitted By/At',
         expandable: true,
         flexGrow: 2,
-        render: (row: any) => {
-          const submittedAt = row.submittedDate ?? row.submittedAt;
-          return (
-            <>
-              {resolveUserName(row.submittedBy)}
-              <br />
-              <span className="date-table-style">{formatDateTime(submittedAt)}</span>
-            </>
-          );
-        }
+        render: (row: any) => (
+          <UserDateCell
+            login={row.submittedBy}
+            date={row.submittedDate ?? row.submittedAt}
+          />
+        )
       },
       {
         key: 'actions',

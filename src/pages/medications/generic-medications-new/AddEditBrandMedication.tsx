@@ -124,7 +124,9 @@ const AddEditBrandMedication = ({
                   fieldName="dosageForm"
                   fieldType="select"
                   selectData={doseageFormLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={brandMedication}
                   setRecord={setBrandMedication}
@@ -140,7 +142,9 @@ const AddEditBrandMedication = ({
                   fieldName="manufacturer"
                   fieldType="select"
                   selectData={brandMedicationLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={brandMedication}
                   setRecord={setBrandMedication}
@@ -268,7 +272,9 @@ const AddEditBrandMedication = ({
                   fieldName="costCategory"
                   fieldType="select"
                   selectData={categoryCostLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={brandMedication}
                   setRecord={setBrandMedication}

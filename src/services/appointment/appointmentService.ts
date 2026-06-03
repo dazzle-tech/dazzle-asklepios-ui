@@ -89,8 +89,19 @@ export const appointmentFromTemplateService = createApi({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/book-patient`,
         method: 'PUT',
-        body
+        body,
+        // Backend sometimes returns malformed JSON with HTTP 200.
+        // Read as text first to avoid RTKQ PARSING_ERROR on successful booking.
+        responseHandler: 'text'
       }),
+      transformResponse: (response: string) => {
+        if (!response) return {} as AppointmentFromTemplate;
+        try {
+          return JSON.parse(response) as AppointmentFromTemplate;
+        } catch {
+          return {} as AppointmentFromTemplate;
+        }
+      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -167,6 +178,33 @@ export const appointmentFromTemplateService = createApi({
           links: parseLinkHeader(headers?.get('Link'))
         };
       },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    getAppointmentsByStatusBetweenDatesWithoutPagination: builder.query<
+      AppointmentFromTemplate[],
+      {
+        status: AppointmentStatus[];
+        startDatetime: string;
+        endDatetime: string;
+      }
+    >({
+      query: ({ status, startDatetime, endDatetime }) => {
+        const query = new URLSearchParams();
+        (status ?? []).forEach(s => {
+          if (s) query.append('status', s);
+        });
+        query.set('startDatetime', startDatetime);
+        query.set('endDatetime', endDatetime);
+        return {
+          url: `${APPOINTMENT_BASE_URL}/by-status-and-dates/without-pagination?${query.toString()}`,
+          method: 'GET'
+        };
+      },
+      transformResponse: (response: AppointmentFromTemplate[]) => response ?? [],
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       },
@@ -253,6 +291,22 @@ export const appointmentFromTemplateService = createApi({
           links: parseLinkHeader(headers?.get('Link'))
         };
       },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    filterAppointmentsWithoutPagination: builder.query<
+      AppointmentFromTemplate[],
+      { filter: AppointmentFromTemplateSearchFilterDTO }
+    >({
+      query: ({ filter }) => ({
+        url: `${APPOINTMENT_BASE_URL}/search/without-pagination`,
+        method: 'POST',
+        body: filter
+      }),
+      transformResponse: (response: AppointmentFromTemplate[]) => response ?? [],
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       },
@@ -348,6 +402,8 @@ export const {
   useRescheduleDiagnosticTestAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
+  useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
+  useLazyGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
   useGetAppointmentsByBatchIdQuery,
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,
@@ -356,6 +412,8 @@ export const {
   useLazyGetAppointmentByIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
+  useFilterAppointmentsWithoutPaginationQuery,
+  useLazyFilterAppointmentsWithoutPaginationQuery,
   useCancelAppointmentMutation,
   useNoShowAppointmentMutation,
   useConfirmAppointmentMutation,

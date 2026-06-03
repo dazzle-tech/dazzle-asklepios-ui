@@ -105,6 +105,8 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                     fieldName="shiftLkey"
                     selectData={shiftsLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
+
                     selectDataValue="key"
                     record={nurseNotes}
                     setRecord={setNurseNotes}
@@ -119,6 +121,8 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                     fieldName="noteTypeLkey"
                     selectData={nurseNoteTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
+
                     selectDataValue="key"
                     record={nurseNotes}
                     setRecord={setNurseNotes}

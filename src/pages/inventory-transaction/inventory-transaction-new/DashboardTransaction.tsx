@@ -796,7 +796,9 @@ function DashboardTransaction() {
                       fieldName="transTypeLkey"
                       fieldType="select"
                       selectData={transTypeListResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={transaction}
                       setRecord={setTransaction}
@@ -835,7 +837,9 @@ function DashboardTransaction() {
                             ? transReasonInListResponse?.object ?? []
                             : transReasonOutListResponse?.object ?? []
                       }
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={transaction}
                       setRecord={setTransaction}

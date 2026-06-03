@@ -284,7 +284,9 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldType="select"
         fieldName="anesthesiaType"
         selectData={anesthesiaLov?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
@@ -297,7 +299,9 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldType="select"
         fieldName="complications"
         selectData={complicationsLov?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
@@ -310,7 +314,9 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldType="checkPicker"
         fieldName="adverseReactionsToAnesthesia"
         selectData={adverseLov?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}

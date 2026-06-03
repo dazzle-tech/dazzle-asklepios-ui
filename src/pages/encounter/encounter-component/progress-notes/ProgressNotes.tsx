@@ -26,6 +26,7 @@ import { newProgressNote } from '@/types/model-types-constructor-new';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import { MdHistory } from 'react-icons/md';
 import ProgressNoteLogsModal from './ProgressNoteLogsModal';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 const ProgressNotes: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -97,6 +98,27 @@ const edit = viewMode === 'readOnly'
 
   const isSelected = (row: ProgressNote) => (selectedNote?.id === row.id ? 'selected-row' : '');
 
+    const UserDateCell: React.FC<{
+      login?: string;
+      date?: string;
+    }> = ({ login, date }) => {
+      const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
+        skip: !login
+      });
+
+      if (!date) return null;
+
+      return (
+        <>
+          {fullName || login}
+          <br />
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(date)}
+          </span>
+        </>
+      );
+    };
+
   const columns = useMemo(
     () => [
       {
@@ -104,35 +126,30 @@ const edit = viewMode === 'readOnly'
         title: 'Progress Notes',
         dataKey: 'noteText',
         flexGrow: 2,
-        render: (row: ProgressNote) => <ExpandableText text={row.noteText} lines={3} />
+        render: (row: ProgressNote) => (
+          <ExpandableText text={row.noteText} lines={3} />
+        )
       },
       {
         key: 'created',
         title: <Translate>CREATED AT / BY</Translate>,
-        render: (row: ProgressNote) =>
-          row.createdDate ? (
-            <>
-              {row.createdBy}
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
+        )
       },
-
       {
         key: 'cancelled',
         title: 'CANCELLED AT / BY',
         expandable: true,
-        render: (row: ProgressNote) =>
-          row.cancelledDate ? (
-            <>
-              {row.cancelledBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.cancelledDate)}
-              </span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.cancelledBy}
+            date={row.cancelledDate}
+          />
+        )
       },
       {
         key: 'cancellationReason',
@@ -144,23 +161,21 @@ const edit = viewMode === 'readOnly'
         key: 'lastModified',
         title: 'LAST MODIFIED AT / BY',
         expandable: true,
-        render: (row: ProgressNote) =>
-          row.lastModifiedDate ? (
-            <>
-              {row.lastModifiedBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.lastModifiedDate)}
-              </span>
-            </>
-          ) : null
+        render: (row: ProgressNote) => (
+          <UserDateCell
+            login={row.lastModifiedBy}
+            date={row.lastModifiedDate}
+          />
+        )
       },
       {
         key: 'edit',
         title: 'ACTIONS',
         width: 120,
         render: (row: ProgressNote) => {
-          const isEdited = row.lastModifiedDate && row.createdDate !== row.lastModifiedDate;
+          const isEdited =
+            row.lastModifiedDate &&
+            row.createdDate !== row.lastModifiedDate;
 
           return (
             <div style={{ display: 'flex', gap: 6 }}>

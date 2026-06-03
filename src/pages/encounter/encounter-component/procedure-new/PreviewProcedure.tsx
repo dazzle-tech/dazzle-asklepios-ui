@@ -42,19 +42,29 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
   }, [procedure?.toFacilityId, getDepartmentsByFacility]);
 
   // Load procedures by facility and category
-  useEffect(() => {
-    const facilityId = procedure?.toFacilityId;
 
-    if (facilityId && procedure?.categoryKey) {
-      getProcedureByFacility({
-        facilityId: facilityId,
-        category: procedure.categoryKey,
-        page: 0,
-        size: 20,
-        sort: 'name,asc'
-      });
-    }
-  }, [procedure?.toFacilityId, procedure?.categoryKey, getProcedureByFacility]);
+    useEffect(() => {
+      const facilityId = procedure?.toFacilityId;
+      const category =
+        procedure?.categoryKey ||
+        procedure?.categoryId;
+
+      if (facilityId && category) {
+        getProcedureByFacility({
+          facilityId,
+          category,
+          page: 0,
+          size: 20,
+          sort: 'name,asc'
+        });
+      }
+    }, [
+      procedure?.toFacilityId,
+      procedure?.categoryKey,
+      procedure?.categoryId,
+      getProcedureByFacility
+    ]);
+
 
   if (!procedure) return null;
 
@@ -100,7 +110,7 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   selectData={categoryOptions ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"
-                  fieldName="categoryKey"
+                  fieldName="categoryId"
                   record={procedure}
                   setRecord={() => {}}
                 />
@@ -191,7 +201,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                         fieldType="select"
                         fieldLabel="Body Part"
                         selectData={bodypartLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="lovDisplayVale"
                         fieldName="bodyPart"
                         record={procedure}
@@ -204,7 +216,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                         fieldType="select"
                         fieldLabel="Side"
                         selectData={sideLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="lovDisplayVale"
                         fieldName="side"
                         record={procedure}

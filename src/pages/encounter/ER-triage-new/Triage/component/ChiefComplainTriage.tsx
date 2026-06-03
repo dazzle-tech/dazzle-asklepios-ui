@@ -261,7 +261,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="quality"
             selectData={painPatternLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}
@@ -289,7 +291,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="region"
             selectData={bodyPartsLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}
@@ -303,7 +307,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="severity"
             selectData={severityLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}

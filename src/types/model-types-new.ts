@@ -387,6 +387,8 @@ export interface AvailabilityGenerationBatchApplyDTO {
   deferredAt?: string | null;
   scope: string;
   holidayHandlingMode?: string | null;
+  policyAssignmentIds?: number[];
+
 }
 
 export interface ApplyAvailabilityTemplateResponseVM {
@@ -562,6 +564,7 @@ export interface AppointmentRequestResponseVM {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestCreateDTO {
@@ -576,6 +579,7 @@ export interface AppointmentRequestCreateDTO {
   priority: EncounterPriority;
   reason?: string | null;
   note?: string | null;
+  preferredDate?: string | null;
 }
 
 export interface AppointmentRequestUpdateDTO {
@@ -633,6 +637,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  nationalNumber?:string | null;
 }
 
 /* =========================
@@ -806,6 +811,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  modality:string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -2375,6 +2381,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface PatientInsurance {
   id?: number;
@@ -2782,7 +2790,11 @@ export interface FormEntry {
   templateId: number | null;
   facilityId: number | null;
   departmentId: number | null;
+  patientId?: number | null;
+  encounterId?: number | null;
   dataJson: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface FormEntryCreateVM {
@@ -2791,6 +2803,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface OrganizationDefinition {
   id?: number;
@@ -4389,6 +4403,86 @@ export type PolicyDefinitionUpdateDTO = {
   name: string;
   description?: string | null;
 };
+
+export type PolicyResourceType = string;
+
+export type PolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policy?: PolicyDefinition;
+  facilityId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isActive?: boolean;
+  isRequired?: boolean;
+};
+
+export type PolicyAssignmentCreateDTO = {
+  policyId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isRequired: boolean;
+};
+
+export type PolicyAssignmentUpdateDTO = {
+  id: number;
+  isRequired: boolean;
+};
+export type AppointmentPolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+};
+export type AppointmentPolicyAssignmentResponseVM = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+  policyName?:string;
+  policyCode?:string;
+};
+
+export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
+  id: number;
+  isApplied: boolean;
+};
+
+export type AppointmentPolicyAssignmentAppliedBulkUpdateDTO = {
+  updates: AppointmentPolicyAssignmentAppliedUpdateDTO[];
+};
+
+export type SkillDefinition = {
+  id?: number;
+  facilityId?: number;
+  facilityName?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+  type?: string;
+};
+
+export type SkillDefinitionCreateDTO = {
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  type: string;
+};
+
+export type SkillDefinitionUpdateDTO = {
+  id: number;
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  type: string;
+};
 export type PatientDiagnosisFlag = {
   encounterId: number;
   hasPrimaryDiagnoses: boolean;
@@ -4621,4 +4715,25 @@ export interface EligibilityCheckResult {
   eligibilityResponseId?: string | null;
   eligibilityResponseUrl?: string | null;
   requestStatus?: string | null;
+}
+
+export interface PatientProblem {
+  id?: number;
+  patient?: any | null;
+
+  condition: string | null;
+  dateOfDiagnosis?: string | Date | null;
+  conditionStatus: string | null;
+  type: string | null;
+  dateOfResolution?: string | Date | null;
+  byPatient: boolean | null;
+  sourceOfInformation?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
 }

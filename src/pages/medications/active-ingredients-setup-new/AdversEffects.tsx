@@ -202,7 +202,9 @@ const sortedList = useMemo(() => {
               record={record}
               setRecord={setRecord}
               selectData={lovData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="lovDisplayVale"
               width={220}
               menuMaxHeight={150}

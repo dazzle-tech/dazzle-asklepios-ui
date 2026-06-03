@@ -31,7 +31,9 @@ import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/securi
 import { cond } from 'lodash';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -300,6 +302,7 @@ const Referrals = (props: any) => {
     return map;
   }, [icdDiagnoses]);
 
+
   const tableColumns = useMemo(
     () => [
       {
@@ -317,7 +320,6 @@ const Referrals = (props: any) => {
           if (!proceduresByIds && procedureIds.length > 0) {
             return <TableLoader />;
           }
-
           const proc = proceduresMap.get(Number(rowData.procedureId));
           return proc?.name ?? '';
         }
@@ -498,13 +500,10 @@ const Referrals = (props: any) => {
         title: <Translate>CREATED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.createdBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.createdDate ? formatDateWithoutSeconds(rowData.createdDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.createdBy}
+            date={rowData?.createdDate}
+          />
         )
       },
       {
@@ -512,13 +511,10 @@ const Referrals = (props: any) => {
         title: <Translate>UPDATED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.lastModifiedBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.lastModifiedDate ? formatDateWithoutSeconds(rowData.lastModifiedDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.lastModifiedBy}
+            date={rowData?.lastModifiedDate}
+          />
         )
       },
       {
@@ -526,13 +522,10 @@ const Referrals = (props: any) => {
         title: <Translate>CANCELLED AT/BY</Translate>,
         expandable: true,
         render: (rowData: any) => (
-          <>
-            <span>{rowData?.cancelledBy ?? ''}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData?.cancelledDate ? formatDateWithoutSeconds(rowData.cancelledDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={rowData?.cancelledBy}
+            date={rowData?.cancelledDate}
+          />
         )
       },
       {

@@ -6,7 +6,7 @@ import {
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { Patient, Address, PatientDocument } from '@/types/model-types-new';
+import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -22,33 +22,21 @@ import {
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
-import MyModal from '@/components/MyModal/MyModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import {
-  Avatar,
-  AvatarGroup,
-  Dropdown,
-  Form,
-  Popover,
-  Stack,
-  Tooltip,
-  Whisper,
-  Input
-} from 'rsuite';
+import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
 import {
   useLazyGetPatientInformationPdfQuery,
-  useLazyGetPatientLabelPdfQuery
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
 } from '@/services/patient/patientService';
-import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
-
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -62,9 +50,9 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
-  setCchiAddress: (address: Address | null) => void;
-  setCchiDocument?: (document: PatientDocument | null) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
+  // eligibilityChecked: boolean;
+  // setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -79,162 +67,163 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
   setLocalPatient,
-  setCchiAddress,
-  setCchiDocument,
   setOpenReferralRequestModal
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
-
-  const [openCchiModal, setOpenCchiModal] = useState(false);
-  const [cchiDocumentId, setCchiDocumentId] = useState('');
-
   const [uploadAttachments] = useUploadAttachmentsMutation();
-  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
-  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
-
-  const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
-    useLazyGetPatientFromCchiQuery();
-
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-
+  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
-  const { data: profilePictureTicket, isError } = useGetPatientProfilePictureQuery(
+  const {
+    data: profilePictureTicket,
+    isError
+  } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
-const handleFetchPatientFromCchi = async () => {
-  if (!cchiDocumentId?.trim()) {
-    dispatch(
-      notify({
-        msg: 'Please enter document ID',
-        sev: 'warning'
-      })
-    );
-    return;
-  }
+
+
+const handlePrintInformation = async () => {
+  if (!localPatient?.id) return;
 
   try {
-    const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
+    setPrintingType('information');
 
-    setLocalPatient({
-      ...localPatient,
-      ...mappedResponse.patient,
-      id: localPatient?.id,
-      isCchiPatient: true
+    const blob = await triggerGetPatientInformationPdf({
+      patientId: localPatient.id,
+    }).unwrap();
+
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
     });
 
-    setCchiAddress(mappedResponse.address ?? null);
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-    if (mappedResponse?.document) {
-      setCchiDocument?.({
-        ...mappedResponse.document,
-        id: null,
-        patient: null,
-        countryId: mappedResponse.document.countryId,
-        number: mappedResponse.document.number,
-        type: mappedResponse.document.type,
-        isPrimary: false
-      } as any);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
     } else {
-      setCchiDocument?.(null);
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
     }
 
-    setOpenCchiModal(false);
-    setCchiDocumentId('');
 
+  } catch (err: any) {
     dispatch(
       notify({
-        msg: 'Patient data loaded from CCHI successfully',
+        msg: err?.data?.message || 'Print failed',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
+
+const handlePrintPatientLabel = async (rowData: any) => {
+  if (!rowData?.id) return;
+
+  try {
+    setPrintingType('label');
+
+    const blob = await triggerGetPatientLabelPdf({
+      patientId: rowData.id,
+    }).unwrap();
+
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
+    }
+
+    // لا تعمل revokeObjectURL هون
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Failed to open label pdf',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setPrintingType(null);
+  }
+};
+
+const extractErrorMessage = (response: any): string => {
+  try {
+    const msg =
+      response?.data?.message ??
+      response?.data?.error ??
+      response?.message ??
+      response?.error;
+
+    if (typeof msg === 'string' && msg.trim()) {
+      return msg.replace(/^error\./i, '').trim();
+    }
+
+    if (response?.data && typeof response?.data === 'object') {
+      const detail = response.data.detail ?? response.data.description;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail.trim();
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+};
+
+const handleSendPasswordEmail = async () => {
+  if (!localPatient?.id) return;
+
+  try {
+    await sendPatientPasswordEmail(localPatient.id).unwrap();
+    dispatch(
+      notify({
+        msg: 'Password email sent successfully',
         sev: 'success'
       })
     );
   } catch (error: any) {
-    setCchiDocument?.(null);
-
+    const errorMsg = extractErrorMessage(error);
     dispatch(
       notify({
-        msg: error?.data?.message || 'Failed to fetch patient from CCHI',
+        msg: errorMsg || 'Failed to send password email',
         sev: 'error'
       })
     );
   }
 };
-
-  const handlePrintInformation = async () => {
-    if (!localPatient?.id) return;
-
-    try {
-      setPrintingType('information');
-
-      const blob = await triggerGetPatientInformationPdf({
-        patientId: localPatient.id
-      }).unwrap();
-
-      const fileURL = window.URL.createObjectURL(blob);
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      }
-
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 10000);
-    } catch (err: any) {
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Print failed',
-          sev: 'error'
-        })
-      );
-    } finally {
-      setPrintingType(null);
-    }
-  };
-
-  const handlePrintPatientLabel = async (rowData: any) => {
-    if (!rowData?.id) return;
-
-    try {
-      setPrintingType('label');
-
-      const blob = await triggerGetPatientLabelPdf({
-        patientId: rowData.id
-      }).unwrap();
-
-      const fileURL = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `label-${rowData.medicalRecordNumber}.pdf`;
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.message || 'Failed to download label pdf',
-          sev: 'error'
-        })
-      );
-    } finally {
-      setPrintingType(null);
-    }
-  };
 
   const contentOfMoreIconMenu = (
     <Popover>
@@ -265,6 +254,20 @@ const handleFetchPatientFromCchi = async () => {
             <Translate>Referral Requests</Translate>
           </div>
         </Dropdown.Item>
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faThumbsUp} />
+            <Translate>Approvals</Translate>
+          </div>
+        </Dropdown.Item> */}
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarDay} />
+            <Translate>Appointments</Translate>
+          </div>
+        </Dropdown.Item> */}
 
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -308,41 +311,48 @@ const handleFetchPatientFromCchi = async () => {
             <Translate>Bulk Registration</Translate>
           </div>
         </Dropdown.Item>
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faBars} />
+            <Translate>Encounter Transactions</Translate>
+          </div>
+        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );
 
-  const contentOfPrintIconMenu = (
-    <Popover>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          disabled={!localPatient?.id || printingType !== null}
-          onClick={async () => {
-            await handlePrintInformation();
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>
-              {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
-            </Translate>
-          </div>
-        </Dropdown.Item>
+ const contentOfPrintIconMenu = (
+  <Popover>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintInformation();
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
 
-        <Dropdown.Item
-          disabled={!localPatient?.id || printingType !== null}
-          onClick={async () => {
-            await handlePrintPatientLabel(localPatient);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>
-              {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
-            </Translate>
-          </div>
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Popover>
-  );
+      <Dropdown.Item
+        disabled={!localPatient?.id || printingType !== null}
+        onClick={async () => {
+          await handlePrintPatientLabel(localPatient);
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <Translate>
+            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
+          </Translate>
+        </div>
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  </Popover>
+);
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -352,7 +362,6 @@ const handleFetchPatientFromCchi = async () => {
     if (!localPatient || !patientId) return;
 
     const selectedFile = event.target.files?.[0];
-
     if (selectedFile) {
       try {
         await uploadAttachments({
@@ -363,6 +372,8 @@ const handleFetchPatientFromCchi = async () => {
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
+        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
+        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
@@ -417,30 +428,39 @@ const handleFetchPatientFromCchi = async () => {
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-  const whisperRef = useRef<any>(null);
+// useEffect(() => {
+//   if (location.state?.eligibilityDone) {
+//     setEligibilityChecked(true);
+//   }
+// }, [location.state]);
 
-  useEffect(() => {
-    if (quickPatientModalOpen || openScanDocumentModal || openCchiModal) {
-      whisperRef.current?.close?.();
-    }
-  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal]);
 
-  useEffect(() => {
-    const handleClick = (e: any) => {
-      if (e.target.closest('.rs-popover')) return;
+const whisperRef = useRef<any>(null);
 
-      setOpenMoreMenu(false);
-    };
+useEffect(() => {
+  if (quickPatientModalOpen || openScanDocumentModal) {
+    whisperRef.current?.close?.();
+  }
+}, [quickPatientModalOpen, openScanDocumentModal]);
 
-    document.addEventListener('mousedown', handleClick);
+useEffect(() => {
+  const handleClick = (e: any) => {
+    if (e.target.closest('.rs-popover')) return;
 
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-    };
-  }, []);
+    setOpenMoreMenu(false);
+  };
 
+  document.addEventListener('mousedown', handleClick);
+
+  return () => {
+    document.removeEventListener('mousedown', handleClick);
+  };
+}, []);
+
+  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
+
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -547,7 +567,6 @@ const handleFetchPatientFromCchi = async () => {
             >
               <AvatarGroup spacing={6}></AvatarGroup>
             </div>
-
             <div
               style={{
                 display: 'flex',
@@ -556,6 +575,10 @@ const handleFetchPatientFromCchi = async () => {
                 justifyContent: 'flex-end'
               }}
             >
+              {/* <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton> */}
+
               <MyButton
                 onClick={() => {
                   // setEligibilityChecked(true);
@@ -563,10 +586,6 @@ const handleFetchPatientFromCchi = async () => {
                 }}
               >
                 <Translate>Eligibility Check</Translate>
-              </MyButton>
-
-              <MyButton onClick={() => setOpenCchiModal(true)}>
-                <Translate>Fetch Patient from CCHI</Translate>
               </MyButton>
 
               <MyButton
@@ -581,6 +600,16 @@ const handleFetchPatientFromCchi = async () => {
                 onClick={handleClear}
               >
                 <Translate>Clear</Translate>
+              </MyButton>
+
+              <MyButton
+                appearance="ghost"
+                disabled={!localPatient?.id || isSendingPasswordEmail}
+                onClick={handleSendPasswordEmail}
+              >
+                <Translate>
+                  {isSendingPasswordEmail ? 'Sending Password Email...' : 'Send Password Email'}
+                </Translate>
               </MyButton>
 
               <MyButton
@@ -612,7 +641,10 @@ const handleFetchPatientFromCchi = async () => {
                 speaker={contentOfMoreIconMenu}
               >
                 <span style={{ display: 'inline-block' }}>
-                  <MyButton size="small" onClick={() => setOpenMoreMenu(prev => !prev)}>
+                  <MyButton
+                    size="small"
+                    onClick={() => setOpenMoreMenu(prev => !prev)}
+                  >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </MyButton>
                 </span>
@@ -651,47 +683,6 @@ const handleFetchPatientFromCchi = async () => {
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
-      />
-
-      <MyModal
-        open={openCchiModal}
-        setOpen={(open: boolean) => {
-          if (!isFetchingCchiPatient) {
-            setOpenCchiModal(open);
-          }
-        }}
-        title={<Translate>Fetch Patient from CCHI</Translate>}
-        size="30vw"
-        bodyheight="160px"
-        pagesCount={1}
-        hideBack
-        actionButtonLabel={isFetchingCchiPatient ? 'Loading...' : 'Load Patient'}
-        isDisabledActionBtn={isFetchingCchiPatient}
-        actionButtonFunction={handleFetchPatientFromCchi}
-        cancelButtonLabel="Cancel"
-        handleCancelFunction={() => {
-          if (!isFetchingCchiPatient) {
-            setOpenCchiModal(false);
-            setCchiDocumentId('');
-          }
-        }}
-        content={
-          <Form fluid>
-            <Form.Group>
-              <Form.ControlLabel>
-                <Translate>Document ID</Translate>
-              </Form.ControlLabel>
-
-              <Input
-                value={cchiDocumentId}
-                disabled={isFetchingCchiPatient}
-                onChange={value => setCchiDocumentId(value)}
-                placeholder="Enter document ID"
-                onPressEnter={handleFetchPatientFromCchi}
-              />
-            </Form.Group>
-          </Form>
-        }
       />
     </div>
   );

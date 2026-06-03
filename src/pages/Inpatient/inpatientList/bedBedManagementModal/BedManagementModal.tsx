@@ -15,7 +15,7 @@ const BedManagementModal = ({ open, setOpen, departmentKey }) => {
   ];
 
   // modal content
-  const modalContent = <MyTab data={tabData} className="tab-container" />;
+  const modalContent = <MyTab data={tabData} lazy className="tab-container" />;
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

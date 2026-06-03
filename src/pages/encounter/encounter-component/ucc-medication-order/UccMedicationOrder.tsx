@@ -301,6 +301,68 @@ const UccMedicationOrder = (props: any) => {
       render: (row: any) => formatEnumString(row?.status)
     },
     {
+      key: 'createdByAt',
+      title: <Translate>CREATED BY/AT</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (row: any) => (
+        <div>
+          <div>{row?.createdByFullName || row?.createdBy || '-'}</div>
+          <div className="text-muted small">
+            {row?.createdDate
+              ? new Date(row.createdDate).toLocaleString()
+              : '-'}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'discardByAt',
+      title: <Translate>DISCARD BY/AT</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (row: any) => (
+        <div>
+          <div>{row?.discardedByFullName || row?.discardedBy || '-'}</div>
+          <div className="text-muted small">
+            {row?.discardedDate
+              ? new Date(row.discardedDate).toLocaleString()
+              : '-'}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'discardReason',
+      title: <Translate>DISCARD REASON</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (row: any) => row?.discardReason || '-'
+    },
+    {
+      key: 'cancelByAt',
+      title: <Translate>CANCEL BY/AT</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (row: any) => (
+        <div>
+          <div>{row?.cancelledByFullName || row?.cancelledBy || '-'}</div>
+          <div className="text-muted small">
+            {row?.cancelledDate
+              ? new Date(row.cancelledDate).toLocaleString()
+              : '-'}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>CANCELLATION REASON</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (row: any) => row?.cancellationReason || '-'
+    },
+    {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
       align: 'center',

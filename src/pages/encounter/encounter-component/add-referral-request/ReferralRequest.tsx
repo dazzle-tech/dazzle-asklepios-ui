@@ -22,7 +22,10 @@ import { useLocation } from 'react-router-dom';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { MdModeEdit } from 'react-icons/md';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+
 const REFERRAL_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Referral request data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -294,6 +297,8 @@ const ReferralRequest = () => {
 
   const isSelected = (rowData: any) => (rowData?.id === referral?.id ? 'selected-row' : '');
 
+
+
   const tableColumns = [
     {
       key: 'referralType',
@@ -361,31 +366,23 @@ const ReferralRequest = () => {
       title: <Translate>Created By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.createdBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.createdDate ? formatDateWithoutSeconds(row.createdDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
       )
     },
-
     {
       key: 'acceptedBy',
       title: <Translate>Accepted By/At</Translate>,
       flexGrow: 3,
       expandable: true,
       render: (row: any) => (
-        <>
-          {row?.acceptedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.acceptedDate ? formatDateWithoutSeconds(row.acceptedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.acceptedBy}
+          date={row?.acceptedDate}
+        />
       )
     },
     {
@@ -393,15 +390,11 @@ const ReferralRequest = () => {
       title: <Translate>Rejected By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.rejectedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.rejectedDate ? formatDateWithoutSeconds(row.rejectedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.rejectedBy}
+          date={row?.rejectedDate}
+        />
       )
     },
     {

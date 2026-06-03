@@ -503,6 +503,8 @@ const AddPayment: React.FC<AddPaymentProps> = ({
           record={record}
           disabled={isReadOnly}
           setRecord={setRecord}
+                  disableByField='isValid'
+
         />
         <MyInput
           column
@@ -521,6 +523,8 @@ const AddPayment: React.FC<AddPaymentProps> = ({
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
+                  disableByField='isValid'
+
         />
         <MyInput
           vr={validationResult}

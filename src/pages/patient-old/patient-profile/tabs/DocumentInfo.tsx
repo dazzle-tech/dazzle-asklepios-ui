@@ -20,7 +20,9 @@ const DocumentInfo = ({
                       fieldType="select"
                       fieldName="documentTypeLkey"
                       selectData={docTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={localPatient}
                       setRecord={setLocalPatient}

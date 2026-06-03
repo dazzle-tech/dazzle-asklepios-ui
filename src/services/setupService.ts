@@ -181,22 +181,22 @@ export const setupService = createApi({
       keepUnusedDataFor: 0
     }),
     getLovValuesByKey: builder.query({
-  query: (lovKey: string) => ({
-    url: `/setup/lov-value-list/by-key?key=${lovKey}`
-  }),
-  
-  onQueryStarted: onQueryStarted,
-  keepUnusedDataFor: 0
-}),
-getLovValuesBulkByKeys: builder.query({
-  query: (lovKeys: string[]) => ({
-    url: `/setup/lov-value-list/bulk-by-keys?${lovKeys
-      .map(key => `lov_keys=${key}`)
-      .join("&")}`
-  }),
-  onQueryStarted: onQueryStarted,
-  keepUnusedDataFor: 0
-}),
+      query: (lovKey: string) => ({
+        url: `/setup/lov-value-list/by-key?key=${lovKey}`
+      }),
+
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 0
+    }),
+    getLovValuesBulkByKeys: builder.query({
+      query: (lovKeys: string[]) => ({
+        url: `/setup/lov-value-list/bulk-by-keys?${lovKeys
+          .map(key => `lov_keys=${key}`)
+          .join("&")}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 0
+    }),
     saveLovValue: builder.mutation({
       query: (lovValue: ApLovValues) => ({
         url: `/setup/save-lov-value`,
@@ -416,6 +416,12 @@ getLovValuesBulkByKeys: builder.query({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 900 // 15 minutes
     }),
+    toggleActiveLovValue: builder.mutation({
+      query: (key: string) => ({
+        url: `/reference-data/lov-values-toggle-active?key=${key}`,
+        method: 'POST',
+      }),
+    }),
     getMetadata: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/dvm/metadata-list?${fromListRequestToQueryParams(listRequest)}`
@@ -423,6 +429,7 @@ getLovValuesBulkByKeys: builder.query({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     getMetadataFields: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/dvm/metadata-fields-list?${fromListRequestToQueryParams(listRequest)}`
@@ -589,7 +596,7 @@ getLovValuesBulkByKeys: builder.query({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 3600
     }),
-        getIcdById: builder.query({
+    getIcdById: builder.query({
       query: (diagnosisId: string) => ({
         url: `/setup/icd-list-by-id`,
         params: {
@@ -850,7 +857,7 @@ getLovValuesBulkByKeys: builder.query({
       },
     }),
 
- 
+
     saveAgeGroup: builder.mutation({
       query: (agegroup: ApAgeGroup) => ({
         url: `/setup/save-age-group`,
@@ -1117,7 +1124,7 @@ getLovValuesBulkByKeys: builder.query({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-  getCandidatesByDepartmentKey: builder.query({
+    getCandidatesByDepartmentKey: builder.query({
       query: (departmentKey) => `/setup/duplication-candidate-by-department?departmentKey=${departmentKey}`,
     }),
 
@@ -1207,8 +1214,8 @@ getLovValuesBulkByKeys: builder.query({
       // onQueryStarted: onQueryStarted,
       // keepUnusedDataFor: 5
 
-    }),   
-     saveRoom: builder.mutation({
+    }),
+    saveRoom: builder.mutation({
       query: (records: ApRoom) => ({
         url: `/setup/save-room`,
         method: 'POST',
@@ -1268,7 +1275,7 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       },
     }),
-      saveRoomServices: builder.mutation({
+    saveRoomServices: builder.mutation({
       query: (records: ApRoomServices) => ({
         url: `/setup/save-room-service`,
         method: 'POST',
@@ -1299,7 +1306,7 @@ getLovValuesBulkByKeys: builder.query({
       },
     }),
     fetchBedsRelatedToDepartment: builder.query({
-      query: (data: { resourceKey: string}) => ({
+      query: (data: { resourceKey: string }) => ({
         url: `/setup/room-beds-list`,
         headers: {
           "resource-key": data.resourceKey,
@@ -1336,7 +1343,7 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       }
     }),
-        getWarehouse: builder.query({
+    getWarehouse: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1361,7 +1368,7 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       }
     }),
-     getWarehouseUser: builder.query({
+    getWarehouseUser: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-user-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1386,20 +1393,20 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       }
     }),
-       fetchBedCountByDepartmentKey: builder.query({
-          query: (data: { department_key: string }) => ({
-            url: `/setup/get-bed-count-by-department`,
-            headers: {
-             "department-key": data.department_key
-            }
-          }),
-          onQueryStarted: onQueryStarted,
-          transformResponse: (response: any) => {
-            return response.object;
-          },
-          keepUnusedDataFor: 0
-        }),
-           getWarehouseProducts: builder.query({
+    fetchBedCountByDepartmentKey: builder.query({
+      query: (data: { department_key: string }) => ({
+        url: `/setup/get-bed-count-by-department`,
+        headers: {
+          "department-key": data.department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
+    getWarehouseProducts: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-products-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1424,7 +1431,7 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       }
     }),
-         getWarehouseProductsDetails: builder.query({
+    getWarehouseProductsDetails: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-products-details-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1449,7 +1456,7 @@ getLovValuesBulkByKeys: builder.query({
         return response.object;
       }
     }),
-      getWarehouseContainProducts: builder.query({
+    getWarehouseContainProducts: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-contain-products-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1606,8 +1613,9 @@ export const {
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
   useLazyGetCandidatesByDepartmentKeyQuery,
- useGetIcdByIdQuery,
- useGetLovValuesByKeyQuery,
- useGetLovValuesBulkByKeysQuery,
- useLazyGetLovValuesBulkByKeysQuery,
+  useGetIcdByIdQuery,
+  useGetLovValuesByKeyQuery,
+  useGetLovValuesBulkByKeysQuery,
+  useLazyGetLovValuesBulkByKeysQuery,
+  useToggleActiveLovValueMutation
 } = setupService;

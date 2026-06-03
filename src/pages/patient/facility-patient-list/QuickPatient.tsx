@@ -41,8 +41,6 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-  'patient.department.date.duplicate':
-    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
   'patient.emergency.notAllowed.withOngoing':
@@ -484,13 +482,9 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   const quickPatientContent = useMemo(
     () => (
       <Form
-        fluid
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12
-        }}
+        fluid 
       >
+       <div className="my-modal-responsive-form-handle">
         <MyInput
           required
           vr={validationResult}
@@ -635,6 +629,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
           </>
         )}
+        </div>
       </Form>
     ),
     [
@@ -666,7 +661,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             icon: <FontAwesomeIcon icon={faBoltLightning} />
           }
         ]}
-        size="30vw"
+        size="33vw"
+        bodyheight="70vh"
         position="right"
         actionButtonLabel="Create"
         actionButtonFunction={handleSave}

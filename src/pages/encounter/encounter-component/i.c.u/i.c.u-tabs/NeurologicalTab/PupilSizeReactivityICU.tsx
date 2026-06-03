@@ -82,7 +82,9 @@ const PupilSizeReactivityICU: React.FC = () => {
                       fieldType="select"
                       fieldName="rightEyePupilSizeLkey"
                       selectData={sizeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={record}
                       setRecord={setRecord}
@@ -112,7 +114,9 @@ const PupilSizeReactivityICU: React.FC = () => {
                       fieldType="select"
                       fieldName="leftEyePupilSizeLkey"
                       selectData={sizeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={record}
                       setRecord={setRecord}

@@ -203,7 +203,9 @@ const BulkCollectSampleModal = ({
                 fieldName="unit"
                 fieldType="select"
                 selectData={valueUnitLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -237,7 +239,9 @@ const BulkCollectSampleModal = ({
                 fieldName="sourceOfSample"
                 fieldType="select"
                 selectData={sampleSourceLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}

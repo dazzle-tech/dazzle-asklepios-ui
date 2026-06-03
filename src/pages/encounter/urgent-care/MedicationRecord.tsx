@@ -26,6 +26,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import './styles.less';
 import CancellationModal from '@/components/CancellationModal';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import { skipToken } from '@reduxjs/toolkit/query';
 
 type MedicationOrderRow = {
   id: number;
@@ -57,17 +59,25 @@ type MedicationOrderRow = {
   discardReason?: string;
 };
 
-const formatUserAt = (user?: string, date?: string) => {
-  return (
-    <>
-      {user || ' '}
-      <br />
-      <span className="date-table-style">
-        {date ? formatDate(new Date(date)) : ' '}
-      </span>
-    </>
-  );
-};
+    const UserFullName = ({ login }: { login?: string }) => {
+      const { data } = useGetUserFullNameByLoginQuery(
+        login || skipToken
+      );
+
+      return <>{data || login || '-'}</>;
+    };
+
+  const formatUserAt = (user?: string, date?: string) => {
+    return (
+      <>
+        <UserFullName login={user} />
+        <br />
+        <span className="date-table-style">
+          {date ? formatDate(new Date(date)) : ' '}
+        </span>
+      </>
+    );
+  };
 
 const MedicationClassCell = ({ drugClassId }: { drugClassId?: number }) => {
   const { data, isFetching } = useGetMedicationCategoryClassByClassIdQuery(
@@ -461,6 +471,9 @@ const MedicationRecord = () => {
     }));
   };
 
+
+
+
   // =========================
   // COMMON COLUMNS
   // =========================
@@ -547,6 +560,9 @@ const MedicationRecord = () => {
   // =========================
   // ORDERED COLUMNS
   // =========================
+
+
+
   const orderedColumns = useMemo(
     () => [
       ...commonColumns,

@@ -25,6 +25,8 @@ const InvasiveDeviceICUModal: React.FC<InvasiveDeviceICUModalProps> = ({ record,
           setRecord={setRecord}
           selectData={deviceTypeLov?.object ?? []}
           selectDataLabel="lovDisplayVale"
+          disableByField='isValid'
+
           selectDataValue="key"
           searchable={false}
         />
@@ -37,6 +39,8 @@ const InvasiveDeviceICUModal: React.FC<InvasiveDeviceICUModalProps> = ({ record,
           setRecord={setRecord}
           selectData={deviceSiteLov?.object ?? []}
           selectDataLabel="lovDisplayVale"
+          disableByField='isValid'
+
           selectDataValue="key"
           searchable={false}
         />

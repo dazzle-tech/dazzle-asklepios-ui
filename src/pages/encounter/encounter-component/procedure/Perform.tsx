@@ -136,7 +136,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Priority"
                     selectData={priorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'priorityLkey'}
                     record={procedure}
@@ -149,7 +151,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Body Part "
                     selectData={bodypartLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'bodyPartLkey'}
                     record={procedure}
@@ -161,7 +165,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Side"
                     selectData={sideLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'sideLkey'}
                     record={procedure}
@@ -204,6 +210,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
              data={tabData}
              activeTab={activeTab}
              setActiveTab={setActiveTab}
+             lazy
             />
         </div>
         <div className='right-box'>

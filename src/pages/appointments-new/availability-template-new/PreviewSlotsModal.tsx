@@ -117,7 +117,7 @@ const PreviewSlotsModal: React.FC<Props> = ({
       }
       content={
         <>
-          <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy/>
 
           <div className="calendar-wrapper">
             <div className="channels-wrapper">

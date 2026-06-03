@@ -520,6 +520,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
                     setRecord={setSelectedRowData}
                     disabled={true}
                     searchable={false}
+                            disableByField='isValid'
+
                   />
                   <MyInput
                     width={200}
@@ -532,6 +534,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
                     record={selectedRowData}
                     setRecord={setSelectedRowData}
                     disabled={true}
+                            disableByField='isValid'
+
                   />
                   <MyInput
                     width={200}

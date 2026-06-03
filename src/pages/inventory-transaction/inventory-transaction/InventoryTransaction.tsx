@@ -643,7 +643,9 @@ const filters = (<>
                         fieldType="select"
                         fieldName="productTypeLkey"
                         selectData={[]}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={searchTrans}
                         setRecord={setSearchTrans}
@@ -661,7 +663,9 @@ const filters = (<>
                         fieldType="select"
                         fieldName="documentTypeLkey"
                         selectData={[]}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={searchTrans}
                         setRecord={setSearchTrans}
@@ -672,7 +676,9 @@ const filters = (<>
                         fieldType="select"
                         fieldName="warehouseLkey"
                         selectData={[]}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={searchTrans}
                         setRecord={setSearchTrans}

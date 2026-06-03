@@ -14,7 +14,7 @@ import MyToast from './components/MyToast/MyToast';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import Translate from './components/Translate';
-import { useAppSelector } from './hooks';
+import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
 import locales from './locales';
 import Error403Page from './pages/authentication/403';
@@ -74,6 +74,7 @@ import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTempl
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import Accounting from './pages/billing-module';
 import CreatePassword from './pages/create-password/CreatePassword';
+import CreatePatientPassword from './pages/patient/patient-profile/CreatePatientPassword';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -213,9 +214,12 @@ import Enums from './pages/setup/Enums';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import PayerSetup from './pages/setup/payer-setup';
 import PolicyDefinitions from './pages/setup/policy-definition';
+import SkillDefinitions from './pages/setup/skill-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
+import { setSelectedDepartment } from './reducers/authSlice';
+import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -354,10 +358,28 @@ const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-
+const dispatch = useAppDispatch();
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
+ useEffect(() => {
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === 'selectedDepartment') {
+      const newDepartment = event.newValue
+        ? JSON.parse(event.newValue)
+        : null;
 
+      dispatch(setSelectedDepartment(newDepartment));
+
+      window.location.reload();
+    }
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+  };
+}, [dispatch]);
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
@@ -668,6 +690,7 @@ const App = () => {
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
+              <Route path="waseel-pre-authorization-requests" element={<WaseelPreAuthorizationRequests />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="inpatient-encounters-list" element={<InpatientList />} />
               <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
@@ -772,6 +795,8 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
+              <Route path="skill-definition" element={<SkillDefinitions />} />
+
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
@@ -871,6 +896,7 @@ const App = () => {
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
+          <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

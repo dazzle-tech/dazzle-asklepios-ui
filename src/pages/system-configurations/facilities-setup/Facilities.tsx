@@ -469,6 +469,7 @@ const handleSave = async () => {
       {facility?.id && (
         <Box mt={3}>
           <MyTab
+          lazy
             data={[
               {
                 title: 'Departments',

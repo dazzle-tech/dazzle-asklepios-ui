@@ -240,7 +240,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                   fieldLabel="Payment Type"
                   fieldName="paymentTypeLkey"
                   selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localEncounter}
                   setRecord={setLocalEncounter}
@@ -290,7 +292,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                       fieldType="select"
                       fieldName="insurancePlanTypeLkey"
                       selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={patientInsurance}
                       setRecord={setPatientInsurance}
@@ -331,7 +335,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                     fieldLabel="Payment Method"
                     fieldName="PaymentMethod"
                     selectData={paymentMethodLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={newValue => {
@@ -359,7 +365,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                     fieldLabel="Currency"
                     fieldName="Currency"
                     selectData={currencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={() => {

@@ -76,7 +76,9 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldLabel="Product Type"
           fieldName="productType"
           selectData={productsLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           width="140px"
           record={{}}
@@ -88,7 +90,9 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldName="status"
           fieldLabel="Status"
           selectData={payPymentMethodLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           width="130px"
           record={{}}

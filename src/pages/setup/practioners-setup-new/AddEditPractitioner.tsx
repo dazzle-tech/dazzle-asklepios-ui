@@ -367,7 +367,7 @@ const AddEditPractitioner = ({
                         />
                       }
                     />
-                    {practitioner?.userId && (
+                    {practitioner?.userId > 0 && (
                       <div style={{ marginBottom: 12 }}>
                         <MyButton color="red" size="xs" onClick={handleUnlinkUser}>
                           Unlink User
@@ -433,6 +433,16 @@ const AddEditPractitioner = ({
                         width={'100%'}
                       />
                     </div>
+                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                      <MyInput
+                        column
+                        fieldLabel='National ID'
+                        fieldName="nationalNumber"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width={'100%'}
+                      />
+                    </div>
                   </>
                 }
               />
@@ -461,7 +471,9 @@ const AddEditPractitioner = ({
                         fieldType="select"
                         fieldName="educationalLevel"
                         selectData={eduLvlLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={practitioner}
                         setRecord={setPractitioner}
@@ -487,7 +499,9 @@ const AddEditPractitioner = ({
                           fieldType="select"
                           fieldName="subSpecialty"
                           selectData={subSpecialityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           record={practitioner}
                           setRecord={setPractitioner}
@@ -552,14 +566,15 @@ const AddEditPractitioner = ({
                   <>
                     <Row>
                       <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="parallelCapacityValue"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required
-                        />
+                      <MyInput
+                        fieldType="number"
+                        fieldName="parallelCapacityValue"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width="100%"
+                        showZero
+                        required
+                      />
                       </Col>
                       {practitioner?.appointable && (
                         <Col md={12}>
@@ -569,6 +584,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>
@@ -583,6 +599,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>
@@ -593,6 +610,7 @@ const AddEditPractitioner = ({
                             record={practitioner}
                             setRecord={setPractitioner}
                             width="100%"
+                            showZero
                             required={practitioner.appointable}
                           />
                         </Col>

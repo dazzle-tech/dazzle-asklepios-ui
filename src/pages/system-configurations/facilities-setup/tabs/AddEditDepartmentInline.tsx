@@ -309,6 +309,7 @@ const defaultNurseMedicalSheetsInfo = (
         setRecord={setDepartment}
         width="100%"
         required
+        showZero
       />
 
       {department?.appointable && (
@@ -321,6 +322,7 @@ const defaultNurseMedicalSheetsInfo = (
             setRecord={setDepartment}
             width="100%"
             required
+            showZero
           />
 
           <MyInput
@@ -331,6 +333,7 @@ const defaultNurseMedicalSheetsInfo = (
             setRecord={setDepartment}
             width="100%"
             required
+            showZero
           />
 
           <MyInput
@@ -341,6 +344,7 @@ const defaultNurseMedicalSheetsInfo = (
             setRecord={setDepartment}
             width="100%"
             required
+            showZero
           />
         </>
       )}

@@ -64,7 +64,9 @@ const AddEditIntake = ({ open, setOpen, width }) => {
             fieldName="intakeType"
             fieldType="select"
             selectData={intakeTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={formData}
             setRecord={setFormData}
@@ -89,7 +91,9 @@ const AddEditIntake = ({ open, setOpen, width }) => {
             fieldName="route"
             fieldType="select"
             selectData={routeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={formData}
             setRecord={setFormData}

@@ -21,7 +21,7 @@ const UrgentCareListMain = () => {
 
   return (
     <Panel dir={dir}>
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Panel>
   );
 };

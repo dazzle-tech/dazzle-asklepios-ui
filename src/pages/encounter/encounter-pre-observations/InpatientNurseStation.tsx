@@ -264,7 +264,7 @@ const InpatientNurseStation = ({ }) => {
                   )}
                 </div>
               </div>
-              <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} />
+              <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} lazy/>
             </Panel>
           </div>
           <div className="right-box">

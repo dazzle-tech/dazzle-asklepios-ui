@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -110,6 +111,32 @@ useEffect(() => {
 }, [departmentIds]);
 const getDepartmentName = (id?: number) =>
   departmentsMap.get(id)?.name ?? id;
+
+
+      const UserDateCell = ({
+        login,
+        date
+        }: {
+        login?: string;
+        date?: string;
+        }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+            skip: !login
+        });
+
+        if (!date && !login) return null;
+
+        return (
+            <>
+            {fullName || login || ''}
+            <br />
+            <span className="date-table-style">
+                {date ? formatDateWithoutSeconds(date) : ''}
+            </span>
+            </>
+        );
+        };
+
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -286,11 +313,10 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
-        </>
+        <UserDateCell
+          login={rowData.createdBy}
+          date={rowData.createdAt}
+        />
       )
     },
     {
@@ -298,13 +324,10 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.lastModifiedBy}</span>
-          <br />
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.lastModifiedBy}
+          date={rowData.lastModifiedDate}
+        />
       )
     },
     {
@@ -312,13 +335,10 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.cancelledBy}</span>
-          <br />
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.cancelledDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.cancelledBy}
+          date={rowData.cancelledDate}
+        />
       )
     },
     {

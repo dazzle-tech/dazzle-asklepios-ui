@@ -94,6 +94,8 @@ const DialysisRequestModal = ({}) => {
                     searchable={false}
                     width={'100%'}
                     setRecord={setFormData}
+                            disableByField='isValid'
+
                   />
                   <MyInput
                     fieldType="select"
@@ -106,6 +108,8 @@ const DialysisRequestModal = ({}) => {
                     record={formData}
                     width={'100%'}
                     setRecord={setFormData}
+                            disableByField='isValid'
+
                   />
                 </div>
 
@@ -129,6 +133,8 @@ const DialysisRequestModal = ({}) => {
                     record={formData}
                     width={'100%'}
                     setRecord={setFormData}
+                            disableByField='isValid'
+
                   />
                 </div>
 

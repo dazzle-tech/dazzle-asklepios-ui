@@ -23,7 +23,7 @@ import './styles.less';
 import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 import Header from '../Header';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import Sidebarlogo from '../../images/SideBarLogo.png';
+import Sidebarlogo from '../../images/Logo_BLUE_New1.svg';
 // MUI imports
 import {
   Drawer,

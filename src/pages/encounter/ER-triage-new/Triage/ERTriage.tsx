@@ -243,27 +243,29 @@ const ERTriage = () => {
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
   const handlePrintWristband = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPatientWristbandPdf({
-        patientId: rowData.patientId
-      }).unwrap();
+  try {
+    const blob = await triggerGetPatientWristbandPdf({
+      patientId: rowData.patientId,
+    }).unwrap();
 
-      const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `wristband-${rowData.patientId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download wristband pdf', error);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      console.error('Popup blocked. Please allow popups for this site.');
     }
-  };
+
+  } catch (error) {
+    console.error('Failed to open wristband pdf', error);
+  }
+};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -1257,7 +1259,8 @@ const ERTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment || isReceptionist}
+                  disabled={true}
+                  // disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>

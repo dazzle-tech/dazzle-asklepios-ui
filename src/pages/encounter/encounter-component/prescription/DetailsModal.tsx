@@ -511,7 +511,9 @@ const DetailsModal = ({
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'durationTypeLkey'}
                             record={prescriptionMedication}
@@ -701,7 +703,9 @@ const DetailsModal = ({
                             placeholder="Indication Use"
                             fieldLabel="Indication Use"
                             selectData={indicationLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
                             record={prescriptionMedication}
@@ -762,7 +766,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Refill Interval Value"
                         selectData={refillunitQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="refillIntervalLkey"
                         record={prescriptionMedication}
@@ -775,7 +781,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Refill Interval Unit"
                         selectData={refillunitQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="refillIntervalUnitLkey"
                         record={prescriptionMedication}

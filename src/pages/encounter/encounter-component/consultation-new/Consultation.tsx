@@ -32,6 +32,7 @@ const Consultation = () => {
     content: <div dir={dir}>{tab.content}</div>
   }))}
   appearance="pills"
+  lazy
 />;
 };
 

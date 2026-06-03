@@ -200,6 +200,8 @@ import { radiologyReportService } from './services/reports/radiologyReportServic
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
+import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
+import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
@@ -217,10 +219,13 @@ import { currentMedicationService } from './services/patients/currentMedicationS
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { cchiApi } from './services/waseel-integration/cchiService';
 import { eligibilityApi } from './services/waseel-integration/eligibilityService';
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
+import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -273,6 +278,9 @@ export const store = configureStore({
     [setupService.reducerPath]: setupService.reducer,
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
+    [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
+    [appointmentPolicyAssignmentService.reducerPath]: appointmentPolicyAssignmentService.reducer,
+    [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -555,6 +563,7 @@ export const store = configureStore({
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
+    [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
     [cchiApi.reducerPath]: cchiApi.reducer,
@@ -734,6 +743,9 @@ export const store = configureStore({
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         PolicyDefinitionService.middleware,
+        PolicyAssignmentService.middleware,
+        appointmentPolicyAssignmentService.middleware,
+        SkillDefinitionService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,
@@ -751,7 +763,9 @@ export const store = configureStore({
         glasgowComaScaleAssessmentService.middleware,
         cchiApi.middleware,
         eligibilityApi.middleware,
-        PayorPlanCoverageClassService.middleware
+        PayorPlanCoverageClassService.middleware,
+        sickLeaveReportService.middleware,
+        glasgowComaScaleAssessmentService.middleware
       ) as any
 });
 

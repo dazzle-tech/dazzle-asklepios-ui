@@ -567,7 +567,9 @@ useEffect(() => {
           fieldType="select"
           fieldName="productTypeLkey"
           selectData={[]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchTrans}
           setRecord={setSearchTrans}
@@ -585,7 +587,9 @@ useEffect(() => {
           fieldType="select"
           fieldName="documentTypeLkey"
           selectData={[]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchTrans}
           setRecord={setSearchTrans}
@@ -596,7 +600,9 @@ useEffect(() => {
           fieldType="select"
           fieldName="warehouseLkey"
           selectData={[]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={searchTrans}
           setRecord={setSearchTrans}

@@ -27,6 +27,7 @@ import DetailsTele from './DetailsTele';
 import './styles.less';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -288,12 +289,11 @@ const TelephonicConsultation = props => {
       title: 'CREATED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.createdDate ? (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
+        row?.createdBy || row?.createdDate ? (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         ) : (
           ' '
         )
@@ -303,12 +303,11 @@ const TelephonicConsultation = props => {
       title: 'CANCELLED BY/AT',
       expandable: true,
       render: (row: TelephonicConsultations) =>
-        row?.cancelledAt ? (
-          <>
-            {row.cancelledBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
-          </>
+        row?.cancelledBy || row?.cancelledAt ? (
+          <UserDateCell
+            login={row.cancelledBy}
+            date={row.cancelledAt}
+          />
         ) : (
           ' '
         )

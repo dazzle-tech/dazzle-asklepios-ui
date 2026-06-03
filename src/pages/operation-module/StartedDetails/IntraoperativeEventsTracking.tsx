@@ -424,7 +424,9 @@ const IntraoperativeEventsTracking = ({
                       width="100%"
                       fieldType="select"
                       selectData={severitylovqueryresponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       searchable={false}
                       fieldName="complicationSeverityLkey"

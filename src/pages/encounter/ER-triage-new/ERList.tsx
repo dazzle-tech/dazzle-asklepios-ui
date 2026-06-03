@@ -110,8 +110,6 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
-  'patient.department.date.duplicate':
-    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
   'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',

@@ -415,7 +415,7 @@ else {
   ];
   const tabContant = () => (
     <Box>
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Box>
   );
 

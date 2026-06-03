@@ -723,7 +723,9 @@ const AddEncounterVaccine = ({
               fieldType="select"
               fieldName="manufacture"
               selectData={manufacturerLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={vaccineBrand}
               setRecord={setVaccineBrand}
@@ -841,7 +843,9 @@ const AddEncounterVaccine = ({
                 fieldType="select"
                 fieldName="administrationReactionsLkey"
                 selectData={medAdversLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={administrationReaction}
                 setRecord={setAdministrationReactions}

@@ -312,54 +312,49 @@
 
 // Container style
 
+
 .container {
   display: flex;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
 }
 
 .left-box {
-  width: calc(100% - 285px);
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+
   border-radius: 5px;
   border: 1px solid var(--rs-border-primary);
+  overflow: hidden;
 }
 
 .right-box {
+  flex: 0 0 275px;
   width: 275px;
+  min-width: 275px;
+  max-width: 275px;
+
   border-radius: 5px;
   border: 1px solid var(--rs-border-primary);
+
+  overflow-x: hidden;
+  overflow-y: auto;
 }
-@media (width: 769px) {
-  .container {
-    flex-direction: column;
-  }
-  .right-box {
-    width: 180px;
-  }
-}
-@media (width: 901px) {
-  .container {
-    flex-direction: column;
-  }
-  .right-box {
-    width: 200px;
-  }
-}
-@media (width: 950px) {
-  .container {
-    flex-direction: column;
-  }
-  .right-box {
-    width: 220px;
-  }
-}
+
 @media (max-width: 1141px) {
   .container {
     flex-direction: column;
   }
+
   .left-box,
   .right-box {
-    flex-basis: 100%;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 100%;
   }
 }
 
@@ -728,5 +723,66 @@
 .rs-theme-dark {
   .css-cio26m-MuiButtonBase-root-MuiMenuItem-root.Mui-disabled {
     opacity: 0.6 !important;
+  }
+}
+
+
+
+/* =========================
+   Frame Responsive Fix
+   ========================= */
+
+.frame,
+.frame .rs-container,
+.frame .rs-content,
+.page-container,
+.content-with-sticky,
+.main-content-area {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.content-with-sticky {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.main-content-area {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 680px) {
+  .page-container {
+    width: calc(100vw - 48px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: 48px !important;
+  }
+
+  .frame .rs-content {
+    padding: 0 4px !important;
+    overflow-x: hidden !important;
+  }
+
+  .content-with-sticky {
+    flex-direction: column !important;
+  }
+
+  .main-content-area {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+  }
+
+  .sticky-sidebar-area {
+    display: none !important;
+  }
+
+  .scroll-container-collapsed {
+    width: 48px !important;
+  }
+
+  .MuiDrawer-paper {
+    width: 48px !important;
   }
 }

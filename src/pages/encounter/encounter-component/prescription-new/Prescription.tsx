@@ -20,7 +20,7 @@ import {
   useGetPatientPrescriptionMedicationsQuery,
   useDeletePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   conjureValueBasedOnKeyFromList,
@@ -135,13 +135,13 @@ const Prescription = (props: Props) => {
   const patientId = patient?.id
     ? Number(patient.id)
     : patient?.key
-    ? Number(patient.key)
-    : undefined;
+      ? Number(patient.key)
+      : undefined;
   const encounterId = encounter?.id
     ? Number(encounter.id)
     : encounter?.key
-    ? Number(encounter.key)
-    : undefined;
+      ? Number(encounter.key)
+      : undefined;
 
   // List prescriptions
   const {
@@ -619,8 +619,8 @@ const Prescription = (props: Props) => {
     const rowsToCancel = selectedRows.length
       ? selectedRows
       : patientPrescriptionMedicationObject?.id
-      ? [patientPrescriptionMedicationObject]
-      : [];
+        ? [patientPrescriptionMedicationObject]
+        : [];
 
     if (!rowsToCancel.length) {
       dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
@@ -645,28 +645,31 @@ const Prescription = (props: Props) => {
 
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
   const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
-  const handlePrintPrescriptionPdf = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPrescriptionPdf({
-        prescriptionId: rowData.id
-      }).unwrap();
+const handlePrintPrescriptionPdf = async (rowData: any) => {
+  try {
+    const blob = await triggerGetPrescriptionPdf({
+      prescriptionId: rowData.id,
+    }).unwrap();
 
-      const fileURL = window.URL.createObjectURL(blob);
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `prescription-${rowData.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download prescription pdf', error);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+    } else {
+      console.error('Popup blocked. Please allow popups for this site.');
     }
-  };
+
+    // لا تعمل revokeObjectURL هون
+  } catch (error) {
+    console.error('Failed to open prescription pdf', error);
+  }
+};
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
 
@@ -742,6 +745,30 @@ const Prescription = (props: Props) => {
 
     setOpenDetailsModal(true);
     setOpenToAdd(true);
+  };
+
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string;
+    date?: string;
+  }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+      skip: !login
+    });
+
+    if (!login && !date) return null;
+
+    return (
+      <>
+        <span>{fullName || login || ''}</span>
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : ''}
+        </span>
+      </>
+    );
   };
 
   // Table columns
@@ -916,11 +943,10 @@ const Prescription = (props: Props) => {
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdDate)}</span>
-        </>
+        <UserDateCell
+          login={rowData.createdBy}
+          date={rowData.createdDate}
+        />
       )
     },
     {
@@ -928,13 +954,10 @@ const Prescription = (props: Props) => {
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.lastModifiedBy}</span>
-          <br />
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.lastModifiedBy}
+          date={rowData.lastModifiedDate}
+        />
       )
     }
   ];
@@ -945,13 +968,7 @@ const Prescription = (props: Props) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (
-    <div dir={dir}>
-      {uniqueBrandIds.map((id: string) => (
-        <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
-      ))}
-
-      <div className="bt-div">
+ const tablefilters =(      <div className="bt-div">
         <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
           <Form fluid>
             <MyInput
@@ -987,7 +1004,7 @@ const Prescription = (props: Props) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => {}}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
@@ -1042,17 +1059,22 @@ const Prescription = (props: Props) => {
           disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
         />
-      </div>
+      </div>);
 
-      <Divider />
-
-      <div className="bt-div">
+  const tablebuttons = (<div className="bt-div">
         <div className="bt-right">
           <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
             Show cancelled
           </Checkbox>
         </div>
-      </div>
+      </div>);
+
+  return (
+    <div dir={dir}>
+      {uniqueBrandIds.map((id: string) => (
+        <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
+      ))}
+      <Divider />
 
       <div ref={tableContainerRef}>
         <MyTable
@@ -1077,6 +1099,8 @@ const Prescription = (props: Props) => {
             }
           }}
           loading={isLoadingPrescriptionMedications}
+          filters={tablefilters}
+          tableButtons={tablebuttons}
           rowClassName={isSelected}
         />
       </div>
@@ -1098,7 +1122,7 @@ const Prescription = (props: Props) => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
         existingMedications={patientPrescriptionMedications}
@@ -1129,18 +1153,17 @@ const Prescription = (props: Props) => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          selectedMedicationForAttachments
+        title={`Attachments - ${selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-                (item: any) =>
-                  String(item.id) ===
-                  String(
-                    (selectedMedicationForAttachments as any)?.medicationsId ??
-                      (selectedMedicationForAttachments as any)?.genericMedicationsId
-                  )
-              )?.name || 'Medication'
+              (item: any) =>
+                String(item.id) ===
+                String(
+                  (selectedMedicationForAttachments as any)?.medicationsId ??
+                  (selectedMedicationForAttachments as any)?.genericMedicationsId
+                )
+            )?.name || 'Medication'
             : 'Medication'
-        }`}
+          }`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1149,7 +1172,7 @@ const Prescription = (props: Props) => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

@@ -17,13 +17,30 @@ import MyInput from '@/components/MyInput';
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import type { ApEncounter } from '@/types/model-types';
+import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
 
-const UrgentCareViewTriage = () => {
-  const location = useLocation();
-  const propsData: any = location.state ?? {};
+  type Props = {
+    patient?: any;
+    encounter?: any;
+  };
+
+  const UrgentCareViewTriage: React.FC<Props> = ({
+    patient: patientProp,
+    encounter: encounterProp
+  }) => {
+    const location = useLocation();
+
+    const propsData: any =
+      patientProp && encounterProp
+        ? {
+            patient: patientProp,
+            encounter: encounterProp
+          }
+        : location.state ?? {};
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
+  const isModalMode = !!(patientProp && encounterProp);
   const patient = propsData?.patient ?? {};
   const [encounter, setEncounter] = useState<ApEncounter>({ ...(propsData?.encounter ?? {}) });
   const [triage, setTriage] = useState<any>({});
@@ -130,10 +147,15 @@ const UrgentCareViewTriage = () => {
     };
   }, [dispatch]);
 
-  const handleGoBack = () => {
-    if (propsData?.from === 'UrgentCare') navigate('/urgent-care-triage');
-    else navigate(-1);
-  };
+const handleGoBack = () => {
+  if (isModalMode) return;
+
+  if (propsData?.from === 'UrgentCare') {
+    navigate('/urgent-care-triage');
+  } else {
+    navigate(-1);
+  }
+};
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -143,8 +165,11 @@ const UrgentCareViewTriage = () => {
     <div className="er-main-container" dir={dir}>
       <div className="left-box">
         <div className="bt-field-div">
-          <BackButton onClick={handleGoBack} />
-          <div className="bt-right">
+
+          {!isModalMode && (
+            <BackButton onClick={handleGoBack} />
+          )} 
+         <div className="bt-right">
             <Form fluid className="patient-priority-er-level-handle-position">
               <MyLabel label="Emergency Level" />
               {triage?.emergencyLevel && (
@@ -189,6 +214,21 @@ const UrgentCareViewTriage = () => {
             />
           )}
         </Row>
+
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+          <SectionContainer
+            title={<Translate>Glasgow Coma Scale Assessment</Translate>}
+            content={
+              <GlasgowComaScale
+                patient={patient}
+                encounter={encounter}
+                viewMode="View"
+              />
+            }
+          />
+        )}
+      </Row>
 
         <Row gutter={30}>
           <SectionContainer

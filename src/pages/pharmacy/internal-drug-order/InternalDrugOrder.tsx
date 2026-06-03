@@ -346,7 +346,9 @@ const InternalDrugOrder = () => {
           fieldName=""
           fieldLabel="Order Status"
           selectData={orderstatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={{}}
@@ -693,6 +695,7 @@ const InternalDrugOrder = () => {
         content={
           <div>
             <MyTab
+            lazy
                 data={tabData.map(tab => ({
                   ...tab,
                   content: <div dir={dir}>{tab.content}</div>

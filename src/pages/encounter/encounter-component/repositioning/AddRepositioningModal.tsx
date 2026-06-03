@@ -109,7 +109,9 @@ const AddRepositioningModal = ({ open, setOpen, patient, encounter, positionObj,
                     fieldType="select"
                     fieldName="newPositionLkey"
                     selectData={positionLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={position}
                     setRecord={setPosition}
@@ -145,7 +147,9 @@ const AddRepositioningModal = ({ open, setOpen, patient, encounter, positionObj,
                         fieldType="select"
                         fieldName="timeUnitLkey"
                         selectData={unitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={position}
                         setRecord={setPosition}

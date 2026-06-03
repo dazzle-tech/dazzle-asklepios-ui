@@ -525,7 +525,7 @@ const Users = () => {
 
       {user?.id && (
         <Box mt={3}>
-          <MyTab data={tabData} />
+          <MyTab data={tabData} lazy/>
         </Box>
       )}
 

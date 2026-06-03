@@ -532,6 +532,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
         </Stack>
         <MyTab 
          data={tabData}
+         lazy
         />
       </Panel>
     </Panel>

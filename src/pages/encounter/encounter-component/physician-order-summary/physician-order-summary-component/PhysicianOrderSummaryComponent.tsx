@@ -303,7 +303,9 @@ const PhysicianOrderSummaryComponent = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={EncPriorityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Select Priority"
                 fieldLabel="Priority"

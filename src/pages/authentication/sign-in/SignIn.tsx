@@ -24,7 +24,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/Logo_BLUE_New.png';
+import Logo from '../../../images/Logo_BLUE_New1.svg';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 

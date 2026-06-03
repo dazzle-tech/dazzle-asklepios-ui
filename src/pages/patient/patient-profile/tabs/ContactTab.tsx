@@ -127,6 +127,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
       <MyInput
         required
@@ -161,6 +163,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -184,6 +188,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         searchable={false}
         menuMaxHeight={200}
         width={170}
+        disableByField='isValid'
+
       />
       <PhoneNumberInput
         column
@@ -208,6 +214,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
     </Form>
   );

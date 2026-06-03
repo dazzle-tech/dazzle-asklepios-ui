@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MainScreenBar from '../MainScreenBarIcons/MainScreenBar';
 import MainScreenBarFilters from '../MainScreenBarIcons/MainScreenBarFilters';
 import { Stack } from 'rsuite';
@@ -133,7 +133,22 @@ const Header: React.FC<HeaderProps> = ({
     dispatch(closeEditProfile());
   };
 
+    useEffect(() => {
+      const updateHeaderHeight = () => {
+        const header = document.querySelector('.header');
 
+        document.documentElement.style.setProperty(
+          '--header-height',
+          `${header?.clientHeight || 70}px`
+        );
+      };
+
+      updateHeaderHeight();
+      window.addEventListener('resize', updateHeaderHeight);
+
+      return () =>
+        window.removeEventListener('resize', updateHeaderHeight);
+    }, []);
 
   return (
     <>

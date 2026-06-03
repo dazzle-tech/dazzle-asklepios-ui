@@ -30,6 +30,8 @@ const DiscountModal = ({ open, setOpen, record, setRecord }) => {
               setRecord={setRecord}
               menuMaxHeight={200}
               width="100%"
+                      disableByField='isValid'
+
             />
 
           </Form>

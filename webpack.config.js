@@ -4,6 +4,8 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Check environment variable to determine if source maps should be generated
 // In Docker, we set this to 'false' to save memory.
 const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
@@ -33,7 +35,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'assets'),
     filename: 'bundle.js',
-    publicPath: './',
+    publicPath: isProduction ? './' : '/',
     clean: true,
   },
 
@@ -110,13 +112,13 @@ module.exports = {
 
   plugins: [
     new HtmlwebpackPlugin({
-      title: 'OneHealth',
+      title: 'Asklepios',
       filename: 'index.html',
       template: './src/index.html',
       inject: true,
       hash: true,
-      path: './',
-     favicon: './public/r-and-d-projects.atlassian1.png',
+      publicPath: isProduction ? './' : '/',
+      favicon: './public/Ask-Rod-Logo.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',

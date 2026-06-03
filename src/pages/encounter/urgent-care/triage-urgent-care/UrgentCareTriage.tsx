@@ -450,29 +450,25 @@ const UrgentCareTriage = () => {
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
+const handlePrintWristband = async (rowData: any) => {
+  try {
+    const blob = await triggerGetPatientWristbandPdf({
+      patientId: rowData.patientId,
+    }).unwrap();
 
-  const handlePrintWristband = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPatientWristbandPdf({
-        patientId: rowData.patientId
-      }).unwrap();
+    const fileURL = window.URL.createObjectURL(
+      new Blob([blob], { type: 'application/pdf' })
+    );
 
-      const fileURL = window.URL.createObjectURL(blob);
+    const printWindow = window.open(fileURL, '_blank');
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `wristband-${rowData.patientId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download wristband pdf', error);
+    if (printWindow) {
+      printWindow.focus();
     }
-  };
+  } catch (error) {
+    console.error('Failed to preview wristband pdf', error);
+  }
+};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');

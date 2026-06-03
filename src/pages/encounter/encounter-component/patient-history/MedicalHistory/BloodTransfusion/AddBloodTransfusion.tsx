@@ -47,7 +47,9 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 fieldType="select"
                 fieldName=""
                 selectData={bloodProductsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
@@ -60,7 +62,9 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 fieldType="select"
                 fieldName=""
                 selectData={bloodTransSourceLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={""}
                 setRecord={""}

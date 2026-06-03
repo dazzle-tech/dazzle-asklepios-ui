@@ -240,6 +240,8 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
         setRecord={setUserStickyNotesCreateVM}
         width={350}
         required
+                disableByField='isValid'
+
       />
 
       {/* Color selector */}

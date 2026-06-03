@@ -15,6 +15,7 @@ import {
   faCheckDouble,
   faClockRotateLeft,
   faDesktop,
+  faFileLines,
   faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
@@ -37,6 +38,7 @@ import './styles.less';
 import WarningiesModal from './WarningiesModal';
 import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import AiAssistantPopup from './AiAssistantPopup';
+import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 type EncounterModalProps = {
@@ -95,6 +97,7 @@ const Encounter = ({
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
@@ -515,6 +518,16 @@ useEffect(() => {
                 </MyButton>
 
                 <MyButton
+                  disabled={edit}
+                  size="small"
+                  backgroundColor="orange"
+                  prefixIcon={() => <FontAwesomeIcon icon={faFileLines} />}
+                  onClick={() => setOpenSickLeaveModal(true)}
+                >
+                  Sick Leave
+                </MyButton>
+
+                <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
@@ -765,6 +778,12 @@ useEffect(() => {
         edit={edit}
         open={summaryModalOpen}
         setOpen={setSummaryModalOpen}
+      />
+
+      <SickLeaveReportModal
+        open={openSickLeaveModal}
+        setOpen={setOpenSickLeaveModal}
+        encounterId={encounterId ?? localEncounter?.id ?? null}
       />
 
       <EncounterDischarge
