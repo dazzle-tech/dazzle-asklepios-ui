@@ -83,7 +83,7 @@
     .MuiTableHead-root {
       .MuiTableRow-root {
         .MuiTableCell-root {
-          background: var(--table-header-bg);
+          background: var(--one-health-theme-header, var(--table-header-bg));
           font-size: var(--smallest-font-size);
           font-weight: var(--text-weight-extra-bold);
           color: #464f60;
@@ -95,6 +95,7 @@
     }
 
     .MuiTableBody-root {
+
       // Main data rows only
       .MuiTableRow-root.main-row {
         .MuiTableCell-root {
@@ -108,7 +109,7 @@
           .MuiTableCell-root {
             // for one health theme (don`t remove the commented color)
             // background-color: var(--light-gray);
-            background-color: #f7fbfb;
+            background-color: var(--light-gray);
           }
         }
 
@@ -116,7 +117,7 @@
           .MuiTableCell-root {
             // for one health theme (don`t remove the commented color)
             // background-color: rgba(#415be7, 0.05);
-            background-color: #eaf7f6;
+            background-color: var(--one-health-theme-hover);
           }
         }
 
@@ -124,7 +125,7 @@
           .MuiTableCell-root {
             // for one health theme (don`t remove the commented color)
             // background-color: #dfe9fc;
-            background-color: #d5efed;
+            background-color: var(--one-health-theme-select);
           }
         }
       }
@@ -152,7 +153,8 @@
 }
 
 .MuiTablePagination-root {
-  background: var(--table-header-bg);
+  background: var(--one-health-theme-header, var(--table-header-bg));
+
   .MuiToolbar-root {
     min-height: 32px;
     padding-right: 16px;
@@ -163,6 +165,7 @@
     }
   }
 }
+
 .my-table-header {
   text-transform: uppercase;
 }
@@ -180,6 +183,7 @@
     color: #1976d2;
   }
 }
+
 .my-table-buttons-wrapper {
   padding-top: 5px !important;
   display: flex;
@@ -187,6 +191,7 @@
   justify-content: end;
   align-items: center;
 }
+
 .my-table-container .MuiTableHead-root {
   position: sticky;
   top: 0;
@@ -198,6 +203,7 @@
 .my-table-wrapper.dark {
   .MuiTableHead-root {
     .MuiTableRow-root {
+
       .MuiTableCell-root,
       .MuiTableCell-stickyHeader {
         color: #b0c4de;
@@ -205,40 +211,46 @@
       }
     }
   }
+
   .MuiTableBody-root {
+
     // Main data rows only
     .MuiTableRow-root.main-row {
       .MuiTableCell-root {
         background-color: var(--dark-black);
         color: var(--white);
       }
-       &.even-row {
-          .MuiTableCell-root {
-            background-color: var(--extra-dark-black);
-          }
-        }
-         &:hover {
-          .MuiTableCell-root {
-            background-color: #3a3a3a;
-          }
-        }
 
-        &.selected-row {
-          .MuiTableCell-root {
-            background-color: #555555;
-          }
+      &.even-row {
+        .MuiTableCell-root {
+          background-color: var(--extra-dark-black);
         }
+      }
+
+      &:hover {
+        .MuiTableCell-root {
+          background-color: #3a3a3a;
+        }
+      }
+
+      &.selected-row {
+        .MuiTableCell-root {
+          background-color: #555555;
+        }
+      }
     }
-    
-        
+
+
   }
+
   .MuiTablePagination-root {
-  background: var(--table-header-bg-dark);
+    background: var(--table-header-bg-dark);
   }
 }
 
 
 @media (max-width: 680px) {
+
   .my-table-wrapper,
   .my-table-content-wrapper {
     width: 100%;

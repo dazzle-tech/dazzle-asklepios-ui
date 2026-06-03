@@ -42,46 +42,64 @@ const setFavicon = (href: string) => {
 
   document.head.appendChild(link);
 };
+const hexToRgb = (hex: string) => {
+  const cleanHex = hex.replace('#', '');
 
+  if (cleanHex.length !== 6) {
+    return '65, 91, 231';
+  }
+
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  return `${r}, ${g}, ${b}`;
+};
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { data: systemConfig } = useGetSystemConfigQuery();
 
- useEffect(() => {
-  const applySystemConfig = (config: any) => {
-    if (config?.SYSTEM_TITLE) {
-      document.title = config.SYSTEM_TITLE;
+  useEffect(() => {
+    const applySystemConfig = (config: any) => {
+      if (config?.SYSTEM_TITLE) {
+        document.title = config.SYSTEM_TITLE;
+      }
+
+      if (config?.PRIMARY_COLOR) {
+        const primaryRgb = hexToRgb(config.PRIMARY_COLOR);
+
+        document.documentElement.style.setProperty('--primary-color', config.PRIMARY_COLOR);
+        document.documentElement.style.setProperty('--primary-blue', config.PRIMARY_COLOR);
+        document.documentElement.style.setProperty('--primary-blue-rgb', primaryRgb);
+        document.documentElement.style.setProperty('--one-health-theme-hover', `rgba(${primaryRgb}, 0.05)`);
+        document.documentElement.style.setProperty('--one-health-theme-header', `rgba(${primaryRgb}, 0.08)`);
+        document.documentElement.style.setProperty('--one-health-theme-select', `rgba(${primaryRgb}, 0.12)`);
+      }
+
+      if (config?.FONT_FAMILY) {
+        document.documentElement.style.setProperty('--font-family', config.FONT_FAMILY);
+      }
+
+      if (config?.FAVICON) {
+        setFavicon(config.FAVICON);
+      }
+    };
+
+    const cachedSystemConfig = localStorage.getItem('systemConfig');
+
+    if (cachedSystemConfig) {
+      try {
+        applySystemConfig(JSON.parse(cachedSystemConfig));
+      } catch {
+        localStorage.removeItem('systemConfig');
+      }
     }
 
-    if (config?.PRIMARY_COLOR) {
-      document.documentElement.style.setProperty('--primary-color', config.PRIMARY_COLOR);
-      document.documentElement.style.setProperty('--primary-blue', config.PRIMARY_COLOR);
+    if (systemConfig) {
+      localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
+      applySystemConfig(systemConfig);
     }
-
-    if (config?.FONT_FAMILY) {
-      document.documentElement.style.setProperty('--font-family', config.FONT_FAMILY);
-    }
-
-    if (config?.FAVICON) {
-      setFavicon(config.FAVICON);
-    }
-  };
-
-  const cachedSystemConfig = localStorage.getItem('systemConfig');
-
-  if (cachedSystemConfig) {
-    try {
-      applySystemConfig(JSON.parse(cachedSystemConfig));
-    } catch {
-      localStorage.removeItem('systemConfig');
-    }
-  }
-
-  if (systemConfig) {
-    localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
-    applySystemConfig(systemConfig);
-  }
-}, [systemConfig]);
+  }, [systemConfig]);
 
   const primaryColor = systemConfig?.PRIMARY_COLOR || '#1976d2';
   const fontFamily = systemConfig?.FONT_FAMILY || 'Inter';
