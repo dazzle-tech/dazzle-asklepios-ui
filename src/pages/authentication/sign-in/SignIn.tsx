@@ -27,6 +27,8 @@ import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New1.svg';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
+import { useBranding } from '@/hooks/useBranding';
+
 
 const mapDefaultDepartmentToSelectedDepartment = (
   defaultDepartment: any,
@@ -45,6 +47,8 @@ const mapDefaultDepartmentToSelectedDepartment = (
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
   const [errText, setErrText] = useState(' ');
+
+const branding = useBranding();
 
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
@@ -143,7 +147,8 @@ const SignIn = () => {
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
-navigate('/', { replace: true });    } catch (err: any) {
+      navigate('/', { replace: true });
+    } catch (err: any) {
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
       } else if (err?.status === 'FETCH_ERROR') {
@@ -177,7 +182,7 @@ navigate('/', { replace: true });    } catch (err: any) {
       >
         <div className="bodySignInDiv">
           <Panel className="logo-panel">
-            <img src={Logo} alt="Tenant Logo" />
+           <img src={branding.logo || Logo} alt="Logo" />
           </Panel>
 
           <Panel className="sign-in-panel ">
@@ -221,7 +226,7 @@ navigate('/', { replace: true });    } catch (err: any) {
                 setRecord={setCredentials}
                 showLabel={false}
               />
-               <MyInput
+              <MyInput
                 width="100%"
                 placeholder="Enter Password"
                 fieldLabel="Password"
@@ -231,17 +236,17 @@ navigate('/', { replace: true });    } catch (err: any) {
                 setRecord={setCredentials}
                 showLabel={false}
               />
-            
+
 
 
               <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
-              <MyButton 
-              onClick={handleLogin}
-              loading={isLoggingIn}
-              width={"26vw"}
-              radius={'5px'}
+              <MyButton
+                onClick={handleLogin}
+                loading={isLoggingIn}
+                width={"26vw"}
+                radius={'5px'}
               >Sign in</MyButton>
-             
+
             </Form>
           </Panel>
         </div>

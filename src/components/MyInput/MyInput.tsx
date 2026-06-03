@@ -62,7 +62,9 @@ type MyInputProps = {
   | 'date'
   | 'number'
   | 'check'
-  | 'textnumber';
+  | 'textnumber'
+  | 'color'
+  ;
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -840,7 +842,19 @@ const MyInput = ({
           </div>
         );
       }
-
+     case 'color':
+  return (
+    <input
+      type="color"
+      value={record?.[fieldName] || '#1976d2'}
+      onChange={(e) =>
+        setRecord({
+          ...record,
+          [fieldName]: e.target.value
+        })
+      }
+    />
+  );
       case 'multyPicker':
         return (
           <div ref={pickerRef}>

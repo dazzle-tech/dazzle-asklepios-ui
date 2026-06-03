@@ -220,6 +220,7 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import { setSelectedDepartment } from './reducers/authSlice';
 import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
+import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -892,6 +893,7 @@ const dispatch = useAppDispatch();
               <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
               <Route path="nurse-assessment" element={<NurseAssessment />} />
               <Route path="physician-assessment" element={<PhysicianAssessment />} />
+              <Route path="system-configuration" element={<SystemConfiguration />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

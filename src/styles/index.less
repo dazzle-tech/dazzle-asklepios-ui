@@ -50,12 +50,16 @@
   font-family: 'Inter Regular';
   src: url('/src/fonts/Inter/static/Inter_18pt-Regular.ttf') format('truetype');
 }
-
+:root {
+  --primary-color: #1976d2;
+  --primary-blue: #1976d2;
+  --font-family: 'Inter';
+}
 body {
   background: #ffffff;
   font-size: 0.9rem !important;
   zoom: 1;
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--font-family, 'Inter'), sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   // overflow:  auto !important;
@@ -88,7 +92,7 @@ h6,
 span,
 th,
 td {
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--font-family, 'Inter'), sans-serif !important;
 }
 
 .text-muted {
