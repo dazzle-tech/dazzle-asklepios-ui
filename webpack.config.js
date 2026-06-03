@@ -112,13 +112,13 @@ module.exports = {
 
   plugins: [
     new HtmlwebpackPlugin({
-      title: 'Clinicle',
+      title: 'Asklepios',
       filename: 'index.html',
       template: './src/index.html',
       inject: true,
       hash: true,
       publicPath: isProduction ? './' : '/',
-      favicon: './public/clinicle.png',
+      favicon: './public/Ask-Rod-Logo.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
