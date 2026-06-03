@@ -842,6 +842,7 @@ useEffect(() => {
         !edit ? (allerges.statusLvalue?.valueCode == 'ARS_CANCEL' ? true : false) : true
       }
       size="40vw"
+      bodyheight="70vh"
       position="right"
       steps={[
         {

@@ -1,44 +1,60 @@
-.flex-column{
-    display: flex;
-    flex-direction: column !important;
-    padding: '3px' ;
+.flex-column {
+  display: flex;
+  flex-direction: column !important;
+  padding: 3px;
+}
 
+.flex-row {
+  display: flex !important;
 }
-.flex-row{
-    display: flex !important;
+
+.flex1 {
+  flex: 1 !important;
 }
-.flex1{
-    flex:1 !important;
+
+.gap10 {
+  gap: 10px !important;
 }
-.gap10{
-    gap:10px !important;
+
+.bt-save-div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.bt-save-div{
-     display:flex;
-     justify-content:center;
-      align-items:center
+
+.buttom-dev {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
-.buttom-dev{
-     display:flex;
-     justify-content:space-between;
-     width:100%
-}
+
 .dropdown-menuresult {
-    width: auto;
-    min-width: fit-content;
-    white-space: nowrap; 
+  width: auto;
+  min-width: fit-content;
+  white-space: nowrap;
 }
-.mid-div{
-    display:flex !important;
-    gap:10px !important;
+
+.mid-div {
+  display: flex !important;
+  gap: 10px !important;
 }
-.type-div{
-    display:flex !important; 
-    flex-direction:column !important;
-    flex:1 !important;
+
+.type-div {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
 }
+
+/* =========================
+   Patient Diagnosis
+   ========================= */
+
 .pd-root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 12px 12px 16px;
+  overflow-x: hidden;
 }
 
 .pd-header {
@@ -60,10 +76,12 @@
 }
 
 .pd-grid {
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 16px;
-  align-items: start;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 .pd-card {
@@ -71,6 +89,18 @@
   border: 1px solid #eef0f4;
   border-radius: 8px;
   padding: 12px;
+  min-width: 0;
+}
+
+.pd-card:first-child {
+  flex: 0 0 42%;
+  max-width: 42%;
+}
+
+.pd-card:last-child {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .pd-card-title {
@@ -87,20 +117,6 @@
   align-items: end;
 }
 
-.pd-footer {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-@media (max-width: 1100px) {
-  .pd-grid {
-    grid-template-columns: 1fr;
-  }
-  .pd-fields {
-    grid-template-columns: 1fr;
-  }
-}
 .pd-fields-inline {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr;
@@ -112,6 +128,7 @@
 .pd-field {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .pd-field-switch {
@@ -120,17 +137,50 @@
   justify-content: flex-end;
 }
 
+.pd-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pd-delete-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .pd-grid {
+    flex-direction: column;
+  }
+
+  .pd-card,
+  .pd-card:first-child,
+  .pd-card:last-child {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+
+  .pd-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .pd-fields-inline {
     grid-template-columns: 1fr;
   }
 }
 
-.dark{
+/* Dark Mode */
+
+.dark {
   .pd-card {
-  background: transparent;
-  border: 1px solid var(--rs-border-primary);
-  border-radius: 8px;
-  padding: 12px;
-}
+    background: transparent;
+    border: 1px solid var(--rs-border-primary);
+    border-radius: 8px;
+    padding: 12px;
+  }
 }
