@@ -4,7 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {Form} from 'rsuite';
+import {Form, Row} from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
 import MyInput from '@/components/MyInput';

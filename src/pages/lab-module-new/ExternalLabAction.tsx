@@ -120,7 +120,7 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
   const iconColor = isFetching
     ? '#999'
     : isAlreadyExternal
-    ? '#1675e0'
+    ? 'var(--primary-blue)'
     : 'var(--primary-gray)';
 
 

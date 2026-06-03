@@ -3,7 +3,7 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import { faFlask, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Button, HStack, Panel, Tooltip, Whisper } from 'rsuite';
+import { Panel, Tooltip, Whisper } from 'rsuite';
 
 import {
   useAddFavoriteDiagnosticTestMutation,
@@ -16,6 +16,7 @@ import { DiagnosticTest } from '@/types/model-types-new';
 
 import './styles.less';
 import { useAppSelector } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
 
 
 const FavoriteTests: React.FC = () => {
@@ -89,28 +90,28 @@ const user = authSlice?.user;
   <div dir={dir}>
     <div className={`favorite-tests ${mode}`}>
 
-      <HStack spacing={10} style={{ marginBottom: 20 }}>
-        <Button
+      <div className="date-filter-form" style={{ marginBottom: 20 }}>
+        <MyButton
           appearance={typeFilter === 'ALL' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('ALL')}
         >
           All
-        </Button>
+        </MyButton>
 
-        <Button
+        <MyButton
           appearance={typeFilter === 'LABORATORY' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('LABORATORY')}
         >
           Laboratory
-        </Button>
+        </MyButton>
 
-        <Button
+        <MyButton
           appearance={typeFilter === 'RADIOLOGY' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('RADIOLOGY')}
         >
           Radiology
-        </Button>
-      </HStack>
+        </MyButton>
+      </div>
 
 
       <div className="favorite-test-review-result-boxes-container">
