@@ -19,7 +19,7 @@ import {
   useUploadLoginBackgroundMutation,
   useUploadSidebarLogoMutation
 } from '@/services/systemConfigService';
-import './Styles.less';
+import './styles.less';
 
 type ConfigRow = {
   key: SystemConfigKey;
