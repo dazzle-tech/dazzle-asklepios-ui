@@ -120,6 +120,7 @@ export interface UserDepartment {
   departmentId: number;
   isActive?: boolean;
   isDefault?: boolean;
+  appointmentBookingAllowed?: boolean;
 }
 
 /* =========================

@@ -116,7 +116,8 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   userId: undefined,
   departmentId: undefined,
   isActive: true,
-  isDefault: false
+  isDefault: false,
+  appointmentBookingAllowed: false
 };
 
 // Patient Attachment Constructors

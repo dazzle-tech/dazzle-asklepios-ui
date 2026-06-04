@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
+import type { Department } from '@/types/model-types-new';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = {
@@ -247,6 +248,12 @@ export const departmentService = createApi({
       query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`
     }),
 
+    // GET /api/setup/department/bookable-departments
+    getBookableDepartmentsForLoggedInUser: builder.query<Department[], void>({
+      query: () => '/api/setup/department/bookable-departments',
+      providesTags: ['Department']
+    }),
+
     // GET /api/setup/department/all
     getAllDepartmentsWithoutPagination: builder.query({
       query: () => `/api/setup/department/all`
@@ -359,6 +366,8 @@ export const {
   useToggleDepartmentIsActiveMutation,
   useGetActiveDepartmentByFacilityListQuery,
   useLazyGetActiveDepartmentByFacilityListQuery,
+  useGetBookableDepartmentsForLoggedInUserQuery,
+  useLazyGetBookableDepartmentsForLoggedInUserQuery,
   useGetAllDepartmentsWithoutPaginationQuery,
   useGetDepartmentsByResourceTypeQuery,
   useLazyGetDepartmentsByResourceTypeQuery,
