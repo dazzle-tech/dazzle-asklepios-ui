@@ -50,12 +50,16 @@
   font-family: 'Inter Regular';
   src: url('/src/fonts/Inter/static/Inter_18pt-Regular.ttf') format('truetype');
 }
-
+:root {
+  --primary-color: #1976d2;
+  --primary-blue: #1976d2;
+  --font-family: 'Inter';
+}
 body {
   background: #ffffff;
   font-size: 0.9rem !important;
   zoom: 1;
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--font-family, 'Inter'), sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   // overflow:  auto !important;
@@ -88,7 +92,7 @@ h6,
 span,
 th,
 td {
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--font-family, 'Inter'), sans-serif !important;
 }
 
 .text-muted {
@@ -301,7 +305,10 @@ aside {
 }
 :root {
   --white: #e0e0e0;
-  --primary-blue: #415be7;
+  // for one health theme (don`t remove the commented color)
+  // --primary-blue: #415be7;
+  --primary-blue: #006264;
+
   --light-blue: #60afff;
   --very-light-blue: #b6d9fc;
 
@@ -341,7 +348,10 @@ aside {
   --primary-yellow: #f2cb4d;
   --light-yellow: #fbf5bf;
 
-  --table-header-bg: #f4f7fe;
+  // for one health theme (don`t remove the commented color)
+  // --table-header-bg: #f4f7fe;
+  --table-header-bg: linear-gradient(180deg, #eef9f8 0%, #e1f4f2 100%);
+
   --table-header-bg-dark: #2c2c2c;
 
   --note-purple: rgba(255, 146, 255, 0.5);
@@ -375,11 +385,10 @@ aside {
   --card-yellow: #ffc300;
   --card-gray: #adadad;
 
-
-
-
-
-
+  // for one health theme (we will remove it later)
+--one-health-theme-hover: rgba(var(--primary-blue-rgb), 0.05);
+--one-health-theme-header: rgba(var(--primary-blue-rgb), 0.18);
+--one-health-theme-select: rgba(var(--primary-blue-rgb), 0.30);
 
 }
 
@@ -525,6 +534,7 @@ input[disabled] {
   }
 }
 
+
 // .dark svg:not(:root) {
 //   color: var(--white) !important;
 // }
@@ -562,6 +572,31 @@ input[disabled] {
   padding-left: 0 !important;
 }
 
+ // for one health theme (we will remove it later)
+:root,
+.rs-theme-light,
+.rs-theme-dark {
+  --rs-input-focus-border: var(--primary-blue);
+  --rs-color-focus-ring: rgb(from var(--primary-blue) r g b / 25%);
+  --rs-state-focus-outline: 3px solid rgb(from var(--primary-blue) r g b / 25%);
+  --rs-state-focus-shadow: 0 0 0 3px rgb(from var(--primary-blue) r g b / 25%);
+  --rs-checkbox-checked-bg: var(--primary-blue);
+  --rs-radio-checked-bg: var(--primary-blue);
+  --rs-picker-count-bg: var(--primary-blue);
+}
 
+// for one health theme (we will remove it later)
+.rs-dropdown-item:hover{
+  background-color: var(--one-health-theme-hover) !important;
+}
+// for one health theme (we will remove it later)
+.rs-dropdown-item.rs-dropdown-item-active
+// .light .rs-dropdown-item.rs-dropdown-item-active
+{
+  background-color: var(--one-health-theme-hover) !important;
+}
 
-
+// for one health theme (we will remove it later)
+.rs-dropdown-item-active .rs-dropdown-item-content{
+  color: var(--primary-blue) !important;
+}

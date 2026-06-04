@@ -13,7 +13,7 @@ import {
   Panel, 
   Sidebar, 
   Sidenav, 
-  RadioGroup, 
+  RadioGroup,
   DOMHelper
 } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -206,13 +206,14 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             </Button>
           </div>
         ) : null}
-        <Button
-          onClick={() => setPatientSidebarExpand(true)}
-          appearance="ghost"
-          style={{ width: '100%' }}
-        >
-          {selectedPatient ? 'Change Patient' : 'Select Patient'}
-        </Button>
+        <div className="sticky-notes-patient-btn-wrap">
+          <MyButton
+            onClick={() => setPatientSidebarExpand(true)}
+            appearance="ghost"
+          >
+            {selectedPatient ? 'Change Patient' : 'Select Patient'}
+          </MyButton>
+        </div>
       </div>
 
       {/* Note input */}

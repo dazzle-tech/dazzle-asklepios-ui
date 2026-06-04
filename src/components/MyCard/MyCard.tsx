@@ -29,8 +29,10 @@ const MyCard = ({
       width={width}
       style={{
         minHeight: '45px', height: height, margin: props.margin ? props.margin : '0px',
-        backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : undefined,
-        border: isSelected ? '1px solid #007bff' : undefined,
+        // for the one health theme (don`t remove the commented code)
+        // backgroundColor: isSelected ? 'rgba(0, 123, 255, 0.1)' : undefined,
+        backgroundColor: isSelected ? 'var(--one-health-theme-select)' : undefined,
+        border: isSelected ? '1px solid var(--primary-blue)' : undefined,
         cursor: 'pointer'
 
 
@@ -53,7 +55,7 @@ const MyCard = ({
                 color="var(--primary-gray)"
                 onClick={moreClick}
                 radius="8px"
-                
+
               >
                 <FontAwesomeIcon icon={faEllipsis} />
               </MyButton>

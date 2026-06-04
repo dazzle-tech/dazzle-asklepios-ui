@@ -886,7 +886,7 @@ const UserDateCell = ({
               icon={faComment}
               style={{
                 cursor: 'pointer',
-                color: hasNote ? '#1675e0' : '#999'
+                color: hasNote ? 'var(--primary-blue)' : '#999'
               }}
               onClick={() => {
                 setTest(rowData);

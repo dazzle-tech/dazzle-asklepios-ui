@@ -176,6 +176,13 @@ const BookPatient = ({
     }
   }, [open, appointmentData, readOnly]);
 
+  useEffect(() => {
+    if (open) return;
+
+    setPatientSidebarOpen(false);
+    setQuickPatientModalOpen(false);
+  }, [open]);
+
   const viewPatientId = useMemo(() => {
     if (!readOnly || !appointmentData) return null;
 
@@ -583,7 +590,7 @@ const BookPatient = ({
     fontWeight: 400,
     border: `1px solid ${mode === 'dark' ? 'var(--rs-border-primary)' : '#d6dde8'}`,
     backgroundColor: mode === 'dark' ? 'var(--rs-bg-card)' : '#ffffff',
-    color: mode === 'dark' ? 'var(--rs-text-primary)' : '#2563EB',
+    color: mode === 'dark' ? 'var(--rs-text-primary)' : 'var(--primary-blue)',
     transition:
       'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
     justifyContent: 'center'
@@ -591,7 +598,7 @@ const BookPatient = ({
 
   const patientChoiceButtonActive: React.CSSProperties = {
     border: 'none',
-    background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)',
+    background: 'linear-gradient(180deg, var(--primary-blue) 0%, var(--primary-blue) 100%)',
     color: '#ffffff',
     boxShadow:
       mode === 'dark'
@@ -953,7 +960,7 @@ const BookPatient = ({
 
   return (
     <>
-      {patientSidebarOpen && (
+      {open && patientSidebarOpen && (
         <div className="book-patient-sidebar-overlay" style={patientSidebarStyle ?? undefined}>
           <ProfileSidebar
             expand={true}

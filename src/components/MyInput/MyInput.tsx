@@ -27,11 +27,26 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy"
+    editable
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
-  <DatePicker {...props} format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+  <DatePicker
+    {...props}
+    format="dd-MM-yyyy HH:mm"
+    cleanable={false}
+    block
+    ref={ref}
+    menuClassName={clsx('my-input-calendar-popup', props?.menuClassName)}
+  />
 ));
 
 const focusNextField = (e: any) => {
@@ -62,7 +77,9 @@ type MyInputProps = {
   | 'date'
   | 'number'
   | 'check'
-  | 'textnumber';
+  | 'textnumber'
+  | 'color'
+  ;
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -96,6 +113,7 @@ type MyInputProps = {
   defaultSelectValue?: any;
   virtualized?: boolean;
   menuMaxHeight?: number;
+  menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
   creatable?: boolean;
@@ -840,7 +858,19 @@ const MyInput = ({
           </div>
         );
       }
-
+     case 'color':
+  return (
+    <input
+      type="color"
+      value={record?.[fieldName] || '#1976d2'}
+      onChange={(e) =>
+        setRecord({
+          ...record,
+          [fieldName]: e.target.value
+        })
+      }
+    />
+  );
       case 'multyPicker':
         return (
           <div ref={pickerRef}>
@@ -928,6 +958,7 @@ const MyInput = ({
               data={filteredData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
+              menuClassName={clsx('my-input-picker-popup', props?.menuClassName)}
               value={record ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
@@ -1008,11 +1039,7 @@ const MyInput = ({
               }
               disabled={props.disabled}
               name={fieldName}
-              accepter={DatePicker}
-              format="dd-MM-yyyy"
-              editable
-              cleanable={false}
-              oneTap
+              accepter={CustomDatePicker}
               defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
                 const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;

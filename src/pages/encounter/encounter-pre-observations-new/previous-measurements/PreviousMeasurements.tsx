@@ -243,7 +243,7 @@ const vitalTotal =
   const clickableHeader = (metric: SelectedMetric, label: string) => (
     <span
       className="link"
-      style={{ cursor: 'pointer', color: '#007bff' }}
+      style={{ cursor: 'pointer', color: 'var(--primary-blue)' }}
       onClick={() => setSelectedMetric(metric)}
     >
       {label}
