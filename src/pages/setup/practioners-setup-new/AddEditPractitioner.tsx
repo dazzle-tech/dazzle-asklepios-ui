@@ -321,7 +321,7 @@ const AddEditPractitioner = ({
                   <>
                     <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                       <MyInput
-                        width={'100%'}
+                        width= '15vw'
                         column
                         fieldLabel="Facility"
                         fieldType="select"
@@ -358,7 +358,7 @@ const AddEditPractitioner = ({
                       showLabel
                       placeholder="Search Users to link"
                       column
-                      width={245}
+                      width="100%"
                       rightAddon={
                         <FontAwesomeIcon
                           icon={faSearch}

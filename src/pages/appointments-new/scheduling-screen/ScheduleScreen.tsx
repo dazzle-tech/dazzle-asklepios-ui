@@ -15,10 +15,7 @@ import { faCalendarCheck, faCheckDouble, faCircleCheck, faCirclePlus, faStethosc
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
-import {
-  useFilterAppointmentsWithoutPaginationQuery,
-  useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery
-} from '@/services/appointment/appointmentService';
+import { useLazyFilterAppointmentsWithoutPaginationQuery } from '@/services/appointment/appointmentService';
 import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
@@ -36,6 +33,7 @@ import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
 import BulkRescheduleModal from './components/BulkRescheduleModal';
+import CancelledAppointmentsModal from './components/CancelledAppointmentsModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
@@ -143,9 +141,14 @@ const isOpenSlotStatus = (rawStatus: unknown): boolean => {
   return status === 'NEW' || status === 'RESCHEDULE';
 };
 
+const isCanceledSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return status === 'CANCELLED' || status === 'CANCELED';
+};
+
 const shouldOpenBookPatientDirectly = (rawStatus: unknown): boolean => {
   const status = normalizeAppointmentStatusKey(rawStatus);
-  return isOpenSlotStatus(status) || status === 'RESCHEDULED';
+  return isOpenSlotStatus(status) || status === 'RESCHEDULED' || isCanceledSlotStatus(status);
 };
 
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
@@ -176,10 +179,12 @@ const ScheduleScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
+  const didInitialAppointmentSearchRef = useRef(false);
   const pendingAgendaSlotRef = useRef<any>(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const [bulkRescheduleModalOpen, setBulkRescheduleModalOpen] = useState(false);
+  const [cancelledAppointmentsModalOpen, setCancelledAppointmentsModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
 
@@ -277,32 +282,10 @@ const ScheduleScreen = () => {
     );
   }, [appointmentSearchFilter]);
 
-  const {
-    data: searchedAppointments,
-    isFetching: isSearchingAppointments,
-    refetch: refetchSearchedAppointments
-  } = useFilterAppointmentsWithoutPaginationQuery(
-    shouldSearchAppointments ? { filter: appointmentSearchFilter } : skipToken
-  );
-
-  const todayAppointmentQueryArgs = useMemo(
-    () => {
-      const day = rightPanelDate ?? currentCalendarDate ?? new Date();
-      const start = new Date(day);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(day);
-      end.setHours(23, 59, 59, 999);
-      return {
-        status: [String(selectedAppointmentStatus?.status ?? 'CONFIRMED')],
-        startDatetime: start.toISOString(),
-        endDatetime: end.toISOString()
-      };
-    },
-    [rightPanelDate, currentCalendarDate, selectedAppointmentStatus?.status]
-  );
-
-  const { data: todayAppointments = [], isFetching: isFetchingTodayAppointments } =
-    useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery(todayAppointmentQueryArgs);
+  const [
+    triggerAppointmentSearch,
+    { data: searchedAppointments, isFetching: isSearchingAppointments }
+  ] = useLazyFilterAppointmentsWithoutPaginationQuery();
 
   const isFollowUpAppointment = (appt: any) => {
     const label = appt?.visitTypeLvalue?.lovDisplayVale ?? '';
@@ -451,13 +434,12 @@ const ScheduleScreen = () => {
       });
     };
     collect(searchedAppointments ?? []);
-    collect((todayAppointments as any) ?? []);
     (appointmentRequestsResponse ?? []).forEach((req: any) => {
       const id = Number(req?.patientId ?? req?.patient_id);
       if (Number.isFinite(id) && id > 0) ids.add(id);
     });
     return Array.from(ids).sort((a, b) => a - b);
-  }, [searchedAppointments, todayAppointments, appointmentRequestsResponse]);
+  }, [searchedAppointments, appointmentRequestsResponse]);
 
   const { data: patientsByIdsData } = useGetPatientsByIdsQuery(
     { ids: appointmentPatientIdsForService },
@@ -484,7 +466,7 @@ const ScheduleScreen = () => {
   }, [patientsByIdsData]);
 
   useEffect(() => {
-    const sourceAppointments = searchedAppointments ?? (todayAppointments as any) ?? [];
+    const sourceAppointments = searchedAppointments ?? [];
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
       const today = new Date();
 
@@ -705,13 +687,10 @@ const ScheduleScreen = () => {
       freshEvent?.appointmentData?.status ??
       ''
     ).toUpperCase();
-    const isCanceled = status === 'CANCELLED' || status === 'CANCELED';
     const isNoShow = status === 'NOSHOW' || status === 'NO_SHOW' || status === 'NO-SHOW';
-    if (isCanceled || isNoShow) {
-      setReasonModalType(isCanceled ? 'Cancel' : 'No-show');
-      const reason = isCanceled
-        ? freshEvent?.appointmentData?.cancelReason
-        : freshEvent?.appointmentData?.noShowReason;
+    if (isNoShow) {
+      setReasonModalType('No-show');
+      const reason = freshEvent?.appointmentData?.noShowReason;
       setReasonViewRecord({
         reason: reason || freshEvent?.appointmentData?.otherReason || ''
       });
@@ -734,6 +713,8 @@ const ScheduleScreen = () => {
         );
         return;
       }
+      setViewAppointmentData(null);
+      setBookPatientReadOnly(false);
       setActionsModalOpen(false);
       setBookPatientModalOpen(true);
       return;
@@ -747,11 +728,24 @@ const ScheduleScreen = () => {
   };
 
   const handleSearchAppointmentsByCriteria = useCallback(async () => {
-    if (!appointmentSearchFilter?.facility) return;
-    if (typeof refetchSearchedAppointments === 'function') {
-      await refetchSearchedAppointments();
-    }
-  }, [appointmentSearchFilter, refetchSearchedAppointments]);
+    if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
+    await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+  }, [
+    appointmentSearchFilter,
+    shouldSearchAppointments,
+    triggerAppointmentSearch
+  ]);
+
+  useEffect(() => {
+    if (didInitialAppointmentSearchRef.current) return;
+    if (!selectedFacility?.id || !shouldSearchAppointments) return;
+    didInitialAppointmentSearchRef.current = true;
+    void handleSearchAppointmentsByCriteria();
+  }, [
+    selectedFacility?.id,
+    shouldSearchAppointments,
+    handleSearchAppointmentsByCriteria
+  ]);
 
   const openEditorForNewAppointment = useCallback(
     async ({
@@ -921,23 +915,10 @@ const ScheduleScreen = () => {
   );
 
   useEffect(() => {
-    if (!selectedFacility?.id) return;
-    void handleSearchAppointmentsByCriteria();
-  }, [
-    selectedFacility?.id,
-    selectedDepartment?.departmentId,
-    selectedResourceTypeValue?.value,
-    selectedResources?.resourceKey,
-    selectedAppointmentStatus?.status,
-    selectedBookingMode?.bookingMode,
-    schedulePatientIdForSearch,
-    handleSearchAppointmentsByCriteria
-  ]);
-
-  useEffect(() => {
     dispatch(setPageCode('Schedule_Screen'));
     dispatch(setDivContent('Scheduling'));
     return () => {
+      didInitialAppointmentSearchRef.current = false;
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
     };
@@ -1171,7 +1152,6 @@ const ScheduleScreen = () => {
 
   const handleActionsStatusRefresh = useCallback(async () => {
     await handleSearchAppointmentsByCriteria();
-    setActionsModalOpen(true);
   }, [handleSearchAppointmentsByCriteria]);
 
   const appointmentResourceKeys = useMemo(() => {
@@ -1217,6 +1197,38 @@ const ScheduleScreen = () => {
     setSelectedEvent(null);
     void handleSearchAppointmentsByCriteria();
   };
+
+  const handleRebookCancelledAppointment = useCallback(
+    (appointmentRow: any) => {
+      const startRaw =
+        appointmentRow?.startDatetime ??
+        appointmentRow?.appointmentDateTime ??
+        appointmentRow?.appointmentStart;
+      const apptStart = startRaw ? new Date(startRaw) : null;
+      if (!apptStart || Number.isNaN(apptStart.getTime())) {
+        dispatch(
+          notify({ msg: 'Invalid appointment start time.', sev: 'warning' })
+        );
+        return;
+      }
+      if (moment(apptStart).startOf('day').isBefore(moment().startOf('day'))) {
+        dispatch(
+          notify({
+            msg: 'Previous days: available slots cannot be booked.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+      setViewAppointmentData(appointmentRow);
+      setSelectedEvent(null);
+      setBookPatientReadOnly(false);
+      setActionsModalOpen(false);
+      setCancelledAppointmentsModalOpen(false);
+      setBookPatientModalOpen(true);
+    },
+    [dispatch]
+  );
 
   const handleViewAppointment = (appointmentDataToView = null) => {
     const dataToView = appointmentDataToView || selectedEvent?.appointmentData;
@@ -1392,40 +1404,6 @@ const ScheduleScreen = () => {
   }, [finalAppointments]);
 
   const todayAppointmentsList = useMemo(() => {
-    const rows = (todayAppointments as any) ?? [];
-    const mappedFromStatusQuery = rows.map((a: any) => {
-      const dt = new Date(
-        a?.appointmentDateTime ??
-        a?.appointmentStart ??
-        a?.appointment_start ??
-        a?.applyStartDateTime ??
-        Date.now()
-      );
-      const timeLabel = Number.isNaN(dt.getTime())
-        ? '--:--'
-        : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const patient = a?.patient ?? {};
-      const pid = getAppointmentPatientId(a);
-      const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
-      const patientName =
-        (fromSvc?.name && fromSvc.name.trim()) ||
-        patient?.full_name ||
-        patient?.fullName ||
-        [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
-        [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
-        'Unknown';
-      return {
-        id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
-        timeLabel,
-        patientName,
-        status: a?.status ?? a?.appointmentStatus ?? '-'
-      };
-    });
-
-    if (mappedFromStatusQuery.length > 0) {
-      return mappedFromStatusQuery;
-    }
-
     const day = new Date(rightPanelDate ?? currentCalendarDate ?? new Date());
     const y = day.getFullYear();
     const m = day.getMonth();
@@ -1446,13 +1424,7 @@ const ScheduleScreen = () => {
           status: e?.appointmentData?.appointmentStatus ?? '-'
         };
       });
-  }, [
-    todayAppointments,
-    finalAppointments,
-    rightPanelDate,
-    currentCalendarDate,
-    patientDisplayByPatientService
-  ]);
+  }, [finalAppointments, rightPanelDate, currentCalendarDate, patientDisplayByPatientService]);
 
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
@@ -1560,8 +1532,13 @@ const ScheduleScreen = () => {
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
-    if (isOpenSlotStatus(status) || statusKey === 'RESCHEDULED') {
-      const isRescheduledSlot = statusKey === 'RESCHEDULED';
+    if (
+      isOpenSlotStatus(status) ||
+      statusKey === 'RESCHEDULED' ||
+      isCanceledSlotStatus(status)
+    ) {
+      const isRebookableSlot =
+        statusKey === 'RESCHEDULED' || isCanceledSlotStatus(status);
       const startLabel =
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1573,10 +1550,10 @@ const ScheduleScreen = () => {
       const resourceText = getTooltipResourceDisplay(event) || 'Unknown Resource';
       return (
         <div
-          className={isRescheduledSlot ? '' : 'available-slot-card'}
+          className={isRebookableSlot ? '' : 'available-slot-card'}
           title={getTooltipContent(event)}
           style={
-            isRescheduledSlot
+            isRebookableSlot
               ? {
                 width: '100%',
                 height: '100%',
@@ -1594,7 +1571,13 @@ const ScheduleScreen = () => {
           <div className="available-slot-status-row">
             <span
               className="available-slot-dot"
-              style={isRescheduledSlot ? { background: '#7e22ce' } : undefined}
+              style={
+                isRebookableSlot
+                  ? {
+                    background: isCanceledSlotStatus(status) ? '#dc2626' : '#7e22ce'
+                  }
+                  : undefined
+              }
             />
             <span>{resourceText}</span>
           </div>
@@ -1937,7 +1920,7 @@ const ScheduleScreen = () => {
             slotPropGetter={slotPropGetter}
             rightPanelDate={rightPanelDate}
             todayAppointmentsList={todayAppointmentsList}
-            isFetchingTodayAppointments={isFetchingTodayAppointments}
+            isFetchingTodayAppointments={false}
             isSearchingAppointments={isSearchingAppointments}
             rightPanelAppointmentRows={rightPanelAppointmentRows}
             todayTimelineRows={todayTimelineRows}
@@ -2079,9 +2062,18 @@ const ScheduleScreen = () => {
         setOpen={setBulkRescheduleModalOpen}
         onSuccess={() => void handleSearchAppointmentsByCriteria()}
       />
+      <CancelledAppointmentsModal
+        open={cancelledAppointmentsModalOpen}
+        setOpen={setCancelledAppointmentsModalOpen}
+        calendarViewRange={calendarViewRange}
+        departmentId={selectedDepartment?.departmentId}
+        departmentOptions={departmentOptions as any[]}
+        onRebookAppointment={handleRebookCancelledAppointment}
+      />
       <ScheduleFloatingActions
         onViewAppointmentRequests={() => setAppRequestModalOpen(true)}
         onBulkReschedule={() => setBulkRescheduleModalOpen(true)}
+        onViewCancelledAppointments={() => setCancelledAppointmentsModalOpen(true)}
       />
     </div>
   );

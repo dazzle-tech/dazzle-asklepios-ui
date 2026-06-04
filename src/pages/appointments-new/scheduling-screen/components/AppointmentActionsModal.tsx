@@ -488,14 +488,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         // eslint-disable-next-line no-console
     }, [isActionsModalOpen, appointment]);
 
-    useEffect(() => {
-      if (!isActionsModalOpen) return;
-      const refreshInterval = setInterval(() => {
-        onStatusChange?.();
-      }, 5000);
-      return () => clearInterval(refreshInterval);
-    }, [isActionsModalOpen, onStatusChange]);
-
     // Set encounter when fetched for selected appointment
     useEffect(() => {
         const hydrateEncounter = async () => {
@@ -558,8 +550,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             }));
             
             dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
-            onStatusChange();
             onActionsModalClose();
+            await onStatusChange?.();
         } catch (error: any) {
             // Extract error message from API response
              const errorMsg = extractErrorMessage(error) || 'Save Failed';
@@ -650,11 +642,11 @@ const handleNonShow = async () => {
   try {
     await noShowAppointment({ id, noShowReason: reasonText }).unwrap();
     dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
-    onStatusChange();
-    onActionsModalClose();
     setResonType(null);
     setOtherReason(null);
     setResonKey(null);
+    onActionsModalClose();
+    await onStatusChange?.();
   } catch (error: any) {
     const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
@@ -678,11 +670,11 @@ const handleCancel = async () => {
   try {
     await cancelAppointment({ id, cancelReason: reasonText }).unwrap();
     dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
-    onStatusChange();
-    onActionsModalClose();
     setResonType(null);
     setOtherReason(null);
     setResonKey(null);
+    onActionsModalClose();
+    await onStatusChange?.();
   } catch (error: any) {
      const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));

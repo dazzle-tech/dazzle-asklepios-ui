@@ -1279,11 +1279,19 @@ const handlePrintWristband = async (rowData: any) => {
         const isPendingPayment = isPendingPaymentStatus(rowData);
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
+
+        const statusUpper = String(
+          rowData?.status ?? rowData?.encounterStatus ?? ''
+        ).toUpperCase();
+
         const tooltipStart = !rowData?.priorityLevel ? (
           <Tooltip>Please set Priority first</Tooltip>
+        ) : statusUpper === 'TRIAGE_STARTED' ? (
+          <Tooltip>Resume Triage</Tooltip>
         ) : (
           <Tooltip>Start Triage</Tooltip>
         );
+
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipCancel = (
           <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
