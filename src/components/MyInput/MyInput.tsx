@@ -743,7 +743,9 @@ const MyInput = ({
               )}
 
               menuStyle={{
-                width: popupWidth
+                minWidth: props?.width ?? 
+                "12vw",
+                width: 'auto',
               }}
 
               virtualized={

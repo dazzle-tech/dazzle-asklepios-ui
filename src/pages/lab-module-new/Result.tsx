@@ -740,11 +740,15 @@ const Result = forwardRef<any, Props>(
           const canEdit = row.processingStatus === 'RESULT_READY';
           const canApprove = row.processingStatus === 'RESULT_READY';
           const canReject = row.processingStatus === 'RESULT_READY';
-          const canPrint = row.processingStatus !== 'RESULT_APPROVED';
+          const canPrint = row.processingStatus === 'RESULT_APPROVED';
 
           return (
             <HStack spacing={10}>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Edit Result</Tooltip>}
+              >
                 <span>
                   <FontAwesomeIcon
                     icon={faPenToSquare}
@@ -762,7 +766,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Approve Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Approve Result</Tooltip>}
+              >
                 <span>
                   <CheckRoundIcon
                     onClick={() => {
@@ -780,7 +788,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Reject Result</Tooltip>}
+              >
                 <span>
                   <WarningRoundIcon
                     onClick={() => {
@@ -800,20 +812,33 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <FontAwesomeIcon
-                icon={faPrint}
-                className="icon-laboratory-size"
-                style={{
-                  cursor: canPrint ? 'pointer' : 'not-allowed',
-                  opacity: canPrint ? 1 : 0.4
-                }}
-                onClick={() => {
-                  if (!canPrint) return;
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Print Result</Tooltip>}
+              >
+                <span>
+                  <FontAwesomeIcon
+                    icon={faPrint}
+                    className="icon-laboratory-size"
+                    style={{
+                      cursor: canPrint ? 'pointer' : 'not-allowed',
+                      opacity: canPrint ? 1 : 0.4
+                    }}
+                    onClick={() => {
+                      if (!canPrint) return;
 
-                }}
-              />
-              
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
+                      // print logic here
+                    }}
+                  />
+                </span>
+              </Whisper>
+
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Logs</Tooltip>}
+              >
                 <FontAwesomeIcon
                   icon={faFileLines}
                   style={{ cursor: 'pointer', opacity: 0.8 }}
