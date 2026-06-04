@@ -49,7 +49,7 @@ const SignIn = () => {
   const [errText, setErrText] = useState(' ');
 
 const branding = useBranding();
-
+const background = branding.loginBackground || Background;
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
   const [credentials, setCredentials] = useState({
@@ -171,8 +171,12 @@ const branding = useBranding();
   }, [credentials.language, langData]);
 
   return (
-    <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
-      <Panel
+<Panel
+  className="panel"
+  style={{
+    backgroundImage: `url(${background})`
+  }}
+>      <Panel
         bordered
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',

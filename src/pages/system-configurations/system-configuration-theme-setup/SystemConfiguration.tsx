@@ -15,7 +15,8 @@ import {
   useGetSystemConfigQuery,
   useUpdateSystemConfigValueMutation,
   useUploadFaviconMutation,
-  useUploadSystemLogoMutation
+  useUploadSystemLogoMutation,
+  useUploadLoginBackgroundMutation
 } from '@/services/systemConfigService';
 import './styles.less';
 
@@ -45,7 +46,7 @@ const SystemConfiguration = () => {
   const [updateSystemConfigValue] = useUpdateSystemConfigValueMutation();
   const [uploadFavicon] = useUploadFaviconMutation();
   const [uploadSystemLogo] = useUploadSystemLogoMutation();
-
+  const [uploadLoginBackground] = useUploadLoginBackgroundMutation();
   const [searchTerm, setSearchTerm] = useState({ value: '' });
   const [selectedRow, setSelectedRow] = useState<ConfigRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -106,6 +107,12 @@ const SystemConfiguration = () => {
         label: 'System Logo',
         type: 'image',
         value: config.SYSTEM_LOGO
+      },
+      {
+        key: SystemConfigKey.LOGIN_BACKGROUND,
+        label: 'Login Background',
+        type: 'image',
+        value: config.LOGIN_BACKGROUND
       }
     ];
   }, [data]);
@@ -161,6 +168,20 @@ const SystemConfiguration = () => {
       return row.value ? (
         <div className="system-config-image-preview">
           <img src={row.value} alt="System Logo" className="system-config-logo-img" />
+          <span>Configured</span>
+        </div>
+      ) : (
+        '-'
+      );
+    }
+    if (row.key === SystemConfigKey.LOGIN_BACKGROUND) {
+      return row.value ? (
+        <div className="system-config-image-preview">
+          <img
+            src={row.value}
+            alt="Login Background"
+            className="system-config-logo-img"
+          />
           <span>Configured</span>
         </div>
       ) : (
@@ -225,39 +246,70 @@ const SystemConfiguration = () => {
     </div>
   );
 
-  const handleSave = async () => {
-    if (!selectedRow) return;
+ const handleSave = async () => {
+  if (!selectedRow) return;
 
-    try {
-      if (selectedRow.key === SystemConfigKey.FAVICON) {
-        if (!selectedFile) {
-          dispatch(notify({ msg: 'Please select favicon file', sev: 'warning' }));
-          return;
-        }
-
-        await uploadFavicon(selectedFile).unwrap();
-      } else if (selectedRow.key === SystemConfigKey.SYSTEM_LOGO) {
-        if (!selectedFile) {
-          dispatch(notify({ msg: 'Please select logo file', sev: 'warning' }));
-          return;
-        }
-
-        await uploadSystemLogo(selectedFile).unwrap();
-      } else {
-        await updateSystemConfigValue({
-          key: selectedRow.key,
-          value: editRecord.value
-        }).unwrap();
+  try {
+    if (selectedRow.key === SystemConfigKey.FAVICON) {
+      if (!selectedFile) {
+        dispatch(notify({ msg: 'Please select favicon file', sev: 'warning' }));
+        return;
       }
 
-      dispatch(notify({ msg: 'System configuration updated successfully', sev: 'success' }));
-      await refetch();
-      setOpen(false);
-      window.location.reload();
-    } catch {
-      dispatch(notify({ msg: 'Failed to update system configuration', sev: 'error' }));
+      await uploadFavicon(selectedFile).unwrap();
+    } else if (selectedRow.key === SystemConfigKey.SYSTEM_LOGO) {
+      if (!selectedFile) {
+        dispatch(notify({ msg: 'Please select logo file', sev: 'warning' }));
+        return;
+      }
+
+      await uploadSystemLogo(selectedFile).unwrap();
+    } else if (selectedRow.key === SystemConfigKey.LOGIN_BACKGROUND) {
+      if (!selectedFile) {
+        dispatch(notify({ msg: 'Please select login background file', sev: 'warning' }));
+        return;
+      }
+
+      await uploadLoginBackground(selectedFile).unwrap();
+    } else {
+      await updateSystemConfigValue({
+        key: selectedRow.key,
+        value: editRecord.value
+      }).unwrap();
     }
-  };
+
+    dispatch(
+      notify({
+        msg: 'System configuration updated successfully',
+        sev: 'success'
+      })
+    );
+
+    await refetch();
+    setOpen(false);
+    window.location.reload();
+  } catch (error: any) {
+    if (
+      error?.status === 413 ||
+      error?.data?.detail?.includes('FileTooLargeException') ||
+      error?.data?.detail?.includes('maximum size')
+    ) {
+      dispatch(
+        notify({
+          msg: 'Selected image is too large. Please choose a smaller image.',
+          sev: 'error'
+        })
+      );
+
+      return;
+    }
+
+    dispatch({
+      msg: 'Failed to update system configuration',
+      sev: 'error'
+    });
+  }
+};
 
   const modalContent = () => {
     if (!selectedRow) return null;
@@ -304,43 +356,51 @@ const SystemConfiguration = () => {
     if (selectedRow.type === 'image') {
       return (
         <Form fluid>
-          <div className="system-config-modal-field">
-            <label>{selectedRow.label}</label>
+         <div className="system-config-modal-field">
+  <label>{selectedRow.label}</label>
 
-            {selectedRow.value && (
-              <div className="system-config-current-image">
-                <img
-                  src={selectedRow.value}
-                  alt={selectedRow.label}
-                  className={
-                    selectedRow.key === SystemConfigKey.FAVICON
-                      ? 'system-config-favicon-img'
-                      : 'system-config-logo-img'
-                  }
-                />
-                <span>Current Image</span>
-              </div>
-            )}
+  {selectedRow.value && (
+    <div className="system-config-current-image">
+      <img
+        src={selectedRow.value}
+        alt={selectedRow.label}
+        className={
+          selectedRow.key === SystemConfigKey.FAVICON
+            ? 'system-config-favicon-img'
+            : 'system-config-logo-img'
+        }
+      />
+      <span>Current Image</span>
+    </div>
+  )}
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => {
-                const file = e.target.files?.[0];
+  <input
+    id="system-config-file-upload"
+    type="file"
+    accept="image/*"
+    style={{ display: 'none' }}
+    onChange={e => {
+      const file = e.target.files?.[0];
 
-                if (file) {
-                  setSelectedFile(file);
-                  setSelectedFileName(file.name);
-                }
-              }}
-            />
+      if (file) {
+        setSelectedFile(file);
+        setSelectedFileName(file.name);
+      }
+    }}
+  />
 
-            {selectedFileName && (
-              <div className="system-config-selected-file">
-                Selected file: {selectedFileName}
-              </div>
-            )}
-          </div>
+  <label htmlFor="system-config-file-upload">
+    <MyButton as="span">
+      📷 Choose Image
+    </MyButton>
+  </label>
+
+  {selectedFileName && (
+    <div className="system-config-selected-file">
+      ✅ {selectedFileName}
+    </div>
+  )}
+</div>
         </Form>
       );
     }

@@ -96,7 +96,21 @@ export const systemConfigService = createApi({
       },
       invalidatesTags: ['SystemConfig'],
       onQueryStarted
-    })
+    }),
+    uploadLoginBackground: builder.mutation<SystemConfiguration, File>({
+  query: file => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return {
+      url: 'api/setup/system-config/login-background',
+      method: 'POST',
+      body: formData
+    };
+  },
+  invalidatesTags: ['SystemConfig'],
+  onQueryStarted
+})
   })
 });
 
@@ -106,5 +120,6 @@ export const {
   useUpdateSystemConfigMutation,
   useUpdateSystemConfigValueMutation,
   useUploadSystemLogoMutation,
-  useUploadFaviconMutation
+  useUploadFaviconMutation,
+  useUploadLoginBackgroundMutation
 } = systemConfigService;
