@@ -101,9 +101,20 @@ const RootWrapper = () => {
     }
   }, [systemConfig]);
 
-  const primaryColor = systemConfig?.PRIMARY_COLOR || '#1976d2';
-  const fontFamily = systemConfig?.FONT_FAMILY || 'Inter';
-  const logo = systemConfig?.SYSTEM_LOGO || '/clinicle.png';
+ const cachedConfig = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('systemConfig') || '{}');
+  } catch {
+    return {};
+  }
+})();
+
+const activeConfig = systemConfig || cachedConfig;
+
+const primaryColor = activeConfig?.PRIMARY_COLOR || '#1976d2';
+const fontFamily = activeConfig?.FONT_FAMILY || 'Inter';
+const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
+const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
 
   const muiTheme = createTheme({
     palette: {
@@ -117,16 +128,17 @@ const RootWrapper = () => {
     }
   });
 
-  const styledTheme = {
-    mode,
-    systemConfig,
-    logo,
-    colors: {
-      primary: primaryColor,
-      background: mode === 'dark' ? '#121212' : '#fff',
-      text: mode === 'dark' ? '#fff' : '#000'
-    }
-  };
+const styledTheme = {
+  mode,
+  systemConfig: activeConfig,
+  logo,
+  loginBackground,
+  colors: {
+    primary: primaryColor,
+    background: mode === 'dark' ? '#121212' : '#fff',
+    text: mode === 'dark' ? '#fff' : '#000'
+  }
+};
 
   return (
     <MUIThemeProvider theme={muiTheme}>
