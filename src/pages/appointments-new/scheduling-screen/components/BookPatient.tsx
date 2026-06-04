@@ -41,6 +41,23 @@ type BookPatientProps = {
   readOnly?: boolean;
 };
 
+const normalizeAppointmentStatusKey = (raw: unknown): string =>
+  String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+const isRebookableSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return (
+    status === 'NEW' ||
+    status === 'RESCHEDULE' ||
+    status === 'RESCHEDULED' ||
+    status === 'CANCELLED' ||
+    status === 'CANCELED'
+  );
+};
+
 const BookPatient = ({
   open,
   setOpen,
@@ -137,8 +154,13 @@ const BookPatient = ({
         ? appointmentData?.patient?.id ?? appointmentData?.patient?.key
         : appointmentData?.patient);
 
+    const slotStatus = normalizeAppointmentStatusKey(
+      appointmentData?.status ?? appointmentData?.appointmentStatus
+    );
     const hasPatientOnAppointment =
-      rawPatientOnAppointment != null && String(rawPatientOnAppointment) !== '';
+      !isRebookableSlotStatus(slotStatus) &&
+      rawPatientOnAppointment != null &&
+      String(rawPatientOnAppointment) !== '';
 
     const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
     const appointmentDefaultService = appointmentData?.defaultServiceId || null;
