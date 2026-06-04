@@ -1686,7 +1686,7 @@ export const newPatient: modelTypes.Patient = {
   receiveEmail: false,
   preferredWayOfContact: null,
 
-  nativeLanguage: '',
+  preferredLanguage: '',
   emergencyContactName: '',
   emergencyContactRelation: '',
   emergencyContactPhone: '',
