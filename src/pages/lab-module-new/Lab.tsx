@@ -332,7 +332,11 @@ const Lab = () => {
                       {test.id && (
                             <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
                       )}
-                      {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
+                        {test.id && (
+                          <div>
+                            Number of Samples Collected: {samplesList.length}
+                          </div>
+                        )}
                   <MyTab
                     data={innerTabsData}
                     activeTab={activeKey2}

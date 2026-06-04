@@ -164,49 +164,90 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   const testMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
 
-  const normalizedResults = useMemo(() => {
-    if (!orderTests.length || !allTests.length) return [];
+const normalizedResults = useMemo(() => {
+  return results.map((r: any) => {
+    const orderTest = orderTestMap.get(r.orderTestId);
 
-    return results.map((r: any) => {
-      const orderTest = orderTestMap.get(r.orderTestId);
-      const test = orderTest ? testMap.get(orderTest.testId) : null;
+    const testId =
+      orderTest?.testId ??
+      r.testId ??
+      r.diagnosticTestId ??
+      r.test?.id;
 
-      const profile = profilesMap.get(r.profileTestId);
-      const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
+    const test = testId ? testMap.get(testId) : null;
 
-      let value = '';
-      let unit = '';
-      let normalRangeValue = ' ';
+    const profile = profilesMap.get(r.profileTestId);
 
-      if (isLovTest) {
-        value = resolveLovDisplayValue(profile?.listOfValueId, r.resultValueText);
+    const isLovTest =
+      profile?.resultType?.toUpperCase() === 'LOV';
 
-        normalRangeValue = resolveLovDisplayValue(profile?.listOfValueId, r.viewNormalRange);
-      } else {
-        value =
-          r.resultValueNumber !== null && r.resultValueNumber !== undefined
-            ? String(r.resultValueNumber)
-            : '';
+    let value = '';
+    let unit = '';
+    let normalRangeValue = ' ';
 
-        unit =
-          valueUnitLov?.object?.find(
-            (u: any) => String(u.key) === String(test?.defaultProfileResultUnit)
-          )?.lovDisplayVale ?? '';
+    if (isLovTest) {
+      value = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.resultValueText
+      );
 
-        normalRangeValue = r.viewNormalRange ?? ' ';
-      }
+      normalRangeValue = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.viewNormalRange
+      );
+    } else {
+      value =
+        r.resultValueNumber !== null &&
+        r.resultValueNumber !== undefined
+          ? String(r.resultValueNumber)
+          : '';
 
-      return {
-        ...r,
-        orderId: orderTest?.orderId ?? ' ',
-        testName: test?.name ?? ' ',
-        resultValue: value,
-        unit,
-        normalRange: normalRangeValue
-      };
-    });
-  }, [results, orderTestMap, testMap, valueUnitLov, lovDefinitions, allLovValues]);
+      unit =
+        valueUnitLov?.object?.find(
+          (u: any) =>
+            String(u.key) ===
+            String(
+              profile?.resultUnit ??
+                profile?.defaultResultUnit ??
+                test?.defaultProfileResultUnit
+            )
+        )?.lovDisplayVale ?? '';
 
+      normalRangeValue = r.viewNormalRange ?? ' ';
+    }
+
+    const testName =
+      profile?.name ??
+      profile?.testName ??
+      profile?.profileTestName ??
+      profile?.diagnosticTestName ??
+      test?.name ??
+      orderTest?.testName ??
+      orderTest?.diagnosticTestName ??
+      r.testName ??
+      r.diagnosticTestName ??
+      r.test?.name ??
+      '-';
+
+    return {
+      ...r,
+      orderId: orderTest?.orderId ?? r.orderId ?? ' ',
+      testName,
+      resultValue: value,
+      unit,
+      normalRange: normalRangeValue
+    };
+  });
+}, [
+  results,
+  orderTestMap,
+  testMap,
+  profilesMap,
+  valueUnitLov,
+  lovDefinitions,
+  allLovValues
+]);
+    
   const columns: ColumnConfig[] = [
     {
       key: 'testName',
@@ -219,7 +260,7 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
       render: (row: any) => {
         const hasValue =
           row.resultValue !== null && row.resultValue !== undefined && row.resultValue !== '';
-
+          console.log("row:", row);
         return (
           <>
             <span>{row.resultValue}</span>
