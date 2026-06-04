@@ -338,6 +338,41 @@
   row-gap: 10px;
 }
 
+/* Cancelled appointments modal: inline filter row (avoid vertical Form 24px group margins) */
+.cancelled-appointments-filter-row.rs-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+
+  .my-input-container.rs-form-group,
+  .cancelled-appointments-filter-search.rs-form-group {
+    margin-bottom: 0 !important;
+  }
+
+  .cancelled-appointments-filter-search {
+    flex-shrink: 0;
+
+    .rs-form-control-label {
+      margin-bottom: 5px !important;
+      font-size: 14px !important;
+      line-height: 20px !important;
+      min-height: 20px;
+    }
+
+    .cancelled-appointments-filter-search-label {
+      visibility: hidden;
+    }
+
+    .bt {
+      height: 35px !important;
+      min-height: 35px !important;
+      box-sizing: border-box;
+    }
+  }
+}
+
 .appointments-filters-collapse-btn {
   width: 24px;
   height: 24px;
