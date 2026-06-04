@@ -1,13 +1,23 @@
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
+import {
+  useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
+import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { Patient, PatientInsurance } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
+import { calculateAgeFormat, conjureValueBasedOnIDFromList } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -22,23 +32,31 @@ import {
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useRef, useState,useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
+import {
+  Avatar,
+  AvatarGroup,
+  Dropdown,
+  Form,
+  Input,
+  Popover,
+  SelectPicker,
+  Stack,
+  Tooltip,
+  Whisper
+} from 'rsuite';
+import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
-import QuickPatient from '../facility-patient-list/QuickPatient';
 import {
-  useLazyGetPatientInformationPdfQuery,
-  useLazyGetPatientLabelPdfQuery,
-  useSendPatientPasswordEmailMutation
-} from '@/services/patient/patientService';
-import { useLazyGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
-import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+  extractCchiInsurance,
+  getCchiInsuranceStorageKey,
+  pickPatientFields
+} from './cchiMappers';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -52,9 +70,11 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
+  setCchiAddress: (address: Address | null) => void;
+  setCchiDocument?: (document: PatientDocument | null) => void;
+  setCchiInsurance?: (insurance: PatientInsurance | null) => void;
+  setProfileActiveTab?: (tabKey: string) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
-  // eligibilityChecked: boolean;
-  // setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -69,25 +89,80 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
   setLocalPatient,
+  setCchiAddress,
+  setCchiDocument,
+  setCchiInsurance,
   setOpenReferralRequestModal
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
+  const whisperRef = useRef<any>(null);
+
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-  const [uploadAttachments] = useUploadAttachmentsMutation();
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+  const [openCchiModal, setOpenCchiModal] = useState(false);
+  const [cchiDocumentId, setCchiDocumentId] = useState('');
+  const [openEligibilityModal, setOpenEligibilityModal] = useState(false);
+  const [selectedPatientInsuranceId, setSelectedPatientInsuranceId] = useState<number | null>(
+    null
+  );
+
+  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const [uploadAttachments] = useUploadAttachmentsMutation();
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
-  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
-  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] =
+    useSendPatientPasswordEmailMutation();
+  const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
+    useLazyGetPatientFromCchiQuery();
   const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
-  const [triggerGetInsurances] = useLazyGetInsurancesByPatientQuery();
-  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+
+  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances } =
+    useGetInsurancesByPatientQuery(
+      {
+        patientId: patientId!,
+        page: 0,
+        size: 100,
+        sort: 'id,desc'
+      },
+      {
+        skip: !patientId || !openEligibilityModal
+      }
+    );
+
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+
+  const patientInsurancesList = useMemo(
+    () => patientInsuranceResponse?.data?.data ?? [],
+    [patientInsuranceResponse?.data?.data]
+  );
+
+  const insurancePickerOptions = useMemo(
+    () =>
+      patientInsurancesList.map((insurance: any) => {
+        const payorName =
+          conjureValueBasedOnIDFromList(payorsList, insurance?.payorId, 'name') ||
+          `Payor #${insurance?.payorId}`;
+        const policyNumber = insurance?.policyNumber ?? '';
+        const primarySuffix = insurance?.isPrimary ? ' (Primary)' : '';
+
+        return {
+          label: `${payorName} - ${policyNumber}${primarySuffix}`,
+          value: Number(insurance?.id)
+        };
+      }),
+    [patientInsurancesList, payorsList]
+  );
 
   const {
     data: profilePictureTicket,
@@ -97,216 +172,304 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+  useEffect(() => {
+    if (!openEligibilityModal || selectedPatientInsuranceId != null) return;
 
+    const primaryInsurance = patientInsurancesList.find((insurance: any) => insurance?.isPrimary);
+    const defaultInsurance = primaryInsurance ?? patientInsurancesList[0];
+    const defaultId = defaultInsurance?.id != null ? Number(defaultInsurance.id) : null;
 
-const handlePrintInformation = async () => {
-  if (!localPatient?.id) return;
-
-  try {
-    setPrintingType('information');
-
-    const blob = await triggerGetPatientInformationPdf({
-      patientId: localPatient.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
+    if (defaultId != null && !Number.isNaN(defaultId)) {
+      setSelectedPatientInsuranceId(defaultId);
     }
+  }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
 
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg =
+        response?.data?.message ??
+        response?.data?.error ??
+        response?.message ??
+        response?.error;
 
-  } catch (err: any) {
-    dispatch(
-      notify({
-        msg: err?.data?.message || 'Print failed',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
-
-const handlePrintPatientLabel = async (rowData: any) => {
-  if (!rowData?.id) return;
-
-  try {
-    setPrintingType('label');
-
-    const blob = await triggerGetPatientLabelPdf({
-      patientId: rowData.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-    // لا تعمل revokeObjectURL هون
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Failed to open label pdf',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
-
-const extractErrorMessage = (response: any): string => {
-  try {
-    const msg =
-      response?.data?.message ??
-      response?.data?.error ??
-      response?.message ??
-      response?.error;
-
-    if (typeof msg === 'string' && msg.trim()) {
-      return msg.replace(/^error\./i, '').trim();
-    }
-
-    if (response?.data && typeof response?.data === 'object') {
-      const detail = response.data.detail ?? response.data.description;
-      if (typeof detail === 'string' && detail.trim()) {
-        return detail.trim();
+      if (typeof msg === 'string' && msg.trim()) {
+        return msg.replace(/^error\./i, '').trim();
       }
+
+      if (response?.data && typeof response?.data === 'object') {
+        const detail = response.data.detail ?? response.data.description;
+        if (typeof detail === 'string' && detail.trim()) {
+          return detail.trim();
+        }
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
-  }
-  return '';
-};
+    return '';
+  };
 
-const handleSendPasswordEmail = async () => {
-  if (!localPatient?.id) return;
-
-  try {
-    await sendPatientPasswordEmail(localPatient.id).unwrap();
-    dispatch(
-      notify({
-        msg: 'Password email sent successfully',
-        sev: 'success'
-      })
-    );
-  } catch (error: any) {
-    const errorMsg = extractErrorMessage(error);
-    dispatch(
-      notify({
-        msg: errorMsg || 'Failed to send password email',
-        sev: 'error'
-      })
-    );
-  }
-};
-
-const resolvePrimaryInsurance = (insurances: PatientInsurance[]): PatientInsurance | undefined => {
-  if (!insurances.length) return undefined;
-  return insurances.find(insurance => insurance.isPrimary) ?? insurances[0];
-};
-
-const handleEligibilityCheck = async () => {
-  if (!localPatient?.id) {
-    dispatch(
-      notify({
-        msg: 'Save the patient before checking eligibility',
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
-  const patientIdNumber = Number(localPatient.id);
-  if (!Number.isFinite(patientIdNumber) || patientIdNumber <= 0) return;
-
-  try {
-    const insurancesResponse = await triggerGetInsurances({
-      patientId: patientIdNumber,
-      page: 0,
-      size: 100,
-      sort: 'id,desc'
-    }).unwrap();
-
-    const insurances: PatientInsurance[] = insurancesResponse?.data?.data ?? [];
-    const primaryInsurance = resolvePrimaryInsurance(insurances);
-
-    if (!primaryInsurance?.id) {
+  const handleOpenEligibilityModal = () => {
+    if (!localPatient?.id) {
       dispatch(
         notify({
-          msg: 'Patient must have insurance before checking eligibility',
+          msg: 'Please save the patient before checking eligibility',
           sev: 'warning'
         })
       );
       return;
     }
 
-    const result = await checkEligibility({
-      patientId: patientIdNumber,
-      patientInsuranceId: primaryInsurance.id,
-      serviceDate: new Date().toISOString().slice(0, 10),
-      benefits: true,
-      validation: true
-    }).unwrap();
+    setSelectedPatientInsuranceId(null);
+    setOpenEligibilityModal(true);
+  };
 
-    dispatch(
-      notify({
-        msg: result.message || 'Eligibility check completed successfully',
-        sev: 'success'
-      })
-    );
-
-    if (result.eligibilityResponseUrl) {
-      const win = window.open(result.eligibilityResponseUrl, '_blank');
-      if (!win) {
-        dispatch(
-          notify({
-            msg: 'Popup blocked. Please allow popups to view the eligibility response.',
-            sev: 'warning'
-          })
-        );
-      }
-    }
-  } catch (error: any) {
-    const errorMsg = extractErrorMessage(error);
-    if (errorMsg) {
+  const handleCheckEligibility = async () => {
+    if (!localPatient?.id) {
       dispatch(
         notify({
-          msg: errorMsg,
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!selectedPatientInsuranceId) {
+      dispatch(
+        notify({
+          msg: 'Please select an insurance',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const result = await checkEligibility({
+        patientId: Number(localPatient.id),
+        patientInsuranceId: selectedPatientInsuranceId,
+        serviceDate: new Date().toISOString().split('T')[0],
+        benefits: true,
+        validation: true,
+        discovery: false,
+        transfer: false,
+        emergency: false
+      }).unwrap();
+
+      setOpenEligibilityModal(false);
+      setSelectedPatientInsuranceId(null);
+
+      dispatch(
+        notify({
+          msg:
+            result.message ||
+            `Eligibility check ${result.requestStatus ?? 'completed'} successfully`,
+          sev: result.requestStatus === 'SUCCESS' ? 'success' : 'info'
+        })
+      );
+
+      if (result.eligibilityResponseUrl) {
+        const win = window.open(result.eligibilityResponseUrl, '_blank');
+        if (!win) {
+          dispatch(
+            notify({
+              msg: 'Popup blocked. Please allow popups to view the eligibility response.',
+              sev: 'warning'
+            })
+          );
+        }
+      }
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to check eligibility',
           sev: 'error'
         })
       );
     }
-  }
-};
+  };
+
+  const handleFetchPatientFromCchi = async () => {
+    if (!cchiDocumentId?.trim()) {
+      dispatch(
+        notify({
+          msg: 'Please enter document ID',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
+      const mappedDocument = mappedResponse.document;
+
+      setLocalPatient({
+        ...localPatient,
+        ...pickPatientFields(mappedResponse.patient),
+        id: localPatient?.id,
+        isCchiPatient: true
+      });
+
+      setCchiAddress(mappedResponse.address ?? null);
+
+      if (mappedDocument) {
+        setCchiDocument?.({
+          ...mappedDocument,
+          id: null,
+          patient: null,
+          countryId: mappedDocument.countryId,
+          number: mappedDocument.number,
+          type: mappedDocument.type,
+          isPrimary: false
+        } as any);
+      } else {
+        setCchiDocument?.(null);
+      }
+
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+      if (rawInsurance) {
+        setCchiInsurance?.({
+          ...rawInsurance,
+          id: undefined,
+          patientId: localPatient?.id != null ? Number(localPatient.id) : undefined,
+          isPrimary: rawInsurance.isPrimary ?? true
+        } as PatientInsurance);
+
+        const storageKey = getCchiInsuranceStorageKey(
+          localPatient?.id,
+          mappedResponse.patient?.documentId ?? cchiDocumentId.trim()
+        );
+        if (storageKey) {
+          sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+        }
+
+      } else {
+        setCchiInsurance?.(null);
+      }
+
+      setOpenCchiModal(false);
+      setCchiDocumentId('');
+
+      dispatch(
+        notify({
+          msg: rawInsurance
+            ? 'Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+            : 'Patient data loaded from CCHI successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      setCchiDocument?.(null);
+      setCchiInsurance?.(null);
+
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to fetch patient from CCHI',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      setPrintingType('information');
+
+      const blob = await triggerGetPatientInformationPdf({
+        patientId: localPatient.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
+  const handlePrintPatientLabel = async (rowData: any) => {
+    if (!rowData?.id) return;
+
+    try {
+      setPrintingType('label');
+
+      const blob = await triggerGetPatientLabelPdf({
+        patientId: rowData.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Failed to open label pdf',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
+  const handleSendPasswordEmail = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      await sendPatientPasswordEmail(localPatient.id).unwrap();
+      dispatch(
+        notify({
+          msg: 'Password email sent successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to send password email',
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const contentOfMoreIconMenu = (
     <Popover>
@@ -337,20 +500,6 @@ const handleEligibilityCheck = async () => {
             <Translate>Referral Requests</Translate>
           </div>
         </Dropdown.Item>
-
-        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon icon={faThumbsUp} />
-            <Translate>Approvals</Translate>
-          </div>
-        </Dropdown.Item> */}
-
-        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon icon={faCalendarDay} />
-            <Translate>Appointments</Translate>
-          </div>
-        </Dropdown.Item> */}
 
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -394,48 +543,41 @@ const handleEligibilityCheck = async () => {
             <Translate>Bulk Registration</Translate>
           </div>
         </Dropdown.Item>
-
-        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon icon={faBars} />
-            <Translate>Encounter Transactions</Translate>
-          </div>
-        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );
 
- const contentOfPrintIconMenu = (
-  <Popover>
-    <Dropdown.Menu>
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintInformation();
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
+  const contentOfPrintIconMenu = (
+    <Popover>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          disabled={!localPatient?.id || printingType !== null}
+          onClick={async () => {
+            await handlePrintInformation();
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <Translate>
+              {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
+            </Translate>
+          </div>
+        </Dropdown.Item>
 
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintPatientLabel(localPatient);
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  </Popover>
-);
+        <Dropdown.Item
+          disabled={!localPatient?.id || printingType !== null}
+          onClick={async () => {
+            await handlePrintPatientLabel(localPatient);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <Translate>
+              {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
+            </Translate>
+          </div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
+  );
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -455,8 +597,6 @@ const handleEligibilityCheck = async () => {
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
-        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
@@ -511,39 +651,33 @@ const handleEligibilityCheck = async () => {
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-// useEffect(() => {
-//   if (location.state?.eligibilityDone) {
-//     setEligibilityChecked(true);
-//   }
-// }, [location.state]);
+  useEffect(() => {
+    if (
+      quickPatientModalOpen ||
+      openScanDocumentModal ||
+      openCchiModal ||
+      openEligibilityModal
+    ) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
 
+  useEffect(() => {
+    const handleClick = (e: any) => {
+      if (e.target.closest('.rs-popover')) return;
 
-const whisperRef = useRef<any>(null);
+      setOpenMoreMenu(false);
+    };
 
-useEffect(() => {
-  if (quickPatientModalOpen || openScanDocumentModal) {
-    whisperRef.current?.close?.();
-  }
-}, [quickPatientModalOpen, openScanDocumentModal]);
+    document.addEventListener('mousedown', handleClick);
 
-useEffect(() => {
-  const handleClick = (e: any) => {
-    if (e.target.closest('.rs-popover')) return;
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, []);
 
-    setOpenMoreMenu(false);
-  };
-
-  document.addEventListener('mousedown', handleClick);
-
-  return () => {
-    document.removeEventListener('mousedown', handleClick);
-  };
-}, []);
-
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -650,6 +784,7 @@ useEffect(() => {
             >
               <AvatarGroup spacing={6}></AvatarGroup>
             </div>
+
             <div
               style={{
                 display: 'flex',
@@ -658,17 +793,16 @@ useEffect(() => {
                 justifyContent: 'flex-end'
               }}
             >
-              {/* <MyButton onClick={handleScanDocumentClick}>
-                <Translate>Scan Document</Translate>
-              </MyButton> */}
-
               <MyButton
                 disabled={!localPatient?.id || isCheckingEligibility}
-                onClick={handleEligibilityCheck}
+                loading={isCheckingEligibility}
+                onClick={handleOpenEligibilityModal}
               >
-                <Translate>
-                  {isCheckingEligibility ? 'Checking Eligibility...' : 'Eligibility Check'}
-                </Translate>
+                <Translate>Eligibility Check</Translate>
+              </MyButton>
+
+              <MyButton onClick={() => setOpenCchiModal(true)}>
+                <Translate>Fetch Patient from CCHI</Translate>
               </MyButton>
 
               <MyButton
@@ -724,10 +858,7 @@ useEffect(() => {
                 speaker={contentOfMoreIconMenu}
               >
                 <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    size="small"
-                    onClick={() => setOpenMoreMenu(prev => !prev)}
-                  >
+                  <MyButton size="small" onClick={() => setOpenMoreMenu(prev => !prev)}>
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </MyButton>
                 </span>
@@ -766,6 +897,109 @@ useEffect(() => {
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+      />
+
+      <MyModal
+        open={openEligibilityModal}
+        setOpen={(open: boolean) => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(open);
+            if (!open) {
+              setSelectedPatientInsuranceId(null);
+            }
+          }
+        }}
+        title={<Translate>Eligibility Check</Translate>}
+        size="35vw"
+        bodyheight="200px"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isCheckingEligibility ? 'Checking...' : 'Check Eligibility'}
+        isDisabledActionBtn={
+          isCheckingEligibility ||
+          isFetchingInsurances ||
+          insurancePickerOptions.length === 0 ||
+          !selectedPatientInsuranceId
+        }
+        actionButtonFunction={handleCheckEligibility}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(false);
+            setSelectedPatientInsuranceId(null);
+          }
+        }}
+        content={
+          <Form fluid>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Insurance</Translate>
+              </Form.ControlLabel>
+
+              {isFetchingInsurances ? (
+                <Translate>Loading insurances...</Translate>
+              ) : insurancePickerOptions.length === 0 ? (
+                <Translate>
+                  No insurance found for this patient. Please add insurance first.
+                </Translate>
+              ) : (
+                <SelectPicker
+                  block
+                  searchable
+                  cleanable={false}
+                  data={insurancePickerOptions}
+                  value={selectedPatientInsuranceId}
+                  disabled={isCheckingEligibility}
+                  onChange={value =>
+                    setSelectedPatientInsuranceId(value != null ? Number(value) : null)
+                  }
+                  placeholder="Select insurance"
+                />
+              )}
+            </Form.Group>
+          </Form>
+        }
+      />
+
+      <MyModal
+        open={openCchiModal}
+        setOpen={(open: boolean) => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(open);
+          }
+        }}
+        title={<Translate>Fetch Patient from CCHI</Translate>}
+        size="30vw"
+        bodyheight="160px"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isFetchingCchiPatient ? 'Loading...' : 'Load Patient'}
+        isDisabledActionBtn={isFetchingCchiPatient}
+        actionButtonFunction={handleFetchPatientFromCchi}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(false);
+            setCchiDocumentId('');
+          }
+        }}
+        content={
+          <Form fluid>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Document ID</Translate>
+              </Form.ControlLabel>
+
+              <Input
+                value={cchiDocumentId}
+                disabled={isFetchingCchiPatient}
+                onChange={value => setCchiDocumentId(value)}
+                placeholder="Enter document ID"
+                onPressEnter={handleFetchPatientFromCchi}
+              />
+            </Form.Group>
+          </Form>
+        }
       />
     </div>
   );

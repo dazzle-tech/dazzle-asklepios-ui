@@ -24,6 +24,7 @@ import PatientDuplicate from './patientsDuplicate';
 import PatientVisitHistory from './PatientVisitHistory';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import ProfileHeader from './ProfileHeader-new';
+import { buildPatientSavePayload } from './cchiMappers';
 import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
@@ -33,12 +34,26 @@ import { Patient, Address } from '@/types/model-types-new';
 
 const { getHeight } = DOMHelper;
 
+const resolveBackendErrorKey = (data: any): string => {
+  const raw = data?.errorKey || data?.message || data?.properties?.message || '';
+  return String(raw).replace(/^error\./, '');
+};
+
+const isTechnicalErrorText = (value: unknown): boolean => {
+  const text = String(value ?? '');
+  return /ProblemDetail|BAD_REQUEST|with-message|instance='null'/i.test(text);
+};
+
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
-  const errorKey = data?.errorKey;
+  const errorKey = resolveBackendErrorKey(data);
   const title = data?.title || '';
-  const detail = data?.detail || '';
-  const message = data?.message || '';
+  const detail =
+    data?.detail && data.detail !== 'null' && !isTechnicalErrorText(data.detail)
+      ? data.detail
+      : '';
+  const message =
+    data?.message && !isTechnicalErrorText(data.message) ? data.message : '';
   const rawFieldErrors = data?.fieldErrors;
 
   const fieldErrors = Array.isArray(rawFieldErrors)
@@ -102,10 +117,23 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return 'A patient with the same medical record number already exists.' + traceId;
   }
   if (errorKey === 'db.constraint') {
-    return (detail || 'Database constraint violated while saving or updating patient.') + traceId;
+    return (
+      detail ||
+      'Could not save patient. A value may already exist or a required field is invalid. Check names, mobile number, and document details, then try again.' +
+        traceId
+    );
   }
 
-  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+  if (message && message.startsWith('error.')) {
+    return message.replace(/^error\./, '') + traceId;
+  }
+
+  return (
+    detail ||
+    (!isTechnicalErrorText(title) ? title : '') ||
+    message ||
+    'Unexpected server error occurred.' + traceId
+  );
 };
 
 const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
@@ -162,6 +190,7 @@ const PatientProfile = () => {
 
   const [cchiAddress, setCchiAddress] = useState<Address | null>(null);
   const [cchiDocument, setCchiDocument] = useState<any>(null);
+  const [cchiInsurance, setCchiInsurance] = useState<any>(null);
   const [openCchiDocumentPopup, setOpenCchiDocumentPopup] = useState(false);
   const [profileActiveTab, setProfileActiveTab] = useState<string>('1');
 
@@ -212,11 +241,7 @@ const PatientProfile = () => {
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
-          data: {
-            ...localPatient,
-            isCompletedPatient: true,
-            isUnknown: false
-          }
+          data: buildPatientSavePayload(localPatient)
         }).unwrap();
 
         setLocalPatient(updated);
@@ -264,11 +289,7 @@ const PatientProfile = () => {
 
       const patientBeforeSave = { ...localPatient };
 
-      const saved = await addPatient({
-        ...localPatient,
-        isCompletedPatient: true,
-        isUnknown: false
-      }).unwrap();
+      const saved = await addPatient(buildPatientSavePayload(localPatient)).unwrap();
 
       setLocalPatient(saved);
       dispatch(setPatient(saved));
@@ -316,6 +337,7 @@ const PatientProfile = () => {
     setLocalPatient({ ...newPatient });
     setCchiAddress(null);
     setCchiDocument(null);
+    setCchiInsurance(null);
     setOpenCchiDocumentPopup(false);
     setProfileActiveTab('1');
     setValidationResult(undefined);
@@ -405,6 +427,7 @@ const PatientProfile = () => {
             setLocalPatient={setLocalPatient}
             setCchiAddress={setCchiAddress}
             setCchiDocument={setCchiDocument}
+            setCchiInsurance={setCchiInsurance}
             handleSave={handleSave}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
@@ -428,6 +451,8 @@ const PatientProfile = () => {
               cchiAddress={cchiAddress}
               setCchiAddress={setCchiAddress}
               cchiDocument={cchiDocument}
+              cchiInsurance={cchiInsurance}
+              setCchiInsurance={setCchiInsurance}
               openCchiDocumentPopup={openCchiDocumentPopup}
               setOpenCchiDocumentPopup={setOpenCchiDocumentPopup}
               activeTab={profileActiveTab}
@@ -517,9 +542,8 @@ const PatientProfile = () => {
         handleSelect={handleSelectExistingPatient}
         handleSave={() =>
           addPatient({
-            ...localPatient,
-            isCompletedPatient: false,
-            isUnknown: false
+            ...buildPatientSavePayload(localPatient),
+            isCompletedPatient: false
           })
             .unwrap()
             .then(saved => {

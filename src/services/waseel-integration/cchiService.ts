@@ -1,10 +1,13 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '../../newApi';
-import { Patient, Address } from '@/types/model-types-new';
+import { Patient, Address, PatientDocument, PatientInsurance } from '@/types/model-types-new';
 
 export type CchiMappedPatientResponse = {
   patient: Patient;
   address: Address | null;
+  document?: PatientDocument | null;
+  insurance?: Partial<PatientInsurance> | null;
+  insurances?: Partial<PatientInsurance>[] | null;
 };
 
 export const cchiApi = createApi({

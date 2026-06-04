@@ -14,7 +14,7 @@ import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import NextOfKin from './tabs/NextOfKin/NextOfKin';
-import { Patient, Address } from '@/types/model-types-new';
+import { Patient, Address, PatientInsurance } from '@/types/model-types-new';
 import { Panel } from 'rsuite';
 import { Translate } from '@mui/icons-material';
 import MyTab from '@/components/MyTab';
@@ -28,6 +28,8 @@ interface ProfileTabsProps {
   cchiAddress: Address | null;
   setCchiAddress: (address: Address | null) => void;
   cchiDocument?: any;
+  cchiInsurance?: PatientInsurance | null;
+  setCchiInsurance?: (insurance: PatientInsurance | null) => void;
   openCchiDocumentPopup?: boolean;
   setOpenCchiDocumentPopup?: (value: boolean) => void;
   activeTab: string;
@@ -43,6 +45,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   cchiAddress,
   setCchiAddress,
   cchiDocument,
+  cchiInsurance,
+  setCchiInsurance,
   openCchiDocumentPopup,
   setOpenCchiDocumentPopup,
   activeTab,
@@ -167,7 +171,13 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     },
     {
       title: 'Insurance',
-      content: <InsuranceTab localPatient={localPatient} />
+      content: (
+        <InsuranceTab
+          localPatient={localPatient}
+          cchiInsurance={cchiInsurance}
+          setCchiInsurance={setCchiInsurance}
+        />
+      )
     },
     {
       title: 'Privacy & Security',
