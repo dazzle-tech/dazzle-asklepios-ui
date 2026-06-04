@@ -16,9 +16,10 @@ import {
   useUpdateSystemConfigValueMutation,
   useUploadFaviconMutation,
   useUploadSystemLogoMutation,
-  useUploadLoginBackgroundMutation
+  useUploadLoginBackgroundMutation,
+  useUploadSidebarLogoMutation
 } from '@/services/systemConfigService';
-import './styles.less';
+import './Styles.less';
 
 type ConfigRow = {
   key: SystemConfigKey;
@@ -47,6 +48,7 @@ const SystemConfiguration = () => {
   const [uploadFavicon] = useUploadFaviconMutation();
   const [uploadSystemLogo] = useUploadSystemLogoMutation();
   const [uploadLoginBackground] = useUploadLoginBackgroundMutation();
+    const [uploadSidebarLogo] = useUploadSidebarLogoMutation();
   const [searchTerm, setSearchTerm] = useState({ value: '' });
   const [selectedRow, setSelectedRow] = useState<ConfigRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -113,6 +115,12 @@ const SystemConfiguration = () => {
         label: 'Login Background',
         type: 'image',
         value: config.LOGIN_BACKGROUND
+      },
+      {
+        key: SystemConfigKey.SIDEBAR_LOGO,
+        label: 'Sidebar Logo',
+        type: 'image',
+        value: config.SIDEBAR_LOGO
       }
     ];
   }, [data]);
@@ -180,6 +188,20 @@ const SystemConfiguration = () => {
           <img
             src={row.value}
             alt="Login Background"
+            className="system-config-logo-img"
+          />
+          <span>Configured</span>
+        </div>
+      ) : (
+        '-'
+      );
+    }
+      if (row.key === SystemConfigKey.SIDEBAR_LOGO) {
+      return row.value ? (
+        <div className="system-config-image-preview">
+          <img
+            src={row.value}
+            alt="Sidebar Logo"
             className="system-config-logo-img"
           />
           <span>Configured</span>
@@ -270,8 +292,18 @@ const SystemConfiguration = () => {
         return;
       }
 
+
       await uploadLoginBackground(selectedFile).unwrap();
-    } else {
+    }
+    else if (selectedRow.key === SystemConfigKey.SIDEBAR_LOGO) {
+      if (!selectedFile) {
+        dispatch(notify({ msg: 'Please select sidebar logo file', sev: 'warning' }));
+        return;
+      }
+      await uploadSidebarLogo(selectedFile).unwrap();
+    } 
+    
+    else {
       await updateSystemConfigValue({
         key: selectedRow.key,
         value: editRecord.value

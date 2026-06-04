@@ -83,6 +83,7 @@ const RootWrapper = () => {
       if (config?.FAVICON) {
         setFavicon(config.FAVICON);
       }
+      
     };
 
     const cachedSystemConfig = localStorage.getItem('systemConfig');
@@ -115,7 +116,7 @@ const primaryColor = activeConfig?.PRIMARY_COLOR || '#1976d2';
 const fontFamily = activeConfig?.FONT_FAMILY || 'Inter';
 const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
 const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
-
+const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
   const muiTheme = createTheme({
     palette: {
       mode: mode === 'dark' ? 'dark' : 'light',
@@ -133,6 +134,7 @@ const styledTheme = {
   systemConfig: activeConfig,
   logo,
   loginBackground,
+  sidebarLogo,
   colors: {
     primary: primaryColor,
     background: mode === 'dark' ? '#121212' : '#fff',
