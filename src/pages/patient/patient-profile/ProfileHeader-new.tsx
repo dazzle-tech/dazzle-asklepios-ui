@@ -6,7 +6,7 @@ import {
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { Patient } from '@/types/model-types-new';
+import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -37,6 +37,8 @@ import {
   useLazyGetPatientLabelPdfQuery,
   useSendPatientPasswordEmailMutation
 } from '@/services/patient/patientService';
+import { useLazyGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -83,6 +85,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
   const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
+  const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
+  const [triggerGetInsurances] = useLazyGetInsurancesByPatientQuery();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 
   const {
@@ -222,6 +226,85 @@ const handleSendPasswordEmail = async () => {
         sev: 'error'
       })
     );
+  }
+};
+
+const resolvePrimaryInsurance = (insurances: PatientInsurance[]): PatientInsurance | undefined => {
+  if (!insurances.length) return undefined;
+  return insurances.find(insurance => insurance.isPrimary) ?? insurances[0];
+};
+
+const handleEligibilityCheck = async () => {
+  if (!localPatient?.id) {
+    dispatch(
+      notify({
+        msg: 'Save the patient before checking eligibility',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const patientIdNumber = Number(localPatient.id);
+  if (!Number.isFinite(patientIdNumber) || patientIdNumber <= 0) return;
+
+  try {
+    const insurancesResponse = await triggerGetInsurances({
+      patientId: patientIdNumber,
+      page: 0,
+      size: 100,
+      sort: 'id,desc'
+    }).unwrap();
+
+    const insurances: PatientInsurance[] = insurancesResponse?.data?.data ?? [];
+    const primaryInsurance = resolvePrimaryInsurance(insurances);
+
+    if (!primaryInsurance?.id) {
+      dispatch(
+        notify({
+          msg: 'Patient must have insurance before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    const result = await checkEligibility({
+      patientId: patientIdNumber,
+      patientInsuranceId: primaryInsurance.id,
+      serviceDate: new Date().toISOString().slice(0, 10),
+      benefits: true,
+      validation: true
+    }).unwrap();
+
+    dispatch(
+      notify({
+        msg: result.message || 'Eligibility check completed successfully',
+        sev: 'success'
+      })
+    );
+
+    if (result.eligibilityResponseUrl) {
+      const win = window.open(result.eligibilityResponseUrl, '_blank');
+      if (!win) {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups to view the eligibility response.',
+            sev: 'warning'
+          })
+        );
+      }
+    }
+  } catch (error: any) {
+    const errorMsg = extractErrorMessage(error);
+    if (errorMsg) {
+      dispatch(
+        notify({
+          msg: errorMsg,
+          sev: 'error'
+        })
+      );
+    }
   }
 };
 
@@ -580,12 +663,12 @@ useEffect(() => {
               </MyButton> */}
 
               <MyButton
-                onClick={() => {
-                  // setEligibilityChecked(true);
-                  // navigate(`/patient-profile/${localPatient?.id}`);
-                }}
+                disabled={!localPatient?.id || isCheckingEligibility}
+                onClick={handleEligibilityCheck}
               >
-                <Translate>Eligibility Check</Translate>
+                <Translate>
+                  {isCheckingEligibility ? 'Checking Eligibility...' : 'Eligibility Check'}
+                </Translate>
               </MyButton>
 
               <MyButton
