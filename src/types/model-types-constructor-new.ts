@@ -1430,11 +1430,16 @@ export const newPayorPlan: modelTypes.PayorPlan = {
 
 export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   id: undefined,
-  payorId: 0,
+  planId: 0,
   itemType: null,
   amount: null,
   coverageType: null,
   isActive: true,
+  preAuthorization: false,
+  brandMedicationId: null,
+  diagnosticTestId: null,
+  serviceId: null,
+  procedureId: null,
   createdDate: null,
   lastModifiedDate: null
 };
