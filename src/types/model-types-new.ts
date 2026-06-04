@@ -1431,7 +1431,7 @@ export interface Patient {
   receiveEmail?: boolean | null;
   preferredWayOfContact?: string | null;
 
-  nativeLanguage?: string | null;
+  preferredLanguage?: string | null;
   emergencyContactName?: string | null;
   emergencyContactRelation?: string | null;
   emergencyContactPhone?: string | null;

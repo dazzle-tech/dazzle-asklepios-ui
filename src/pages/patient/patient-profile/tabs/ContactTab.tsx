@@ -117,9 +117,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        fieldLabel="Native Language"
+        fieldLabel="Preferred Language"
         fieldType="select"
-        fieldName="nativeLanguage"
+        fieldName="preferredLanguage"
         selectData={primaryLangLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
