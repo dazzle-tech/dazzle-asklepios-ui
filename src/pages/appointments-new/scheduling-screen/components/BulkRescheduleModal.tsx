@@ -6,6 +6,7 @@ import { faCircleCheck, faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 
 import MyButton from "@/components/MyButton/MyButton";
+import MyInput from "@/components/MyInput";
 import "@/components/MyModal/styles.less";
 import MyStepper from "@/components/MyStepper";
 import MyTable from "@/components/MyTable";
@@ -18,7 +19,8 @@ import {
 } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import {
   useBulkRescheduleAppointmentsMutation,
-  useCancelAppointmentMutation,useGetBulkReschedulePreviewQuery
+  useCancelAppointmentMutation,
+  useGetBulkReschedulePreviewQuery,
 } from "@/services/appointment/appointmentService";
 import {
   useGetAvailabilityTemplatesByPublishStatusQuery,
@@ -317,6 +319,23 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
   const [unmatchedIds, setUnmatchedIds] = useState<number[]>([]);
   const [confirmBulkCancelOpen, setConfirmBulkCancelOpen] = useState(false);
   const [showFreeAppointments, setShowFreeAppointments] = useState(false);
+  const [templateSearchRecord, setTemplateSearchRecord] = useState<{
+    templateName: string;
+    departmentId: number | null;
+  }>({ templateName: "", departmentId: null });
+  const [listRefreshKeys, setListRefreshKeys] = useState({
+    originBatches: 0,
+    preview: 0,
+    replacementTemplates: 0,
+    replacementBatches: 0,
+  });
+
+  const bumpListRefresh = useCallback(
+    (key: keyof typeof listRefreshKeys) => {
+      setListRefreshKeys((prev) => ({ ...prev, [key]: prev[key] + 1 }));
+    },
+    [],
+  );
 
   const { data: publishedTemplatesPage, isFetching: loadingTemplates } =
     useGetAvailabilityTemplatesByPublishStatusQuery(
@@ -325,6 +344,29 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     );
   const publishedTemplates = publishedTemplatesPage?.data ?? [];
 
+  const templateNameFilter = String(templateSearchRecord.templateName ?? "").trim();
+  const departmentIdFilter =
+    templateSearchRecord.departmentId != null &&
+    Number(templateSearchRecord.departmentId) > 0
+      ? Number(templateSearchRecord.departmentId)
+      : undefined;
+
+  const filteredPublishedTemplates = useMemo(() => {
+    let list = publishedTemplates;
+    const name = templateNameFilter.toLowerCase();
+    if (name) {
+      list = list.filter((t) =>
+        String(t?.templateName ?? "").toLowerCase().includes(name),
+      );
+    }
+    if (departmentIdFilter != null) {
+      list = list.filter(
+        (t) => Number(t?.departmentId) === departmentIdFilter,
+      );
+    }
+    return list;
+  }, [publishedTemplates, templateNameFilter, departmentIdFilter]);
+
   const { data: originBatchesPage, isFetching: loadingOriginBatches } =
     useGetAvailabilityGenerationBatchesByTemplateQuery(
       {
@@ -332,8 +374,12 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         page: 0,
         size: 500,
         sort: "id,desc",
+        timestamp: listRefreshKeys.originBatches,
       },
-      { skip: !open || !originTemplateId },
+      {
+        skip: !open || !originTemplateId || step !== 1,
+        refetchOnMountOrArgChange: true,
+      },
     );
 
   const {
@@ -346,15 +392,24 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       page: 0,
       size: 500,
       sort: "id,desc",
+      timestamp: listRefreshKeys.replacementBatches,
     },
-    { skip: !open || !replacementTemplateId || !originBatchId || step < 3 },
+    {
+      skip:
+        !open ||
+        !replacementTemplateId ||
+        !originBatchId ||
+        step !== 4,
+      refetchOnMountOrArgChange: true,
+    },
   );
 
   const {
     data: departmentActiveTemplatesPage,
     isFetching: loadingDepartmentActiveTemplates,
   } = useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
-    selectedOriginTemplate?.departmentId &&
+    step === 3 &&
+      selectedOriginTemplate?.departmentId &&
       selectedOriginTemplate?.templateType &&
       selectedOriginTemplate?.resourceId
       ? {
@@ -364,8 +419,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           page: 0,
           size: 1000,
           sort: "id,asc",
+          timestamp: listRefreshKeys.replacementTemplates,
         }
       : skipToken,
+    { refetchOnMountOrArgChange: true },
   );
 
   const {
@@ -376,6 +433,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       ? {
           batchId: originBatchId,
           includeFreeSlots: showFreeAppointments,
+          departmentId: departmentIdFilter,
+          templateName: templateNameFilter || undefined,
+          refreshKey: listRefreshKeys.preview,
         }
       : skipToken,
     {
@@ -400,6 +460,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     setUnmatchedIds([]);
     setConfirmBulkCancelOpen(false);
     setShowFreeAppointments(false);
+    setTemplateSearchRecord({ templateName: "", departmentId: null });
+    setListRefreshKeys({
+      originBatches: 0,
+      preview: 0,
+      replacementTemplates: 0,
+      replacementBatches: 0,
+    });
   }, []);
 
   useEffect(() => {
@@ -407,6 +474,19 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       resetWizard();
     }
   }, [open, resetWizard]);
+
+  useEffect(() => {
+    if (!originTemplateId) return;
+    const stillVisible = filteredPublishedTemplates.some(
+      (t) => Number(t.id) === Number(originTemplateId),
+    );
+    if (!stillVisible) {
+      setOriginTemplateId(null);
+      setSelectedOriginTemplate(null);
+      setOriginBatchId(null);
+      setSelectedOriginBatchRowKey("");
+    }
+  }, [filteredPublishedTemplates, originTemplateId]);
 
   const bulkPreviewRows = useMemo(
     () =>
@@ -497,7 +577,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
   }, [appointmentPreviewRows, publishedTemplates, departmentActiveTemplatesPage?.data]);
 
   const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
-    selectedFacility?.id
+    open && selectedFacility?.id
       ? {
           facilityId: selectedFacility.id,
           page: 0,
@@ -505,6 +585,18 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           sort: "id,asc",
         }
       : skipToken,
+  );
+
+  const appointableDepartmentOptions = useMemo(
+    () =>
+      ((appointableDepartmentsResponse as any)?.data ?? [])
+        .map((d: any) => {
+          const value = d?.id ?? d?.key;
+          const label = d?.name ?? d?.departmentName ?? String(value ?? "");
+          return value != null ? { label: String(label), value: Number(value) } : null;
+        })
+        .filter(Boolean) as { label: string; value: number }[],
+    [appointableDepartmentsResponse],
   );
 
   const { data: appointablePractitionersResponse } =
@@ -1011,6 +1103,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("originBatches");
       setStep(1);
       return;
     }
@@ -1024,6 +1117,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("preview");
       setStep(2);
       return;
     }
@@ -1034,6 +1128,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("replacementBatches");
       setStep(4);
     }
   };
@@ -1141,6 +1236,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             sev: "warning",
           }),
         );
+        bumpListRefresh("preview");
         setStep(2);
         return;
       }
@@ -1195,13 +1291,65 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       return (
         <Form fluid layout="vertical">
           <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
-            Published templates (active and inactive). Select one template to
-            continue.
+            Published templates (active and inactive). Use the search filters
+            below, then select one template to continue.
           </p>
+          <Panel
+            bordered
+            style={{
+              marginBottom: 12,
+              padding: "12px 16px",
+              background: mode === "light" ? "#f8fafc" : undefined,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                margin: "0 0 10px",
+                color: "#334155",
+              }}
+            >
+              <Translate>Search</Translate>
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <MyInput
+                fieldLabel="Template name"
+                fieldName="templateName"
+                record={templateSearchRecord}
+                setRecord={setTemplateSearchRecord}
+                placeholder="Search by template name"
+                width="100%"
+              />
+              <MyInput
+                fieldType="select"
+                fieldLabel="Department"
+                fieldName="departmentId"
+                record={templateSearchRecord}
+                setRecord={setTemplateSearchRecord}
+                selectData={appointableDepartmentOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
+                placeholder="All departments"
+                searchable
+                width="100%"
+              />
+            </div>
+          </Panel>
           {loadingTemplates ? (
             <Loader center />
           ) : publishedTemplates.length === 0 ? (
             <Panel bordered>No published templates found.</Panel>
+          ) : filteredPublishedTemplates.length === 0 ? (
+            <Panel bordered>
+              No templates match the current search filters.
+            </Panel>
           ) : (
             <div
               style={{
@@ -1212,7 +1360,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             >
               <MyTable
                 columns={templatePickColumns as any}
-                data={publishedTemplates}
+                data={filteredPublishedTemplates}
                 loading={loadingTemplates}
                 height={420}
                 onRowClick={(row: AvailabilityTemplateResponseVM) => {
@@ -1220,7 +1368,8 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   if (!Number.isFinite(id) || id <= 0) return;
                   setOriginTemplateId(id);
                   const t =
-                    publishedTemplates.find((x) => Number(x.id) === id) ?? null;
+                    filteredPublishedTemplates.find((x) => Number(x.id) === id) ??
+                    null;
                   setSelectedOriginTemplate(t);
                   setOriginBatchId(null);
                   setSelectedOriginBatchRowKey("");
@@ -1474,7 +1623,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             <MyButton appearance="default" disabled style={{ opacity: 0.65 }}>
               Ask patient by notification (Coming soon)
             </MyButton>
-            <MyButton appearance="ghost" onClick={() => setStep(3)}>
+            <MyButton
+              appearance="ghost"
+              onClick={() => {
+                bumpListRefresh("replacementTemplates");
+                setStep(3);
+              }}
+            >
               Reschedule
             </MyButton>
           </Form>

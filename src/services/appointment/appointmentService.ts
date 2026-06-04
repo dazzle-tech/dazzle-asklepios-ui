@@ -349,13 +349,30 @@ export const appointmentFromTemplateService = createApi({
 
     getBulkReschedulePreview: builder.query<
       BulkReschedulePreviewVM,
-      { batchId: Id; includeFreeSlots: boolean }
+      {
+        batchId: Id;
+        includeFreeSlots: boolean;
+        departmentId?: number | null;
+        templateName?: string | null;
+        /** Client-only cache key; not sent to the API */
+        refreshKey?: number;
+      }
     >({
-      query: ({ batchId, includeFreeSlots }) => ({
-        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
-        method: 'GET',
-        params: { includeFreeSlots }
-      }),
+      query: ({ batchId, includeFreeSlots, departmentId, templateName }) => {
+        const params: Record<string, boolean | number | string> = { includeFreeSlots };
+        if (departmentId != null && Number(departmentId) > 0) {
+          params.departmentId = Number(departmentId);
+        }
+        const trimmedTemplateName = templateName?.trim();
+        if (trimmedTemplateName) {
+          params.templateName = trimmedTemplateName;
+        }
+        return {
+          url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
+          method: 'GET',
+          params
+        };
+      },
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
