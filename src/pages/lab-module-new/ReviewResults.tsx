@@ -48,7 +48,7 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import './ReviewResultsIcon.less';
-import UserDateCell from '@/components/userdetalesCell';
+import UserDateCell from '@/components/UserDateCell';
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {

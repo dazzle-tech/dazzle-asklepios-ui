@@ -33,7 +33,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
 import '@/pages/lab-module-new/ReviewResultsIcon.less';
-import UserDateCell from '@/components/userdetalesCell';
+import UserDateCell from '@/components/UserDateCell';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
