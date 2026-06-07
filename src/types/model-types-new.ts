@@ -500,15 +500,18 @@ export interface DiagnosticTestAppointmentRescheduleDTO {
   rescheduleReason: string;
 }
 
-export interface AppointmentFromTemplateSearchFilterDTO {
+export interface AppointmentSearchFilterMultiDepartmentDTO {
   facility?: number | null;
-  department?: number | null;
+  departmentIds?: number[] | null;
   resourceType?: TemplateType | null;
   resourceId?: number | null;
   status?: AppointmentStatus | null;
   bookingMode?: BookingMode[] | null;
   patientId?: number | null;
 }
+
+/** @deprecated Use AppointmentSearchFilterMultiDepartmentDTO */
+export type AppointmentFromTemplateSearchFilterDTO = AppointmentSearchFilterMultiDepartmentDTO;
 
 /** GET `/appointments/bulk-reschedule/preview/{batchId}` — BulkReschedulePreviewVM */
 export interface BulkReschedulePreviewVM {

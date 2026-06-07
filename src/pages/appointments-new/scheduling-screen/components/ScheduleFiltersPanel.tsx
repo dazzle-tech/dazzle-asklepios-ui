@@ -11,9 +11,9 @@ type Props = {
   selectedFacility: any;
   setSelectedFacility: React.Dispatch<React.SetStateAction<any>>;
   departmentOptions: any[];
-  selectedDepartment: { departmentId: number | string | null };
-  setSelectedDepartment: React.Dispatch<
-    React.SetStateAction<{ departmentId: number | string | null }>
+  selectedDepartmentIds: { departmentIds: number[] };
+  setSelectedDepartmentIds: React.Dispatch<
+    React.SetStateAction<{ departmentIds: number[] }>
   >;
   TemplateTypeEnum: any[];
   selectedResourceTypeValue: { value: string | null };
@@ -41,8 +41,8 @@ const ScheduleFiltersPanel = ({
   selectedFacility,
   setSelectedFacility,
   departmentOptions,
-  selectedDepartment,
-  setSelectedDepartment,
+  selectedDepartmentIds,
+  setSelectedDepartmentIds,
   TemplateTypeEnum,
   selectedResourceTypeValue,
   setSelectedResourceTypeValue,
@@ -112,12 +112,13 @@ const ScheduleFiltersPanel = ({
                   column
                   fieldLabel="Department"
                   selectData={departmentOptions ?? []}
-                  fieldType="select"
+                  fieldType="checkPicker"
                   selectDataLabel="name"
                   selectDataValue="id"
-                  fieldName="departmentId"
-                  record={selectedDepartment}
-                  setRecord={setSelectedDepartment}
+                  fieldName="departmentIds"
+                  placeholder="All bookable departments"
+                  record={selectedDepartmentIds}
+                  setRecord={setSelectedDepartmentIds}
                   searchable
                 />
 

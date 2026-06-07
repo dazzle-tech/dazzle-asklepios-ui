@@ -30,7 +30,7 @@ const AppointmentsTable = ({ patient }: any) => {
   };
 
   if (departmentId) {
-    filter.department = departmentId;
+    filter.departmentIds = [Number(departmentId)];
   }
 
   const { data, isLoading } = useSearchAppointmentsQuery(

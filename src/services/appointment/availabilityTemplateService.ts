@@ -206,7 +206,7 @@ export const availabilityTemplateService = createApi({
       PagedParams
     >({
       query: ({ page, size, sort = 'id,asc' }) => ({
-        url: '/api/patient/availability-templates/by-facility-and-publish-status',
+        url: '/api/patient/availability-templates/by-facility-and-publish-status-and-bookable-department',
         method: 'GET',
         params: { page, size, sort }
       }),

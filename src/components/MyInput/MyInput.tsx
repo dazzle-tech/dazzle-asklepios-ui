@@ -961,7 +961,7 @@ const MyInput = ({
               labelKey={primaryLabelKey}
               valueKey={valueKey}
               menuClassName={clsx('my-input-picker-popup', props?.menuClassName)}
-              value={record ? record[fieldName] : []}
+              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
 

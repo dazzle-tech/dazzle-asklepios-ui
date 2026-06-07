@@ -75,7 +75,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
         const res = await searchAppointments({
           filter: {
             facility: Number(facilityId),
-            department: Number(departmentId),
+            departmentIds: departmentId != null ? [Number(departmentId)] : null,
             resourceType: null,
             resourceId: null,
             status: null,
