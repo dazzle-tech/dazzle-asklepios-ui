@@ -54,6 +54,7 @@ import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import {
   extractCchiInsurance,
+  extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
   pickPatientFields
 } from './cchiMappers';
@@ -131,7 +132,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         sort: 'id,desc'
       },
       {
-        skip: !patientId || !openEligibilityModal
+        skip: !patientId || !openEligibilityModal,
+        refetchOnMountOrArgChange: true
       }
     );
 
@@ -143,13 +145,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const payorsList = payorListResponse?.data ?? [];
 
   const patientInsurancesList = useMemo(
-    () => patientInsuranceResponse?.data?.data ?? [],
-    [patientInsuranceResponse?.data?.data]
+    () => extractPatientInsurancesList(patientInsuranceResponse),
+    [patientInsuranceResponse]
   );
 
   const insurancePickerOptions = useMemo(
     () =>
-      patientInsurancesList.map((insurance: any) => {
+      patientInsurancesList
+        .filter((insurance: any) => insurance?.id != null && !Number.isNaN(Number(insurance.id)))
+        .map((insurance: any) => {
         const payorName =
           conjureValueBasedOnIDFromList(payorsList, insurance?.payorId, 'name') ||
           `Payor #${insurance?.payorId}`;
@@ -158,7 +162,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         return {
           label: `${payorName} - ${policyNumber}${primarySuffix}`,
-          value: Number(insurance?.id)
+          value: Number(insurance.id)
         };
       }),
     [patientInsurancesList, payorsList]

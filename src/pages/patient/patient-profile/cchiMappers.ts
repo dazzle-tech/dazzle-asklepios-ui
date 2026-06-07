@@ -49,6 +49,17 @@ export const buildPatientSavePayload = (patient: Partial<Patient>): Patient => {
   return payload;
 };
 
+export const extractPatientInsurancesList = (response: any): PatientInsurance[] => {
+  const responseData = response?.data ?? response;
+
+  if (Array.isArray(responseData)) return responseData;
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  if (Array.isArray(responseData?.data?.data)) return responseData.data.data;
+  if (Array.isArray(responseData?.object)) return responseData.object;
+
+  return [];
+};
+
 export const getCchiInsuranceStorageKey = (
   patientId?: number | string | null,
   documentId?: number | string | null

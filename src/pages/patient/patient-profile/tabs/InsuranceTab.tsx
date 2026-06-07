@@ -29,6 +29,7 @@ import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { conjureValueBasedOnIDFromList } from '@/utils';
 import {
+  extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
   normalizeCchiPatientInsurance
 } from '../cchiMappers';
@@ -91,7 +92,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
 
   const [triggerGetPlans] = useLazyGetPlansByPayorQuery();
 
-  const savedInsurances = patientInsuranceResponse?.data?.data ?? [];
+  const savedInsurances = extractPatientInsurancesList(patientInsuranceResponse);
 
   const normalizedCchiInsurance = useMemo(() => {
     if (!cchiInsurance) return null;
