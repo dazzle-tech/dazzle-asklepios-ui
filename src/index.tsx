@@ -10,6 +10,7 @@ import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { useGetSystemConfigQuery } from './services/systemConfigService';
+import { lightenColor } from './utils';
 
 if (typeof window !== 'undefined') {
   const resizeObserverErr = (e: ErrorEvent) => {
@@ -59,6 +60,7 @@ const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { data: systemConfig } = useGetSystemConfigQuery();
 
+
   useEffect(() => {
     const applySystemConfig = (config: any) => {
       if (config?.SYSTEM_TITLE) {
@@ -72,8 +74,10 @@ const RootWrapper = () => {
         document.documentElement.style.setProperty('--primary-blue', config.PRIMARY_COLOR);
         document.documentElement.style.setProperty('--primary-blue-rgb', primaryRgb);
         document.documentElement.style.setProperty('--one-health-theme-hover', `rgba(${primaryRgb}, 0.05)`);
-        document.documentElement.style.setProperty('--one-health-theme-header', `rgba(${primaryRgb}, 0.08)`);
-        document.documentElement.style.setProperty('--one-health-theme-select', `rgba(${primaryRgb}, 0.12)`);
+        document.documentElement.style.setProperty(
+          '--one-health-theme-header',
+          lightenColor(config.PRIMARY_COLOR, 0.9)
+        ); document.documentElement.style.setProperty('--one-health-theme-select', `rgba(${primaryRgb}, 0.12)`);
       }
 
       if (config?.FONT_FAMILY) {
@@ -83,7 +87,7 @@ const RootWrapper = () => {
       if (config?.FAVICON) {
         setFavicon(config.FAVICON);
       }
-      
+
     };
 
     const cachedSystemConfig = localStorage.getItem('systemConfig');
@@ -102,21 +106,21 @@ const RootWrapper = () => {
     }
   }, [systemConfig]);
 
- const cachedConfig = (() => {
-  try {
-    return JSON.parse(localStorage.getItem('systemConfig') || '{}');
-  } catch {
-    return {};
-  }
-})();
+  const cachedConfig = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('systemConfig') || '{}');
+    } catch {
+      return {};
+    }
+  })();
 
-const activeConfig = systemConfig || cachedConfig;
+  const activeConfig = systemConfig || cachedConfig;
 
-const primaryColor = activeConfig?.PRIMARY_COLOR || '#1976d2';
-const fontFamily = activeConfig?.FONT_FAMILY || 'Inter';
-const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
-const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
-const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
+  const primaryColor = activeConfig?.PRIMARY_COLOR || '#1976d2';
+  const fontFamily = activeConfig?.FONT_FAMILY || 'Inter';
+  const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
+  const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
+  const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
   const muiTheme = createTheme({
     palette: {
       mode: mode === 'dark' ? 'dark' : 'light',
@@ -129,18 +133,18 @@ const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
     }
   });
 
-const styledTheme = {
-  mode,
-  systemConfig: activeConfig,
-  logo,
-  loginBackground,
-  sidebarLogo,
-  colors: {
-    primary: primaryColor,
-    background: mode === 'dark' ? '#121212' : '#fff',
-    text: mode === 'dark' ? '#fff' : '#000'
-  }
-};
+  const styledTheme = {
+    mode,
+    systemConfig: activeConfig,
+    logo,
+    loginBackground,
+    sidebarLogo,
+    colors: {
+      primary: primaryColor,
+      background: mode === 'dark' ? '#121212' : '#fff',
+      text: mode === 'dark' ? '#fff' : '#000'
+    }
+  };
 
   return (
     <MUIThemeProvider theme={muiTheme}>
