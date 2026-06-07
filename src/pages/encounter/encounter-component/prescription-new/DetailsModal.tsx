@@ -14,7 +14,10 @@ import {
   useUpdatePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
-import { useGetActiveIngredientsActiveByNameQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import {
+  useGetActiveIngredientsActiveByNameQuery,
+  useGetActiveIngredientsByIdsMutation
+} from '@/services/setup/activeIngredients/activeIngredientsService';
 import {
   useGetBrandMedicationByIdQuery,
   useGetBrandMedicationsByActiveIdsMutation
@@ -72,6 +75,10 @@ const DetailsModal = ({
   const activeIngredientSearchWrapperRef = React.useRef<HTMLDivElement>(null);
 
   const [fetchPreRequestedTests] = useLazyGetActiveIngredientPreRequestedTestsQuery();
+  const [getActiveIngredientsByIds] = useGetActiveIngredientsByIdsMutation();
+  const editAiLoadedRef = React.useRef<string | null>(null);
+  const editBrandLoadedRef = React.useRef<string | null>(null);
+  const loadedMedicationIdRef = React.useRef<string | null>(null);
   const [testsByAiId, setTestsByAiId] = useState<Record<string, any[]>>({});
 
   const [customeinst, setCustomeinst] = useState({
@@ -176,27 +183,127 @@ const DetailsModal = ({
     }
   }, [exists]);
 
+  const getMedicationLoadKey = () =>
+    prescriptionMedication?.id != null ? String(prescriptionMedication.id) : 'new';
+
+  const blockAutoBrandLoad = () => {
+    editBrandLoadedRef.current = `${getMedicationLoadKey()}-manual`;
+  };
+
+  const resetMedicationSelectionState = () => {
+    setSelectedGeneric(null);
+    setSelectedActiveIngredient(null);
+    setSearchKeyword('');
+    setActiveIngredientKeyword('');
+    setShowMedicationDropdown(false);
+    setShowActiveIngredientDropdown(false);
+    setInst(null);
+    editAiLoadedRef.current = null;
+    editBrandLoadedRef.current = null;
+  };
+
+  const clearBrandSelection = () => {
+    blockAutoBrandLoad();
+    setSelectedGeneric(null);
+    setSearchKeyword('');
+    setShowMedicationDropdown(false);
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      medicationsId: null,
+      genericMedicationsId: null
+    }));
+  };
+
   useEffect(() => {
     if (!open) {
-      setSearchKeyword('');
-      setActiveIngredientKeyword('');
+      loadedMedicationIdRef.current = null;
       setTagsLoaded(false);
+      resetMedicationSelectionState();
       return;
     }
+
     setEditingKey(prescriptionMedication?.id ?? null);
+
+    const medicationId = prescriptionMedication?.id;
+    if (!medicationId) return;
+
+    const loadKey = String(medicationId);
+    if (loadedMedicationIdRef.current === loadKey) return;
+
+    loadedMedicationIdRef.current = loadKey;
+    setTagsLoaded(false);
+    resetMedicationSelectionState();
   }, [open, prescriptionMedication?.id]);
+
+  useEffect(() => {
+    if (!open || !prescriptionMedication?.id) return;
+
+    const loadKey = String(prescriptionMedication.id);
+    if (editAiLoadedRef.current === loadKey) return;
+
+    const aiId = prescriptionMedication.activeIngredientId;
+    if (!aiId) {
+      editAiLoadedRef.current = loadKey;
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const ingredients = await getActiveIngredientsByIds([aiId]).unwrap();
+        if (cancelled) return;
+        if (loadedMedicationIdRef.current !== loadKey) return;
+
+        const ai = ingredients?.[0];
+        if (ai && String(ai.id) === String(aiId)) {
+          setSelectedActiveIngredient(ai);
+          setActiveIngredientKeyword(ai.name ?? '');
+          try {
+            await getBrandsByActive([ai.id]).unwrap();
+          } catch (e) {
+            console.error('Error fetching brands for edit:', e);
+          }
+        }
+
+        editAiLoadedRef.current = loadKey;
+      } catch (e) {
+        console.error('Error loading active ingredient for edit:', e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    open,
+    prescriptionMedication?.id,
+    prescriptionMedication?.activeIngredientId,
+    getActiveIngredientsByIds,
+    getBrandsByActive
+  ]);
+
+  useEffect(() => {
+    if (!open || !prescriptionMedication?.id || !Brand || !medIdForBrand) return;
+    if (String(Brand.id) !== String(medIdForBrand)) return;
+
+    const loadKey = String(prescriptionMedication.id);
+    if (
+      editBrandLoadedRef.current === loadKey ||
+      editBrandLoadedRef.current === `${loadKey}-manual`
+    ) {
+      return;
+    }
+
+    setSelectedGeneric(Brand);
+    setSearchKeyword(Brand.name ?? '');
+    editBrandLoadedRef.current = loadKey;
+  }, [open, prescriptionMedication?.id, Brand, medIdForBrand]);
 
   useEffect(() => {
     const hasMedication = prescriptionMedication?.id != null;
 
-    if (hasMedication && Brand) {
-      setSelectedGeneric(Brand);
-
-      if (Brand?.activeIngredients?.length) {
-        setSelectedActiveIngredient(Brand.activeIngredients[0]);
-        setActiveIngredientKeyword(Brand.activeIngredients[0]?.name ?? '');
-      }
-
+    if (hasMedication) {
       setSelectedOption(prescriptionMedication?.instructionsType);
       setInstruc(prescriptionMedication?.administrationInstructions);
 
@@ -264,8 +371,18 @@ const DetailsModal = ({
       }
     }
   }, [
+    open,
     prescriptionMedication?.id,
-    Brand,
+    prescriptionMedication?.instructionsType,
+    prescriptionMedication?.administrationInstructions,
+    prescriptionMedication?.indicationUse,
+    prescriptionMedication?.indicationUseLkey,
+    prescriptionMedication?.parametersToMonitor,
+    prescriptionMedication?.indicationIcd,
+    prescriptionMedication?.dose,
+    prescriptionMedication?.doesUnit,
+    prescriptionMedication?.frequency,
+    prescriptionMedication?.rout,
     customeInstructions,
     indicationLovQueryResponse,
     setPrescriptionMedications,
@@ -488,7 +605,7 @@ const DetailsModal = ({
       administrationInstructionValue = adminInstructions.administrationInstructions.join(',');
     }
 
-    const selectedMedicationId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
+    const selectedMedicationId = selectedGeneric?.id ?? null;
 
     const isChronic = Boolean(prescriptionMedication?.chronicMedication);
     const durationRaw = prescriptionMedication?.duration;
@@ -689,15 +806,29 @@ const DetailsModal = ({
   const handleSearchActiveIngredient = (value: string) => {
     setActiveIngredientKeyword(value);
     setShowActiveIngredientDropdown(!!value);
+
+    const normalizedValue = value.trim().toLowerCase();
+    const selectedName = (selectedActiveIngredient?.name ?? '').trim().toLowerCase();
+
+    if (normalizedValue !== selectedName) {
+      if (selectedActiveIngredient) {
+        setSelectedActiveIngredient(null);
+      }
+      clearBrandSelection();
+      setInst(null);
+    }
   };
 
   const handleActiveIngredientClick = async (activeIngredient: any) => {
     setSelectedActiveIngredient(activeIngredient);
     setActiveIngredientKeyword(activeIngredient?.name ?? '');
     setShowActiveIngredientDropdown(false);
-    setSelectedGeneric(null);
-    setSearchKeyword('');
-    setShowMedicationDropdown(false);
+    clearBrandSelection();
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      activeIngredientId: activeIngredient?.id ?? null
+    }));
+    setInst(null);
 
     if (activeIngredient?.id) {
       try {
@@ -720,6 +851,12 @@ const DetailsModal = ({
     setSelectedGeneric(Generic);
     setSearchKeyword(Generic?.name ?? '');
     setShowMedicationDropdown(false);
+    editBrandLoadedRef.current = getMedicationLoadKey();
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      medicationsId: Generic?.id ?? null,
+      genericMedicationsId: Generic?.id ?? null
+    }));
   };
 
   const handleSearch = value => {
@@ -729,6 +866,11 @@ const DetailsModal = ({
     }
     setSearchKeyword(value);
     setShowMedicationDropdown(!!value);
+
+    const selectedName = (selectedGeneric?.name ?? '').trim();
+    if (selectedGeneric && value.trim() !== selectedName) {
+      clearBrandSelection();
+    }
   };
 
   const handleCleare = () => {
@@ -749,6 +891,9 @@ const DetailsModal = ({
     setIndicationsIcd({ indicationIcd: null });
     setShowMedicationDropdown(false);
     setShowActiveIngredientDropdown(false);
+    loadedMedicationIdRef.current = null;
+    editAiLoadedRef.current = null;
+    editBrandLoadedRef.current = null;
   };
 
   const preRequestedTests = Object.values(testsByAiId ?? {})
@@ -797,11 +942,20 @@ const DetailsModal = ({
           </span>
         }
         size="80vw"
-        leftTitle={selectedGeneric ? String(selectedGeneric.name) : 'Select Generic'}
+        leftTitle={
+          selectedGeneric?.name
+            ? String(selectedGeneric.name)
+            : selectedActiveIngredient?.name
+              ? String(selectedActiveIngredient.name)
+              : 'Select Medication'
+        }
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
-            <ActiveIngrediantList selectedGeneric={selectedGeneric} />
+            <ActiveIngrediantList
+              selectedGeneric={selectedGeneric}
+              selectedActiveIngredient={selectedActiveIngredient}
+            />
             {!!preRequestedTestNames.length && (
               <div style={{ marginTop: 12 }}>
                 <Text className="font-style">Pre-requested Tests</Text>
@@ -967,6 +1121,7 @@ const DetailsModal = ({
 
                       <div className="prescription-full-block">
                         <Instructions
+                          key={`${selectedActiveIngredient?.id ?? 'none'}-${selectedGeneric?.id ?? 'none'}`}
                           selectedOption={selectedOption}
                           setCustomeinst={setCustomeinst}
                           customeinst={customeinst}
