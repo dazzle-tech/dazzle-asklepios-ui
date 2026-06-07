@@ -46,6 +46,7 @@ import RescheduleAppointmentsLookupModal from '@/pages/encounter/encounter-compo
 import './styles.less';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell';
 
 type Props = {
   order: any;
@@ -91,18 +92,6 @@ const Tests = forwardRef<any, Props>(
     const [rescheduleAppointmentsModalOpen, setRescheduleAppointmentsModalOpen] = useState(false);
     const [selectedOrderTestForReschedule, setSelectedOrderTestForReschedule] = useState<any>(null);
 
-    const UserFullName = ({ login }: { login?: string }) => {
-      const { data: fullName, isFetching } = useGetUserFullNameByLoginQuery(
-        login!,
-        {
-          skip: !login
-        }
-      );
-
-      if (!login) return <> </>;
-
-      return <>{isFetching ? login : fullName || login}</>;
-    };
 
 
     const notifyFromApiError = (e: any) => {
@@ -271,7 +260,7 @@ const Tests = forwardRef<any, Props>(
 
     const normalizedOrderTests = useMemo(() => {
       return (orderTests ?? [])
-        .filter(t => t && t.id) 
+        .filter(t => t && t.id)
         .map(orderTest => {
           const test = testsMap.get(orderTest.testId);
           const radiology = radiologyByTestIdMap.get(orderTest.testId);
@@ -753,23 +742,7 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-const UserDateCell = ({
-  login,
-  date
-}: {
-  login?: string | null;
-  date?: string | null;
-}) => (
-  <>
-    <div>
-      <UserFullName login={login ?? undefined} />
-    </div>
 
-    <div className="date-table-style">
-      {date ? formatDateWithoutSeconds(date) : '-'}
-    </div>
-  </>
-);
 
     const columns: ColumnConfig[] = [
       {
@@ -851,15 +824,11 @@ const UserDateCell = ({
         title: <Translate>PHYSICIAN</Translate>,
         width: 170,
         align: 'center',
-        render: (rowData: any) => (
-          <>
-            <div>
-              <UserFullName login={rowData.createdBy} />
-            </div>
-            <div className="date-table-style">
-              {formatDateWithoutSeconds(rowData.createdDate)}
-            </div>
-          </>
+        render: (row: any) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
       {
@@ -898,33 +867,33 @@ const UserDateCell = ({
         }
       },
       {
-  key: 'patientArrived',
-  title: <Translate>PATIENT ARRIVED</Translate>,
-  render: (rowData: any) => {
-    const isRescheduled = String(rowData?.status ?? '')
-      .toUpperCase()
-      .includes('RESCHEDULE');
+        key: 'patientArrived',
+        title: <Translate>PATIENT ARRIVED</Translate>,
+        render: (rowData: any) => {
+          const isRescheduled = String(rowData?.status ?? '')
+            .toUpperCase()
+            .includes('RESCHEDULE');
 
-    return (
-      <HStack spacing={10}>
-        <FontAwesomeIcon
-          className='icon-radiologist-worklist-size'
-          icon={faHospitalUser}
-          onClick={() => {
-            if (!isRescheduled) {
-              setOpenArrivalModal(true);
-            }
-          }}
-          color={isRescheduled ? '#bdbdbd' : undefined}
-          style={{
-            cursor: isRescheduled ? 'not-allowed' : 'pointer',
-            opacity: isRescheduled ? 0.5 : 1
-          }}
-        />
-      </HStack>
-    );
-  }
-},
+          return (
+            <HStack spacing={10}>
+              <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
+                icon={faHospitalUser}
+                onClick={() => {
+                  if (!isRescheduled) {
+                    setOpenArrivalModal(true);
+                  }
+                }}
+                color={isRescheduled ? '#bdbdbd' : undefined}
+                style={{
+                  cursor: isRescheduled ? 'not-allowed' : 'pointer',
+                  opacity: isRescheduled ? 0.5 : 1
+                }}
+              />
+            </HStack>
+          );
+        }
+      },
       {
         key: 'status',
         title: <Translate>STATUS</Translate>,
@@ -964,12 +933,24 @@ const UserDateCell = ({
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
 
-          const rescheduleTooltip = isRescheduled
-            ? 'This test rescheduled'
-            : 'Reschedule appointment';
-          const rescheduleColor = isRescheduled ? 'orange' : 'var(--primary-gray)';
-          const rescheduleCursor = isRescheduled ? 'not-allowed' : 'pointer';
 
+          const canReschedule =
+            !isRescheduled &&
+            [
+              DiagnosticOrderTestStatus.NEW,
+              DiagnosticOrderTestStatus.REJECTED
+            ].includes(rowData.processingStatus);
+          const rescheduleTooltip = canReschedule
+            ? 'Reschedule appointment'
+            : 'Reschedule not available';
+
+          const rescheduleColor = canReschedule
+            ? 'var(--primary-gray)'
+            : 'orange';
+
+          const rescheduleCursor = canReschedule
+            ? 'pointer'
+            : 'not-allowed';
           return (
             <HStack spacing={8}>
               <Whisper speaker={<Tooltip>Accept</Tooltip>}>
@@ -1028,12 +1009,12 @@ const UserDateCell = ({
                   className="icons-styles"
                   color={rescheduleColor}
                   onClick={() => {
-                    if (isRescheduled) return;
+                    if (!canReschedule) return;
                     handleOpenRescheduleAppointments(rowData);
                   }}
                   style={{
                     cursor: rescheduleCursor,
-                    opacity: 1
+                    opacity: canReschedule ? 1 : 0.4
                   }}
                 />
               </Whisper>
