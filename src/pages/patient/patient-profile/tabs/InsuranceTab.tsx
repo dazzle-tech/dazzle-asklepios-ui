@@ -29,6 +29,7 @@ import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { conjureValueBasedOnIDFromList } from '@/utils';
 import {
+  buildPatientInsuranceSavePayload,
   extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
   normalizeCchiPatientInsurance
@@ -291,7 +292,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
   };
 
   const handleSaveCchiInsurance = async () => {
-    if (!normalizedCchiInsurance) return;
+    if (!cchiInsurance || !normalizedCchiInsurance) return;
 
     if (!localPatient?.id) {
       dispatch(
@@ -324,12 +325,33 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
     }
 
     try {
-      await addPatientInsurance({
-        ...normalizedCchiInsurance,
-        patientId: Number(localPatient.id),
-        payorId: Number(normalizedCchiInsurance.payorId),
-        planId: normalizedCchiInsurance.planId ? Number(normalizedCchiInsurance.planId) : null
-      }).unwrap();
+      const payorId = Number(normalizedCchiInsurance.payorId);
+      let plans = plansByPayorId[payorId] ?? [];
+
+      if (!plans.length) {
+        const res = await triggerGetPlans({
+          payorId,
+          page: 0,
+          size: 1000,
+          sort: 'name,asc'
+        }).unwrap();
+        plans = res?.data ?? [];
+        setPlansByPayorId(prev => ({
+          ...prev,
+          [payorId]: plans
+        }));
+      }
+
+      const payload = buildPatientInsuranceSavePayload(
+        cchiInsurance as Record<string, any>,
+        Number(localPatient.id),
+        payorsList,
+        plans
+      );
+
+      console.log('[CCHI] Saving patient insurance payload:', payload);
+
+      await addPatientInsurance(payload).unwrap();
 
       setCchiInsurance?.(null);
       if (cchiStorageKey) {

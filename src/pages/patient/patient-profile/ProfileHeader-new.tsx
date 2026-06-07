@@ -249,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
 
     try {
-      const result = await checkEligibility({
+      const eligibilityRequest = {
         patientId: Number(localPatient.id),
         patientInsuranceId: selectedPatientInsuranceId,
         serviceDate: new Date().toISOString().split('T')[0],
@@ -258,7 +258,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         discovery: false,
         transfer: false,
         emergency: false
-      }).unwrap();
+      };
+
+      console.log('[Eligibility] Request JSON:', eligibilityRequest);
+      console.log('[Eligibility] Request JSON (stringified):', JSON.stringify(eligibilityRequest, null, 2));
+
+      const result = await checkEligibility(eligibilityRequest).unwrap();
 
       setOpenEligibilityModal(false);
       setSelectedPatientInsuranceId(null);
@@ -307,6 +312,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     try {
       const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
       const mappedDocument = mappedResponse.document;
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      console.log('[CCHI] Mapped patient insurance response:', {
+        insurance: mappedResponse.insurance ?? null,
+        insurances: mappedResponse.insurances ?? null,
+        patientInsurance: (mappedResponse as any).patientInsurance ?? null,
+        patientNestedInsurance: (mappedResponse as any).patient?.insurance ?? null,
+        patientNestedInsurances: (mappedResponse as any).patient?.insurances ?? null,
+        extractedInsurance: rawInsurance
+      });
+
+      if (rawInsurance) {
+        console.log('[CCHI] Extracted patient insurance object:', rawInsurance);
+      } else {
+        console.warn('[CCHI] No patient insurance object found in mapped response');
+      }
 
       setLocalPatient({
         ...localPatient,
@@ -331,7 +352,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         setCchiDocument?.(null);
       }
 
-      const rawInsurance = extractCchiInsurance(mappedResponse);
       if (rawInsurance) {
         setCchiInsurance?.({
           ...rawInsurance,
