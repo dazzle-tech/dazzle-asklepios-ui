@@ -41,64 +41,79 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
   }, [open]);
 
   const handleDownloadSickLeavePdf = async () => {
-  if (!encounterId) {
-    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-    return;
-  }
-
-  if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
-    dispatch(notify({ msg: 'Please enter both start date and end date', sev: 'warning' }));
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-    dispatch(showSystemLoader());
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    const blob = await postSickLeaveReportPdf({
-      encounterId,
-      timezone,
-      request: {
-        fromDate: sickLeaveForm.fromDate,
-        toDate: sickLeaveForm.toDate,
-        notes: sickLeaveForm.notes,
-      },
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
     }
 
-    dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
-    setOpen(false);
-  } catch (error: any) {
-    console.error('Error while printing sick leave report PDF:', error);
+    if (!sickLeaveForm.fromDate || !sickLeaveForm.toDate) {
+      dispatch(
+        notify({
+          msg: 'Please enter both start date and end date',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Error while printing sick leave report PDF',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setIsLoading(false);
-    dispatch(hideSystemLoader());
-  }
-};
+    if (new Date(sickLeaveForm.toDate) < new Date(sickLeaveForm.fromDate)) {
+      dispatch(
+        notify({
+          msg: 'End date cannot be earlier than start date',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      dispatch(showSystemLoader());
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const blob = await postSickLeaveReportPdf({
+        encounterId,
+        timezone,
+        request: {
+          fromDate: sickLeaveForm.fromDate,
+          toDate: sickLeaveForm.toDate,
+          notes: sickLeaveForm.notes,
+        },
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning',
+          })
+        );
+      }
+
+      dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
+      setOpen(false);
+    } catch (error: any) {
+      console.error('Error while printing sick leave report PDF:', error);
+
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Error while printing sick leave report PDF',
+          sev: 'error',
+        })
+      );
+    } finally {
+      setIsLoading(false);
+      dispatch(hideSystemLoader());
+    }
+  };
 
   return (
     <MyModal
@@ -128,6 +143,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
                 fieldType="date"
                 fieldLabel="End Date "
                 fieldName="toDate"
+
                 record={sickLeaveForm}
                 setRecord={setSickLeaveForm}
                 required
