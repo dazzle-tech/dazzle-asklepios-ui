@@ -63,9 +63,7 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           <Form fluid>
             <MyTable
               height={450}
-              data={(facilityListResponse ?? []).filter(
-                facility => facility.isActive
-              )}
+              data={(facilityListResponse ?? [])}
               loading={isFetching}
               columns={tableColumns}
             />
