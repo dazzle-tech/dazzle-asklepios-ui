@@ -55,6 +55,7 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+import VisitReportPrintButton from './VisitReportPrintButton';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -652,53 +653,52 @@ const EncounterList = () => {
     }
   };
 
-const handlePrintVisitReport = async (row: any) => {
-  const encounterId = row?.id ?? null;
+  const handlePrintVisitReport = async (row: any) => {
+    const encounterId = row?.id ?? null;
 
-  if (!encounterId) {
-    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-    return;
-  }
-
-  try {
-    setPrintingVisitReportId(encounterId);
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    const blob = await triggerVisitReportPdf({
-      encounterId,
-      timezone,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+      return;
     }
 
-    // مهم: لا تعمل revokeObjectURL هون
-    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Error while opening visit report',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingVisitReportId(null);
-  }
-};
+    try {
+      setPrintingVisitReportId(encounterId);
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const blob = await triggerVisitReportPdf({
+        encounterId,
+        timezone,
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning',
+          })
+        );
+      }
+
+
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Error while opening visit report',
+          sev: 'error',
+        })
+      );
+    } finally {
+      setPrintingVisitReportId(null);
+    }
+  };
 
   const tableColumns = [
     {
@@ -973,19 +973,10 @@ const handlePrintVisitReport = async (row: any) => {
             {canSeePrint && (
               <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                 <div>
-                  <MyButton
-                    size="small"
-                    backgroundColor="light-blue"
-                    disabled={printingVisitReportId === row?.id}
-                    loading={printingVisitReportId === row?.id}
-                    onClick={() => {
-                      if (printingVisitReportId === row?.id) return;
-                      setLocalEncounter(row);
-                      handlePrintVisitReport(row);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPrint} />
-                  </MyButton>
+                 <VisitReportPrintButton
+                        row={row}
+                       
+                      />
                 </div>
               </Whisper>
             )}
