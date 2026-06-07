@@ -3,7 +3,7 @@ import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { GrTestDesktop } from 'react-icons/gr';
 import MyModal from '@/components/MyModal/MyModal';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -21,7 +21,7 @@ import {
 
 const AddEditPolicy = ({ open, setOpen, policy, setPolicy, onSaved }) => {
     const dispatch = useAppDispatch();
-    const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+    const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
     const [policyCreateDTO, setPolicyCreateDTO] = useState<PolicyDefinitionCreateDTO>({
         ...newPolicyDefinitionCreateDTO

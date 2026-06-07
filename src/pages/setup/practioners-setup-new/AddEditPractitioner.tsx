@@ -10,7 +10,7 @@ import {
   useGetAppointableDepartmentsQuery,
   useGetDepartmentByFacilityQuery
 } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
@@ -44,7 +44,7 @@ const AddEditPractitioner = ({
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   // Facilities
-  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
+  const { data: allFacilities = [] } = useGetActiveFacilitiesQuery(null);
   const [deptPage, setDeptPage] = useState(0);
 
   const {

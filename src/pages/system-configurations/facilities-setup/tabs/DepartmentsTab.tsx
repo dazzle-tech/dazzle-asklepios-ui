@@ -660,7 +660,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
 
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"

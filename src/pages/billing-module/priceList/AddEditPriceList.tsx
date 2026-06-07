@@ -8,7 +8,7 @@ import SectionContainer from "@/components/SectionsoContainer";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { useEnumOptions } from "@/services/enumsApi";
-import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useSavePriceListMutation } from "@/services/billing/PriceListService";
 import MyModal from "@/components/MyModal/MyModal";
 
@@ -24,7 +24,7 @@ const AddEditPriceList = ({
 
   const [savePriceList] = useSavePriceListMutation();
   const priceListTypes = useEnumOptions("PriceListTypes");
-  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
+  const { data: allFacilities = [] } = useGetActiveFacilitiesQuery(null);
 
   useEffect(() => {
     const fid = priceList?.facilityId;

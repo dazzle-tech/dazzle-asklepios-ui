@@ -46,6 +46,9 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
+
+
+
 type RadRef = {
   refetchAllRadData: () => Promise<void>;
 };
@@ -263,6 +266,48 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
   }, [order?.patientId]);
 
+const filters = (
+              <>
+                <Form fluid className="filter-form-radiology-filters">
+                  <MyInput
+                    width="8vw"
+                    placeholder="From Date"
+                    fieldType="date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width="8vw"
+                    placeholder="To Date"
+                    fieldType="date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width="8vw"
+                    placeholder="Order ID"
+                    fieldType="text"
+                    fieldName="orderNumber"
+                    record={{ orderNumber: orderNumberFilter }}
+                    setRecord={(val: any) =>
+                      setOrderNumberFilter(val.orderNumber ?? '')
+                    }
+                    showLabel={false}
+                  />
+                </Form>
+
+                {test?.id && (
+                      <MyStepper
+                        stepsList={stepsDataComputed}
+                        activeStep={activeStep}
+                      />                  
+                )}
+                </>);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -306,8 +351,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         <div className="container">
 
           <div className="left-boxs">
-            <Row>
-              <Col xs={14}>
                 <Orders
                   ref={OrdersRef}
                   order={order}
@@ -315,54 +358,10 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                   dateFilter={dateFilter}
                   loading={globalLoading}
                   orderNumberFilter={orderNumberFilter}
+                  filters={filters}
                 />
-              </Col>
 
-              <Col xs={10}>
-                <Form fluid className="filter-form-radiology-filters">
-                  <MyInput
-                    width="8vw"
-                    placeholder="From Date"
-                    fieldType="date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="To Date"
-                    fieldType="date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="Order ID"
-                    fieldType="text"
-                    fieldName="orderNumber"
-                    record={{ orderNumber: orderNumberFilter }}
-                    setRecord={(val: any) =>
-                      setOrderNumberFilter(val.orderNumber ?? '')
-                    }
-                    showLabel={false}
-                  />
-                </Form>
 
-                {test?.id && (
-                  <Row>
-                    <Col md={24}>
-                      <MyStepper
-                        stepsList={stepsDataComputed}
-                        activeStep={activeStep}
-                      />
-                    </Col>
-                  </Row>
-                )}
-              </Col>
-            </Row>
 
             <Tabs
               activeKey={activeKey}
