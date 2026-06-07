@@ -23,10 +23,11 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+  filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
+({ order, setOrder, dateFilter, loading, orderNumberFilter, filters }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -270,6 +271,7 @@ const diagnosisMap = useMemo(() => {
           onRowsPerPageChange={handleRowsPerPageChange}
           sortColumn={sortColumn}
           sortType={sortType}
+          filters={filters}
           onSortChange={handleSortChange}
         />
       </div>

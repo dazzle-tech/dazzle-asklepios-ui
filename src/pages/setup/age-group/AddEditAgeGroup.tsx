@@ -6,7 +6,7 @@ import { FaBabyCarriage } from 'react-icons/fa';
 import MyModal from '@/components/MyModal/MyModal';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
 const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, width }) => {
@@ -16,7 +16,7 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
   const [facilityListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
 
   // Main modal content
   const conjureFormContent = stepNumber => {

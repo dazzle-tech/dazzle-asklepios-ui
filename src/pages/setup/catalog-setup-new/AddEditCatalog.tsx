@@ -13,7 +13,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { CatalogCreateVM, CatalogUpdateVM } from '@/types/model-types-new';
 import { newCatalogCreateVM, newCatalogUpdateVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) => {
   const dispatch = useAppDispatch();
@@ -23,7 +23,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
   const [catalogUpdateVM, setCatalogUpdateVM] = useState<CatalogUpdateVM>({
     ...newCatalogUpdateVM
   });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
   const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
     {
       facilityId: diagnosticsTestCatalogHeader?.id
