@@ -116,7 +116,8 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   userId: undefined,
   departmentId: undefined,
   isActive: true,
-  isDefault: false
+  isDefault: false,
+  appointmentBookingAllowed: false
 };
 
 // Patient Attachment Constructors
@@ -1172,15 +1173,18 @@ export const newDiagnosticTestAppointmentRescheduleDTO: modelTypes.DiagnosticTes
   rescheduleReason: ''
 };
 
-export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
+export const newAppointmentSearchFilterMultiDepartmentDTO: modelTypes.AppointmentSearchFilterMultiDepartmentDTO = {
   facility: null,
-  department: null,
+  departmentIds: null,
   resourceType: null,
   resourceId: null,
   status: null,
   bookingMode: null,
   patientId: null,
 };
+
+/** @deprecated Use newAppointmentSearchFilterMultiDepartmentDTO */
+export const newAppointmentFromTemplateSearchFilterDTO = newAppointmentSearchFilterMultiDepartmentDTO;
 
 export const newBulkAppointmentRescheduleDTO: modelTypes.BulkAppointmentRescheduleDTO = {
   originalAvailabilityGenerationBatchId: 0,

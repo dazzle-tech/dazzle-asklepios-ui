@@ -87,6 +87,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       facilityId: nextFacilityId,
       departmentId: undefined,
       isDefault: false,
+      appointmentBookingAllowed: false,
     }));
     if (nextFacilityId) {
       await getDepartmentsByFacility({ facilityId: nextFacilityId });
@@ -200,6 +201,14 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       render: (rowData: any) => <p>{rowData?.isDefault ? 'Yes' : 'No'}</p>,
     },
     {
+      key: 'appointmentBookingAllowed',
+      title: <Translate>Appointment Booking Allowed</Translate>,
+      flexGrow: 3,
+      render: (rowData: any) => (
+        <p>{rowData?.appointmentBookingAllowed ? 'Yes' : 'No'}</p>
+      ),
+    },
+    {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
@@ -300,6 +309,14 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
             fieldLabel="Set as Default"
             fieldType="checkbox"
             fieldName="isDefault"
+            record={userDepartment}
+            setRecord={setUserDepartment}
+          />
+          <MyInput
+            column
+            fieldLabel="Appointment Booking Allowed"
+            fieldType="checkbox"
+            fieldName="appointmentBookingAllowed"
             record={userDepartment}
             setRecord={setUserDepartment}
           />

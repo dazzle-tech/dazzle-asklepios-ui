@@ -75,7 +75,7 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
             bookingMode: ['SLOT'] as any,
             status: null,
             patientId: null,
-            department: null
+            departmentIds: null
           },
           page: 0,
           size: 500,

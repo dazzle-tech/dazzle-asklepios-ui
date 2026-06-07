@@ -9,14 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import FollowupAppointmentModal from './components/FollowupAppointmentModal';
-import type { AppointmentFromTemplateSearchFilterDTO } from '@/types/model-types-new';
+import type { AppointmentSearchFilterMultiDepartmentDTO } from '@/types/model-types-new';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCalendarCheck, faCheckDouble, faCircleCheck, faCirclePlus, faStethoscope, faUserCheck, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
 import { useLazyFilterAppointmentsWithoutPaginationQuery } from '@/services/appointment/appointmentService';
-import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetBookableDepartmentsForLoggedInUserQuery } from '@/services/security/departmentService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
@@ -196,8 +196,8 @@ const ScheduleScreen = () => {
   const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
   const [selectedFacility, setSelectedFacility] = useState<any>({});
-  const [selectedDepartment, setSelectedDepartment] = useState<{ departmentId: number | string | null }>({
-    departmentId: null
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<{ departmentIds: number[] }>({
+    departmentIds: []
   });
   const [selectedResourceTypeValue, setSelectedResourceTypeValue] = useState<{ value: string | null }>({
     value: null
@@ -239,7 +239,7 @@ const ScheduleScreen = () => {
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [schedulePatientFilter]);
 
-  const appointmentSearchFilter = useMemo<AppointmentFromTemplateSearchFilterDTO>(() => {
+  const appointmentSearchFilter = useMemo<AppointmentSearchFilterMultiDepartmentDTO>(() => {
     const rk = selectedResources?.resourceKey;
     const firstResourceId =
       rk != null && String(rk).trim() !== '' && Number.isFinite(Number(rk)) && Number(rk) > 0
@@ -252,10 +252,17 @@ const ScheduleScreen = () => {
       : rawBookingMode
         ? [rawBookingMode]
         : ['QUICK', 'SLOT'];
+    const rawDeptIds = selectedDepartmentIds?.departmentIds;
+    const departmentIds =
+      Array.isArray(rawDeptIds) && rawDeptIds.length > 0
+        ? rawDeptIds
+            .map(id => Number(id))
+            .filter(id => Number.isFinite(id) && id > 0)
+        : null;
 
     return {
       facility: selectedFacility?.id ? Number(selectedFacility.id) : null,
-      department: selectedDepartment?.departmentId ? Number(selectedDepartment.departmentId) : null,
+      departmentIds,
       resourceType: selectedResourceTypeValue?.value ?? null,
       resourceId: firstResourceId,
       status: selectedAppointmentStatus?.status ?? null,
@@ -264,7 +271,7 @@ const ScheduleScreen = () => {
     };
   }, [
     selectedFacility?.id,
-    selectedDepartment?.departmentId,
+    selectedDepartmentIds?.departmentIds,
     selectedResourceTypeValue?.value,
     selectedResources?.resourceKey,
     selectedAppointmentStatus?.status,
@@ -276,7 +283,8 @@ const ScheduleScreen = () => {
     if (!appointmentSearchFilter) return false;
     return (
       appointmentSearchFilter.facility != null ||
-      appointmentSearchFilter.department != null ||
+      (Array.isArray(appointmentSearchFilter.departmentIds) &&
+        appointmentSearchFilter.departmentIds.length > 0) ||
       appointmentSearchFilter.resourceId != null ||
       appointmentSearchFilter.patientId != null
     );
@@ -314,7 +322,7 @@ const ScheduleScreen = () => {
   }, [authSlice?.selectedDepartment, authSlice?.selectedFacility, selectedFacility?.id]);
 
   useEffect(() => {
-    setSelectedDepartment({ departmentId: null });
+    setSelectedDepartmentIds({ departmentIds: [] });
   }, [selectedFacility?.id]);
 
   const { data: appointmentRequestsResponse } = useGetAppointmentRequestsQuery(
@@ -326,15 +334,7 @@ const ScheduleScreen = () => {
   );
 
   const { data: activeFacilitiesResponse = [] } = useGetActiveFacilitiesQuery({});
-  const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
-    {
-      facilityId: selectedFacility?.id,
-      page: 0,
-      size: 200,
-      sort: 'id,asc'
-    },
-    { skip: !selectedFacility?.id }
-  );
+  const { data: bookableDepartmentsResponse = [] } = useGetBookableDepartmentsForLoggedInUserQuery();
   const { data: appointablePractitionersResponse } = useGetAppointablePractitionerByLoggedInFacilityQuery(
     { page: 0, size: 200, sort: 'id,asc' },
     { skip: String(selectedResourceTypeValue?.value ?? '').toUpperCase() !== 'PRACTITIONER' }
@@ -362,12 +362,20 @@ const ScheduleScreen = () => {
     }
   }, [activeFacilitiesResponse, selectedFacility]);
 
+  const bookableDepartmentOptions = useMemo(() => {
+    const all = bookableDepartmentsResponse ?? [];
+    if (!selectedFacility?.id) return all;
+    return all.filter(
+      (d: any) => String(d?.facilityId ?? d?.facility_id ?? '') === String(selectedFacility.id)
+    );
+  }, [bookableDepartmentsResponse, selectedFacility?.id]);
+
   const resourcesWithAvailabilityResponse = useMemo(() => {
     const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
     let rows: any[] = [];
 
     if (selectedType === 'DEPARTMENT') {
-      rows = (appointableDepartmentsResponse as any)?.data ?? [];
+      rows = bookableDepartmentOptions;
     } else if (selectedType === 'PRACTITIONER') {
       rows = (appointablePractitionersResponse as any)?.data ?? [];
     } else if (selectedType === 'CATALOG') {
@@ -399,7 +407,7 @@ const ScheduleScreen = () => {
     return { object };
   }, [
     selectedResourceTypeValue?.value,
-    appointableDepartmentsResponse,
+    bookableDepartmentOptions,
     appointablePractitionersResponse,
     appointableCatalogsResponse,
     appointableDiagnosticTestsResponse,
@@ -560,10 +568,7 @@ const ScheduleScreen = () => {
     resourceNameById
   ]);
 
-  const departmentOptions = useMemo(
-    () => (appointableDepartmentsResponse as any)?.data ?? [],
-    [appointableDepartmentsResponse]
-  );
+  const departmentOptions = useMemo(() => bookableDepartmentOptions, [bookableDepartmentOptions]);
 
   const resourceOptions = useMemo(() => {
     const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
@@ -675,7 +680,7 @@ const ScheduleScreen = () => {
 
   useEffect(() => {
     setSelectedResources({ resourceKey: null });
-  }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartment?.departmentId]);
+  }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartmentIds?.departmentIds]);
 
   const handleSelectEvent = event => {
     const freshEvent = finalAppointments?.find(e => e.id === event.id) || event;
@@ -936,20 +941,18 @@ const ScheduleScreen = () => {
   );
 
   const finalResourceLit = useMemo(() => {
-    const selectedDeptId = selectedDepartment?.departmentId ? String(selectedDepartment.departmentId) : '';
     const deptColumns = (departmentOptions ?? []).map((d: any) => ({
       key: String(d?.id ?? ''),
       resourceName: d?.name ?? d?.departmentName ?? `Department #${d?.id ?? ''}`
     }));
 
-    if (selectedDeptId) {
-      return deptColumns.filter((d: any) => String(d?.key) === selectedDeptId);
+    const selectedIds = selectedDepartmentIds?.departmentIds;
+    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+      const idSet = new Set(selectedIds.map(id => String(id)));
+      return deptColumns.filter((d: any) => idSet.has(String(d?.key)));
     }
     return deptColumns;
-  }, [
-    selectedDepartment?.departmentId,
-    departmentOptions
-  ]);
+  }, [selectedDepartmentIds?.departmentIds, departmentOptions]);
 
   const selectedResourceKeysForFilter = useMemo(() => {
     const rk = selectedResources?.resourceKey;
@@ -976,9 +979,10 @@ const ScheduleScreen = () => {
   const filteredAppointments = useMemo(() => {
     let list = appointmentsData;
 
-    if (selectedDepartment?.departmentId != null && String(selectedDepartment.departmentId) !== '') {
-      const deptId = String(selectedDepartment.departmentId);
-      list = list.filter(event => String((event as any).resourceId ?? '') === deptId);
+    const selectedIds = selectedDepartmentIds?.departmentIds;
+    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+      const idSet = new Set(selectedIds.map(id => String(id)));
+      list = list.filter(event => idSet.has(String((event as any).resourceId ?? '')));
     }
 
     if (selectedResourceKeysForFilter) {
@@ -1015,7 +1019,7 @@ const ScheduleScreen = () => {
     return list;
   }, [
     appointmentsData,
-    selectedDepartment?.departmentId,
+    selectedDepartmentIds?.departmentIds,
     selectedResourceKeysForFilter,
     selectedAppointmentStatus?.status,
     selectedBookingMode?.bookingMode,
@@ -1863,8 +1867,8 @@ const ScheduleScreen = () => {
           selectedFacility={selectedFacility}
           setSelectedFacility={setSelectedFacility}
           departmentOptions={departmentOptions as any[]}
-          selectedDepartment={selectedDepartment}
-          setSelectedDepartment={setSelectedDepartment}
+          selectedDepartmentIds={selectedDepartmentIds}
+          setSelectedDepartmentIds={setSelectedDepartmentIds}
           TemplateTypeEnum={TemplateTypeEnum as any[]}
           selectedResourceTypeValue={selectedResourceTypeValue}
           setSelectedResourceTypeValue={setSelectedResourceTypeValue}
@@ -1889,7 +1893,7 @@ const ScheduleScreen = () => {
         >
           <ScheduleSummaryBar
             slotSummaryBarStats={slotSummaryBarStats}
-            selectedDepartment={selectedDepartment}
+            selectedDepartmentIds={selectedDepartmentIds}
             departmentOptions={departmentOptions as any[]}
             selectedResources={selectedResources}
             resourceNameById={resourceNameById}
@@ -2066,7 +2070,12 @@ const ScheduleScreen = () => {
         open={cancelledAppointmentsModalOpen}
         setOpen={setCancelledAppointmentsModalOpen}
         calendarViewRange={calendarViewRange}
-        departmentId={selectedDepartment?.departmentId}
+        departmentId={
+          Array.isArray(selectedDepartmentIds?.departmentIds) &&
+          selectedDepartmentIds.departmentIds.length === 1
+            ? selectedDepartmentIds.departmentIds[0]
+            : null
+        }
         departmentOptions={departmentOptions as any[]}
         onRebookAppointment={handleRebookCancelledAppointment}
       />

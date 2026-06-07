@@ -27,7 +27,7 @@ import {
   useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
 } from "@/services/appointment/availabilityTemplateService";
 import { useGetPatientsByIdsQuery } from "@/services/patient/patientService";
-import { useGetAppointableDepartmentsQuery } from "@/services/security/departmentService";
+import { useGetBookableDepartmentsForLoggedInUserQuery } from "@/services/security/departmentService";
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from "@/services/setup/practitioner/PractitionerService";
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from "@/services/setup/catalog/catalogService";
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from "@/services/setup/diagnosticTest/diagnosticTestService";
@@ -576,28 +576,27 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     });
   }, [appointmentPreviewRows, publishedTemplates, departmentActiveTemplatesPage?.data]);
 
-  const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
-    open && selectedFacility?.id
-      ? {
-          facilityId: selectedFacility.id,
-          page: 0,
-          size: 200,
-          sort: "id,asc",
-        }
-      : skipToken,
-  );
+  const { data: bookableDepartmentsResponse = [] } =
+    useGetBookableDepartmentsForLoggedInUserQuery(undefined, { skip: !open });
 
-  const appointableDepartmentOptions = useMemo(
-    () =>
-      ((appointableDepartmentsResponse as any)?.data ?? [])
-        .map((d: any) => {
-          const value = d?.id ?? d?.key;
-          const label = d?.name ?? d?.departmentName ?? String(value ?? "");
-          return value != null ? { label: String(label), value: Number(value) } : null;
-        })
-        .filter(Boolean) as { label: string; value: number }[],
-    [appointableDepartmentsResponse],
-  );
+  const bookableDepartmentOptions = useMemo(() => {
+    const all = bookableDepartmentsResponse ?? [];
+    const filtered = selectedFacility?.id
+      ? all.filter(
+          (d: any) =>
+            String(d?.facilityId ?? d?.facility_id ?? "") ===
+            String(selectedFacility.id),
+        )
+      : all;
+
+    return filtered
+      .map((d: any) => {
+        const value = d?.id ?? d?.key;
+        const label = d?.name ?? d?.departmentName ?? String(value ?? "");
+        return value != null ? { label: String(label), value: Number(value) } : null;
+      })
+      .filter(Boolean) as { label: string; value: number }[];
+  }, [bookableDepartmentsResponse, selectedFacility?.id]);
 
   const { data: appointablePractitionersResponse } =
     useGetAppointablePractitionerByLoggedInFacilityQuery(
@@ -625,13 +624,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const departmentNameById = useMemo(() => {
     const map = new Map<string, string>();
-    ((appointableDepartmentsResponse as any)?.data ?? []).forEach((d: any) => {
+    (bookableDepartmentsResponse ?? []).forEach((d: any) => {
       const id = d?.id ?? d?.departmentId ?? d?.key;
       const name = d?.name ?? d?.departmentName;
       if (id != null && name) map.set(String(id), String(name));
     });
     return map;
-  }, [appointableDepartmentsResponse]);
+  }, [bookableDepartmentsResponse]);
 
   const [getRoomsByIds, { data: roomsByIds = [] }] = useGetRoomsByIdsMutation();
 
@@ -658,7 +657,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const resourceNameByTypeAndId = useMemo(() => {
     const departmentMap = new Map<string, string>();
-    ((appointableDepartmentsResponse as any)?.data ?? []).forEach((d: any) => {
+    (bookableDepartmentsResponse ?? []).forEach((d: any) => {
       const id = d?.id ?? d?.key;
       const name = d?.name ?? d?.departmentName;
       if (id != null && name) departmentMap.set(String(id), String(name));
@@ -708,7 +707,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       ROOM: roomMap,
     };
   }, [
-    appointableDepartmentsResponse,
+    bookableDepartmentsResponse,
     appointablePractitionersResponse,
     appointableCatalogsResponse,
     appointableDiagnosticTestsResponse,
@@ -1333,10 +1332,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                 fieldName="departmentId"
                 record={templateSearchRecord}
                 setRecord={setTemplateSearchRecord}
-                selectData={appointableDepartmentOptions}
+                selectData={bookableDepartmentOptions}
                 selectDataLabel="label"
                 selectDataValue="value"
-                placeholder="All departments"
+                placeholder="All bookable departments"
                 searchable
                 width="100%"
               />

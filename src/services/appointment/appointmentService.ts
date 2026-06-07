@@ -13,7 +13,7 @@ import type {
   BulkAppointmentRescheduleResponseVM,
   BulkReschedulePreviewVM,
   DiagnosticTestAppointmentRescheduleDTO,
-  AppointmentFromTemplateSearchFilterDTO,
+  AppointmentSearchFilterMultiDepartmentDTO,
   AvailabilityTemplateResponseVM
 } from '@/types/model-types-new';
 
@@ -317,7 +317,7 @@ export const appointmentFromTemplateService = createApi({
 
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
-      { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
+      { filter: AppointmentSearchFilterMultiDepartmentDTO } & PagedParams
     >({
       query: ({ filter, page, size, sort = 'id,asc' }) => ({
         url: `${APPOINTMENT_BASE_URL}/search`,
@@ -341,7 +341,7 @@ export const appointmentFromTemplateService = createApi({
 
     filterAppointmentsWithoutPagination: builder.query<
       AppointmentFromTemplate[],
-      { filter: AppointmentFromTemplateSearchFilterDTO }
+      { filter: AppointmentSearchFilterMultiDepartmentDTO }
     >({
       query: ({ filter }) => ({
         url: `${APPOINTMENT_BASE_URL}/search/without-pagination`,
