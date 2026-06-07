@@ -860,7 +860,45 @@ const MyInput = ({
           </div>
         );
       }
-     case 'color':
+ 
+     case 'multyPicker': {
+  const dataList = props?.selectData ?? [];
+  const valueKey = props?.selectDataValue ?? '';
+
+  return (
+    <div ref={pickerRef}>
+      <Form.Control
+        style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+        block
+        disabled={props.disabled}
+        accepter={TagPicker}
+        container={resolveContainer()}
+        placement={placement}
+        preventOverflow={pickerPreventOverflow}
+        name={fieldName}
+        data={dataList}
+        labelKey={props?.selectDataLabel ?? ''}
+        valueKey={valueKey}
+        value={record ? record[fieldName] : []}
+        onChange={handleValueChange}
+        placeholder={props.placeholder ?? 'Select...'}
+        creatable={props.creatable ?? false}
+        groupBy={props.groupBy ?? null}
+        searchBy={props.searchBy}
+        menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
+        onKeyDown={focusNextField}
+        open={isMultyPickerOpen}
+        onOpen={() => {
+          setPlacement(calculatePlacement());
+          setIsMultyPickerOpen(true);
+        }}
+        onClose={() => setIsMultyPickerOpen(false)}
+        disabledItemValues={getDisabledValues(dataList, valueKey)}
+      />
+    </div>
+  );
+}
+        case 'color':
   return (
     <input
       type="color"
@@ -873,39 +911,6 @@ const MyInput = ({
       }
     />
   );
-      case 'multyPicker':
-        return (
-          <div ref={pickerRef}>
-            <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-              block
-              disabled={props.disabled}
-              accepter={TagPicker}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              name={fieldName}
-              data={props?.selectData ?? []}
-              labelKey={props?.selectDataLabel ?? ''}
-              valueKey={props?.selectDataValue ?? ''}
-              value={record ? record[fieldName] : []}
-              onChange={handleValueChange}
-              placeholder={props.placeholder ?? 'Select...'}
-              creatable={props.creatable ?? false}
-              groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
-              menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
-              onKeyDown={focusNextField}
-              open={isMultyPickerOpen}
-              onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsMultyPickerOpen(true);
-              }}
-              onClose={() => setIsMultyPickerOpen(false)}
-              disabledItemValues={getDisabledValues(dataList, valueKey)} />
-          </div>
-        );
-
       case 'checkPicker': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
 
