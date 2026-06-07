@@ -79,6 +79,7 @@ const DetailsModal = ({
   const editAiLoadedRef = React.useRef<string | null>(null);
   const editBrandLoadedRef = React.useRef<string | null>(null);
   const loadedMedicationIdRef = React.useRef<string | null>(null);
+  const userClearedBrandRef = React.useRef(false);
   const [testsByAiId, setTestsByAiId] = useState<Record<string, any[]>>({});
 
   const [customeinst, setCustomeinst] = useState({
@@ -200,6 +201,7 @@ const DetailsModal = ({
     setInst(null);
     editAiLoadedRef.current = null;
     editBrandLoadedRef.current = null;
+    userClearedBrandRef.current = false;
   };
 
   const clearBrandSelection = () => {
@@ -218,6 +220,7 @@ const DetailsModal = ({
     if (!open) {
       loadedMedicationIdRef.current = null;
       setTagsLoaded(false);
+      userClearedBrandRef.current = false; 
       resetMedicationSelectionState();
       return;
     }
@@ -294,6 +297,8 @@ const DetailsModal = ({
     ) {
       return;
     }
+
+    if (userClearedBrandRef.current) return;
 
     setSelectedGeneric(Brand);
     setSearchKeyword(Brand.name ?? '');
@@ -606,6 +611,7 @@ const DetailsModal = ({
     }
 
     const selectedMedicationId = selectedGeneric?.id ?? null;
+    console.log("selectedMedicationId: ", selectedMedicationId);
 
     const isChronic = Boolean(prescriptionMedication?.chronicMedication);
     const durationRaw = prescriptionMedication?.duration;
@@ -730,6 +736,7 @@ const DetailsModal = ({
     try {
       const medicationId = prescriptionMedication?.id;
       if (medicationId) {
+        console.log("createPayload: ", createPayload)
         await updatePrescriptionMedication({
           id: Number(medicationId),
           body: {
@@ -814,7 +821,17 @@ const DetailsModal = ({
       if (selectedActiveIngredient) {
         setSelectedActiveIngredient(null);
       }
-      clearBrandSelection();
+      userClearedBrandRef.current = true;
+      setPrescriptionMedications(prev => ({
+        ...prev,
+        activeIngredientId: null,
+        medicationsId: null,
+        genericMedicationsId: null
+      }));
+      setSelectedGeneric(null);
+      setSearchKeyword('');
+      setShowMedicationDropdown(false);
+      blockAutoBrandLoad();
       setInst(null);
     }
   };
@@ -823,12 +840,19 @@ const DetailsModal = ({
     setSelectedActiveIngredient(activeIngredient);
     setActiveIngredientKeyword(activeIngredient?.name ?? '');
     setShowActiveIngredientDropdown(false);
-    clearBrandSelection();
+    setSelectedGeneric(null);
+    setSearchKeyword('');
+    setShowMedicationDropdown(false);
+    userClearedBrandRef.current = true;
+    blockAutoBrandLoad();
+    setInst(null);
+
     setPrescriptionMedications(prev => ({
       ...prev,
-      activeIngredientId: activeIngredient?.id ?? null
+      activeIngredientId: activeIngredient?.id ?? null,
+      medicationsId: null,
+      genericMedicationsId: null
     }));
-    setInst(null);
 
     if (activeIngredient?.id) {
       try {
@@ -894,6 +918,7 @@ const DetailsModal = ({
     loadedMedicationIdRef.current = null;
     editAiLoadedRef.current = null;
     editBrandLoadedRef.current = null;
+    userClearedBrandRef.current = false; 
   };
 
   const preRequestedTests = Object.values(testsByAiId ?? {})
@@ -1152,7 +1177,6 @@ const DetailsModal = ({
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             disableByField='isValid'
-
                             selectDataValue="key"
                             fieldName="durationType"
                             record={safeRecord}
@@ -1242,7 +1266,6 @@ const DetailsModal = ({
                             selectData={indicationLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             disableByField='isValid'
-
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
                             record={safeRecord}
@@ -1275,7 +1298,6 @@ const DetailsModal = ({
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             disableByField='isValid'
-
                             selectDataValue="key"
                             fieldName="administrationInstructions"
                             record={adminInstructions}
