@@ -27,8 +27,12 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
     toDate: '',
     notes: defaultNotes
   });
+  const [language, setLanguage] = useState({ lang: 'en' });
   const [isLoading, setIsLoading] = useState(false);
-
+  const langOptions = [
+    { label: 'English', value: 'en' },
+    { label: 'Arabic', value: 'ar' }
+  ];
   useEffect(() => {
     if (open) {
       setSickLeaveForm({
@@ -75,6 +79,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
       const blob = await postSickLeaveReportPdf({
         encounterId,
         timezone,
+        language: language.lang,
         request: {
           fromDate: sickLeaveForm.fromDate,
           toDate: sickLeaveForm.toDate,
@@ -134,6 +139,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
                 record={sickLeaveForm}
                 setRecord={setSickLeaveForm}
                 required
+                disablePastDates
               />
             </div>
             <div style={{ flex: 1, minWidth: 180 }}>
@@ -143,7 +149,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
                 fieldType="date"
                 fieldLabel="End Date "
                 fieldName="toDate"
-
+                disablePastDates
                 record={sickLeaveForm}
                 setRecord={setSickLeaveForm}
                 required
@@ -160,6 +166,16 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
               setRecord={setSickLeaveForm}
               placeholder="Enter any notes..."
               width="100%"
+            />
+          </div>
+          <div >
+            <MyInput
+              fieldLabel="Language"
+              fieldName="lang"
+              fieldType="select"
+              selectData={langOptions}
+              record={language}
+              setRecord={setLanguage}
             />
           </div>
         </Form>
