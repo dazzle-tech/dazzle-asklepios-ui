@@ -4,7 +4,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -13,6 +13,7 @@ import {
   useAddUserDepartmentMutation,
   useLazyGetUserDepartmentsByUserQuery,
   useDeleteUserDepartmentMutation,
+  useUpdateUserDepartmentTogglesMutation,
 } from '@/services/security/userDepartmentsService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -25,6 +26,9 @@ interface DepartmentsTabProps {
   user: ApUser;
   width: number;
 }
+
+// Mode to distinguish add vs edit
+type FormMode = 'add' | 'edit';
 
 const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
   const dispatch = useAppDispatch();
@@ -48,15 +52,19 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     useLazyGetActiveDepartmentByFacilityListQuery();
 
   const [deleteUserDepartment] = useDeleteUserDepartmentMutation();
+  const [updateToggles] = useUpdateUserDepartmentTogglesMutation(); 
   const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] =
     useState<boolean>(false);
   const [openForm, setOpenForm] = useState<boolean>(false);
+  const [formMode, setFormMode] = useState<FormMode>('add'); 
 
   const [saveDepartment] = useAddUserDepartmentMutation();
 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  const isSelected = (rowData: any) =>
+    rowData?.id === userDepartment?.id ? "selected-row" : "";
 
   useEffect(() => {
     if (userId) {
@@ -94,11 +102,29 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     }
   };
 
+  //  Reset form to empty add mode
+  const resetToAddMode = () => {
+    setFormMode('add');
+    setOpenForm(false);
+    setUserDepartment({
+      ...newUserDepartment,
+      userId,
+      isDefault: false,
+    });
+  };
+
+  //  Handle save — branches on formMode
   const handleFacilityDepartmentSave = () => {
+    if (formMode === 'edit') {
+      handleTogglesSave();
+    } else {
+      handleAddSave();
+    }
+  };
+
+  const handleAddSave = () => {
     if (!userDepartment?.facilityId || !userDepartment?.departmentId) {
-      dispatch(
-        notify({ msg: 'Please select both Facility and Department', sev: 'error' }),
-      );
+      dispatch(notify({ msg: 'Please select both Facility and Department', sev: 'error' }));
       return;
     }
 
@@ -107,38 +133,53 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     saveDepartment(dataToSave)
       .unwrap()
       .then(() => {
-        setOpenForm(false);
-        dispatch(
-          notify({
-            msg: 'The Department has been saved successfully',
-            sev: 'success',
-          }),
-        );
+        resetToAddMode();
+        dispatch(notify({ msg: 'The Department has been saved successfully', sev: 'success' }));
         refetchUserDepartments();
-        setUserDepartment({
-          ...newUserDepartment,
-          userId,
-          isDefault: false,
-        });
       })
       .catch((err) => {
-  let message =
-    err?.data?.message ||
-    err?.data?.detail ||
-    err?.error ||
-    'Something went wrong';
+        let message =
+          err?.data?.message ||
+          err?.data?.detail ||
+          err?.error ||
+          'Something went wrong';
 
-  if (typeof message === 'string' && message.startsWith('error.')) {
-    message = message.replace('error.', '').replace(/\./g, ' ');
-  }
+        if (typeof message === 'string' && message.startsWith('error.')) {
+          message = message.replace('error.', '').replace(/\./g, ' ');
+        }
 
-  dispatch(
-    notify({
-      msg: message,
-      sev: 'error',
-    }),
-  );
-});
+        dispatch(notify({ msg: message, sev: 'error' }));
+      });
+  };
+
+  //  Save only toggles in edit mode
+  const handleTogglesSave = () => {
+    if (!userDepartment?.id) return;
+
+    updateToggles({
+      id: userDepartment.id,
+      isDefault: !!userDepartment.isDefault,
+      appointmentBookingAllowed: !!userDepartment.appointmentBookingAllowed,
+    })
+      .unwrap()
+      .then(() => {
+        resetToAddMode();
+        dispatch(notify({ msg: 'Department settings updated successfully', sev: 'success' }));
+        refetchUserDepartments();
+      })
+      .catch((err) => {
+        let message =
+          err?.data?.message ||
+          err?.data?.detail ||
+          err?.error ||
+          'Something went wrong';
+
+        if (typeof message === 'string' && message.startsWith('error.')) {
+          message = message.replace('error.', '').replace(/\./g, ' ');
+        }
+
+        dispatch(notify({ msg: message, sev: 'error' }));
+      });
   };
 
   const handleDeleteUserDepartment = (UFD: any) => {
@@ -146,22 +187,12 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       .unwrap()
       .then(() => {
         setOpenConfirmDeleteDepartmentModal(false);
-        dispatch(
-          notify({
-            msg: 'The department was successfully deleted for this user',
-            sev: 'success',
-          }),
-        );
+        dispatch(notify({ msg: 'The department was successfully deleted for this user', sev: 'success' }));
         refetchUserDepartments();
       })
       .catch(() => {
         setOpenConfirmDeleteDepartmentModal(false);
-        dispatch(
-          notify({
-            msg: 'Failed to delete department for this User',
-            sev: 'error',
-          }),
-        );
+        dispatch(notify({ msg: 'Failed to delete department for this User', sev: 'error' }));
       });
   };
 
@@ -172,11 +203,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       flexGrow: 4,
       render: (rowData: any) => (
         <span>
-          {conjureValueBasedOnIDFromList(
-            facilities ?? [],
-            rowData.facilityId,
-            'name',
-          )}
+          {conjureValueBasedOnIDFromList(facilities ?? [], rowData.facilityId, 'name')}
         </span>
       ),
     },
@@ -186,11 +213,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       flexGrow: 4,
       render: (rowData: any) => (
         <span>
-          {conjureValueBasedOnIDFromList(
-            departmentList as any,
-            rowData.departmentId,
-            'name',
-          )}
+          {conjureValueBasedOnIDFromList(departmentList as any, rowData.departmentId, 'name')}
         </span>
       ),
     },
@@ -220,21 +243,37 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       flexGrow: 2,
       render: (rowData: any) => {
         return (
-          <MdDelete
-            style={{ cursor: 'pointer' }}
-            title="Delete"
-            size={24}
-            fill="var(--primary-pink)"
-            onClick={() => {
-              setUserDepartment(rowData);
-              setOpenConfirmDeleteDepartmentModal(true);
-            }}
-          />
+          <div className="container-of-icons">
+            <MdDelete
+              style={{ cursor: 'pointer' }}
+              title="Delete"
+              size={24}
+              fill="var(--primary-pink)"
+              onClick={() => {
+                setUserDepartment(rowData);
+                setOpenConfirmDeleteDepartmentModal(true);
+              }}
+            />
+            {/*  Edit icon — opens form in edit mode */}
+            <MdModeEdit
+              className="icons-style"
+              title="Edit"
+              size={24}
+              fill="var(--primary-gray)"
+              onClick={() => {
+                setUserDepartment(rowData);   // load row data into form
+                setFormMode('edit');          // switch to edit mode
+                setOpenForm(true);            // open the form
+                if (rowData.facilityId) {
+                  getDepartmentsByFacility({ facilityId: rowData.facilityId });
+                }
+              }}
+            />
+          </div>
         );
       },
     },
   ];
-
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setPageIndex(newPage);
@@ -253,12 +292,9 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
 
   const totalCount = userDepartmentsResponse?.length ?? 0;
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
-
 
   return (
     <div dir={dir}>
@@ -273,6 +309,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
             borderRadius: '4px',
           }}
         >
+          {/*  Facility — always disabled in edit mode */}
           <MyInput
             column
             width={350}
@@ -289,7 +326,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
               onChangeFacility(updateRecord.facilityId);
             }}
             searchable
+            disabled={formMode === 'edit'}
           />
+
+          {/*  Department — always disabled in edit mode */}
           <MyInput
             column
             fieldLabel="Select Departments"
@@ -302,8 +342,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
             record={userDepartment}
             setRecord={setUserDepartment}
             required
-            disabled={!userDepartment?.facilityId || deptLoading}
+            disabled={formMode === 'edit' || !userDepartment?.facilityId || deptLoading}
           />
+
+          {/*  Toggles — always enabled */}
           <MyInput
             column
             fieldLabel="Set as Default"
@@ -320,6 +362,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
             record={userDepartment}
             setRecord={setUserDepartment}
           />
+
           <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '10px' }}>
             <MyButton
               onClick={handleFacilityDepartmentSave}
@@ -328,14 +371,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
               Save
             </MyButton>
             <MyButton
-              onClick={() => {
-                setOpenForm(false);
-                setUserDepartment({
-                  ...newUserDepartment,
-                  userId,
-                  isDefault: false,
-                });
-              }}
+              onClick={resetToAddMode}
               appearance="subtle"
               style={{ marginLeft: '10px' }}
             >
@@ -344,6 +380,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
           </div>
         </Form>
       )}
+
       {!openForm && (
         <div className="container-of-add-new-button" style={{ marginBottom: '20px' }}>
           <MyButton
@@ -355,6 +392,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
                 userId,
                 isDefault: false,
               });
+              setFormMode('add');
               setOpenForm(true);
             }}
             width={width > 600 ? '150px' : '109px'}
@@ -364,16 +402,22 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
           </MyButton>
         </div>
       )}
+
       <MyTable
         height={300}
         data={paginatedData}
         columns={userDepartmentTableColumns}
+        onRowClick={(row: UserDepartment) => {
+          setUserDepartment(row);
+        }}
+        rowClassName={isSelected}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}
         setOpen={setOpenConfirmDeleteDepartmentModal}
@@ -386,5 +430,3 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
 };
 
 export default DepartmentsTab;
-
-
