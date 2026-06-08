@@ -44,7 +44,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const mode = useAppSelector(state => state.ui);
+  const mode = useAppSelector(state => state.ui.mode);
   const uiSlice = useAppSelector(state => state.ui);
   const authSlice = useAppSelector(state => state.auth);
 
