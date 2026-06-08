@@ -220,18 +220,6 @@ const diagnosisMap = useMemo(() => {
         }
       },
       {
-        key: 'diagnosis',
-        title: <Translate>Diagnosis</Translate>,
-        flexGrow: 3,
-        render: (r: any) => {
-          const diagnosis = diagnosisMap[r.icdDiagnosisId];
-
-          return diagnosis
-            ? `${diagnosis.code ?? ''} - ${diagnosis.name ?? diagnosis.description ?? ''}`
-            : '—';
-        }
-      },
-      {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 2,

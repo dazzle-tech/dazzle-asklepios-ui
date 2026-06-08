@@ -436,8 +436,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
             />
 
             <div className="pd-fields-inline">
-              <div className="pd-field">
                 <MyInput
+                  width="15vw"
                   required
                   fieldType="select"
                   selectData={diagnosisTypeOptions ?? []}
@@ -449,10 +449,9 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   fieldLabel="Type"
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
+                  width="100%"
                   fieldLabel="Suspected"
                   fieldType="checkbox"
                   fieldName="suspected"
@@ -460,10 +459,9 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
+                  width="100%"
                   fieldLabel="Chronic"
                   fieldType="checkbox"
                   fieldName="major"
@@ -471,7 +469,6 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
             </div>
 
             <div className="pd-footer">
