@@ -50,6 +50,7 @@ import './styles.less';
 import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
+import PrescriptionReportButton from './PrescriptionReportButton';
 
 type Props = any;
 
@@ -645,31 +646,31 @@ const Prescription = (props: Props) => {
 
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
   const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
-const handlePrintPrescriptionPdf = async (rowData: any) => {
-  try {
-    const blob = await triggerGetPrescriptionPdf({
-      prescriptionId: rowData.id,
-    }).unwrap();
+  const handlePrintPrescriptionPdf = async (rowData: any) => {
+    try {
+      const blob = await triggerGetPrescriptionPdf({
+        prescriptionId: rowData.id,
+      }).unwrap();
 
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf',
+      });
 
-    const fileURL = window.URL.createObjectURL(pdfBlob);
+      const fileURL = window.URL.createObjectURL(pdfBlob);
 
-    const win = window.open(fileURL, '_blank');
+      const win = window.open(fileURL, '_blank');
 
-    if (win) {
-      win.focus();
-    } else {
-      console.error('Popup blocked. Please allow popups for this site.');
+      if (win) {
+        win.focus();
+      } else {
+        console.error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // لا تعمل revokeObjectURL هون
+    } catch (error) {
+      console.error('Failed to open prescription pdf', error);
     }
-
-    // لا تعمل revokeObjectURL هون
-  } catch (error) {
-    console.error('Failed to open prescription pdf', error);
-  }
-};
+  };
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
 
@@ -968,106 +969,104 @@ const handlePrintPrescriptionPdf = async (rowData: any) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
- const tablefilters =(      <div className="bt-div">
-        <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
-          <Form fluid>
-            <MyInput
-              placeholder="Prescription"
-              fieldName="preKey"
-              fieldType="select"
-              record={preKeyRecord}
-              setRecord={setPreKeyRecord}
-              selectData={prescriptionOptions}
-              selectDataLabel="label"
-              selectDataValue="key"
-              showLabel={false}
-            />
-          </Form>
-
-          <div className="icon-style">
-            <FaFilePrescription size={18} />
-          </div>
-
-          <div>
-            <div className="prescripton-word-style">Prescription</div>
-            <div className="prescripton-number-style">
-              {currentPrescription?.prescriptionNum || currentPrescription?.id || '_'}
-            </div>
-          </div>
-
-          <Form fluid>
-            <MyInput
-              fieldName=""
-              fieldType="select"
-              selectData={[]}
-              placeholder="Pharmacy"
-              selectDataLabel="label"
-              selectDataValue="key"
-              record={{}}
-              setRecord={() => { }}
-              width={110}
-            />
-          </Form>
-        </div>
-
-        <div className={clsx('bt-right', { 'disabled-panel': edit })}>
-          <UrgencyButton />
-
-          <MyButton loading={isLoadingPrescriptions}>
-            <Translate>Validate with Gallon Reasoner</Translate>
-          </MyButton>
-
-          <MyButton
-            onClick={handleNewPrescriptionAndAddMedication}
-            prefixIcon={() => <PlusIcon />}
-            loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-            disabled={
-              edit ||
-              isNurse ||
-              !currentPrescription?.id ||
-              String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
-            }
-          >
-            Add Medication
-          </MyButton>
-
-          <MyButton
-            prefixIcon={() => <BlockIcon />}
-            onClick={() => {
-              if (!selectedRows.length && patientPrescriptionMedicationObject?.id) {
-                setSelectedRows([patientPrescriptionMedicationObject]);
-              }
-              setOpenCancellation(true);
-            }}
-            disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
-          >
-            Cancel
-          </MyButton>
-
-          <MyButton
-            loading={isLoadingPrescriptions}
-            onClick={() => setSummaryModalOpen(true)}
-            disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
-            prefixIcon={() => <CheckIcon />}
-          >
-            Sign & Submit Order
-          </MyButton>
-        </div>
-
-        <MyButton
-          onClick={() => handlePrintPrescriptionPdf(currentPrescription)}
-          disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
-          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+  const tablefilters = (<div className="bt-div">
+    <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
+      <Form fluid>
+        <MyInput
+          placeholder="Prescription"
+          fieldName="preKey"
+          fieldType="select"
+          record={preKeyRecord}
+          setRecord={setPreKeyRecord}
+          selectData={prescriptionOptions}
+          selectDataLabel="label"
+          selectDataValue="key"
+          showLabel={false}
         />
-      </div>);
+      </Form>
+
+      <div className="icon-style">
+        <FaFilePrescription size={18} />
+      </div>
+
+      <div>
+        <div className="prescripton-word-style">Prescription</div>
+        <div className="prescripton-number-style">
+          {currentPrescription?.prescriptionNum || currentPrescription?.id || '_'}
+        </div>
+      </div>
+
+      <Form fluid>
+        <MyInput
+          fieldName=""
+          fieldType="select"
+          selectData={[]}
+          placeholder="Pharmacy"
+          selectDataLabel="label"
+          selectDataValue="key"
+          record={{}}
+          setRecord={() => { }}
+          width={110}
+        />
+      </Form>
+    </div>
+
+    <div className={clsx('bt-right', { 'disabled-panel': edit })}>
+      <UrgencyButton />
+
+      <MyButton loading={isLoadingPrescriptions}>
+        <Translate>Validate with Gallon Reasoner</Translate>
+      </MyButton>
+
+      <MyButton
+        onClick={handleNewPrescriptionAndAddMedication}
+        prefixIcon={() => <PlusIcon />}
+        loading={isLoadingPrescriptions || isLoadingCreateOrGet}
+        disabled={
+          edit ||
+          isNurse ||
+          !currentPrescription?.id ||
+          String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
+        }
+      >
+        Add Medication
+      </MyButton>
+
+      <MyButton
+        prefixIcon={() => <BlockIcon />}
+        onClick={() => {
+          if (!selectedRows.length && patientPrescriptionMedicationObject?.id) {
+            setSelectedRows([patientPrescriptionMedicationObject]);
+          }
+          setOpenCancellation(true);
+        }}
+        disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
+      >
+        Cancel
+      </MyButton>
+
+      <MyButton
+        loading={isLoadingPrescriptions}
+        onClick={() => setSummaryModalOpen(true)}
+        disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
+        prefixIcon={() => <CheckIcon />}
+      >
+        Sign & Submit Order
+      </MyButton>
+    </div>
+
+    <PrescriptionReportButton prescriptionId={currentPrescription?.id}
+      disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
+    />
+  </div>);
 
   const tablebuttons = (<div className="bt-div">
-        <div className="bt-right">
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
-            Show cancelled
-          </Checkbox>
-        </div>
-      </div>);
+    <div className="bt-right">
+      <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
+        Show cancelled
+      </Checkbox>
+    </div>
+  </div>);
 
   return (
     <div dir={dir}>
@@ -1154,15 +1153,15 @@ const handlePrintPrescriptionPdf = async (rowData: any) => {
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
         title={`Attachments - ${selectedMedicationForAttachments
-            ? genericMedicationListResponse?.data?.find(
-              (item: any) =>
-                String(item.id) ===
-                String(
-                  (selectedMedicationForAttachments as any)?.medicationsId ??
-                  (selectedMedicationForAttachments as any)?.genericMedicationsId
-                )
-            )?.name || 'Medication'
-            : 'Medication'
+          ? genericMedicationListResponse?.data?.find(
+            (item: any) =>
+              String(item.id) ===
+              String(
+                (selectedMedicationForAttachments as any)?.medicationsId ??
+                (selectedMedicationForAttachments as any)?.genericMedicationsId
+              )
+          )?.name || 'Medication'
+          : 'Medication'
           }`}
         size="lg"
         hideActionBtn={true}

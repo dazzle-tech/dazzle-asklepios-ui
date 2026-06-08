@@ -155,10 +155,14 @@ export const patientPrescriptionService = createApi({
       ],
     }),
 
-    getPrescriptionPdf: builder.query<Blob, { prescriptionId: number }>({
-      query: ({ prescriptionId }) => ({
+    getPrescriptionPdf: builder.query<Blob,{ prescriptionId: number; lang?: string }
+    >({
+      query: ({ prescriptionId, lang = 'en' }) => ({
         url: `/api/analytics/prescriptions/${prescriptionId}/pdf`,
         method: 'GET',
+        params: {
+          lang
+        },
         responseHandler: (response) => response.blob()
       })
     })
