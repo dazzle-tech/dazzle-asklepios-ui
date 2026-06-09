@@ -4764,6 +4764,101 @@ export interface EligibilityCheckResult {
   requestStatus?: string | null;
 }
 
+export interface EligibilityCheckResponse {
+  eligibilityRequestId?: number | null;
+  apiStatus?: string | null;
+  statusCode?: string | null;
+  message?: string | null;
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  requestStatus?: string | null;
+}
+
+// ------------------- Waseel Pre-Authorization -------------------
+
+export interface PreAuthorizationTrackingResponse {
+  id?: number | null;
+
+  patientId?: number | null;
+  encounterId?: number | null;
+  patientInsuranceId?: number | null;
+  payorId?: number | null;
+  payorPlanId?: number | null;
+
+  providerId?: string | null;
+  providerNphiesId?: string | null;
+
+  transactionId?: number | null;
+  outgoingTransactionId?: string | null;
+  approvalRequestId?: number | null;
+  approvalResponseId?: number | null;
+  preAuthRefNo?: string | null;
+
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  eligibilityOfflineId?: string | null;
+  eligibilityOfflineDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  dateOrdered?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  payeeId?: number | null;
+  payeeType?: string | null;
+
+  preauthType?: string | null;
+  preauthSubType?: string | null;
+
+  episodeId?: string | null;
+  prescription?: string | null;
+
+  transfer?: boolean | null;
+  isNewBorn?: boolean | null;
+  destinationId?: string | null;
+
+  encounterStatus?: string | null;
+  encounterClass?: string | null;
+  serviceType?: string | null;
+  serviceEventType?: string | null;
+  serviceProvider?: number | null;
+  encounterStartDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+  encounterEndDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  totalNet?: number | string | null; // BigDecimal
+
+  status?: string | null;
+  outcome?: string | null;
+  message?: string | null;
+  disposition?: string | null;
+  statusReason?: string | null;
+
+  isCancelled?: boolean | null;
+  cancelReason?: string | null;
+  cancelStatus?: string | null;
+  cancelOutcome?: string | null;
+  cancelMessage?: string | null;
+
+  createdDate?: string | null; // Instant -> string (ISO)
+  createdBy?: string | null;
+  lastModifiedDate?: string | null; // Instant -> string (ISO)
+  lastModifiedBy?: string | null;
+}
+
+export type PreAuthorizationCommunicationRequest = {
+  approvalRequestId?: number;
+  approvalResponseId?: number;
+  preAuthRefNo?: string;
+  message: string;
+  note?: string;
+  communicationText?: string;
+};
+
+export type PreAuthorizationCancelRequest = {
+  approvalRequestId?: number;
+  approvalResponseId?: number;
+  preAuthRefNo?: string;
+  reason: string;
+  cancelReason?: string;
+};
+
 export interface PatientProblem {
   id?: number;
   patient?: any | null;

@@ -249,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
 
     try {
-      const eligibilityRequest = {
+      const result = await checkEligibility({
         patientId: Number(localPatient.id),
         patientInsuranceId: selectedPatientInsuranceId,
         serviceDate: new Date().toISOString().split('T')[0],
@@ -258,15 +258,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         discovery: false,
         transfer: false,
         emergency: false
-      };
-
-      console.log('[Eligibility] Request JSON:', eligibilityRequest);
-      console.log('[Eligibility] Request JSON (stringified):', JSON.stringify(eligibilityRequest, null, 2));
-
-      const result = await checkEligibility(eligibilityRequest).unwrap();
-
-      setOpenEligibilityModal(false);
-      setSelectedPatientInsuranceId(null);
+      }).unwrap();
 
       dispatch(
         notify({
@@ -277,17 +269,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         })
       );
 
-      if (result.eligibilityResponseUrl) {
-        const win = window.open(result.eligibilityResponseUrl, '_blank');
-        if (!win) {
-          dispatch(
-            notify({
-              msg: 'Popup blocked. Please allow popups to view the eligibility response.',
-              sev: 'warning'
-            })
-          );
-        }
-      }
+      dispatch(
+        notify({
+          msg: result.message?.trim() || 'Eligibility check completed successfully',
+          sev: 'success'
+        })
+      );
     } catch (error: any) {
       dispatch(
         notify({

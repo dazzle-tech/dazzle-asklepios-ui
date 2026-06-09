@@ -3158,6 +3158,100 @@ export const newEligibilityCheckResult: modelTypes.EligibilityCheckResult = {
   eligibilityResponseUrl: null,
   requestStatus: null
 };
+
+export const newEligibilityCheckResponse: modelTypes.EligibilityCheckResponse = {
+  eligibilityRequestId: null,
+  apiStatus: null,
+  statusCode: null,
+  message: null,
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  requestStatus: null
+};
+
+export const newPreAuthorizationTrackingResponse: modelTypes.PreAuthorizationTrackingResponse = {
+  id: null,
+
+  patientId: null,
+  encounterId: null,
+  patientInsuranceId: null,
+  payorId: null,
+  payorPlanId: null,
+
+  providerId: null,
+  providerNphiesId: null,
+
+  transactionId: null,
+  outgoingTransactionId: null,
+  approvalRequestId: null,
+  approvalResponseId: null,
+  preAuthRefNo: null,
+
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  eligibilityOfflineId: null,
+  eligibilityOfflineDate: null,
+
+  dateOrdered: null,
+
+  payeeId: null,
+  payeeType: null,
+
+  preauthType: null,
+  preauthSubType: null,
+
+  episodeId: null,
+  prescription: null,
+
+  transfer: null,
+  isNewBorn: null,
+  destinationId: null,
+
+  encounterStatus: null,
+  encounterClass: null,
+  serviceType: null,
+  serviceEventType: null,
+  serviceProvider: null,
+  encounterStartDate: null,
+  encounterEndDate: null,
+
+  totalNet: null,
+
+  status: null,
+  outcome: null,
+  message: null,
+  disposition: null,
+  statusReason: null,
+
+  isCancelled: null,
+  cancelReason: null,
+  cancelStatus: null,
+  cancelOutcome: null,
+  cancelMessage: null,
+
+  createdDate: null,
+  createdBy: null,
+  lastModifiedDate: null,
+  lastModifiedBy: null
+};
+
+export const newPreAuthorizationCommunicationRequest: modelTypes.PreAuthorizationCommunicationRequest = {
+  approvalRequestId: undefined,
+  approvalResponseId: undefined,
+  preAuthRefNo: undefined,
+  message: '',
+  note: undefined,
+  communicationText: undefined
+};
+
+export const newPreAuthorizationCancelRequest: modelTypes.PreAuthorizationCancelRequest = {
+  approvalRequestId: undefined,
+  approvalResponseId: undefined,
+  preAuthRefNo: undefined,
+  reason: '',
+  cancelReason: undefined
+};
+
 export const newPatientProblem: modelTypes.PatientProblem = {
   id: undefined,
   patient: null,
