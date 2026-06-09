@@ -6,27 +6,27 @@ import { result } from 'lodash';
 
 export type LaboratoryReport = {
 
-  facilityName : String;
-    departmentName : String;
-    patientFullName : String;
-        mrn : String;
-     dateOfBirth : Date;
-      age : String;
-      gender : String;
-     primaryMobileNumber : String;
+  facilityName: String;
+  departmentName: String;
+  patientFullName: String;
+  mrn: String;
+  dateOfBirth: Date;
+  age: String;
+  gender: String;
+  primaryMobileNumber: String;
 
-     encounterNumber : String;
-     orderNumber : number;
-      resultDate : String;
-      normalRange : String;
-      fromDepartment : String;
-       testName : String;
+  encounterNumber: String;
+  orderNumber: number;
+  resultDate: String;
+  normalRange: String;
+  fromDepartment: String;
+  testName: String;
 
-       result : String;
-      unit : String;
-       marker : String;
-     reviewedDate : String;
-     reviewedBy : String;
+  result: String;
+  unit: String;
+  marker: String;
+  reviewedDate: String;
+  reviewedBy: String;
 };
 
 /* ===================== SERVICE ===================== */
@@ -46,11 +46,14 @@ export const laboratoryReportsService = createApi({
       ],
     }),
 
-     getLaboratoryReportPdf: builder.query<Blob, { resultId: number }>({
-      query: ({ resultId }) => ({
-        
+    getLaboratoryReportPdf: builder.query<Blob, { resultId: number, lang: String }>({
+      query: ({ resultId, lang = 'en' }) => ({
+
         url: `/api/analytics/laboratory-reports/result/${resultId}/pdf`,
         method: 'GET',
+        params: {
+          lang
+        },
         responseHandler: (response) => response.blob()
       })
     })
