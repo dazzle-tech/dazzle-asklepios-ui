@@ -21,7 +21,7 @@ const VisitReportPrintButton = ({ row }: Props) => {
     const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
     const [loading, setLoading] = useState(false);
     const [openlangModal, setOpenLangModal] = useState(false);
-    const [selectedLang, setSelectedLang] = useState<'en' | 'ar'>({ lang: 'en' } as any);
+    const [selectedLang, setSelectedLang] = useState({ lang: 'en' } as any);
     const handlePrintVisitReport = async () => {
         const encounterId = row?.id ?? null;
 

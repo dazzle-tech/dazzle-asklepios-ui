@@ -311,10 +311,13 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
-    getPatientInformationPdf: builder.query<Blob, { patientId: number }>({
-      query: ({ patientId }) => ({
+    getPatientInformationPdf: builder.query<Blob, { patientId: number ,lang:string }>({
+      query: ({ patientId ,lang}) => ({
         url: `/api/analytics/${patientId}/information/pdf`,
         method: 'GET',
+        params:{
+          lang
+        },
         responseHandler: (response) => response.blob()
       })
     }),

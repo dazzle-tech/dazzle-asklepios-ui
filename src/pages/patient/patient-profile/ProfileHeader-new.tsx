@@ -2,6 +2,10 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
+import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
@@ -22,21 +26,17 @@ import {
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useRef, useState,useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
-import AdministrativeWarningsModal from './AdministrativeWarning';
-import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
-import {
-  useLazyGetPatientInformationPdfQuery,
-  useLazyGetPatientLabelPdfQuery,
-  useSendPatientPasswordEmailMutation
-} from '@/services/patient/patientService';
+import AdministrativeWarningsModal from './AdministrativeWarning';
+import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
+import ScanDocumentModal from './ScanDocumentModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -79,12 +79,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
   const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
-
+const {
+  patientInformationMenuItem,
+  patientInformationModal
+} = usePatientInformationReportPrint(localPatient?.id);
   const {
     data: profilePictureTicket,
     isError
@@ -95,47 +97,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
 
 
-const handlePrintInformation = async () => {
-  if (!localPatient?.id) return;
-
-  try {
-    setPrintingType('information');
-
-    const blob = await triggerGetPatientInformationPdf({
-      patientId: localPatient.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-
-  } catch (err: any) {
-    dispatch(
-      notify({
-        msg: err?.data?.message || 'Print failed',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
 
 const handlePrintPatientLabel = async (rowData: any) => {
   if (!rowData?.id) return;
@@ -325,19 +286,7 @@ const handleSendPasswordEmail = async () => {
  const contentOfPrintIconMenu = (
   <Popover>
     <Dropdown.Menu>
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintInformation();
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
-
+      {patientInformationMenuItem}
       <Dropdown.Item
         disabled={!localPatient?.id || printingType !== null}
         onClick={async () => {
@@ -684,6 +633,7 @@ useEffect(() => {
         }}
         onIdParsed={handleIdParsed}
       />
+      {patientInformationModal}
     </div>
   );
 };
