@@ -8,8 +8,8 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useLazyGetDiagnosticOrderByIdQuery,
-  useFilterDiagnosticOrdersQuery
+  useFilterDiagnosticOrdersQuery,
+  useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
@@ -25,14 +25,13 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
 import { Form, HStack, Tooltip, Whisper } from 'rsuite';
-import { useLazyGetRadiologyReportByIdQuery, useLazyGetRadiologyReportPdfQuery } from '@/services/reports/radiologyReportService';
-import MyButton from '@/components/MyButton/MyButton';
+import RadiologyReportButton from './RadiologyReportButton';
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -71,8 +70,6 @@ const Reports = ({ patient }) => {
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
-  const [fetchRadiologyReportPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetRadiologyReportPdfQuery();
 
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
@@ -161,43 +158,7 @@ const Reports = ({ patient }) => {
   );
 
  
-const handleGenerateReport = async () => {
-  if (!selectedReport?.id) return;
 
-  try {
-    const blob = await fetchRadiologyReportPdfData({
-      reportId: selectedReport.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-    // لا تعمل revokeObjectURL هنا
-  } catch (error) {
-    dispatch(
-      notify({
-        msg: 'Failed to generate report PDF',
-        sev: 'error',
-      })
-    );
-  }
-};
   const reportColumns: ColumnConfig[] = [
     {
       key: 'orderId',
@@ -369,17 +330,7 @@ const handleGenerateReport = async () => {
 
   const tableButtons = (
    
-    <MyButton
-          onClick={handleGenerateReport}
-          loading={isGeneratingReport}
-          disabled={selectedReport?.id ? false : true}
-          appearance='ghost'
-          prefixIcon={() => (
-            <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
-          )}
-        >
-          <Translate>Generate Report</Translate>
-        </MyButton>
+  <RadiologyReportButton  reportId={selectedReport?.id}/>
   );
 
   const closeModal = () => {
