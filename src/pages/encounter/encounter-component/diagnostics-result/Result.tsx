@@ -48,6 +48,7 @@ import {
   initialListRequestAllValues
 } from '@/types/types';
 import { useLazyGetLaboratoryReportPdfQuery } from '@/services/reports/laboratoryReportsService';
+import LaboratoryReportButton from './LaboratoryReportButton';
 
 type Props = {
   patient: any;
@@ -108,8 +109,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
-  const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetLaboratoryReportPdfQuery();
+
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -266,33 +266,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
 
-  const handleGeneratePdf = async (result: any) => {
-  if (!result?.id) return;
-
-  try {
-    const blob = await fetchLaboratoryResultPdfData({
-      resultId: result.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      console.error('Popup blocked. Please allow popups for this site.');
-    }
-
-    // لا تعمل revokeObjectURL هون
-  } catch (error) {
-    console.error('Failed to open report pdf', error);
-  }
-};
+ 
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -453,17 +427,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
   const tableButtons = (
-    <MyButton
-      onClick={() => handleGeneratePdf(selectedResult)}
-      loading={isGeneratingReport}
-      disabled={selectedResult == null || !selectedResult.id}
-      appearance='ghost'
-      prefixIcon={() => (
-        <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
-      )}
-    >
-      Generate Complete Report
-    </MyButton>
+    <LaboratoryReportButton resultId={selectedResult?.id} />
   );
 
   useEffect(() => {
