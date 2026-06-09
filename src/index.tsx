@@ -121,6 +121,7 @@ const RootWrapper = () => {
   const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
   const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
   const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
+  const sidebarLogoDark=activeConfig?.SIDEBAR_LOGO_DARK||logo;
   const muiTheme = createTheme({
     palette: {
       mode: mode === 'dark' ? 'dark' : 'light',

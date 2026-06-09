@@ -10,7 +10,8 @@ export enum SystemConfigKey {
   FAVICON = 'FAVICON',
   LOGIN_BACKGROUND = 'LOGIN_BACKGROUND',
   ENABLE_DARK_MODE = 'ENABLE_DARK_MODE',
-  SIDEBAR_LOGO = 'SIDEBAR_LOGO'
+  SIDEBAR_LOGO = 'SIDEBAR_LOGO',
+  SIDEBAR_LOGO_DARK='SIDEBAR_LOGO_DARK'
 }
 
 export type SystemConfigMap = Partial<Record<SystemConfigKey, string>>;
@@ -123,6 +124,18 @@ uploadSidebarLogo: builder.mutation({
       body: formData
     };
   }
+}),
+uploadSidebarLogoDark: builder.mutation({
+  query: file => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return {
+      url: '/api/setup/system-config/sidebar-logo-dark',
+      method: 'POST',
+      body: formData
+    };
+  }
 })
   })
 });
@@ -135,5 +148,6 @@ export const {
   useUploadSystemLogoMutation,
   useUploadFaviconMutation,
   useUploadLoginBackgroundMutation,
-  useUploadSidebarLogoMutation
+  useUploadSidebarLogoMutation,
+  useUploadSidebarLogoDarkMutation
 } = systemConfigService;
