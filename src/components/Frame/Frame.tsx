@@ -83,6 +83,7 @@ const Frame = (props: FrameProps) => {
   const authAlice = useAppSelector(state => state.auth);
   const selectedDepartment = authAlice.selectedDepartment;
   const branding = useBranding();
+  console.log("Branding",branding)
   const [expand, setExpand] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
@@ -97,7 +98,7 @@ const Frame = (props: FrameProps) => {
   const [expandNotes, setExpandNotes] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
+console.log("MODE" ,mode)
   const drawerOffset = expand ? drawerWidth : collapsedWidth;
 
   useEffect(() => {
@@ -215,6 +216,13 @@ const Frame = (props: FrameProps) => {
                 authSlice.tenant && authSlice.tenant.tenantLogoPath
                   ? authSlice.tenant.tenantLogoPath
                   : branding.sidebarLogo || branding.logo || Sidebarlogo
+              }
+               src={
+                authSlice.tenant && authSlice.tenant.tenantLogoPath
+                  ? authSlice.tenant.tenantLogoPath
+                  : mode === 'light'
+                    ? branding.sidebarLogo || branding.logo || Sidebarlogo
+                    : branding.sidebarLogoDark
               }
             />
           )}

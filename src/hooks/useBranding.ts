@@ -22,6 +22,8 @@ export const useBranding = () => {
     loginBackground: activeConfig?.LOGIN_BACKGROUND,
     primaryColor: activeConfig?.PRIMARY_COLOR,
     fontFamily: activeConfig?.FONT_FAMILY,
-    sidebarLogo: activeConfig?.SIDEBAR_LOGO
+    sidebarLogo: activeConfig?.SIDEBAR_LOGO,
+    sidebarLogoDark:activeConfig?.SIDEBAR_LOGO_DARK
+
   };
 };
