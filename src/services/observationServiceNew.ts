@@ -12,10 +12,13 @@ export const observationServiceNew = createApi({
         method: 'GET'
       })
     }),
-    getNurseSummaryReportPdf: builder.query<Blob, { encounterId: number }>({
-      query: ({ encounterId }) => ({
+    getNurseSummaryReportPdf: builder.query<Blob, { encounterId: number,lang:string }>({
+      query: ({ encounterId ,lang}) => ({
         url: `/api/analytics/nurse-summary/${encounterId}/pdf`,
         method: 'GET',
+        params:{
+          lang
+        },
         responseHandler: response => response.blob()
       })
     }),

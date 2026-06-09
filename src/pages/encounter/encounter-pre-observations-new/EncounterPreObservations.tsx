@@ -21,9 +21,9 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import { useLazyGetNurseSummaryReportPdfQuery } from '@/services/observationServiceNew';
-import './styles.less';
 import clsx from 'clsx';
+import NurseSummeryReportButton from './NurseSummeryReportButton';
+import './styles.less';
 
 type NurseStationModalProps = {
   patient?: any;
@@ -70,7 +70,6 @@ const NurseStation = ({
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [triggerNurseSummaryReportPdf] = useLazyGetNurseSummaryReportPdfQuery();
 
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId
@@ -178,46 +177,7 @@ const NurseStation = ({
     navigate('/encounter-list');
   };
 
- const handleGenerateReport = async (): Promise<void> => {
-  const encounterId = localEncounter?.id ?? localEncounter?.key;
 
-  if (!encounterId) {
-    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-    return;
-  }
-
-  try {
-    const blob = await triggerNurseSummaryReportPdf({ encounterId }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-    // لا تعمل revokeObjectURL هون
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Error while generating report',
-        sev: 'error',
-      })
-    );
-  }
-};
   return (
     <div className="container">
       <div className="left-box">
@@ -256,20 +216,7 @@ const NurseStation = ({
 
             {!inModal && (
               <div className="right">
-                <MyButton
-                  loading={isGeneratingReport}
-                  disabled={isGeneratingReport}
-                  onClick={async () => {
-                    try {
-                      setIsGeneratingReport(true);
-                      await handleGenerateReport();
-                    } finally {
-                      setIsGeneratingReport(false);
-                    }
-                  }}
-                >
-                  Generate Report
-                </MyButton>
+             <NurseSummeryReportButton encounterId={localEncounter?.id}/>
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
