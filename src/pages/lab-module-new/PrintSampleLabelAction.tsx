@@ -17,7 +17,9 @@ export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
 
   const [openPrintModal, setOpenPrintModal] = useState(false);
   const [copies, setCopies] = useState({copies: 1} as any);
-
+ const [selectedLang, setSelectedLang] = useState<{ lang: 'en' | 'ar' }>({
+    lang: 'en'
+  });
   const handleOpenModal = (e: any) => {
     e.stopPropagation();
     setCopies({ copies: 1 } as any);
@@ -36,6 +38,7 @@ export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
       const result = await trigger({
         orderTestId: rowData.id,
         copies: safeCopies,
+        lang:selectedLang?.lang
       }).unwrap();
 
       if (!result) {
@@ -108,7 +111,18 @@ export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
         bodyheight={'30vh'}
         content={
           <>
-            <Form>
+            <Form fluid>
+               <MyInput
+                          fieldLabel="Language"
+                          fieldName="lang"
+                          fieldType="select"
+                          selectData={[
+                            { label: 'English', value: 'en' },
+                            { label: 'Arabic', value: 'ar' }
+                          ]}
+                          record={selectedLang}
+                          setRecord={setSelectedLang}
+                        />
               <MyInput
                 fieldLabel="Number of label copies"
                 fieldName="copies"

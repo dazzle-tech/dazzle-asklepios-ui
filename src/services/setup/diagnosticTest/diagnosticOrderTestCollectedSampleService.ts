@@ -148,12 +148,12 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
 
     getSampleLabelPdf: builder.query<
       Blob | null,
-      { orderTestId: number; copies?: number }
+      { orderTestId: number; copies?: number;lang?:string }
     >({
-      query: ({ orderTestId, copies = 1 }) => ({
+      query: ({ orderTestId, copies = 1,lang="en" }) => ({
         url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-label/pdf`,
         method: "GET",
-        params: { copies },
+        params: { copies,lang },
         responseHandler: async (response) => {
           if (response.status === 204) {
             return null;
@@ -165,12 +165,12 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
 
     getSampleLabelsPdf: builder.query<
       Blob | null,
-      { orderTestId: number; copies?: number }
+      { orderTestId: number; copies?: number ;lang?:string }
     >({
-      query: ({ orderTestId, copies = 1 }) => ({
+      query: ({ orderTestId, copies = 1,lang="en" }) => ({
         url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-labels/pdf`,
         method: "GET",
-        params: { copies },
+        params: { copies,lang },
         responseHandler: async (response) => {
           if (response.status === 204) {
             return null;
