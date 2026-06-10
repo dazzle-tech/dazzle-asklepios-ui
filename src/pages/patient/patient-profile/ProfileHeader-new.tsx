@@ -37,6 +37,7 @@ import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
 import ScanDocumentModal from './ScanDocumentModal';
+import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -80,13 +81,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
-  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
   const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 const {
   patientInformationMenuItem,
   patientInformationModal
 } = usePatientInformationReportPrint(localPatient?.id);
+const {  patientLabelMenuItem,
+    patientLabelModal}=usePatientLabelPrint(localPatient?.id)
   const {
     data: profilePictureTicket,
     isError
@@ -98,47 +100,7 @@ const {
 
 
 
-const handlePrintPatientLabel = async (rowData: any) => {
-  if (!rowData?.id) return;
 
-  try {
-    setPrintingType('label');
-
-    const blob = await triggerGetPatientLabelPdf({
-      patientId: rowData.id,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-    // لا تعمل revokeObjectURL هون
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Failed to open label pdf',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingType(null);
-  }
-};
 
 const extractErrorMessage = (response: any): string => {
   try {
@@ -287,18 +249,8 @@ const handleSendPasswordEmail = async () => {
   <Popover>
     <Dropdown.Menu>
       {patientInformationMenuItem}
-      <Dropdown.Item
-        disabled={!localPatient?.id || printingType !== null}
-        onClick={async () => {
-          await handlePrintPatientLabel(localPatient);
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <Translate>
-            {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
-          </Translate>
-        </div>
-      </Dropdown.Item>
+      {patientLabelMenuItem}
+  
     </Dropdown.Menu>
   </Popover>
 );
@@ -634,6 +586,7 @@ useEffect(() => {
         onIdParsed={handleIdParsed}
       />
       {patientInformationModal}
+      {patientLabelModal}
     </div>
   );
 };
