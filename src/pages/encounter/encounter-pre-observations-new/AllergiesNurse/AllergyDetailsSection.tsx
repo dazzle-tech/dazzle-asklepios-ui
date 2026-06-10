@@ -296,8 +296,8 @@ const AllergyDetailsSection = ({
                                         fieldLabel="Allergic Reactions"
                                         selectData={reactionLovQueryResponse?.object ?? []}
                                          selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                                        disableByField='isValid'
+                                        disabled
                                         selectDataValue="key"
                                         fieldName='reactions'
                                         record={reactions}

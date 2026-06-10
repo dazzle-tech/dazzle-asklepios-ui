@@ -106,7 +106,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     fromDate: null,
     toDate: null
   });
-
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
 
@@ -323,7 +323,46 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     allLovValues
   ]);
 
+const allSelected =
+  normalizedResults.length > 0 &&
+  normalizedResults.every(row => selectedRows.includes(row.id));
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        setSelectedRows(normalizedResults.map(row => row.id));
+      } else {
+        setSelectedRows([]);
+      }
+    };
+
+    const handleSelectRow = (rowId: number, checked: boolean) => {
+      if (checked) {
+        setSelectedRows(prev => [...prev, rowId]);
+      } else {
+        setSelectedRows(prev => prev.filter(id => id !== rowId));
+      }
+    };
+
   const columns = [
+    {
+  key: 'select',
+  width: 60,
+  align: 'center',
+  title: (
+    <Checkbox
+      checked={allSelected}
+      onChange={(_, checked) => handleSelectAll(checked)}
+    />
+  ),
+  render: (row: any) => (
+    <Checkbox
+      checked={selectedRows.includes(row.id)}
+      onChange={(_, checked) =>
+        handleSelectRow(row.id, checked)
+      }
+    />
+  )
+    },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
