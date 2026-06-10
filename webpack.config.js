@@ -112,13 +112,13 @@ module.exports = {
 
   plugins: [
     new HtmlwebpackPlugin({
-      title: 'Asklepios',
+      title: 'Title',
       filename: 'index.html',
       template: './src/index.html',
       inject: true,
       hash: true,
       publicPath: isProduction ? './' : '/',
-      favicon: './public/Ask-Rod-Logo.png',
+      favicon: './public/default-favicon.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
