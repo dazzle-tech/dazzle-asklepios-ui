@@ -241,6 +241,7 @@ const Lab = () => {
                 </div>
               )}
     </>)
+    
   const innerTabsData = [
     {
       title: 'Tests',

@@ -30,8 +30,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
-import { Form, HStack, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import RadiologyReportButton from './RadiologyReportButton';
+import UserDateCell from '@/components/UserDateCell';
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -58,6 +59,7 @@ const Reports = ({ patient }) => {
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [testsMap, setTestsMap] = useState<Record<string, any>>({});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedReportIds, setSelectedReportIds] = useState<number[]>([]);
   const [selectedReportForAttachments, setSelectedReportForAttachments] =
     useState<any>(null);
 
@@ -157,9 +159,55 @@ const Reports = ({ patient }) => {
       : skipToken
   );
 
- 
+
+const allSelected =
+  reports.length > 0 &&
+  reports.every(report => selectedReportIds.includes(report.id));
+
+const handleSelectAll = (checked: boolean) => {
+  if (checked) {
+    setSelectedReportIds(reports.map(report => report.id));
+  } else {
+    setSelectedReportIds([]);
+  }
+};
+
+const handleSelectReport = (
+  reportId: number,
+  checked: boolean
+) => {
+  if (checked) {
+    setSelectedReportIds(prev => [...prev, reportId]);
+  } else {
+    setSelectedReportIds(prev =>
+      prev.filter(id => id !== reportId)
+    );
+  }
+};
+
 
   const reportColumns: ColumnConfig[] = [
+    {
+      key: 'select',
+      width: 60,
+      align: 'center',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          onChange={(_, checked) =>
+            handleSelectAll(checked)
+          }
+        />
+      ),
+      render: (rowData: any) => (
+        <Checkbox
+          checked={selectedReportIds.includes(rowData.id)}
+          onChange={(_, checked) =>
+            handleSelectReport(rowData.id, checked)
+          }
+        />
+      )
+    },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
@@ -292,15 +340,10 @@ const Reports = ({ patient }) => {
       key: 'review',
       title: <Translate>Review At/By</Translate>,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.reviewBy}</span>
-          <br />
-          <span className="date-table-style">
-            {rowData.reviewDate
-              ? new Date(rowData.reviewDate).toLocaleString()
-              : ''}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.reviewBy}
+          date={rowData.reviewDate}
+        />
       )
     }
   ];
