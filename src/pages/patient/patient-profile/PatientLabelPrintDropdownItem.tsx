@@ -3,31 +3,31 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
-import { useLazyGetPatientInformationPdfQuery } from '@/services/patient/patientService';
+import { useLazyGetPatientLabelPdfQuery } from '@/services/patient/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dropdown, Form } from 'rsuite';
 
-const usePatientInformationReportPrint = (patientId?: number) => {
+const usePatientLabelPrint = (patientId?: number) => {
   const dispatch = useDispatch();
-  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
-
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
   const [loading, setLoading] = useState(false);
   const [openLangModal, setOpenLangModal] = useState(false);
   const [selectedLang, setSelectedLang] = useState<{ lang: 'en' | 'ar' }>({
     lang: 'en'
   });
-
+const [copies,setCopies]=useState({number:1});
   const handlePrintInformation = async () => {
     if (!patientId) return;
 
     try {
       setLoading(true);
 
-      const blob = await triggerGetPatientInformationPdf({
+      const blob = await triggerGetPatientLabelPdf({
         patientId,
-        lang: selectedLang.lang
+        lang: selectedLang.lang,
+        copies:copies.number
       }).unwrap();
 
       const fileURL = window.URL.createObjectURL(
@@ -63,13 +63,13 @@ const usePatientInformationReportPrint = (patientId?: number) => {
   const menuItem = (
     <Dropdown.Item
       disabled={!patientId || loading}
-      onClick={() =>{ 
+      onClick={() => {
         if(!patientId) return;
         setOpenLangModal(true)}}
     >
       <div className="container-of-icon-and-key1">
         <Translate>
-          {loading ? 'Printing Information...' : 'Print Information'}
+          {loading ? 'Printing Label...' : 'Print Label'}
         </Translate>
       </div>
     </Dropdown.Item>
@@ -85,7 +85,7 @@ const usePatientInformationReportPrint = (patientId?: number) => {
       actionButtonFunction={handlePrintInformation}
       bodyheight="30vh"
       content={
-        <Form>
+        <Form fluid>
           <MyInput
             fieldLabel="Language"
             fieldName="lang"
@@ -97,15 +97,22 @@ const usePatientInformationReportPrint = (patientId?: number) => {
             record={selectedLang}
             setRecord={setSelectedLang}
           />
+          <MyInput
+          fieldLabel='Number of Copies'
+          fieldName='number'
+          fieldType='number'
+          record={copies}
+          setRecord={setCopies}
+          />
         </Form>
       }
     />
   );
 
   return {
-    patientInformationMenuItem: menuItem,
-    patientInformationModal: modal
+    patientLabelMenuItem: menuItem,
+    patientLabelModal: modal
   };
 };
 
-export default usePatientInformationReportPrint;
+export default usePatientLabelPrint;

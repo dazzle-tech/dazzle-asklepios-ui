@@ -308,10 +308,14 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
-    getPatientLabelPdf: builder.query<Blob, { patientId: number }>({
-      query: ({ patientId }) => ({
+    getPatientLabelPdf: builder.query<Blob, { patientId: number,lang:string,copies:number }>({
+      query: ({ patientId ,lang,copies}) => ({
         url: `/api/analytics/${patientId}/label/pdf`,
         method: 'GET',
+        params:{
+          lang,
+          copies
+        },
         responseHandler: (response) => response.blob()
       })
     }),
