@@ -47,7 +47,6 @@ import {
   initialListRequest,
   initialListRequestAllValues
 } from '@/types/types';
-import { useLazyGetLaboratoryReportPdfQuery } from '@/services/reports/laboratoryReportsService';
 import LaboratoryReportButton from './LaboratoryReportButton';
 
 type Props = {
@@ -94,7 +93,6 @@ const renderMarker = (marker?: string) => {
 };
 
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
-  const toaster = useToaster();
   const patientId = patient?.id;
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -466,7 +464,7 @@ const allSelected =
   );
 
   const tableButtons = (
-    <LaboratoryReportButton resultId={selectedResult?.id} />
+    <LaboratoryReportButton resultIds={selectedRows} />
   );
 
   useEffect(() => {
