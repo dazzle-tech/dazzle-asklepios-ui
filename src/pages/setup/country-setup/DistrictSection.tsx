@@ -72,13 +72,20 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
 };
-
 const DISTRICT_ERROR_MAP: Record<string, string> = {
   'country.required': 'Country is required.',
   'payload.required': 'District payload is required.',
   'id.required': 'District id is required.',
-  'unique.countryDistrict.namecode': 'District name or code already exists for this country.',
-  'db.constraint': 'Database constraint violation.',
+
+  'unique.countryDistrict.namecode':
+    'District name or code already exists for this country.',
+
+  'db.constraint':
+    'Unable to save the district due to a database constraint.',
+
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
+
   notfound: 'District not found.'
 };
 
