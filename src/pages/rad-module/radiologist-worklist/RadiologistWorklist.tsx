@@ -5,7 +5,7 @@ import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
   useGetDepartmentByFacilityQuery,
@@ -45,6 +45,10 @@ import './style.less';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import {
+  useLazyGetRadiologyReportPdfQuery
+} from '@/services/reports/radiologyReportService';
+import PatientSearch from '@/components/PatientSearch';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -124,10 +128,15 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
-  const [filterRecord, setFilterRecord] = useState<any>({
-    searchCriteria: 'patientName',
-    value: ''
-  });
+
+  const [selectedPatient, setSelectedPatient] =
+    useState<any>(null);
+
+  const [orderIdIn, setOrderIdIn] =
+    useState<number[] | null>(null);
+
+  const [fetchOrders] =
+    useLazyFilterDiagnosticOrdersQuery();
 
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const attachmentsLocked = attachmentsModalOpen;
@@ -141,6 +150,71 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   }>({
     departmentIds: []
   });
+
+
+    const [triggerRadiologyReportPdf] =
+      useLazyGetRadiologyReportPdfQuery();
+
+    const [openPrintModal, setOpenPrintModal] = useState(false);
+
+    const [selectedReportForPrint, setSelectedReportForPrint] =
+      useState<any>(null);
+
+    const [loadingPrint, setLoadingPrint] = useState(false);
+
+    const [selectedLang, setSelectedLang] = useState({
+      lang: 'en'
+    });
+
+    const langOptions = [
+      { label: 'English', value: 'en' },
+      { label: 'Arabic', value: 'ar' }
+    ];
+
+
+    const handleDownloadRadiologyReportPdf = async () => {
+      try {
+        setLoadingPrint(true);
+
+        const blob = await triggerRadiologyReportPdf({
+          reportId: selectedReportForPrint?.id,
+          lang: selectedLang.lang
+        }).unwrap();
+
+        const pdfBlob = new Blob([blob], {
+          type: 'application/pdf'
+        });
+
+        const fileURL =
+          window.URL.createObjectURL(pdfBlob);
+
+        const win = window.open(fileURL, '_blank');
+
+        if (win) {
+          win.focus();
+        } else {
+          dispatch(
+            notify({
+              msg: 'Popup blocked. Please allow popups for this site.',
+              sev: 'warning'
+            })
+          );
+        }
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              error?.data?.message ||
+              'Failed to download report',
+            sev: 'error'
+          })
+        );
+      } finally {
+        setLoadingPrint(false);
+      }
+    };
+
+
 
   const { data: departmentsResponse, isFetching: isDepartmentsFetching } =
     useGetDepartmentByFacilityQuery(
@@ -162,14 +236,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
   const [approveRadiologyReport, { isLoading: approving }] = useApproveRadiologyReportMutation();
 
-  const searchCriteriaOptions = [
-    { label: 'Patient Name', value: 'patientName' },
-    { label: 'MRN', value: 'mrn' }
-  ];
-
-  const shouldSearch =
-    Boolean(filterRecord.searchCriteria) && filterRecord.value.trim().length >= 3;
-
   const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
     attachmentsLocked
       ? skipToken
@@ -181,10 +247,19 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             imageStatusIn: ['FINISHED'],
             createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
             createdDateTo: endOfDay(dateFilter.toDate).toISOString(),
+
             ...(departmentFilter.departmentIds?.length
-              ? { fromDepartmentIn: departmentFilter.departmentIds }
+              ? {
+                  fromDepartmentIn:
+                    departmentFilter.departmentIds
+                }
               : {}),
-            ...(shouldSearch ? { [filterRecord.searchCriteria]: filterRecord.value.trim() } : {})
+
+            ...(orderIdIn?.length
+              ? {
+                  orderIdIn
+                }
+              : {})
           }
         }
   );
@@ -315,34 +390,43 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       });
   }, [patientIds, getBulkPatientBasicInfo]);
 
+  useEffect(() => {
+    if (!selectedPatient?.id) {
+      setOrderIdIn(null);
+      return;
+    }
+
+    fetchOrders({
+      patientIdIn: [selectedPatient.id],
+      page: 0,
+      size: 10000
+    })
+      .unwrap()
+      .then(res => {
+        const ids = (res?.data ?? [])
+          .map((order: any) => Number(order.id))
+          .filter((id: number) => Number.isFinite(id));
+
+        setOrderIdIn(ids);
+      })
+      .catch(() => setOrderIdIn([]));
+  }, [selectedPatient?.id]);
+
   const FilterModel = (
     <Form fluid className="table-header-content">
       <div className="filter-radiologist-worklist-main-container">
-        <MyInput
-          fieldType="select"
-          fieldLabel="Search By"
-          fieldName="searchCriteria"
-          width="180px"
-          selectData={searchCriteriaOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          searchable={false}
-          record={filterRecord}
-          setRecord={setFilterRecord}
-        />
-
-        <MyInput
-          width="220px"
-          fieldLabel={filterRecord.searchCriteria === 'mrn' ? 'MRN' : 'Patient Name'}
-          fieldName="value"
-          placeholder={filterRecord.searchCriteria === 'mrn' ? 'Search by MRN' : 'Search by name'}
-          record={filterRecord}
-          setRecord={rec => {
+      <div className="patient-search-container">
+        <PatientSearch
+          value={selectedPatient}
+          onChange={patient => {
             setPage(0);
-            setFilterRecord(rec);
+            setSelectedPatient(patient);
           }}
+          showLabel={false}
+          width="22vw"
+          containerMinWidth={250}
         />
-
+      </div>
         <MyInput
           width={160}
           fieldType="date"
@@ -698,9 +782,19 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
                   />
                 </span>
               </Whisper>
-              <Whisper speaker={<Tooltip>Print</Tooltip>}>
-                <FontAwesomeIcon className="icon-radiologist-worklist-size" icon={faPrint} />
-              </Whisper>
+                <Whisper speaker={<Tooltip>Print</Tooltip>}>
+                  <FontAwesomeIcon
+                    className="icon-radiologist-worklist-size"
+                    icon={faPrint}
+                    style={{
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setSelectedReportForPrint(row);
+                      setOpenPrintModal(true);
+                    }}
+                  />
+                </Whisper>
               <Whisper speaker={<Tooltip>Logs</Tooltip>}>
                 <span>
                   <FontAwesomeIcon
@@ -874,6 +968,31 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
               />
             </div>
           )
+        }
+      />
+
+      <MyModal
+        open={openPrintModal}
+        setOpen={setOpenPrintModal}
+        title="Select Language"
+        size="33vw"
+        bodyheight="25vh"
+        actionButtonFunction={
+          handleDownloadRadiologyReportPdf
+        }
+        actionButtonLoading={loadingPrint}
+        content={
+          <Form>
+            <MyInput
+              fieldType="select"
+              fieldLabel="Language"
+              fieldName="lang"
+              selectData={langOptions}
+              record={selectedLang}
+              setRecord={setSelectedLang}
+              width="100%"
+            />
+          </Form>
         }
       />
     </div>

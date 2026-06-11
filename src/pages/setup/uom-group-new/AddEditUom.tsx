@@ -356,6 +356,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         return (
           <Form>
             <MyInput
+              required
               fieldType="select"
               fieldName="uom"
               record={uomUnit}
@@ -473,6 +474,26 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
 
   // Handle Save Uom unit
   const handleSaveUnits = () => {
+    if (uomUnit?.uom == null) {
+      dispatch(
+        notify({
+          msg: 'UOM is required',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (uomUnit?.uomOrder == null) {
+      dispatch(
+        notify({
+          msg: 'UOM Order is required',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     if (!uomUnit?.id) {
       createUomGroupUnits({
         groupId: uom?.id,
@@ -481,30 +502,41 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         .unwrap()
         .then(() => {
           uomUnitRefetch();
+
           setUomUnit({
             ...newUOMGroupUnit
           });
+
           dispatch(
             notify({
-              msg: 'The UOM group unit was created successfully ',
+              msg: 'The UOM group unit was created successfully',
               sev: 'success'
             })
           );
         })
         .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+          const errorMessage =
+            e?.data?.fieldErrors?.[0]?.message ||
+            e?.data?.message ||
+            'Failed to create UOM unit';
+
+          dispatch(
+            notify({
+              msg: errorMessage,
+              sev: 'warning'
+            })
+          );
         });
     } else {
       updateUomGroupUnits(uomUnit)
         .unwrap()
         .then(() => {
           uomUnitRefetch();
+
           setUomUnit({
             ...newUOMGroupUnit
           });
+
           dispatch(
             notify({
               msg: 'The UOM group unit was updated successfully',
@@ -513,10 +545,17 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
           );
         })
         .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+          const errorMessage =
+            e?.data?.fieldErrors?.[0]?.message ||
+            e?.data?.message ||
+            'Failed to update UOM unit';
+
+          dispatch(
+            notify({
+              msg: errorMessage,
+              sev: 'warning'
+            })
+          );
         });
     }
   };

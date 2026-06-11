@@ -5,7 +5,7 @@ import {
   useUpdateRadiologyReportMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import { useGetDiagnosticTestTemplateByTestIdQuery } from '@/services/setup/report-template/DiagnosticTestTemplate';
-import { useGetAllReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
+import { useGetActiveReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
@@ -78,7 +78,7 @@ const AddReportModal = ({
     useGetLovValuesByCodeQuery('SEVERITY');
 
   const { data: readyTemplatesResponse } =
-    useGetAllReportTemplatesQuery({
+    useGetActiveReportTemplatesQuery({
       page: 0,
       size: 9999,
       sort: 'name,asc'

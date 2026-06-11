@@ -26,7 +26,9 @@ import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import ReviewResults from './ReviewResults';
+import PatientSearch from '@/components/PatientSearch';
 import './styles.less';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -49,11 +51,13 @@ const Lab = () => {
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
   const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
-
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
   const [activeKey2, setActiveKey2] = useState('1');
-
+  const [departmentFilter, setDepartmentFilter] = useState<any>({
+    fromDepartmentIdIn: null
+  });
   useEffect(() => {
     dispatch(setPageCode('Lab'));
     dispatch(setDivContent('Clinical Laboratory'));
@@ -65,6 +69,10 @@ const Lab = () => {
     fromDate: today,
     toDate: today
   });
+
+
+  const { data: departmentsList = [] } =
+    useGetAllDepartmentsWithoutPaginationQuery();
 
   const { data: samplesResponse, refetch: fecthSample } = useGetCollectedSamplesByOrderTestIdQuery(
     test?.id ? { orderTestId: test.id, page: 0, size: 20 } : skipToken
@@ -221,6 +229,26 @@ const Lab = () => {
                   setRecord={setDateFilter}
                   showLabel={false}
                 />
+                <PatientSearch
+                  value={selectedPatient}
+                  onChange={setSelectedPatient}
+                  showLabel={false}
+                  width="22vw"
+                  containerMinWidth={250}
+                />
+                <MyInput
+                  width="12vw"
+                  placeholder="Department Name"
+                  fieldType="select"
+                  fieldName="fromDepartmentIdIn"
+                  record={departmentFilter}
+                  setRecord={setDepartmentFilter}
+                  selectData={departmentsList}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  showLabel={false}
+                  cleanable
+                />
                 <MyInput
                   width={"8vw"}
                   placeholder="Order ID"
@@ -230,6 +258,7 @@ const Lab = () => {
                   setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
                   showLabel={false}
                 />
+
               </Form>
 
               {test.id && (
@@ -333,15 +362,17 @@ const Lab = () => {
             <div dir={dir}>
               <div className="container">
                 <div className="left-boxs">
-                  <Orders
-                    ref={OrdersRef}
-                    order={order}
-                    setOrder={setOrder}
-                    dateFilter={dateFilter}
-                    loading={globalLoading}
-                    orderNumberFilter={orderNumberFilter}
-                    filters={tablefilters}
-                  />
+                    <Orders
+                      ref={OrdersRef}
+                      order={order}
+                      setOrder={setOrder}
+                      dateFilter={dateFilter}
+                      loading={globalLoading}
+                      orderNumberFilter={orderNumberFilter}
+                      selectedPatient={selectedPatient}
+                      departmentFilter={departmentFilter}
+                      filters={tablefilters}
+                    />
 
                   <MyTab
                     data={innerTabsData}

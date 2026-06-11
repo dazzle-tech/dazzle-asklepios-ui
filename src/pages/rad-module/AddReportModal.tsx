@@ -3,7 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
+import { useGetActiveReportTemplatesQuery, useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService"; 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApDiagnosticOrderTests } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
@@ -35,7 +35,7 @@ const AddReportModal = ({
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
-  const { data: readyTemplatesResponse } = useGetAllReportTemplatesQuery({
+  const { data: readyTemplatesResponse } = useGetActiveReportTemplatesQuery({
     page: 0,
     size: 9999,
     sort: "name,asc"

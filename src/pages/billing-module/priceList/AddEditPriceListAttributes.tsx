@@ -143,6 +143,23 @@ const AddEditPriceListAttributes = ({
             } else {
                 await createAttr(payload).unwrap();
             }
+
+            setAttributeRec({
+                ...newPriceListAttribute,
+                priceListId: priceList.id,
+            });
+
+            dispatch(
+                notify({
+                    msg: "Saved Successfully",
+                    sev: "success"
+                })
+            );
+
+            setPaginationParams(prev => ({
+                ...prev,
+                timestamp: Date.now()
+            }));
             dispatch
             setAttributeRec({
                 ...newPriceListAttribute,
@@ -322,6 +339,7 @@ const AddEditPriceListAttributes = ({
 
                         <Col md={6}>
                             <MyInput
+                                key={`type-${attributeRec.attributeType ?? 'empty'}`}
                                 required
                                 width="100%"
                                 fieldType={attributeOptions.length > 0 ? "select" : "text"}
