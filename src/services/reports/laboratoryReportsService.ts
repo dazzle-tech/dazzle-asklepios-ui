@@ -1,32 +1,47 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
-import { result } from 'lodash';
 
 /* ===================== TYPES ===================== */
 
-export type LaboratoryReport = {
+export type LaboratoryResultItem = {
+  resultDate: string | null;
+  normalRange: string | null;
+  categoryName: string | null;
+  testName: string | null;
+  result: string | null;
+  unit: string | null;
+  marker: string | null;
+  reviewedDate: string | null;
+  reviewedBy: string | null;
+};
 
-  facilityName: String;
-  departmentName: String;
-  patientFullName: String;
-  mrn: String;
-  dateOfBirth: Date;
-  age: String;
-  gender: String;
-  primaryMobileNumber: String;
+export type LaboratoryOrderTestSection = {
+  orderTestId: number;
+  testName: string | null;
+  receivedDepartment: string | null;
+  results: LaboratoryResultItem[];
+};
 
-  encounterNumber: String;
+export type LaboratoryOrderSection = {
+  orderId: number;
   orderNumber: number;
-  resultDate: String;
-  normalRange: String;
-  fromDepartment: String;
-  testName: String;
+  encounterNumber: string | null;
+  fromDepartment: string | null;
+  orderTests: LaboratoryOrderTestSection[];
+};
 
-  result: String;
-  unit: String;
-  marker: String;
-  reviewedDate: String;
-  reviewedBy: String;
+export type LaboratoryReport = {
+  facilityName: string | null;
+  departmentName: string | null;
+
+  patientFullName: string | null;
+  mrn: string | null;
+  dateOfBirth: string | null;
+  age: string | null;
+  gender: string | null;
+  primaryMobileNumber: string | null;
+
+  orders: LaboratoryOrderSection[];
 };
 
 /* ===================== SERVICE ===================== */
@@ -35,36 +50,40 @@ export const laboratoryReportsService = createApi({
   reducerPath: 'laboratoryReportApi',
   baseQuery: BaseQuery,
   tagTypes: ['LaboratoryReport'],
+
   endpoints: builder => ({
-    getLaboratoryReportById: builder.query<LaboratoryReport, number>({
-      query: resultId => ({
-        url: `/api/analytics/laboratory-reports/result/${resultId}`,
-        method: 'GET',
-      }),
-      providesTags: (_r, _e, resultId) => [
-        { type: 'LaboratoryReport', id: resultId },
-      ],
-    }),
-
-    getLaboratoryReportPdf: builder.query<Blob, { resultId: number, lang: String }>({
-      query: ({ resultId, lang = 'en' }) => ({
-
-        url: `/api/analytics/laboratory-reports/result/${resultId}/pdf`,
+    getLaboratoryReports: builder.query<LaboratoryReport, number[]>({
+      query: resultIds => ({
+        url: '/api/analytics/laboratory-reports/results',
         method: 'GET',
         params: {
-          lang
+          resultIds,
         },
-        responseHandler: (response) => response.blob()
-      })
-    })
+      }),
+      providesTags: ['LaboratoryReport'],
+    }),
+
+    getLaboratoryReportsPdf: builder.query<
+      Blob,
+      { resultIds: number[]; lang?: string }
+    >({
+      query: ({ resultIds, lang = 'en' }) => ({
+        url: '/api/analytics/laboratory-reports/results/pdf',
+        method: 'GET',
+        params: {
+          resultIds,
+          lang,
+        },
+        responseHandler: response => response.blob(),
+      }),
+    }),
   }),
 });
 
 /* ===================== HOOKS ===================== */
 
 export const {
-  useGetLaboratoryReportByIdQuery,
-  useLazyGetLaboratoryReportByIdQuery,
-  useLazyGetLaboratoryReportPdfQuery
-
+  useGetLaboratoryReportsQuery,
+  useLazyGetLaboratoryReportsQuery,
+  useLazyGetLaboratoryReportsPdfQuery,
 } = laboratoryReportsService;

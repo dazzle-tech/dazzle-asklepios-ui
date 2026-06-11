@@ -8,12 +8,12 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyInput from "@/components/MyInput";
 import Translate from "@/components/Translate/Translate";
 import { Form } from "rsuite";
-import { useLazyGetLaboratoryReportPdfQuery } from "@/services/reports/laboratoryReportsService";
-const LaboratoryReportButton = ({ resultId }: { resultId: number }) => {
+import { useLazyGetLaboratoryReportsPdfQuery } from "@/services/reports/laboratoryReportsService";
+const LaboratoryReportButton = ({ resultIds }: { resultIds: number[] }) => {
     const dispatch = useDispatch();
 
   const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetLaboratoryReportPdfQuery();   
+    useLazyGetLaboratoryReportsPdfQuery();   
      const [loading, setLoading] = useState(false);
     const [openLangModal, setOpenLangModal] = useState(false);
     const [selectedLang, setSelectedLang] = useState<{ lang: string }>({ lang: 'en' });
@@ -24,7 +24,7 @@ const LaboratoryReportButton = ({ resultId }: { resultId: number }) => {
     const handleDownloadRadiologyReportPdf = async () => {
         try {
             setLoading(true);
-            const blob = await fetchLaboratoryResultPdfData({ resultId, lang: selectedLang.lang }).unwrap();
+            const blob = await fetchLaboratoryResultPdfData({ resultIds, lang: selectedLang.lang }).unwrap();
             const pdfBlob = new Blob([blob], { type: 'application/pdf' });
             const fileURL = window.URL.createObjectURL(pdfBlob);
             const win = window.open(fileURL, '_blank');
@@ -56,7 +56,7 @@ const LaboratoryReportButton = ({ resultId }: { resultId: number }) => {
             <MyButton
                 onClick={() => setOpenLangModal(true)}
                 loading={loading}
-                disabled={resultId ? false : true}
+                disabled={resultIds.length>0 ? false : true}
                 appearance='ghost'
                 prefixIcon={() => (
                     <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
