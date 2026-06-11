@@ -85,9 +85,10 @@ const COUNTRY_ERROR_MAP: Record<string, string> = {
   'id.required': 'Country id is required.',
   'unique.country.namecode': 'Country name or code already exists.',
   'db.constraint': 'Database constraint violation.',
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
   notfound: 'Country not found.'
 };
-
 const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
   const dispatch = useAppDispatch();
 

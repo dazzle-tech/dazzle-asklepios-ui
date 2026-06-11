@@ -71,13 +71,20 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
 };
-
 const COMMUNITY_ERROR_MAP: Record<string, string> = {
   'district.required': 'District is required.',
   'payload.required': 'Community payload is required.',
   'id.required': 'Community id is required.',
-  'unique.community.name': 'Community name already exists for this district.',
-  'db.constraint': 'Database constraint violation.',
+
+  'unique.community.name':
+    'Community name already exists for this district.',
+
+  'db.constraint':
+    'Unable to save the community due to a database constraint.',
+
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
+
   notfound: 'Community not found.'
 };
 
