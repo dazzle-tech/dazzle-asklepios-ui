@@ -3119,3 +3119,77 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderCreateDTO: modelTypes.NotificationHeaderCreateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderUpdateDTO: modelTypes.NotificationHeaderUpdateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateCreateDTO: modelTypes.NotificationTemplateCreateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateUpdateDTO: modelTypes.NotificationTemplateUpdateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+};

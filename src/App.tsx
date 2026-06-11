@@ -218,6 +218,7 @@ import PolicyDefinitions from './pages/setup/policy-definition';
 import SkillDefinitions from './pages/setup/skill-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
+import NotificationRule from './pages/notification-management/notification-rule';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import { setSelectedDepartment } from './reducers/authSlice';
 import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
@@ -614,6 +615,7 @@ const dispatch = useAppDispatch();
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
+              <Route path="notification-rule" element={<NotificationRule />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />

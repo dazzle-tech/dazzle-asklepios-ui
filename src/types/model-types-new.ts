@@ -4691,3 +4691,103 @@ export interface PatientProblem {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | Date | null;
 }
+
+export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
+
+export type NotificationModule = string;
+
+export type NotificationCategory = string;
+
+export type NotificationPriority = string;
+
+export type RecipientRule =
+  | 'PATIENT_EMAIL'
+  | 'PATIENT_PHONE'
+  | 'PRACTITIONER_EMAIL'
+  | 'PRACTITIONER_PHONE'
+  | 'DATA'
+  | 'STATIC';
+
+export interface NotificationHeaderResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderCreateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderUpdateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderSearchDTO {
+  code?: string | null;
+  name?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+}
+
+export interface NotificationTemplateResponseVM {
+  id?: number;
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateCreateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateUpdateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+}
