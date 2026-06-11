@@ -32,7 +32,7 @@ import { useGetActiveIngredientsByDrugClassQuery } from '@/services/setup/active
 const MedicationMatrix = () => {
   const dispatch = useAppDispatch();
   const [searchTermForCategory, setSearchTermForCategory] = useState({ value: '' });
-   const [searchTermForCategoryClass, setSearchTermForCategoryClass] = useState({ value: '' });
+  const [searchTermForCategoryClass, setSearchTermForCategoryClass] = useState({ value: '' });
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 100,
@@ -58,19 +58,19 @@ const MedicationMatrix = () => {
     activeIngredientsListRequest
   );
   const {
-  data: medClassList,
-  refetch: refetchClass,
-} = useGetAllMedicationCategoryClassesByCategoryQuery(
-  selectedCategories?.id
-    ? { id: selectedCategories.id, name: searchTermForCategoryClass?.value }
-    : undefined,
-  {
-    skip: !selectedCategories?.id,
-  }
-);
-  const { data: categoriesList, refetch: refetchCat } = useGetAllMedicationCategoriesQuery(searchTermForCategory?.value || undefined);4
+    data: medClassList,
+    refetch: refetchClass,
+  } = useGetAllMedicationCategoryClassesByCategoryQuery(
+    selectedCategories?.id
+      ? { id: selectedCategories.id, name: searchTermForCategoryClass?.value }
+      : undefined,
+    {
+      skip: !selectedCategories?.id,
+    }
+  );
+  const { data: categoriesList, refetch: refetchCat } = useGetAllMedicationCategoriesQuery(searchTermForCategory?.value || undefined); 4
 
-   const { data: classAIList, refetch: refetchClassAI } = useGetActiveIngredientsByDrugClassQuery(
+  const { data: classAIList, refetch: refetchClassAI } = useGetActiveIngredientsByDrugClassQuery(
     {
       drugClassIds: selectedClass?.id ? [selectedClass?.id] : [],
     }
@@ -86,15 +86,15 @@ const MedicationMatrix = () => {
   const divContent = 'Medication Matrix SetUp';
 
 
-useEffect(() => {
-  dispatch(setPageCode('Medication Matrix SetUp'));
-  dispatch(setDivContent(divContent));
+  useEffect(() => {
+    dispatch(setPageCode('Medication Matrix SetUp'));
+    dispatch(setDivContent(divContent));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const handleEdit = type => {
     switch (type) {
@@ -157,8 +157,9 @@ useEffect(() => {
   const categoryColumns: ColumnConfig[] = [
     {
       key: 'name',
-      align: 'center',
-      title: 'Therapeutic Category Name'
+      width: 45,
+      title: 'Therapeutic Category Name',
+
     },
     {
       key: 'icons',
@@ -170,12 +171,14 @@ useEffect(() => {
   const classColumns: ColumnConfig[] = [
     {
       key: 'name',
-      align: 'center',
+      width: 45,
+
       title: 'Medication Class'
     },
     {
       key: 'icons',
       title: '',
+      
       render: rowData => iconsForActions(rowData, 'class')
     }
   ];
@@ -183,203 +186,236 @@ useEffect(() => {
   const activeIngColumns: ColumnConfig[] = [
     {
       key: 'name',
-      align: 'center',
       title: 'Active Ingredient',
     }
   ];
 
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-  <div dir={dir}>
-    <Row>
-      <Col md={8}>
-        <MyTable
-          columns={categoryColumns}
-          data={categoriesList ?? []}
-          onRowClick={rowData => {
-            setSelectedCategories(rowData);
-            setSelectedClass({ ...newMedicationCategoryClass });
-          }}
-          rowClassName={isSelected}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-          }}
-          filters={
-            <div className="container-of-header-actions-medication-matrix">
-              <Form layout="inline" className="form-medication-matrix">
-                <MyInput
-                  fieldName="value"
-                  fieldType="text"
-                  record={searchTermForCategory}
-                  setRecord={setSearchTermForCategory}
-                  showLabel={false}
-                  placeholder="Search by Name"
-                  width={'220px'}
-                  height={32}
-                />
-              </Form>
-            </div>
-          }
-          tableButtons={
-            <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setOpenAddEditPopupCat(true),
-                  setSelectedCategories({ ...newMedicationCategory }),
-                  setEdit_new_cat(true);
-              }}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-            </div>
-          }
-        />
-        <AddEditMedCat
-          open={openAddEditPopupCat}
-          setOpen={setOpenAddEditPopupCat}
-          medCategory={selectedCategories}
-          setMedCategory={setSelectedCategories}
-          edit_new={edit_new_cat}
-          refetch={refetchCat}
-        />
-        <DeletionConfirmationModal
-          open={openConfirmDeleteModalCat}
-          setOpen={setOpenConfirmDeleteModalCat}
-          itemToDelete="Category"
-          actionButtonFunction={() => {
-            removeCat(selectedCategories?.id)
-              .unwrap()
-              .then(() => {
+    <div dir={dir}>
+      <Row>
+        <Col md={8}>
+          <MyTable
+            columns={categoryColumns}
+            data={categoriesList ?? []}
+            onRowClick={rowData => {
+              setSelectedCategories(rowData);
+              setSelectedClass({ ...newMedicationCategoryClass });
+            }}
+            rowClassName={isSelected}
+            sortColumn={listRequest.sortBy}
+            sortType={listRequest.sortType}
+            onSortChange={(sortBy, sortType) => {
+              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+            }}
+            filters={
+              <div className="container-of-header-actions-medication-matrix">
+                <Form layout="inline" className="form-medication-matrix">
+                  <MyInput
+                    fieldName="value"
+                    fieldType="text"
+                    record={searchTermForCategory}
+                    setRecord={setSearchTermForCategory}
+                    showLabel={false}
+                    placeholder="Search by Name"
+                    width={'220px'}
+                    height={32}
+                  />
+                </Form>
+              </div>
+            }
+            tableButtons={
+              <div className="container-of-add-new-button">
+                <MyButton
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={() => {
+                    setOpenAddEditPopupCat(true),
+                      setSelectedCategories({ ...newMedicationCategory }),
+                      setEdit_new_cat(true);
+                  }}
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>
+            }
+          />
+          <AddEditMedCat
+            open={openAddEditPopupCat}
+            setOpen={setOpenAddEditPopupCat}
+            medCategory={selectedCategories}
+            setMedCategory={setSelectedCategories}
+            edit_new={edit_new_cat}
+            refetch={refetchCat}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteModalCat}
+            setOpen={setOpenConfirmDeleteModalCat}
+            itemToDelete="Category"
+            actionButtonFunction={async () => {
+              try {
+                await removeCat(selectedCategories?.id).unwrap();
+
                 refetchClass();
                 refetchCat();
+
                 dispatch(notify('Category Deleted Successfully'));
+
                 setSelectedCategories(newMedicationCategory);
                 setOpenConfirmDeleteModalCat(false);
-              });
-          }}
-          actionType={stateOfDeleteModal}
-        />
-      </Col>
-      <Col md={8}>
-        <MyTable
-          columns={classColumns}
-          data={medClassList ?? []}
-          onRowClick={rowData => {
-            setSelectedClass(rowData);
-          }}
-          rowClassName={isSelectedClass}
-          tableButtons={
-            <div className="container-of-add-new-button">
-              <MyButton
-                disabled={!selectedCategories?.id}
-                prefixIcon={() => <AddOutlineIcon />}
-                color="var(--deep-blue)"
-                onClick={() => {
-                  setOpenAddEditPopupClass(true),
-                    setSelectedClass({ ...newMedicationCategoryClass }),
-                    setEdit_new_class(true);
-                }}
-                width="109px"
-              >
-                Add New
-              </MyButton>
-            </div>
-          }
-          filters={
-            <div className="container-of-header-actions-medication-matrix">
-              <Form layout="inline" className="form-medication-matrix">
-                <MyInput
-                  fieldName="value"
-                  fieldType="text"
-                  record={searchTermForCategoryClass}
-                  setRecord={setSearchTermForCategoryClass}
-                  showLabel={false}
-                  placeholder="Search by Name"
-                  width={'220px'}
-                  height={32}
-                />
-              </Form>
-            </div>
-          }
-        />
-        <AddEditClass
-          open={openAddEditPopupClass}
-          setOpen={setOpenAddEditPopupClass}
-          medClass={selectedClass}
-          medicationcategory={selectedCategories}
-          setMedClass={setSelectedClass}
-          edit_new={edit_new_class}
-          refetch={refetchClass}
-        />
-        <DeletionConfirmationModal
-          open={openConfirmDeleteModalClass}
-          setOpen={setOpenConfirmDeleteModalClass}
-          itemToDelete="Class"
-          actionButtonFunction={() => {
-            removeClass(selectedClass?.id)
-              .unwrap()
-              .then(() => {
+              } catch (error: any) {
+                const detail = error?.data?.detail || '';
+
+                const isForeignKeyError =
+                  detail.includes('foreign key constraint') ||
+                  detail.includes('still referenced');
+
+                dispatch(
+                  notify(
+                    isForeignKeyError
+                      ? 'Cannot delete this category because it is linked to other records.'
+                      : 'Failed to delete this category',
+                    'error'
+                  )
+                );
+              }
+            }}
+            actionType={stateOfDeleteModal}
+          />
+        </Col>
+        <Col md={8}>
+          <MyTable
+            columns={classColumns}
+            data={medClassList ?? []}
+            onRowClick={rowData => {
+              setSelectedClass(rowData);
+            }}
+            rowClassName={isSelectedClass}
+            tableButtons={
+              <div className="container-of-add-new-button">
+                <MyButton
+                  disabled={!selectedCategories?.id}
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={() => {
+                    setOpenAddEditPopupClass(true),
+                      setSelectedClass({ ...newMedicationCategoryClass }),
+                      setEdit_new_class(true);
+                  }}
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>
+            }
+            filters={
+              <div className="container-of-header-actions-medication-matrix">
+                <Form layout="inline" className="form-medication-matrix">
+                  <MyInput
+                    fieldName="value"
+                    fieldType="text"
+                    record={searchTermForCategoryClass}
+                    setRecord={setSearchTermForCategoryClass}
+                    showLabel={false}
+                    placeholder="Search by Name"
+                    width={'220px'}
+                    height={32}
+                  />
+                </Form>
+              </div>
+            }
+          />
+          <AddEditClass
+            open={openAddEditPopupClass}
+            setOpen={setOpenAddEditPopupClass}
+            medClass={selectedClass}
+            medicationcategory={selectedCategories}
+            setMedClass={setSelectedClass}
+            edit_new={edit_new_class}
+            refetch={refetchClass}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteModalClass}
+            setOpen={setOpenConfirmDeleteModalClass}
+            itemToDelete="Class"
+            actionButtonFunction={async () => {
+              try {
+                await removeClass(selectedClass?.id).unwrap();
+
                 refetchClass();
                 refetchCat();
+
                 dispatch(notify('Class Deleted Successfully'));
+
                 setSelectedClass(newMedicationCategoryClass);
                 setOpenConfirmDeleteModalClass(false);
-              });
-          }}
-          actionType={stateOfDeleteModal}
-        />
-      </Col>
-      <Col md={8}>
-        <MyTable
-          columns={activeIngColumns}
-          data={classAIList?.data ?? []}
-          tableButtons={
-            <div className="container-of-add-new-button">
-              <MyButton
-                disabled={!selectedClass?.id}
-                prefixIcon={() => <AddOutlineIcon />}
-                color="var(--deep-blue)"
-                onClick={() => 
+              } catch (error: any) {
+                const detail = error?.data?.detail || '';
+
+                const isForeignKeyError =
+                  detail.includes('foreign key constraint') ||
+                  detail.includes('still referenced');
+
+                dispatch(
+                  notify(
+                    isForeignKeyError
+                      ? 'Cannot delete this class because it is linked to other records.'
+                      : 'Failed to delete this class',
+                    'error'
+                  )
+                );
+              }
+            }}
+            actionType={stateOfDeleteModal}
+          />
+        </Col>
+        <Col md={8}>
+          <MyTable
+            columns={activeIngColumns}
+            data={classAIList?.data ?? []}
+            tableButtons={
+              <div className="container-of-add-new-button">
+                <MyButton
+                  disabled={!selectedClass?.id}
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={() =>
                     setSelectedCategories({ ...newMedicationCategory })
-                }
-                width="109px"
-              >
-                Add New
-              </MyButton>
-            </div>
-          }
-          filters={
-            <div className="container-of-header-actions-medication-matrix">
-              <Form layout="inline" className="form-medication-matrix">
-                <MyInput
-                  fieldName="value"
-                  fieldType="text"
-                  record={searchTermForCategory}
-                  setRecord={setSearchTermForCategory}
-                  showLabel={false}
-                  placeholder="Search by Name"
-                  width='220px'
-                  height={32}
-                />
-              </Form>
-            </div>
-          }
-        />
-      </Col>
-    </Row>
-  </div>
+                  }
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>
+            }
+            filters={
+              <div className="container-of-header-actions-medication-matrix">
+                <Form layout="inline" className="form-medication-matrix">
+                  <MyInput
+                    fieldName="value"
+                    fieldType="text"
+                    record={searchTermForCategory}
+                    setRecord={setSearchTermForCategory}
+                    showLabel={false}
+                    placeholder="Search by Name"
+                    width='220px'
+                    height={32}
+                  />
+                </Form>
+              </div>
+            }
+          />
+        </Col>
+      </Row>
+    </div>
   );
 };
 export default MedicationMatrix;
