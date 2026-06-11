@@ -23,7 +23,7 @@ import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { Form } from 'rsuite';
 import AddEditNotificationTemplate from '../components/AddEditNotificationTemplate';
 import { getNotificationTemplateChannelConfig } from '../notificationTemplateChannelConfig';
-import { formatRecipientRuleDisplay } from '../notificationTemplateValidation';
+import { formatRecipientRuleDisplay, stripHtmlBody } from '../notificationTemplateValidation';
 
 interface NotificationTemplatesTabProps {
   header: NotificationHeaderResponseVM;
@@ -207,7 +207,11 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
             key: 'body',
             title: <Translate>Body</Translate>,
             flexGrow: 4,
-            render: (rowData: NotificationTemplateResponseVM) => truncateCell(rowData.body, 80),
+            render: (rowData: NotificationTemplateResponseVM) =>
+              truncateCell(
+                channel === 'EMAIL' ? stripHtmlBody(rowData.body) : rowData.body,
+                80
+              ),
           },
         ]
       : []),

@@ -187,7 +187,7 @@ const RecipientRuleInput: React.FC<RecipientRuleInputProps> = ({
                   setRecord={next =>
                     updateEntry(entry.id, { customValue: next.customValue ?? '' })
                   }
-                  placeholder="e.g. example@gmail.com"
+                  placeholder="e.g. example@example.com"
                   showLabel={false}
                   width="100%"
                 />
@@ -221,7 +221,7 @@ const RecipientRuleInput: React.FC<RecipientRuleInputProps> = ({
       <div className="recipient-rule-input__hint">
         Choose a predefined rule, or select <strong>Data Field</strong> / <strong>Static Value</strong> and
         enter the value after the prefix (for example <code>DATA: practitionerEmail</code> or{' '}
-        <code>STATIC: sondos@gmail.com</code>).
+        <code>STATIC: example@example.com</code>).
       </div>
     </div>
   );

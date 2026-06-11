@@ -95,6 +95,11 @@ export const validateRecipientRuleFormat = (rule?: string | null): string | null
   return null;
 };
 
+export const stripHtmlBody = (html?: string | null): string =>
+  html?.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() ?? '';
+
+export const isHtmlBodyEmpty = (html?: string | null): boolean => !stripHtmlBody(html);
+
 export interface NotificationTemplateFormValues {
   language?: string | null;
   subject?: string | null;
@@ -123,7 +128,7 @@ export const validateNotificationTemplate = (
     if (!dto.subject?.trim()) {
       errors.push('Email subject is required');
     }
-    if (!dto.body?.trim()) {
+    if (isHtmlBodyEmpty(dto.body)) {
       errors.push('Email body is required');
     }
   }

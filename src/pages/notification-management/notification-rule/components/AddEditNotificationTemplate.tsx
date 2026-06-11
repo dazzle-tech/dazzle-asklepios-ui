@@ -24,6 +24,7 @@ import { MdMailOutline } from 'react-icons/md';
 import { Col, Form, Row } from 'rsuite';
 import { getNotificationTemplateChannelConfig } from '../notificationTemplateChannelConfig';
 import { validateNotificationTemplate } from '../notificationTemplateValidation';
+import HtmlBodyEditor from './HtmlBodyEditor';
 import RecipientRuleInput from './RecipientRuleInput';
 import '../styles.less';
 
@@ -59,6 +60,8 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
   const fieldConfig = getNotificationTemplateChannelConfig(channel);
 
   useEffect(() => {
+    if (!open) return;
+
     if (template?.id) {
       setUpdateDTO({
         notificationHeaderId: template.notificationHeaderId,
@@ -79,7 +82,7 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
         channel,
       });
     }
-  }, [template, header, channel]);
+  }, [template, header, channel, open]);
 
   const handleSubmit = async () => {
     const dto = template?.id ? updateDTO : createDTO;
@@ -133,6 +136,7 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
   const conjureFormContentOfMainModal = (stepNumber: number) => {
     const dto = template?.id ? updateDTO : createDTO;
     const setDTO = template?.id ? setUpdateDTO : setCreateDTO;
+    const bodyValue = template?.id ? updateDTO.body || template.body || '' : createDTO.body;
 
     switch (stepNumber) {
       case 0:
@@ -192,14 +196,29 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
               )}
               {fieldConfig.body && (
                 <Row>
-                  <MyInput
-                    fieldName="body"
-                    fieldType="textarea"
-                    record={dto}
-                    setRecord={setDTO}
-                    width="100%"
-                    required={fieldConfig.requireBody}
-                  />
+                  {channel === 'EMAIL' ? (
+                    <HtmlBodyEditor
+                      key={open ? `template-body-${template?.id ?? 'new'}` : 'template-body-closed'}
+                      editorKey={open ? template?.id ?? 'new' : 'closed'}
+                      label="Body"
+                      value={bodyValue}
+                      required={fieldConfig.requireBody}
+                      onChange={value =>
+                        template?.id
+                          ? setUpdateDTO(prev => ({ ...prev, body: value }))
+                          : setCreateDTO(prev => ({ ...prev, body: value }))
+                      }
+                    />
+                  ) : (
+                    <MyInput
+                      fieldName="body"
+                      fieldType="textarea"
+                      record={dto}
+                      setRecord={setDTO}
+                      width="100%"
+                      required={fieldConfig.requireBody}
+                    />
+                  )}
                 </Row>
               )}
               {fieldConfig.toRecipientRule && (
