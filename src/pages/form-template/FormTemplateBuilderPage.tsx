@@ -50,6 +50,7 @@ const FormTemplateBuilderPage = () => {
 
   const [creator, setCreator] = useState<SurveyCreator | null>(null);
   const [template, setTemplate] = useState<FormTemplate>({ ...newFormTemplate });
+  const [departmentIds, setDepartmentIds] = useState<number[]>([]);
   const [width, setWidth] = useState<number>(window.innerWidth);
 
   // APIs
@@ -116,6 +117,12 @@ const FormTemplateBuilderPage = () => {
   }, [mode, creator]);
 
   useEffect(() => {
+    if (!templateId) {
+      setDepartmentIds([]);
+    }
+  }, [templateId]);
+
+  useEffect(() => {
     if (!creator) return;
     if (!templateId) {
       creator.JSON = {};
@@ -125,6 +132,7 @@ const FormTemplateBuilderPage = () => {
     (async () => {
       const tpl = await loadTemplate(templateId).unwrap();
       setTemplate(tpl);
+      setDepartmentIds(tpl?.departmentId ? [Number(tpl.departmentId)] : []);
 
       try {
         creator.JSON = tpl?.formJson ? JSON.parse(tpl.formJson) : {};
@@ -180,18 +188,10 @@ const FormTemplateBuilderPage = () => {
     }
   }, [selectedFacilityId]);
 
-  useEffect(() => {
-    if (!template?.departmentId) return;
-    const dep = (departmentListResponse?.data ?? []).find((d: any) => d.id === template.departmentId);
-    if (dep?.facilityId && dep.facilityId !== template.facilityId) {
-      setTemplate(prev => ({ ...prev, facilityId: dep.facilityId }));
-    }
-  }, [template?.departmentId, departmentListResponse]);
-
   const validateRequiredFields = () => {
     const missing: string[] = [];
     if (!template?.name?.trim()) missing.push('Template Name');
-    if (!template?.departmentId) missing.push('Department');
+    if (!departmentIds.length) missing.push('Department');
     if (!template?.facilityId) missing.push('Facility');
     if (!template?.formJson || template.formJson === '{}' || template.formJson === 'null') missing.push('Form Content');
 
@@ -213,39 +213,79 @@ const FormTemplateBuilderPage = () => {
     return Number.isNaN(n) ? null : n;
   };
 
-  const handleSave = () => {
+  const buildTemplateBody = (departmentId: number) => ({
+    name: template?.name?.trim(),
+    description: template?.description ?? null,
+    facilityId: toNumberOrNull(template?.facilityId),
+    departmentId: toNumberOrNull(departmentId),
+    formJson:
+      template?.formJson && template.formJson !== "null"
+        ? template.formJson
+        : JSON.stringify(creator?.JSON ?? {}),
+  });
+
+  const handleSave = async () => {
     if (!validateRequiredFields()) return;
 
-    const body = {
-      name: template?.name?.trim(),
-      description: template?.description ?? null,
-      facilityId: toNumberOrNull(template?.facilityId),
-      departmentId: toNumberOrNull(template?.departmentId),
-      formJson:
-        template?.formJson && template.formJson !== "null"
-          ? template.formJson
-          : JSON.stringify(creator?.JSON ?? {}),
-    };
+    const selectedDepartmentIds = departmentIds.map(Number).filter(id => !Number.isNaN(id));
+    if (!selectedDepartmentIds.length) return;
 
-    if (!template?.id) {
-      createTemplate(body as any)
-        .unwrap()
-        .then((created: any) => {
-          dispatch(notify({ msg: "Template created successfully", sev: "success" }));
-          navigate(`/form-template/${created.id}`);
+    try {
+      if (!template?.id) {
+        const createdTemplates = await Promise.all(
+          selectedDepartmentIds.map(deptId =>
+            createTemplate(buildTemplateBody(deptId) as any).unwrap()
+          )
+        );
+
+        const count = createdTemplates.length;
+        dispatch(
+          notify({
+            msg:
+              count > 1
+                ? `Template created successfully for ${count} departments`
+                : "Template created successfully",
+            sev: "success"
+          })
+        );
+        navigate(`/form-template/${createdTemplates[0].id}`);
+        return;
+      }
+
+      const currentDepartmentId = template.departmentId ? Number(template.departmentId) : null;
+      const primaryDepartmentId = currentDepartmentId && selectedDepartmentIds.includes(currentDepartmentId)
+        ? currentDepartmentId
+        : selectedDepartmentIds[0];
+
+      const updated = await updateTemplate({
+        id: Number(template.id),
+        body: buildTemplateBody(primaryDepartmentId) as any
+      }).unwrap();
+
+      setTemplate(updated);
+      setDepartmentIds(selectedDepartmentIds);
+
+      const departmentsToCreate = selectedDepartmentIds.filter(id => id !== primaryDepartmentId);
+      if (departmentsToCreate.length) {
+        await Promise.all(
+          departmentsToCreate.map(deptId =>
+            createTemplate(buildTemplateBody(deptId) as any).unwrap()
+          )
+        );
+      }
+
+      dispatch(
+        notify({
+          msg:
+            departmentsToCreate.length > 0
+              ? `Template updated and linked to ${selectedDepartmentIds.length} departments`
+              : "Template updated successfully",
+          sev: "success"
         })
-        .catch((e: any) => {
-          console.error(e);
-          dispatch(notify({ msg: "Failed to create template", sev: "error" }));
-        });
-    } else {
-      updateTemplate({ id: Number(template.id), body: body as any })
-        .unwrap()
-        .then(() => dispatch(notify({ msg: "Template updated successfully", sev: "success" })))
-        .catch((e: any) => {
-          console.error(e);
-          dispatch(notify({ msg: "Failed to update template", sev: "error" }));
-        });
+      );
+    } catch (e) {
+      console.error(e);
+      dispatch(notify({ msg: template?.id ? "Failed to update template" : "Failed to create template", sev: "error" }));
     }
   };
 
@@ -271,18 +311,20 @@ const FormTemplateBuilderPage = () => {
 
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
-              fieldLabel="Department"
-              fieldName="departmentId"
-              fieldType="select"
+              fieldLabel="Departments"
+              fieldName="departmentIds"
+              fieldType="checkPicker"
               selectData={departmentListResponse?.data ?? []}
               selectDataLabel="name"
               selectDataValue="id"
-              record={template}
+              record={{ departmentIds }}
               setRecord={(updated: any) => {
-                setTemplate(prev => ({ ...prev, departmentId: Number(updated.departmentId) }));
+                const ids = Array.isArray(updated.departmentIds)
+                  ? updated.departmentIds.map((id: string | number) => Number(id)).filter((id: number) => !Number.isNaN(id))
+                  : [];
+                setDepartmentIds(ids);
               }}
               required
-              searchable
               menuMaxHeight={260}
               loading={deptFetching}
             />

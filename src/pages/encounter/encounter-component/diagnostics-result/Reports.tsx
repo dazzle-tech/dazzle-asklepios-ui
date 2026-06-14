@@ -8,8 +8,8 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useLazyGetDiagnosticOrderByIdQuery,
-  useFilterDiagnosticOrdersQuery
+  useFilterDiagnosticOrdersQuery,
+  useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
@@ -25,14 +25,14 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
-import { Form, HStack, Tooltip, Whisper } from 'rsuite';
-import { useLazyGetRadiologyReportByIdQuery, useLazyGetRadiologyReportPdfQuery } from '@/services/reports/radiologyReportService';
-import MyButton from '@/components/MyButton/MyButton';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
+import RadiologyReportButton from './RadiologyReportButton';
+import UserDateCell from '@/components/UserDateCell';
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -59,6 +59,7 @@ const Reports = ({ patient }) => {
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [testsMap, setTestsMap] = useState<Record<string, any>>({});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedReportIds, setSelectedReportIds] = useState<number[]>([]);
   const [selectedReportForAttachments, setSelectedReportForAttachments] =
     useState<any>(null);
 
@@ -71,8 +72,6 @@ const Reports = ({ patient }) => {
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
-  const [fetchRadiologyReportPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetRadiologyReportPdfQuery();
 
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
@@ -160,33 +159,55 @@ const Reports = ({ patient }) => {
       : skipToken
   );
 
- 
- const handleGenerateReport = async () => {
-   if (!selectedReport?.id) return;
-    try {
-      const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
 
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `Report-${selectedReport.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+const allSelected =
+  reports.length > 0 &&
+  reports.every(report => selectedReportIds.includes(report.id));
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to generate report PDF',
-          sev: 'error'
-        })
-      );
-    }
-  };
+const handleSelectAll = (checked: boolean) => {
+  if (checked) {
+    setSelectedReportIds(reports.map(report => report.id));
+  } else {
+    setSelectedReportIds([]);
+  }
+};
+
+const handleSelectReport = (
+  reportId: number,
+  checked: boolean
+) => {
+  if (checked) {
+    setSelectedReportIds(prev => [...prev, reportId]);
+  } else {
+    setSelectedReportIds(prev =>
+      prev.filter(id => id !== reportId)
+    );
+  }
+};
+
+
   const reportColumns: ColumnConfig[] = [
+    {
+      key: 'select',
+      width: 60,
+      align: 'center',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          onChange={(_, checked) =>
+            handleSelectAll(checked)
+          }
+        />
+      ),
+      render: (rowData: any) => (
+        <Checkbox
+          checked={selectedReportIds.includes(rowData.id)}
+          onChange={(_, checked) =>
+            handleSelectReport(rowData.id, checked)
+          }
+        />
+      )
+    },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
@@ -319,15 +340,10 @@ const Reports = ({ patient }) => {
       key: 'review',
       title: <Translate>Review At/By</Translate>,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.reviewBy}</span>
-          <br />
-          <span className="date-table-style">
-            {rowData.reviewDate
-              ? new Date(rowData.reviewDate).toLocaleString()
-              : ''}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.reviewBy}
+          date={rowData.reviewDate}
+        />
       )
     }
   ];
@@ -357,18 +373,7 @@ const Reports = ({ patient }) => {
 
   const tableButtons = (
    
-    <MyButton
-          onClick={handleGenerateReport}
-          loading={isGeneratingReport}
-          disabled={selectedReport?.id ? false : true}
-          appearance='ghost'
-          prefixIcon={() => (
-            <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
-          )}
-          style={{ marginLeft: 'auto' }}
-        >
-          <Translate>Generate Report</Translate>
-        </MyButton>
+  <RadiologyReportButton  reportId={selectedReport?.id}/>
   );
 
   const closeModal = () => {

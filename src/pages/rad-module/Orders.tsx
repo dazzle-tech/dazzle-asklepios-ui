@@ -14,9 +14,10 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import { Tooltip, Whisper } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 
 import './styles.less';
+import MyInput from '@/components/MyInput';
 
 type OrdersProps = {
   order: any;
@@ -27,10 +28,11 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+  filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
+ ({ order, setOrder, dateFilter, loading, orderNumberFilter, filters }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -272,6 +274,7 @@ const Orders = forwardRef<any, OrdersProps>(
         onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}
         sortType={sortType}
+        filters={filters}
         onSortChange={handleSortChange}
       />
     </div>

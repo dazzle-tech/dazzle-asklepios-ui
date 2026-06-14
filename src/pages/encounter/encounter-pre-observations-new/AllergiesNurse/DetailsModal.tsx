@@ -326,7 +326,9 @@ const isOtherType = allerges?.id
                         fieldType="select"
                         fieldLabel="Criticality"
                         selectData={criticalityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="criticality"
                         record={
@@ -360,7 +362,9 @@ const isOtherType = allerges?.id
                         fieldType="select"
                         fieldLabel="Treatment Strategy"
                         selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="treatmentStrategy"
                         record={
@@ -382,7 +386,9 @@ const isOtherType = allerges?.id
                         fieldType="select"
                         fieldLabel="Onset"
                         selectData={onsetLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="onset"
                         record={
@@ -440,7 +446,9 @@ const isOtherType = allerges?.id
                         fieldType="select"
                         fieldLabel="Type of Propensity"
                         selectData={allgPropnLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName="typeOfPropensity"
                         record={
@@ -466,7 +474,9 @@ const isOtherType = allerges?.id
                           fieldType="select"
                           fieldLabel="Source of Information"
                           selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="sourceOfInformation"
                           record={
@@ -507,7 +517,9 @@ const isOtherType = allerges?.id
                           fieldType="checkPicker"
                           fieldLabel="Allergic Reactions"
                           selectData={reactionLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="reactions"
                           record={reactions}
@@ -830,6 +842,7 @@ useEffect(() => {
         !edit ? (allerges.statusLvalue?.valueCode == 'ARS_CANCEL' ? true : false) : true
       }
       size="40vw"
+      bodyheight="70vh"
       position="right"
       steps={[
         {

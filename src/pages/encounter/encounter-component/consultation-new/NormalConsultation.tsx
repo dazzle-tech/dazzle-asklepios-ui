@@ -38,7 +38,7 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 import Details from './Details';
 import './styles.less';
 import PreviewConsultation from './PreviewConsultation';
-
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const toISOStartOfDay = (d: Date) => {
@@ -322,17 +322,6 @@ const NormalConsultation = props => {
     }
   }, [selectedRow?.toFacilityId, getDepartmentsByFacility]);
 
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-    const { data: fullName, isLoading } = useGetUserFullNameByLoginQuery(login!, {
-      skip: !login
-    });
-
-    if (!login) return <span>-</span>;
-    if (isLoading) return <Loader size="xs" />;
-
-    return <span>{fullName || login}</span>;
-  };
-
   const tableColumns = useMemo(
     () => [
       {
@@ -373,7 +362,7 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) =>
           rowData.createdBy || rowData.createdDate ? (
             <>
-              <UserFullNameCell login={rowData.createdBy} />
+              <UserDateCell login={rowData.createdBy} />
               <br />
               <span className="date-table-style">
                 {formatDateWithoutSeconds(rowData.createdDate)}
@@ -506,7 +495,7 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) =>
           rowData.rejectedBy || rowData.rejectedDate ? (
             <>
-              <UserFullNameCell login={rowData.rejectedBy} />
+              <UserDateCell login={rowData.rejectedBy} />
               <br />
               <span className="date-table-style">
                 {rowData.rejectedDate
@@ -535,7 +524,7 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) =>
           rowData.cancelledBy || rowData.cancelledDate ? (
             <>
-              <UserFullNameCell login={rowData.cancelledBy} />
+              <UserDateCell login={rowData.cancelledBy} />
               <br />
               <span className="date-table-style">
                 {rowData.cancelledDate

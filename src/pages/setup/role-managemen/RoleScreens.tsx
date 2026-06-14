@@ -135,7 +135,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
           <span
             style={{
               fontWeight: hasPermissions ? 500 : 400,
-              color: hasPermissions ? '#1976d2' : 'inherit'
+              color: hasPermissions ? 'var(--primary-blue)' : 'inherit'
             }}
           >
             {rowData.name}

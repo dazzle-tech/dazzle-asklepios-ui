@@ -54,6 +54,7 @@ import { printPatientWristband } from '@/utils/printPatientWristband';
 import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
 import { useAppSelector } from '@/hooks';
 import AddPaymentModal from './component/AddPaymentModal';
+import PatientWritBandPrintLabelButton from './PatientWritBandPrintLabelButton';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -432,7 +433,6 @@ const UrgentCareTriage = () => {
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
-  const [triggerWristband] = useLazyGetPatientWristbandQuery();
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openBedAssignmentModal, setOpenBedAssignmentModal] = useState(false);
@@ -441,7 +441,6 @@ const UrgentCareTriage = () => {
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
-  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
 
   const navigate = useNavigate();
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -451,33 +450,6 @@ const UrgentCareTriage = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
 
- const handlePrintWristband = async (rowData: any) => {
-  try {
-    const blob = await triggerGetPatientWristbandPdf({
-      patientId: rowData.patientId,
-    }).unwrap();
-
-    const fileURL = window.URL.createObjectURL(
-      new Blob([blob], { type: 'application/pdf' })
-    );
-
-    const printWindow = window.open(fileURL, '_blank');
-
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.focus();
-        // optional: auto-open print dialog
-        // printWindow.print();
-      };
-    }
-
-    setTimeout(() => {
-      window.URL.revokeObjectURL(fileURL);
-    }, 60_000);
-  } catch (error) {
-    console.error('Failed to preview wristband pdf', error);
-  }
-};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -1288,11 +1260,19 @@ const UrgentCareTriage = () => {
         const isPendingPayment = isPendingPaymentStatus(rowData);
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
+
+        const statusUpper = String(
+          rowData?.status ?? rowData?.encounterStatus ?? ''
+        ).toUpperCase();
+
         const tooltipStart = !rowData?.priorityLevel ? (
           <Tooltip>Please set Priority first</Tooltip>
+        ) : statusUpper === 'TRIAGE_STARTED' ? (
+          <Tooltip>Resume Triage</Tooltip>
         ) : (
           <Tooltip>Start Triage</Tooltip>
         );
+
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipCancel = (
           <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
@@ -1434,16 +1414,8 @@ const UrgentCareTriage = () => {
               speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipPrint}
             >
               <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    handlePrintWristband(rowData);
-                  }}
-                  disabled={isPendingPayment || isReceptionist}
-                >
-                  <FontAwesomeIcon icon={faBarcode} />
-                </MyButton>
+                
+                <PatientWritBandPrintLabelButton  disabled={isPendingPayment || isReceptionist} patientId={rowData.patientId}  />
               </div>
             </Whisper>
 

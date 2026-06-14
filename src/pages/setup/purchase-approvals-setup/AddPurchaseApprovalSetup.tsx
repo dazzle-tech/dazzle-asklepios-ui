@@ -22,7 +22,9 @@ const AddPurchaseApprovalSetup = ({
           fieldLabel="Types of Purchase"
           fieldName={'key001'}
           selectData={purchaseLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}
@@ -65,7 +67,9 @@ const AddPurchaseApprovalSetup = ({
           fieldLabel="Hierarchy of approval"
           fieldName={'key004'}
           selectData={purchaseLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}

@@ -4,7 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Col, Form, Row, Tabs } from 'rsuite';
+import { Form, Row } from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
 import MyInput from '@/components/MyInput';
@@ -200,6 +200,48 @@ const Lab = () => {
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
+
+  const tablefilters = (<>
+              <Form fluid className="filter-form-lab-filters">
+                <MyInput
+                  width={"8vw"}
+                  placeholder="From Date"
+                  fieldType="date"
+                  fieldName="fromDate"
+                  record={dateFilter}
+                  setRecord={setDateFilter}
+                  showLabel={false}
+                />
+                <MyInput
+                  width={"8vw"}
+                  placeholder="To Date"
+                  fieldType="date"
+                  fieldName="toDate"
+                  record={dateFilter}
+                  setRecord={setDateFilter}
+                  showLabel={false}
+                />
+                <MyInput
+                  width={"8vw"}
+                  placeholder="Order ID"
+                  fieldType="text"
+                  fieldName="orderNumber"
+                  record={{ orderNumber: orderNumberFilter }}
+                  setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
+                  showLabel={false}
+                />
+              </Form>
+
+              {test.id && (
+                <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
+              )}
+              {test.id && (
+                <div>
+                  Number of Samples Collected: {samplesList.length}
+                </div>
+              )}
+    </>)
+    
   const innerTabsData = [
     {
       title: 'Tests',
@@ -213,7 +255,25 @@ const Lab = () => {
           fecthSample={fecthSample}
           loading={globalLoading}
           refetchAllLabData={refetchAllLabData}
-          onTestsLoaded={setVisibleTests}
+          onTestsLoaded={(tests: any[]) => {
+            const selectedDate = new Date(dateFilter.fromDate);
+
+            const selectedYear = selectedDate.getFullYear();
+            const selectedMonth = selectedDate.getMonth();
+            const selectedDay = selectedDate.getDate();
+
+            const filtered = (tests ?? []).filter(test => {
+              const createdDate = new Date(test.createdDate);
+
+              return (
+                createdDate.getFullYear() === selectedYear &&
+                createdDate.getMonth() === selectedMonth &&
+                createdDate.getDate() === selectedDay
+              );
+            });
+
+            setVisibleTests(filtered);
+          }}
         />
       )
     },
@@ -273,58 +333,16 @@ const Lab = () => {
             <div dir={dir}>
               <div className="container">
                 <div className="left-boxs">
-                  <Row>
-                    <Col xs={14}>
-                      <Orders
-                        ref={OrdersRef}
-                        order={order}
-                        setOrder={setOrder}
-                        dateFilter={dateFilter}
-                        loading={globalLoading}
-                        orderNumberFilter={orderNumberFilter}
-                      />
-                    </Col>
-                    <Col xs={10}>
-                      <Form fluid className="filter-form-lab-filters">
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="From Date"
-                          fieldType="date"
-                          fieldName="fromDate"
-                          record={dateFilter}
-                          setRecord={setDateFilter}
-                          showLabel={false}
-                        />
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="To Date"
-                          fieldType="date"
-                          fieldName="toDate"
-                          record={dateFilter}
-                          setRecord={setDateFilter}
-                          showLabel={false}
-                        />
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="Order ID"
-                          fieldType="text"
-                          fieldName="orderNumber"
-                          record={{ orderNumber: orderNumberFilter }}
-                          setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
-                          showLabel={false}
-                        />
-                      </Form>
+                  <Orders
+                    ref={OrdersRef}
+                    order={order}
+                    setOrder={setOrder}
+                    dateFilter={dateFilter}
+                    loading={globalLoading}
+                    orderNumberFilter={orderNumberFilter}
+                    filters={tablefilters}
+                  />
 
-                      {test.id && (
-                        <Row>
-                          <Col md={24}>
-                            <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
-                          </Col>
-                        </Row>
-                      )}
-                      {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
-                    </Col>
-                  </Row>
                   <MyTab
                     data={innerTabsData}
                     activeTab={activeKey2}

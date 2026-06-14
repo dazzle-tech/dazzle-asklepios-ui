@@ -64,6 +64,7 @@ import EditResultModal from './EditResultModal';
 import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
 import MyButton from '@/components/MyButton/MyButton';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type SortType = 'asc' | 'desc';
 
@@ -739,11 +740,15 @@ const Result = forwardRef<any, Props>(
           const canEdit = row.processingStatus === 'RESULT_READY';
           const canApprove = row.processingStatus === 'RESULT_READY';
           const canReject = row.processingStatus === 'RESULT_READY';
-          const canPrint = row.processingStatus !== 'RESULT_APPROVED';
+          const canPrint = row.processingStatus === 'RESULT_APPROVED';
 
           return (
             <HStack spacing={10}>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Edit Result</Tooltip>}
+              >
                 <span>
                   <FontAwesomeIcon
                     icon={faPenToSquare}
@@ -761,7 +766,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Approve Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Approve Result</Tooltip>}
+              >
                 <span>
                   <CheckRoundIcon
                     onClick={() => {
@@ -779,7 +788,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Reject Result</Tooltip>}
+              >
                 <span>
                   <WarningRoundIcon
                     onClick={() => {
@@ -799,20 +812,33 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <FontAwesomeIcon
-                icon={faPrint}
-                className="icon-laboratory-size"
-                style={{
-                  cursor: canPrint ? 'pointer' : 'not-allowed',
-                  opacity: canPrint ? 1 : 0.4
-                }}
-                onClick={() => {
-                  if (!canPrint) return;
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Print Result</Tooltip>}
+              >
+                <span>
+                  <FontAwesomeIcon
+                    icon={faPrint}
+                    className="icon-laboratory-size"
+                    style={{
+                      cursor: canPrint ? 'pointer' : 'not-allowed',
+                      opacity: canPrint ? 1 : 0.4
+                    }}
+                    onClick={() => {
+                      if (!canPrint) return;
 
-                }}
-              />
-              
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
+                      // print logic here
+                    }}
+                  />
+                </span>
+              </Whisper>
+
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Logs</Tooltip>}
+              >
                 <FontAwesomeIcon
                   icon={faFileLines}
                   style={{ cursor: 'pointer', opacity: 0.8 }}
@@ -832,13 +858,10 @@ const Result = forwardRef<any, Props>(
         title: <Translate>REJECTED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.rejectedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.rejectedAt ? formatDateWithoutSeconds(row.rejectedAt) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.rejectedBy}
+            date={row.rejectedAt}
+          />
         )
       },
       {
@@ -846,13 +869,10 @@ const Result = forwardRef<any, Props>(
         title: <Translate>APPROVED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.approvedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.approvedAt ? formatDateWithoutSeconds(row.approvedDate) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.approvedBy}
+            date={row.approvedAt}
+          />
         )
       }
     ];

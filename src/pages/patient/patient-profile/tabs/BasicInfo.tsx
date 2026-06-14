@@ -111,6 +111,8 @@ const BasicInfo = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
       {localPatient?.incompletePatient ? (
         <MyInput
@@ -125,7 +127,7 @@ const BasicInfo = ({
           width={170}
         />
       ) : null}
-       <MyInput
+      <MyInput
         vr={validationResult}
         column
         fieldLabel="Private Patient"

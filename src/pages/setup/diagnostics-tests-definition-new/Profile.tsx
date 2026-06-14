@@ -459,7 +459,9 @@ const Profile = ({
                     fieldName="resultUnit"
                     fieldType="select"
                     selectData={unitsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={diagnosticsTestProfile}
                     setRecord={setDiagnosticsTestProfile}
@@ -694,8 +696,8 @@ useEffect(() => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
-      mainSize="xs"
-      childSize="sm"
+      mainSize="37vw"
+      childSize="47vw"
     />
   );
 };

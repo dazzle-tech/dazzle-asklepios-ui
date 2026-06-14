@@ -150,7 +150,9 @@ const Additives = ({ open, setOpen }) => {
               fieldName="unit"
               fieldType="select"
               selectData={unitsLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={additive}
               setRecord={setAdditive}

@@ -85,9 +85,10 @@ const COUNTRY_ERROR_MAP: Record<string, string> = {
   'id.required': 'Country id is required.',
   'unique.country.namecode': 'Country name or code already exists.',
   'db.constraint': 'Database constraint violation.',
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
   notfound: 'Country not found.'
 };
-
 const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
   const dispatch = useAppDispatch();
 
@@ -493,6 +494,55 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       )
     }
   ];
+const filters = (<div className="inputs-dis-flex">
+                  <div className="geo-inline-form">
+                    <Form fluid layout="inline" className="flex-dis-row">
+                      <MyInput
+                        fieldName="name"
+                        fieldType="select"
+                        column
+                        fieldLabel="Country Name"
+                        record={countryForEdit}
+                        setRecord={setCountryForEdit}
+                        selectData={enumOptions}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        width={220}
+                        required
+                      />
+                      <MyInput
+                        fieldName="code"
+                        fieldType="text"
+                        fieldLabel="Code"
+                        column
+                        record={countryForEdit}
+                        setRecord={setCountryForEdit}
+                        width={120}
+                        required
+                      />
+                      <div className="margin-top-37">
+                        <MyButton
+                          color="var(--deep-blue)"
+                          width="80px"
+                          onClick={() => handleSaveCountry(countryForEdit)}
+                        >
+                          Save
+                        </MyButton>
+                      </div>
+                      <div className="margin-top-37">
+                        <MyButton
+                          color="var(--primary-gray)"
+                          width="80px"
+                          onClick={() => setCountryForEdit({ ...newCountry })}
+                        >
+                          Clear
+                        </MyButton>
+                      </div>
+                    </Form>
+                  </div>
+
+                  {countryFiltersUI()}
+                 </div>);
 
   return (
     <>
@@ -500,56 +550,6 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
         title={<Translate>Country</Translate>}
         content={
           <>
-            <div className="inputs-dis-flex">
-              <div className="geo-inline-form">
-                <Form fluid layout="inline" className="flex-dis-row">
-                  <MyInput
-                    fieldName="name"
-                    fieldType="select"
-                    column
-                    fieldLabel="Country Name"
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    selectData={enumOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    width={220}
-                    required
-                  />
-                  <MyInput
-                    fieldName="code"
-                    fieldType="text"
-                    fieldLabel="Code"
-                    column
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    width={120}
-                    required
-                  />
-                  <div className="margin-top-37">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="80px"
-                      onClick={() => handleSaveCountry(countryForEdit)}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
-                  <div className="margin-top-37">
-                    <MyButton
-                      color="var(--primary-gray)"
-                      width="80px"
-                      onClick={() => setCountryForEdit({ ...newCountry })}
-                    >
-                      Clear
-                    </MyButton>
-                  </div>
-                </Form>
-              </div>
-
-              {countryFiltersUI()}
-            </div>
-
             <MyTable
               data={countryTableData}
               columns={countryColumns}
@@ -559,9 +559,9 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                 isCountryFiltered ? countryFilterPagination.size : countryPaginationParams.size
               }
               onPageChange={handleCountryPageChange}
+              filters={filters}
               onRowsPerPageChange={handleCountryRowsPerPageChange}
               loading={countriesFetching || byNameResult?.isFetching || byCodeResult?.isFetching}
-              filters={null}
               onRowClick={row => onSelect(row as Country)}
               rowClassName={row =>
                 selectedCountry && row.id === selectedCountry.id ? 'selected-row' : ''

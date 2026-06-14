@@ -14,13 +14,16 @@ import {
   useUpdatePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
-import { useGetActiveIngredientsActiveByNameQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import {
+  useGetActiveIngredientsActiveByNameQuery,
+  useGetActiveIngredientsByIdsMutation
+} from '@/services/setup/activeIngredients/activeIngredientsService';
 import {
   useGetBrandMedicationByIdQuery,
   useGetBrandMedicationsByActiveIdsMutation
 } from '@/services/setup/brandmedication/BrandMedicationService';
 import './styles.less';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { conjureValueBasedOnKeyFromList, extractErrorMessage } from '@/utils';
 import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -62,7 +65,7 @@ const DetailsModal = ({
   const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [tags, setTags] = React.useState<any[]>([]);
-  const [tagsLoaded, setTagsLoaded] = useState(false); 
+  const [tagsLoaded, setTagsLoaded] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showMedicationDropdown, setShowMedicationDropdown] = useState(false);
   const searchWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -72,6 +75,11 @@ const DetailsModal = ({
   const activeIngredientSearchWrapperRef = React.useRef<HTMLDivElement>(null);
 
   const [fetchPreRequestedTests] = useLazyGetActiveIngredientPreRequestedTestsQuery();
+  const [getActiveIngredientsByIds] = useGetActiveIngredientsByIdsMutation();
+  const editAiLoadedRef = React.useRef<string | null>(null);
+  const editBrandLoadedRef = React.useRef<string | null>(null);
+  const loadedMedicationIdRef = React.useRef<string | null>(null);
+  const userClearedBrandRef = React.useRef(false);
   const [testsByAiId, setTestsByAiId] = useState<Record<string, any[]>>({});
 
   const [customeinst, setCustomeinst] = useState({
@@ -176,27 +184,131 @@ const DetailsModal = ({
     }
   }, [exists]);
 
+  const getMedicationLoadKey = () =>
+    prescriptionMedication?.id != null ? String(prescriptionMedication.id) : 'new';
+
+  const blockAutoBrandLoad = () => {
+    editBrandLoadedRef.current = `${getMedicationLoadKey()}-manual`;
+  };
+
+  const resetMedicationSelectionState = () => {
+    setSelectedGeneric(null);
+    setSelectedActiveIngredient(null);
+    setSearchKeyword('');
+    setActiveIngredientKeyword('');
+    setShowMedicationDropdown(false);
+    setShowActiveIngredientDropdown(false);
+    setInst(null);
+    editAiLoadedRef.current = null;
+    editBrandLoadedRef.current = null;
+    userClearedBrandRef.current = false;
+  };
+
+  const clearBrandSelection = () => {
+    blockAutoBrandLoad();
+    setSelectedGeneric(null);
+    setSearchKeyword('');
+    setShowMedicationDropdown(false);
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      medicationsId: null,
+      genericMedicationsId: null
+    }));
+  };
+
   useEffect(() => {
     if (!open) {
-      setSearchKeyword('');
-      setActiveIngredientKeyword('');
+      loadedMedicationIdRef.current = null;
       setTagsLoaded(false);
+      userClearedBrandRef.current = false; 
+      resetMedicationSelectionState();
       return;
     }
+
     setEditingKey(prescriptionMedication?.id ?? null);
+
+    const medicationId = prescriptionMedication?.id;
+    if (!medicationId) return;
+
+    const loadKey = String(medicationId);
+    if (loadedMedicationIdRef.current === loadKey) return;
+
+    loadedMedicationIdRef.current = loadKey;
+    setTagsLoaded(false);
+    resetMedicationSelectionState();
   }, [open, prescriptionMedication?.id]);
+
+  useEffect(() => {
+    if (!open || !prescriptionMedication?.id) return;
+
+    const loadKey = String(prescriptionMedication.id);
+    if (editAiLoadedRef.current === loadKey) return;
+
+    const aiId = prescriptionMedication.activeIngredientId;
+    if (!aiId) {
+      editAiLoadedRef.current = loadKey;
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const ingredients = await getActiveIngredientsByIds([aiId]).unwrap();
+        if (cancelled) return;
+        if (loadedMedicationIdRef.current !== loadKey) return;
+
+        const ai = ingredients?.[0];
+        if (ai && String(ai.id) === String(aiId)) {
+          setSelectedActiveIngredient(ai);
+          setActiveIngredientKeyword(ai.name ?? '');
+          try {
+            await getBrandsByActive([ai.id]).unwrap();
+          } catch (e) {
+            console.error('Error fetching brands for edit:', e);
+          }
+        }
+
+        editAiLoadedRef.current = loadKey;
+      } catch (e) {
+        console.error('Error loading active ingredient for edit:', e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    open,
+    prescriptionMedication?.id,
+    prescriptionMedication?.activeIngredientId,
+    getActiveIngredientsByIds,
+    getBrandsByActive
+  ]);
+
+  useEffect(() => {
+    if (!open || !prescriptionMedication?.id || !Brand || !medIdForBrand) return;
+    if (String(Brand.id) !== String(medIdForBrand)) return;
+
+    const loadKey = String(prescriptionMedication.id);
+    if (
+      editBrandLoadedRef.current === loadKey ||
+      editBrandLoadedRef.current === `${loadKey}-manual`
+    ) {
+      return;
+    }
+
+    if (userClearedBrandRef.current) return;
+
+    setSelectedGeneric(Brand);
+    setSearchKeyword(Brand.name ?? '');
+    editBrandLoadedRef.current = loadKey;
+  }, [open, prescriptionMedication?.id, Brand, medIdForBrand]);
 
   useEffect(() => {
     const hasMedication = prescriptionMedication?.id != null;
 
-    if (hasMedication && Brand) {
-      setSelectedGeneric(Brand);
-
-      if (Brand?.activeIngredients?.length) {
-        setSelectedActiveIngredient(Brand.activeIngredients[0]);
-        setActiveIngredientKeyword(Brand.activeIngredients[0]?.name ?? '');
-      }
-
+    if (hasMedication) {
       setSelectedOption(prescriptionMedication?.instructionsType);
       setInstruc(prescriptionMedication?.administrationInstructions);
 
@@ -264,8 +376,18 @@ const DetailsModal = ({
       }
     }
   }, [
+    open,
     prescriptionMedication?.id,
-    Brand,
+    prescriptionMedication?.instructionsType,
+    prescriptionMedication?.administrationInstructions,
+    prescriptionMedication?.indicationUse,
+    prescriptionMedication?.indicationUseLkey,
+    prescriptionMedication?.parametersToMonitor,
+    prescriptionMedication?.indicationIcd,
+    prescriptionMedication?.dose,
+    prescriptionMedication?.doesUnit,
+    prescriptionMedication?.frequency,
+    prescriptionMedication?.rout,
     customeInstructions,
     indicationLovQueryResponse,
     setPrescriptionMedications,
@@ -333,8 +455,8 @@ const DetailsModal = ({
     const aiList = selectedGeneric?.activeIngredients?.length
       ? selectedGeneric.activeIngredients
       : selectedActiveIngredient
-      ? [selectedActiveIngredient]
-      : [];
+        ? [selectedActiveIngredient]
+        : [];
 
     if (!aiList.length) {
       setTestsByAiId({});
@@ -488,7 +610,8 @@ const DetailsModal = ({
       administrationInstructionValue = adminInstructions.administrationInstructions.join(',');
     }
 
-    const selectedMedicationId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
+    const selectedMedicationId = selectedGeneric?.id ?? null;
+    console.log("selectedMedicationId: ", selectedMedicationId);
 
     const isChronic = Boolean(prescriptionMedication?.chronicMedication);
     const durationRaw = prescriptionMedication?.duration;
@@ -534,15 +657,14 @@ const DetailsModal = ({
     }
 
     const indicationIcd = prescriptionMedication?.indicationIcd;
-    const indicationManual = String(prescriptionMedication?.indicationManually ?? '').trim();
-    const hasIndication =
-      (indicationIcd !== null &&
-        indicationIcd !== undefined &&
-        String(indicationIcd).trim() !== '') ||
-      indicationManual.length > 0;
+    const hasIcd10 =
+      indicationIcd !== null &&
+      indicationIcd !== undefined &&
+      String(indicationIcd).trim() !== '' &&
+      String(indicationIcd).trim() !== '0';
 
-    if (!hasIndication) {
-      dispatch(notify({ msg: 'Indication Is missing', sev: 'warning' }));
+    if (!hasIcd10) {
+      dispatch(notify({ msg: 'Please select ICD-10', sev: 'warning' }));
       return;
     }
 
@@ -568,8 +690,8 @@ const DetailsModal = ({
         selectedOption === OPTION_MANUAL
           ? String(inst ?? '')
           : selectedOption === OPTION_PREDEFINED
-          ? String(inst ?? '')
-          : null,
+            ? String(inst ?? '')
+            : null,
       dose:
         selectedOption === OPTION_CUSTOM
           ? customeinst?.dose ?? null
@@ -614,6 +736,7 @@ const DetailsModal = ({
     try {
       const medicationId = prescriptionMedication?.id;
       if (medicationId) {
+        console.log("createPayload: ", createPayload)
         await updatePrescriptionMedication({
           id: Number(medicationId),
           body: {
@@ -661,7 +784,6 @@ const DetailsModal = ({
         setOpen(false);
       }
     } catch (error: any) {
-      console.log('Save prescription medication error:', error);
       if (error?.originalStatus === 409) return;
 
       const isChronicConflict =
@@ -679,18 +801,39 @@ const DetailsModal = ({
         return;
       }
 
-      let errorMessage = 'Save failed';
-      if (error?.data) {
-        if (typeof error.data === 'string') errorMessage = error.data;
-        else if (error.data?.message) errorMessage = error.data.message;
-      }
-      dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Save failed',
+          sev: 'warning'
+        })
+      );
     }
   };
 
   const handleSearchActiveIngredient = (value: string) => {
     setActiveIngredientKeyword(value);
     setShowActiveIngredientDropdown(!!value);
+
+    const normalizedValue = value.trim().toLowerCase();
+    const selectedName = (selectedActiveIngredient?.name ?? '').trim().toLowerCase();
+
+    if (normalizedValue !== selectedName) {
+      if (selectedActiveIngredient) {
+        setSelectedActiveIngredient(null);
+      }
+      userClearedBrandRef.current = true;
+      setPrescriptionMedications(prev => ({
+        ...prev,
+        activeIngredientId: null,
+        medicationsId: null,
+        genericMedicationsId: null
+      }));
+      setSelectedGeneric(null);
+      setSearchKeyword('');
+      setShowMedicationDropdown(false);
+      blockAutoBrandLoad();
+      setInst(null);
+    }
   };
 
   const handleActiveIngredientClick = async (activeIngredient: any) => {
@@ -700,6 +843,16 @@ const DetailsModal = ({
     setSelectedGeneric(null);
     setSearchKeyword('');
     setShowMedicationDropdown(false);
+    userClearedBrandRef.current = true;
+    blockAutoBrandLoad();
+    setInst(null);
+
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      activeIngredientId: activeIngredient?.id ?? null,
+      medicationsId: null,
+      genericMedicationsId: null
+    }));
 
     if (activeIngredient?.id) {
       try {
@@ -722,6 +875,12 @@ const DetailsModal = ({
     setSelectedGeneric(Generic);
     setSearchKeyword(Generic?.name ?? '');
     setShowMedicationDropdown(false);
+    editBrandLoadedRef.current = getMedicationLoadKey();
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      medicationsId: Generic?.id ?? null,
+      genericMedicationsId: Generic?.id ?? null
+    }));
   };
 
   const handleSearch = value => {
@@ -731,6 +890,11 @@ const DetailsModal = ({
     }
     setSearchKeyword(value);
     setShowMedicationDropdown(!!value);
+
+    const selectedName = (selectedGeneric?.name ?? '').trim();
+    if (selectedGeneric && value.trim() !== selectedName) {
+      clearBrandSelection();
+    }
   };
 
   const handleCleare = () => {
@@ -751,6 +915,10 @@ const DetailsModal = ({
     setIndicationsIcd({ indicationIcd: null });
     setShowMedicationDropdown(false);
     setShowActiveIngredientDropdown(false);
+    loadedMedicationIdRef.current = null;
+    editAiLoadedRef.current = null;
+    editBrandLoadedRef.current = null;
+    userClearedBrandRef.current = false; 
   };
 
   const preRequestedTests = Object.values(testsByAiId ?? {})
@@ -800,12 +968,19 @@ const DetailsModal = ({
         }
         size="80vw"
         leftTitle={
-          <Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>
+          selectedGeneric?.name
+            ? String(selectedGeneric.name)
+            : selectedActiveIngredient?.name
+              ? String(selectedActiveIngredient.name)
+              : 'Select Medication'
         }
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
-            <ActiveIngrediantList selectedGeneric={selectedGeneric} />
+            <ActiveIngrediantList
+              selectedGeneric={selectedGeneric}
+              selectedActiveIngredient={selectedActiveIngredient}
+            />
             {!!preRequestedTestNames.length && (
               <div style={{ marginTop: 12 }}>
                 <Text className="font-style">Pre-requested Tests</Text>
@@ -971,6 +1146,7 @@ const DetailsModal = ({
 
                       <div className="prescription-full-block">
                         <Instructions
+                          key={`${selectedActiveIngredient?.id ?? 'none'}-${selectedGeneric?.id ?? 'none'}`}
                           selectedOption={selectedOption}
                           setCustomeinst={setCustomeinst}
                           customeinst={customeinst}
@@ -1000,6 +1176,7 @@ const DetailsModal = ({
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
                             selectDataValue="key"
                             fieldName="durationType"
                             record={safeRecord}
@@ -1088,6 +1265,7 @@ const DetailsModal = ({
                             fieldLabel="Indication Use"
                             selectData={indicationLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
                             record={safeRecord}
@@ -1119,6 +1297,7 @@ const DetailsModal = ({
                             fieldLabel="Administration Instructions"
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
                             selectDataValue="key"
                             fieldName="administrationInstructions"
                             record={adminInstructions}
@@ -1132,17 +1311,17 @@ const DetailsModal = ({
                             value={
                               adminInstructions?.administrationInstructions?.length
                                 ? adminInstructions.administrationInstructions
-                                    .map(key => {
-                                      return (
-                                        conjureValueBasedOnKeyFromList(
-                                          administrationInstructionsLovQueryResponse?.object ?? [],
-                                          key,
-                                          'lovDisplayVale'
-                                        ) || String(key)
-                                      );
-                                    })
-                                    .filter(Boolean)
-                                    .join('\n')
+                                  .map(key => {
+                                    return (
+                                      conjureValueBasedOnKeyFromList(
+                                        administrationInstructionsLovQueryResponse?.object ?? [],
+                                        key,
+                                        'lovDisplayVale'
+                                      ) || String(key)
+                                    );
+                                  })
+                                  .filter(Boolean)
+                                  .join('\n')
                                 : ''
                             }
                             className="indication-display-field"
@@ -1216,7 +1395,7 @@ const DetailsModal = ({
       <MyModal
         open={openOrderModel}
         setOpen={setOpenOrderModel}
-        size={'full'}
+        size="full"
         title="Add Order"
         content={
           <div dir={dir}>

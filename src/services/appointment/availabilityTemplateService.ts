@@ -133,12 +133,12 @@ export const availabilityTemplateService = createApi({
 
     getAvailabilityTemplatesByTemplateType: builder.query<
       AvailabilityTemplateResponseVM[],
-      { templateType: string }
+      { templateType: string } & PagedParams
     >({
-      query: ({ templateType }) => ({
+      query: ({ templateType, page = 0, size = 1000, sort = 'id,asc' }) => ({
         url: '/api/patient/availability-templates/by-facility-and-type',
         method: 'GET',
-        params: { templateType }
+        params: { templateType, page, size, sort }
       }),
       providesTags: ['AvailabilityTemplate']
     }),
@@ -206,7 +206,7 @@ export const availabilityTemplateService = createApi({
       PagedParams
     >({
       query: ({ page, size, sort = 'id,asc' }) => ({
-        url: '/api/patient/availability-templates/by-facility-and-publish-status',
+        url: '/api/patient/availability-templates/by-facility-and-publish-status-and-bookable-department',
         method: 'GET',
         params: { page, size, sort }
       }),

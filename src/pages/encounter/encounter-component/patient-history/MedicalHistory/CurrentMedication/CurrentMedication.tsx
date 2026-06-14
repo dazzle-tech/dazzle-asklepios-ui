@@ -23,6 +23,7 @@ import { MdDelete, MdModeEdit } from 'react-icons/md';
 import AddCurrentMedication from './AddCurrentMedication';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const CurrentMedication = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -160,40 +161,6 @@ const tableData = useMemo(
 );
 
 const totalCount = medicationsResponse?.totalCount ?? 0;
-
-const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) {
-    return <span>-</span>;
-  }
-
-  return <span>{fullName || login}</span>;
-};
-
-const UserDateCell = ({
-  login,
-  date
-}: {
-  login?: string | null;
-  date?: string | null;
-}) => {
-  if (!login && !date) {
-    return <span>-</span>;
-  }
-
-  return (
-    <>
-      <UserFullNameCell login={login} />
-      <br />
-      <span className="date-table-style">
-        {date ? formatDateWithoutSeconds(date) : ''}
-      </span>
-    </>
-  );
-};
 
 
 const columns = [

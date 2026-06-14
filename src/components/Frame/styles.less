@@ -464,6 +464,7 @@
   min-width: 0;
   overflow-y: hidden;
   margin-top: 16px;
+  width: 100px !important;
   @media (max-width: 685px) {
     margin-top: 40px;
   }
@@ -723,5 +724,66 @@
 .rs-theme-dark {
   .css-cio26m-MuiButtonBase-root-MuiMenuItem-root.Mui-disabled {
     opacity: 0.6 !important;
+  }
+}
+
+
+
+/* =========================
+   Frame Responsive Fix
+   ========================= */
+
+.frame,
+.frame .rs-container,
+.frame .rs-content,
+.page-container,
+.content-with-sticky,
+.main-content-area {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.content-with-sticky {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.main-content-area {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 680px) {
+  .page-container {
+    width: calc(100vw - 48px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: 48px !important;
+  }
+
+  .frame .rs-content {
+    padding: 0 4px !important;
+    overflow-x: hidden !important;
+  }
+
+  .content-with-sticky {
+    flex-direction: column !important;
+  }
+
+  .main-content-area {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+  }
+
+  .sticky-sidebar-area {
+    display: none !important;
+  }
+
+  .scroll-container-collapsed {
+    width: 48px !important;
+  }
+
+  .MuiDrawer-paper {
+    width: 48px !important;
   }
 }

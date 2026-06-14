@@ -116,7 +116,8 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   userId: undefined,
   departmentId: undefined,
   isActive: true,
-  isDefault: false
+  isDefault: false,
+  appointmentBookingAllowed: false
 };
 
 // Patient Attachment Constructors
@@ -245,6 +246,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
   workingDays: [],
+  nationalNumber:null
 };
 
 // ------------------- Language Translation -------------------
@@ -338,7 +340,11 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  modality:null
 };
+
+
+
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
 {
@@ -1067,7 +1073,8 @@ export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGene
   deferred: false,
   deferredAt: null,
   scope: '',
-  holidayHandlingMode: null
+  holidayHandlingMode: null,
+  policyAssignmentIds: []
 };
 
 export const newApplyAvailabilityTemplateResponseVM: modelTypes.ApplyAvailabilityTemplateResponseVM = {
@@ -1166,15 +1173,18 @@ export const newDiagnosticTestAppointmentRescheduleDTO: modelTypes.DiagnosticTes
   rescheduleReason: ''
 };
 
-export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
+export const newAppointmentSearchFilterMultiDepartmentDTO: modelTypes.AppointmentSearchFilterMultiDepartmentDTO = {
   facility: null,
-  department: null,
+  departmentIds: null,
   resourceType: null,
   resourceId: null,
   status: null,
   bookingMode: null,
   patientId: null,
 };
+
+/** @deprecated Use newAppointmentSearchFilterMultiDepartmentDTO */
+export const newAppointmentFromTemplateSearchFilterDTO = newAppointmentSearchFilterMultiDepartmentDTO;
 
 export const newBulkAppointmentRescheduleDTO: modelTypes.BulkAppointmentRescheduleDTO = {
   originalAvailabilityGenerationBatchId: 0,
@@ -2893,6 +2903,44 @@ export const newPolicyDefinitionUpdateDTO: modelTypes.PolicyDefinitionUpdateDTO 
   name: '',
   description: ''
 };
+export const newPolicyAssignment: modelTypes.PolicyAssignment = {
+  id: undefined,
+  policyId: undefined,
+  policy: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isActive: true,
+  isRequired: false,
+};
+
+export const newPolicyAssignmentCreateDTO: modelTypes.PolicyAssignmentCreateDTO = {
+  policyId: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isRequired: false,
+};
+
+export const newPolicyAssignmentUpdateDTO: modelTypes.PolicyAssignmentUpdateDTO = {
+  id: undefined,
+  policyId: undefined,
+  facilityId: undefined,
+  resourceType: '',
+  resourceId: undefined,
+  isActive: true,
+  isRequired: false,
+};
+
+export const newAppointmentPolicyAssignment: modelTypes.AppointmentPolicyAssignment = {
+  id: undefined,
+  policyId: undefined,
+  policyAssignmentId: undefined,
+  appointment: undefined,
+  isApplied: false,
+  isRequired: false,
+};
+
 export const newSkillDefinition: modelTypes.SkillDefinition = {
   id: undefined,
   facilityId: undefined,

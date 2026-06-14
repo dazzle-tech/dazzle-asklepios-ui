@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Calendar as RsCalendar, DatePicker, Stack, Text, TimePicker } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import { useLazySearchAppointmentsQuery } from '@/services/appointment/appointmentService';
+import { useAppSelector } from '@/hooks';
 
 type Props = {
   open: boolean;
@@ -15,6 +16,9 @@ const normalizeLocalDayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth
 const normalizeLocalDayEnd = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
 const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment }: Props) => {
+  const mode = useAppSelector((state: any) => state.ui.mode);
+  const isDark = mode === 'dark';
+
   const [dateFrom, setDateFrom] = useState<Date>(new Date());
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<'agenda'>('agenda');
@@ -71,7 +75,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
         const res = await searchAppointments({
           filter: {
             facility: Number(facilityId),
-            department: Number(departmentId),
+            departmentIds: departmentId != null ? [Number(departmentId)] : null,
             resourceType: null,
             resourceId: null,
             status: null,
@@ -131,6 +135,28 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
     });
   }, [slots, timeFrom, timeTo]);
 
+  // Dark mode color tokens
+  const colors = {
+    border: isDark ? '#737c8f' : '#dbe2ea',
+    tableHeadBg: isDark ? '#1e2533' : '#f8fafc',
+    tableHeadText: isDark ? '#94a3b8' : '#334155',
+    tableHeadBorder: isDark ? '#737c8f' : '#e2e8f0',
+    rowBorder: isDark ? '#737c8f' : '#eef2f7',
+    dateCellColor: isDark ? '#94a3b8' : '#475569',
+    timeCellColor: isDark ? '#f1f5f9' : '#0f172a',
+    mutedText: isDark ? '#64748b' : '#94a3b8',
+    loadingText: isDark ? '#94a3b8' : '#64748b',
+    toLabel: isDark ? '#64748b' : '#94a3b8',
+    timeFilterLabel: isDark ? '#94a3b8' : '#475569',
+    calendarHeaderText: isDark ? '#e2e8f0' : undefined,
+    calendarBorder: isDark ? '#737c8f' : '#dbe2ea',
+    eventText: isDark ? '#cbd5e1' : '#334155',
+    badgeBg: isDark ? '#14532d' : '#dcfce7',
+    badgeText: isDark ? '#86efac' : '#166534',
+    badgeBorder: isDark ? '#166534' : '#86efac',
+    rowHoverBg: isDark ? '#1a2235' : '#f8fafc',
+  };
+
   return (
     <MyModal
       open={open}
@@ -161,7 +187,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                     borderColor: dateRangeInvalid ? '#ef4444' : undefined
                   }}
                 />
-                <Text size="sm" style={{ color: '#94a3b8' }}>
+                <Text size="sm" style={{ color: colors.toLabel }}>
                   to
                 </Text>
                 <DatePicker
@@ -185,7 +211,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
           </div>
 
           <Stack spacing={10} alignItems="center" wrap style={{ padding: '4px 0' }}>
-            <Text size="sm" style={{ fontWeight: 600, color: '#475569' }}>
+            <Text size="sm" style={{ fontWeight: 600, color: colors.timeFilterLabel }}>
               Time filter
             </Text>
             <TimePicker
@@ -196,7 +222,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
               cleanable
               style={{ width: 110 }}
             />
-            <Text size="sm" style={{ color: '#94a3b8' }}>
+            <Text size="sm" style={{ color: colors.toLabel }}>
               -
             </Text>
             <TimePicker
@@ -213,22 +239,22 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
           </Stack>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12 }}>
-            <div style={{ maxHeight: '58vh', overflowY: 'auto', border: '1px solid #dbe2ea', borderRadius: 8 }}>
+            <div style={{ maxHeight: '58vh', overflowY: 'auto', border: `1px solid ${colors.border}`, borderRadius: 8 }}>
               {isFetching ? (
-                <div style={{ fontSize: 13, color: '#64748b', padding: 12 }}>Loading free appointments...</div>
+                <div style={{ fontSize: 13, color: colors.loadingText, padding: 12 }}>Loading free appointments...</div>
               ) : slots.length === 0 && !dateRangeInvalid ? (
-                <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>No NEW appointments for selected date range.</div>
+                <div style={{ fontSize: 13, color: colors.mutedText, padding: 12 }}>No NEW appointments for selected date range.</div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc', color: '#334155' }}>
-                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', width: 180 }}>
+                    <tr style={{ background: colors.tableHeadBg, color: colors.tableHeadText }}>
+                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: `1px solid ${colors.tableHeadBorder}`, width: 180 }}>
                         Date
                       </th>
-                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', width: 170 }}>
+                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: `1px solid ${colors.tableHeadBorder}`, width: 170 }}>
                         Time
                       </th>
-                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #e2e8f0' }}>Event</th>
+                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: `1px solid ${colors.tableHeadBorder}` }}>Event</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -254,18 +280,18 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                         <tr
                           key={String(slot?.id ?? slot?.key)}
                           onClick={() => onSelectAppointment(slot)}
-                          style={{ cursor: 'pointer', borderBottom: '1px solid #eef2f7' }}
+                          style={{ cursor: 'pointer', borderBottom: `1px solid ${colors.rowBorder}` }}
                         >
-                          <td style={{ padding: '10px 12px', color: '#475569' }}>{dateLabel}</td>
-                          <td style={{ padding: '10px 12px', color: '#0f172a', fontWeight: 600 }}>{timeLabel}</td>
+                          <td style={{ padding: '10px 12px', color: colors.dateCellColor }}>{dateLabel}</td>
+                          <td style={{ padding: '10px 12px', color: colors.timeCellColor, fontWeight: 600 }}>{timeLabel}</td>
                           <td style={{ padding: '10px 12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span
                                 style={{
                                   fontSize: 11,
-                                  color: '#166534',
-                                  background: '#dcfce7',
-                                  border: '1px solid #86efac',
+                                  color: colors.badgeText,
+                                  background: colors.badgeBg,
+                                  border: `1px solid ${colors.badgeBorder}`,
                                   borderRadius: 999,
                                   padding: '2px 8px',
                                   fontWeight: 600
@@ -273,7 +299,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                               >
                                 NEW
                               </span>
-                              <span style={{ color: '#334155' }}>Available appointment</span>
+                              <span style={{ color: colors.eventText }}>Available appointment</span>
                             </div>
                           </td>
                         </tr>
@@ -284,9 +310,9 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
               )}
             </div>
 
-            <div style={{ border: '1px solid #dbe2ea', borderRadius: 8, padding: 8 }}>
+            <div style={{ border: `1px solid ${colors.calendarBorder}`, borderRadius: 8, padding: 8 }}>
               <Stack justifyContent="space-between" alignItems="center" style={{ marginBottom: 6 }}>
-                <Text style={{ fontWeight: 600 }}>
+                <Text style={{ fontWeight: 600, color: colors.calendarHeaderText }}>
                   {dateFrom.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </Text>
                 <Button

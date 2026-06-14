@@ -5,7 +5,7 @@ import { Form, Divider } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
@@ -45,7 +45,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
   const [updateProcedure, { isLoading: isUpdating }] = useUpdateProcedureMutation();
 
   const facilityListRequest: ListRequest = { ...initialListRequest };
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
 
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');

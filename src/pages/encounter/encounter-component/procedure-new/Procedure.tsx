@@ -33,6 +33,7 @@ import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedure
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -302,40 +303,6 @@ const Referrals = (props: any) => {
   }, [icdDiagnoses]);
 
 
-const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) {
-    return <span>-</span>;
-  }
-
-  return <span>{fullName || login}</span>;
-};
-
-    const UserDateCell = ({
-      login,
-      date
-    }: {
-      login?: string | null;
-      date?: string | null;
-    }) => {
-      if (!login && !date) {
-        return <span>-</span>;
-      }
-
-      return (
-        <>
-          <UserFullNameCell login={login} />
-          <br />
-          <span className="date-table-style">
-            {date ? formatDateWithoutSeconds(date) : ''}
-          </span>
-        </>
-      );
-    };
-
   const tableColumns = useMemo(
     () => [
       {
@@ -353,7 +320,6 @@ const UserFullNameCell = ({ login }: { login?: string | null }) => {
           if (!proceduresByIds && procedureIds.length > 0) {
             return <TableLoader />;
           }
-
           const proc = proceduresMap.get(Number(rowData.procedureId));
           return proc?.name ?? '';
         }

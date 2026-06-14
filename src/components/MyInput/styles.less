@@ -1,4 +1,24 @@
 .my-input-container {
+
+  // for one health theme (we will remove it later)
+  .rs-input:focus,
+  .rs-input:focus-visible,
+  .rs-input-group:focus-within,
+  .rs-input-group.rs-input-group-focus,
+  .rs-picker-date .rs-picker-toggle:focus,
+  .rs-picker-date .rs-picker-toggle:focus-visible,
+  .rs-picker-toggle:focus,
+  .rs-picker-toggle:focus-visible {
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-blue-rgb), 0.2) !important;
+    outline: none !important;
+  }
+
+  .rs-toggle-checked .rs-toggle-presentation {
+    // for one health theme
+    background-color: var(--primary-blue) !important;
+  }
+
   .label-placement .rs-badge-content {
     top: -5px;
   }
@@ -29,7 +49,7 @@
   }
 }
 
-.rs-picker-popup {
+.my-input-calendar-popup {
   z-index: 9999 !important;
 }
 
@@ -333,4 +353,73 @@
   width: auto !important;
 
   min-width: 100% !important;
+}
+
+.my-input-calendar-popup .rs-calendar-table-cell-selected .rs-calendar-table-cell-content {
+  // for one health theme (we will remove it later)
+  background-color: var(--primary-blue) !important;
+}
+
+.my-input-calendar-popup .rs-calendar-table-cell-is-today .rs-calendar-table-cell-content {
+  // for one health theme (we will remove it later)
+  box-shadow: inset 0 0 0 1px var(--primary-blue) !important;
+}
+
+
+.my-input-calendar-popup .rs-calendar-table-cell-content:hover {
+  // for one health theme (we will remove it later)
+  background-color: var(--one-health-theme-hover) !important;
+  color: var(--primary-blue) !important;
+}
+
+// for one health theme (we will remove it later)
+.rs-picker-select-menu-item:hover {
+  color: var(--primary-blue) !important;
+  background-color: var(--one-health-theme-hover) !important;
+}
+
+// for one health theme (we will remove it later)
+.rs-picker-select-menu-item-active {
+  color: var(--primary-blue) !important;
+  background-color: var(--one-health-theme-hover) !important;
+}
+
+.my-input-picker-popup .rs-check-item:hover,
+.my-input-picker-popup .rs-check-item:focus,
+.my-input-picker-popup .rs-check-item.rs-check-item-focus {
+  background-color: var(--one-health-theme-hover) !important;
+  color: var(--primary-blue) !important;
+}
+
+
+.my-input-calendar-popup {
+  .rs-btn-primary {
+    // for one health theme (we will remove it later)
+    background-color: var(--primary-blue) !important;
+  }
+}
+
+.rs-picker-select-menu-item.rs-picker-select-menu-item-focus {
+  background-color: var(--one-health-theme-hover) !important;
+  color: var(--primary-blue) !important;
+
+
+
+.rs-picker-select-menu,
+.rs-picker-check-menu {
+  max-width: calc(100vw - 40px) !important;
+  overflow-x: hidden !important;
+}
+
+.rs-picker-select-menu-item,
+.rs-picker-check-menu-item,
+.rs-picker-menu-item {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+}
+
+.rs-picker-popup {
+  z-index: 9999 !important;
 }

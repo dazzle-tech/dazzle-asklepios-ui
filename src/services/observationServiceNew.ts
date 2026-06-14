@@ -12,10 +12,13 @@ export const observationServiceNew = createApi({
         method: 'GET'
       })
     }),
-    getNurseSummaryReportPdf: builder.query<Blob, { encounterId: number }>({
-      query: ({ encounterId }) => ({
+    getNurseSummaryReportPdf: builder.query<Blob, { encounterId: number,lang:string }>({
+      query: ({ encounterId ,lang}) => ({
         url: `/api/analytics/nurse-summary/${encounterId}/pdf`,
         method: 'GET',
+        params:{
+          lang
+        },
         responseHandler: response => response.blob()
       })
     }),
@@ -25,13 +28,24 @@ export const observationServiceNew = createApi({
         method: 'GET'
       })
     }),
-    getVisitReportPdf: builder.query<Blob, { encounterId: number }>({
-      query: ({ encounterId }) => ({
+    getVisitReportPdf: builder.query<
+      Blob,
+      {
+        encounterId: number;
+        timezone: string;
+        lang?: string;
+      }
+    >({
+      query: ({ encounterId, timezone, lang = 'en' }) => ({
         url: `/api/analytics/visit-report/${encounterId}/pdf`,
         method: 'GET',
-        responseHandler: response => response.blob()
-      })
-    })
+        params: {
+          timezone,
+          lang,
+        },
+        responseHandler: response => response.blob(),
+      }),
+    }),
   })
 });
 

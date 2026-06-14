@@ -132,7 +132,9 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
                     fieldType="select"
                     fieldName="dosageLkey"
                     selectData={dosageLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"    
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+    
                     selectDataValue="key"
                     record={medicationReconciliation}
                     setRecord={setMedicationReconciliation}
@@ -146,7 +148,9 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
                     fieldType="select"
                     fieldName="routeLkey"
                     selectData={roaLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={medicationReconciliation}
                     setRecord={setMedicationReconciliation}
@@ -172,7 +176,9 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
                     fieldType="select"
                     fieldName="frequencyLkey"
                     selectData={durationLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={medicationReconciliation}
                     setRecord={setMedicationReconciliation}

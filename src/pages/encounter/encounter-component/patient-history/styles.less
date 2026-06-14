@@ -13,7 +13,9 @@
     width: 95%;
     border: 0.1px solid var(--rs-border-primary);
     border-radius: 8px;
-    box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
+    box-shadow:
+      0px 0px 0px 1px rgba(152, 161, 178, 0.1),
+      0px 1px 4px rgba(69, 75, 87, 0.12),
       0px 0px 2px rgba(0, 0, 0, 0.08);
 
     .medical-header-div {
@@ -22,14 +24,17 @@
       justify-content: space-between;
       position: sticky;
       top: 0;
-      background-color: #ffffff;
       z-index: 10;
+
       padding: 13px 15px 16px 15px;
+
+      background-color: var(--one-health-theme-header) !important;
 
       .medical-title-div {
         display: flex;
         font-size: 14px;
-        font-family: 'Manrope Bold' !important;
+        font-family: var(--font-family, 'Manrope Bold') !important;
+        color: var(--primary-blue) !important;
       }
     }
 
@@ -41,43 +46,55 @@
       background-color: #ffffff;
       border: 1px solid var(--rs-border-primary) !important;
     }
+
     .medical-table-div2 {
       // padding: 15px 20px;
     }
+
     .medical-table-div {
       padding: 15px 20px;
     }
   }
 }
 
-/* Patient History Summary Styles */
+/* ========================================= */
+/* Patient History Summary */
+/* ========================================= */
 
 .patient-history-title {
   display: flex;
   align-items: center;
   gap: 8px;
+
   font-size: 16px;
   font-weight: bold;
   color: #333;
+
   margin-top: 0;
 }
 
 .patient-history-icon {
-  color: #2563eb;
+  color: var(--primary-blue);
   font-size: 20px;
 }
 
 .patient-history-card {
   display: flex;
-  background-color: #f8f9ff;
+
+  // for the one health theme(don`t remove the commented code)
+  // background-color: #f8f9ff;
+
+  background-color: var(--one-health-theme-hover);
+
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--rs-border-primary);
+
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.14);
 }
 
 .patient-history-blue-line {
   width: 4px;
-  background-color: #2563eb;
+  background-color: var(--primary-blue);
   flex-shrink: 0;
 }
 
@@ -92,17 +109,37 @@
   line-height: 1.6;
 }
 
+/* ========================================= */
+/* Dark Mode */
+/* ========================================= */
+
 .dark {
   .medical-main-container {
-  background-color: #121212;
+    background-color: #121212;
   }
+
+  .medical-container-div {
+    background-color: var(--dark-black);
+  }
+
+  .medical-header-div {
+    background-color: rgba(var(--primary-blue-rgb), 0.12) !important;
+  }
+
   .patient-history-title {
     color: var(--white) !important;
   }
+
+  .patient-history-card {
+    background-color: rgba(var(--primary-blue-rgb), 0.08);
+    border-color: rgba(var(--primary-blue-rgb), 0.18);
+  }
+
+  .patient-history-content {
+    background-color: rgba(var(--primary-blue-rgb), 0.08) !important;
+  }
+
   .patient-history-text {
-  color: var(--white);
-}
-.patient-history-content {
-  background-color: rgb(49, 49, 49) !important;
-}
+    color: var(--white);
+  }
 }

@@ -24,14 +24,14 @@ export const userDepartmentService = createApi({
     }),
 
     // GET /api/user-departments/user/{userId}/active
-   getActiveUserDepartmentsByUser: builder.query<
-  UserDepartment[],
-  { userId: number; facilityId: number | string }
->({
-  query: ({ userId }) =>
-    `/api/setup/user-departments/user/${userId}/active`,
-  providesTags: ['UserDepartment'],
-}),
+    getActiveUserDepartmentsByUser: builder.query<
+      UserDepartment[],
+      { userId: number; facilityId: number | string }
+    >({
+      query: ({ userId }) =>
+        `/api/setup/user-departments/user/${userId}/active`,
+      providesTags: ['UserDepartment'],
+    }),
 
 
     // GET /api/user-departments/user/{userId}/default
@@ -61,6 +61,24 @@ export const userDepartmentService = createApi({
       }),
       invalidatesTags: ['UserDepartment'],
     }),
+
+    // PATCH /api/setup/user-departments/{id}/toggles
+    updateUserDepartmentToggles: builder.mutation<
+      UserDepartment,
+      {
+        id: number | string;
+        isDefault?: boolean;
+        appointmentBookingAllowed?: boolean;
+      }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/api/setup/user-departments/${id}/toggles`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['UserDepartment'],
+    }),
+
   }),
 });
 
@@ -73,5 +91,7 @@ export const {
   useGetDefaultUserDepartmentByUserQuery,
   useLazyGetDefaultUserDepartmentByUserQuery,
   useAddUserDepartmentMutation,
-  useDeleteUserDepartmentMutation
+  useDeleteUserDepartmentMutation,
+  useUpdateUserDepartmentTogglesMutation,
+
 } = userDepartmentService;

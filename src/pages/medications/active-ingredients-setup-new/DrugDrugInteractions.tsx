@@ -281,7 +281,9 @@ const [sortType, setSortType] = useState<"asc" | "desc">("asc");
             <MyInput
               fieldType="select"
               selectData={severityLovQueryResponseData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="lovDisplayVale"
               fieldName="severity"
               width={180}

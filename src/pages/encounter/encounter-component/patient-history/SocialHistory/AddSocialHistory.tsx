@@ -304,7 +304,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       <CollapsibleSection
         title={<Translate>Smoking History</Translate>}
         icon={faSmoking}
-        color="#415be7"
+        color='var(--primary-blue)'
         isOpen={smokingExpanded}
         onToggle={() => setSmokingExpanded(!smokingExpanded)}
         badge={record?.isCurrentSmoker ? 'Active' : record?.isPreviousSmoker ? 'Former' : null}
@@ -401,7 +401,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       <CollapsibleSection
         title={<Translate>Alcohol Consumption</Translate>}
         icon={faWineGlass}
-        color="#415be7"
+        color='var(--primary-blue)'
         isOpen={alcoholExpanded}
         onToggle={() => setAlcoholExpanded(!alcoholExpanded)}
         badge={record.alcoholConsumption ? 'Active' : null}
@@ -474,7 +474,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="route"
                 fieldType="select"
                 selectData={routeLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -487,7 +489,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="frequency"
                 fieldType="select"
                 selectData={freqLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -501,7 +505,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       <CollapsibleSection
         title={<Translate>Health Conditions</Translate>}
         icon={faHeartbeat}
-        color="#415be7"
+        color='var(--primary-blue)'
         isOpen={healthExpanded}
         onToggle={() => setHealthExpanded(!healthExpanded)}
       >
@@ -513,7 +517,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             fieldName="physicalLimitation"
             fieldType="select"
             selectData={physicalLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -527,7 +533,9 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             fieldName="diagnosedEatingDisorders"
             fieldType="select"
             selectData={diagnoseLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}

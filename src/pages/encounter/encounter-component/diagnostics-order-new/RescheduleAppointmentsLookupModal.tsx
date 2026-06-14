@@ -18,6 +18,7 @@ type Props = {
   orderTest: any;
   facilityId?: number;
   onClose?: () => void;
+  onSuccess?: () => Promise<void> | void;
 };
 
 const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
@@ -25,7 +26,8 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
   setOpen,
   orderTest,
   facilityId,
-  onClose
+  onClose,
+  onSuccess
 }) => {
   const dispatch = useAppDispatch();
   const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
@@ -73,7 +75,7 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
             bookingMode: ['SLOT'] as any,
             status: null,
             patientId: null,
-            department: null
+            departmentIds: null
           },
           page: 0,
           size: 500,
@@ -220,6 +222,9 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
           }).unwrap();
           dispatch(notify({ msg: 'Diagnostic test appointment rescheduled successfully.', sev: 'success' }));
           closeModal(false);
+          if (onSuccess) {
+            await onSuccess();
+          }
         } catch {
           dispatch(notify({ msg: 'Failed to reschedule diagnostic test appointment.', sev: 'error' }));
         }

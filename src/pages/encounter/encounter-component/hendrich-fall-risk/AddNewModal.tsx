@@ -38,16 +38,16 @@ const AddNewModal = ({
     }
   };
 
-const getRiskInfo = (riskLevelKey) => {
-  if (riskLevelKey === '6830244509957984') {
-    return { label: 'High', backgroundColor: 'var(--light-orange)', color: 'var(--primary-orange)' };
-  } else if (riskLevelKey === '6830230146334591') {
-    return { label: 'Low', backgroundColor: 'var(--light-green)', color: 'var(--primary-green)' };
-  }
-  return { label: '', backgroundColor: '', color: '' };
-};
+  const getRiskInfo = (riskLevelKey) => {
+    if (riskLevelKey === '6830244509957984') {
+      return { label: 'High', backgroundColor: 'var(--light-orange)', color: 'var(--primary-orange)' };
+    } else if (riskLevelKey === '6830230146334591') {
+      return { label: 'Low', backgroundColor: 'var(--light-green)', color: 'var(--primary-green)' };
+    }
+    return { label: '', backgroundColor: '', color: '' };
+  };
 
-const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
+  const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
 
 
   // Modal content
@@ -65,6 +65,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -78,6 +80,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -95,6 +99,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -108,6 +114,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -124,6 +132,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={genderLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -137,6 +147,8 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
                   fieldType="select"
                   selectData={booleanLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={hendrichFallRisk}
                   setRecord={setHendrichFallRisk}
@@ -151,39 +163,41 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
               fieldType="select"
               selectData={booleanLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
+              disableByField='isValid'
+
               selectDataValue="key"
               record={hendrichFallRisk}
               setRecord={setHendrichFallRisk}
             />
             <Text><Translate>Get-Up-and-Go Test (GUGT)</Translate></Text>
             <RadioGroup value={GUGT} onChange={value => setGUGT(value)}>
-                <Radio value="RiseInSingleMovement "><Translate>Rise in single movement</Translate></Radio>
-                <Radio value="PushesUpIn1Attempt"><Translate>Pushes up in 1 attempt</Translate></Radio>
-                <Radio value="MultipleAttemptsOrUnable"><Translate>Multiple attempts or unable</Translate></Radio>
+              <Radio value="RiseInSingleMovement "><Translate>Rise in single movement</Translate></Radio>
+              <Radio value="PushesUpIn1Attempt"><Translate>Pushes up in 1 attempt</Translate></Radio>
+              <Radio value="MultipleAttemptsOrUnable"><Translate>Multiple attempts or unable</Translate></Radio>
             </RadioGroup>
             <br />
-<Row>
-  <Col md={12}>
-    <MyInput
-      width="100%"
-      fieldName="score"
-      fieldType="number"
-      fieldLabel="Total Score"
-      record={recordOfScore}
-      setRecord={setRecordOfScore}
-      disabled
-    />
-  </Col>
-  <Col md={12}>
-    <div style={{ marginTop: '1.5vw' }}>
-      <MyBadgeStatus
-        contant={riskInfo.label}
-        backgroundColor={riskInfo.backgroundColor}
-        color={riskInfo.color}
-      />
-    </div>
-  </Col>
-</Row>
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  fieldName="score"
+                  fieldType="number"
+                  fieldLabel="Total Score"
+                  record={recordOfScore}
+                  setRecord={setRecordOfScore}
+                  disabled
+                />
+              </Col>
+              <Col md={12}>
+                <div style={{ marginTop: '1.5vw' }}>
+                  <MyBadgeStatus
+                    contant={riskInfo.label}
+                    backgroundColor={riskInfo.backgroundColor}
+                    color={riskInfo.color}
+                  />
+                </div>
+              </Col>
+            </Row>
           </Form>
         );
     }
@@ -240,11 +254,11 @@ const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
     }
   }, [recordOfScore]);
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

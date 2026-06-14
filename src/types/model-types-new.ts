@@ -120,6 +120,7 @@ export interface UserDepartment {
   departmentId: number;
   isActive?: boolean;
   isDefault?: boolean;
+  appointmentBookingAllowed?: boolean;
 }
 
 /* =========================
@@ -387,6 +388,8 @@ export interface AvailabilityGenerationBatchApplyDTO {
   deferredAt?: string | null;
   scope: string;
   holidayHandlingMode?: string | null;
+  policyAssignmentIds?: number[];
+
 }
 
 export interface ApplyAvailabilityTemplateResponseVM {
@@ -497,15 +500,18 @@ export interface DiagnosticTestAppointmentRescheduleDTO {
   rescheduleReason: string;
 }
 
-export interface AppointmentFromTemplateSearchFilterDTO {
+export interface AppointmentSearchFilterMultiDepartmentDTO {
   facility?: number | null;
-  department?: number | null;
+  departmentIds?: number[] | null;
   resourceType?: TemplateType | null;
   resourceId?: number | null;
   status?: AppointmentStatus | null;
   bookingMode?: BookingMode[] | null;
   patientId?: number | null;
 }
+
+/** @deprecated Use AppointmentSearchFilterMultiDepartmentDTO */
+export type AppointmentFromTemplateSearchFilterDTO = AppointmentSearchFilterMultiDepartmentDTO;
 
 /** GET `/appointments/bulk-reschedule/preview/{batchId}` — BulkReschedulePreviewVM */
 export interface BulkReschedulePreviewVM {
@@ -635,6 +641,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  nationalNumber?:string | null;
 }
 
 /* =========================
@@ -808,6 +815,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  modality:string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -2356,6 +2364,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface PatientInsurance {
   id?: number;
@@ -2763,7 +2773,11 @@ export interface FormEntry {
   templateId: number | null;
   facilityId: number | null;
   departmentId: number | null;
+  patientId?: number | null;
+  encounterId?: number | null;
   dataJson: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface FormEntryCreateVM {
@@ -2772,6 +2786,8 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string;
+  patientId?: number | null;
+  encounterId?: number | null;
 }
 export interface OrganizationDefinition {
   id?: number;
@@ -4369,6 +4385,58 @@ export type PolicyDefinitionUpdateDTO = {
   code: string;
   name: string;
   description?: string | null;
+};
+
+export type PolicyResourceType = string;
+
+export type PolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policy?: PolicyDefinition;
+  facilityId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isActive?: boolean;
+  isRequired?: boolean;
+};
+
+export type PolicyAssignmentCreateDTO = {
+  policyId: number;
+  resourceType: PolicyResourceType;
+  resourceId: number;
+  isRequired: boolean;
+};
+
+export type PolicyAssignmentUpdateDTO = {
+  id: number;
+  isRequired: boolean;
+};
+export type AppointmentPolicyAssignment = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+};
+export type AppointmentPolicyAssignmentResponseVM = {
+  id?: number;
+  policyId: number;
+  policyAssignmentId: number;
+  appointment: AppointmentFromTemplate;
+  isApplied?: boolean;
+  isRequired?: boolean;
+  policyName?:string;
+  policyCode?:string;
+};
+
+export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
+  id: number;
+  isApplied: boolean;
+};
+
+export type AppointmentPolicyAssignmentAppliedBulkUpdateDTO = {
+  updates: AppointmentPolicyAssignmentAppliedUpdateDTO[];
 };
 
 export type SkillDefinition = {

@@ -221,6 +221,8 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                         record={formData}
                         setRecord={() => {}}
                         required
+                                disableByField='isValid'
+
                       />
 
                       <button
@@ -279,6 +281,8 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   record={formData}
                   setRecord={() => {}}
                   required
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   width={'12vw'}
@@ -296,6 +300,8 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   record={formData}
                   setRecord={() => {}}
                   required
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   width={'12vw'}

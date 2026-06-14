@@ -46,6 +46,9 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
+
+
+
 type RadRef = {
   refetchAllRadData: () => Promise<void>;
 };
@@ -72,19 +75,49 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   });
   //add new patient edits
 
-  const { data: todayRadTestsResponse } = useFilterDiagnosticOrderTestsQuery({
-    page: 0,
-    size: 1000,
-    orderType: 'RADIOLOGY',
-    receivedDepartmentId: authSlice.selectedDepartment?.departmentId,
-    createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
-    createdDateTo: endOfDay(dateFilter.toDate).toISOString()
-  });
+    const formatLocalDateTime = (date: Date) => {
+      const d = new Date(date);
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    };
+  
+    const { data: todayRadTestsResponse } = useFilterDiagnosticOrderTestsQuery({
+      page: 0,
+      size: 1000,
+      hasRadiology: true,
+      receivedDepartmentId: authSlice.selectedDepartment?.departmentId,
+      createdDateFrom: formatLocalDateTime(startOfDay(dateFilter.fromDate)),
+      createdDateTo: formatLocalDateTime(endOfDay(dateFilter.toDate))
+    });
+
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
-  useEffect(() => {
-    setVisibleRadTests(todayRadTestsResponse?.data ?? []);
-  }, [todayRadTestsResponse]);
+    useEffect(() => {
+      const selectedDate = new Date(dateFilter.fromDate);
+
+      const selectedYear = selectedDate.getFullYear();
+      const selectedMonth = selectedDate.getMonth();
+      const selectedDay = selectedDate.getDate();
+
+      const filtered = (todayRadTestsResponse?.data ?? []).filter(test => {
+        const createdDate = new Date(test.createdDate);
+
+        return (
+          createdDate.getFullYear() === selectedYear &&
+          createdDate.getMonth() === selectedMonth &&
+          createdDate.getDate() === selectedDay
+        );
+      });
+      
+      setVisibleRadTests(filtered);
+    }, [todayRadTestsResponse, dateFilter.fromDate]);
 
   useEffect(() => {
     dispatch(setPageCode('Rad'));
@@ -233,6 +266,48 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
   }, [order?.patientId]);
 
+const filters = (
+              <>
+                <Form fluid className="filter-form-radiology-filters">
+                  <MyInput
+                    width="8vw"
+                    placeholder="From Date"
+                    fieldType="date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width="8vw"
+                    placeholder="To Date"
+                    fieldType="date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width="8vw"
+                    placeholder="Order ID"
+                    fieldType="text"
+                    fieldName="orderNumber"
+                    record={{ orderNumber: orderNumberFilter }}
+                    setRecord={(val: any) =>
+                      setOrderNumberFilter(val.orderNumber ?? '')
+                    }
+                    showLabel={false}
+                  />
+                </Form>
+
+                {test?.id && (
+                      <MyStepper
+                        stepsList={stepsDataComputed}
+                        activeStep={activeStep}
+                      />                  
+                )}
+                </>);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -276,8 +351,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         <div className="container">
 
           <div className="left-boxs">
-            <Row>
-              <Col xs={14}>
                 <Orders
                   ref={OrdersRef}
                   order={order}
@@ -285,54 +358,10 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                   dateFilter={dateFilter}
                   loading={globalLoading}
                   orderNumberFilter={orderNumberFilter}
+                  filters={filters}
                 />
-              </Col>
 
-              <Col xs={10}>
-                <Form fluid className="filter-form-radiology-filters">
-                  <MyInput
-                    width="8vw"
-                    placeholder="From Date"
-                    fieldType="date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="To Date"
-                    fieldType="date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="Order ID"
-                    fieldType="text"
-                    fieldName="orderNumber"
-                    record={{ orderNumber: orderNumberFilter }}
-                    setRecord={(val: any) =>
-                      setOrderNumberFilter(val.orderNumber ?? '')
-                    }
-                    showLabel={false}
-                  />
-                </Form>
 
-                {test?.id && (
-                  <Row>
-                    <Col md={24}>
-                      <MyStepper
-                        stepsList={stepsDataComputed}
-                        activeStep={activeStep}
-                      />
-                    </Col>
-                  </Row>
-                )}
-              </Col>
-            </Row>
 
             <Tabs
               activeKey={activeKey}

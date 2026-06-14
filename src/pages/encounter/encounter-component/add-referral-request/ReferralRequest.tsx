@@ -24,6 +24,8 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { MdModeEdit } from 'react-icons/md';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+
 const REFERRAL_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Referral request data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -295,40 +297,6 @@ const ReferralRequest = () => {
 
   const isSelected = (rowData: any) => (rowData?.id === referral?.id ? 'selected-row' : '');
 
-
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-    const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-      skip: !login
-    });
-
-    if (!login) {
-      return <span>-</span>;
-    }
-
-    return <span>{fullName || login}</span>;
-  };
-
-  const UserDateCell = ({
-    login,
-    date
-  }: {
-    login?: string | null;
-    date?: string | null;
-  }) => {
-    if (!login && !date) {
-      return <span>-</span>;
-    }
-
-    return (
-      <>
-        <UserFullNameCell login={login} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDateWithoutSeconds(date) : '-'}
-        </span>
-      </>
-    );
-  };
 
 
   const tableColumns = [

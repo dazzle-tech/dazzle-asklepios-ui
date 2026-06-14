@@ -43,6 +43,8 @@ import AddReportModal from './AddReportModal';
 import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -637,11 +639,10 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         title: 'Order By / At',
         width: 200,
         render: row => (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
       {

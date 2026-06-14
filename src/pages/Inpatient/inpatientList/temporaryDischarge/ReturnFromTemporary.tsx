@@ -92,7 +92,9 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
                     fieldType="select"
                     fieldName=""
                     selectData={[]}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={""}
                     setRecord={""}

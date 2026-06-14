@@ -12,7 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetDepartmentByTypeAndFacilityQuery } from '@/services/security/departmentService';
 import {
   useAddRoomMutation,
@@ -132,7 +132,7 @@ const AddEditRoom: React.FC<Props> = ({
     ]
   });
 
-  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilitiesResponse } = useGetActiveFacilitiesQuery({});
   const [triggerDepartments, { isFetching: isDeptLoading }] =
     useLazyGetDepartmentByTypeAndFacilityQuery();
 
@@ -647,6 +647,7 @@ const AddEditRoom: React.FC<Props> = ({
         fieldType="number"
         record={room}
         setRecord={setRoom}
+        showZero
       />
 
       <MyInput

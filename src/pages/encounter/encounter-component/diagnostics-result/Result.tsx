@@ -47,7 +47,7 @@ import {
   initialListRequest,
   initialListRequestAllValues
 } from '@/types/types';
-import { useLazyGetLaboratoryReportPdfQuery } from '@/services/reports/laboratoryReportsService';
+import LaboratoryReportButton from './LaboratoryReportButton';
 
 type Props = {
   patient: any;
@@ -93,7 +93,6 @@ const renderMarker = (marker?: string) => {
 };
 
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
-  const toaster = useToaster();
   const patientId = patient?.id;
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -105,11 +104,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     fromDate: null,
     toDate: null
   });
-
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
-  const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-      useLazyGetLaboratoryReportPdfQuery();
+
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -208,9 +206,9 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
-      const fallback = "—"; 
+    const fallback = "—";
 
-    
+
     if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
       return key;
     }
@@ -266,26 +264,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
 
-  const handleGeneratePdf = async (result: any) => {
-   if (!result?.id) return;
-    try {
-      const blob = await fetchLaboratoryResultPdfData({ resultId: result.id }).unwrap();
-      const fileURL = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `Result-${result.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(fileURL);
-      }, 1000);
-    } catch (error) {
-      console.error('Failed to download report pdf', error);
-    }
-  };
+ 
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -310,7 +289,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       } else {
         value =
           r.resultValueNumber !== null &&
-          r.resultValueNumber !== undefined
+            r.resultValueNumber !== undefined
             ? String(r.resultValueNumber)
             : '';
 
@@ -342,7 +321,46 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     allLovValues
   ]);
 
+const allSelected =
+  normalizedResults.length > 0 &&
+  normalizedResults.every(row => selectedRows.includes(row.id));
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        setSelectedRows(normalizedResults.map(row => row.id));
+      } else {
+        setSelectedRows([]);
+      }
+    };
+
+    const handleSelectRow = (rowId: number, checked: boolean) => {
+      if (checked) {
+        setSelectedRows(prev => [...prev, rowId]);
+      } else {
+        setSelectedRows(prev => prev.filter(id => id !== rowId));
+      }
+    };
+
   const columns = [
+    {
+  key: 'select',
+  width: 60,
+  align: 'center',
+  title: (
+    <Checkbox
+      checked={allSelected}
+      onChange={(_, checked) => handleSelectAll(checked)}
+    />
+  ),
+  render: (row: any) => (
+    <Checkbox
+      checked={selectedRows.includes(row.id)}
+      onChange={(_, checked) =>
+        handleSelectRow(row.id, checked)
+      }
+    />
+  )
+    },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
@@ -401,7 +419,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
           className='icon-radiologist-worklist-size'
           style={{
             cursor: 'pointer',
-            color: row.hasNote ? '#1675e0' : 'gray'
+            color: row.hasNote ? 'var(--primary-blue)' : 'gray'
           }}
           onClick={() => {
             setSelectedResultId(row.id);
@@ -446,18 +464,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
   const tableButtons = (
-    <MyButton
-      onClick={() => handleGeneratePdf(selectedResult)}
-      loading={isGeneratingReport}
-      disabled={selectedResult == null || !selectedResult.id}
-      appearance='ghost'
-      prefixIcon={() => (
-        <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
-      )}
-      style={{ marginLeft: 'auto' }}
-    >
-      Generate Complete Report
-    </MyButton>
+    <LaboratoryReportButton resultIds={selectedRows} />
   );
 
   useEffect(() => {

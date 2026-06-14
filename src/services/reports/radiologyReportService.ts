@@ -42,13 +42,19 @@ export const radiologyReportService = createApi({
       ],
     }),
 
-     getRadiologyReportPdf: builder.query<Blob, { reportId: number }>({
-      query: ({ reportId }) => ({
-        url: `/api/analytics/radiology-reports/${reportId}/pdf`,
-        method: 'GET',
-        responseHandler: (response) => response.blob()
-      })
-    })
+   getRadiologyReportPdf: builder.query<
+  Blob,
+  { reportId: number; lang?: string }
+>({
+  query: ({ reportId, lang = 'en' }) => ({
+    url: `/api/analytics/radiology-reports/${reportId}/pdf`,
+    method: 'GET',
+    params: {
+      lang
+    },
+    responseHandler: (response) => response.blob()
+  })
+})
   }),
 });
 

@@ -23,10 +23,11 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+  filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
+({ order, setOrder, dateFilter, loading, orderNumberFilter, filters }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -219,18 +220,6 @@ const diagnosisMap = useMemo(() => {
         }
       },
       {
-        key: 'diagnosis',
-        title: <Translate>Diagnosis</Translate>,
-        flexGrow: 3,
-        render: (r: any) => {
-          const diagnosis = diagnosisMap[r.icdDiagnosisId];
-
-          return diagnosis
-            ? `${diagnosis.code ?? ''} - ${diagnosis.name ?? diagnosis.description ?? ''}`
-            : '—';
-        }
-      },
-      {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 2,
@@ -270,6 +259,7 @@ const diagnosisMap = useMemo(() => {
           onRowsPerPageChange={handleRowsPerPageChange}
           sortColumn={sortColumn}
           sortType={sortType}
+          filters={filters}
           onSortChange={handleSortChange}
         />
       </div>

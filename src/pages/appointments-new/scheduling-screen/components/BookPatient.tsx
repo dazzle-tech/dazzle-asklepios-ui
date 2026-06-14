@@ -27,7 +27,8 @@ import { formatEnumString } from '@/utils';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/encounters/patientEncounterService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-
+import { ShieldCheck, Check, X } from 'lucide-react';
+import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from '@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 
 type BookPatientProps = {
   open: boolean;
@@ -38,6 +39,23 @@ type BookPatientProps = {
   onBooked?: () => Promise<void> | void;
   /** When true, shows the same flow read-only (opened from View action on an existing appointment). */
   readOnly?: boolean;
+};
+
+const normalizeAppointmentStatusKey = (raw: unknown): string =>
+  String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+const isRebookableSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return (
+    status === 'NEW' ||
+    status === 'RESCHEDULE' ||
+    status === 'RESCHEDULED' ||
+    status === 'CANCELLED' ||
+    status === 'CANCELED'
+  );
 };
 
 const BookPatient = ({
@@ -51,19 +69,45 @@ const BookPatient = ({
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
   const mode = useAppSelector((state: any) => state.ui.mode);
+
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
+
   const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
 
+  const isDark = mode === 'dark';
+
+  const [record, setRecord] = useState<any>({
+    patientId: null,
+    status: 'BOOKED',
+    defaultService: null,
+    defaultPractitioner: null,
+    service: null,
+    reason: '',
+    note: '',
+    originType: null,
+    originName: '',
+    priority: null,
+    followUpEncounterId: null
+  });
+
+  const [prevPage, setPrevPage] = useState(0);
+  const prevSize = 15;
+  const [allPrevEncounters, setAllPrevEncounters] = useState<any[]>([]);
+  const [triggerPrevious, { data: prevList, isFetching: isPrevFetching }] =
+    useLazyGetPreviousEncountersSameDepartmentQuery();
+
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
+  const [patientAction, setPatientAction] = useState<'select' | 'quick'>('select');
+  const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
+  const [patientSidebarStyle, setPatientSidebarStyle] = useState<React.CSSProperties | null>(null);
+
   useEffect(() => {
     if (!open) return;
-    // Debug: inspect appointment payload when opening booking modal
-    // eslint-disable-next-line no-console
 
-    const appointmentPriority =
-      appointmentData?.priority ??
-      null;
+    const appointmentPriority = appointmentData?.priority ?? null;
 
     if (readOnly && appointmentData) {
       const rawPatientId =
@@ -71,7 +115,9 @@ const BookPatient = ({
         (typeof appointmentData.patient === 'object'
           ? appointmentData.patient?.id ?? appointmentData.patient?.key
           : appointmentData.patient);
+
       const pid = Number(rawPatientId);
+
       setRecord(prev => ({
         ...prev,
         patientId: Number.isFinite(pid) && pid > 0 ? pid : prev.patientId,
@@ -98,6 +144,7 @@ const BookPatient = ({
               null
             : null
       }));
+
       return;
     }
 
@@ -106,7 +153,14 @@ const BookPatient = ({
       (typeof appointmentData?.patient === 'object'
         ? appointmentData?.patient?.id ?? appointmentData?.patient?.key
         : appointmentData?.patient);
-    const hasPatientOnAppointment = rawPatientOnAppointment != null && String(rawPatientOnAppointment) !== '';
+
+    const slotStatus = normalizeAppointmentStatusKey(
+      appointmentData?.status ?? appointmentData?.appointmentStatus
+    );
+    const hasPatientOnAppointment =
+      !isRebookableSlotStatus(slotStatus) &&
+      rawPatientOnAppointment != null &&
+      String(rawPatientOnAppointment) !== '';
 
     const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
     const appointmentDefaultService = appointmentData?.defaultServiceId || null;
@@ -119,7 +173,6 @@ const BookPatient = ({
 
     setRecord(prev => ({
       ...prev,
-      // Opening a free slot must start with no patient selected.
       patientId: hasPatientOnAppointment ? prev.patientId : null,
       defaultPractitioner: appointmentDefaultPractitioner ?? prev.defaultPractitioner ?? null,
       defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
@@ -145,12 +198,23 @@ const BookPatient = ({
     }
   }, [open, appointmentData, readOnly]);
 
+  useEffect(() => {
+    if (open) return;
+
+    setPatientSidebarOpen(false);
+    setQuickPatientModalOpen(false);
+  }, [open]);
+
   const viewPatientId = useMemo(() => {
     if (!readOnly || !appointmentData) return null;
+
     const p = appointmentData.patient;
     const raw =
-      appointmentData.patientId ?? (typeof p === 'object' ? p?.id ?? p?.key : p);
+      appointmentData.patientId ??
+      (typeof p === 'object' ? p?.id ?? p?.key : p);
+
     const n = Number(raw);
+
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [readOnly, appointmentData]);
 
@@ -162,27 +226,69 @@ const BookPatient = ({
   const appointmentId = useMemo(() => {
     const raw = appointmentData?.id ?? null;
     const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
+
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [appointmentData]);
+
+  const {
+    data: appointmentPolicyAssignments = [],
+    isFetching: isLoadingAppointmentPolicies
+  } = useGetAppointmentPolicyAssignmentsByAppointmentIdQuery(appointmentId as any, {
+    skip: !open || !appointmentId
+  });
+
+  const getPolicyParts = (policyAssignment: any) => {
+    const code = policyAssignment?.policyCode ?? '';
+    const name = policyAssignment?.policyName ?? '';
+
+    if (code || name) {
+      return {
+        code: code || '-',
+        name: name || code || `Policy #${policyAssignment?.policyId ?? '-'}`,
+        display: `${code ? `${code} ` : ''}${name || ''}`.trim()
+      };
+    }
+
+    return {
+      code: '-',
+      name: `Policy #${policyAssignment?.policyId ?? '-'}`,
+      display: `Policy #${policyAssignment?.policyId ?? '-'}`
+    };
+  };
+
+  const isPolicyRequired = (policyAssignment: any) => {
+    return Boolean(policyAssignment?.isRequired);
+  };
+
+  const isPolicyApplied = (policyAssignment: any) => {
+    return Boolean(policyAssignment?.isApplied);
+  };
+
   const appointmentFacilityId = useMemo(() => {
     const raw = appointmentData?.facilityId ?? appointmentData?.facilityKey ?? null;
     const parsed = Number(raw);
+
     return Number.isFinite(parsed) ? parsed : null;
   }, [appointmentData]);
+
   const appointmentDepartmentId = useMemo(() => {
     const raw = appointmentData?.departmentId ?? appointmentData?.departmentKey ?? null;
     const parsed = Number(raw);
+
     return Number.isFinite(parsed) ? parsed : null;
   }, [appointmentData]);
 
   const { data: facilityByIdResponse } = useGetFacilityByIdQuery(appointmentFacilityId, {
     skip: !open || !appointmentFacilityId
   });
+
   const { data: departmentByIdResponse } = useGetDepartmentByIdQuery(appointmentDepartmentId, {
     skip: !open || !appointmentDepartmentId
   });
+
   const resourceTypeRaw = String(appointmentData?.resourceType ?? '').toUpperCase();
   const appointmentResourceId = appointmentData?.resourceId ?? appointmentData?.resourceKey ?? null;
+
   const isDepartmentResource = resourceTypeRaw.includes('DEPARTMENT');
   const isPractitionerResource = resourceTypeRaw.includes('PRACTITIONER');
   const isCatalogResource = resourceTypeRaw.includes('CATALOG');
@@ -197,54 +303,58 @@ const BookPatient = ({
   const { data: resourceDepartmentById } = useGetDepartmentByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isDepartmentResource
   });
+
   const { data: resourcePractitionerById } = useGetPractitionerByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isPractitionerResource
   });
+
   const { data: resourceCatalogById } = useGetCatalogByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isCatalogResource
   });
+
   const { data: resourceDiagnosticTestById } = useGetDiagnosticTestByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isDiagnosticTestResource
   });
+
   const { data: resourceRoomById } = useGetRoomByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isRoomResource
   });
+
   const { data: resourceServiceById } = useGetServiceByIdQuery(appointmentResourceId as any, {
     skip: !open || !appointmentResourceId || !isServiceResource
   });
+
   const formatDateTime = (value: any) => {
     if (!value) return '-';
+
     const d = new Date(value);
+
     if (Number.isNaN(d.getTime())) return '-';
+
     return d.toLocaleString();
   };
 
   const appointmentDetailsRecord = useMemo(
     () => ({
-      facility:
-        (facilityByIdResponse as any)?.name ||
-        '-',
+      facility: (facilityByIdResponse as any)?.name || '-',
       department:
         (departmentByIdResponse as any)?.name ||
         appointmentData?.departmentName ||
         appointmentData?.department ||
         appointmentData?.departmentId ||
         '-',
-      status:
-        formatEnumString(appointmentData?.status) ||
-        '-',
-      practitioner:
-        appointmentData?.defaultPractitionerId ||
-        '-',
-      resourceType:
-      formatEnumString(appointmentData?.resourceType) ||
-        '-',
+      status: formatEnumString(appointmentData?.status) || '-',
+      practitioner: appointmentData?.defaultPractitionerId || '-',
+      resourceType: formatEnumString(appointmentData?.resourceType) || '-',
       resourceName:
         (isDepartmentResource
           ? (resourceDepartmentById as any)?.name
           : isPractitionerResource
             ? (resourcePractitionerById as any)?.fullName ||
-              [(resourcePractitionerById as any)?.firstName, (resourcePractitionerById as any)?.lastName]
+              [
+                (resourcePractitionerById as any)?.firstName,
+                (resourcePractitionerById as any)?.lastName
+              ]
                 .filter(Boolean)
                 .join(' ')
             : isCatalogResource
@@ -280,13 +390,14 @@ const BookPatient = ({
       resourceServiceById
     ]
   );
+
   const selectedSlotDisplay = useMemo(() => {
-    const rawStart =
-      appointmentData?.startDatetime 
-    const rawEnd =
-      appointmentData?.endDatetime 
+    const rawStart = appointmentData?.startDatetime;
+    const rawEnd = appointmentData?.endDatetime;
+
     const start = formatDateTime(rawStart);
     const end = formatDateTime(rawEnd);
+
     const startTime =
       start !== '-'
         ? new Date(rawStart).toLocaleTimeString([], {
@@ -294,6 +405,7 @@ const BookPatient = ({
           minute: '2-digit'
         })
         : '--:--';
+
     const endTime =
       end !== '-'
         ? new Date(rawEnd).toLocaleTimeString([], {
@@ -301,6 +413,7 @@ const BookPatient = ({
           minute: '2-digit'
         })
         : '--:--';
+
     const dateTitle =
       start !== '-'
         ? new Date(rawStart).toLocaleDateString([], {
@@ -310,6 +423,7 @@ const BookPatient = ({
           day: '2-digit'
         })
         : 'Selected Slot';
+
     return {
       dateTitle,
       timeRange: `${startTime} - ${endTime}`
@@ -338,20 +452,23 @@ const BookPatient = ({
     [services]
   );
 
-  // Ensure dropdowns are populated even when parent screen skips loading lists
   const { data: practitionersAppointableByLoggedInFacility } =
     useGetAppointablePractitionerByLoggedInFacilityQuery(
       { page: 0, size: 500, sort: 'id,asc' },
       { skip: !open }
     );
-  const { data: servicesAppointableByLoggedInFacility } = useGetAppointableServicesByLoggedInFacilityQuery(
-    { page: 0, size: 500, sort: 'id,asc' },
-    { skip: !open }
-  );
+
+  const { data: servicesAppointableByLoggedInFacility } =
+    useGetAppointableServicesByLoggedInFacilityQuery(
+      { page: 0, size: 500, sort: 'id,asc' },
+      { skip: !open }
+    );
 
   const effectivePractitionerOptions = useMemo(() => {
     if ((practitionerOptions ?? []).length > 0) return practitionerOptions;
+
     const fallback = (practitionersAppointableByLoggedInFacility as any)?.data ?? [];
+
     return (fallback ?? []).map((p: any) => ({
       id: p?.id,
       label:
@@ -364,46 +481,25 @@ const BookPatient = ({
 
   const effectiveServiceOptions = useMemo(() => {
     if ((serviceOptions ?? []).length > 0) return serviceOptions;
+
     const fallback = (servicesAppointableByLoggedInFacility as any)?.data ?? [];
+
     return (fallback ?? []).map((s: any) => ({
       id: s?.id,
       label: s?.serviceName || s?.name || `Service #${s?.id ?? ''}`
     }));
   }, [serviceOptions, servicesAppointableByLoggedInFacility]);
 
-  const [record, setRecord] = useState<any>({
-    patientId: null,
-    status: 'BOOKED',
-    defaultService: null,
-    defaultPractitioner: null,
-    service: null,
-    reason: '',
-    note: '',
-    originType: null,
-    originName: '',
-    priority: null,
-    followUpEncounterId: null
-  });
-
-  const [prevPage, setPrevPage] = useState(0);
-  const prevSize = 15;
-  const [allPrevEncounters, setAllPrevEncounters] = useState<any[]>([]);
-  const [triggerPrevious, { data: prevList, isFetching: isPrevFetching }] =
-    useLazyGetPreviousEncountersSameDepartmentQuery();
-
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-  const [patientAction, setPatientAction] = useState<'select' | 'quick'>('select');
-  const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
-  const [patientSidebarStyle, setPatientSidebarStyle] = useState<React.CSSProperties | null>(null);
-
   useEffect(() => {
     if (!open || !readOnly || !appointmentData) return;
+
     const p = appointmentData.patient;
+
     if (p && typeof p === 'object' && (p.firstName || p.fullName || p.lastName || p.name)) {
       setSelectedPatient(p);
       return;
     }
+
     if (viewPatientById) {
       setSelectedPatient(viewPatientById);
     }
@@ -415,11 +511,13 @@ const BookPatient = ({
   useEffect(() => {
     if (record.service === 'FOLLOW_UP') return;
     if (record.followUpEncounterId == null) return;
+
     setRecord((prev: any) => ({ ...prev, followUpEncounterId: null }));
   }, [record.service, record.followUpEncounterId]);
 
   useEffect(() => {
     if (!open || isFollowUpService) return;
+
     setPrevPage(0);
     setAllPrevEncounters([]);
   }, [open, isFollowUpService]);
@@ -430,6 +528,7 @@ const BookPatient = ({
 
     setPrevPage(0);
     setAllPrevEncounters([]);
+
     triggerPrevious({
       patientId: bookingPatientId,
       departmentId: appointmentDepartmentId,
@@ -437,8 +536,7 @@ const BookPatient = ({
       size: prevSize,
       sort: 'id,desc'
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isFollowUpService, bookingPatientId, appointmentDepartmentId]);
+  }, [open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
   useEffect(() => {
     if (!open || !isFollowUpService) return;
@@ -452,21 +550,23 @@ const BookPatient = ({
       size: prevSize,
       sort: 'id,desc'
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId]);
+  }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
   useEffect(() => {
     const rows = prevList?.data ?? [];
+
     if (!rows.length) return;
 
-      setAllPrevEncounters(previousEncounters => {
-        const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
-        const merged = [...previousEncounters];
-        rows.forEach((encounter: any) => {
-          if (!seenIds.has(encounter.id)) merged.push(encounter);
-        });
-        return merged;
+    setAllPrevEncounters(previousEncounters => {
+      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
+      const merged = [...previousEncounters];
+
+      rows.forEach((encounter: any) => {
+        if (!seenIds.has(encounter.id)) merged.push(encounter);
       });
+
+      return merged;
+    });
   }, [prevList]);
 
   const prevHasMore = Boolean(prevList?.links?.next);
@@ -480,10 +580,13 @@ const BookPatient = ({
 
   const visitDetailsStepBlocked = useMemo(() => {
     if (!record?.service) return true;
+
     if (!readOnly) {
       const hasPriority = record?.priority != null && String(record.priority).trim() !== '';
+
       if (!hasPriority) return true;
     }
+
     if (record.service === 'FOLLOW_UP') {
       return (
         !Number(record?.followUpEncounterId) ||
@@ -491,8 +594,16 @@ const BookPatient = ({
         !appointmentDepartmentId
       );
     }
+
     return false;
-  }, [readOnly, record?.service, record?.priority, record?.followUpEncounterId, bookingPatientId, appointmentDepartmentId]);
+  }, [
+    readOnly,
+    record?.service,
+    record?.priority,
+    record?.followUpEncounterId,
+    bookingPatientId,
+    appointmentDepartmentId
+  ]);
 
   const patientChoiceButtonBase: React.CSSProperties = {
     width: '100%',
@@ -501,14 +612,15 @@ const BookPatient = ({
     fontWeight: 400,
     border: `1px solid ${mode === 'dark' ? 'var(--rs-border-primary)' : '#d6dde8'}`,
     backgroundColor: mode === 'dark' ? 'var(--rs-bg-card)' : '#ffffff',
-    color: mode === 'dark' ? 'var(--rs-text-primary)' : '#2563EB',
-    transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    color: mode === 'dark' ? 'var(--rs-text-primary)' : 'var(--primary-blue)',
+    transition:
+      'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
     justifyContent: 'center'
   };
 
   const patientChoiceButtonActive: React.CSSProperties = {
     border: 'none',
-    background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)',
+    background: 'linear-gradient(180deg, var(--primary-blue) 0%, var(--primary-blue) 100%)',
     color: '#ffffff',
     boxShadow:
       mode === 'dark'
@@ -532,10 +644,12 @@ const BookPatient = ({
 
   const handlePatientSelect = (patient: any) => {
     setSelectedPatient(patient);
+
     setRecord((prev: any) => ({
       ...prev,
       patientId: Number(patient?.id ?? patient?.key ?? null)
     }));
+
     setPatientAction('select');
     setPatientSidebarOpen(false);
   };
@@ -545,7 +659,9 @@ const BookPatient = ({
 
     const compute = () => {
       const dialog = document.querySelector('.book-patient-modal .rs-modal-dialog') as HTMLElement | null;
+
       if (!dialog) return;
+
       const rect = dialog.getBoundingClientRect();
       const right = Math.max(0, window.innerWidth - rect.right);
 
@@ -561,8 +677,10 @@ const BookPatient = ({
     };
 
     compute();
+
     window.addEventListener('resize', compute);
     window.addEventListener('scroll', compute, true);
+
     return () => {
       window.removeEventListener('resize', compute);
       window.removeEventListener('scroll', compute, true);
@@ -573,6 +691,7 @@ const BookPatient = ({
     setOpen(false);
     setPrevPage(0);
     setAllPrevEncounters([]);
+
     setRecord({
       patientId: null,
       status: 'BOOKED',
@@ -586,6 +705,7 @@ const BookPatient = ({
       priority: null,
       followUpEncounterId: null
     });
+
     setSelectedPatient(null);
     setQuickPatientModalOpen(false);
     setPatientAction('select');
@@ -594,90 +714,283 @@ const BookPatient = ({
 
   const extractErrorMessage = (response: any): string => {
     try {
-      const msg = response?.data?.message;
-      if (typeof msg === 'string') {
-        return msg.replace(/^error\./i, '');
-      }
-      return '';
+      const data = response?.data ?? response?.error?.data ?? null;
+      const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
+      const path = data?.path ?? data?.detail ?? data?.instance ?? '';
+      const rawMessage =
+        data?.message ??
+        data?.error ??
+        response?.error?.message ??
+        response?.message ??
+        response?.toString?.() ??
+        '';
+      const message =
+        typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
+
+      const parts = [message];
+      if (status) parts.push(`HTTP ${status}`);
+      if (path && typeof path === 'string') parts.push(path);
+
+      return parts.filter(Boolean).join(' | ');
     } catch {
       return '';
     }
   };
 
   const handleBooking = async () => {
-  if (readOnly) return;
+    if (readOnly) return;
 
-  try {
-    if (!appointmentId || !record?.patientId) {
-      dispatch(notify({ msg: 'Please enter patient id', sev: 'warning' }));
-      return
-    }
+    try {
+      if (!appointmentId || !record?.patientId) {
+        dispatch(notify({ msg: 'Please enter patient id', sev: 'warning' }));
+        return;
+      }
 
-    if (!record?.service) {
-      dispatch(notify({ msg: 'Please select service', sev: 'warning' }));
-      return
-    }
+      if (!record?.service) {
+        dispatch(notify({ msg: 'Please select service', sev: 'warning' }));
+        return;
+      }
 
-    if (record?.priority == null || String(record.priority).trim() === '') {
-      dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
-      return
-    }
-    if(appointmentData.requirePractitioner && !record.defaultPractitioner){
-      dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
-      return
-    }
-    if (record.service === 'FOLLOW_UP') {
-      if (!appointmentDepartmentId) {
+      if (record?.priority == null || String(record.priority).trim() === '') {
+        dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
+        return;
+      }
+
+      if (appointmentData.requirePractitioner && !record.defaultPractitioner) {
+        dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+        return;
+      }
+
+      if (record.service === 'FOLLOW_UP') {
+        if (!appointmentDepartmentId) {
+          dispatch(
+            notify({
+              msg: 'Follow-up requires an appointment department to load previous encounters.',
+              sev: 'warning'
+            })
+          );
+          return;
+        }
+
+        if (!Number(record.followUpEncounterId)) {
+          dispatch(notify({ msg: 'Please select a previous encounter for follow-up.', sev: 'warning' }));
+          return;
+        }
+      }
+
+      await bookPatientAppointment({
+        id: appointmentId,
+        patientId: Number(record.patientId),
+        defaultService: record?.defaultService ? Number(record.defaultService) : null,
+        defaultPractitioner: record?.defaultPractitioner ? Number(record.defaultPractitioner) : null,
+        reason: record?.reason || null,
+        note: record?.note || null,
+        originType: record?.originType ? String(record.originType) : null,
+        originName: record?.originName ? String(record.originName) : null,
+        status: 'BOOKED',
+        service: record?.service || null,
+        priority: record?.priority ? String(record.priority) : null,
+        followUpEncounterId:
+          record?.service === 'FOLLOW_UP' && Number(record?.followUpEncounterId)
+            ? Number(record.followUpEncounterId)
+            : null
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
+      handleClose();
+
+      try {
+        await Promise.resolve(onBooked?.());
+      } catch {
+        // Booking is already persisted; avoid showing a false "Save Failed" message.
         dispatch(
           notify({
-            msg: 'Follow-up requires an appointment department to load previous encounters.',
+            msg: 'Appointment booked successfully, but refresh did not complete.',
             sev: 'warning'
           })
         );
-        return
       }
-
-      if (!Number(record.followUpEncounterId)) {
-        dispatch(notify({ msg: 'Please select a previous encounter for follow-up.', sev: 'warning' }));
-        return
-      }
-    }
-    
-    await bookPatientAppointment({
-      id: appointmentId,
-      patientId: Number(record.patientId),
-      defaultService: record?.defaultService ? Number(record.defaultService) : null,
-      defaultPractitioner: record?.defaultPractitioner ? Number(record.defaultPractitioner) : null,
-      reason: record?.reason || null,
-      note: record?.note || null,
-      originType: record?.originType ? String(record.originType) : null,
-      originName: record?.originName ? String(record.originName) : null,
-      status: 'BOOKED',
-      service: record?.service || null,
-      priority: record?.priority ? String(record.priority) : null,
-      followUpEncounterId:
-        record?.service === 'FOLLOW_UP' && Number(record?.followUpEncounterId)
-          ? Number(record.followUpEncounterId)
-          : null
-    }).unwrap();
-
-    dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
-    await Promise.resolve(onBooked?.());
-    handleClose();
-  } catch (error: any) {
+    } catch (error: any) {
+      // Keep a detailed payload in console for debugging backend/transform failures.
+      console.error('Book appointment failed:', {
+        appointmentId,
+        patientId: record?.patientId,
+        error
+      });
       const errorMsg = extractErrorMessage(error) || 'Save Failed';
-        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
-  }
-};
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+    }
+  };
+
+  const policyEmptyTextStyle: React.CSSProperties = {
+    fontSize: 12,
+    color: isDark ? '#d1d5db' : '#6b7280',
+    padding: '8px 0'
+  };
+
+  const renderPoliciesSection = () => (
+    <SectionContainer
+      title="Policies"
+      content={
+        <Panel
+          bordered
+          style={{
+            padding: 12,
+            backgroundColor: isDark ? 'var(--dark-black)' : '#fff'
+          }}
+        >
+          {!appointmentId ? (
+            <div style={policyEmptyTextStyle}>No appointment selected.</div>
+          ) : isLoadingAppointmentPolicies ? (
+            <div style={policyEmptyTextStyle}>Loading policies...</div>
+          ) : appointmentPolicyAssignments.length === 0 ? (
+            <div style={policyEmptyTextStyle}>No policies assigned to this appointment.</div>
+          ) : (
+            <div
+              style={{
+                border: isDark ? '1px solid #3d3d3d' : '1px solid #e5e7eb',
+                borderRadius: 8,
+                overflow: 'hidden',
+                backgroundColor: isDark ? 'var(--extra-dark-black)' : '#fff'
+              }}
+            >
+              {appointmentPolicyAssignments.map((policyAssignment: any, index: number) => {
+                const policy = getPolicyParts(policyAssignment);
+                const required = isPolicyRequired(policyAssignment);
+                const applied = isPolicyApplied(policyAssignment);
+
+                return (
+                  <div
+                    key={`booking-policy-${policyAssignment?.id ?? policyAssignment?.policyId ?? index}`}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '34px 120px 1fr 90px 115px',
+                      alignItems: 'center',
+                      gap: 10,
+                      minHeight: 46,
+                      padding: '8px 12px',
+                      borderBottom:
+                        index === appointmentPolicyAssignments.length - 1
+                          ? 'none'
+                          : isDark
+                            ? '1px solid #3d3d3d'
+                            : '1px solid #e5e7eb',
+                      backgroundColor: isDark ? 'var(--extra-dark-black)' : '#fff'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isDark ? '#27272a' : '#f3f4f6',
+                        color: isDark ? '#d1d5db' : '#374151'
+                      }}
+                    >
+                      <ShieldCheck size={16} />
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: isDark ? '#f9fafb' : '#374151',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis'
+                      }}
+                      title={policy.code}
+                    >
+                      {policy.code}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: isDark ? '#f9fafb' : '#374151',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis'
+                      }}
+                      title={policy.name || policy.display}
+                    >
+                      {policy.name || policy.display}
+                    </div>
+
+                    <div>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: 70,
+                          height: 24,
+                          borderRadius: 8,
+                          padding: '0 10px',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: required ? '#9f1239' : '#1d4ed8',
+                          backgroundColor: required ? '#ffe4e6' : '#dbeafe'
+                        }}
+                      >
+                        {required ? 'Required' : 'Optional'}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: applied ? '#059669' : '#ef4444'
+                      }}
+                    >
+                      <span
+                        title={applied ? 'Applied' : 'Not Applied'}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: applied ? '#d1fae5' : '#fee2e2',
+                          color: applied ? '#059669' : '#ef4444',
+                          border: applied ? '1px solid #34d399' : '1px solid #fca5a5'
+                        }}
+                      >
+                        {applied ? <Check size={15} /> : <X size={15} />}
+                      </span>
+
+                      <span>{applied ? 'Applied' : 'Not Applied'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+      }
+    />
+  );
 
   return (
     <>
-      {patientSidebarOpen && (
+      {open && patientSidebarOpen && (
         <div className="book-patient-sidebar-overlay" style={patientSidebarStyle ?? undefined}>
           <ProfileSidebar
             expand={true}
             setExpand={setPatientSidebarOpen}
-            windowHeight={Math.max(0, Math.floor((patientSidebarStyle?.height as number) || window.innerHeight))}
+            windowHeight={Math.max(
+              0,
+              Math.floor((patientSidebarStyle?.height as number) || window.innerHeight)
+            )}
             setLocalPatient={handlePatientSelect}
             title={<Translate>Search Patient</Translate>}
             direction="right"
@@ -719,6 +1032,7 @@ const BookPatient = ({
                         {selectedPatient ? 'Change Patient' : 'Select Patient'}
                       </MyButton>
                     </div>
+
                     <div style={{ flex: 1 }}>
                       <MyButton
                         appearance="subtle"
@@ -736,6 +1050,7 @@ const BookPatient = ({
                       >
                         Quick Patient
                       </MyButton>
+
                       <QuickPatient
                         open={quickPatientModalOpen}
                         setOpen={() => setQuickPatientModalOpen(false)}
@@ -764,26 +1079,32 @@ const BookPatient = ({
                             <p style={{ fontSize: 15, margin: 0 }}>
                               {selectedPatient
                                 ? ([
-                                    selectedPatient?.firstName,
-                                    selectedPatient?.secondName,
-                                    selectedPatient?.thirdName,
-                                    selectedPatient?.lastName
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')
-                                    .trim() || selectedPatient?.fullName || selectedPatient?.name || 'N/A')
+                                  selectedPatient?.firstName,
+                                  selectedPatient?.secondName,
+                                  selectedPatient?.thirdName,
+                                  selectedPatient?.lastName
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')
+                                  .trim() ||
+                                  selectedPatient?.fullName ||
+                                  selectedPatient?.name ||
+                                  'N/A')
                                 : 'N/A'}
                             </p>
+
                             <p style={{ fontSize: 12, color: '#A1A9B8', fontWeight: 600, margin: '4px 0' }}>
                               <FontAwesomeIcon icon={faUser} />
                               {` ${selectedPatient?.sexAtBirth || selectedPatient?.genderLkey || 'N/A'}`}
                             </p>
+
                             <p style={{ fontSize: 12, color: '#A1A9B8', margin: 0 }}>
                               {(() => {
                                 const mrn =
                                   selectedPatient?.medicalRecordNumber ||
                                   selectedPatient?.patientMrn ||
                                   selectedPatient?.mrn;
+
                                 return mrn ? `#${mrn}` : '';
                               })()}
                             </p>
@@ -800,18 +1121,24 @@ const BookPatient = ({
                           }}
                         >
                           <Divider style={{ height: 50 }} vertical />
+
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
                             <p style={{ margin: 0 }}>{selectedPatient?.documentTypeLkey || '-'}</p>
                           </div>
+
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
                             <p style={{ margin: 0 }}>{selectedPatient?.documentNo || '-'}</p>
                           </div>
+
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Mobile Number</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.primaryMobileNumber || selectedPatient?.mobileNumber || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {selectedPatient?.primaryMobileNumber || selectedPatient?.mobileNumber || '-'}
+                            </p>
                           </div>
+
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Email</p>
                             <p style={{ margin: 0 }}>{selectedPatient?.email || '-'}</p>
@@ -830,12 +1157,59 @@ const BookPatient = ({
                     content={
                       <Panel bordered style={{ padding: 12 }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                          <MyInput fieldType="text" fieldName="facility" fieldLabel="Facility" record={appointmentDetailsRecord} width="100%" disabled />
-                          <MyInput fieldType="text" fieldName="department" fieldLabel="Department" record={appointmentDetailsRecord} width="100%" disabled />
-                          <MyInput fieldType="text" fieldName="status" fieldLabel="Status" record={appointmentDetailsRecord} width="100%" disabled />
-                          <MyInput fieldType="text" fieldName="resourceType" fieldLabel="Resource Type" record={appointmentDetailsRecord} width="100%" disabled />
-                          <MyInput fieldType="text" fieldName="resourceName" fieldLabel="Resource Name" record={appointmentDetailsRecord} width="100%" disabled />
-                          <MyInput fieldType="text" fieldName="bookingMode" fieldLabel="Booking Mode" record={appointmentDetailsRecord} width="100%" disabled />
+                          <MyInput
+                            fieldType="text"
+                            fieldName="facility"
+                            fieldLabel="Facility"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
+
+                          <MyInput
+                            fieldType="text"
+                            fieldName="department"
+                            fieldLabel="Department"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
+
+                          <MyInput
+                            fieldType="text"
+                            fieldName="status"
+                            fieldLabel="Status"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
+
+                          <MyInput
+                            fieldType="text"
+                            fieldName="resourceType"
+                            fieldLabel="Resource Type"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
+
+                          <MyInput
+                            fieldType="text"
+                            fieldName="resourceName"
+                            fieldLabel="Resource Name"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
+
+                          <MyInput
+                            fieldType="text"
+                            fieldName="bookingMode"
+                            fieldLabel="Booking Mode"
+                            record={appointmentDetailsRecord}
+                            width="100%"
+                            disabled
+                          />
                         </div>
                       </Panel>
                     }
@@ -844,13 +1218,31 @@ const BookPatient = ({
                   <SectionContainer
                     title="Selected Appointment Time"
                     content={
-                      <Panel bordered style={{ padding: 10, background: mode === 'dark' ? 'var(--dark-black)' :'#f8f4ea' }}>
+                      <Panel
+                        bordered
+                        style={{
+                          padding: 10,
+                          background: isDark ? 'var(--dark-black)' : '#f8f4ea'
+                        }}
+                      >
                         <div>
                           <div>
-                            <div style={{ fontSize: 16, fontWeight: 500, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
+                            <div
+                              style={{
+                                fontSize: 16,
+                                fontWeight: 500,
+                                color: isDark ? 'var(--white)' : '#000000'
+                              }}
+                            >
                               {selectedSlotDisplay.dateTitle}
                             </div>
-                            <div style={{ fontSize: 12, color: mode === 'dark' ? 'var(--white)' : '#000000' }}>
+
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: isDark ? 'var(--white)' : '#000000'
+                              }}
+                            >
                               {selectedSlotDisplay.timeRange}
                             </div>
                           </div>
@@ -858,6 +1250,8 @@ const BookPatient = ({
                       </Panel>
                     }
                   />
+
+                  {renderPoliciesSection()}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -879,6 +1273,7 @@ const BookPatient = ({
                             disabled={readOnly}
                             required={appointmentData?.requirePractitioner}
                           />
+
                           <MyInput
                             fieldType="select"
                             fieldName="defaultService"
@@ -891,7 +1286,6 @@ const BookPatient = ({
                             width="100%"
                             disabled={readOnly}
                           />
-                        
 
                           <MyInput
                             fieldType="textarea"
@@ -907,12 +1301,13 @@ const BookPatient = ({
                       </Panel>
                     }
                   />
+
                   <SectionContainer
                     title="Upcoming Encounter Details"
                     content={
                       <Panel bordered style={{ padding: 12 }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <MyInput
+                          <MyInput
                             fieldType="textarea"
                             fieldName="reason"
                             fieldLabel="Chief Complaint"
@@ -922,6 +1317,7 @@ const BookPatient = ({
                             rows={2}
                             disabled={readOnly}
                           />
+
                           <MyInput
                             fieldType="select"
                             fieldName="service"
@@ -936,6 +1332,7 @@ const BookPatient = ({
                             required={!readOnly}
                             disabled={readOnly}
                           />
+
                           <MyInput
                             fieldType="select"
                             fieldName="priority"
@@ -950,6 +1347,7 @@ const BookPatient = ({
                             required={!readOnly}
                             disabled={readOnly}
                           />
+
                           <MyInput
                             fieldType="select"
                             fieldName="originType"
@@ -962,7 +1360,10 @@ const BookPatient = ({
                             width="100%"
                             searchable={false}
                             disabled={readOnly}
+                                    disableByField='isValid'
+
                           />
+
                           <MyInput
                             fieldName="originName"
                             fieldLabel="Origin Name"
@@ -971,6 +1372,7 @@ const BookPatient = ({
                             width="100%"
                             disabled={readOnly}
                           />
+
                           {record?.service === 'FOLLOW_UP' && (
                             <div style={{ gridColumn: '1 / -1' }}>
                               <MyInput
@@ -988,9 +1390,7 @@ const BookPatient = ({
                                 searchable={false}
                                 hasMore={prevHasMore}
                                 required={!readOnly && record?.service === 'FOLLOW_UP'}
-                                disabled={
-                                  readOnly || !bookingPatientId || !appointmentDepartmentId
-                                }
+                                disabled={readOnly || !bookingPatientId || !appointmentDepartmentId}
                                 onFetchMore={() => {
                                   if (prevList?.links?.next) {
                                     const { page } = extractPaginationFromLink(prevList.links.next);

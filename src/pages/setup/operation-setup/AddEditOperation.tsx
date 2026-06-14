@@ -501,7 +501,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                             fieldType="select"
                             fieldLabel="Code Type"
                             selectData={codeTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'codeTypeLkey'}
                             record={operationCode}
@@ -535,7 +537,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                             fieldType="select"
                             fieldLabel="Currency"
                             selectData={currencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'currencyLkey'}
                             record={operationprice}

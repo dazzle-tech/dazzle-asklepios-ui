@@ -88,7 +88,7 @@ const RescheduleAppointmentModal = ({ open, setOpen, appointment, onRescheduled 
         const response = await searchAppointments({
           filter: {
             facility: facilityId,
-            department: departmentId,
+            departmentIds: [departmentId],
             resourceType,
             resourceId: Number.isFinite(resourceId) && resourceId > 0 ? resourceId : null,
             status: 'NEW',

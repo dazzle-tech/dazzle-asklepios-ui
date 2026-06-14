@@ -40,6 +40,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -52,6 +54,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -65,6 +69,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -78,6 +84,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -91,6 +99,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         menuMaxHeight={200}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -104,6 +114,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -117,6 +129,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        disableByField='isValid'
       />
       <MyInput
         vr={validationResult}

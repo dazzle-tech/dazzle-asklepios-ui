@@ -6,25 +6,33 @@ import { faCircleCheck, faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 
 import MyButton from "@/components/MyButton/MyButton";
+import MyInput from "@/components/MyInput";
 import "@/components/MyModal/styles.less";
 import MyStepper from "@/components/MyStepper";
 import MyTable from "@/components/MyTable";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import Translate from "@/components/Translate";
-import { useAppDispatch } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import {
   useGetAvailabilityGenerationBatchesByTemplateQuery,
   useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
 } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import {
   useBulkRescheduleAppointmentsMutation,
-  useCancelAppointmentMutation,useGetBulkReschedulePreviewQuery
+  useCancelAppointmentMutation,
+  useGetBulkReschedulePreviewQuery,
 } from "@/services/appointment/appointmentService";
 import {
   useGetAvailabilityTemplatesByPublishStatusQuery,
   useGetAvailabilityTemplatesByDepartmentAndActiveQuery,
 } from "@/services/appointment/availabilityTemplateService";
 import { useGetPatientsByIdsQuery } from "@/services/patient/patientService";
+import { useGetBookableDepartmentsForLoggedInUserQuery } from "@/services/security/departmentService";
+import { useGetAppointablePractitionerByLoggedInFacilityQuery } from "@/services/setup/practitioner/PractitionerService";
+import { useGetAppointableCatalogsByLoggedInFacilityQuery } from "@/services/setup/catalog/catalogService";
+import { useGetAllActiveAppointableDiagnosticTestsQuery } from "@/services/setup/diagnosticTest/diagnosticTestService";
+import { useGetAppointableServicesByLoggedInFacilityQuery } from "@/services/setup/serviceService";
+import { useGetRoomsByIdsMutation } from "@/services/setup/room/roomService";
 import type {
   AvailabilityGenerationBatch,
   AvailabilityTemplateResponseVM,
@@ -91,11 +99,6 @@ function getAppointmentPatientId(row: any): number | null {
     row?.patient?.patient_id;
   const numeric = Number(raw);
   const result = Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-  console.log("[BulkRescheduleModal] getAppointmentPatientId", {
-    raw,
-    result,
-    row,
-  });
   return result;
 }
 
@@ -117,6 +120,71 @@ function getPatientFullName(patient: any): string {
       patient?.fullName ?? patient?.full_name ?? patient?.name ?? "",
     ).trim()
   );
+}
+
+function normalizeResourceTypeKey(value: any): string {
+  return String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[-\s]+/g, "_");
+}
+
+function getAppointmentResourceType(row: any): string {
+  return normalizeResourceTypeKey(row?.resourceType ?? "");
+}
+function getTemplateResourceType(row: any): string {
+  return normalizeResourceTypeKey(row?.templateType ?? row?.resourceType ?? "");
+}
+
+function getCanonicalResourceTypeKey(value: any): string {
+  const key = normalizeResourceTypeKey(value);
+  if (!key) return key;
+  if (key.includes("DEPARTMENT")) return "DEPARTMENT";
+  if (key.includes("PRACTITIONER")) return "PRACTITIONER";
+  if (key.includes("CATALOG")) return "CATALOG";
+  if (
+    key.includes("DIAGNOSTIC") ||
+    key.includes("LAB") ||
+    key.includes("RADIOLOGY") ||
+    key.includes("TEST")
+  )
+    return "DIAGNOSTIC_TEST";
+  if (key.includes("SERVICE")) return "SERVICE";
+  if (key.includes("ROOM")) return "ROOM";
+  return key;
+}
+
+function getAppointmentDepartmentId(row: any): number | string | null {
+  return (
+    row?.departmentId ??
+    row?.department_id ??
+    row?.department?.id ??
+    row?.department?.departmentId ??
+    row?.department?.department_id ??
+    row?.appointmentData?.departmentId ??
+    row?.appointmentData?.department_id ??
+    row?.appointmentData?.department?.id ??
+    row?.appointmentData?.department?.departmentId ??
+    row?.appointmentData?.department?.department_id ??
+    null
+  );
+}
+
+function getAppointmentResourceId(row: any): number | string | null {
+  return (
+    row?.resourceId ??
+    row?.resource?.id ??
+    row?.resource?.key ??
+    row?.resource?.resourceId ??
+    row?.appointmentData?.resourceId ??
+    row?.appointmentData?.resource?.id ??
+    row?.appointmentData?.resource?.key ??
+    null
+  );
+}
+
+function getRowResourceId(row: any): number | string | null {
+  return getAppointmentResourceId(row);
 }
 
 function extractErrorMessage(response: any): string {
@@ -251,6 +319,23 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
   const [unmatchedIds, setUnmatchedIds] = useState<number[]>([]);
   const [confirmBulkCancelOpen, setConfirmBulkCancelOpen] = useState(false);
   const [showFreeAppointments, setShowFreeAppointments] = useState(false);
+  const [templateSearchRecord, setTemplateSearchRecord] = useState<{
+    templateName: string;
+    departmentId: number | null;
+  }>({ templateName: "", departmentId: null });
+  const [listRefreshKeys, setListRefreshKeys] = useState({
+    originBatches: 0,
+    preview: 0,
+    replacementTemplates: 0,
+    replacementBatches: 0,
+  });
+
+  const bumpListRefresh = useCallback(
+    (key: keyof typeof listRefreshKeys) => {
+      setListRefreshKeys((prev) => ({ ...prev, [key]: prev[key] + 1 }));
+    },
+    [],
+  );
 
   const { data: publishedTemplatesPage, isFetching: loadingTemplates } =
     useGetAvailabilityTemplatesByPublishStatusQuery(
@@ -259,6 +344,29 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     );
   const publishedTemplates = publishedTemplatesPage?.data ?? [];
 
+  const templateNameFilter = String(templateSearchRecord.templateName ?? "").trim();
+  const departmentIdFilter =
+    templateSearchRecord.departmentId != null &&
+    Number(templateSearchRecord.departmentId) > 0
+      ? Number(templateSearchRecord.departmentId)
+      : undefined;
+
+  const filteredPublishedTemplates = useMemo(() => {
+    let list = publishedTemplates;
+    const name = templateNameFilter.toLowerCase();
+    if (name) {
+      list = list.filter((t) =>
+        String(t?.templateName ?? "").toLowerCase().includes(name),
+      );
+    }
+    if (departmentIdFilter != null) {
+      list = list.filter(
+        (t) => Number(t?.departmentId) === departmentIdFilter,
+      );
+    }
+    return list;
+  }, [publishedTemplates, templateNameFilter, departmentIdFilter]);
+
   const { data: originBatchesPage, isFetching: loadingOriginBatches } =
     useGetAvailabilityGenerationBatchesByTemplateQuery(
       {
@@ -266,8 +374,12 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         page: 0,
         size: 500,
         sort: "id,desc",
+        timestamp: listRefreshKeys.originBatches,
       },
-      { skip: !open || !originTemplateId },
+      {
+        skip: !open || !originTemplateId || step !== 1,
+        refetchOnMountOrArgChange: true,
+      },
     );
 
   const {
@@ -280,15 +392,24 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       page: 0,
       size: 500,
       sort: "id,desc",
+      timestamp: listRefreshKeys.replacementBatches,
     },
-    { skip: !open || !replacementTemplateId || !originBatchId || step < 3 },
+    {
+      skip:
+        !open ||
+        !replacementTemplateId ||
+        !originBatchId ||
+        step !== 4,
+      refetchOnMountOrArgChange: true,
+    },
   );
 
   const {
     data: departmentActiveTemplatesPage,
     isFetching: loadingDepartmentActiveTemplates,
   } = useGetAvailabilityTemplatesByDepartmentAndActiveQuery(
-    selectedOriginTemplate?.departmentId &&
+    step === 3 &&
+      selectedOriginTemplate?.departmentId &&
       selectedOriginTemplate?.templateType &&
       selectedOriginTemplate?.resourceId
       ? {
@@ -298,8 +419,10 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
           page: 0,
           size: 1000,
           sort: "id,asc",
+          timestamp: listRefreshKeys.replacementTemplates,
         }
       : skipToken,
+    { refetchOnMountOrArgChange: true },
   );
 
   const {
@@ -310,6 +433,9 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       ? {
           batchId: originBatchId,
           includeFreeSlots: showFreeAppointments,
+          departmentId: departmentIdFilter,
+          templateName: templateNameFilter || undefined,
+          refreshKey: listRefreshKeys.preview,
         }
       : skipToken,
     {
@@ -334,6 +460,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     setUnmatchedIds([]);
     setConfirmBulkCancelOpen(false);
     setShowFreeAppointments(false);
+    setTemplateSearchRecord({ templateName: "", departmentId: null });
+    setListRefreshKeys({
+      originBatches: 0,
+      preview: 0,
+      replacementTemplates: 0,
+      replacementBatches: 0,
+    });
   }, []);
 
   useEffect(() => {
@@ -341,6 +474,19 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       resetWizard();
     }
   }, [open, resetWizard]);
+
+  useEffect(() => {
+    if (!originTemplateId) return;
+    const stillVisible = filteredPublishedTemplates.some(
+      (t) => Number(t.id) === Number(originTemplateId),
+    );
+    if (!stillVisible) {
+      setOriginTemplateId(null);
+      setSelectedOriginTemplate(null);
+      setOriginBatchId(null);
+      setSelectedOriginBatchRowKey("");
+    }
+  }, [filteredPublishedTemplates, originTemplateId]);
 
   const bulkPreviewRows = useMemo(
     () =>
@@ -353,7 +499,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
 
   const appointmentPreviewRows = useMemo(() => {
     if (!showFreeAppointments) return bulkPreviewRows;
-    return bulkPreviewRows.filter((row) => normalizeApptStatus(row) === "NEW");
+    return bulkPreviewRows.filter((row) => isFreeSlotStatus(normalizeApptStatus(row)));
   }, [bulkPreviewRows, showFreeAppointments]);
 
   useEffect(() => {
@@ -372,20 +518,202 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     { skip: patientIds.length === 0 },
   );
 
-  useEffect(() => {
-    console.log("[BulkRescheduleModal] patientIds", {
-      patientIds,
-      isArray: Array.isArray(patientIds),
-      isSet: patientIds instanceof Set,
-      patients,
-    });
-  }, [patientIds, patients]);
-
   const patientMap = useMemo(() => {
     const map = new Map<number, any>();
     patients?.forEach((p) => map.set(Number(p.id), p));
     return map;
   }, [patients]);
+
+  const selectedFacility = useAppSelector(
+    (state: any) => state.auth?.tenant?.selectedFacility,
+  );
+
+  const appointmentPreviewResourceTypes = useMemo(() => {
+    const types = new Set<string>();
+    appointmentPreviewRows.forEach((row: any) => {
+      const rt = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+      if (rt) types.add(rt);
+    });
+    return types;
+  }, [appointmentPreviewRows]);
+
+  const templateResourceTypes = useMemo(() => {
+    const types = new Set<string>();
+    const addType = (row: any) => {
+      const rt = getCanonicalResourceTypeKey(
+        getTemplateResourceType(row) || getAppointmentResourceType(row),
+      );
+      if (rt) types.add(rt);
+    };
+    publishedTemplates.forEach(addType);
+    (departmentActiveTemplatesPage?.data ?? []).forEach(addType);
+    return types;
+  }, [publishedTemplates, departmentActiveTemplatesPage?.data]);
+
+  const allResourceTypes = useMemo(() => {
+    const types = new Set<string>(appointmentPreviewResourceTypes);
+    templateResourceTypes.forEach((type) => types.add(type));
+    return types;
+  }, [appointmentPreviewResourceTypes, templateResourceTypes]);
+
+  const roomResourceIds = useMemo(() => {
+    const ids = new Set<string>();
+    const addRoomId = (row: any) => {
+      const rt = getCanonicalResourceTypeKey(
+        getTemplateResourceType(row) || getAppointmentResourceType(row),
+      );
+      if (rt === "ROOM") {
+        const id = getRowResourceId(row);
+        if (id != null) ids.add(String(id));
+      }
+    };
+    appointmentPreviewRows.forEach(addRoomId);
+    publishedTemplates.forEach(addRoomId);
+    (departmentActiveTemplatesPage?.data ?? []).forEach(addRoomId);
+    return Array.from(ids).map((value) => {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : value;
+    });
+  }, [appointmentPreviewRows, publishedTemplates, departmentActiveTemplatesPage?.data]);
+
+  const { data: bookableDepartmentsResponse = [] } =
+    useGetBookableDepartmentsForLoggedInUserQuery(undefined, { skip: !open });
+
+  const bookableDepartmentOptions = useMemo(() => {
+    const all = bookableDepartmentsResponse ?? [];
+    const filtered = selectedFacility?.id
+      ? all.filter(
+          (d: any) =>
+            String(d?.facilityId ?? d?.facility_id ?? "") ===
+            String(selectedFacility.id),
+        )
+      : all;
+
+    return filtered
+      .map((d: any) => {
+        const value = d?.id ?? d?.key;
+        const label = d?.name ?? d?.departmentName ?? String(value ?? "");
+        return value != null ? { label: String(label), value: Number(value) } : null;
+      })
+      .filter(Boolean) as { label: string; value: number }[];
+  }, [bookableDepartmentsResponse, selectedFacility?.id]);
+
+  const { data: appointablePractitionersResponse } =
+    useGetAppointablePractitionerByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("PRACTITIONER") },
+    );
+
+  const { data: appointableCatalogsResponse } =
+    useGetAppointableCatalogsByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("CATALOG") },
+    );
+
+  const { data: appointableDiagnosticTestsResponse } =
+    useGetAllActiveAppointableDiagnosticTestsQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("DIAGNOSTIC_TEST") },
+    );
+
+  const { data: appointableServicesResponse } =
+    useGetAppointableServicesByLoggedInFacilityQuery(
+      { page: 0, size: 200, sort: "id,asc" },
+      { skip: !allResourceTypes.has("SERVICE") },
+    );
+
+  const departmentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    (bookableDepartmentsResponse ?? []).forEach((d: any) => {
+      const id = d?.id ?? d?.departmentId ?? d?.key;
+      const name = d?.name ?? d?.departmentName;
+      if (id != null && name) map.set(String(id), String(name));
+    });
+    return map;
+  }, [bookableDepartmentsResponse]);
+
+  const [getRoomsByIds, { data: roomsByIds = [] }] = useGetRoomsByIdsMutation();
+
+  useEffect(() => {
+    if (roomResourceIds.length === 0) return;
+    void getRoomsByIds({ ids: roomResourceIds });
+  }, [getRoomsByIds, roomResourceIds]);
+
+  const getDepartmentNameFromRow = useCallback(
+    (row: any): string | undefined => {
+      const deptId = getAppointmentDepartmentId(row);
+      return (
+        row?.departmentName ??
+        row?.department?.name ??
+        row?.department?.departmentName ??
+        row?.appointmentData?.departmentName ??
+        row?.appointmentData?.department?.name ??
+        row?.appointmentData?.department?.departmentName ??
+        (deptId != null ? departmentNameById.get(String(deptId)) : undefined)
+      );
+    },
+    [departmentNameById],
+  );
+
+  const resourceNameByTypeAndId = useMemo(() => {
+    const departmentMap = new Map<string, string>();
+    (bookableDepartmentsResponse ?? []).forEach((d: any) => {
+      const id = d?.id ?? d?.key;
+      const name = d?.name ?? d?.departmentName;
+      if (id != null && name) departmentMap.set(String(id), String(name));
+    });
+
+    const practitionerMap = new Map<string, string>();
+    ((appointablePractitionersResponse as any)?.data ?? []).forEach((p: any) => {
+      const id = p?.id ?? p?.key;
+      const name = [p?.firstName, p?.lastName].filter(Boolean).join(" ") || p?.fullName;
+      if (id != null && name) practitionerMap.set(String(id), String(name));
+    });
+
+    const catalogMap = new Map<string, string>();
+    ((appointableCatalogsResponse as any)?.data ?? []).forEach((c: any) => {
+      const id = c?.id ?? c?.key;
+      const name = c?.name ?? c?.catalogName;
+      if (id != null && name) catalogMap.set(String(id), String(name));
+    });
+
+    const diagnosticTestMap = new Map<string, string>();
+    ((appointableDiagnosticTestsResponse as any)?.data ?? []).forEach((t: any) => {
+      const id = t?.id ?? t?.key;
+      const name = t?.name ?? t?.testName;
+      if (id != null && name) diagnosticTestMap.set(String(id), String(name));
+    });
+
+    const serviceMap = new Map<string, string>();
+    ((appointableServicesResponse as any)?.data ?? []).forEach((s: any) => {
+      const id = s?.id ?? s?.key;
+      const name = s?.name ?? s?.serviceName;
+      if (id != null && name) serviceMap.set(String(id), String(name));
+    });
+
+    const roomMap = new Map<string, string>();
+    (roomsByIds ?? []).forEach((room: any) => {
+      const id = room?.id ?? room?.key;
+      const name = room?.name ?? room?.roomName;
+      if (id != null && name) roomMap.set(String(id), String(name));
+    });
+
+    return {
+      DEPARTMENT: departmentMap,
+      PRACTITIONER: practitionerMap,
+      CATALOG: catalogMap,
+      DIAGNOSTIC_TEST: diagnosticTestMap,
+      SERVICE: serviceMap,
+      ROOM: roomMap,
+    };
+  }, [
+    bookableDepartmentsResponse,
+    appointablePractitionersResponse,
+    appointableCatalogsResponse,
+    appointableDiagnosticTestsResponse,
+    appointableServicesResponse,
+    roomsByIds,
+  ]);
 
   const replacementCandidates = useMemo(() => {
     if (!selectedOriginTemplate) return [];
@@ -453,6 +781,52 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: 'resourceType',
+        title: <Translate>Resource Type</Translate>,
+        flexGrow: 1,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+          return (
+            <span>
+              {formatEnumString(resourceTypeKey) || '—'}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'department',
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : undefined);
+          return <span>{String(deptName ?? '—')}</span>;
+        },
+      },
+      {
+        key: 'resource',
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getAppointmentResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : '—');
+          return <span>{String(rname ?? '—')}</span>;
+        },
+      },
+      {
         key: "patient",
         title: <Translate>Patient</Translate>,
         flexGrow: 2,
@@ -467,19 +841,11 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             getPatientFullName(row?.patient) ||
             String(row?.patientName ?? "").trim();
           const name = nameFromService || nameFromRow || "—";
-          console.log("[BulkRescheduleModal] render patient", {
-            row,
-            patientId,
-            patient,
-            nameFromService,
-            nameFromRow,
-            name,
-          });
           return <span>{name}</span>;
         },
       },
     ],
-    [patientMap],
+    [patientMap, departmentNameById, resourceNameByTypeAndId],
   );
 
   const templatePickColumns = useMemo(
@@ -513,6 +879,38 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: "department",
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : "-");
+          return <span>{String(deptName)}</span>;
+        },
+      },
+      {
+        key: "resource",
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getTemplateResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : "-");
+          return <span>{String(rname)}</span>;
+        },
+      },
+      {
         key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
@@ -524,7 +922,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
     ],
-    [originTemplateId],
+    [originTemplateId, departmentNameById, resourceNameByTypeAndId],
   );
 
   const replacementTemplatePickColumns = useMemo(
@@ -558,6 +956,38 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
       {
+        key: "department",
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const deptId = getAppointmentDepartmentId(row);
+          const deptName =
+            getDepartmentNameFromRow(row) ??
+            (deptId != null ? String(deptId) : "-");
+          return <span>{String(deptName)}</span>;
+        },
+      },
+      {
+        key: "resource",
+        title: <Translate>Resource</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const resourceTypeKey = getCanonicalResourceTypeKey(getTemplateResourceType(row));
+          const resourceId = getAppointmentResourceId(row);
+          const resourceLookup =
+            resourceId != null && resourceTypeKey
+              ? resourceNameByTypeAndId[resourceTypeKey]?.get(String(resourceId))
+              : undefined;
+          const rname =
+            row?.resourceName ??
+            row?.appointmentData?.resourceName ??
+            row?.resource?.name ??
+            resourceLookup ??
+            (resourceId != null ? String(resourceId) : "-");
+          return <span>{String(rname)}</span>;
+        },
+      },
+      {
         key: "active",
         title: <Translate>State</Translate>,
         flexGrow: 1,
@@ -569,7 +999,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         ),
       },
     ],
-    [replacementTemplateId],
+    [replacementTemplateId, departmentNameById, resourceNameByTypeAndId],
   );
 
   const batchPickColumnsOrigin = useMemo(
@@ -672,6 +1102,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("originBatches");
       setStep(1);
       return;
     }
@@ -685,6 +1116,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("preview");
       setStep(2);
       return;
     }
@@ -695,6 +1127,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
         );
         return;
       }
+      bumpListRefresh("replacementBatches");
       setStep(4);
     }
   };
@@ -802,6 +1235,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             sev: "warning",
           }),
         );
+        bumpListRefresh("preview");
         setStep(2);
         return;
       }
@@ -856,13 +1290,65 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
       return (
         <Form fluid layout="vertical">
           <p style={{ color: "#64748b", fontSize: 13, marginBottom: 12 }}>
-            Published templates (active and inactive). Select one template to
-            continue.
+            Published templates (active and inactive). Use the search filters
+            below, then select one template to continue.
           </p>
+          <Panel
+            bordered
+            style={{
+              marginBottom: 12,
+              padding: "12px 16px",
+              background: mode === "light" ? "#f8fafc" : undefined,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                margin: "0 0 10px",
+                color: "#334155",
+              }}
+            >
+              <Translate>Search</Translate>
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <MyInput
+                fieldLabel="Template name"
+                fieldName="templateName"
+                record={templateSearchRecord}
+                setRecord={setTemplateSearchRecord}
+                placeholder="Search by template name"
+                width="100%"
+              />
+              <MyInput
+                fieldType="select"
+                fieldLabel="Department"
+                fieldName="departmentId"
+                record={templateSearchRecord}
+                setRecord={setTemplateSearchRecord}
+                selectData={bookableDepartmentOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
+                placeholder="All bookable departments"
+                searchable
+                width="100%"
+              />
+            </div>
+          </Panel>
           {loadingTemplates ? (
             <Loader center />
           ) : publishedTemplates.length === 0 ? (
             <Panel bordered>No published templates found.</Panel>
+          ) : filteredPublishedTemplates.length === 0 ? (
+            <Panel bordered>
+              No templates match the current search filters.
+            </Panel>
           ) : (
             <div
               style={{
@@ -873,7 +1359,7 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             >
               <MyTable
                 columns={templatePickColumns as any}
-                data={publishedTemplates}
+                data={filteredPublishedTemplates}
                 loading={loadingTemplates}
                 height={420}
                 onRowClick={(row: AvailabilityTemplateResponseVM) => {
@@ -881,7 +1367,8 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
                   if (!Number.isFinite(id) || id <= 0) return;
                   setOriginTemplateId(id);
                   const t =
-                    publishedTemplates.find((x) => Number(x.id) === id) ?? null;
+                    filteredPublishedTemplates.find((x) => Number(x.id) === id) ??
+                    null;
                   setSelectedOriginTemplate(t);
                   setOriginBatchId(null);
                   setSelectedOriginBatchRowKey("");
@@ -1135,7 +1622,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             <MyButton appearance="default" disabled style={{ opacity: 0.65 }}>
               Ask patient by notification (Coming soon)
             </MyButton>
-            <MyButton appearance="ghost" onClick={() => setStep(3)}>
+            <MyButton
+              appearance="ghost"
+              onClick={() => {
+                bumpListRefresh("replacementTemplates");
+                setStep(3);
+              }}
+            >
               Reschedule
             </MyButton>
           </Form>

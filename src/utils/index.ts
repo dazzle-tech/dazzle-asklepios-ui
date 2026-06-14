@@ -1,5 +1,6 @@
 import { ListRequest } from '@/types/types';
 
+export { extractErrorMessage } from './extractErrorMessage';
 export { default as toThousands } from './toThousands';
 export { default as highlightValue } from './highlightValue';
 export { default as formatValue } from './formatValue';
@@ -339,4 +340,37 @@ export const formatControlledEnumLabel = (code?: string | null): string => {
   const schedulePart = afterPrefix.replace(/_/g, ' ').toUpperCase();
 
   return `Schedule ${schedulePart} (${trimmed})`;
+};
+
+
+export const lightenColor = (
+  hex: string,
+  percent: number = 0.9
+): string => {
+  const cleanHex = hex.replace('#', '');
+
+  if (cleanHex.length !== 6) {
+    return hex;
+  }
+
+  const num = parseInt(cleanHex, 16);
+
+  const r = Math.min(
+    255,
+    (num >> 16) + Math.round((255 - (num >> 16)) * percent)
+  );
+
+  const g = Math.min(
+    255,
+    ((num >> 8) & 0x00ff) +
+      Math.round((255 - ((num >> 8) & 0x00ff)) * percent)
+  );
+
+  const b = Math.min(
+    255,
+    (num & 0x0000ff) +
+      Math.round((255 - (num & 0x0000ff)) * percent)
+  );
+
+  return `rgb(${r}, ${g}, ${b})`;
 };

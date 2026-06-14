@@ -186,11 +186,13 @@ const SOAP = props => {
           <SectionContainer
             title={<Translate>Patient Diagnosis</Translate>}
             content={
+              <div style={{ width: '100%' }}>
               <PatientDiagnosis
                 patient={patient}
                 encounter={localEncounter}
                 onDiagnosisSaved={onDiagnosisSaved}
               />
+              </div>
             }
           />
 
@@ -221,7 +223,7 @@ const SOAP = props => {
           className={clsx('column-container', { 'disabled-panel': edit })}
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
-          <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+          <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} setEncounter={setLocalEncounter} />
         </div>
       )
     }

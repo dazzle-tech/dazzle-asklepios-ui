@@ -48,7 +48,7 @@ import {
   formatEnumString
 } from '@/utils';
 import AddBulkServicesToConsultationModal from '@/pages/encounter/encounter-pre-observations-new/Service&Products/AddBulkServicesToConsultationModal';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '../UserDateCell/UserDateCell';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -660,41 +660,6 @@ const MyConsultations = () => {
     setOpenBulkServicesModal(false);
     setSelectedConsultationForServices(null);
   }, []);
-
-const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) {
-    return <span>-</span>;
-  }
-
-  return <span>{fullName || login}</span>;
-};
-
-    const UserDateCell = ({
-      login,
-      date
-    }: {
-      login?: string | null;
-      date?: string | null;
-    }) => {
-      if (!login && !date) {
-        return <span>-</span>;
-      }
-
-      return (
-        <>
-          <UserFullNameCell login={login} />
-          <br />
-          <span className="date-table-style">
-            {date ? formatDateWithoutSeconds(date) : ''}
-          </span>
-        </>
-      );
-    };
-
 
   const tableColumns = useMemo(
     () => [

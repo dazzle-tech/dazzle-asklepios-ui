@@ -107,7 +107,6 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
   <div dir={dir}>
     <div className="main-container">
       <div className="enhanced-header">
-        {/* Row 1 */}
         <div className="header-first-row">
           <SelectPicker
             data={ordersList ?? []}
@@ -207,6 +206,8 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                       : []
                 }
                 selectDataLabel="lovDisplayVale"
+                        disableByField='isValid'
+
                 selectDataValue="key"
                 record={filters}
                 setRecord={setFilters}
@@ -236,7 +237,6 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         <Divider />
       </Row>
 
-      {/* Row 4 - Table actions */}
       <Row>
         <div className="top-container">
           <div className="buttons-sect">

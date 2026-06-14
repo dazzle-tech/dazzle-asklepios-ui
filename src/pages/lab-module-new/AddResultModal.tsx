@@ -225,7 +225,9 @@ const AddResultModal = ({
                 fieldName={String(profile.id)}
                 fieldType={isLov ? 'select' : 'number'}
                 selectData={isLov ? resolveLovOptions(profile) : undefined}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 showLabel={false}
                 record={rowRecord}

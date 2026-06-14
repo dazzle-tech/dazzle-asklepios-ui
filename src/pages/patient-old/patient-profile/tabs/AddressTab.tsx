@@ -54,7 +54,9 @@ const AddressTab: React.FC<AddressTabProps> = ({
         fieldType="select"
         fieldName="stateProvinceRegionLkey"
         selectData={cityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -66,7 +68,9 @@ const AddressTab: React.FC<AddressTabProps> = ({
         fieldType="select"
         fieldName="cityLkey"
         selectData={cityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}

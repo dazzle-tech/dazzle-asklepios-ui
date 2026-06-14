@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider, useSelector } from 'react-redux';
 import { HashRouter } from 'react-router-dom';
@@ -9,6 +9,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { useGetSystemConfigQuery } from './services/systemConfigService';
+import { lightenColor } from './utils';
 
 if (typeof window !== 'undefined') {
   const resizeObserverErr = (e: ErrorEvent) => {
@@ -17,27 +19,129 @@ if (typeof window !== 'undefined') {
       e.message === 'ResizeObserver loop completed with undelivered notifications.'
     ) {
       const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay');
+
       if (resizeObserverErrDiv) {
         resizeObserverErrDiv.style.display = 'none';
       }
+
       e.stopImmediatePropagation();
     }
   };
+
   window.addEventListener('error', resizeObserverErr);
 }
 
+const setFavicon = (href: string) => {
+  document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']").forEach((el) => {
+    el.remove();
+  });
+
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = href.endsWith('.ico') ? 'image/x-icon' : 'image/png';
+  link.href = `${href}${href.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
+  document.head.appendChild(link);
+};
+const hexToRgb = (hex: string) => {
+  const cleanHex = hex.replace('#', '');
+
+  if (cleanHex.length !== 6) {
+    return '65, 91, 231';
+  }
+
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  return `${r}, ${g}, ${b}`;
+};
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const { data: systemConfig } = useGetSystemConfigQuery();
 
+
+  useEffect(() => {
+    const applySystemConfig = (config: any) => {
+      if (config?.SYSTEM_TITLE) {
+        document.title = config.SYSTEM_TITLE;
+      }
+
+      if (config?.PRIMARY_COLOR) {
+        const primaryRgb = hexToRgb(config.PRIMARY_COLOR);
+
+        document.documentElement.style.setProperty('--primary-color', config.PRIMARY_COLOR);
+        document.documentElement.style.setProperty('--primary-blue', config.PRIMARY_COLOR);
+        document.documentElement.style.setProperty('--primary-blue-rgb', primaryRgb);
+        document.documentElement.style.setProperty('--one-health-theme-hover', `rgba(${primaryRgb}, 0.05)`);
+        document.documentElement.style.setProperty(
+          '--one-health-theme-header',
+          lightenColor(config.PRIMARY_COLOR, 0.9)
+        ); document.documentElement.style.setProperty('--one-health-theme-select', `rgba(${primaryRgb}, 0.12)`);
+      }
+
+      if (config?.FONT_FAMILY) {
+        document.documentElement.style.setProperty('--font-family', config.FONT_FAMILY);
+      }
+
+      if (config?.FAVICON) {
+        setFavicon(config.FAVICON);
+      }
+
+    };
+
+    const cachedSystemConfig = localStorage.getItem('systemConfig');
+
+    if (cachedSystemConfig) {
+      try {
+        applySystemConfig(JSON.parse(cachedSystemConfig));
+      } catch {
+        localStorage.removeItem('systemConfig');
+      }
+    }
+
+    if (systemConfig) {
+      localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
+      applySystemConfig(systemConfig);
+    }
+  }, [systemConfig]);
+
+  const cachedConfig = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('systemConfig') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+
+  const activeConfig = systemConfig || cachedConfig;
+
+  const primaryColor = activeConfig?.PRIMARY_COLOR || '#1976d2';
+  const fontFamily = activeConfig?.FONT_FAMILY || 'Inter';
+  const logo = activeConfig?.SYSTEM_LOGO || '/clinicle.png';
+  const loginBackground = activeConfig?.LOGIN_BACKGROUND || '';
+  const sidebarLogo = activeConfig?.SIDEBAR_LOGO || logo;
+  const sidebarLogoDark=activeConfig?.SIDEBAR_LOGO_DARK||logo;
   const muiTheme = createTheme({
     palette: {
-      mode: mode === 'dark' ? 'dark' : 'light'
+      mode: mode === 'dark' ? 'dark' : 'light',
+      primary: {
+        main: primaryColor
+      }
+    },
+    typography: {
+      fontFamily
     }
   });
 
   const styledTheme = {
     mode,
+    systemConfig: activeConfig,
+    logo,
+    loginBackground,
+    sidebarLogo,
     colors: {
+      primary: primaryColor,
       background: mode === 'dark' ? '#121212' : '#fff',
       text: mode === 'dark' ? '#fff' : '#000'
     }
@@ -48,7 +152,7 @@ const RootWrapper = () => {
       <CssBaseline />
       <RSuiteProvider theme={mode === 'dark' ? 'dark' : 'light'}>
         <StyledThemeProvider theme={styledTheme}>
-          <div className={`${mode === 'light' ? 'light' : 'dark'}`}>
+          <div className={mode === 'light' ? 'light' : 'dark'}>
             <App />
           </div>
         </StyledThemeProvider>
@@ -56,10 +160,12 @@ const RootWrapper = () => {
     </MUIThemeProvider>
   );
 };
+
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
+
   root.render(
     <Provider store={store}>
       <HashRouter>

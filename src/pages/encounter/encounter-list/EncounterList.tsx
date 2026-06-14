@@ -55,6 +55,7 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+import VisitReportPrintButton from './VisitReportPrintButton';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -307,7 +308,7 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-  
+
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -663,23 +664,34 @@ const EncounterList = () => {
     try {
       setPrintingVisitReportId(encounterId);
 
-      const blob = await triggerVisitReportPdf({ encounterId }).unwrap();
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      const fileURL = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const blob = await triggerVisitReportPdf({
+        encounterId,
+        timezone,
+      }).unwrap();
 
-      link.href = fileURL;
-      link.download = `visit-report-${encounterId}.pdf`;
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const fileURL = window.URL.createObjectURL(pdfBlob);
 
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const win = window.open(fileURL, '_blank');
 
-      setTimeout(() => window.URL.revokeObjectURL(fileURL), 1000);
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning',
+          })
+        );
+      }
+
+
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Error while downloading visit report',
+          msg: error?.data?.message || 'Error while opening visit report',
           sev: 'error',
         })
       );
@@ -808,7 +820,17 @@ const EncounterList = () => {
     {
       key: 'encounterDate',
       title: 'DATE',
-      render: (row: any) => row?.encounterDate ?? '-'
+      render: (row: any) => {
+        if (!row?.encounterDate) {
+          return '-';
+        }
+
+        const time = row?.encounterTime
+          ? row.encounterTime.slice(0, 5)
+          : '';
+
+        return `${row.encounterDate} ${time}`;
+      }
     },
     {
       key: 'startedDate',
@@ -951,19 +973,10 @@ const EncounterList = () => {
             {canSeePrint && (
               <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                 <div>
-                  <MyButton
-                    size="small"
-                    backgroundColor="light-blue"
-                    disabled={printingVisitReportId === row?.id}
-                    loading={printingVisitReportId === row?.id}
-                    onClick={() => {
-                      if (printingVisitReportId === row?.id) return; 
-                      setLocalEncounter(row);
-                      handlePrintVisitReport(row);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPrint} />
-                  </MyButton>
+                 <VisitReportPrintButton
+                        row={row}
+                       
+                      />
                 </div>
               </Whisper>
             )}
@@ -1165,43 +1178,43 @@ const EncounterList = () => {
   }, [dispatch, tableLoading]);
 
   useEffect(() => {
-  if (!departmentId || appliedFilters) return;
+    if (!departmentId || appliedFilters) return;
 
-  const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-  const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-  setAppliedFilters({
+    setAppliedFilters({
+      departmentId,
+      fromDate,
+      toDate,
+      statusIn: DEFAULT_STATUS,
+      patientName: undefined,
+      mrn: undefined,
+      encounterReasons: undefined,
+      chiefComplaint: undefined,
+      priorities: undefined,
+      hasPrescription: undefined,
+      hasOrder: undefined,
+      isObserved: undefined,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+  }, [
     departmentId,
-    fromDate,
-    toDate,
-    statusIn: DEFAULT_STATUS,
-    patientName: undefined,
-    mrn: undefined,
-    encounterReasons: undefined,
-    chiefComplaint: undefined,
-    priorities: undefined,
-    hasPrescription: undefined,
-    hasOrder: undefined,
-    isObserved: undefined,
-    page: 0,
-    size: pageSize,
-    sort: DEFAULT_SORT
-  });
-}, [
-  departmentId,
-  appliedFilters,
-  dateFilter.fromDate,
-  dateFilter.toDate,
-  todayStr,
-  DEFAULT_STATUS,
-  pageSize
-]);
+    appliedFilters,
+    dateFilter.fromDate,
+    dateFilter.toDate,
+    todayStr,
+    DEFAULT_STATUS,
+    pageSize
+  ]);
 
-useEffect(() => {
-  if (appliedFilters) {
-    refetchEncounters();
-  }
-}, [appliedFilters, refetchEncounters]);
+  useEffect(() => {
+    if (appliedFilters) {
+      refetchEncounters();
+    }
+  }, [appliedFilters, refetchEncounters]);
 
   const didAutoRefetchRef = useRef(false);
   useEffect(() => {
@@ -1338,6 +1351,7 @@ useEffect(() => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
+
         </Panel>
       </div>
     </>

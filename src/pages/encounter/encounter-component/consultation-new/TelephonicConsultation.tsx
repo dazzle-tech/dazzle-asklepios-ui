@@ -27,8 +27,7 @@ import DetailsTele from './DetailsTele';
 import './styles.less';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { Loader } from 'rsuite';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -193,39 +192,6 @@ const TelephonicConsultation = props => {
       dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
     }
   };
-
-  const UserFullNameCell = ({ login }: { login?: string | null }) => {
-  const { data: fullName, isLoading } = useGetUserFullNameByLoginQuery(login!, {
-    skip: !login
-  });
-
-  if (!login) return <span>-</span>;
-  if (isLoading) return <Loader size="xs" />;
-
-  return <span>{fullName || login}</span>;
-};
-
-const UserDateCell = ({
-  login,
-  date
-}: {
-  login?: string | null;
-  date?: string | null;
-}) => {
-  if (!login && !date) {
-    return <span>-</span>;
-  }
-
-  return (
-    <>
-      <UserFullNameCell login={login} />
-      <br />
-      <span className="date-table-style">
-        {date ? formatDateWithoutSeconds(date) : ''}
-      </span>
-    </>
-  );
-};
 
   const columns = [
     {

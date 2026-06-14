@@ -239,7 +239,9 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
             <MyInput
               fieldType="select"
               selectData={specialLov?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               fieldName="specialPopulation"
               record={record}

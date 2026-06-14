@@ -211,7 +211,9 @@ const ERList = () => {
             fieldLabel="Encounter Status"
             fieldName="key"
             selectData={encounterStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
@@ -228,7 +230,9 @@ const ERList = () => {
                 fieldName="accessTypeLkey"
                 fieldType="select"
                 selectData={bookVisitLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 fieldLabel="Visit Type"
                 selectDataValue="key"
                 record={record}
@@ -251,7 +255,9 @@ const ERList = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={EncPriorityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Select Priority"
                 fieldLabel="Priority"

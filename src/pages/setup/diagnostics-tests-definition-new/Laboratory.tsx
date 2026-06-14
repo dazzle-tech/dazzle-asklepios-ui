@@ -71,7 +71,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="category"
           fieldType="select"
           selectData={CategoriesLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -161,7 +163,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="reagents"
           fieldType="select"
           selectData={LabReagentsLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -186,7 +190,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="timeUnit"
           fieldType="select"
           selectData={TimeUnitLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -209,7 +215,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="sampleContainer"
           fieldType="select"
           selectData={SampleContainerLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -231,7 +239,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="sampleVolumeUnit"
           fieldType="select"
           selectData={ValueUnitLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -247,7 +257,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="tubeColor"
           fieldType="select"
           selectData={TubeColorLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -260,7 +272,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="tubeType"
           fieldType="select"
           selectData={LabTubeTypeLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}
@@ -305,7 +319,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           fieldName="turnaroundTimeUnit"
           fieldType="select"
           selectData={TimeUnitLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={diagnosticTestLaboratory}
           setRecord={setDiagnosticTestLaboratory}

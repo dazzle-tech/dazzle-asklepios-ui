@@ -319,7 +319,9 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                 fieldType="select"
                 fieldName="painPattern"
                 selectData={painPatternLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}

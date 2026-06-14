@@ -8,7 +8,7 @@ import SectionContainer from "@/components/SectionsoContainer";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { useEnumOptions } from "@/services/enumsApi";
-import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useSavePriceListMutation } from "@/services/billing/PriceListService";
 import MyModal from "@/components/MyModal/MyModal";
 
@@ -24,22 +24,27 @@ const AddEditPriceList = ({
 
   const [savePriceList] = useSavePriceListMutation();
   const priceListTypes = useEnumOptions("PriceListTypes");
-  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
+  const { data: allFacilities = [] } = useGetActiveFacilitiesQuery(null);
+ useEffect(() => {
+  if (!open || !priceList) return;
 
-  useEffect(() => {
-    const fid = priceList?.facilityId;
-    if (!fid) return;
+  setPriceList(prev => {
+    if (!prev) return prev;
 
-    setPriceList(prev => {
-      const existing = prev.facilityIds ?? [];
-      if (existing.includes(fid)) return prev;
+    if (prev.facilityIds?.length) {
+      return prev;
+    }
 
+    if (prev.facilityId) {
       return {
         ...prev,
-        facilityIds: [...existing, fid],
+        facilityIds: [prev.facilityId],
       };
-    });
-  }, [priceList?.facilityId, setPriceList]);
+    }
+
+    return prev;
+  });
+}, [open, priceList?.id, priceList?.facilityId, setPriceList]);
 
   const validateRequiredFields = () => {
     const required = ["name", "type", "effectiveFrom"];
@@ -61,6 +66,7 @@ const AddEditPriceList = ({
     }
     return true;
   };
+console.log("price list ",priceList);
 
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
@@ -138,7 +144,7 @@ const AddEditPriceList = ({
           <>
             <MyInput
               fieldType="checkPicker"
-              fieldLabel={<span><Translate>Facilities</Translate><span>(<Translate>bulk</Translate>)</span> </span>}
+              fieldLabel={"Facilities(bulk)"}
               fieldName="facilityIds"
               selectData={allFacilities ?? []}
               selectDataLabel="name"
@@ -147,8 +153,9 @@ const AddEditPriceList = ({
               setRecord={setPriceList}
               searchable
               width={520}
-              placeholder={<Translate>Select at least one facility</Translate>}
+              placeholder={"Select at least one facility"}
               required
+              disabled={priceList?.id}
             />
             <small style={{ opacity: 0.7 }}>
               <Translate>At least one facility is required</Translate>
@@ -170,6 +177,7 @@ const AddEditPriceList = ({
                 record={priceList}
                 setRecord={setPriceList}
                 required
+                disablePastDates
                 width={250}
               />
 
@@ -180,6 +188,7 @@ const AddEditPriceList = ({
                 fieldName="effectiveTo"
                 record={priceList}
                 setRecord={setPriceList}
+                disablePastDates
                 width={250}
               />
             </div>

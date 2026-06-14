@@ -159,7 +159,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Criticality"
                                     selectData={criticalityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='criticality'
                                     record={allerges}
@@ -183,7 +185,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Treatment Strategy"
                                     selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='treatmentStrategy'
                                     record={allerges}
@@ -200,7 +204,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Onset"
                                     selectData={onsetLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='onset'
                                     record={allerges}
@@ -238,7 +244,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Type of Propensity"
                                     selectData={allgPropnLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='typeOfPropensity'
                                     record={allerges}
@@ -254,7 +262,9 @@ const AllergyDetailsSection = ({
                                         fieldType="select"
                                         fieldLabel="Source of Information"
                                         selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                         selectDataValue="key"
                                         fieldName='sourceOfInformation'
                                         record={allerges}
@@ -285,7 +295,9 @@ const AllergyDetailsSection = ({
                                         fieldType="checkPicker"
                                         fieldLabel="Allergic Reactions"
                                         selectData={reactionLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+                                        disabled
                                         selectDataValue="key"
                                         fieldName='reactions'
                                         record={reactions}

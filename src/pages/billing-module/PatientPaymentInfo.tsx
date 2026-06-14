@@ -63,6 +63,8 @@ const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, i
                 record={localEncounter}
                 setRecord={setLocalEncounter}
                 disabled={isReadOnly}
+                        disableByField='isValid'
+
             />
             <br />
             {localEncounter?.paymentTypeLkey === '330434908679093' ?
@@ -113,6 +115,8 @@ const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, i
                         selectDataValue="key"
                         record={patientInsurance}
                         setRecord={setPatientInsurance}
+                                disableByField='isValid'
+
                     />
                     <MyInput
                         vr={validationResult}

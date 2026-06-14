@@ -54,7 +54,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={routeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="route"
@@ -84,7 +86,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={frequencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="frequency"
@@ -158,7 +162,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={infusionDeviceLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="infusionDevice"
@@ -174,7 +180,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={priorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="priority"

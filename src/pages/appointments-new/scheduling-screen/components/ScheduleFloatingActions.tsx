@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import Draggable from 'react-draggable';
 import { Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faPlus, faRightLeft, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPaperPlane, faPlus, faRightLeft, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 type Props = {
   onViewAppointmentRequests: () => void;
   onBulkReschedule: () => void;
+  onViewCancelledAppointments: () => void;
 };
 
-const ScheduleFloatingActions = ({ onViewAppointmentRequests, onBulkReschedule }: Props) => {
+const ScheduleFloatingActions = ({
+  onViewAppointmentRequests,
+  onBulkReschedule,
+  onViewCancelledAppointments
+}: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [wasDragged, setWasDragged] = useState(false);
 
@@ -53,6 +58,16 @@ const ScheduleFloatingActions = ({ onViewAppointmentRequests, onBulkReschedule }
                 onClick={() => runAction(onBulkReschedule)}
               >
                 <FontAwesomeIcon icon={faRightLeft} />
+              </button>
+            </Whisper>
+            <Whisper placement="left" trigger="hover" speaker={<Tooltip>Cancelled appointments</Tooltip>}>
+              <button
+                type="button"
+                className="schedule-fab-secondary-btn"
+                aria-label="Cancelled appointments"
+                onClick={() => runAction(onViewCancelledAppointments)}
+              >
+                <FontAwesomeIcon icon={faBan} />
               </button>
             </Whisper>
           </div>

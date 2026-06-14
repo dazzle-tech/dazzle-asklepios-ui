@@ -83,8 +83,11 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   const { data: ordersResponse, isFetching: isOrdersFetching } =
     useFilterDiagnosticOrdersQuery(ordersQueryParams);
-  const orders = ordersResponse?.data ?? [];
-  const orderIds = useMemo(() => orders.map((o: any) => o.id).filter(Boolean), [orders]);
+  const diagnosticOrders = ordersResponse?.data ?? [];
+  const orderIds = useMemo(
+    () => diagnosticOrders.map((order: any) => order.id).filter(Boolean),
+    [diagnosticOrders]
+  );
 
   const queryParams = useMemo(() => {
     if (!patientId) return skipToken;
@@ -105,7 +108,7 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
     return params;
   }, [patientId, orderIds, pageIndex, rowsPerPage, isOrdersFetching]);
 
-  const { data: response, isFetching } = useFilterDiagnosticOrderTestResultsQuery(
+  const { data: testResultsResponse, isFetching } = useFilterDiagnosticOrderTestResultsQuery(
     queryParams ?? skipToken
   );
 
@@ -113,118 +116,174 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
     openNotesModal && selectedResultId ? selectedResultId : skipToken
   );
 
-  const results = response?.data ?? [];
-  const totalCount = response?.totalCount ?? 0;
+  const testResults = testResultsResponse?.data ?? [];
+  const totalCount = testResultsResponse?.totalCount ?? 0;
 
   const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
     page: 0,
     size: 10000
   });
 
-  const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
+  const diagnosticTestProfileMap = useMemo(
+    () => new Map(profilesResponse?.data?.map((profile: any) => [profile.id, profile]) ?? []),
     [profilesResponse]
   );
-  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: valueUnitOptionsResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-  const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+  const { data: allLovValuesResponse } = useGetLovAllValuesQuery({
+    ...initialListRequestAllValues
+  });
 
-  const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+  const { data: lovDefinitionsResponse } = useGetLovsQuery({
+    ...initialListRequest,
+    pageSize: 1000
+  });
 
   const resolveLovDisplayValue = (lovId: any, key: any) => {
-    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) return key;
+    if (!lovId || key == null || !lovDefinitionsResponse?.object || !allLovValuesResponse?.object)
+      return key;
 
-    const lovDef = lovDefinitions.object.find((d: any) => String(d.key) === String(lovId));
+    const lovDefinitionItem = lovDefinitionsResponse.object.find(
+      (lovDefinitionItem: any) => String(lovDefinitionItem.key) === String(lovId)
+    );
 
-    if (!lovDef?.lovCode) return key;
+    if (!lovDefinitionItem?.lovCode) return key;
 
     return (
-      allLovValues.object.find(
-        (v: any) => String(v.lovCode) === String(lovDef.lovCode) && String(v.key) === String(key)
+      allLovValuesResponse.object.find(
+        (lovValue: any) =>
+          String(lovValue.lovCode) === String(lovDefinitionItem.lovCode) &&
+          String(lovValue.key) === String(key)
       )?.lovDisplayVale ?? key
     );
   };
 
-  const orderTestIds = useMemo(() => results.map(r => r.orderTestId).filter(Boolean), [results]);
+  const orderTestRecordIds = useMemo(
+    () => testResults.map((testResult: any) => testResult.orderTestId).filter(Boolean),
+    [testResults]
+  );
 
   const { data: orderTestsResponse, isFetching: isOrderTestsFetching } =
     useFilterDiagnosticOrderTestsQuery(
-      orderTestIds.length ? { orderTestIdIn: orderTestIds, page: 0, size: 100 } : skipToken
+      orderTestRecordIds.length
+        ? { orderTestIdIn: orderTestRecordIds, page: 0, size: 100 }
+        : skipToken
     );
-  const orderTests = orderTestsResponse?.data ?? [];
+  const orderTestRecords = orderTestsResponse?.data ?? [];
 
-  const orderTestMap = useMemo(() => new Map(orderTests.map(t => [t.id, t])), [orderTests]);
+  const orderTestRecordMap = useMemo(
+    () => new Map(orderTestRecords.map((orderTest: any) => [orderTest.id, orderTest])),
+    [orderTestRecords]
+  );
 
   const { data: allTestsResponse, isFetching: isAllTestsFetching } = useGetAllDiagnosticTestsQuery({
     page: 0,
     size: 10000
   });
 
-  const allTests = allTestsResponse?.data ?? [];
+  const allDiagnosticTests = allTestsResponse?.data ?? [];
 
-  const testMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
+  const diagnosticTestMap = useMemo(
+    () => new Map(allDiagnosticTests.map((diagnosticTest: any) => [diagnosticTest.id, diagnosticTest])),
+    [allDiagnosticTests]
+  );
 
   const normalizedResults = useMemo(() => {
-    if (!orderTests.length || !allTests.length) return [];
+    return testResults.map((testResult: any) => {
+      const orderTest = orderTestRecordMap.get(testResult.orderTestId);
 
-    return results.map((r: any) => {
-      const orderTest = orderTestMap.get(r.orderTestId);
-      const test = orderTest ? testMap.get(orderTest.testId) : null;
+      const testId =
+        orderTest?.testId ??
+        testResult.testId ??
+        testResult.diagnosticTestId ??
+        testResult.test?.id;
 
-      const profile = profilesMap.get(r.profileTestId);
-      const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
+      const diagnosticTest = testId ? diagnosticTestMap.get(testId) : null;
+
+      const profile = diagnosticTestProfileMap.get(testResult.profileTestId);
+
+      const isLovTest =
+        profile?.resultType?.toUpperCase() === 'LOV';
 
       let value = '';
       let unit = '';
       let normalRangeValue = ' ';
 
       if (isLovTest) {
-        value = resolveLovDisplayValue(profile?.listOfValueId, r.resultValueText);
+        value = resolveLovDisplayValue(profile?.listOfValueId, testResult.resultValueText);
 
-        normalRangeValue = resolveLovDisplayValue(profile?.listOfValueId, r.viewNormalRange);
+        normalRangeValue = resolveLovDisplayValue(profile?.listOfValueId, testResult.viewNormalRange);
       } else {
         value =
-          r.resultValueNumber !== null && r.resultValueNumber !== undefined
-            ? String(r.resultValueNumber)
+          testResult.resultValueNumber !== null && testResult.resultValueNumber !== undefined
+            ? String(testResult.resultValueNumber)
             : '';
 
         unit =
-          valueUnitLov?.object?.find(
-            (u: any) => String(u.key) === String(test?.defaultProfileResultUnit)
+          valueUnitOptionsResponse?.object?.find(
+            (valueUnit: any) =>
+              String(valueUnit.key) ===
+              String(
+                profile?.resultUnit ??
+                profile?.defaultResultUnit ??
+                diagnosticTest?.defaultProfileResultUnit
+              )
           )?.lovDisplayVale ?? '';
 
-        normalRangeValue = r.viewNormalRange ?? ' ';
+        normalRangeValue = testResult.viewNormalRange ?? ' ';
       }
 
+      const testName =
+        profile?.name ??
+        profile?.testName ??
+        profile?.profileTestName ??
+        profile?.diagnosticTestName ??
+        diagnosticTest?.name ??
+        orderTest?.testName ??
+        orderTest?.diagnosticTestName ??
+        testResult.testName ??
+        testResult.diagnosticTestName ??
+        testResult.test?.name ??
+        '-';
+
       return {
-        ...r,
-        orderId: orderTest?.orderId ?? ' ',
-        testName: test?.name ?? ' ',
+        ...testResult,
+        orderId: orderTest?.orderId ?? testResult.orderId ?? ' ',
+        testName,
         resultValue: value,
         unit,
         normalRange: normalRangeValue
       };
     });
-  }, [results, orderTestMap, testMap, valueUnitLov, lovDefinitions, allLovValues]);
+  }, [
+    testResults,
+    orderTestRecordMap,
+    diagnosticTestMap,
+    diagnosticTestProfileMap,
+    valueUnitOptionsResponse,
+    lovDefinitionsResponse,
+    allLovValuesResponse
+  ]);
 
   const columns: ColumnConfig[] = [
     {
       key: 'testName',
       title: <Translate>TEST NAME</Translate>,
-      render: (row: any) => row.testName
+      render: (testResultRow: any) => testResultRow.testName
     },
     {
       key: 'result',
       title: <Translate>TEST RESULT, UNIT</Translate>,
-      render: (row: any) => {
+      render: (testResultRow: any) => {
         const hasValue =
-          row.resultValue !== null && row.resultValue !== undefined && row.resultValue !== '';
-
+          testResultRow.resultValue !== null &&
+          testResultRow.resultValue !== undefined &&
+          testResultRow.resultValue !== '';
         return (
           <>
-            <span>{row.resultValue}</span>
-            {hasValue && row.unit && (
-              <span style={{ marginLeft: 6, color: '#666' }}>{row.unit}</span>
+            <span>{testResultRow.resultValue}</span>
+            {hasValue && testResultRow.unit && (
+              <span style={{ marginLeft: 6, color: '#666' }}>{testResultRow.unit}</span>
             )}
           </>
         );
@@ -234,7 +293,7 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
       key: 'marker',
       title: <Translate>MARKER</Translate>,
       align: 'center',
-      render: (row: any) => renderMarker(row.marker ?? row.marker)
+      render: (testResultRow: any) => renderMarker(testResultRow.marker ?? testResultRow.marker)
     }
   ];
 

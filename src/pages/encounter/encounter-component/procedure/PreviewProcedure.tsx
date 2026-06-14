@@ -84,7 +84,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   fieldType="select"
                   fieldLabel="Procedure Level"
                   selectData={procedureLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="procedureLevelLkey"
                   record={procedure}
@@ -96,7 +98,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   fieldType="select"
                   fieldLabel="Priority"
                   selectData={priorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="priorityLkey"
                   record={procedure}
@@ -128,7 +132,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   fieldType="select"
                   fieldLabel="Body Part"
                   selectData={bodypartLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="bodyPartLkey"
                   record={procedure}
@@ -140,7 +146,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   fieldType="select"
                   fieldLabel="Side"
                   selectData={sideLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="sideLkey"
                   record={procedure}

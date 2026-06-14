@@ -247,7 +247,9 @@ const PatientArrival = ({
                   <MyInput
                     fieldType="select"
                     selectData={ConsentFormLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width="100%"
                     fieldName="consentLkey"

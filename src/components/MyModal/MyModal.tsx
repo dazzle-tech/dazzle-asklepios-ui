@@ -12,7 +12,7 @@ const MyModal = ({
   title,
   icon = null,
   pagesCount = 1,
-  bodyheight = '80vh',
+  bodyheight = '73vh',
   content,
   size = '50vw',
   steps = [],
@@ -22,6 +22,7 @@ const MyModal = ({
   hideBack = false,
   hideActionBtn = false,
   isDisabledActionBtn = false,
+  actionButtonLoading = false,
   actionButtonLabel = 'Save',
   actionButtonFunction = () => {},
   customClassName = '',
@@ -48,6 +49,7 @@ const MyModal = ({
   hideBack?: boolean;
   hideActionBtn?: boolean;
   isDisabledActionBtn?: boolean;
+  actionButtonLoading?: boolean;
   actionButtonLabel?: string;
   actionButtonFunction?: () => void | Promise<void>;
   customClassName?: string;
@@ -166,6 +168,7 @@ const MyModal = ({
                 }
               }}
               disabled={isDisabledActionBtn}
+              loading={actionButtonLoading}
             >
               {actionButtonLabel}
             </MyButton>

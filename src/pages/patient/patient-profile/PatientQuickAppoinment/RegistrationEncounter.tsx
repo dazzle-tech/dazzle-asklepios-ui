@@ -562,7 +562,9 @@ useEffect(() => {
         fieldLabel="Origin Type"
         fieldName="originType"
         selectData={patOriginLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={setLocalEncounter}

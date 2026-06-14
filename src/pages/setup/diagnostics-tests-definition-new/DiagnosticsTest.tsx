@@ -2,6 +2,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -23,6 +24,8 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
 import { Form, Panel } from 'rsuite';
@@ -30,6 +33,7 @@ import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import Coding from './Coding';
 import DefaultProfileIndicator from './DefaultProfileIndicator';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import Profile from './Profile';
 import './styles.less';
 
@@ -52,6 +56,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
   const [openTemplateModal, setOpenTemplateModal] = useState<boolean>(false);
   const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedDiagnosticTestForPolicyAssignment, setSelectedDiagnosticTestForPolicyAssignment] =
+    useState<DiagnosticTest | null>(null);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
@@ -217,11 +224,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-         parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
+        parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
-        
+        modality: diagnosticsTest?.modality
+
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
@@ -335,10 +343,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-       parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
+        parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality
+
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
@@ -478,15 +488,15 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const divContent = 'Diagnostics Tests Definition';
 
 
-useEffect(() => {
-  dispatch(setPageCode('Diagnostics_Tests'));
-  dispatch(setDivContent(divContent));
+  useEffect(() => {
+    dispatch(setPageCode('Diagnostics_Tests'));
+    dispatch(setDivContent(divContent));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.id === diagnosticsTest.id) {
@@ -577,6 +587,18 @@ useEffect(() => {
             }}
           />
         )}
+
+        <FontAwesomeIcon
+          icon={faClipboardList}
+          title="Policy Assignment"
+          className="icons-style"
+          color="var(--primary-gray)"
+          size="lg"
+          onClick={() => {
+            setSelectedDiagnosticTestForPolicyAssignment(rowData);
+            setOpenPolicyAssignmentModal(true);
+          }}
+        />
 
         {/* Profile or Normal Range */}
         {rowData?.type === 'LABORATORY' && (
@@ -762,17 +784,17 @@ useEffect(() => {
 
 
   useEffect(() => {
-  if (selectedProfile) {
-    setOpenProfileModal(true);
-  }
-}, [selectedProfile]);
+    if (selectedProfile) {
+      setOpenProfileModal(true);
+    }
+  }, [selectedProfile]);
 
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -891,6 +913,30 @@ useEffect(() => {
         diagnosticsTest={diagnosticsTest}
         selectedProfile={selectedProfile}
         openNormalRanges={openNormalRangesDirectly}
+      />
+
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        content={
+          selectedDiagnosticTestForPolicyAssignment?.id ? (
+            <PolicyAssignmentManager
+              resourceType="DIAGNOSTIC_TEST"
+              resourceId={selectedDiagnosticTestForPolicyAssignment.id}
+              facilityId={selectedDiagnosticTestForPolicyAssignment.facilityId}
+              showHeader={false}
+              onSaved={() => {
+                refetchDiagnostics();
+              }}
+            />
+          ) : (
+            <div style={{ padding: 16 }}>Please select a diagnostic test.</div>
+          )
+        }
       />
 
       {openTemplateModal && diagnosticsTest?.id && (
