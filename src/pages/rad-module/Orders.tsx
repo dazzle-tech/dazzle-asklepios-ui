@@ -28,11 +28,22 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+  selectedPatient?: any;
+  departmentFilter?: any;
   filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
- ({ order, setOrder, dateFilter, loading, orderNumberFilter, filters }, ref) => {
+  ({
+    order,
+    setOrder,
+    dateFilter,
+    loading,
+    orderNumberFilter,
+    selectedPatient,
+    departmentFilter,
+    filters
+  }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -41,7 +52,11 @@ const Orders = forwardRef<any, OrdersProps>(
 
     useEffect(() => {
       setPaginationParams(prev => ({ ...prev, page: 0 }));
-    }, [orderNumberFilter]);
+    }, [
+      orderNumberFilter,
+      selectedPatient?.id,
+      departmentFilter?.fromDepartmentIdIn
+    ]);
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
@@ -87,6 +102,19 @@ const Orders = forwardRef<any, OrdersProps>(
             status: 'SUBMITTED',
             submittedDateFrom: fromDateParam,
             submittedDateTo: toDateParam,
+
+            ...(selectedPatient?.id
+              ? { patientIdIn: [selectedPatient.id] }
+              : {}),
+
+            ...(departmentFilter?.fromDepartmentIdIn
+              ? {
+                  fromDepartmentIdIn: [
+                    Number(departmentFilter.fromDepartmentIdIn)
+                  ]
+                }
+              : {}),
+
             ...(orderNumberFilter?.trim()
               ? { orderNumber: orderNumberFilter.trim() }
               : {})

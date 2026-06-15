@@ -49,6 +49,9 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import './ReviewResultsIcon.less';
 import UserDateCell from '@/components/UserDateCell';
+import PatientSearch from '@/components/PatientSearch';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -137,6 +140,13 @@ const ReviewResults = forwardRef<any, any>(
 
     const [filtersKey, setFiltersKey] = useState(0);
 
+    const [orderIdFilter, setOrderIdFilter] = useState('');
+
+    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+    const [departmentFilter, setDepartmentFilter] = useState<any>({
+      fromDepartmentIdIn: null
+    });
 
     const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -157,6 +167,10 @@ const ReviewResults = forwardRef<any, any>(
       ...initialListRequest,
       pageSize: 1000
     });
+
+
+    const { data: departmentsList = [] } =
+      useGetAllDepartmentsWithoutPaginationQuery();
 
     const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
       if (from && to && from > to) {
@@ -186,6 +200,16 @@ const ReviewResults = forwardRef<any, any>(
 
       params.reviewed = showReview;
 
+      if (selectedPatient?.id) {
+        params.patientIdIn = [selectedPatient.id];
+      }
+
+      if (departmentFilter?.fromDepartmentIdIn) {
+          params.fromDepartmentIdIn = [
+            Number(departmentFilter.fromDepartmentIdIn)
+          ];
+      }
+
       if (showAbnormal) {
         params.excludeMarkerIn = ['NORMAL_MARKER', 'UNKNOWN'];
       }
@@ -203,7 +227,18 @@ const ReviewResults = forwardRef<any, any>(
         params.approvedDateTo = endOfDay(approval.to).toISOString();
       }
 
-      if (orderDate.fromDate || orderDate.toDate) {
+      const orderIdNumber = Number(orderIdFilter);
+
+      if (orderIdFilter.trim() && Number.isFinite(orderIdNumber)) {
+        params.orderNumber = orderIdNumber;
+      }
+
+      if (
+        selectedPatient?.id ||
+        departmentFilter?.fromDepartmentIdIn ||
+        orderDate.fromDate ||
+        orderDate.toDate
+      ) {
         if (orderIdIn && orderIdIn.length > 0) {
           params.orderIdIn = orderIdIn;
         } else {
@@ -212,8 +247,18 @@ const ReviewResults = forwardRef<any, any>(
       }
 
       return params;
-    }, [page, size, approvalDate, showReview, showAbnormal, orderIdIn, orderDate]);
-
+      }, [
+            page,
+            size,
+            approvalDate,
+            showReview,
+            showAbnormal,
+            orderIdIn,
+            orderDate,
+            orderIdFilter,
+            selectedPatient?.id,
+            departmentFilter?.fromDepartmentIdIn
+          ]);
     const {
       data: resultsResponse,
       isFetching,
@@ -384,6 +429,12 @@ const ReviewResults = forwardRef<any, any>(
       setShowReview(false);
       setShowAbnormal(false);
       setOrderIdIn(null);
+      setSelectedPatient(null);
+
+      setDepartmentFilter({
+        fromDepartmentIdIn: null
+      });
+      setOrderIdFilter('');
       setPage(0);
 
       setFiltersKey(prev => prev + 1);
@@ -583,6 +634,43 @@ const ReviewResults = forwardRef<any, any>(
             record={orderDate}
             setRecord={setOrderDate}
           />
+
+          <div className='check-box-review-results-handle'>
+            <PatientSearch
+              value={selectedPatient}
+              onChange={setSelectedPatient}
+              showLabel={false}
+              width="22vw"
+              containerMinWidth={250}
+            />
+
+            <MyInput
+              width="12vw"
+              placeholder="Department Name"
+              fieldType="select"
+              fieldName="fromDepartmentIdIn"
+              record={departmentFilter}
+              setRecord={setDepartmentFilter}
+              selectData={departmentsList}
+              selectDataLabel="name"
+              selectDataValue="id"
+              showLabel={false}
+              cleanable
+            />
+
+          <MyInput
+            fieldType="text"
+            fieldLabel="Order ID"
+            fieldName="orderId"
+            showLabel={false}
+            placeholder="Order ID"
+            record={{ orderId: orderIdFilter }}
+            setRecord={(record: any) => {
+              setOrderIdFilter(record.orderId ?? '');
+              setPage(0);
+            }}
+          />
+            </div>
           <div className='check-box-review-results-handle'>
             <MyInput
               fieldType="check"
@@ -593,6 +681,8 @@ const ReviewResults = forwardRef<any, any>(
               setRecord={(obj: any) => setShowReview(!!obj.showReview)}
             />
           </div>
+
+
         </div>
 
         <AdvancedSearchFilters
@@ -617,16 +707,29 @@ const ReviewResults = forwardRef<any, any>(
     useEffect(() => {
       const { fromDate, toDate } = orderDate;
 
-      if (!fromDate && !toDate) {
-        setOrderIdIn(null);
-        return;
-      }
-
       fetchOrders({
         submittedDateFrom: fromDate
           ? startOfDay(fromDate).toISOString()
           : undefined,
-        submittedDateTo: toDate ? endOfDay(toDate).toISOString() : undefined,
+
+        submittedDateTo: toDate
+          ? endOfDay(toDate).toISOString()
+          : undefined,
+
+        ...(selectedPatient?.id
+          ? {
+              patientIdIn: [selectedPatient.id]
+            }
+          : {}),
+
+        ...(departmentFilter?.fromDepartmentIdIn
+          ? {
+              fromDepartmentIdIn: [
+                Number(departmentFilter.fromDepartmentIdIn)
+              ]
+            }
+          : {}),
+
         page: 0,
         size: 10000
       })
@@ -636,7 +739,20 @@ const ReviewResults = forwardRef<any, any>(
           setOrderIdIn(ids);
         })
         .catch(() => setOrderIdIn([]));
-    }, [orderDate]);
+    }, [
+      orderDate,
+      selectedPatient?.id,
+      departmentFilter?.fromDepartmentIdIn
+    ]);
+
+
+    useEffect(() => {
+      setPage(0);
+    }, [
+        orderDate,
+        selectedPatient?.id,
+        departmentFilter?.fromDepartmentIdIn
+      ]);
 
     // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
