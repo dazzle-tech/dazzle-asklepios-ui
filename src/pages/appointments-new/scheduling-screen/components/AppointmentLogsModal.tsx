@@ -92,7 +92,7 @@ const AppointmentLogsModal: React.FC<Props> = ({ open, setOpen, appointment }) =
       { key: 'bookingMode', title: 'BOOKING MODE', render: (row: any) => formatEnumString(row?.bookingMode) },
       { key: 'status', title: 'STATUS',render: (row: any) => formatEnumString(row?.status) },
       { key: 'service', title: 'SERVICE',render: (row: any) => formatEnumString(row?.service) },
-      { key: 'serviceGroupId', title: 'SERVICE GROUP ID', render: (row: any) => formatValue(row?.serviceGroupId) },
+      // { key: 'serviceGroupId', title: 'SERVICE GROUP ID', render: (row: any) => formatValue(row?.serviceGroupId) },
       { key: 'deferred', title: 'DEFERRED', render: (row: any) => formatValue(row?.deferred) },
       { key: 'deferredAt', title: 'DEFERRED AT', render: (row: any) => formatDateWithoutSeconds(row?.deferredAt) },
       { key: 'noShowReason', title: 'NO-SHOW REASON', render: (row: any) => formatValue(row?.noShowReason) },
