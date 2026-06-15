@@ -855,17 +855,27 @@ const handleCancel = async () => {
                                 {policy.name}
                             </div>
 
-                            <Switch
-                                checked={applied}
-                                onCheckedChange={(checked) => {
+                          <Form>
+                            <MyInput
+                                fieldName={`policy_${assignmentId}`}
+                                fieldType="checkbox"
+                                showLabel={false}
+                                width={60}
+                                record={{
+                                    [`policy_${assignmentId}`]: applied
+                                }}
+                                setRecord={(updatedRecord: any) => {
+                                    const checked = updatedRecord?.[`policy_${assignmentId}`];
+
                                     if (!Number.isFinite(assignmentId) || assignmentId <= 0) return;
+
                                     setPolicyAppliedDraft(prev => ({
                                         ...prev,
                                         [assignmentId]: checked
                                     }));
                                 }}
-                                className={applied ? 'data-[state=checked]:bg-emerald-500' : undefined}
                             />
+                          </Form>
 
                             <div
                                 style={{
