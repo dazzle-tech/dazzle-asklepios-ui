@@ -205,13 +205,16 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         return m;
     }, [facilities]);
 
+const getDefaultFilters = () => ({
+  fromDate: dayjs().startOf('day').toDate(),
+  toDate: dayjs().add(1, 'month').endOf('day').toDate(),
+  status: null,
+  showRejected: false
+});
+
+
     // filters
-    const [filters, setFilters] = useState<any>({
-        fromDate: null,
-        toDate: null,
-        status: null,
-        showRejected: false
-    });
+const [filters, setFilters] = useState<any>(getDefaultFilters);
 
     // Reject reason modal
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
