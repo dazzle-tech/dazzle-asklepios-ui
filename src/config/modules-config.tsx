@@ -175,15 +175,7 @@ export const MODULES: Module[] =
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
       ],
     },
-    {
-      name: "Notification Management",
-      description: "",
-      icon: "FaBell",
-      viewOrder: 0.6,
-      screens: [
-        { name: "Notification Rule", code: "NOTIFICATION_RULE", description: "", icon: "FaListCheck", viewOrder: 0, navPath: "notification-rule" },
-      ],
-    },
+   
     {
       name: "System Setup",
       description: "",
@@ -244,7 +236,15 @@ export const MODULES: Module[] =
 
       ],
     },
-
+    {
+      name: "Notification Management",
+      description: "",
+      icon: "FaBell",
+      viewOrder: 0.6,
+      screens: [
+        { name: "Notification Rule", code: "NOTIFICATION_RULE", description: "", icon: "FaListCheck", viewOrder: 0, navPath: "notification-rule" },
+      ],
+    },
     {
       name: "Coding Module",
       description: "Coding Module",
