@@ -263,7 +263,10 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                 backgroundColor="black"
                 width={170}
                 height={100}
-                onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
+                onClick={() => {
+                  setActiveSectionCard(null);
+                  setActiveCard(activeCard === 'all' ? null : 'all');
+                }}
               />
             </div>
           </div>
