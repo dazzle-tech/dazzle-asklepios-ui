@@ -38,6 +38,7 @@ import AdministrativeWarningsModal from './AdministrativeWarning';
 import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
 import ScanDocumentModal from './ScanDocumentModal';
 import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
+import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -81,6 +82,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+
+  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+
   const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 const {
@@ -192,7 +196,12 @@ const handleSendPasswordEmail = async () => {
           </div>
         </Dropdown.Item> */}
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenPriceListModal(true);
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
             <Translate>View Price List</Translate>
@@ -574,6 +583,12 @@ useEffect(() => {
         open={quickPatientModalOpen}
         setOpen={setQuickPatientModalOpen}
         setPatient={setLocalPatient}
+      />
+
+      <ViewPriceListModal
+        open={openPriceListModal}
+        setOpen={setOpenPriceListModal}
+        patient={localPatient}
       />
 
       <ScanDocumentModal
