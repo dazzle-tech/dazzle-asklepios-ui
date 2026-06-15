@@ -201,6 +201,7 @@ import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
 import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
+import { notificationService } from './services/notification-management/notificationService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -350,6 +351,7 @@ export const store = configureStore({
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
+    [notificationService.reducerPath]: notificationService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -747,6 +749,7 @@ export const store = configureStore({
         organizationHolidaysService.middleware,
         notificationHeaderService.middleware,
         notificationTemplateService.middleware,
+        notificationService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,

@@ -4791,3 +4791,76 @@ export interface NotificationTemplateUpdateDTO {
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
 }
+
+export type NotificationChannel = NotificationTemplateChannel;
+
+export type NotificationStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface NotificationResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  notificationHeaderId?: number | null;
+  notificationTemplateId?: number | null;
+  code?: string | null;
+  channel?: NotificationChannel | null;
+  language?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toEmails?: string[] | null;
+  ccEmails?: string[] | null;
+  bccEmails?: string[] | null;
+  toPhone?: string | null;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  dataJson?: Record<string, unknown> | null;
+  recipientJson?: Record<string, unknown> | null;
+  resolvedRecipientsJson?: Record<string, unknown> | null;
+  channelPayload?: Record<string, unknown> | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  providerResponse?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  retryCount?: number | null;
+  maxRetryCount?: number | null;
+  nextRetryDate?: string | Date | null;
+  sentDate?: string | Date | null;
+  deliveredDate?: string | Date | null;
+  readDate?: string | Date | null;
+  failedDate?: string | Date | null;
+}
+
+export interface NotificationSearchDTO {
+  code?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  language?: string | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toPhone?: string | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  dateFrom?: string | Date | null;
+  dateTo?: string | Date | null;
+}
