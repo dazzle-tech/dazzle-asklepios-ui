@@ -3,37 +3,29 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { faCheckDouble, faEllipsis, faLock, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { PlusRound } from '@rsuite/icons';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Badge } from 'rsuite';
-import InsuranceModal from '../InsuranceModal';
-import SpecificCoverageModa from '../SpecificCoverageModa';
-import './styles.less';
-import { Tooltip, Whisper } from 'rsuite';
-import { useRef } from 'react';
-import { newPatientInsurance } from '@/types/model-types-constructor-new';
-
 import {
   useAddPatientInsuranceMutation,
   useDeletePatientInsuranceMutation,
   useGetInsurancesByPatientQuery,
   useLazyGetInsuranceCoveragesCountQuery
 } from '@/services/patients/patientInsurancesService';
-
-import { useLazyGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
-
 import { Patient, PatientInsurance } from '@/types/model-types-new';
-import { conjureValueBasedOnIDFromList } from '@/utils';
+import { newPatientInsurance } from '@/types/model-types-constructor-new';
+import { notify } from '@/utils/uiReducerActions';
+import { faCheckDouble, faEllipsis, faLock, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { PlusRound } from '@rsuite/icons';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Badge, Tooltip, Whisper } from 'rsuite';
+import InsuranceModal from '../InsuranceModal';
+import SpecificCoverageModa from '../SpecificCoverageModa';
 import {
   buildPatientInsuranceSavePayload,
   extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
   normalizeCchiPatientInsurance
 } from '../cchiMappers';
+import './styles.less';
 
 interface InsuranceTabProps {
   localPatient: Patient;
@@ -48,66 +40,55 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
+  const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [selectedInsurance, setSelectedInsurance] = useState<PatientInsurance | null>(null);
 
   const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
   const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
 
-  const [deleteInsurance] = useDeletePatientInsuranceMutation();
-  const [addPatientInsurance, { isLoading: isSavingCchiInsurance }] = useAddPatientInsuranceMutation();
-
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
+
   const [hideSaveBtn, setHideSaveBtn] = useState(false);
+  const [coveragesCount, setCoveragesCount] = useState<number>(0);
+
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
-  const [coveragesCount, setCoveragesCount] = useState<number>(0);
+  const [deleteInsurance] = useDeletePatientInsuranceMutation();
+  const [addPatientInsurance, { isLoading: isSavingCchiInsurance }] =
+    useAddPatientInsuranceMutation();
 
-  const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
-const patientId = Number(localPatient?.id);
+  const patientId = Number(localPatient?.id);
 
-const patientInsuranceResponse = useGetInsurancesByPatientQuery(
-  {
-    patientId,
-    page: 0,
-    size: 100,
-    sort: 'id,desc'
-  },
-  {
-    skip: !Number.isFinite(patientId) || patientId <= 0
-  }
-);
-  const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
-    page: 0,
-    size: 1000,
-    sort: 'name,asc'
-  });
-
-  const payorsList = payorListResponse?.data ?? [];
-
-  const [plansByPayorId, setPlansByPayorId] = useState<Record<number, any[]>>({});
-
-  const [triggerGetPlans] = useLazyGetPlansByPayorQuery();
+  const patientInsuranceResponse = useGetInsurancesByPatientQuery(
+    {
+      patientId,
+      page: 0,
+      size: 100,
+      sort: 'id,desc'
+    },
+    {
+      skip: !Number.isFinite(patientId) || patientId <= 0
+    }
+  );
 
   const savedInsurances = extractPatientInsurancesList(patientInsuranceResponse);
 
   const normalizedCchiInsurance = useMemo(() => {
-    if (!cchiInsurance) return null;
-
-    const payorId = Number(cchiInsurance.payorId);
-    const draftPayorPlans = Number.isFinite(payorId) ? plansByPayorId[payorId] ?? [] : [];
+    if (!cchiInsurance) {
+      return null;
+    }
 
     return normalizeCchiPatientInsurance(
       cchiInsurance as Record<string, any>,
-      localPatient?.id,
-      payorsList,
-      draftPayorPlans
+      localPatient?.id
     );
-  }, [cchiInsurance, localPatient?.id, payorsList, plansByPayorId]);
+  }, [cchiInsurance, localPatient?.id]);
 
   const cchiStorageKey = useMemo(
     () => getCchiInsuranceStorageKey(localPatient?.id, localPatient?.documentId),
@@ -115,7 +96,9 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
   );
 
   useEffect(() => {
-    if (!localPatient?.id || !cchiInsurance || cchiInsurance.patientId) return;
+    if (!localPatient?.id || !cchiInsurance || cchiInsurance.patientId) {
+      return;
+    }
 
     setCchiInsurance?.({
       ...cchiInsurance,
@@ -124,13 +107,19 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
   }, [localPatient?.id, cchiInsurance, setCchiInsurance]);
 
   useEffect(() => {
-    if (!setCchiInsurance || cchiInsurance || !cchiStorageKey) return;
+    if (!setCchiInsurance || cchiInsurance || !cchiStorageKey) {
+      return;
+    }
 
     const saved = sessionStorage.getItem(cchiStorageKey);
-    if (!saved) return;
+
+    if (!saved) {
+      return;
+    }
 
     try {
       const parsed = JSON.parse(saved);
+
       setCchiInsurance({
         ...parsed,
         id: undefined,
@@ -140,33 +129,6 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       sessionStorage.removeItem(cchiStorageKey);
     }
   }, [cchiInsurance, cchiStorageKey, localPatient?.id, setCchiInsurance]);
-
-  useEffect(() => {
-    if (!normalizedCchiInsurance?.payorId) return;
-
-    const payorId = Number(normalizedCchiInsurance.payorId);
-    if (!Number.isFinite(payorId) || payorId <= 0 || plansByPayorId[payorId]) return;
-
-    triggerGetPlans({
-      payorId,
-      page: 0,
-      size: 1000,
-      sort: 'name,asc'
-    })
-      .unwrap()
-      .then(res => {
-        setPlansByPayorId(prev => ({
-          ...prev,
-          [payorId]: res?.data ?? []
-        }));
-      })
-      .catch(() => {
-        setPlansByPayorId(prev => ({
-          ...prev,
-          [payorId]: []
-        }));
-      });
-  }, [normalizedCchiInsurance?.payorId, plansByPayorId, triggerGetPlans]);
 
   const tableRows = useMemo(() => {
     const rows = [...savedInsurances];
@@ -183,51 +145,13 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
     pageIndex * rowsPerPage + rowsPerPage
   );
 
-  const visiblePayorIds = useMemo(() => {
-    const ids = new Set<number>();
-    (paginatedData ?? []).forEach(row => {
-      const payorId = Number(row?.payorId);
-      if (!Number.isNaN(payorId)) ids.add(payorId);
-    });
-    return Array.from(ids);
-  }, [paginatedData]);
-
-  useEffect(() => {
-    const loadPlans = async () => {
-      for (const payorId of visiblePayorIds) {
-        if (plansByPayorId[payorId]) continue;
-
-        try {
-          const res = await triggerGetPlans(
-            {
-              payorId,
-              page: 0,
-              size: 1000,
-              sort: 'name,asc'
-            },
-            true
-          ).unwrap();
-
-          setPlansByPayorId(prev => ({
-            ...prev,
-            [payorId]: res?.data ?? []
-          }));
-        } catch {
-          setPlansByPayorId(prev => ({
-            ...prev,
-            [payorId]: []
-          }));
-        }
-      }
-    };
-
-    if (visiblePayorIds.length > 0) loadPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visiblePayorIds]);
-
   const handleEditModal = (row?: any) => {
     const target = row ?? selectedInsurance;
-    if (!target) return;
+
+    if (!target) {
+      return;
+    }
+
     setSelectedInsurance(target);
     setInsuranceModalOpen(true);
     setInsuranceBrowsing(false);
@@ -235,7 +159,10 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
   };
 
   const handleShowInsuranceDetails = (row?: any) => {
-    if (row) setSelectedInsurance(row);
+    if (row) {
+      setSelectedInsurance(row);
+    }
+
     setInsuranceModalOpen(true);
     setInsuranceBrowsing(true);
     setHideSaveBtn(true);
@@ -243,20 +170,28 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
 
   const handleOpenSpecificCoverage = (row?: any) => {
     const target = row ?? selectedInsurance;
-    if (!target?.id) return;
+
+    if (!target?.id) {
+      return;
+    }
+
     setSelectedInsurance(target);
     setSpecificCoverageModalOpen(true);
   };
 
   const handleDeleteInsurance = async (row?: any) => {
     const target = row ?? selectedInsurance;
-    if (!target?.id) return;
+
+    if (!target?.id) {
+      return;
+    }
 
     setSelectedInsurance(target);
 
     try {
       const countRes = await triggerCoveragesCount({ id: target.id }, true).unwrap();
       const count = Number(countRes ?? 0);
+
       setCoveragesCount(count);
 
       if (count > 0) {
@@ -265,18 +200,30 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
         setOpenDeleteModal(true);
       }
     } catch {
-      // fallback
       setOpenDeleteModal(true);
     }
   };
 
   const confirmDeleteInsurance = async () => {
-    if (!selectedInsurance?.id) return;
+    if (!selectedInsurance?.id) {
+      return;
+    }
 
     try {
-      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: false }).unwrap();
+      await deleteInsurance({
+        id: selectedInsurance.id,
+        deleteCoverages: false
+      }).unwrap();
+
       patientInsuranceResponse.refetch();
-      dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Insurance Deleted Successfully',
+          sev: 'success'
+        })
+      );
+
       setSelectedInsurance(null);
       setOpenDeleteModal(false);
     } catch (err: any) {
@@ -287,27 +234,59 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       } else if (err?.data?.detail) {
         msg = err.data.detail;
       }
-      dispatch(notify({ msg, sev: 'error' }));
+
+      dispatch(
+        notify({
+          msg,
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const confirmDeleteInsuranceWithCoverages = async () => {
+    if (!selectedInsurance?.id) {
+      return;
+    }
+
+    try {
+      await deleteInsurance({
+        id: selectedInsurance.id,
+        deleteCoverages: true
+      }).unwrap();
+
+      patientInsuranceResponse.refetch();
+
+      dispatch(
+        notify({
+          msg: 'Insurance & Coverages Deleted Successfully',
+          sev: 'success'
+        })
+      );
+
+      setSelectedInsurance(null);
+      setOpenDeleteWithCoveragesModal(false);
+    } catch (err: any) {
+      const msg = err?.data?.detail || 'Failed to delete insurance';
+
+      dispatch(
+        notify({
+          msg,
+          sev: 'error'
+        })
+      );
     }
   };
 
   const handleSaveCchiInsurance = async () => {
-    if (!cchiInsurance || !normalizedCchiInsurance) return;
+    if (!cchiInsurance || !normalizedCchiInsurance) {
+      return;
+    }
 
     if (!localPatient?.id) {
       dispatch(
         notify({
           msg: 'Please save the patient before saving insurance',
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-
-    if (!normalizedCchiInsurance.payorId) {
-      dispatch(
-        notify({
-          msg: 'CCHI insurance payor could not be matched. Please configure the payor in setup.',
           sev: 'warning'
         })
       );
@@ -325,28 +304,9 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
     }
 
     try {
-      const payorId = Number(normalizedCchiInsurance.payorId);
-      let plans = plansByPayorId[payorId] ?? [];
-
-      if (!plans.length) {
-        const res = await triggerGetPlans({
-          payorId,
-          page: 0,
-          size: 1000,
-          sort: 'name,asc'
-        }).unwrap();
-        plans = res?.data ?? [];
-        setPlansByPayorId(prev => ({
-          ...prev,
-          [payorId]: plans
-        }));
-      }
-
       const payload = buildPatientInsuranceSavePayload(
         cchiInsurance as Record<string, any>,
-        Number(localPatient.id),
-        payorsList,
-        plans
+        Number(localPatient.id)
       );
 
       console.log('[CCHI] Saving patient insurance payload:', payload);
@@ -354,35 +314,37 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       await addPatientInsurance(payload).unwrap();
 
       setCchiInsurance?.(null);
+
       if (cchiStorageKey) {
         sessionStorage.removeItem(cchiStorageKey);
       }
 
       patientInsuranceResponse.refetch();
-      dispatch(notify({ msg: 'Insurance Saved Successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Insurance Saved Successfully',
+          sev: 'success'
+        })
+      );
     } catch (err: any) {
       const msg =
         err?.data?.detail ||
         err?.data?.message ||
         err?.data?.title ||
         'Failed to save insurance from CCHI';
-      dispatch(notify({ msg, sev: 'error' }));
+
+      dispatch(
+        notify({
+          msg,
+          sev: 'error'
+        })
+      );
     }
   };
 
-  const confirmDeleteInsuranceWithCoverages = async () => {
-    if (!selectedInsurance?.id) return;
-
-    try {
-      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: true }).unwrap();
-      patientInsuranceResponse.refetch();
-      dispatch(notify({ msg: 'Insurance & Coverages Deleted Successfully', sev: 'success' }));
-      setSelectedInsurance(null);
-      setOpenDeleteWithCoveragesModal(false);
-    } catch (err: any) {
-      const msg = err?.data?.detail || 'Failed to delete insurance';
-      dispatch(notify({ msg, sev: 'error' }));
-    }
+  const getInsuranceProviderName = (row: any) => {
+    return row?.payerName || row?.payerNphiesId || '-';
   };
 
   const columns = [
@@ -391,7 +353,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       title: <Translate>Insurance Provider</Translate>,
       flexGrow: 4,
       render: (row: any) => {
-        const payorName = conjureValueBasedOnIDFromList(payorsList, row.payorId, 'name');
+        const payorName = getInsuranceProviderName(row);
 
         return row.isPrimary ? (
           <Badge color="blue" content="Primary">
@@ -417,13 +379,10 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
       dataKey: 'groupNumber'
     },
     {
-      key: 'plan',
-      title: <Translate>Insurance Plan Type</Translate>,
+      key: 'policyClassName',
+      title: <Translate>Policy Class</Translate>,
       flexGrow: 4,
-      render: (row: any) => {
-        const plans = plansByPayorId[row.payorId] ?? [];
-        return <span>{conjureValueBasedOnIDFromList(plans, row.planId, 'name')}</span>;
-      }
+      dataKey: 'policyClassName'
     },
     {
       key: 'expirationDate',
@@ -447,79 +406,79 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
         }
 
         return (
-        <div className="container-of-icons insurance-tooltip-wrapper">
-          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Insurance</Tooltip>}>
-            <span className="insurance-tooltip-trigger">
-              <MyButton
-                className="icons-style"
-                appearance="subtle"
-                onClick={() => handleEditModal(rowData)}
-              >
-                <FontAwesomeIcon
+          <div className="container-of-icons insurance-tooltip-wrapper">
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Insurance</Tooltip>}>
+              <span className="insurance-tooltip-trigger">
+                <MyButton
                   className="icons-style"
-                  color="var(--primary-gray)"
-                  icon={faUserPen}
-                />
-              </MyButton>
-            </span>
-          </Whisper>
+                  appearance="subtle"
+                  onClick={() => handleEditModal(rowData)}
+                >
+                  <FontAwesomeIcon
+                    className="icons-style"
+                    color="var(--primary-gray)"
+                    icon={faUserPen}
+                  />
+                </MyButton>
+              </span>
+            </Whisper>
 
-          <Whisper
-            placement="top"
-            trigger="hover"
-            speaker={<Tooltip>Manage Specific Coverages</Tooltip>}
-          >
-            <span className="insurance-tooltip-trigger">
-              <MyButton
-                className="icons-style"
-                appearance="subtle"
-                onClick={() => handleOpenSpecificCoverage(rowData)}
-              >
-                <FontAwesomeIcon
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>Manage Specific Coverages</Tooltip>}
+            >
+              <span className="insurance-tooltip-trigger">
+                <MyButton
                   className="icons-style"
-                  color="var(--primary-gray)"
-                  icon={faLock}
-                />
-              </MyButton>
-            </span>
-          </Whisper>
+                  appearance="subtle"
+                  onClick={() => handleOpenSpecificCoverage(rowData)}
+                >
+                  <FontAwesomeIcon
+                    className="icons-style"
+                    color="var(--primary-gray)"
+                    icon={faLock}
+                  />
+                </MyButton>
+              </span>
+            </Whisper>
 
-          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Delete Insurance</Tooltip>}>
-            <span className="insurance-tooltip-trigger">
-              <MyButton
-                className="icons-style"
-                appearance="subtle"
-                onClick={() => handleDeleteInsurance(rowData)}
-              >
-                <FontAwesomeIcon
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Delete Insurance</Tooltip>}>
+              <span className="insurance-tooltip-trigger">
+                <MyButton
                   className="icons-style"
-                  color="var(--primary-pink)"
-                  icon={faTrash}
-                />
-              </MyButton>
-            </span>
-          </Whisper>
+                  appearance="subtle"
+                  onClick={() => handleDeleteInsurance(rowData)}
+                >
+                  <FontAwesomeIcon
+                    className="icons-style"
+                    color="var(--primary-pink)"
+                    icon={faTrash}
+                  />
+                </MyButton>
+              </span>
+            </Whisper>
 
-          <Whisper
-            placement="top"
-            trigger="hover"
-            speaker={<Tooltip>View Insurance Details</Tooltip>}
-          >
-            <span className="insurance-tooltip-trigger">
-              <MyButton
-                className="icons-style"
-                appearance="subtle"
-                onClick={() => handleShowInsuranceDetails(rowData)}
-              >
-                <FontAwesomeIcon
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>View Insurance Details</Tooltip>}
+            >
+              <span className="insurance-tooltip-trigger">
+                <MyButton
                   className="icons-style"
-                  color="var(--primary-gray)"
-                  icon={faEllipsis}
-                />
-              </MyButton>
-            </span>
-          </Whisper>
-        </div>
+                  appearance="subtle"
+                  onClick={() => handleShowInsuranceDetails(rowData)}
+                >
+                  <FontAwesomeIcon
+                    className="icons-style"
+                    color="var(--primary-gray)"
+                    icon={faEllipsis}
+                  />
+                </MyButton>
+              </span>
+            </Whisper>
+          </div>
         );
       }
     }
@@ -552,6 +511,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
           </MyButton>
         )}
       </div>
+
       <InsuranceModal
         relations={[]}
         editing={selectedInsurance}
@@ -563,11 +523,13 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
         onClose={() => setInsuranceModalOpen(false)}
         hideSaveBtn={hideSaveBtn}
       />
+
       <SpecificCoverageModa
         insurance={selectedInsurance?.id}
         open={specificCoverageModalOpen}
         setOpen={setSpecificCoverageModalOpen}
       />
+
       <MyTable
         data={paginatedData ?? []}
         columns={columns}
@@ -580,14 +542,16 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
           setRowsPerPage(parseInt(e.target.value, 10));
           setPageIndex(0);
         }}
-        loading={patientInsuranceResponse.isFetching || payorFetching}
+        loading={patientInsuranceResponse.isFetching}
       />
+
       <DeletionConfirmationModal
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
         itemToDelete="Insurance"
         actionButtonFunction={confirmDeleteInsurance}
       />
+
       <DeletionConfirmationModal
         open={openDeleteWithCoveragesModal}
         setOpen={setOpenDeleteWithCoveragesModal}

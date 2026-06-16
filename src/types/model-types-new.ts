@@ -2053,28 +2053,39 @@ export interface PatientDocument {
 export interface PatientInsurance {
   id?: number;
   patientId: number;
-  payorId: number;
+
+  payorId?: number | null;
   planId?: number | null;
+
+  payerName?: string | null;
+  payerNphiesId?: string | null;
+
   policyHolderId?: number | null;
 
   policyNumber: number | string;
   groupNumber?: number | string | null;
 
-  expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
+  expirationDate: string;
+
   remainingBenefits?: number | string | null;
   remainingDeductibles?: number | string | null;
 
   memberCardId?: string | null;
-  payerNphiesId?: string | null;
+
   networkId?: string | null;
   sponsorNumber?: string | null;
+
   coverageType?: string | null;
   relationWithSubscriber?: string | null;
+
   policyClassName?: string | null;
   policyHolderName?: string | null;
-  issueDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  issueDate?: string | null;
+
   patientShare?: number | string | null;
   maxLimit?: number | string | null;
+
   waseelNewPlan?: boolean | null;
 
   isPrimary?: boolean | null;

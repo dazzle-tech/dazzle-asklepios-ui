@@ -1760,34 +1760,50 @@ export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredH
 
 export const newPatientInsurance: modelTypes.PatientInsurance = {
   id: undefined,
+
   patientId: undefined,
-  payorId: undefined,
+
+  payorId: null,
   planId: null,
+
+  payerName: null,
+  payerNphiesId: null,
+
   policyHolderId: null,
+
   policyNumber: '',
   groupNumber: null,
+
   expirationDate: '',
+
   remainingBenefits: null,
   remainingDeductibles: null,
+
   memberCardId: null,
-  payerNphiesId: null,
+
   networkId: null,
   sponsorNumber: null,
+
   coverageType: null,
   relationWithSubscriber: null,
+
   policyClassName: null,
   policyHolderName: null,
+
   issueDate: null,
+
   patientShare: null,
   maxLimit: null,
+
   waseelNewPlan: null,
+
   isPrimary: false,
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
 };
-
 export const newPatientInsuranceCoverage: modelTypes.PatientInsuranceCoverage = {
   id: undefined,
   insuranceId: 0,
