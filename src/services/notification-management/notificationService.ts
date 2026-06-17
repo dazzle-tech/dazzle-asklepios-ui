@@ -16,6 +16,7 @@ export const notificationService = createApi({
         url: `/api/notification/notifications/channel/${channel}`,
         method: 'GET',
       }),
+      transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
       providesTags: ['Notification'],
     }),
 
@@ -28,6 +29,7 @@ export const notificationService = createApi({
         method: 'POST',
         body,
       }),
+      transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
       providesTags: ['Notification'],
     }),
 

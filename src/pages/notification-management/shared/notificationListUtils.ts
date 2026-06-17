@@ -1,5 +1,4 @@
-import { NotificationSearchDTO } from '@/types/model-types-new';
-
+import { NotificationSearchDTO, NotificationStatus } from '@/types/model-types-new';
 export type NotificationFiltersState = {
   code: string;
   status: string;
@@ -37,14 +36,29 @@ export const getInitialFiltersState = (): NotificationFiltersState => {
   };
 };
 
+export const parseFilterDate = (value: Date | string | null | undefined): Date | null => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : new Date(value);
+  }
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 export const toInstantParam = (
   value: Date | string | null | undefined,
   endOfDay = false
 ): string | undefined => {
-  if (!value) return undefined;
-
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
+  const date = parseFilterDate(value);
+  if (!date) return undefined;
 
   if (endOfDay) {
     date.setHours(23, 59, 59, 999);
@@ -94,3 +108,6 @@ export const getBodyPreview = (body?: string | null, asHtml = false) => {
   if (!asHtml) return value;
   return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
 };
+
+export const canCancelNotification = (status?: NotificationStatus | null): boolean =>
+  Boolean(status) && status !== 'SENT' && status !== 'CANCELLED';

@@ -1,4 +1,5 @@
 import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -6,20 +7,22 @@ import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
-  useGetNotificationsByChannelQuery,
+  useCancelNotificationMutation,
   useSearchNotificationsByChannelQuery,
 } from '@/services/notification-management/notificationService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { NotificationChannel, NotificationResponseVM } from '@/types/model-types-new';
+import { NotificationChannel, NotificationResponseVM, NotificationSearchDTO } from '@/types/model-types-new';
 import { newNotificationResponseVM } from '@/types/model-types-constructor-new';
-import { conjureValueBasedOnIDFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { MdVisibility } from 'react-icons/md';
+import { MdCancel, MdVisibility } from 'react-icons/md';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { getNotificationChannelPageConfig } from './notificationChannelPageConfig';
 import {
   buildSearchParamsFromFilters,
+  canCancelNotification,
   formatEmailList,
   formatPhoneValue,
   getBodyPreview,
@@ -36,11 +39,10 @@ interface NotificationListPageProps {
 const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) => {
   const config = getNotificationChannelPageConfig(channel);
   const dispatch = useAppDispatch();
-  const [isFiltered, setIsFiltered] = useState(true);
   const [filtersState, setFiltersState] = useState<NotificationFiltersState>(() =>
     getInitialFiltersState()
   );
-  const [searchParams, setSearchParams] = useState(() =>
+  const [searchParams, setSearchParams] = useState<NotificationSearchDTO>(() =>
     buildSearchParamsFromFilters(getInitialFiltersState())
   );
   const [selectedNotification, setSelectedNotification] = useState<NotificationResponseVM>({
@@ -48,15 +50,18 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     channel,
   });
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [notificationToCancel, setNotificationToCancel] = useState<NotificationResponseVM | null>(
+    null
+  );
 
-  const { data, isFetching } = useGetNotificationsByChannelQuery(channel);
-  const { data: filteredData, isFetching: isSearchFetching } =
-    useSearchNotificationsByChannelQuery(
-      { channel, body: searchParams ?? {} },
-      { skip: !searchParams }
-    );
+  const { data, isFetching } = useSearchNotificationsByChannelQuery({
+    channel,
+    body: searchParams,
+  });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const { data: languages } = useGetAllLanguagesQuery({});
+  const [cancelNotification, { isLoading: isCancelling }] = useCancelNotificationMutation();
 
   const statusOptions = useEnumOptions('NotificationStatus');
   const priorityOptions = useEnumOptions('NotificationPriority');
@@ -76,7 +81,7 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     return languageNameByKey.get(langKey) ?? langKey;
   };
 
-  const tableData = isFiltered ? filteredData ?? [] : data ?? [];
+  const tableData = data ?? [];
 
   useEffect(() => {
     dispatch(setPageCode(config.pageCode));
@@ -97,14 +102,12 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
 
   const handleSearch = () => {
     setSearchParams(buildSearchParamsFromFilters(filtersState));
-    setIsFiltered(true);
   };
 
   const handleReset = () => {
     const initial = getInitialFiltersState();
     setFiltersState(initial);
     setSearchParams(buildSearchParamsFromFilters(initial));
-    setIsFiltered(true);
   };
 
   const openViewModal = (rowData: NotificationResponseVM) => {
@@ -112,20 +115,69 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     setViewModalOpen(true);
   };
 
-  const iconsForActions = (rowData: NotificationResponseVM) => (
-    <div className="container-of-icons">
-      <MdVisibility
-        title="View"
-        size={24}
-        fill="var(--primary-gray)"
-        className="icons-style"
-        onClick={event => {
-          event.stopPropagation();
-          openViewModal(rowData);
-        }}
-      />
-    </div>
-  );
+  const openCancelModalForRow = (rowData: NotificationResponseVM) => {
+    setNotificationToCancel(rowData);
+    setOpenCancelModal(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!notificationToCancel?.id) return;
+
+    try {
+      await cancelNotification(notificationToCancel.id).unwrap();
+      dispatch(notify({ msg: 'Notification cancelled successfully', sev: 'success' }));
+      setOpenCancelModal(false);
+      if (selectedNotification?.id === notificationToCancel.id) {
+        setSelectedNotification({ ...newNotificationResponseVM, channel });
+      }
+      setNotificationToCancel(null);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to cancel notification',
+          sev: 'warning',
+        })
+      );
+    }
+  };
+
+  const iconsForActions = (rowData: NotificationResponseVM) => {
+    const cancelEnabled = canCancelNotification(rowData.status);
+
+    return (
+      <div className="container-of-icons">
+        <MdVisibility
+          title="View"
+          size={24}
+          fill="var(--primary-gray)"
+          className="icons-style"
+          onClick={event => {
+            event.stopPropagation();
+            openViewModal(rowData);
+          }}
+        />
+        <MdCancel
+          title={
+            cancelEnabled
+              ? 'Cancel Notification'
+              : 'Cannot cancel sent or cancelled notifications'
+          }
+          size={24}
+          fill={cancelEnabled ? 'var(--primary-pink)' : 'var(--primary-gray)'}
+          className="icons-style"
+          style={{
+            cursor: cancelEnabled ? 'pointer' : 'not-allowed',
+            opacity: cancelEnabled ? 1 : 0.35,
+          }}
+          onClick={event => {
+            event.stopPropagation();
+            if (!cancelEnabled || !rowData.id) return;
+            openCancelModalForRow(rowData);
+          }}
+        />
+      </div>
+    );
+  };
 
   const truncatePreview = (value: string, max = 30) =>
     value && value.length > max ? `${value.substring(0, max)}...` : value || '-';
@@ -217,9 +269,12 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
       title: 'Body Preview',
       render: (row: NotificationResponseVM) => {
         const preview = getBodyPreview(row.body, config.bodyPreviewAsHtml);
+
         return (
           <Whisper placement="top" speaker={<Tooltip>{preview || '-'}</Tooltip>}>
-            <span>{truncatePreview(preview)}</span>
+            <span className="notification-body-preview-cell__text">
+              {truncatePreview(preview)}
+            </span>
           </Whisper>
         );
       },
@@ -377,7 +432,7 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
         height={600}
         rowClassName={isSelected}
         data={tableData}
-        loading={isFetching || isSearchFetching}
+        loading={isFetching}
         columns={columns}
         filters={filters()}
         onRowClick={row => setSelectedNotification(row)}
@@ -388,6 +443,16 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
         open={viewModalOpen}
         setOpen={setViewModalOpen}
         notification={selectedNotification?.id ? selectedNotification : null}
+      />
+
+      <DeletionConfirmationModal
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        itemToDelete="Notification"
+        actionType="reject"
+        actionButtonLabel={isCancelling ? 'Cancelling...' : 'Cancel Notification'}
+        confirmationQuestion="Are you sure you want to cancel this notification?"
+        actionButtonFunction={handleCancelConfirm}
       />
     </Panel>
   );
