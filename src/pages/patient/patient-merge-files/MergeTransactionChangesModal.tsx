@@ -120,7 +120,7 @@ const MergeTransactionChangesModal: React.FC<Props> = ({
                                 </div>
 
                                 <div className="merge-change-meta">
-                                    {item.entityName}
+                                    {formatEnumString(item.entityName)}
                                 </div>
                             </div>
 
@@ -151,8 +151,8 @@ const MergeTransactionChangesModal: React.FC<Props> = ({
         );
     };
 
-const mode = useSelector((state: any) => state.ui.mode);
-    
+    const mode = useSelector((state: any) => state.ui.mode);
+
     return (
         <MyModal
             open={open}
@@ -171,7 +171,10 @@ const mode = useSelector((state: any) => state.ui.mode);
             size="lg"
             bodyheight="70vh"
             content={
-                <div className="merge-changes-modal-content" className={`merge-transaction-changes-modal ${mode === 'dark' ? 'dark' : 'light'}`}>
+                <div
+                    className={`merge-changes-modal-content merge-transaction-changes-modal ${mode === 'dark' ? 'dark' : 'light'
+                        }`}
+                >
                     {transaction && (
                         <div className="merge-changes-header">
                             <div className="merge-changes-patient-card source">
@@ -212,18 +215,12 @@ const mode = useSelector((state: any) => state.ui.mode);
                         <div className="merge-changes-loading">
                             <Loader
                                 center
-                                content={
-                                    <Translate>
-                                        Loading changes...
-                                    </Translate>
-                                }
+                                content={<Translate>Loading changes...</Translate>}
                             />
                         </div>
                     ) : error ? (
                         <Message showIcon type="error">
-                            <Translate>
-                                Failed to load transaction changes.
-                            </Translate>
+                            <Translate>Failed to load transaction changes.</Translate>
                         </Message>
                     ) : (
                         renderFieldChanges()
@@ -231,7 +228,7 @@ const mode = useSelector((state: any) => state.ui.mode);
                 </div>
             }
             hideCancel
-            actionButtonLabel={<Translate>Close</Translate>}
+            actionButtonLabel={"Close"}
             actionButtonFunction={onClose}
         />
     );

@@ -50,7 +50,7 @@
 
 .merge-patient-section {
   padding: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 12px;
   background: transparent;
   box-sizing: border-box;
@@ -75,7 +75,7 @@
   text-align: center;
   gap: 12px;
   padding: 24px 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 12px;
   background: transparent;
   box-sizing: border-box;
@@ -103,8 +103,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1675e0;
-  color: #ffffff;
+  background: var(--primary-blue);
+  color: var(--white);
   flex-shrink: 0;
 }
 
@@ -178,7 +178,7 @@
 
 .merge-transactions-title svg,
 .merge-changes-section-title svg {
-  color: #1675e0;
+  color: var(--primary-blue);
 }
 
 /* Shared badge/pill styles */
@@ -199,8 +199,8 @@
   min-width: 24px;
   height: 24px;
   padding: 0 8px;
-  background: #eef4ff;
-  color: #1675e0;
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  color: var(--primary-blue);
 }
 
 .merge-status-badge,
@@ -215,9 +215,9 @@
 .merge-transaction-card,
 .merge-change-row,
 .merge-changes-header {
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--rs-border-primary) !important;
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
 }
 
 /* ============================================================
@@ -282,22 +282,37 @@
   flex: 1 1 120px;
 }
 
-.merge-transaction-title,
-.merge-transaction-reason-title,
-.merge-change-meta {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-}
+.rs-theme-dark,
+.dark {
+  .merge-transaction-card {
+    background: var(--dark-black) !important;
+    border-color: #334155 !important;
+  }
 
-.merge-transaction-heading,
-.merge-change-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e293b;
-}
+  .merge-transaction-number {
+    background: var(--one-health-theme-select) !important;
+    color: var(--primary-blue) !important;
+  }
 
+  .merge-transaction-title,
+  .merge-transaction-reason-title {
+    color: rgba(255, 255, 255, 0.72) !important;
+  }
+
+  .merge-transaction-heading {
+    color: var(--white) !important;
+  }
+
+  .merge-transaction-meta,
+  .merge-transaction-small,
+  .merge-transaction-reason-text {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .merge-transaction-divider-line {
+    background: #475569 !important;
+  }
+}
 .merge-transaction-meta,
 .merge-transaction-small,
 .merge-transaction-reason-text,
@@ -326,10 +341,9 @@
   height: 1px;
   background: #dbe2ea;
 }
-
 .merge-transaction-arrow,
 .merge-change-arrow {
-  color: #1675e0;
+  color: var(--primary-blue);
 }
 
 .merge-status-merged {
@@ -342,6 +356,28 @@
   color: #ef6c00;
 }
 
+.dark .merge-status-badge,
+.dark .merge-change-decision,
+.rs-theme-dark .merge-status-badge,
+.rs-theme-dark .merge-change-decision {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid #475569 !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-status-merged,
+.rs-theme-dark .merge-status-merged {
+  background: rgba(69, 184, 135, 0.18) !important;
+  border-color: rgba(69, 184, 135, 0.45) !important;
+  color: #86efac !important;
+}
+
+.dark .merge-status-undone,
+.rs-theme-dark .merge-status-undone {
+  background: rgba(242, 154, 77, 0.18) !important;
+  border-color: rgba(242, 154, 77, 0.45) !important;
+  color: #fdba74 !important;
+}
 /* ============================================================
    CHANGES
    ============================================================ */
@@ -377,25 +413,14 @@
   gap: 10px;
 }
 
-.merge-change-old,
-.merge-change-new {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  word-break: break-word;
-}
+
 
 .merge-change-old {
   background: #f8fafc;
   color: #64748b;
 }
 
-.merge-change-new {
-  background: #eef6ff;
-  color: #0f4c81;
-}
+
 
 /* ============================================================
    PREVIEW
@@ -408,7 +433,7 @@
 }
 
 .merge-preview-reason-card {
-  background: #ffffff;
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
   border: 1px solid #e4e9f1;
   border-radius: 16px;
   padding: 20px;
@@ -428,7 +453,7 @@
 }
 
 .merge-preview-conflict-card {
-  background: #ffffff;
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
   border: 1px solid #e4e9f1;
   border-radius: 16px;
   padding: 20px;
@@ -463,8 +488,8 @@
 }
 
 .merge-preview-value-card.from {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  border-color: rgba(var(--primary-blue-rgb), 0.25);
 }
 
 .merge-preview-value-card.to {
@@ -488,8 +513,8 @@
 }
 
 .merge-preview-value-badge.from {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--one-health-theme-select);
+  color: var(--primary-blue);
 }
 
 .merge-preview-value-badge.to {
@@ -501,7 +526,7 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.5;
-  color: #101828;
+  color: var(--rs-text-primary, #101828);
   white-space: pre-wrap;
   word-break: break-word;
   min-height: 36px;
@@ -522,10 +547,10 @@
 }
 
 .merge-summary-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 12px;
   padding: 14px 16px;
-  background: #fff;
+  background: var(--rs-bg-card, #ffffff);
 }
 
 .merge-summary-card-header {
@@ -633,18 +658,18 @@
 .merge-transaction-changes-modal .merge-changes-patient-card {
   border-radius: 12px;
   padding: 16px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--rs-border-primary);
+  background: var(--rs-bg-card, #ffffff);
 }
 
 .merge-transaction-changes-modal .merge-changes-patient-card.source {
-  background: #fff7ed;
+  background: var(--rs-bg-card, #ffffff)7ed;
   border-color: #fed7aa;
 }
 
 .merge-transaction-changes-modal .merge-changes-patient-card.target {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  border-color: rgba(var(--primary-blue-rgb), 0.25);
 }
 
 .merge-transaction-changes-modal .merge-changes-patient-label {
@@ -694,15 +719,15 @@
    ============================================================ */
 
 /* Base */
-.dark .merge-section-title         { color: #ffffff; }
-.dark .merge-section-title svg     { color: #ffffff; }
+.dark .merge-section-title         { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff); }
+.dark .merge-section-title svg     { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff); }
 .dark .merge-flow-text             { color: #cbd5e1; }
 .dark .merge-flow-line             { background: #475569; }
 .dark .merge-flow-arrow            { color: #94a3b8; }
 .dark .merge-flow-badge            {
   background: var(--dark-black);
   border: 1px solid #475569;
-  color: #ffffff;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
 }
 
 /* Preview */
@@ -715,14 +740,16 @@
     0 0 6px rgba(255, 255, 255, 0.05);
 }
 
-.dark .merge-preview-conflict-title          { color: #ffffff !important; }
+.dark .merge-preview-conflict-title          { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important; }
 .dark .merge-preview-value-card              { border-color: #334155; box-shadow: none; }
-.dark .merge-preview-value-card.from        { background: rgba(59, 130, 246, 0.10); border-color: #3b82f6; }
+.dark .merge-preview-value-card.from        { background: rgba(59, 130, 246, 0.10); border-color: var(--primary-blue); }
 .dark .merge-preview-value-card.to          { background: rgba(34, 197, 94, 0.10);  border-color: #22c55e; }
-.dark .merge-preview-value-badge.from       { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+.dark .merge-preview-value-badge.from       { background: var(--one-health-theme-hover); color: var(--one-health-theme-select); }
 .dark .merge-preview-value-badge.to         { background: rgba(34, 197, 94, 0.18);  color: #86efac; }
-.dark .merge-preview-value-card-content     { color: #ffffff !important; }
-
+.dark .merge-preview-value-card-content,
+.rs-theme-dark .merge-preview-value-card-content {
+  color: #ffffff !important;
+}
 /* Summary */
 .dark .merge-summary-card {
   background: var(--dark-black) !important;
@@ -733,13 +760,13 @@
 }
 
 .dark .merge-summary-title,
-.dark .merge-summary-value        { color: #ffffff !important; }
+.dark .merge-summary-value        {  color: #ffffff !important; }
 .dark .merge-summary-label,
 .dark .merge-summary-empty        { color: #94a3b8 !important; }
 .dark .merge-summary-badge        {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid #475569;
-  color: #ffffff;
+   color: #ffffff !important;
 }
 .dark .merge-summary-value-box    {
   background: rgba(255, 255, 255, 0.03);
@@ -759,8 +786,9 @@
 
 .dark .merge-transaction-heading,
 .dark .merge-change-label,
-.dark .merge-changes-patient-name { color: #ffffff !important; }
-
+.dark .merge-changes-patient-name {
+  color: var(--white) !important;
+}
 .dark .merge-transaction-title,
 .dark .merge-transaction-reason-title,
 .dark .merge-change-meta,
@@ -780,23 +808,17 @@
 .dark .merge-change-arrow,
 .dark .merge-changes-header-arrow { color: #94a3b8; }
 
-.dark .merge-transactions-count,
-.dark .merge-changes-count,
-.dark .merge-status-badge,
-.dark .merge-change-decision,
-.dark .merge-transaction-number {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid #475569;
-  color: #ffffff;
-}
 
 .dark .merge-change-old {
   background: rgba(255, 255, 255, 0.03);
   color: #cbd5e1;
 }
-.dark .merge-change-new {
-  background: rgba(59, 130, 246, 0.08);
-  color: #93c5fd;
+.dark .merge-transactions-count,
+.dark .merge-changes-count,
+.merge-transaction-changes-modal.dark .merge-changes-count {
+  background: rgba(var(--primary-blue-rgb), 0.15) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: var(--primary-blue) !important;
 }
 
 .dark .merge-changes-patient-card {
@@ -809,19 +831,19 @@
 }
 .dark .merge-changes-patient-card.target {
   background: rgba(59, 130, 246, 0.08) !important;
-  border-color: #3b82f6;
+  border-color: var(--primary-blue);
 }
 
 /* Form inputs */
 .dark .rs-form-control-label,
 .dark .rs-form-group-label,
-.dark label                        { color: #ffffff !important; }
+.dark label                        { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important; }
 
 .dark .rs-input,
 .dark textarea,
 .dark input {
   background-color: var(--dark-black) !important;
-  color: #ffffff !important;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
   border-color: #475569 !important;
 }
 
@@ -832,7 +854,7 @@
 /* Modal dark overrides */
 .merge-transaction-changes-modal.dark .merge-changes-modal-content {
   background: var(--dark-black) !important;
-  color: #ffffff !important;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
 }
 .merge-transaction-changes-modal.dark .merge-changes-header { background: transparent; }
 
@@ -843,15 +865,18 @@
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.6),
     0 0 6px rgba(255, 255, 255, 0.05);
+    color:var(--rs-bg-card, #ffffff)
 }
 
 .merge-transaction-changes-modal.dark .merge-changes-patient-card.source {
   background: rgba(249, 115, 22, 0.08) !important;
   border-color: #f97316;
+  color:var(--rs-bg-card, #ffffff);
 }
 .merge-transaction-changes-modal.dark .merge-changes-patient-card.target {
   background: rgba(59, 130, 246, 0.08) !important;
-  border-color: #3b82f6;
+  border-color: var(--primary-blue);
+  color:var(--rs-bg-card, #ffffff)
 }
 
 .merge-transaction-changes-modal.dark .merge-changes-patient-label,
@@ -859,32 +884,29 @@
 .merge-transaction-changes-modal.dark .merge-change-empty { color: #94a3b8 !important; }
 
 .merge-transaction-changes-modal.dark .merge-changes-patient-name,
-.merge-transaction-changes-modal.dark .merge-changes-patient-mrn,
 .merge-transaction-changes-modal.dark .merge-changes-section-title,
-.merge-transaction-changes-modal.dark .merge-change-label { color: #ffffff !important; }
+.merge-transaction-changes-modal.dark .merge-change-label {
+  color: #ffffff !important;
+}
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-mrn {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
 
 .merge-transaction-changes-modal.dark .merge-changes-header-arrow,
 .merge-transaction-changes-modal.dark .merge-change-arrow { color: #94a3b8 !important; }
 
-.merge-transaction-changes-modal.dark .merge-changes-count {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid #475569;
-  color: #ffffff;
-}
+
 .merge-transaction-changes-modal.dark .merge-change-old {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid #334155;
-  color: #ffffff;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
 }
-.merge-transaction-changes-modal.dark .merge-change-new {
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid #3b82f6;
-  color: #ffffff;
-}
+
 .merge-transaction-changes-modal.dark .rs-message {
   background: var(--dark-black) !important;
   border: 1px solid #334155;
-  color: #ffffff !important;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
 }
 
 /* ============================================================
@@ -996,4 +1018,39 @@
   .merge-transactions-list,
   .merge-changes-section,
   .merge-changes-list { gap: 12px; }
+}
+.merge-change-old,
+.merge-change-new {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.merge-change-old {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.merge-change-new {
+  background: var(--one-health-theme-hover);
+  color: var(--primary-blue);
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.18);
+}
+
+/* Dark mode */
+.dark .merge-change-old,
+.merge-transaction-changes-modal.dark .merge-change-old {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid #334155 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.dark .merge-change-new,
+.merge-transaction-changes-modal.dark .merge-change-new {
+  background: rgba(var(--primary-blue-rgb), 0.14) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: #ffffff !important;
 }

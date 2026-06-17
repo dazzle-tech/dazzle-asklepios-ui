@@ -53,7 +53,7 @@ const PatientMergeCard: React.FC<PatientMergeCardProps> = ({ patient }) => {
     const genderText = patient?.sexAtBirth || '';
 
     const genderAge = [
-        genderText,
+        formatEnumString(genderText),
         dobValue ? calculateAgeFormat(dobValue) : ''
     ]
         .filter(Boolean)
@@ -170,7 +170,7 @@ const PatientMergeCard: React.FC<PatientMergeCardProps> = ({ patient }) => {
                         },
                         {
                             label: 'Document Country',
-                            value: documentCountry || '-'
+                            value: formatEnumString(documentCountry) || '-'
                         },
                         {
                             label: 'Document Number',

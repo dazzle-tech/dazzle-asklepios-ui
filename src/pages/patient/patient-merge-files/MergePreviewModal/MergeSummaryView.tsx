@@ -90,7 +90,7 @@ const MergeSummaryView: React.FC<Props> = ({
                                             </div>
 
                                             <div className="merge-summary-badge">
-                                                {item.decision || '-'}
+                                                {formatEnumString(item.decision) || '-'}
                                             </div>
                                         </div>
 
@@ -141,7 +141,7 @@ const MergeSummaryView: React.FC<Props> = ({
                                             </div>
 
                                             <div className="merge-summary-badge">
-                                                {item.decision || 'TAKE_FROM'}
+                                                {formatEnumString(item.decision) || formatEnumString('TAKE_FROM')}
                                             </div>
                                         </div>
 
@@ -164,11 +164,11 @@ const MergeSummaryView: React.FC<Props> = ({
                                     >
                                         <div className="merge-summary-card-header">
                                             <div className="merge-summary-title">
-                                                <Translate>{item.entityName || '-'}</Translate>
+                                                <Translate>{formatEnumString(item.entityName) || '-'}</Translate>
                                             </div>
 
                                             <div className="merge-summary-badge">
-                                                {item.decision || 'ADD_FROM_RECORD'}
+                                                {formatEnumString(item.decision) || 'ADD_FROM_RECORD'}
                                             </div>
                                         </div>
 
@@ -200,7 +200,7 @@ const MergeSummaryView: React.FC<Props> = ({
                                             </div>
 
                                             <div className="merge-summary-badge">
-                                                {item.decision || 'IGNORED'}
+                                                {formatEnumString(item.decision) || 'Ignored'}
                                             </div>
                                         </div>
 
