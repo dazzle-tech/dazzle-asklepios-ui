@@ -4864,3 +4864,30 @@ export interface NotificationSearchDTO {
   dateFrom?: string | Date | null;
   dateTo?: string | Date | null;
 }
+
+export type NotificationEventType =
+  | 'CREATED'
+  | 'PROCESSING'
+  | 'SENT_TO_PROVIDER'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'RETRY'
+  | 'CANCELLED'
+  | 'WEBHOOK_STATUS_UPDATE';
+
+export interface NotificationEventResponseVM {
+  id?: number;
+  notificationId?: number | null;
+  eventType?: NotificationEventType | null;
+  oldStatus?: NotificationStatus | null;
+  newStatus?: NotificationStatus | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  message?: string | null;
+  errorMessage?: string | null;
+  eventPayload?: Record<string, unknown> | null;
+  createdDate?: string | Date | null;
+}

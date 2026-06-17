@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
 import {
   NotificationChannel,
+  NotificationEventResponseVM,
   NotificationResponseVM,
   NotificationSearchDTO,
 } from '@/types/model-types-new';
@@ -41,6 +42,16 @@ export const notificationService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'Notification', id }],
     }),
 
+    getNotificationEvents: builder.query<NotificationEventResponseVM[], number>({
+      query: id => ({
+        url: `/api/notification/notifications/${id}/events`,
+        method: 'GET',
+      }),
+      transformResponse: (response: NotificationEventResponseVM[] | null | undefined) =>
+        response ?? [],
+      providesTags: (_result, _error, id) => [{ type: 'Notification', id }],
+    }),
+
     cancelNotification: builder.mutation<void, number>({
       query: id => ({
         url: `/api/notification/notifications/${id}/cancel`,
@@ -55,6 +66,7 @@ export const {
   useGetNotificationsByChannelQuery,
   useSearchNotificationsByChannelQuery,
   useGetNotificationByIdQuery,
+  useGetNotificationEventsQuery,
   useLazyGetNotificationByIdQuery,
   useCancelNotificationMutation,
 } = notificationService;

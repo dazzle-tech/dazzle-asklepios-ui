@@ -17,7 +17,7 @@ import { newNotificationResponseVM } from '@/types/model-types-constructor-new';
 import { conjureValueBasedOnIDFromList, extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { MdCancel, MdVisibility } from 'react-icons/md';
+import { MdCancel, MdHistory, MdVisibility } from 'react-icons/md';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { getNotificationChannelPageConfig } from './notificationChannelPageConfig';
 import {
@@ -30,6 +30,7 @@ import {
   NotificationFiltersState,
 } from './notificationListUtils';
 import ViewNotificationModal from './ViewNotificationModal';
+import NotificationEventsModal from './NotificationEventsModal';
 import './styles.less';
 
 interface NotificationListPageProps {
@@ -50,6 +51,10 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     channel,
   });
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [eventsModalOpen, setEventsModalOpen] = useState(false);
+  const [notificationForEvents, setNotificationForEvents] = useState<NotificationResponseVM | null>(
+    null
+  );
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [notificationToCancel, setNotificationToCancel] = useState<NotificationResponseVM | null>(
     null
@@ -115,6 +120,11 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     setViewModalOpen(true);
   };
 
+  const openEventsModalForRow = (rowData: NotificationResponseVM) => {
+    setNotificationForEvents(rowData);
+    setEventsModalOpen(true);
+  };
+
   const openCancelModalForRow = (rowData: NotificationResponseVM) => {
     setNotificationToCancel(rowData);
     setOpenCancelModal(true);
@@ -154,6 +164,17 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
           onClick={event => {
             event.stopPropagation();
             openViewModal(rowData);
+          }}
+        />
+        <MdHistory
+          title="View Events"
+          size={24}
+          fill="var(--primary-gray)"
+          className="icons-style"
+          onClick={event => {
+            event.stopPropagation();
+            if (!rowData.id) return;
+            openEventsModalForRow(rowData);
           }}
         />
         <MdCancel
@@ -443,6 +464,12 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
         open={viewModalOpen}
         setOpen={setViewModalOpen}
         notification={selectedNotification?.id ? selectedNotification : null}
+      />
+
+      <NotificationEventsModal
+        open={eventsModalOpen}
+        setOpen={setEventsModalOpen}
+        notification={notificationForEvents}
       />
 
       <DeletionConfirmationModal
