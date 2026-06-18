@@ -28,6 +28,7 @@ const RadiologyReportButton = ({ reportId }: { reportId: number }) => {
             const win = window.open(fileURL, '_blank');
             if (win) {
                 win.focus();
+                setOpenLangModal(false);
             } else {
                 dispatch(
                     notify({
@@ -46,6 +47,7 @@ const RadiologyReportButton = ({ reportId }: { reportId: number }) => {
         }
         finally {
             setLoading(false);
+            setOpenLangModal(false);
         }
     };
     return (

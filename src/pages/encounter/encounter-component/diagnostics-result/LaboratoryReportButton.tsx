@@ -1,4 +1,4 @@
-import React ,{useState}from "react";
+import React, { useState } from "react";
 import MyButton from "@/components/MyButton/MyButton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
@@ -12,9 +12,9 @@ import { useLazyGetLaboratoryReportsPdfQuery } from "@/services/reports/laborato
 const LaboratoryReportButton = ({ resultIds }: { resultIds: number[] }) => {
     const dispatch = useDispatch();
 
-  const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetLaboratoryReportsPdfQuery();   
-     const [loading, setLoading] = useState(false);
+    const [fetchLaboratoryResultPdfData, { isFetching: isGeneratingReport }] =
+        useLazyGetLaboratoryReportsPdfQuery();
+    const [loading, setLoading] = useState(false);
     const [openLangModal, setOpenLangModal] = useState(false);
     const [selectedLang, setSelectedLang] = useState<{ lang: string }>({ lang: 'en' });
     const langOptions = [
@@ -30,6 +30,7 @@ const LaboratoryReportButton = ({ resultIds }: { resultIds: number[] }) => {
             const win = window.open(fileURL, '_blank');
             if (win) {
                 win.focus();
+                setOpenLangModal(false);
             } else {
                 dispatch(
                     notify({
@@ -56,7 +57,7 @@ const LaboratoryReportButton = ({ resultIds }: { resultIds: number[] }) => {
             <MyButton
                 onClick={() => setOpenLangModal(true)}
                 loading={loading}
-                disabled={resultIds.length>0 ? false : true}
+                disabled={resultIds.length > 0 ? false : true}
                 appearance='ghost'
                 prefixIcon={() => (
                     <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
