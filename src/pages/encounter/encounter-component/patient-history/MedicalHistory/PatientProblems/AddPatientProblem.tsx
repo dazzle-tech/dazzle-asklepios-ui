@@ -12,8 +12,14 @@ import {
   useAddPatientProblemMutation,
   useUpdatePatientProblemMutation
 } from '@/services/patients/patientProblemService';
+
+import {
+   useUpdatePatientMutation
+} from '@/services/patient/patientService';
+
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? {};
@@ -133,6 +139,9 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
 
+const patientConditions = useEnumOptions('Condition');
+
+
   const statusOptions = useEnumOptions('EncounterVaccinationStatus');
 
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
@@ -140,6 +149,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
+  const [updatePatient] = useUpdatePatientMutation();
 
   useEffect(() => {
     if (initialData) {
@@ -156,25 +166,25 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   }, [initialData, open, patient?.id]);
 
   const handleSave = async () => {
-    const payload = {
-      id: formData.id,
-      patientId: Number(patient.id),
-      condition: formData.condition,
-      dateOfDiagnosis: formData.dateOfDiagnosis,
+  const payload = {
+    id: formData.id,
+    patientId: Number(patient.id),
 
-      conditionStatus: formData.conditionStatus,
+    condition: formData.condition,
 
-      type: formData.type,
-      dateOfResolution: formData.dateOfResolution,
-      byPatient: formData.byPatient,
-      sourceOfInformation: formData.byPatient
-        ? null
-        : formData.sourceOfInformation
-    };
+    dateOfDiagnosis: formData.dateOfDiagnosis,
+    conditionStatus: formData.conditionStatus,
+    type: formData.type,
+    dateOfResolution: formData.dateOfResolution,
+    byPatient: formData.byPatient,
+    sourceOfInformation: formData.byPatient
+      ? null
+      : formData.sourceOfInformation
+  };
 
     const errors: string[] = [];
 
-    if (!payload.condition) {
+    if (!payload.condition?.trim()) {
       errors.push('Condition is required');
     }
 
@@ -196,12 +206,42 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       try {
         if (formData.id) {
           await updatePatientProblem(payload).unwrap();
+
+
+            await updatePatient({
+                id: patient.id,
+                data: {
+                    ...patient,
+                    patientConditions: formData.condition
+                }
+            }).unwrap();
           dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
           setOpen(false);
         } else {
-          await addPatientProblem(payload).unwrap();
-          dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
-          setFormData({ ...emptyPatientProblem, patientId: Number(patient?.id) });
+await addPatientProblem(payload).unwrap();
+
+
+await updatePatient({
+    id: patient.id,
+    data: {
+        ...patient,
+        patientConditions: formData.condition
+    }
+}).unwrap();
+
+
+dispatch(
+    notify({
+        msg:'Patient problem added successfully',
+        sev:'success'
+    })
+);
+
+          setFormData({
+    ...emptyPatientProblem,
+    patientId: Number(patient?.id),
+    condition: ''
+});
         }
       } catch (err: any) {
         handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
@@ -216,21 +256,29 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     }
   };
 
+console.log(patient);
+
   const content = (
     <Form fluid className="fields-container">
       <Row>
         <Row>
-          <Col md={12}>
-            <MyInput
-              width="100%"
-              column
-              fieldLabel="Condition"
-              fieldName="condition"
-              record={formData}
-              setRecord={setFormData}
-              required
+        <Col md={12}>
+          <div style={{ marginBottom: 12 }}>
+            <MultiSelectAppender
+              label="Condition"
+              options={patientConditions ?? []}
+              optionLabel="label"
+              optionValue="value"
+              object={formData.condition ?? ''}
+              setObject={(value: string) =>
+                setFormData(prev => ({
+                  ...prev,
+                  condition: value
+                }))
+              }
             />
-          </Col>
+          </div>
+        </Col>
 
           <Col md={12}>
             <MyInput

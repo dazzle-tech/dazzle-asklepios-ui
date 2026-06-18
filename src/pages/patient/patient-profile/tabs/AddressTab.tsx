@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
@@ -35,6 +35,7 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
 import { FaSave } from 'react-icons/fa';
+
 const toHumanAddressError = (
   err: any,
   fieldLabels: Record<string, string> = {
@@ -198,7 +199,15 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   const [openChangeLog, setOpenChangeLog] = useState(false);
 
   const countryEnum = useEnumOptions('CountryName');
-  const countryLabelMap = Object.fromEntries(countryEnum.map(o => [o.value, o.label]));
+
+  const countryEnumKey = JSON.stringify(countryEnum);
+
+  const countryLabelMap = useMemo(() => {
+    return Object.fromEntries(
+      countryEnum.map(o => [o.value, o.label])
+    );
+  }, [countryEnumKey]);
+
 
   const resetLocationState = () => {
     setAddress({
@@ -237,19 +246,10 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   };
 
   useEffect(() => {
-    if (patientId) {
-      setBlockServerHydration(false);
-      resetLocationState();
-    }
-  }, [patientId]);
+    if (patientId === undefined) return;
 
-  useEffect(() => {
-    if (!patientId) {
-      setBlockServerHydration(false);
-      resetLocationState();
-    }
+    resetLocationState();
   }, [patientId]);
-
 
   const { data: addressesResult, isFetching } = useGetPatientAddressesQuery(
     { patientId },
