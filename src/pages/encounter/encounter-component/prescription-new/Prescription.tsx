@@ -1016,7 +1016,11 @@ const Prescription = (props: Props) => {
           }
           setOpenCancellation(true);
         }}
-        disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
+        disabled={
+          (!selectedRows.length && !patientPrescriptionMedicationObject?.id) ||
+          edit ||
+          String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
+        }
       >
         Cancel
       </MyButton>

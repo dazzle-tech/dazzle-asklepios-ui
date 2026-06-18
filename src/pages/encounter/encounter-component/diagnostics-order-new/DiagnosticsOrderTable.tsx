@@ -292,7 +292,7 @@ const getDepartmentName = (id?: number) =>
               </HStack>
             </Whisper>
 
-            <Whisper placement="top" speaker={<Tooltip>Reschedule appointment</Tooltip>}>
+            {/* <Whisper placement="top" speaker={<Tooltip>Reschedule appointment</Tooltip>}>
               <FontAwesomeIcon
                 icon={faCalendarCheck}
                 className="icons-styles"
@@ -303,7 +303,7 @@ const getDepartmentName = (id?: number) =>
                 }}
                 style={{ cursor: actionCursor }}
               />
-            </Whisper>
+            </Whisper> */}
           </div>
         );
       }
