@@ -222,6 +222,7 @@ import { useLazyGetDepartmentByIdQuery } from './services/security/departmentSer
 import { setSelectedDepartment } from './reducers/authSlice';
 import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
 import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
+import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -858,6 +859,7 @@ const dispatch = useAppDispatch();
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
               <Route path="payor-setup" element={<PayerSetup />} />
+              <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"
                 element={<InventoryManagementProductSetup />}

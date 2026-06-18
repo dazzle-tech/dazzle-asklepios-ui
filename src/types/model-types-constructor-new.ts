@@ -1428,6 +1428,19 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   lastModifiedDate: null
 };
 
+export const newNphiesPayer: modelTypes.NphiesPayer = {
+  id: undefined,
+
+  nphiesId: '',
+  nameEn: '',
+  nameAr: null,
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   id: undefined,
   planId: 0,

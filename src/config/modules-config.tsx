@@ -232,7 +232,14 @@ export const MODULES: Module[] =
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
         { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
-
+        {
+          name: "NPHIES Payers",
+          code: "NPHIES_PAYER",
+          description: "NPHIES Payers",
+          icon: "FaBuilding",
+          viewOrder: 24,
+          navPath: "nphies-payers"
+        },
       ],
     },
 
@@ -726,7 +733,7 @@ export const MODULES: Module[] =
       screens: [
 
         { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
-  ],
+      ],
     }
 
 

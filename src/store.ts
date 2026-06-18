@@ -226,7 +226,7 @@ import { eligibilityApi } from './services/waseel-integration/eligibilityService
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
-
+import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -571,8 +571,8 @@ export const store = configureStore({
     [eligibilityApi.reducerPath]: eligibilityApi.reducer,
     [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
   
-  [systemConfigService.reducerPath]: systemConfigService.reducer,
-
+    [systemConfigService.reducerPath]: systemConfigService.reducer,
+    [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
 
   },
 
@@ -771,7 +771,8 @@ export const store = configureStore({
         PayorPlanCoverageClassService.middleware,
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        systemConfigService.middleware
+        systemConfigService.middleware,
+        NphiesPayerService.middleware
       ) as any
 });
 

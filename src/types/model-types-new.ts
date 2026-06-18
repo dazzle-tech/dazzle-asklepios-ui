@@ -1777,6 +1777,19 @@ export interface PayorPlan {
   lastModifiedDate?: Date | null;
 }
 
+export interface NphiesPayer {
+  id?: number;
+
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 export interface PayorPlanItem {
   id?: number;
   planId: number;
