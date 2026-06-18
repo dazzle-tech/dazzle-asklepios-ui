@@ -646,31 +646,7 @@ const Prescription = (props: Props) => {
 
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
   const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
-  const handlePrintPrescriptionPdf = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPrescriptionPdf({
-        prescriptionId: rowData.id,
-      }).unwrap();
 
-      const pdfBlob = new Blob([blob], {
-        type: 'application/pdf',
-      });
-
-      const fileURL = window.URL.createObjectURL(pdfBlob);
-
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      } else {
-        console.error('Popup blocked. Please allow popups for this site.');
-      }
-
-      // لا تعمل revokeObjectURL هون
-    } catch (error) {
-      console.error('Failed to open prescription pdf', error);
-    }
-  };
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
 

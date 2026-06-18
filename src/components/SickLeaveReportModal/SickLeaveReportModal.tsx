@@ -92,19 +92,19 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
 
       const win = window.open(fileURL, '_blank');
 
-      if (win) {
-        win.focus();
-      } else {
-        dispatch(
-          notify({
-            msg: 'Popup blocked. Please allow popups for this site.',
-            sev: 'warning',
-          })
-        );
-      }
 
-      dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
-      setOpen(false);
+   if (win) {
+  win.focus();
+  dispatch(notify({ msg: 'Sick leave report PDF opened successfully', sev: 'success' }));
+  setOpen(false);
+} else {
+  dispatch(
+    notify({
+      msg: 'Popup blocked. Please allow popups for this site.',
+      sev: 'warning',
+    })
+  );
+}
     } catch (error: any) {
       console.error('Error while printing sick leave report PDF:', error);
 

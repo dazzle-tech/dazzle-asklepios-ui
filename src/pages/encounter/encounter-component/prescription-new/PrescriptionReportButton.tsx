@@ -24,6 +24,7 @@ const PrescriptionReportButton = ({ prescriptionId ,disabled}: { prescriptionId:
             const win = window.open(fileURL, "_blank");
             if (win) {
                 win.focus();
+                setOpenLangModal(false);
             }
                 else {
                 dispatch(
