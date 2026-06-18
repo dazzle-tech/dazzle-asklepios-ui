@@ -4879,3 +4879,36 @@ export interface PatientProblem {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | Date | null;
 }
+
+
+export type WaseelSbsCatalog = {
+  id: number;
+  sbsCode: string;
+  updateType?: string;
+  revisionDetails?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  isActive: boolean;
+};
+
+export type WaseelSbsImportResult = {
+  totalRows: number;
+  successRows: number;
+  failedRows: number;
+  message: string;
+  errorDetails?: string;
+};
+
+export type WaseelItemMapping = {
+  id: number;
+  itemType?: string;
+  sourceId?: number;
+  itemCode?: string;
+  itemName?: string;
+  sbsCatalogId: number;
+  sbsCode: string;
+  sbsDescription?: string;
+  requiresPreauth: boolean;
+  isActive: boolean;
+  notes?: string;
+};

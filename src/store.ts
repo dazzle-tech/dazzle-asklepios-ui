@@ -227,6 +227,7 @@ import { preAuthorizationApi } from './services/waseel-integration/preAuthorizat
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -575,6 +576,8 @@ export const store = configureStore({
   
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
+  [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer
+
 
   },
 
@@ -772,6 +775,7 @@ export const store = configureStore({
         eligibilityApi.middleware,
         preAuthorizationApi.middleware,
         PayorPlanCoverageClassService.middleware,
+        waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware

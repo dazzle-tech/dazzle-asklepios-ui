@@ -3271,3 +3271,27 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export type WaseelItemMappingRequest = {
+  itemType: string;
+  sourceId: number;
+  itemCode?: string;
+  itemName?: string;
+  sbsCatalogId: number;
+  requiresPreauth: boolean;
+  isActive: boolean;
+  notes?: string;
+};
+
+export type WaseelSbsSearchParams = {
+  page: number;
+  size: number;
+  search?: string;
+  sort?: string;
+};
+
+export type WaseelItemMappingSearchParams = {
+  page: number;
+  size: number;
+  sort?: string;
+};

@@ -222,6 +222,7 @@ import { useLazyGetDepartmentByIdQuery } from './services/security/departmentSer
 import { setSelectedDepartment } from './reducers/authSlice';
 import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
 import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
+import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -853,6 +854,7 @@ const dispatch = useAppDispatch();
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
+              <Route path="waseel-sbs-setup" element={<WaseelSbsSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
