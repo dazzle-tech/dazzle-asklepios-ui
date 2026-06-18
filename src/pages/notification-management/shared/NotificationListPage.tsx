@@ -8,6 +8,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCancelNotificationMutation,
+  useRetryNotificationMutation,
   useSearchNotificationsByChannelQuery,
 } from '@/services/notification-management/notificationService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
@@ -17,12 +18,13 @@ import { newNotificationResponseVM } from '@/types/model-types-constructor-new';
 import { conjureValueBasedOnIDFromList, extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { MdCancel, MdHistory, MdVisibility } from 'react-icons/md';
+import { MdCancel, MdHistory, MdReplay, MdVisibility } from 'react-icons/md';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { getNotificationChannelPageConfig } from './notificationChannelPageConfig';
 import {
   buildSearchParamsFromFilters,
   canCancelNotification,
+  canRetryNotification,
   formatEmailList,
   formatPhoneValue,
   getBodyPreview,
@@ -59,6 +61,10 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
   const [notificationToCancel, setNotificationToCancel] = useState<NotificationResponseVM | null>(
     null
   );
+  const [openRetryModal, setOpenRetryModal] = useState(false);
+  const [notificationToRetry, setNotificationToRetry] = useState<NotificationResponseVM | null>(
+    null
+  );
 
   const { data, isFetching } = useSearchNotificationsByChannelQuery({
     channel,
@@ -67,6 +73,7 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const { data: languages } = useGetAllLanguagesQuery({});
   const [cancelNotification, { isLoading: isCancelling }] = useCancelNotificationMutation();
+  const [retryNotification, { isLoading: isRetrying }] = useRetryNotificationMutation();
 
   const statusOptions = useEnumOptions('NotificationStatus');
   const priorityOptions = useEnumOptions('NotificationPriority');
@@ -130,6 +137,11 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     setOpenCancelModal(true);
   };
 
+  const openRetryModalForRow = (rowData: NotificationResponseVM) => {
+    setNotificationToRetry(rowData);
+    setOpenRetryModal(true);
+  };
+
   const handleCancelConfirm = async () => {
     if (!notificationToCancel?.id) return;
 
@@ -151,8 +163,30 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     }
   };
 
+  const handleRetryConfirm = async () => {
+    if (!notificationToRetry?.id) return;
+
+    try {
+      await retryNotification(notificationToRetry.id).unwrap();
+      dispatch(notify({ msg: 'Notification retry queued successfully', sev: 'success' }));
+      setOpenRetryModal(false);
+      if (selectedNotification?.id === notificationToRetry.id) {
+        setSelectedNotification({ ...newNotificationResponseVM, channel });
+      }
+      setNotificationToRetry(null);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to retry notification',
+          sev: 'warning',
+        })
+      );
+    }
+  };
+
   const iconsForActions = (rowData: NotificationResponseVM) => {
     const cancelEnabled = canCancelNotification(rowData.status);
+    const retryEnabled = canRetryNotification(rowData.status);
 
     return (
       <div className="container-of-icons">
@@ -177,11 +211,30 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
             openEventsModalForRow(rowData);
           }}
         />
+        <MdReplay
+          title={
+            retryEnabled
+              ? 'Retry Notification'
+              : 'Only failed notifications can be retried'
+          }
+          size={24}
+          fill={retryEnabled ? 'var(--primary-pink)' : 'var(--primary-gray)'}
+          className="icons-style"
+          style={{
+            cursor: retryEnabled ? 'pointer' : 'not-allowed',
+            opacity: retryEnabled ? 1 : 0.35,
+          }}
+          onClick={event => {
+            event.stopPropagation();
+            if (!retryEnabled || !rowData.id) return;
+            openRetryModalForRow(rowData);
+          }}
+        />
         <MdCancel
           title={
             cancelEnabled
               ? 'Cancel Notification'
-              : 'Cannot cancel sent or cancelled notifications'
+              : 'Only pending notifications can be cancelled'
           }
           size={24}
           fill={cancelEnabled ? 'var(--primary-pink)' : 'var(--primary-gray)'}
@@ -480,6 +533,16 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
         actionButtonLabel={isCancelling ? 'Cancelling...' : 'Cancel Notification'}
         confirmationQuestion="Are you sure you want to cancel this notification?"
         actionButtonFunction={handleCancelConfirm}
+      />
+
+      <DeletionConfirmationModal
+        open={openRetryModal}
+        setOpen={setOpenRetryModal}
+        itemToDelete="Notification"
+        actionType="confirm"
+        actionButtonLabel={isRetrying ? 'Retrying...' : 'Retry Notification'}
+        confirmationQuestion="Are you sure you want to retry sending this notification?"
+        actionButtonFunction={handleRetryConfirm}
       />
     </Panel>
   );

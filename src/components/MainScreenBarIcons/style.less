@@ -1,3 +1,70 @@
+.in-app-notifications-popover__list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.in-app-notifications-popover__item {
+  cursor: default;
+}
+
+.in-app-notifications-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.in-app-notifications-popover__mark-read {
+  flex-shrink: 0;
+  color: var(--primary-gray);
+}
+
+.in-app-notifications-popover__mark-read:hover {
+  color: var(--primary-pink);
+}
+
+.in-app-notifications-popover__item--unread .in-app-notifications-popover__title {
+  font-weight: 600;
+}
+
+.in-app-notifications-popover__title {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rs-text-primary);
+}
+
+.in-app-notifications-popover__body {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--rs-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.in-app-notifications-popover__body--empty {
+  font-style: italic;
+}
+
+.in-app-notifications-popover__time {
+  color: #57606a;
+  font-size: 12px;
+}
+
+.in-app-notifications-popover__empty {
+  margin: 12px 0;
+  text-align: center;
+  color: #57606a;
+}
+
+.in-app-notifications-popover__footer {
+  text-align: center;
+  margin-top: 12px;
+}
+
 .header-screen-bar-icon-size-handle {
   width: 20px;
   height: 20px;

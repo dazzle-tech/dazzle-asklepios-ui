@@ -146,6 +146,9 @@ export const validateNotificationTemplate = (
   }
 
   if (channel === 'IN_APP') {
+    if (!dto.toRecipientRule?.trim()) {
+      errors.push('In-app to recipient rule is required');
+    }
     if (!dto.title?.trim()) {
       errors.push('Notification title is required');
     }

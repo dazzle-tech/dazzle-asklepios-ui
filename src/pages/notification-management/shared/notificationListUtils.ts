@@ -110,4 +110,7 @@ export const getBodyPreview = (body?: string | null, asHtml = false) => {
 };
 
 export const canCancelNotification = (status?: NotificationStatus | null): boolean =>
-  Boolean(status) && status !== 'SENT' && status !== 'CANCELLED';
+  status === 'PENDING' || status === 'FAILED';
+
+export const canRetryNotification = (status?: NotificationStatus | null): boolean =>
+  status === 'FAILED';

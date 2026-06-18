@@ -7,6 +7,11 @@ import {
   NotificationSearchDTO,
 } from '@/types/model-types-new';
 
+export type InAppNotificationRecipientParams = {
+  recipientType: string;
+  recipientId: number;
+};
+
 export const notificationService = createApi({
   reducerPath: 'notificationApi',
   baseQuery: BaseQuery,
@@ -59,6 +64,58 @@ export const notificationService = createApi({
       }),
       invalidatesTags: (_result, _error, id) => [{ type: 'Notification', id }, 'Notification'],
     }),
+
+    getInAppNotifications: builder.query<
+      NotificationResponseVM[],
+      InAppNotificationRecipientParams
+    >({
+      query: ({ recipientType, recipientId }) => ({
+        url: '/api/notification/notifications/in-app',
+        method: 'GET',
+        params: { recipientType, recipientId },
+      }),
+      transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
+      providesTags: ['Notification'],
+    }),
+
+    getUnreadInAppNotifications: builder.query<
+      NotificationResponseVM[],
+      InAppNotificationRecipientParams
+    >({
+      query: ({ recipientType, recipientId }) => ({
+        url: '/api/notification/notifications/in-app/unread',
+        method: 'GET',
+        params: { recipientType, recipientId },
+      }),
+      transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
+      providesTags: ['Notification'],
+    }),
+
+    countUnreadInAppNotifications: builder.query<number, InAppNotificationRecipientParams>({
+      query: ({ recipientType, recipientId }) => ({
+        url: '/api/notification/notifications/in-app/unread/count',
+        method: 'GET',
+        params: { recipientType, recipientId },
+      }),
+      transformResponse: (response: number | null | undefined) => response ?? 0,
+      providesTags: ['Notification'],
+    }),
+
+    markNotificationRead: builder.mutation<NotificationResponseVM, number>({
+      query: id => ({
+        url: `/api/notification/notifications/${id}/read`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Notification', id }, 'Notification'],
+    }),
+
+    retryNotification: builder.mutation<NotificationResponseVM, number>({
+      query: id => ({
+        url: `/api/notification/notifications/${id}/retry`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Notification', id }, 'Notification'],
+    }),
   }),
 });
 
@@ -69,4 +126,12 @@ export const {
   useGetNotificationEventsQuery,
   useLazyGetNotificationByIdQuery,
   useCancelNotificationMutation,
+  useGetInAppNotificationsQuery,
+  useLazyGetInAppNotificationsQuery,
+  useGetUnreadInAppNotificationsQuery,
+  useLazyGetUnreadInAppNotificationsQuery,
+  useCountUnreadInAppNotificationsQuery,
+  useLazyCountUnreadInAppNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useRetryNotificationMutation,
 } = notificationService;
