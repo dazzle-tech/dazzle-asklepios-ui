@@ -3,7 +3,7 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import { faFlask, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Panel, Tooltip, Whisper } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 
 import {
   useAddFavoriteDiagnosticTestMutation,
@@ -17,18 +17,24 @@ import { DiagnosticTest } from '@/types/model-types-new';
 import './styles.less';
 import { useAppSelector } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
-
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useDispatch } from 'react-redux';
+import MyInput from '@/components/MyInput';
 
 const FavoriteTests: React.FC = () => {
   const [favoriteTestIds, setFavoriteTestIds] = useState<number[]>([]);
   const mode = useAppSelector((state) => state.ui.mode);
-  
-  const [paginationParams] = useState({
+  const dispatch = useDispatch();
+
+    const PAGE_SIZE = 15;
+
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: PAGE_SIZE,
     sort: 'id,asc',
     timestamp: Date.now()
   });
+
 const authSlice=useAppSelector((state) => state.auth);
 const user = authSlice?.user;
   const { data: diagnodticsTestList, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
@@ -37,7 +43,9 @@ const user = authSlice?.user;
   const [deleteFavorite] = useDeleteFavoriteDiagnosticTestMutation();
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
-  const allTests: DiagnosticTest[] = diagnodticsTestList?.data ?? [];
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [allTests, setAllTests] = useState<DiagnosticTest[]>([]);
 
   useEffect(() => {
     if (favorites) {
@@ -73,10 +81,78 @@ const user = authSlice?.user;
     return 'linear-gradient(135deg, #718096 0%, #4a5568 100%)';
   };
 
-  const filteredTests =
-    typeFilter === 'ALL'
-      ? allTests
-      : allTests.filter(t => t.type === typeFilter);
+  const filteredTests = allTests.filter(test => {
+
+      const matchesType =
+          typeFilter === 'ALL'
+          || test.type === typeFilter;
+
+      const matchesName =
+          !searchTerm
+          || test.name?.toLowerCase().includes(
+              searchTerm.toLowerCase()
+          );
+
+      return matchesType && matchesName;
+
+  });
+
+useEffect(() => {
+
+    const newTests =
+        diagnodticsTestList?.data ?? [];
+
+    if (paginationParams.page === 0) {
+
+        setAllTests(newTests);
+
+    }
+    else {
+
+        setAllTests(prev => [
+
+            ...prev,
+
+            ...newTests
+
+        ]);
+
+    }
+
+}, [diagnodticsTestList]);
+
+
+const hasMore =
+    (diagnodticsTestList?.data?.length ?? 0)
+    === PAGE_SIZE;
+
+
+
+    const handleLoadMore = () => {
+
+    setPaginationParams(prev => ({
+
+        ...prev,
+
+        page: prev.page + 1,
+
+        timestamp: Date.now()
+
+    }));
+
+};
+
+
+  useEffect(() => {
+    dispatch(setPageCode('REVIEW_RESULTS'));
+    dispatch(setDivContent('Favorite Test'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch]);
+
 
 
 // Direction handling for RTL/LTR
@@ -111,6 +187,17 @@ const user = authSlice?.user;
         >
           Radiology
         </MyButton>
+      <Form>
+        <MyInput
+            fieldName="search"
+            fieldType="text"
+            placeholder="Search by Test Name..."
+            record={{ search: searchTerm }}
+            setRecord={(r:any)=>setSearchTerm(r.search)}
+            showLabel={false}
+            width="15vw"
+        />
+      </Form>
       </div>
 
 
@@ -175,6 +262,19 @@ const user = authSlice?.user;
           );
         })}
       </div>
+
+      {hasMore && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+          <MyButton
+            appearance="ghost"
+            onClick={handleLoadMore}
+            disabled={isFetching}
+          >
+            Load More
+          </MyButton>
+        </div>
+      )}
+
 
       {!isFetching && allTests.length === 0 && (
         <div className="empty-state">
