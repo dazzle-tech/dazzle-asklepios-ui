@@ -108,7 +108,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 100,
     sort: 'id,asc',
     // timestamp: Date.now()
 
