@@ -15,7 +15,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, HStack, Message, Panel, useToaster } from 'rsuite';
+import { Checkbox, Form, HStack, Message, Panel, Tooltip, useToaster, Whisper } from 'rsuite';
 
 import {
   useFilterDiagnosticOrderTestResultsQuery
@@ -65,32 +65,44 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
-const renderMarker = (marker?: string) => {
-  switch (marker) {
-    case 'ABNORMAL_MARKER':
-      return <FontAwesomeIcon icon={faCircleExclamation} />;
-    case 'UPPER_LIMIT':
-      return <FontAwesomeIcon icon={faArrowUp} />;
-    case 'LOWER_LIMIT':
-      return <FontAwesomeIcon icon={faArrowDown} />;
-    case 'CRITICAL_UPPER':
+  const renderMarker = (marker?: string) => {
+    const isCritical =
+      marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+
+    if (isCritical) {
       return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowUp} />
-        </HStack>
+        <Whisper
+          placement="top"
+          speaker={<Tooltip>Critical</Tooltip>}
+        >
+          <span
+            style={{
+              color: 'red',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <FontAwesomeIcon
+              icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+            />
+          </span>
+        </Whisper>
       );
-    case 'CRITICAL_LOWER':
-      return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowDown} />
-        </HStack>
-      );
-    default:
-      return formatEnumString(marker);
-  }
-};
+    }
+
+    switch (marker) {
+      case 'ABNORMAL_MARKER':
+        return <FontAwesomeIcon icon={faCircleExclamation} />;
+      case 'UPPER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowUp} />;
+      case 'LOWER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowDown} />;
+      default:
+        return formatEnumString(marker);
+    }
+  };
 
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const patientId = patient?.id;

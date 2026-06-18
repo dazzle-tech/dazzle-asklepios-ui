@@ -27,6 +27,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import React, { useMemo, useState } from 'react';
 import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
+import UserDateCell from '@/components/UserDateCell';
 
 interface AdministrativeWarningsModalProps {
   localPatient: Patient;
@@ -193,36 +194,33 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                     <span className="meta-label">
                       <Translate>ADDITION BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.createdBy || 'By User'}</span>
-                    <span className="meta-date">
-                      {warning.createdDate
-                        ? new Date(warning.createdDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.createdBy}
+                      date={warning.createdDate}
+                    />
                   </div>
 
                   <div className="meta-item">
                     <span className="meta-label">
                       <Translate>RESOLVED BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.resolvedBy || '-'}</span>
-                    <span className="meta-date">
-                      {warning.resolvedDate
-                        ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.resolvedBy}
+                      date={warning.resolvedDate}
+                    />
                   </div>
 
                   <div className="meta-item">
                     <span className="meta-label">
                       <Translate>RESOLUTION UNDO BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.undoResolvedBy || '-'}</span>
-                    <span className="meta-date">
-                      {warning.undoResolvedDate
-                        ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.undoResolvedBy}
+                      date={warning.undoResolvedDate}
+                    />
                   </div>
                 </div>
               </div>

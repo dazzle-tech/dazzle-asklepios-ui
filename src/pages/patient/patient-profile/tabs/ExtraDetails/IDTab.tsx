@@ -19,6 +19,7 @@ import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
+import UserDateCell from '@/components/UserDateCell';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
@@ -153,34 +154,24 @@ const IDTab = ({ localPatient }) => {
       title: <Translate>CREATED AT/BY</Translate>,
       flexGrow: 3,
       fullText: true,
-      render: (row: any) =>
-        row?.createdDate ? (
-          <>
-            {row?.createdBy || ''}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
-        ) : (
-          ''
-        )
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
+      )
     },
     {
       key: 'updatedAt',
       title: <Translate>UPDATED AT/BY</Translate>,
       flexGrow: 3,
       fullText: true,
-      render: (row: any) =>
-        row?.lastModifiedDate ? (
-          <>
-            {row?.lastModifiedBy || ''}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.lastModifiedDate)}
-            </span>
-          </>
-        ) : (
-          '-'
-        )
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
     },
     {
       key: 'actions',
