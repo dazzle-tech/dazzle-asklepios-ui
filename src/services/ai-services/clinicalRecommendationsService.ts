@@ -1,5 +1,38 @@
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
+
+/* ===================== Types ===================== */
+
+export type PatientRecommendationRequest = {
+  patientId: number;
+  encounterId: number;
+  focusAreas?: string[];
+};
+
+export type ClinicalRecommendation = {
+  recommendation_id: string;
+  type: string;
+  title: string;
+  description: string;
+  rationale: string;
+  priority: string;
+  actionable_steps?: string[];
+  evidence_level?: string | null;
+  contraindications?: string[];
+  monitoring_requirements?: string | null;
+  follow_up?: string | null;
+};
+
+export type RecommendationsResponse = {
+  request_id?: string | null;
+  patient_id?: string | null;
+  recommendations: ClinicalRecommendation[];
+  summary: string;
+  total_recommendations: number;
+  priority_breakdown?: Record<string, number>;
+  processing_metadata?: Record<string, any>;
+};
 
 /* ===================== Types ===================== */
 
@@ -11,11 +44,7 @@ export type RecommendationRequest = {
   patient_context: PatientContext;
 };
 
-export type RecommendationsResponse = {
-  request_id?: string | null;
-  summary: string;
-  processing_metadata?: Record<string, any>;
-};
+
 
 /** POST /consultation/specialty */
 export type SpecialtyConsultationRequest = {
@@ -53,18 +82,17 @@ export const clinicalRecommendationsService = createApi({
       })
     }),
 
-    /* ---------- Generate Recommendations ---------- */
-    getClinicalRecommendations: builder.mutation<
+ 
+       getClinicalRecommendations: builder.mutation<
       RecommendationsResponse,
-      RecommendationRequest
+      PatientRecommendationRequest
     >({
       query: body => ({
-        url: '/api/ai/v1/clinical-recommendations/recommendations',
+        url: '/api/analytics/recommendations',
         method: 'POST',
         body
       })
     }),
-
     /* ---------- Specialty Consultation ---------- */
     getSpecialtyConsultation: builder.mutation<
       SpecialtyConsultationResponse,
