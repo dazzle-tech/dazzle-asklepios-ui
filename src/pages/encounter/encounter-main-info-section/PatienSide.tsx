@@ -72,10 +72,14 @@ const PatientSide = ({
 }) => {
   const profileImageFileInputRef = useRef(null);
 
-  const { data: freshPatient } = useGetPatientByIdQuery(
+const {
+    data: freshPatient,
+    refetch: refetchPatient
+} = useGetPatientByIdQuery(
     { id: patient?.id },
     { skip: !patient?.id }
-  );
+);
+
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
