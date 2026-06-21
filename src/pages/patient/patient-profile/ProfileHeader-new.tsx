@@ -152,6 +152,10 @@ const handleSendPasswordEmail = async () => {
   }
 };
 
+const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -485,9 +489,9 @@ useEffect(() => {
                 justifyContent: 'flex-end'
               }}
             >
-              {/* <MyButton onClick={handleScanDocumentClick}>
+              <MyButton onClick={handleScanDocumentClick}>
                 <Translate>Scan Document</Translate>
-              </MyButton> */}
+              </MyButton>
 
               <MyButton
                 onClick={() => {
@@ -599,6 +603,8 @@ useEffect(() => {
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
       {patientInformationModal}
       {patientLabelModal}

@@ -4691,3 +4691,14 @@ export interface PatientProblem {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | Date | null;
 }
+
+export interface OCRParsingResponseDTO {
+   type: string | null;
+   documentNumber: number | null;
+   familyName: string | null;
+   givenNames: string | null;
+   nationality: string | null,
+   dateOfBirth: Date | null,  // change it later
+   sex : string | null, // change it later
+   placeOfBirth: string;
+}
