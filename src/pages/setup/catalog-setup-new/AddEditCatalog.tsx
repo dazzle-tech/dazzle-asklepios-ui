@@ -15,6 +15,27 @@ import { newCatalogCreateVM, newCatalogUpdateVM } from '@/types/model-types-cons
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+
+
+const getApiErrorMessage = (err: any, fallback: string) => {
+  const data = err?.data;
+
+  if (typeof data === 'string') return data;
+
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+  if (data?.detail) return data.detail;
+
+  if (Array.isArray(data?.fieldErrors)) {
+    return data.fieldErrors
+      .map((x: any) => `${x.field ?? x.name}: ${x.message ?? x.defaultMessage}`)
+      .join(', ');
+  }
+
+  return fallback;
+};
+
+
 const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) => {
   const dispatch = useAppDispatch();
   const [catalogCreateVM, setCatalogCreateVM] = useState<CatalogCreateVM>({
@@ -24,12 +45,13 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
     ...newCatalogUpdateVM
   });
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
-  const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
-    {
-      facilityId: diagnosticsTestCatalogHeader?.id
+  const { data: departmentListResponse } =
+  useGetActiveDepartmentByFacilityListQuery(
+  {
+    facilityId: diagnosticsTestCatalogHeader?.id
         ? catalogUpdateVM.facilityId
         : catalogCreateVM.facilityId
-    },
+  },
     {
       skip: !(diagnosticsTestCatalogHeader?.id
         ? catalogUpdateVM.facilityId
@@ -115,8 +137,13 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
           setCatalogCreateVM({ ...newCatalogCreateVM });
           dispatch(notify({ msg: 'The Catalog has been added successfully', sev: 'success' }));
         })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'warning' }));
+        .catch((err) => {
+          dispatch(
+            notify({
+              msg: getApiErrorMessage(err, 'Failed to add this Catalog'),
+              sev: 'warning'
+            })
+          );
         });
     } else {
       updateCatalog({ id: diagnosticsTestCatalogHeader?.id, body: catalogUpdateVM })
@@ -125,11 +152,20 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
           setOpen(false);
           dispatch(notify({ msg: 'The Catalog has been updated successfully', sev: 'success' }));
         })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'warning' }));
-        });
+      .catch((err) => {
+        console.log(err);
+
+        dispatch(
+          notify({
+            msg: getApiErrorMessage(err, 'Failed to update this Catalog'),
+            sev: 'warning'
+          })
+        );
+      });
     }
   };
+
+
 
   useEffect(() => {
     const appointable = !diagnosticsTestCatalogHeader?.id
