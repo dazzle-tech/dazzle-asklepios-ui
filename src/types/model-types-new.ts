@@ -4907,7 +4907,6 @@ export interface PatientProblem {
 
 export type WaseelSbsCatalog = {
   id: number;
-  waseelItemType?: string;
   sbsCode: string;
   updateType?: string;
   revisionDetails?: string;

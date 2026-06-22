@@ -338,11 +338,11 @@ const WaseelSbsSetup = () => {
   ]);
 
   const sbsDropdownOptions = useMemo(() => {
-    return (sbsDropdownResponse?.content ?? []).map((item: WaseelSbsCatalog) => ({
+    return sbsDropdownCache.map((item: WaseelSbsCatalog) => ({
       ...item,
-      sbsDisplay: `${item.waseelItemType ?? ''} - ${item.sbsCode ?? ''} - ${item.shortDescription ?? ''}`
+      sbsDisplay: `${item.sbsCode} - ${item.shortDescription ?? ''}`
     }));
-  }, [sbsDropdownResponse]);
+  }, [sbsDropdownCache]);
 
   useEffect(() => {
     dispatch(setPageCode('WASEEL_SBS_SETUP'));
@@ -776,29 +776,27 @@ const WaseelSbsSetup = () => {
   searchable={false}
 />
 
-<MyInput
-  required
-  fieldLabel="SBS Code"
-  fieldType="selectPagination"
-  fieldName="sbsCatalogId"
-  selectData={sbsDropdownOptions}
-  selectDataLabel="sbsDisplay"
-  selectDataValue="id"
-  record={mappingForm}
-  setRecord={setMappingForm}
-  width="100%"
-  searchable
-  loading={isFetchingSbsDropdown}
-  hasMore={false}
-  onFetchMore={async () => {}}
-  onSelectItem={(selectedSbs: WaseelSbsCatalog) => {
-    setMappingForm(prev => ({
-      ...prev,
-      sbsCatalogId: selectedSbs?.id ?? null,
-      waseelItemType: selectedSbs?.waseelItemType ?? ''
-    }));
-  }}
-/>
+      <MyInput
+        required
+        fieldLabel="SBS Code"
+        fieldType="selectPagination"
+        fieldName="sbsCatalogId"
+        selectData={sbsDropdownOptions}
+        selectDataLabel="sbsDisplay"
+        selectDataValue="id"
+        record={mappingForm}
+        setRecord={setMappingForm}
+        width="100%"
+        searchable={true}
+        searchKeyWard={sbsDropdownSearch}
+        setSearchKeyWard={setSbsDropdownSearch}
+        loading={isFetchingSbsDropdown}
+        hasMore={
+          Boolean((sbsDropdownResponse as any)?.links?.next) ||
+          Number(sbsDropdownResponse?.totalElements ?? 0) > sbsDropdownCache.length
+        }
+        onFetchMore={async () => setSbsDropdownPage(prev => prev + 1)}
+      />
 
       <MyInput
         fieldType="checkbox"
