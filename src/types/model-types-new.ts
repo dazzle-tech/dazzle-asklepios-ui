@@ -541,7 +541,7 @@ export interface AppointmentRequestResponseVM {
   patientId?: number | null;
   patientName?: string | null;
   patientMrn?: string | null;
-  
+
   facilityId?: number | null;
   facilityName?: string | null;
 
@@ -641,7 +641,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  nationalNumber?:string | null;
+  nationalNumber?: string | null;
 }
 
 /* =========================
@@ -815,7 +815,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
-  modality:string
+  modality: string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -938,7 +938,7 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  isLookAlikeSoundAlike?: boolean ;
+  isLookAlikeSoundAlike?: boolean;
   highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
@@ -2946,7 +2946,7 @@ export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
   medicationsId: number;
-  activeIngredientId: number ;
+  activeIngredientId: number;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -3644,9 +3644,9 @@ export type PatientServiceAndProduct = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
-  SourceId?: number | null; 
+  SourceId?: number | null;
 };
- 
+
 export enum ServiceSource {
   LABORATORY = 'LABORATORY',
   RADIOLOGY = 'RADIOLOGY',
@@ -4422,8 +4422,8 @@ export type AppointmentPolicyAssignmentResponseVM = {
   appointment: AppointmentFromTemplate;
   isApplied?: boolean;
   isRequired?: boolean;
-  policyName?:string;
-  policyCode?:string;
+  policyName?: string;
+  policyCode?: string;
 };
 
 export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
@@ -4568,13 +4568,13 @@ export interface PatientUccMedicationOrder {
 
   isHighAlert?: boolean | null;
 
-  status?: 
-    | 'WAITING_DOUBLE_CHECK'
-    | 'ADMINISTERED'
-    | 'CANCELLED'
-    | 'DISCARDED'
-    | 'NEW'
-    | 'SUBMITTED';
+  status?:
+  | 'WAITING_DOUBLE_CHECK'
+  | 'ADMINISTERED'
+  | 'CANCELLED'
+  | 'DISCARDED'
+  | 'NEW'
+  | 'SUBMITTED';
 
   submittedDate?: string | Date | null;
   submittedBy?: string | null;
@@ -4706,7 +4706,9 @@ export type RecipientRule =
   | 'PRACTITIONER_EMAIL'
   | 'PRACTITIONER_PHONE'
   | 'DATA'
-  | 'STATIC';
+  | 'STATIC'
+  | 'PRACTITIONER_USER'
+  | 'DEPARTMENT_USERS';
 
 export interface NotificationHeaderResponseVM {
   id?: number;
