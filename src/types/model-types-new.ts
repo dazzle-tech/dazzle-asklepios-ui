@@ -4905,22 +4905,23 @@ export interface PatientProblem {
 }
 
 
-export type WaseelSbsCatalog = {
-  id: number;
-  sbsCode: string;
-  updateType?: string;
-  revisionDetails?: string;
-  shortDescription?: string;
-  longDescription?: string;
-  isActive: boolean;
-};
-
 export type WaseelSbsImportResult = {
   totalRows: number;
   successRows: number;
   failedRows: number;
   message: string;
   errorDetails?: string;
+};
+
+export type WaseelSbsCatalog = {
+  id: number;
+  waseelItemType?: string;
+  sbsCode: string;
+  updateType?: string;
+  revisionDetails?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  isActive: boolean;
 };
 
 export type WaseelItemMapping = {
@@ -4930,6 +4931,7 @@ export type WaseelItemMapping = {
   itemCode?: string;
   itemName?: string;
   sbsCatalogId: number;
+  waseelItemType?: string;
   sbsCode: string;
   sbsDescription?: string;
   requiresPreauth: boolean;

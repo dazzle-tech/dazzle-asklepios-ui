@@ -328,12 +328,11 @@ const WaseelSbsSetup = () => {
   ]);
 
   const sbsDropdownOptions = useMemo(() => {
-    return sbsDropdownCache.map((item: WaseelSbsCatalog) => ({
+    return (sbsDropdownResponse?.content ?? []).map((item: WaseelSbsCatalog) => ({
       ...item,
-      sbsDisplay: `${item.sbsCode} - ${item.shortDescription ?? ''}`
+      sbsDisplay: `${item.waseelItemType ?? ''} - ${item.sbsCode ?? ''} - ${item.shortDescription ?? ''}`
     }));
-  }, [sbsDropdownCache]);
-
+  }, [sbsDropdownResponse]);
   useEffect(() => {
     dispatch(setPageCode('WASEEL_SBS_SETUP'));
     dispatch(setDivContent('Waseel SBS Setup'));
@@ -511,7 +510,7 @@ const WaseelSbsSetup = () => {
   };
 
   const handleSaveMapping = async () => {
-    if (!mappingForm.itemType || mappingForm.sourceId == null || mappingForm.sbsCatalogId == null) {
+    if (!mappingForm.itemType || !mappingForm.sourceId || !mappingForm.sbsCatalogId) {
       dispatch(
         notify({
           msg: 'Category, Item, and SBS Code are required',
@@ -526,10 +525,10 @@ const WaseelSbsSetup = () => {
 
       await createItemMapping({
         itemType: mappingForm.itemType,
-        sourceId: mappingForm.sourceId,
+        sourceId: Number(mappingForm.sourceId),
         itemCode: mappingForm.itemCode,
         itemName: mappingForm.itemName,
-        sbsCatalogId: mappingForm.sbsCatalogId,
+        sbsCatalogId: Number(mappingForm.sbsCatalogId),
         requiresPreauth: mappingForm.requiresPreauth,
         isActive: mappingForm.isActive,
         notes: mappingForm.notes
@@ -567,6 +566,11 @@ const WaseelSbsSetup = () => {
   };
 
   const sbsColumns = [
+    {
+      key: 'waseelItemType',
+      title: <Translate>Waseel Type</Translate>,
+      flexGrow: 2
+    },
     {
       key: 'sbsCode',
       title: <Translate>SBS Code</Translate>,
@@ -742,27 +746,28 @@ const WaseelSbsSetup = () => {
         />
       )}
 
-      <MyInput
-        required
-        fieldLabel="SBS Code"
-        fieldType="selectPagination"
-        fieldName="sbsCatalogId"
-        selectData={sbsDropdownOptions}
-        selectDataLabel="sbsDisplay"
-        selectDataValue="id"
-        record={mappingForm}
-        setRecord={setMappingForm}
-        width="100%"
-        searchable
-        searchKeyWard={sbsDropdownSearch}
-        setSearchKeyWard={setSbsDropdownSearch}
-        loading={isFetchingSbsDropdown}
-        hasMore={
-          Boolean((sbsDropdownResponse as any)?.links?.next) ||
-          Number(sbsDropdownResponse?.totalElements ?? 0) > sbsDropdownCache.length
-        }
-        onFetchMore={async () => setSbsDropdownPage(prev => prev + 1)}
-      />
+<MyInput
+  required
+  fieldLabel="SBS Code"
+  fieldType="selectPagination"
+  fieldName="sbsCatalogId"
+  selectData={sbsDropdownOptions}
+  selectDataLabel="sbsDisplay"
+  selectDataValue="id"
+  record={mappingForm}
+  setRecord={setMappingForm}
+  width="100%"
+  searchable
+  loading={isFetchingSbsDropdown}
+  hasMore={false}
+  onFetchMore={async () => {}}
+  onSelectItem={(selectedSbs: WaseelSbsCatalog) => {
+    setMappingForm(prev => ({
+      ...prev,
+      sbsCatalogId: selectedSbs?.id ?? null,
+    }));
+  }}
+/>
 
       <MyInput
         fieldType="checkbox"
