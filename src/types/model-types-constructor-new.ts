@@ -3306,7 +3306,6 @@ export type WaseelItemMappingRequest = {
   sourceId: number;
   itemCode?: string;
   itemName?: string;
-  waseelItemType?: string;
   sbsCatalogId: number;
   requiresPreauth: boolean;
   isActive: boolean;

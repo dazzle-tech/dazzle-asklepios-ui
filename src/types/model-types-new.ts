@@ -4929,7 +4929,6 @@ export type WaseelItemMapping = {
   sourceId?: number;
   itemCode?: string;
   itemName?: string;
-  waseelItemType?: string;
   sbsCatalogId: number;
   sbsCode: string;
   sbsDescription?: string;
