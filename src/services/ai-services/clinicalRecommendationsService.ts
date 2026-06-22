@@ -47,18 +47,25 @@ export type RecommendationRequest = {
 
 
 /** POST /consultation/specialty */
-export type SpecialtyConsultationRequest = {
-  request_id?: string | null;
+
+export type PatientSpecialtyConsultationRequest = {
+  patientId: number;
+  encounterId: number;
   specialty: string;
-  patient_context?: PatientContext;
-  complaint?: string;
 };
 
+export type ConsultationAction = {
+  title: string;
+  description?: string | null;
+  category?: string | null;
+  priority?: string | null;
+};
 export type SpecialtyConsultationResponse = {
   request_id?: string | null;
   summary: string;
-  processing_metadata?: Record<string, any>;
+  actions: ConsultationAction[];
 };
+
 
 /** POST /recommendations/user-role */
 export type UserRoleRecommendationRequest = {
@@ -96,10 +103,10 @@ export const clinicalRecommendationsService = createApi({
     /* ---------- Specialty Consultation ---------- */
     getSpecialtyConsultation: builder.mutation<
       SpecialtyConsultationResponse,
-      SpecialtyConsultationRequest
+      PatientSpecialtyConsultationRequest
     >({
       query: body => ({
-        url: '/api/ai/v1/clinical-recommendations/consultation/specialty',
+        url: '/api/analytics/consultation/specialty',
         method: 'POST',
         body
       })

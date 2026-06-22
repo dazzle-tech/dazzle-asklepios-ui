@@ -336,24 +336,37 @@ const Details = ({
     }
   }, [formData?.toFacilityId, open, getDepartmentsByFacility]);
 
-  useEffect(() => {
-    if (!specialtyName) return;
+useEffect(() => {
+  if (!specialtyName) return;
+  if (!patient?.id || !encounter?.id) return;
 
-    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
+  const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
 
-    setLocalAiSummary(null);
-    getSpecialtyConsultation({
-      request_id: `req-${patient?.id ?? ''}-${encounter?.id ?? ''}`,
-      specialty: specialtyApi
+  setLocalAiSummary(null);
+
+  getSpecialtyConsultation({
+    patientId: Number(patient.id),
+    encounterId: Number(encounter.id),
+    specialty: specialtyApi
+  })
+    .unwrap()
+    .then(res => {
+      const actionsText = Array.isArray(res?.actions) && res.actions.length > 0
+        ? '\n\nActions:\n' +
+          res.actions
+            .map(
+              (a, index) =>
+                `${index + 1}. ${a.title}${a.priority ? ` (${a.priority})` : ''}\n${a.description || ''}`
+            )
+            .join('\n\n')
+        : '';
+
+      setLocalAiSummary((res?.summary ?? '') + actionsText);
     })
-      .unwrap()
-      .then(res => {
-        setLocalAiSummary(res?.summary ?? null);
-      })
-      .catch(error => {
-        setLocalAiSummary(null);
-      });
-  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id, open]);
+    .catch(() => {
+      setLocalAiSummary(null);
+    });
+}, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id]);
 
   useEffect(() => {
     setShowAiPanel(false);
