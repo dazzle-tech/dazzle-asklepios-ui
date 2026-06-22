@@ -46,11 +46,20 @@ type MappingForm = {
   sourceId: number | null;
   itemCode: string;
   itemName: string;
+  waseelItemType: string;
   sbsCatalogId: number | null;
   requiresPreauth: boolean;
   isActive: boolean;
   notes: string;
 };
+
+const waseelItemTypeOptions = [
+  { label: 'Services', value: 'services' },
+  { label: 'Medical Devices', value: 'medical-devices' },
+  { label: 'Medication', value: 'medication' },
+  { label: 'Laboratory', value: 'laboratory' },
+  { label: 'Imaging', value: 'imaging' }
+];
 
 const itemTypeOptions = [
   { label: 'Medication', value: 'MEDICATION' },
@@ -117,6 +126,7 @@ const WaseelSbsSetup = () => {
     sourceId: null,
     itemCode: '',
     itemName: '',
+    waseelItemType: '',
     sbsCatalogId: null,
     requiresPreauth: true,
     isActive: true,
@@ -501,6 +511,7 @@ const WaseelSbsSetup = () => {
       sourceId: null,
       itemCode: '',
       itemName: '',
+      waseelItemType: '',
       sbsCatalogId: null,
       requiresPreauth: true,
       isActive: true,
@@ -511,13 +522,16 @@ const WaseelSbsSetup = () => {
   };
 
   const handleSaveMapping = async () => {
-    if (!mappingForm.itemType || mappingForm.sourceId == null || mappingForm.sbsCatalogId == null) {
-      dispatch(
-        notify({
-          msg: 'Category, Item, and SBS Code are required',
-          sev: 'warning'
-        })
-      );
+    if (
+      !mappingForm.itemType ||
+      !mappingForm.sourceId ||
+      !mappingForm.waseelItemType ||
+      !mappingForm.sbsCatalogId
+    ) {
+      dispatch(notify({
+        msg: 'Category, Item, Waseel Item Type, and SBS Code are required',
+        sev: 'warning'
+      }));
       return;
     }
 
@@ -526,10 +540,11 @@ const WaseelSbsSetup = () => {
 
       await createItemMapping({
         itemType: mappingForm.itemType,
-        sourceId: mappingForm.sourceId,
+        sourceId: Number(mappingForm.sourceId),
         itemCode: mappingForm.itemCode,
         itemName: mappingForm.itemName,
-        sbsCatalogId: mappingForm.sbsCatalogId,
+        waseelItemType: mappingForm.waseelItemType,
+        sbsCatalogId: Number(mappingForm.sbsCatalogId),
         requiresPreauth: mappingForm.requiresPreauth,
         isActive: mappingForm.isActive,
         notes: mappingForm.notes
@@ -567,6 +582,11 @@ const WaseelSbsSetup = () => {
   };
 
   const sbsColumns = [
+    {
+      key: 'waseelItemType',
+      title: <Translate>Waseel Type</Translate>,
+      flexGrow: 2
+    },
     {
       key: 'sbsCode',
       title: <Translate>SBS Code</Translate>,
@@ -742,6 +762,20 @@ const WaseelSbsSetup = () => {
         />
       )}
 
+<MyInput
+  required
+  fieldLabel="Waseel Item Type"
+  fieldType="select"
+  fieldName="waseelItemType"
+  selectData={waseelItemTypeOptions}
+  selectDataLabel="label"
+  selectDataValue="value"
+  record={mappingForm}
+  setRecord={setMappingForm}
+  width="100%"
+  searchable={false}
+/>
+
       <MyInput
         required
         fieldLabel="SBS Code"
@@ -753,7 +787,7 @@ const WaseelSbsSetup = () => {
         record={mappingForm}
         setRecord={setMappingForm}
         width="100%"
-        searchable
+        searchable={true}
         searchKeyWard={sbsDropdownSearch}
         setSearchKeyWard={setSbsDropdownSearch}
         loading={isFetchingSbsDropdown}
