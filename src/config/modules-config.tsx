@@ -175,6 +175,7 @@ export const MODULES: Module[] =
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
       ],
     },
+   
     {
       name: "System Setup",
       description: "",
@@ -235,7 +236,19 @@ export const MODULES: Module[] =
 
       ],
     },
-
+    {
+      name: "Notification Management",
+      description: "",
+      icon: "FaBell",
+      viewOrder: 0.6,
+      screens: [
+        { name: "Notification Rule", code: "NOTIFICATION_RULE", description: "", icon: "FaListCheck", viewOrder: 0, navPath: "notification-rule" },
+        { name: "Email Notification", code: "EMAIL_NOTIFICATION", description: "", icon: "FaEnvelope", viewOrder: 1, navPath: "email-notification" },
+        { name: "SMS Notification", code: "SMS_NOTIFICATION", description: "", icon: "FaCommentSms", viewOrder: 2, navPath: "sms-notification" },
+        { name: "In-App Notification", code: "IN_APP_NOTIFICATION", description: "", icon: "FaDesktop", viewOrder: 3, navPath: "in-app-notification" },
+        { name: "WhatsApp Notification", code: "WHATSAPP_NOTIFICATION", description: "", icon: "FaWhatsapp", viewOrder: 4, navPath: "whatsapp-notification" },
+      ],
+    },
     {
       name: "Coding Module",
       description: "Coding Module",

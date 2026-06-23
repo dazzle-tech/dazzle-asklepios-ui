@@ -11,7 +11,7 @@ import {
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -101,34 +101,6 @@ const {  patientLabelMenuItem,
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
-
-
-
-
-
-const extractErrorMessage = (response: any): string => {
-  try {
-    const msg =
-      response?.data?.message ??
-      response?.data?.error ??
-      response?.message ??
-      response?.error;
-
-    if (typeof msg === 'string' && msg.trim()) {
-      return msg.replace(/^error\./i, '').trim();
-    }
-
-    if (response?.data && typeof response?.data === 'object') {
-      const detail = response.data.detail ?? response.data.description;
-      if (typeof detail === 'string' && detail.trim()) {
-        return detail.trim();
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return '';
-};
 
 const handleSendPasswordEmail = async () => {
   if (!localPatient?.id) return;
@@ -287,8 +259,13 @@ const handleSendPasswordEmail = async () => {
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
-        console.error('Failed to upload profile picture:', error);
-        dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+        const errorMsg = extractErrorMessage(error);
+        dispatch(
+          notify({
+            msg: errorMsg || 'Failed to Upload Profile Picture',
+            sev: 'error'
+          })
+        );
       }
     }
   };

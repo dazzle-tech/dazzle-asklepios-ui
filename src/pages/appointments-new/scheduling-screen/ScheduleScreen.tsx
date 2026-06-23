@@ -28,7 +28,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ViewAppointmentRequests from './components/ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
-import { calculateAgeFormat } from '@/utils';
+import { extractErrorMessage } from '@/utils';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
@@ -482,8 +482,9 @@ const ScheduleScreen = () => {
         const startRaw = appointment?.startDatetime;
         const endRaw = appointment?.endDatetime;
 
-        const startDate = convertDate(startRaw);
-        const endDate = convertDate(endRaw);
+        const startDate = parseAppointmentDate(startRaw);
+        const endDate = parseAppointmentDate(endRaw) ?? startDate;
+        if (!startDate) return null;
         const dob = new Date(appointment?.patient?.dob);
         const patientIdNum = getAppointmentPatientId(appointment);
         const fromPatientService =
@@ -558,7 +559,7 @@ const ScheduleScreen = () => {
           fromTo: `${extractTimeFromTimestamp(startRaw)} - ${extractTimeFromTimestamp(endRaw)}`
         };
       });
-      setAppointmentsData(formattedAppointments);
+      setAppointmentsData(formattedAppointments.filter(Boolean));
     }
   }, [
     searchedAppointments,
@@ -728,17 +729,29 @@ const ScheduleScreen = () => {
     setActionsModalOpen(true);
   };
 
-  const convertDate = appointmentTime => {
-    return new Date(appointmentTime);
+  const parseAppointmentDate = (value: unknown): Date | null => {
+    if (value == null || value === '') return null;
+    const date = value instanceof Date ? new Date(value) : new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
   };
 
   const handleSearchAppointmentsByCriteria = useCallback(async () => {
     if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
-    await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+    try {
+      await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to load appointments',
+          sev: 'warning',
+        })
+      );
+    }
   }, [
     appointmentSearchFilter,
+    dispatch,
     shouldSearchAppointments,
-    triggerAppointmentSearch
+    triggerAppointmentSearch,
   ]);
 
   useEffect(() => {
@@ -1344,15 +1357,6 @@ const ScheduleScreen = () => {
     return out || head || res || templateName || 'Appointment';
   };
 
-  const [currentCalView, setCurrentCalView] = useState('month');
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
   const ResourceHeader = ({ resource }) => {
     return (
       <div
@@ -1621,8 +1625,13 @@ const ScheduleScreen = () => {
               color: '#8F98AB'
             }}
           >
-            {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ›{' '}
-            {event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {event.start instanceof Date && !Number.isNaN(event.start.getTime())
+              ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}{' '}
+            ›{' '}
+            {event.end instanceof Date && !Number.isNaN(event.end.getTime())
+              ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}
           </p>
         </div>
       </div>
