@@ -190,12 +190,16 @@ const {
   });
   // ─────────────────────────────────────────────────────────────────────────
 
-  const patientConditionItems =
-    (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
-      .split(',')
-      .map((item: string) => item.trim())
-      .filter(Boolean);
+const patientConditionItems =
+  (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
+    .split(',')
+    .map((item: string) => item.trim())
+    .filter((item: string) => {
+      const value = item.trim().toLowerCase();
+      return value && value !== 'null' && value !== 'undefined';
+    });
 
+    
   const getPatientConditionColors = () => {
     return {
       bg: 'var(--light-purple, #f3e8ff)',
