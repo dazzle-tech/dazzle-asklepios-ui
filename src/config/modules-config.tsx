@@ -108,7 +108,14 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   // { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   // { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
-  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
+  {
+    name: 'Progress Notes / Additional Notes',
+    code: 'PROGRESS_NOTES',
+    icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
+    path: '/progress-notes',
+    isDefaultMedicalSheet: true,
+    isDefaultNurseMedicalSheet: true
+  },
   // { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   // { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   // { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },

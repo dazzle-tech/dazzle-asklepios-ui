@@ -442,7 +442,7 @@ const NormalConsultation = props => {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        expandable: true,
+        expandable: false,
         render: row => {
           const text = row.responseText || '';
           const MAX = 20;

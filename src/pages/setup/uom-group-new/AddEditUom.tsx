@@ -215,6 +215,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
               record={uom}
               setRecord={setUom}
               width="100%"
+              required
             />
             <MyInput
               fieldLabel="Description"
@@ -429,48 +430,70 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
   };
 
   // Handle Save Uom
-  const handleSave = () => {
-    if (!uom?.id)
-      createUomGroup(uom)
-        .unwrap()
-        .then(result => {
-          setUom(result);
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group Added/Edited successfully ',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    else {
-      const updatedUom = { id: uom?.id, description: uom?.description, name: uom?.name };
-      updateUomGroup(updatedUom)
-        .unwrap()
-        .then(result => {
-          setUom(result);
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group updated successfully ',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    }
-  };
+    const handleSave = () => {
+
+      if (!uom?.name?.trim()) {
+        dispatch(
+          notify({
+            msg: 'Missing field is required : UOM group',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!uom?.id) {
+        createUomGroup(uom)
+          .unwrap()
+          .then(result => {
+            setUom(result);
+            refetchUomGroups();
+
+            dispatch(
+              notify({
+                msg: 'The UOM group Added/Edited successfully',
+                sev: 'success'
+              })
+            );
+          })
+          .catch(() => {
+            dispatch(
+              notify({
+                msg: 'Missing field is required : UOM group',
+                sev: 'warning'
+              })
+            );
+          });
+      } else {
+        const updatedUom = {
+          id: uom.id,
+          description: uom.description,
+          name: uom.name
+        };
+
+        updateUomGroup(updatedUom)
+          .unwrap()
+          .then(result => {
+            setUom(result);
+            refetchUomGroups();
+
+            dispatch(
+              notify({
+                msg: 'The UOM group updated successfully',
+                sev: 'success'
+              })
+            );
+          })
+          .catch(() => {
+            dispatch(
+              notify({
+                msg: 'Missing field is required : UOM group',
+                sev: 'warning'
+              })
+            );
+          });
+      }
+    };
 
   // Handle Save Uom unit
   const handleSaveUnits = () => {
