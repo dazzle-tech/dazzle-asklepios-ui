@@ -267,19 +267,39 @@ const handleClearSection = async () => {
             </div>
 
             <div className="system-details">
-              <MyTable data={paginatedData} columns={tableColumns} loading={rosLoading} />
+
+                {openModel && (
+                    <div className="mb-3">
+                        <Summary
+                            list={rosList}
+                            encounter={encounter}
+                            setEncounter={setEncounter}
+                            system={bodySystemsLovQueryResponse}
+                        />
+                    </div>
+                )}
+
+                <MyTable
+                    tablefilters={
+                        <>                
+                          {openModel && (
+                            <div className="mb-3">
+                                <Summary
+                                    list={rosList}
+                                    encounter={encounter}
+                                    setEncounter={setEncounter}
+                                    system={bodySystemsLovQueryResponse}
+                                />
+                            </div>
+                        )}</>}
+                    data={paginatedData}
+                    columns={tableColumns}
+                    loading={rosLoading}
+                />
+
             </div>
           </div>
-        </Grid>
-
-        <Summary
-          open={openModel}
-          setOpen={setOpenModel}
-          list={rosList}
-          encounter={encounter}
-          setEncounter={setEncounter}
-          system={bodySystemsLovQueryResponse}
-        />
+        </Grid> 
       </Panel>
     </>
   );

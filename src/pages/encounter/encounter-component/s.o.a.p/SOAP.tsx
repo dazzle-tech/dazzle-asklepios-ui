@@ -172,6 +172,19 @@ const SOAP = props => {
                     record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
+                  <MyInput
+                    width="100%"
+                    height="120px"
+                    fieldLabel="Physical Examination Summary"
+                    fieldType="textarea"
+                    fieldName="physicalExaminationSummery"
+                    record={{
+                      physicalExaminationSummery:
+                        localEncounter?.physicalExaminationSummery || ''
+                    }}
+                    setRecord={() => {}}
+                    disabled
+                  />
                 </Form>
               }
               action={

@@ -14,7 +14,7 @@ import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
   tableContainerRef: any;
-
+  patientPrevTestsRef:any;
   orderId: any;
   tableVersion: number;
 
@@ -58,7 +58,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     tableVersion,
     loadTests,
     normalizedOrderTestList,
-
+    patientPrevTestsRef,
     selectedRows,
     setSelectedRows,
     selectableRowIds,
@@ -80,6 +80,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
 
     patient
   } = props;
+
 
   const isSelected = (rowData: any, currentOrderTest: any) => {
     const rowId = rowData?.id ?? rowData?.key;
@@ -381,9 +382,10 @@ const getDepartmentName = (id?: number) =>
       <PreviewDiagnosticsOrder open={!!previewDiagnosticsOrder} orderTest={previewDiagnosticsOrder} />
 
       <Panel header="Patient Orders Test" collapsible expanded className="panel-style">
-        <PatientPrevTests patient={
-          //add new patient edits
-          patient} />
+        <PatientPrevTests
+            ref={patientPrevTestsRef}
+            patient={patient}
+        />
       </Panel>
     </div>
   </div>
