@@ -61,6 +61,51 @@ const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) 
   }, [rosList]);
 
 
+const handleClearSection = async () => {
+  if (!selectedSystem?.key) return;
+
+  try {
+    const sectionItems =
+      bodySystemsDetailLovQueryResponse?.object ?? [];
+
+    for (const item of sectionItems) {
+      const existing = mainData[String(item.key)];
+
+      if (existing?.id) {
+        await deleteRos(existing.id).unwrap();
+      }
+    }
+
+    setMainData(prev => {
+      const clone = { ...prev };
+
+      sectionItems.forEach(item => {
+        delete clone[String(item.key)];
+      });
+
+      return clone;
+    });
+
+    setSelectedSystem({ ...newApLovValues });
+
+    refetchRos();
+
+    dispatch(
+      notify({
+        msg: 'Section cleared successfully',
+        sev: 'success'
+      })
+    );
+  } catch (e) {
+    dispatch(
+      notify({
+        msg: 'Failed to clear section',
+        sev: 'error'
+      })
+    );
+  }
+};
+
 
 
   const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
@@ -179,6 +224,9 @@ const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) 
     ]
   );
 
+
+
+
   return (
     <>
       <Panel>
@@ -187,7 +235,17 @@ const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) 
          
 
             <div className="bt-right">
-              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />} >
+              <MyButton
+                disabled={!selectedSystem?.key}
+                onClick={handleClearSection}
+              >
+                Clear
+              </MyButton>
+
+              <MyButton
+                onClick={() => setOpenModel(true)}
+                prefixIcon={() => <icons.List />}
+              >
                 Findings
               </MyButton>
             </div>
