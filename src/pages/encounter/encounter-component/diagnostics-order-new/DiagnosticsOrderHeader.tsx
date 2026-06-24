@@ -50,6 +50,7 @@ type Props = {
   handleSubmitPres: () => void;
 
   setOpenTestsModal: (v: boolean) => void;
+  setOpenValidationSummaryModal: (v: boolean) => void;
   OpenConfirmDeleteModel: () => void;
   setBulkDepartmentModalOpen: (v: boolean) => void;
 
@@ -85,6 +86,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     handleSubmitPres,
 
     setOpenTestsModal,
+    setOpenValidationSummaryModal,
     OpenConfirmDeleteModel,
     setBulkDepartmentModalOpen,
 
@@ -156,6 +158,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             >
               Urgent
             </MyButton>
+
           </div>
         </div>
 
@@ -227,7 +230,11 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
           </MyButton>
 
-          <MyButton onClick={handleSubmitPres} disabled={isSubmitDisabled || isNurse} prefixIcon={() => <CheckIcon />}>
+          <MyButton
+            onClick={() => setOpenValidationSummaryModal(true)}
+            disabled={isSubmitDisabled || isNurse}
+            prefixIcon={() => <CheckIcon />}
+          >
             Sign &amp; Submit
           </MyButton>
         </div>

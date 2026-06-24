@@ -5,10 +5,12 @@ import './styles.less';
 
 import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
 import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
+import { useState } from 'react';
 
 const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
@@ -22,6 +24,7 @@ const DiagnosticsOrder = (props: any) => {
     (props.edit ?? location.state?.edit ?? false);
 
   const vm = useDiagnosticsOrder({ patient, encounter, edit });
+  const [openValidationSummaryModal, setOpenValidationSummaryModal] = useState(false);
 
   const isInsideModalOrPopup = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
@@ -97,6 +100,7 @@ const DiagnosticsOrder = (props: any) => {
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
         setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenValidationSummaryModal={setOpenValidationSummaryModal}
         OpenConfirmDeleteModel={vm.OpenConfirmDeleteModel}
         setBulkDepartmentModalOpen={vm.setBulkDepartmentModalOpen}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
@@ -178,6 +182,20 @@ const DiagnosticsOrder = (props: any) => {
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
         handleLoadMore={vm.handleLoadMore}
+      />
+
+      <PatientHistorySummaryModal
+        open={openValidationSummaryModal}
+        setOpen={setOpenValidationSummaryModal}
+        handleSave={async () => {
+          const ok = await vm.handleSubmitPres();
+          if (ok) setOpenValidationSummaryModal(false);
+        }}
+        payload={{
+          patientId: patient?.id ?? patient?.key,
+          encounterId: encounter?.id ?? encounter?.key,
+          orderNumber: vm.orders?.orderNumber
+        }}
       />
 
       <RescheduleAppointmentsLookupModal

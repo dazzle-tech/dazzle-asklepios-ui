@@ -223,7 +223,7 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
-
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -526,6 +526,8 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -761,7 +763,8 @@ export const store = configureStore({
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        systemConfigService.middleware
+        systemConfigService.middleware,
+        medicationValidationService.middleware
       ) as any
 });
 
