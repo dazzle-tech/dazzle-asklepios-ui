@@ -22,6 +22,7 @@ import type { Patient } from '@/types/model-types-new';
 import { newPatient } from '@/types/model-types-constructor-new';
 import BasicInfo from '@/pages/patient/patient-profile/tabs/BasicInfo';
 import ContactTab from '@/pages/patient/patient-profile/tabs/ContactTab';
+import ProfileTabs from '@/pages/patient/patient-profile/ProfileTabs-new';
 
 type CompletePatientProfileBeforeCheckInModalProps = {
   open: boolean;
@@ -130,6 +131,7 @@ const CompletePatientProfileBeforeCheckInModal: React.FC<
   const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
   const [validationResult, setValidationResult] = useState<any>(undefined);
+  const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [updatePatient, { isLoading: isSaving }] = useUpdatePatientMutation();
 
   const [ageGroupValue, setAgeGroupValue] = useState<{ ageGroup: string }>({ ageGroup: '' });
@@ -137,8 +139,6 @@ const CompletePatientProfileBeforeCheckInModal: React.FC<
   const lastProcessedDOB = useRef<string | null>(null);
 
   const [fetchAgeGroupByBirthDate] = useLazyGetAgeGroupByBirthDateQuery();
-  const genderEnum = useEnumOptions('Gender');
-  const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
   const numericPatientId = Number(patientId);
@@ -310,58 +310,7 @@ const CompletePatientProfileBeforeCheckInModal: React.FC<
     await Promise.resolve(onCompleted?.(updated));
   };
 
-  const patientInformationSection = (
-    <Panel bordered style={{ padding: 0 }}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ flex: 2, display: 'flex', alignItems: 'center', padding: 12 }}>
-          <Avatar size="md" circle src={profileImageSrc} />
-          <div style={{ marginLeft: 8 }}>
-            <p style={{ fontSize: 15, margin: 0 }}>{patientDisplayName}</p>
-            <p style={{ fontSize: 12, color: '#A1A9B8', fontWeight: 600, margin: '4px 0' }}>
-              <FontAwesomeIcon icon={faUser} /> {patientGenderLabel}
-              {localPatient?.dateOfBirth
-                ? `, ${calculateAgeFormat(String(localPatient.dateOfBirth))}`
-                : ''}
-            </p>
-            <p style={{ fontSize: 12, color: '#A1A9B8', margin: 0 }}>
-              {localPatient?.medicalRecordNumber
-                ? `#${localPatient.medicalRecordNumber}`
-                : ''}
-            </p>
-          </div>
-        </div>
-
-        <div
-          style={{
-            flex: 4,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: 12
-          }}
-        >
-          <Divider style={{ height: 50 }} vertical />
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
-            <p style={{ margin: 0 }}>{(localPatient as any)?.documentTypeLkey || '-'}</p>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
-            <p style={{ margin: 0 }}>{(localPatient as any)?.documentNo || '-'}</p>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Mobile Number</p>
-            <p style={{ margin: 0 }}>{localPatient?.primaryMobileNumber || '-'}</p>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Email</p>
-            <p style={{ margin: 0 }}>{localPatient?.email || '-'}</p>
-          </div>
-        </div>
-      </div>
-    </Panel>
-  );
-
+ 
   return (
     <MyModal
       open={open}
@@ -377,65 +326,22 @@ const CompletePatientProfileBeforeCheckInModal: React.FC<
       isDisabledActionBtn={isSaving || isLoadingPatient || !localPatient?.id}
       actionButtonLoading={isSaving}
       content={
-        <Form fluid>
+            <Form fluid>
           {isLoadingPatient ? (
             <Panel bordered style={{ padding: 12 }}>
               <Translate>Loading patient...</Translate>
             </Panel>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <SectionContainer
-                title="Patient Information"
-                action={
-                  <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                    onClick={() => void handleSave()}
-                    disabled={isSaving || isLoadingPatient}
-                    loading={isSaving}
-                  >
-                    <Translate>Edit</Translate>
-                  </MyButton>
-                }
-                content={patientInformationSection}
-              />
-
-              <Row gutter={15}>
-                <Col md={12}>
-                  <SectionContainer
-                    title="Basic Information"
-                    content={
-                      <Panel bordered style={{ padding: 12 }}>
-                        <BasicInfo
-                          validationResult={validationResult}
-                          localPatient={localPatient}
+          <ProfileTabs
+               localPatient={localPatient}
                           setLocalPatient={setLocalPatient}
-                          genderEnum={genderEnum}
-                          ageFormatType={ageFormatType}
-                          ageGroupValue={ageGroupValue}
-                          patientClassLovQueryResponse={patientClassLovQueryResponse}
-                        />
-                      </Panel>
-                    }
-                  />
-                </Col>
-                <Col md={12}>
-                  <SectionContainer
-                    title="Contact"
-                    content={
-                      <Panel bordered style={{ padding: 12 }}>
-                        <ContactTab
-                          localPatient={localPatient}
-                          setLocalPatient={setLocalPatient}
-                          validationResult={validationResult}
-                        />
-                      </Panel>
-                    }
-                  />
-                </Col>
-              </Row>
-            </div>
+ validationResult={validationResult}
+   refetchAttachmentList={refetchAttachmentList}
+  setRefetchAttachmentList={setRefetchAttachmentList}
+             />
           )}
         </Form>
+        
       }
     />
   );
