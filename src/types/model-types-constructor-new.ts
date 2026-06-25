@@ -78,6 +78,8 @@ export const newFacility: modelTypes.Facility = {
   ruleId: null,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -94,6 +96,8 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   isActive: true,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Role -------------------

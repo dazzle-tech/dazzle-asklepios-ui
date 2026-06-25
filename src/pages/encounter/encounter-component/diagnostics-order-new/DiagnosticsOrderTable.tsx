@@ -1,6 +1,6 @@
 import { faCalendarCheck, faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
@@ -9,7 +9,6 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
@@ -49,6 +48,7 @@ type Props = {
 
   // patient
   patient: any;
+  departments: any[];
 };
 
 const DiagnosticsOrderTable: React.FC<Props> = props => {
@@ -78,43 +78,26 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     previewDiagnosticsOrder,
     setPreviewDiagnosticsOrder,
 
-    patient
+    patient,
+    departments
   } = props;
 
+  const resolveReceivedDepartmentName = (rowData: any) => {
+    const nestedName =
+      rowData.receivedDepartment?.name ??
+      rowData.receivedDepartment?.translatedObject?.name ??
+      rowData.receivedDepartmentName;
 
-  const isSelected = (rowData: any, currentOrderTest: any) => {
-    const rowId = rowData?.id ?? rowData?.key;
-    const selectedId = currentOrderTest?.id ?? currentOrderTest?.key;
-    if (rowId && selectedId && rowId === selectedId) return 'selected-row';
-    return '';
+    if (nestedName) return nestedName;
+
+    const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
+    if (deptId == null || deptId === '') return '';
+
+    const department = departments.find((d: any) => String(d.id) === String(deptId));
+    return department?.name ?? department?.departmentName ?? '';
   };
 
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
-
-  const departmentIds = React.useMemo(() => {
-  const ids = normalizedOrderTestList
-    .map(r => r.receivedDepartmentId ?? r.receivedLabId)
-    .filter(Boolean);
-
-  return Array.from(new Set(ids));
-}, [normalizedOrderTestList]);
-const [departmentsMap, setDepartmentsMap] = useState<Map<number, any>>(new Map());
-
-useEffect(() => {
-  if (!departmentIds.length) return;
-
-  getDepartmentsBulk(departmentIds)
-    .unwrap()
-    .then(res => {
-      const map = new Map<number, any>(res.map((d: any) => [Number(d.id), d]));
-      setDepartmentsMap(map);
-    });
-}, [departmentIds]);
-const getDepartmentName = (id?: number) =>
-  departmentsMap.get(id)?.name ?? id;
-
-
-      const UserDateCell = ({
+  const UserDateCell = ({
         login,
         date
         }: {
@@ -137,6 +120,13 @@ const getDepartmentName = (id?: number) =>
             </>
         );
         };
+
+  const isSelected = (rowData: any, currentOrderTest: any) => {
+    const rowId = rowData?.id ?? rowData?.key;
+    const selectedId = currentOrderTest?.id ?? currentOrderTest?.key;
+    if (rowId && selectedId && rowId === selectedId) return 'selected-row';
+    return '';
+  };
 
   const tableColumns: any[] = [
     {
@@ -202,10 +192,7 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>RECEIVED Department</Translate>,
       fullText: true,
       flexGrow: 1,
-      render: (rowData: any) => {
-        const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
-        return getDepartmentName(deptId);
-      }
+      render: (rowData: any) => resolveReceivedDepartmentName(rowData)
     },
     {
       key: 'reason',
