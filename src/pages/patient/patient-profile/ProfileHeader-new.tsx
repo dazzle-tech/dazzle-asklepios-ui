@@ -508,7 +508,7 @@ useEffect(() => {
               </MyButton>
 
               <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                <Translate>Quick Appointment</Translate>
+                <Translate>Walk-in Patient</Translate>
               </MyButton>
 
               <AdministrativeWarningsModal

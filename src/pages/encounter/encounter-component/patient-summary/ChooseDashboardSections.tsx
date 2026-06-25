@@ -171,6 +171,22 @@ const ChooseDashboardSections = ({
                 record={displays}
                 setRecord={setDisplays}
               />
+              <MyInput
+                fieldType="check"
+                fieldName="c14"
+
+                fieldLabel={
+                <Translate>
+                Previous Assessments
+                </Translate>
+                }
+
+                showLabel={false}
+
+                record={displays}
+                setRecord={setDisplays}
+
+                />
               {/* <MyInput
                 fieldType="check"
                 fieldName="c13"
@@ -202,9 +218,9 @@ const ChooseDashboardSections = ({
   };
   useEffect(() => {
     if(selectedAll['all'])
-     setDisplays({...displays, c1: true, c2: true, c3: true, c4: true, c5: true, c7: true, c8: true,c9:true, c11: true, c12: true, c13: true});
+     setDisplays({...displays, c1: true, c2: true, c3: true, c4: true, c5: true, c7: true, c8: true,c9:true, c11: true, c12: true, c13: true, c14:true});
     else
-     setDisplays({...displays, c1: false, c2: false, c3: false, c4: false, c5: false, c7: false, c8: false, c9: true, c11: false, c12: false,c13: false});
+     setDisplays({...displays, c1: false, c2: false, c3: false, c4: false, c5: false, c7: false, c8: false, c9: true, c11: false, c12: false,c13: false, c14:false});
 
   },[selectedAll]);
   return (
