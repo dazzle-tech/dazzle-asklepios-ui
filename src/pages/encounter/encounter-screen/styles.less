@@ -195,7 +195,35 @@
   opacity: 1;
   animation: pulse-hover 2s infinite;
 }
+.medical-sheets-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
 
+.medical-sheet-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #dcdcdc;
+  background: transparent;
+  color: inherit;
+  border-radius: 20px;
+  padding: 7px 13px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.medical-sheet-tab.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.medical-sheet-tab:hover {
+  border-color: var(--primary-color);
+}
 @keyframes pulse-hover {
   0% {
     transform: scale(1);
