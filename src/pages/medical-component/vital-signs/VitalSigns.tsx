@@ -17,6 +17,9 @@ import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip, Whisper } from 'rsuite';
+import AllGraphsModal from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/AllGraphsModal';
 
 type VitalSignsProps = {
   patientId: number;
@@ -264,9 +267,44 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     setMeanArterialPressureValue(null);
   };
 
+const [openGraphsModal, setOpenGraphsModal] = useState(false);
+
+    const titleContent = (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}
+      >
+        <span>{title}</span>
+
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={
+            <Tooltip>
+              Graph
+            </Tooltip>
+          }
+        >
+          <FontAwesomeIcon
+            icon={faChartLine}
+            className="icons-style"
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenGraphsModal(true);
+            }}
+          />
+        </Whisper>
+      </div>
+    );
+
+
   return (
     <SectionContainer
-      title={title}
+      title={titleContent}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
@@ -394,6 +432,13 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
             disabled={disabled}
           />
         </div>
+
+
+                <AllGraphsModal
+                    open={openGraphsModal}
+                    setOpen={setOpenGraphsModal}
+                      patient={{ id: patientId }}
+                />
         </Form>
       }
     />

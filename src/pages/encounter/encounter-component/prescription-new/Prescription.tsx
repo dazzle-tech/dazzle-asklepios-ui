@@ -1167,7 +1167,10 @@ const Prescription = (props: Props) => {
         }
       />
 
-      <AllergyFloatingButton patient={patient} />
+      <AllergyFloatingButton
+          patient={patient}
+          encounter={encounter}
+      />
     </div>
   );
 };

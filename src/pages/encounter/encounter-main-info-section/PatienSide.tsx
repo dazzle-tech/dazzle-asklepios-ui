@@ -51,6 +51,9 @@ import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import AllGraphsModal from '../encounter-pre-observations-new/previous-measurements/AllGraphsModal';
+
 
 const PatientSide = ({
   patient,
@@ -84,6 +87,9 @@ const {
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
   const dispatch = useDispatch();
+
+
+  const [openGraphsModal, setOpenGraphsModal] = useState(false);
 
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
@@ -646,12 +652,28 @@ const patientConditionItems =
 
       {showMeasurements && (
         <>
-          <Text className="main-info-patient-side">
-            <FaWeight className="icon-color" />{' '}
-            <span className="section-title-patient-side">
-              <Translate>Measurements</Translate>
-            </span>
-          </Text>
+        <Text className="main-info-patient-side">
+          <FaWeight className="icon-color" />{' '}
+
+          <span className="section-title-patient-side">
+            <Translate>Measurements</Translate>
+          </span>
+
+          <Whisper
+              placement="top"
+              speaker={<Tooltip>Graph</Tooltip>}
+          >
+              <FontAwesomeIcon
+                  icon={faChartLine}
+                  className="icons-style"
+                  style={{
+                      cursor: 'pointer',
+                      marginInlineStart: '10px'
+                  }}
+                  onClick={() => setOpenGraphsModal(true)}
+              />
+          </Whisper>
+        </Text>
 
           <div className="details-sections">
             <br />
@@ -1145,6 +1167,13 @@ const patientConditionItems =
           <Divider className="divider-style" />
         </div>
       )}
+
+        <AllGraphsModal
+            open={openGraphsModal}
+            setOpen={setOpenGraphsModal}
+            patient={patient}
+        />
+
     </Panel>
   );
 };
