@@ -159,6 +159,7 @@ const SOAP = props => {
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
           <div className="top-section">
+             <div style={{ marginBottom: '16px' }}>
             <SectionContainer
               title={<Translate>Chief Complaint </Translate>}
               content={
@@ -182,7 +183,7 @@ const SOAP = props => {
                       physicalExaminationSummery:
                         localEncounter?.physicalExaminationSummery || ''
                     }}
-                    setRecord={() => {}}
+                    setRecord={() => { }}
                     disabled
                   />
                 </Form>
@@ -193,25 +194,29 @@ const SOAP = props => {
                 </MyButton>
               }
             />
+            </div>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <SectionContainer
+              title={<Translate>Patient Diagnosis</Translate>}
+              content={
+                <div style={{ width: '100%' }}>
+                  <PatientDiagnosis
+                    patient={patient}
+                    encounter={localEncounter}
+                    onDiagnosisSaved={onDiagnosisSaved}
+                  />
+                </div>
+              }
+            /></div>
+          <div style={{ marginBottom: '16px' }}>
             <EncounterAssessmentSection patient={patient} encounterId={localEncounter?.id} />
           </div>
-
-          <SectionContainer
-            title={<Translate>Patient Diagnosis</Translate>}
-            content={
-              <div style={{ width: '100%' }}>
-              <PatientDiagnosis
-                patient={patient}
-                encounter={localEncounter}
-                onDiagnosisSaved={onDiagnosisSaved}
-              />
-              </div>
-            }
-          />
-
           <div className="last-section-clinical-visit">
             <div className="half-width-section">
+               <div style={{ marginBottom: '16px' }}>
               <PatientPlan patient={patient} localEncounter={localEncounter} />
+              </div>
             </div>
             <div className="half-width-section">
               <PatientHistorySummary
