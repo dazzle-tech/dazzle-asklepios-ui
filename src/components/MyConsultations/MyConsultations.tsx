@@ -9,7 +9,6 @@ import {
   faCircleXmark,
   faFileLines,
   faFilePen,
-  faUpload,
   faPlus
 } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '../MyBadgeStatus/MyBadgeStatus';
@@ -43,7 +42,6 @@ import { setPatient, setEncounter } from '@/reducers/patientSlice';
 import { notify } from '@/utils/uiReducerActions';
 import {
   conjureValueBasedOnIDFromList,
-  formatDateWithoutSeconds,
   calculateAgeFormat,
   formatEnumString
 } from '@/utils';
@@ -110,13 +108,7 @@ const MyConsultations = () => {
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const todayString = getLocalDateString();
-
-  const formatDateTime = useCallback(
-    (value?: string | number | Date | null) => (value ? formatDateWithoutSeconds(value) : ''),
-    []
-  );
-
+  const todayString = useMemo(() => getLocalDateString(), []);
   const DEFAULT_SORT = 'createdDate,desc';
 
   const [record, setRecord] = useState<any>({
@@ -181,6 +173,16 @@ const MyConsultations = () => {
     useGetDepartmentsBulkMutation();
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
+  const facilities = useMemo(
+    () => (Array.isArray(facilityListResponse) ? facilityListResponse : []),
+    [facilityListResponse]
+  );
+
+  const departments = useMemo(
+    () => (Array.isArray(departmentListResponse) ? departmentListResponse : []),
+    [departmentListResponse]
+  );
+
   const searchParams = useMemo(() => {
     const fromFacilityId = record.facilityId ?? selectedFacilityId;
     const toDepartmentId = selectedDepartment?.departmentId;
@@ -234,23 +236,15 @@ const MyConsultations = () => {
     }
   }, [triggerSearch]);
 
-  const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
-  const departments = Array.isArray(departmentListResponse) ? departmentListResponse : [];
-
   const pageIndex = page;
   const rowsPerPage = pageSize;
   const totalCount = consultationResponse?.totalCount ?? consultationResponse?.data?.length ?? 0;
 
-  const handlePageChange = useCallback((_: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
+  const allConsultations = useMemo(
+    () => consultationResponse?.data ?? [],
+    [consultationResponse?.data]
+  );
 
-  const handleRowsPerPageChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setPageSize(parseInt(event.target.value, 10));
-    setPage(0);
-  }, []);
-
-  const allConsultations = consultationResponse?.data ?? [];
   const visibleConsultations = useMemo(() => {
     const start = page * pageSize;
     return allConsultations.slice(start, start + pageSize);
@@ -269,6 +263,8 @@ const MyConsultations = () => {
       ),
     [visibleConsultations]
   );
+
+  const patientIdsKey = useMemo(() => patientIdsForBulk.join(','), [patientIdsForBulk]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -307,6 +303,8 @@ const MyConsultations = () => {
     [visibleConsultations]
   );
 
+  const departmentIdsKey = useMemo(() => departmentIdsForBulk.join(','), [departmentIdsForBulk]);
+
   const userIdsForBulk = useMemo(
     () =>
       Array.from(
@@ -325,6 +323,8 @@ const MyConsultations = () => {
     [visibleConsultations]
   );
 
+  const userIdsKey = useMemo(() => userIdsForBulk.join(','), [userIdsForBulk]);
+
   const usersNameMap = useMemo(() => {
     const map = new Map<string, string>();
     const ids = usersBulkIdsRef.current;
@@ -336,11 +336,6 @@ const MyConsultations = () => {
     });
     return map;
   }, [usersBasicNames]);
-
-  const resolveUserName = (id: number | string | null | undefined) => {
-    if (id === null || id === undefined) return '';
-    return usersNameMap.get(String(id)) ?? String(id);
-  };
 
   const selectableRows = useMemo(
     () =>
@@ -364,6 +359,7 @@ const MyConsultations = () => {
 
   const allSelectableSelected =
     selectableRows.length > 0 && selectedSelectableCount === selectableRows.length;
+
   const isIndeterminate =
     selectedSelectableCount > 0 && selectedSelectableCount < selectableRows.length;
 
@@ -372,6 +368,15 @@ const MyConsultations = () => {
     (patientsBulkLoading || usersBulkLoading || departmentsBulkLoading);
 
   const tableLoading = consultationsLoading || bulkLoading;
+
+  const handlePageChange = useCallback((_: unknown, newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  const handleRowsPerPageChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  }, []);
 
   useEffect(() => {
     if (openResponseModal) return;
@@ -383,6 +388,7 @@ const MyConsultations = () => {
   useEffect(() => {
     dispatch(setPageCode('My Consultation'));
     dispatch(setDivContent('My Consultation'));
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -397,55 +403,76 @@ const MyConsultations = () => {
 
   useEffect(() => {
     if (selectedFacilityId === null || selectedFacilityId === undefined) return;
-    setRecord(prev => {
+
+    setRecord((prev: any) => {
       if (prev?.facilityId !== undefined && prev?.facilityId !== null && prev?.facilityId !== '') {
         return prev;
       }
+
       return { ...prev, facilityId: selectedFacilityId };
     });
+
     getDepartmentsByFacility({ facilityId: selectedFacilityId });
   }, [selectedFacilityId, getDepartmentsByFacility]);
 
   useEffect(() => {
     if (!searchParams) return;
+
+    const currentParamsJson = JSON.stringify(searchParams);
+    const lastParamsJson = JSON.stringify(lastSearchParamsRef.current);
+
+    if (currentParamsJson === lastParamsJson) {
+      return;
+    }
+
     lastSearchParamsRef.current = searchParams;
     triggerSearch(searchParams);
   }, [searchParams, triggerSearch]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
+
     patientBulkIdsRef.current = patientIdsForBulk;
+
     getBulkPatientBasicInfo(patientIdsForBulk)
       .unwrap()
-      .catch(() => { });
-  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+      .catch(() => {});
+  }, [patientIdsKey, getBulkPatientBasicInfo]);
 
   useEffect(() => {
     if (departmentIdsForBulk.length === 0) return;
+
     getDepartmentsBulk(departmentIdsForBulk)
       .unwrap()
-      .catch(() => { });
-  }, [departmentIdsForBulk, getDepartmentsBulk]);
+      .catch(() => {});
+  }, [departmentIdsKey, getDepartmentsBulk]);
 
   useEffect(() => {
     if (userIdsForBulk.length === 0) return;
+
     usersBulkIdsRef.current = userIdsForBulk;
+
     getUsersBasicNamesBulk(userIdsForBulk)
       .unwrap()
-      .catch(() => { });
-  }, [userIdsForBulk, getUsersBasicNamesBulk]);
+      .catch(() => {});
+  }, [userIdsKey, getUsersBasicNamesBulk]);
 
   useEffect(() => {
     if (!emrPatientData) return;
+
     const patientKey = String(emrPatientData?.key ?? emrPatientData?.id ?? '');
+
     if (!emrPatientKeyRef.current || patientKey !== emrPatientKeyRef.current) return;
+
     setEmrPatient(emrPatientData);
     dispatch(setPatient(emrPatientData));
   }, [emrPatientData, dispatch]);
 
   useEffect(() => {
     if (!emrEncounterData || !emrEncounterKey) return;
+
     const encounterKey = String(emrEncounterData?.key ?? emrEncounterData?.id ?? '');
+
     if (encounterKey && encounterKey === emrEncounterKey) {
       setEmrEncounter(emrEncounterData);
       dispatch(setEncounter(emrEncounterData));
@@ -460,23 +487,32 @@ const MyConsultations = () => {
 
   useEffect(() => {
     if (selectedRows.length === 0) return;
-    setSelectedRows(previousRows =>
-      previousRows.filter(selectedRowItem =>
+
+    setSelectedRows(previousRows => {
+      const nextRows = previousRows.filter(selectedRowItem =>
         selectableRows.some(
           selectableRow =>
             String(selectableRow.id ?? selectableRow.key) ===
             String(selectedRowItem.id ?? selectedRowItem.key)
         )
-      )
-    );
-  }, [selectableRows]);
+      );
+
+      if (nextRows.length === previousRows.length) {
+        return previousRows;
+      }
+
+      return nextRows;
+    });
+  }, [selectableRows, selectedRows.length]);
 
   const handleConfirmAction = useCallback(async () => {
     if (!selectedRow) return;
+
     if (!loggedInUser?.id) {
       dispatch(notify({ msg: 'User ID is required to confirm consultations', sev: 'error' }));
       return;
     }
+
     if (!selectedRow?.id) {
       dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
@@ -502,32 +538,35 @@ const MyConsultations = () => {
       dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
+
     if (!loggedInUser?.id) {
       dispatch(notify({ msg: 'User ID is required to reject consultations', sev: 'error' }));
       return;
     }
 
     const reason = String(rejectForm?.reason ?? '').trim();
+
     if (!reason) {
       dispatch(notify({ msg: 'Reject reason is required', sev: 'warning' }));
       return;
     }
 
-  try {
-    await rejectConsultation({
-      id: Number(selectedRow.id),
-      body: { reason, rejectedBy: Number(loggedInUser.id) }
-    }).unwrap();
-    sessionStorage.setItem('consultation_updated', String(Date.now()));
+    try {
+      await rejectConsultation({
+        id: Number(selectedRow.id),
+        body: { reason, rejectedBy: Number(loggedInUser.id) }
+      }).unwrap();
 
-    dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
-    refetchConsultations();
-    setOpenRejectModal(false);
-    setRejectForm({ reason: '' });
-    setSelectedRow(null);
-  } catch {
-  dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
-}
+      sessionStorage.setItem('consultation_updated', String(Date.now()));
+
+      dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
+      refetchConsultations();
+      setOpenRejectModal(false);
+      setRejectForm({ reason: '' });
+      setSelectedRow(null);
+    } catch {
+      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
+    }
   }, [
     dispatch,
     loggedInUser?.id,
@@ -542,11 +581,13 @@ const MyConsultations = () => {
       const alreadySelected = previousRows.some(
         item => String(item.id ?? item.key) === String(rowData.id ?? rowData.key)
       );
+
       if (alreadySelected) {
         return previousRows.filter(
           item => String(item.id ?? item.key) !== String(rowData.id ?? rowData.key)
         );
       }
+
       return [...previousRows, rowData];
     });
   }, []);
@@ -574,12 +615,14 @@ const MyConsultations = () => {
       }
 
       await submitConsultations({ consultationIds }).unwrap();
+
       dispatch(
         notify({
           msg: `${readyConsultations.length} consultation(s) submitted successfully`,
           sev: 'success'
         })
       );
+
       refetchConsultations();
       setSelectedRows([]);
     } catch {
@@ -603,10 +646,12 @@ const MyConsultations = () => {
 
   const handleSaveResponse = useCallback(async () => {
     if (!selectedConsultation) return;
+
     if (!loggedInUser?.id) {
       dispatch(notify({ msg: 'User ID is required to submit a response', sev: 'error' }));
       return;
     }
+
     if (!selectedConsultation?.id) {
       dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
@@ -639,6 +684,7 @@ const MyConsultations = () => {
 
   const handleSelectAll = useCallback(() => {
     if (selectableRows.length === 0) return;
+
     if (allSelectableSelected) {
       setSelectedRows(previousRows =>
         previousRows.filter(
@@ -648,6 +694,7 @@ const MyConsultations = () => {
       );
       return;
     }
+
     setSelectedRows(selectableRows);
   }, [allSelectableSelected, selectableRows]);
 
@@ -785,6 +832,7 @@ const MyConsultations = () => {
         flexGrow: 2,
         render: (row: any) => {
           const deptId = row.fromDepartmentId;
+
           return conjureValueBasedOnIDFromList(
             departmentsBulk ?? departments,
             deptId ? Number(deptId) : deptId,
@@ -797,12 +845,7 @@ const MyConsultations = () => {
         title: <Translate>Created By / At</Translate>,
         expandable: true,
         flexGrow: 2,
-        render: (row: any) => (
-          <UserDateCell
-            login={row.createdBy}
-            date={row.createdDate}
-          />
-        )
+        render: (row: any) => <UserDateCell login={row.createdBy} date={row.createdDate} />
       },
       {
         key: 'status',
@@ -811,6 +854,7 @@ const MyConsultations = () => {
         render: (row: any) => {
           const status = String(row.status ?? '').toUpperCase();
           const statusDisplay = status ? status.replace(/_/g, ' ') : '';
+
           return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
         }
       },
@@ -820,10 +864,7 @@ const MyConsultations = () => {
         expandable: true,
         flexGrow: 2,
         render: (row: any) => (
-          <UserDateCell
-            login={row.confirmedBy}
-            date={row.confirmedDate ?? row.confirmedAt}
-          />
+          <UserDateCell login={row.confirmedBy} date={row.confirmedDate ?? row.confirmedAt} />
         )
       },
       {
@@ -832,10 +873,7 @@ const MyConsultations = () => {
         expandable: true,
         flexGrow: 2,
         render: (row: any) => (
-          <UserDateCell
-            login={row.responseBy}
-            date={row.responseDate ?? row.responseAt}
-          />
+          <UserDateCell login={row.responseBy} date={row.responseDate ?? row.responseAt} />
         )
       },
       {
@@ -844,10 +882,7 @@ const MyConsultations = () => {
         expandable: true,
         flexGrow: 2,
         render: (row: any) => (
-          <UserDateCell
-            login={row.rejectedBy}
-            date={row.rejectedDate ?? row.rejectedAt}
-          />
+          <UserDateCell login={row.rejectedBy} date={row.rejectedDate ?? row.rejectedAt} />
         )
       },
       {
@@ -863,10 +898,7 @@ const MyConsultations = () => {
         expandable: true,
         flexGrow: 2,
         render: (row: any) => (
-          <UserDateCell
-            login={row.submittedBy}
-            date={row.submittedDate ?? row.submittedAt}
-          />
+          <UserDateCell login={row.submittedBy} date={row.submittedDate ?? row.submittedAt} />
         )
       },
       {
@@ -886,15 +918,12 @@ const MyConsultations = () => {
           const disableResponse = !canOpenResponse;
 
           const responseReadOnly = status === 'SUBMITTED';
-          const responseTooltipLabel = responseReadOnly
-            ? 'View Response'
-            : 'Add Response';
+          const responseTooltipLabel = responseReadOnly ? 'View Response' : 'Add Response';
 
           const canAddServices = status === 'SUBMITTED';
 
           return (
             <div className="actions-cell">
-              {/* Open EMR */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Open EMR</Tooltip>}>
                 <div>
                   <MyButton
@@ -937,7 +966,6 @@ const MyConsultations = () => {
                 </div>
               </Whisper>
 
-              {/* Confirm */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Confirm</Tooltip>}>
                 <div>
                   <MyButton
@@ -955,7 +983,6 @@ const MyConsultations = () => {
                 </div>
               </Whisper>
 
-              {/* Reject */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject</Tooltip>}>
                 <div>
                   <MyButton
@@ -974,7 +1001,6 @@ const MyConsultations = () => {
                 </div>
               </Whisper>
 
-              {/* Response */}
               <Whisper
                 trigger="hover"
                 placement="top"
@@ -993,7 +1019,6 @@ const MyConsultations = () => {
                 </div>
               </Whisper>
 
-              {/* Add Services ✅ */}
               <Whisper
                 trigger="hover"
                 placement="top"
@@ -1017,7 +1042,6 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
-
             </div>
           );
         }
@@ -1029,13 +1053,11 @@ const MyConsultations = () => {
       departmentsBulk,
       dispatch,
       fetchPatientById,
-      formatDateTime,
       handleOpenBulkServicesModal,
       handleOpenResponseModal,
       handleSelectAll,
       isIndeterminate,
       patientMap,
-      resolveUserName,
       selectedRows,
       toggleRowSelection
     ]
@@ -1070,18 +1092,21 @@ const MyConsultations = () => {
             selectDataLabel="name"
             selectDataValue="id"
             record={record}
-            setRecord={updated => {
+            setRecord={(updated: any) => {
               setRecord((prev: any) => {
                 const facilityChanged =
                   String(updated?.facilityId ?? '') !== String(prev?.facilityId ?? '');
+
                 const next = {
                   ...updated,
                   departmentId: facilityChanged ? [] : updated?.departmentId
                 };
-                if (next.facilityId) {
+
+                if (next.facilityId && facilityChanged) {
                   getDepartmentsByFacility({ facilityId: next.facilityId });
                 }
-                return next;
+
+                return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
               });
             }}
           />
@@ -1098,7 +1123,7 @@ const MyConsultations = () => {
             disabled={departments.length === 0}
           />
           <div className="show-rejected-checkbox">
-            <Checkbox checked={showRejected} onChange={() => setShowRejected(!showRejected)}>
+            <Checkbox checked={showRejected} onChange={() => setShowRejected(prev => !prev)}>
               Show Rejected
             </Checkbox>
           </div>

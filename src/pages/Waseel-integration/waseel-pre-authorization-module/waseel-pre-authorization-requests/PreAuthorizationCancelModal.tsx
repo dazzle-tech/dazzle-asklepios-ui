@@ -1,16 +1,24 @@
-import React from 'react';
-import { Modal } from 'rsuite';
+import React, { useMemo } from 'react';
+import { Form } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
+import { useEnumOptions } from '@/services/enumsApi';
+
+type CancelReason =
+  | 'SERVICE_NOT_PERFORMED'
+  | 'WRONG_INFORMATION'
+  | 'TRANSACTION_ALREADY_SUBMITTED';
 
 type PreAuthorizationCancelModalProps = {
   open: boolean;
-  cancelReason: string;
+  cancelReason?: CancelReason | '';
   isSubmitting: boolean;
   onClose: () => void;
-  onCancelReasonChange: (value: string) => void;
-  onSubmit: () => void;
+  onCancelReasonChange: (value: CancelReason | '') => void;
+  onSubmit: () => void | Promise<void>;
 };
 
 const PreAuthorizationCancelModal: React.FC<PreAuthorizationCancelModalProps> = ({
@@ -20,37 +28,60 @@ const PreAuthorizationCancelModal: React.FC<PreAuthorizationCancelModalProps> = 
   onClose,
   onCancelReasonChange,
   onSubmit
-}) => (
-  <Modal open={open} onClose={onClose} size="xs">
-    <Modal.Header>
-      <Modal.Title>Cancel Pre-Authorization</Modal.Title>
-    </Modal.Header>
+}) => {
+  const cancelReasonList = useEnumOptions('CancelReason');
 
-    <Modal.Body>
-      <MyInput
-        fieldName="cancelReason"
-        fieldLabel="Cancel Reason"
-        fieldType="textarea"
-        record={{ cancelReason }}
-        setRecord={(value: { cancelReason: string }) => onCancelReasonChange(value.cancelReason)}
-        width="100%"
-      />
-    </Modal.Body>
+  const cancelObject = useMemo(
+    () => ({
+      cancelReason: cancelReason || ''
+    }),
+    [cancelReason]
+  );
 
-    <Modal.Footer>
-      <MyButton appearance="ghost" onClick={onClose}>
-        Close
-      </MyButton>
-      <MyButton
-        color="var(--deep-blue)"
-        loading={isSubmitting}
-        disabled={!cancelReason}
-        onClick={onSubmit}
-      >
-        Submit Cancel
-      </MyButton>
-    </Modal.Footer>
-  </Modal>
-);
+  const setCancelObject = (value: { cancelReason?: CancelReason | '' }) => {
+    onCancelReasonChange(value?.cancelReason ?? '');
+  };
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={(value: boolean) => {
+        if (!value) onClose();
+      }}
+      size="30vw"
+      bodyheight="35vh"
+      title="Confirm Cancel Pre-Authorization"
+      actionButtonLabel="Confirm"
+      actionButtonFunction={onSubmit}
+      actionButtonLoading={isSubmitting}
+      isDisabledActionBtn={!cancelObject.cancelReason || isSubmitting}
+      cancelButtonLabel="Close"
+      steps={[
+        {
+          title: 'Cancel Pre-Authorization',
+          icon: <FontAwesomeIcon icon={faBan} />
+        }
+      ]}
+      content={() => (
+        <Form fluid style={{ width: '100%' }}>
+          <MyInput
+            width="100%"
+            fieldLabel="Cancel Reason"
+            fieldName="cancelReason"
+            fieldType="select"
+            selectData={cancelReasonList ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={cancelObject}
+            setRecord={setCancelObject}
+            searchable={false}
+            menuMaxHeight={200}
+            required
+          />
+        </Form>
+      )}
+    />
+  );
+};
 
 export default PreAuthorizationCancelModal;

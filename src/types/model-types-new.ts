@@ -4866,21 +4866,26 @@ export interface PreAuthorizationTrackingResponse {
   lastModifiedBy?: string | null;
 }
 
-export type PreAuthorizationCommunicationRequest = {
-  approvalRequestId?: number;
-  approvalResponseId?: number;
-  preAuthRefNo?: string;
-  message: string;
-  note?: string;
-  communicationText?: string;
-};
+export interface PreAuthorizationCommunicationRequest {
+  claimResponseId?: number;
+  payloads?: {
+    attachmentName?: string;
+    attachmentType?: string;
+    claimItemId?: number;
+    createdDate?: string;
+    payloadAttachment?: string;
+    payloadValue?: string;
+  }[];
+}
+
+export type CancelReason =
+  | 'SERVICE_NOT_PERFORMED'
+  | 'WRONG_INFORMATION'
+  | 'TRANSACTION_ALREADY_SUBMITTED';
 
 export type PreAuthorizationCancelRequest = {
   approvalRequestId?: number;
-  approvalResponseId?: number;
-  preAuthRefNo?: string;
-  reason: string;
-  cancelReason?: string;
+  cancelReason?: CancelReason;
 };
 
 export interface PatientProblem {

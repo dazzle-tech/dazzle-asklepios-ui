@@ -3265,19 +3265,12 @@ export const newPreAuthorizationTrackingResponse: modelTypes.PreAuthorizationTra
 };
 
 export const newPreAuthorizationCommunicationRequest: modelTypes.PreAuthorizationCommunicationRequest = {
-  approvalRequestId: undefined,
-  approvalResponseId: undefined,
-  preAuthRefNo: undefined,
-  message: '',
-  note: undefined,
-  communicationText: undefined
+  claimResponseId: undefined,
+  payloads: []
 };
 
 export const newPreAuthorizationCancelRequest: modelTypes.PreAuthorizationCancelRequest = {
   approvalRequestId: undefined,
-  approvalResponseId: undefined,
-  preAuthRefNo: undefined,
-  reason: '',
   cancelReason: undefined
 };
 

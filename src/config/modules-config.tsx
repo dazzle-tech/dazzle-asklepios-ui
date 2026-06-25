@@ -240,6 +240,14 @@ export const MODULES: Module[] =
           viewOrder: 24,
           navPath: "nphies-payers"
         },
+        {
+          name: "Waseel SBS Setup",
+          code: "WASEEL_SBS_SETUP",
+          description: "Waseel SBS Setup",
+          icon: "FaBuilding",
+          viewOrder: 25,
+          navPath: "waseel-sbs-setup"
+        }
       ],
     },
 

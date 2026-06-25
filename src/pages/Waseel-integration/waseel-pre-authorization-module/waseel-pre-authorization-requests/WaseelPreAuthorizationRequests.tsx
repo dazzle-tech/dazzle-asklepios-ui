@@ -22,7 +22,8 @@ import PreAuthorizationCommunicationModal from './PreAuthorizationCommunicationM
 import { getPreAuthorizationColumns } from './preAuthorizationColumns';
 import { initialFilters, type Filters } from './types';
 import { filterPreAuthorizationRows } from './utils';
-
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 
 const WaseelPreAuthorizationRequests: React.FC = () => {
@@ -43,14 +44,15 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  const dispatch = useAppDispatch();
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   const { data, refetch } = useGetPreAuthorizationTrackingQuery({
     page,
     size: rowsPerPage,
-    sort: 'id,desc',
-    timestamp: Date.now()
+    sort: 'id,desc'
   });
 
   const [searchFromWaseel] = useLazySearchPreAuthorizationQuery();
@@ -58,10 +60,32 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
 
-  const tableData = useMemo(
-    () => filterPreAuthorizationRows(data?.data ?? [], appliedFilters),
-    [data?.data, appliedFilters]
-  );
+  const preAuthorizationRows: PreAuthorizationTrackingResponse[] = useMemo(() => {
+    const response: any = data;
+
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.content)) return response.content;
+    if (Array.isArray(response?.data?.content)) return response.data.content;
+    if (Array.isArray(response?.data)) return response.data;
+
+    return [];
+  }, [data]);
+
+  const totalCount = useMemo(() => {
+    const response: any = data;
+
+    return (
+      response?.totalElements ??
+      response?.data?.totalElements ??
+      response?.totalCount ??
+      response?.data?.totalCount ??
+      preAuthorizationRows.length
+    );
+  }, [data, preAuthorizationRows.length]);
+
+  const tableData = useMemo(() => {
+    return filterPreAuthorizationRows(preAuthorizationRows, appliedFilters);
+  }, [preAuthorizationRows, appliedFilters]);
 
   const handleSearch = () => {
     setAppliedFilters({ ...filters });
@@ -106,33 +130,63 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     setOpenCommunicationModal(true);
   }, []);
 
-  const submitCancel = async () => {
-    if (!selectedRow) return;
+const submitCancel = async () => {
+  if (!selectedRow) {
+    dispatch(notify({ msg: 'No pre-authorization selected', sev: 'error' }));
+    return;
+  }
 
+  if (!selectedRow.approvalRequestId) {
+    dispatch(notify({ msg: 'No approvalRequestId found for this pre-authorization', sev: 'error' }));
+    return;
+  }
+
+  if (!cancelReason) {
+    dispatch(notify({ msg: 'Please select cancel reason', sev: 'error' }));
+    return;
+  }
+
+  try {
     const body: PreAuthorizationCancelRequest = {
-      approvalRequestId: selectedRow.approvalRequestId ?? undefined,
-      approvalResponseId: selectedRow.approvalResponseId ?? undefined,
-      preAuthRefNo: selectedRow.preAuthRefNo ?? undefined,
-      reason: cancelReason,
-      cancelReason
+      approvalRequestId: Number(selectedRow.approvalRequestId),
+      cancelReason: cancelReason as PreAuthorizationCancelRequest['cancelReason']
     };
 
     await cancelPreAuthorization(body).unwrap();
+
+    dispatch(notify({ msg: 'Pre-authorization cancelled successfully', sev: 'success' }));
+
     setOpenCancelModal(false);
+    setCancelReason('');
     refetch();
-  };
+  } catch {
+    dispatch(notify({ msg: 'Failed to cancel pre-authorization', sev: 'error' }));
+  }
+};
 
   const submitCommunication = async () => {
     if (!selectedRow) return;
+    console.log('selectedRow:', selectedRow);
+    if (!selectedRow.approvalResponseId) {
+      alert('No approvalResponseId found for this pre-authorization.');
+      return;
+    }
 
-    const body: PreAuthorizationCommunicationRequest = {
-      approvalRequestId: selectedRow.approvalRequestId ?? undefined,
-      approvalResponseId: selectedRow.approvalResponseId ?? undefined,
-      preAuthRefNo: selectedRow.preAuthRefNo ?? undefined,
-      message: communicationMessage,
-      note: communicationMessage,
-      communicationText: communicationMessage
-    };
+    const body = {
+      claimResponseId: Number(selectedRow.approvalResponseId),
+      payloads: [
+        {
+          attachmentName: '',
+          attachmentType: '',
+          claimItemId: 1,
+          createdDate: '',
+          payloadAttachment: '',
+          payloadValue: communicationMessage
+        }
+      ]
+    } as unknown as PreAuthorizationCommunicationRequest;
+
+    console.log('submitCommunication body:', body);
 
     await communicatePreAuthorization(body).unwrap();
     setOpenCommunicationModal(false);
@@ -162,7 +216,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         onRowClick={openView}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={data?.totalCount ?? tableData.length}
+        totalCount={totalCount}
         onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
         onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           setRowsPerPage(parseInt(event.target.value, 10));
@@ -212,3 +266,4 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 };
 
 export default WaseelPreAuthorizationRequests;
+

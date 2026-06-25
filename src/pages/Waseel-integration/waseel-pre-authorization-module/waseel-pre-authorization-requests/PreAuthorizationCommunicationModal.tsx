@@ -1,8 +1,10 @@
 import React from 'react';
-import { Modal } from 'rsuite';
+import { Form } from 'rsuite';
 
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 
 type PreAuthorizationCommunicationModalProps = {
   open: boolean;
@@ -13,46 +15,53 @@ type PreAuthorizationCommunicationModalProps = {
   onSubmit: () => void;
 };
 
-const PreAuthorizationCommunicationModal: React.FC<PreAuthorizationCommunicationModalProps> = ({
+const PreAuthorizationCommunicationModal: React.FC<
+  PreAuthorizationCommunicationModalProps
+> = ({
   open,
   communicationMessage,
   isSubmitting,
   onClose,
   onMessageChange,
   onSubmit
-}) => (
-  <Modal open={open} onClose={onClose} size="sm">
-    <Modal.Header>
-      <Modal.Title>Pre-Authorization Communication</Modal.Title>
-    </Modal.Header>
+}) => {
+  const record = { communicationMessage };
 
-    <Modal.Body>
-      <MyInput
-        fieldName="communicationMessage"
-        fieldLabel="Message"
-        fieldType="textarea"
-        record={{ communicationMessage }}
-        setRecord={(value: { communicationMessage: string }) =>
-          onMessageChange(value.communicationMessage)
+  return (
+    <MyModal
+      open={open}
+      setOpen={onClose}
+      size="30vw"
+      bodyheight="55vh"
+      title="Pre-Authorization Communication"
+      actionButtonLabel="Send"
+      actionButtonFunction={onSubmit}
+      isDisabledActionBtn={!communicationMessage || isSubmitting}
+      cancelButtonLabel="Close"
+      steps={[
+        {
+          title: 'Communication',
+          icon: <FontAwesomeIcon icon={faCommentDots} />
         }
-        width="100%"
-      />
-    </Modal.Body>
-
-    <Modal.Footer>
-      <MyButton appearance="ghost" onClick={onClose}>
-        Close
-      </MyButton>
-      <MyButton
-        color="var(--deep-blue)"
-        loading={isSubmitting}
-        disabled={!communicationMessage}
-        onClick={onSubmit}
-      >
-        Send
-      </MyButton>
-    </Modal.Footer>
-  </Modal>
-);
+      ]}
+      content={() => (
+        <Form fluid style={{ width: '100%' }}>
+          <MyInput
+            width="100%"
+            fieldType="textarea"
+            fieldLabel="Message"
+            fieldName="communicationMessage"
+            height={120}
+            record={record}
+            setRecord={(value: { communicationMessage: string }) =>
+              onMessageChange(value.communicationMessage)
+            }
+            required
+          />
+        </Form>
+      )}
+    />
+  );
+};
 
 export default PreAuthorizationCommunicationModal;
