@@ -74,7 +74,8 @@ export const buildSearchParamsFromFilters = (
 ): NotificationSearchDTO => {
   const cleaned: NotificationSearchDTO = {};
 
-  if (obj.code.trim()) cleaned.code = obj.code.trim();
+  const code = typeof obj.code === 'string' ? obj.code.trim() : String(obj.code ?? '').trim();
+  if (code) cleaned.code = code;
   if (obj.status) cleaned.status = obj.status as NotificationSearchDTO['status'];
   if (obj.priority) cleaned.priority = obj.priority as NotificationSearchDTO['priority'];
   if (obj.language.trim()) cleaned.language = obj.language.trim();
