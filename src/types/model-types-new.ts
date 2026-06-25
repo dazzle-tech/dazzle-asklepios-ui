@@ -84,6 +84,10 @@ export interface Facility {
   ruleId?: number;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
+  defaultLabDepartmentName?: string | null;
+  defaultRadDepartmentName?: string | null;
 }
 
 export interface CreateFacility {
@@ -99,6 +103,8 @@ export interface CreateFacility {
   isActive?: boolean;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
 }
 
 export interface Role {

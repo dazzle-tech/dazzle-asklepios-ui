@@ -134,6 +134,7 @@ const DiagnosticsOrder = (props: any) => {
         previewDiagnosticsOrder={vm.previewDiagnosticsOrder}
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
         patient={vm.patient}
+        departments={vm.departments}
       />
 
       <DiagnosticsOrderModals
