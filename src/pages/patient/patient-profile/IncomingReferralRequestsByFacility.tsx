@@ -17,7 +17,7 @@ import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientSe
 
 import { useAppSelector } from '@/hooks';
 import { useDispatch } from 'react-redux';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
@@ -26,6 +26,10 @@ import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
+import ApproveRequestAgendaModal from '@/pages/appointments-new/scheduling-screen/components/ApproveRequestAgendaModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { AppointmentFromTemplate } from '@/types/model-types-new';
+import { useBookPatientAppointmentMutation } from '@/services/appointment/appointmentService';
 
 interface IncomingReferralRequestsByFacilityProps {
     open: boolean;
@@ -71,8 +75,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
     const [selectedReferral, setSelectedReferral] = useState<any>(null);
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentFromTemplate>(null);
 
     const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
+    const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
     const [facilityMap, setFacilityMap] = useState<Record<number, string>>({});
     const [departmentsMap, setDepartmentsMap] = useState<Record<number, string>>({});
@@ -80,6 +86,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
     const [acceptReferralRequest] = useAcceptReferralRequestMutation();
     const [rejectReferralRequest] = useRejectReferralRequestMutation();
+    const [bookPatientAppointment] = useBookPatientAppointmentMutation();
 
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectObject, setRejectObject] = useState<any>({
@@ -228,7 +235,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
         getBulkPatientBasicInfo(patientIdsForBulk as any)
             .unwrap()
-            .catch(() => {});
+            .catch(() => { });
     }, [open, patientIdsForBulk, getBulkPatientBasicInfo]);
 
     const patientMap = useMemo(() => {
@@ -291,6 +298,31 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         });
     }, [tableData, patientMap]);
 
+    const extractErrorMessage = (response: any): string => {
+    try {
+      const data = response?.data ?? response?.error?.data ?? null;
+      const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
+      const path = data?.path ?? data?.detail ?? data?.instance ?? '';
+      const rawMessage =
+        data?.message ??
+        data?.error ??
+        response?.error?.message ??
+        response?.message ??
+        response?.toString?.() ??
+        '';
+      const message =
+        typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
+
+      const parts = [message];
+      if (status) parts.push(`HTTP ${status}`);
+      if (path && typeof path === 'string') parts.push(path);
+
+      return parts.filter(Boolean).join(' | ');
+    } catch {
+      return '';
+    }
+  };
+
     const handleOpenQuickAppointment = (row: any) => {
         const patientId = row?.patient?.id;
         const fullPatient = patientId != null ? patientMap.get(String(patientId)) : null;
@@ -328,18 +360,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             setRejectModalOpen(false);
             setRejectObject({ cancelReason: '' });
             await refetch();
-        } catch {}
-    };
-
-    const handleEncounterSaved = async () => {
-        if (selectedReferral?.id) {
-            try {
-                await acceptReferralRequest({ id: selectedReferral.id }).unwrap();
-            } catch {}
-        }
-
-        await refetch();
-        setQuickAppointmentModel(false);
+        } catch { }
     };
 
     const handlePageChange = (_event: any, newPage: number) => {
@@ -351,6 +372,57 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
     };
 
+    const handleApproveAgendaSelectAppointment = (appointmentFromAgenda: any) => {
+    setSelectedAppointment(appointmentFromAgenda)
+    setAgendaSlotConfirmOpen(true);
+  };
+
+const handleBookAppointment = async () => {
+  try {
+    if (!selectedAppointment?.id || !selectedReferral?.patient?.id) {
+      dispatch(notify({ msg: 'Missing appointment or patient data', sev: 'warning' }));
+      return;
+    }
+
+    if (!selectedAppointment?.priority) {
+      dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
+      return;
+    }
+
+    // 1. Accept referral
+    await acceptReferralRequest({
+      id: selectedReferral.id,
+      appointmentId: selectedAppointment.id
+    }).unwrap();
+
+    // 2. Book appointment
+    await bookPatientAppointment({
+      id: selectedAppointment.id,
+      patientId: Number(selectedReferral.patient.id),
+      defaultService: null,
+      defaultPractitioner: selectedAppointment.defaultPractitionerId ?? null,
+      reason: "REFERRAL",
+      service: "REFERRAL",
+      note: null,
+      originType: null,
+      originName: null,
+      status: 'BOOKED',
+      priority: selectedAppointment.priority,
+      followUpEncounterId: null
+    }).unwrap();
+
+    dispatch(notify({
+      msg: 'Appointment booked successfully',
+      sev: 'success'
+    }));
+
+  } catch (error: any) {
+    dispatch(notify({
+      msg: extractErrorMessage(error) || 'Failed to load appointments',
+      sev: 'error'
+    }));
+  }
+};
     const tableColumns = [
         {
             key: 'referralType',
@@ -655,17 +727,23 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             />
 
             {quickAppointmentModel && selectedPatient && (
-                <PatientQuickAppointment
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
-                    localPatient={selectedPatient}
-                    localVisit={null}
-                    localReferral={selectedReferral}
-                    openedFromReferral={true}
-                    isDisabeld={false}
-                    initialStep={0}
-                    onEncounterSaved={handleEncounterSaved}
+                <>
+                <ApproveRequestAgendaModal
+                    open={quickAppointmentModel}
+                    setOpen={ setQuickAppointmentModel}
+                    request={{...selectedReferral, departmentId: selectedReferral?.toDepartmentId, facilityId: selectedReferral?.toFacilityId}}
+                    onSelectAppointment={handleApproveAgendaSelectAppointment}
                 />
+                <DeletionConfirmationModal
+                        open={agendaSlotConfirmOpen}
+                        setOpen={setAgendaSlotConfirmOpen}
+                        actionType="confirm"
+                        confirmationQuestion="Approve the request and book this time slot?"
+                        cancelButtonLabel="No"
+                        actionButtonLabel="Yes"
+                        actionButtonFunction={() => handleBookAppointment()}
+                      />
+                      </>
             )}
         </div>
     );

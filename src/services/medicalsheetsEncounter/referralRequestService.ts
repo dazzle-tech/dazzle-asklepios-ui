@@ -38,10 +38,10 @@ export const referralRequestService = createApi({
 
     acceptReferralRequest: builder.mutation<
       modelTypes.ReferralRequest,
-      { id: Id }
+      { id: Id, appointmentId: Id }
     >({
-      query: ({ id }) => ({
-        url: `/api/patient/referral-request/${id}/accept`,
+      query: ({ id, appointmentId}) => ({
+        url: `/api/patient/referral-request/${id}/accept/${appointmentId}`,
         method: 'PUT'
       }),
       invalidatesTags: (_res, _err, { id }) => [
