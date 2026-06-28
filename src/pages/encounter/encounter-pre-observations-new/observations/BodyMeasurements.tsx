@@ -14,8 +14,10 @@ import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import { Patient } from '@/types/model-types-new';
 
 type BodyMeasurementsProps = {
+  patient?: Patient;
   patientId: number;
   encounterId: number;
   encounter?: any;
@@ -25,6 +27,7 @@ type BodyMeasurementsProps = {
 };
 
 const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
+  patient,
   patientId,
   encounterId,
   encounter,
@@ -49,6 +52,28 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
   const [bodyMassIndex, setBodyMassIndex] = useState<string>('');
   const [bodySurfaceArea, setBodySurfaceArea] = useState<string>('');
+
+  const ageInMonths = useMemo(() => {
+    const dob =
+      patient?.dateOfBirth ||
+      (patient as any)?.birthDate ||
+      (patient as any)?.dob;
+
+    if (!dob) return null;
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    const months =
+      (today.getFullYear() - birthDate.getFullYear()) * 12 +
+      (today.getMonth() - birthDate.getMonth());
+
+    return months;
+  }, [patient]);
+
+  const showHeadCircumference =
+    ageInMonths !== null && ageInMonths < 24;
+
 
   useEffect(() => {
     if (!latestBodyMeasurementsByEncounterId) return;
@@ -283,24 +308,31 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
             </div>
           </div>
 
-          <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-            <div style={{ flex: 1 }}>
-              <MyInput
-                width="100%"
-                fieldLabel="Head circumference"
-                fieldName="headCircumference"
-                rightAddon="Cm"
-                rightAddonwidth={40}
-                fieldType="number"
-                record={bodyMeasurements}
-                setRecord={setBodyMeasurements}
-                disabled={disabled}
-              />
-            </div>
+            {showHeadCircumference && (
+              <div
+                className="rows-gap"
+                style={{ display: 'flex', gap: 12, marginTop: 10 }}
+              >
+                <div style={{ flex: 1 }}>
+                  <MyInput
+                    width="100%"
+                    fieldLabel="Head circumference"
+                    fieldName="headCircumference"
+                    rightAddon="Cm"
+                    rightAddonwidth={40}
+                    fieldType="number"
+                    record={bodyMeasurements}
+                    setRecord={setBodyMeasurements}
+                    disabled={disabled}
+                  />
+                </div>
+
+                <div style={{ flex: 1 }} />
+              </div>
+            )}
 
             <div style={{ flex: 1 }} />
           </div>
-        </div>
       }
     />
   );

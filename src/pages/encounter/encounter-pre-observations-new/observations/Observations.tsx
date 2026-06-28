@@ -87,8 +87,9 @@ console.log(localPatient);
                 <BodyMeasurements
                   width="100%"
                   disabled={isEncounterStatusClosed || readOnly}
-                  patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
-                  encounterId={Number((localEncounter as any)?.id)}
+                  patient={localPatient}
+                  patientId={Number(localPatient?.id)}
+                  encounterId={Number(localEncounter?.id)}
                   encounter={localEncounter}
                 />
               </Col>
