@@ -2123,6 +2123,7 @@ export interface PatientEncounter {
   status: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
+  historyOfPresentIllness?:string |null;
 
 }
 
@@ -2304,6 +2305,7 @@ export interface PatientEncounter {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  historyOfPresentIllness?: string|null;
 }
 
 
@@ -2584,6 +2586,7 @@ export interface PatientEncounter {
   hasOrder: boolean;
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
+    historyOfPresentIllness?: string|null;
 }
 
 export interface PatientPaymentServiceItemDTO {
