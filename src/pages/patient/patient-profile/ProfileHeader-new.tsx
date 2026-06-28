@@ -436,8 +436,11 @@ useEffect(() => {
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
-                      {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
+                      {localPatient.isCompletedPatient ? (
+                        <Icon color="green" as={VscVerified} />
+                      ) : (
+                        <Icon color="red" as={VscUnverified} />
+                      )}
                     </div>
                   </Whisper>
                 )}

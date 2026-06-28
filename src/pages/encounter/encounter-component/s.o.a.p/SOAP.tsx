@@ -159,52 +159,77 @@ const SOAP = props => {
           className={clsx('column-container', { 'disabled-panel': edit })}
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
-          <div className="top-section">
-            <div style={{ marginBottom: '16px' }}>
-              <SectionContainer
-                title={<Translate>Chief Complaint </Translate>}
-                content={
-                  <Form fluid>
-                    <MyInput
-                      width="100%"
-                      height="95px"
-                      showLabel={false}
-                      fieldType="textarea"
-                      fieldName="chiefComplaint"
-                      record={localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
+             <div className="top-section">
+                <div style={{ marginBottom: '16px' }}>
+                  <SectionContainer
+                    title={<Translate>Chief Complaint </Translate>}
+                    content={
+                      <Form fluid>
+                        <MyInput
+                          width="100%"
+                          height="95px"
+                          showLabel={false}
+                          fieldType="textarea"
+                          fieldName="chiefComplaint"
+                          record={localEncounter}
+                          setRecord={setLocalEncounter}
+                        />
 
-                    <MyInput
-                      width="100%"
-                      height="120px"
-                      fieldLabel="Physical Examination Summary"
-                      fieldType="textarea"
-                      fieldName="physicalExaminationSummery"
-                      record={{
-                        physicalExaminationSummery:
-                          localEncounter?.physicalExaminationSummery || ''
-                      }}
-                      setRecord={() => { }}
-                      disabled
-                    />
-                  </Form>
-                }
-                action={
-                  <MyButton size="small" onClick={saveChanges}>
-                    Save
-                  </MyButton>
-                }
-              />
-            </div>
-          </div>
-          <div style={{ marginBottom: '16px' }}>
-            <HistoryOfPresentIllnessSection
-              encounter={localEncounter}
-              setEncounter={setLocalEncounter}
-              disabled={edit}
-            />
-          </div>
+                        {/* <MyInput
+                          width="100%"
+                          height="120px"
+                          fieldLabel="Physical Examination Summary"
+                          fieldType="textarea"
+                          fieldName="physicalExaminationSummery"
+                          record={{
+                            physicalExaminationSummery:
+                              localEncounter?.physicalExaminationSummery || ''
+                          }}
+                          setRecord={() => { }}
+                          disabled
+                        /> */}
+                      </Form>
+                    }
+                    action={
+                      <MyButton size="small" onClick={saveChanges}>
+                        Save
+                      </MyButton>
+                    }
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <HistoryOfPresentIllnessSection
+                    encounter={localEncounter}
+                    setEncounter={setLocalEncounter}
+                    disabled={edit}
+                  />
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <SectionContainer
+                    title={<Translate>Physical Examination Summary </Translate>}
+                    content={
+                      <Form fluid>
+                        <MyInput
+                          width="100%"
+                          height="120px"
+                          fieldLabel="Physical Examination Summary"
+                          showLabel={false}
+                          fieldType="textarea"
+                          fieldName="physicalExaminationSummery"
+                          record={{
+                            physicalExaminationSummery:
+                              localEncounter?.physicalExaminationSummery || ''
+                          }}
+                          setRecord={() => { }}
+                          disabled
+                        />
+                      </Form>
+                    }
+                  />
+                </div>
+             </div>
+
           <div style={{ marginBottom: '16px' }}>
             <SectionContainer
               title={<Translate>Patient Diagnosis</Translate>}
