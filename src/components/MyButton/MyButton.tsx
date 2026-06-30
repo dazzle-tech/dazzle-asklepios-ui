@@ -20,9 +20,10 @@ type MyButtonProps = {
   radius?: string | number;
   disabled?: boolean;
   style?: React.CSSProperties;
+  className?: string;
 };
 
-const MyButton = ({
+const MyButton: React.FC<MyButtonProps> = ({
   prefixIcon: Prefix = null,
   postfixIcon: Postfix = null,
   children = null,

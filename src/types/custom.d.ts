@@ -9,6 +9,8 @@ declare const require: {
   };
 };
 
+declare module '*.less';
+
 // Extend Window to include Web Speech API types used in MyInput
 interface Window {
   SpeechRecognition?: any;
