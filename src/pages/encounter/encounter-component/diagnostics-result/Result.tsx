@@ -382,7 +382,7 @@ const allSelected =
       key: 'resultDate',
       title: <Translate>RESULT DATE</Translate>,
       render: (row: any) =>
-        row.reviewDate ? formatDateWithoutSeconds(row.reviewDate) : ' '
+        row.reviewDate ? formatDateWithoutSeconds(row.createdDate) : ' '
     },
     {
       key: 'testName',
