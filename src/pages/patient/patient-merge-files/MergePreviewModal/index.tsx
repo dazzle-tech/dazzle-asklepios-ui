@@ -137,7 +137,7 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
         });
     }, [decisions]);
 
-    const handleReviewSummary = () => {
+  const handleReviewSummary = () => {
     if (!allDecisionsComplete) {
         toaster.push(
             <Message showIcon type="warning">
@@ -153,7 +153,7 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
     setSummaryDecisions(apiDecisions as ConflictDecision[]);
     setSummaryReason(reason);
 
-    onReviewSummary(apiDecisions, reason, autoTransfers);
+    onReviewSummary(apiDecisions, reason, conflicts, autoTransfers);
 };
 
  const handleConfirmMerge = () => {

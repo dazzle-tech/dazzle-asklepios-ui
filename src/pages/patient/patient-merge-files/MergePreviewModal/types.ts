@@ -26,11 +26,12 @@ export interface MergePreviewModalProps {
     autoTransfers?: any[];
     fromPatientId?: number;
     toPatientId?: number;
-    onReviewSummary: (
-        decisions: any[],
-        reason: string,
-        autoTransfers: any[]
-    ) => void;
+ onReviewSummary: (
+    decisions: any[],
+    reason: string,
+    conflicts: any[],
+    autoTransfers: any[]
+) => void;
     onConfirmMerge: (
         decisions: any[],
         reason: string,
