@@ -17,6 +17,8 @@ import { notify } from '@/utils/uiReducerActions';
 import { PlusRound } from '@rsuite/icons';
 import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
+
+import clsx from 'clsx';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import UserDateCell from '@/components/UserDateCell';
@@ -182,6 +184,7 @@ const IDTab = ({ localPatient }) => {
           <FontAwesomeIcon
             icon={faFilePen}
             className="action-icon edit-icon"
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'} 
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -191,7 +194,11 @@ const IDTab = ({ localPatient }) => {
           />
           <FontAwesomeIcon
             icon={faTrash}
-            className="action-icon delete-icon"
+            className={clsx('action-icon delete-icon', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
+            style={{ cursor: rowData.isPrimary ? 'not-allowed' : 'pointer' }}
+            // "action-icon delete-icon"
+
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -235,8 +242,9 @@ const IDTab = ({ localPatient }) => {
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewDocSecondary}
-          disabled={!localPatient?.id}
+          disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
+
         >
           <Translate>New Document</Translate>
         </MyButton>

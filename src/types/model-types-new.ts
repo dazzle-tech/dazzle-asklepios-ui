@@ -1498,7 +1498,7 @@ export interface Patient {
   secondNameSecondaryLang?: string | null;
   thirdNameSecondaryLang?: string | null;
   lastNameSecondaryLang?: string | null;
-
+  
   primaryMobileNumber?: string | null;
   receiveSms?: boolean | null;
   secondMobileNumber?: string | null;
@@ -1537,6 +1537,10 @@ export interface Patient {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  patientStatus?: string | null;
+  mergedIntoPatientId?: number | null;
+  mergedAt?: Date | null;
+  mergedBy?: string | null;
 }
 
 export interface SimpleCountry {

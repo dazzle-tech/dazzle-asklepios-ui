@@ -253,7 +253,6 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         return (tableData as any[]).map(row => {
             const patientId = row?.patient?.id ?? null;
             const patientFromMap = patientId != null ? patientMap.get(String(patientId)) : null;
-
             const firstName = String(patientFromMap?.firstName ?? row?.patient?.firstName ?? '').trim();
             const secondName = String(
                 patientFromMap?.secondName ?? row?.patient?.secondName ?? ''
@@ -274,6 +273,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
             const isPrivate =
                 patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
+            const patientStatus = patientFromMap?.patientStatus ?? row?.patient?.patientStatus ?? null;
 
             return {
                 ...row,
@@ -284,7 +284,8 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                     medicalRecordNumber: mrn,
                     dateOfBirth: dob,
                     sexAtBirth,
-                    isPrivatePatient: isPrivate
+                    isPrivatePatient: isPrivate,
+                    patientStatus
                 },
                 patientAge: dob ? calculateAgeFormat(dob) : null
             };
@@ -506,7 +507,6 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             render: (row: any) => {
                 const statusUpper = String(row?.status ?? '').toUpperCase();
                 const isRequested = statusUpper === 'REQUESTED';
-
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper
@@ -518,7 +518,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                             <div>
                                 <MyButton
                                     size="small"
-                                    disabled={!isRequested}
+                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
                                     onClick={() => handleOpenQuickAppointment(row)}
                                 >
                                     <FontAwesomeIcon icon={faCircleCheck} />
@@ -536,7 +536,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                                 <MyButton
                                     size="small"
                                     backgroundColor="var(--primary-pink)"
-                                    disabled={!isRequested}
+                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
                                     onClick={() => handleOpenReject(row)}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -604,7 +604,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         <div dir={dir}>
             <Drawer open={open} onClose={() => setOpen(false)} size="full">
                 <Drawer.Header>
-                    <Drawer.Title>Referral Requests</Drawer.Title>
+                    <Drawer.Title>Referral Requests </Drawer.Title>
                 </Drawer.Header>
 
                 <Drawer.Body>

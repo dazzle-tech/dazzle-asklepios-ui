@@ -139,12 +139,11 @@ const BedAssignmentModal: React.FC<Props> = ({
       sort: 'id,asc'
     },
     {
-      skip: !open || !resolvedDepartmentId || !patientGender
+      skip: !open || !resolvedDepartmentId 
     }
   );
 
   const roomOptions = useMemo(() => roomsResponse?.data ?? [], [roomsResponse]);
-
   useEffect(() => {
     if (open) {
       setRecord({
@@ -231,11 +230,6 @@ const BedAssignmentModal: React.FC<Props> = ({
 
     if (!resolvedDepartmentId) {
       dispatch(notify({ msg: 'Department is required.', sev: 'error' }));
-      return;
-    }
-
-    if (!patientGender) {
-      dispatch(notify({ msg: 'Patient gender is required to load available rooms.', sev: 'error' }));
       return;
     }
 
