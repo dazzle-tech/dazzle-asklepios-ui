@@ -130,8 +130,8 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
 
   return (
     <div className="availability-template-modal">
-      <Row>
-        <Col md={12}>
+      <Row className="availability-template-top-row">
+        <Col md={12} className="availability-template-column--left">
           <SectionContainer
             title="Basic Information"
             content={
@@ -202,16 +202,13 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
                   <Col md={12}>
                     <MyInput fieldName="versionNo" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled />
                   </Col>
-                  <Col md={12}>
-                    <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} disabled />
-                  </Col>
                 </Row>
               </Form>
             }
           />
         </Col>
 
-        <Col md={12}>
+        <Col md={12} className="availability-template-column--right">
           <SectionContainer
             title="Department Details"
             content={
@@ -267,6 +264,15 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
                   )}
                 </Row>
                 <MyInput width="100%" fieldType="check" fieldName="requirePreAssessment" record={record} setRecord={setRecord} showLabel={false} disabled />
+              </Form>
+            }
+          />
+          <SectionContainer
+            title="Appointment Details"
+            content={
+              <Form fluid>
+                <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} disabled />
+                <MyInput width="100%" fieldType="check" fieldName="allowWalkInBooking" record={record} setRecord={setRecord} showLabel={false} disabled />
               </Form>
             }
           />

@@ -88,6 +88,7 @@ const getUserName = (login?: string | null) => {
       { key: 'requireBilling', title: 'REQUIRE BILLING', render: (row: any) => formatValue(row?.requireBilling) },
       { key: 'requirePreAssessment', title: 'REQUIRE PRE-ASSESSMENT',  render: (row: any) => formatValue(row?.requirePreAssessment) },
       { key: 'allowPatientPortalBooking', title: 'ALLOW PORTAL BOOKING', render: (row: any) => formatValue(row?.allowPatientPortalBooking) },
+      { key: 'allowWalkInBooking', title: 'ALLOW WALK-IN BOOKING', render: (row: any) => formatValue(row?.allowWalkInBooking) },
       { key: 'requireConfirmation', title: 'REQUIRE CONFIRMATION', render: (row: any) => formatValue(row?.requireConfirmation) },
       { key: 'financialDetails', title: 'FINANCIAL DETAILS', render: (row: any) => formatEnumString(row?.financialDetails) },
       {
