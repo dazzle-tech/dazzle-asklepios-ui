@@ -154,7 +154,6 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
             <MyInput
               width="100%"
               showLabel={false}
-              placeholder="Only you can see this Assessment"
               fieldType="textarea"
               fieldName="assessment"
               record={{ assessment: assessmentText }}

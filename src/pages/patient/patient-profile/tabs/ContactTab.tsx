@@ -6,6 +6,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import clsx from 'clsx';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 interface ContactTabProps {
   localPatient: Patient;
@@ -66,6 +67,11 @@ const ContactTab: React.FC<ContactTabProps> = ({
     return `${normalizedPrefix}${number}`;
   };
 
+
+
+  const { data: languages = [] } = useGetAllLanguagesQuery({});
+
+
   return (
     <Form layout="inline" fluid className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}> 
       <PhoneNumberInput
@@ -115,22 +121,24 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         width={170}
       />
+
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Native Language"
         fieldType="select"
         fieldName="nativeLanguage"
-        selectData={primaryLangLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={languages ?? []}
+        selectDataLabel="langName"
+        selectDataValue="langKey"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
-        disableByField='isValid'
-
+        disableByField="isValid"
       />
+
+
       <MyInput
         required
         vr={validationResult}

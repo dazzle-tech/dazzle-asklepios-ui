@@ -48,41 +48,55 @@ const EditModal: React.FC<EditModalProps> = ({
     }, [selectedAttachment, open]);
 
     // Handle Save Edit
-    const handleSaveEdit = async () => {
-        if (!selectedAttachment?.id) return;
+        const handleSaveEdit = async () => {
+            if (!selectedAttachment?.id) return;
 
-        try {
-            if (encounterId) {
-                // Update encounter attachment
-                await updateEncounterAttachment({
+            const payload = encounterId
+                ? {
                     id: selectedAttachment.id,
-                    encounterId: encounterId,
-                    type: editFormData.type || undefined,
-                    details: editFormData.details || undefined
-                }).unwrap();
-            } else if (patientId) {
-                // Update patient attachment
-                await updatePatientAttachment({
+                    encounterId,
+                    type: editFormData.type ?? '',
+                    details: editFormData.details ?? ''
+                }
+                : {
                     id: selectedAttachment.id,
-                    patientId: patientId,
-                    type: editFormData.type || undefined,
-                    details: editFormData.details || undefined
-                }).unwrap();
-            } else {
-                dispatch(notify({ msg: 'Patient ID or Encounter ID is required', sev: 'error' }));
-                return;
+                    patientId,
+                    type: editFormData.type ?? '',
+                    details: editFormData.details ?? ''
+                };
+
+                
+            try {
+                let response;
+
+                if (encounterId) {
+                    response = await updateEncounterAttachment(payload).unwrap();
+                } else if (patientId) {
+                    response = await updatePatientAttachment(payload).unwrap();
+                }
+
+                dispatch(
+                    notify({
+                        msg: 'Attachment Updated Successfully',
+                        sev: 'success'
+                    })
+                );
+
+                onUpdateSuccess();
+                handleClose();
+            } catch (error: any) {
+                console.error('UPDATE ERROR', error);
+
+                dispatch(
+                    notify({
+                        msg:
+                            error?.data?.message ||
+                            'Failed to Update Attachment',
+                        sev: 'error'
+                    })
+                );
             }
-
-            dispatch(notify({ msg: 'Attachment Updated Successfully', sev: 'success' }));
-            onUpdateSuccess();
-            handleClose();
-        } catch (error: any) {
-            dispatch(notify({ 
-                msg: error?.data?.message || 'Failed to Update Attachment', 
-                sev: 'error' 
-            }));
-        }
-    };
+        };
 
     // Handle Close
     const handleClose = () => {

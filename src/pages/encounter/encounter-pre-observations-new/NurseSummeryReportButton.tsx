@@ -20,50 +20,49 @@ const NurseSummeryReportButton = ({ encounterId }: { encounterId: number }) => {
         { label: 'English', value: 'en' },
         { label: 'Arabic', value: 'ar' }
     ];
-    const handleGenerateReport = async () => {
-   
-     if (!encounterId) {
-       dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-       return;
-     }
-   
-     try {
-        setLoading(true)
-       const blob = await triggerNurseSummaryReportPdf({ encounterId,
-        lang:selectedLang.lang
-        }).unwrap();
-   
-       const pdfBlob = new Blob([blob], {
-         type: 'application/pdf',
-       });
-   
-       const fileURL = window.URL.createObjectURL(pdfBlob);
-   
-       const win = window.open(fileURL, '_blank');
-   
-       if (win) {
-         win.focus();
-       } else {
-         dispatch(
-           notify({
-             msg: 'Popup blocked. Please allow popups for this site.',
-             sev: 'warning',
-           })
+const handleGenerateReport = async () => {
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
 
-         );
-         setLoading(false)
-       }
-   
-       // لا تعمل revokeObjectURL هون
-     } catch (error: any) {
-       dispatch(
-         notify({
-           msg: error?.data?.message || 'Error while generating report',
-           sev: 'error',
-         })
-       );
-     }
-   };
+  try {
+    setLoading(true);
+
+    const blob = await triggerNurseSummaryReportPdf({
+      encounterId,
+      lang: selectedLang.lang,
+    }).unwrap();
+
+    const pdfBlob = new Blob([blob], {
+      type: 'application/pdf',
+    });
+
+    const fileURL = window.URL.createObjectURL(pdfBlob);
+    const win = window.open(fileURL, '_blank');
+
+    if (win) {
+      win.focus();
+      setOpenLangModal(false);
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
+    }
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while generating report',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setLoading(false);
+  }
+};
     return (
         <>
 

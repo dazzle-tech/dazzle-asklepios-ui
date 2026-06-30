@@ -84,6 +84,10 @@ export interface Facility {
   ruleId?: number;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
+  defaultLabDepartmentName?: string | null;
+  defaultRadDepartmentName?: string | null;
 }
 
 export interface CreateFacility {
@@ -99,6 +103,8 @@ export interface CreateFacility {
   isActive?: boolean;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
 }
 
 export interface Role {
@@ -541,7 +547,7 @@ export interface AppointmentRequestResponseVM {
   patientId?: number | null;
   patientName?: string | null;
   patientMrn?: string | null;
-  
+
   facilityId?: number | null;
   facilityName?: string | null;
 
@@ -641,7 +647,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  nationalNumber?:string | null;
+  nationalNumber?: string | null;
 }
 
 /* =========================
@@ -815,7 +821,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
-  modality:string
+  modality: string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -938,7 +944,7 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  isLookAlikeSoundAlike?: boolean ;
+  isLookAlikeSoundAlike?: boolean;
   highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
@@ -2121,6 +2127,7 @@ export interface PatientEncounter {
   status: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
+  historyOfPresentIllness?:string |null;
 
 }
 
@@ -2302,6 +2309,7 @@ export interface PatientEncounter {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  historyOfPresentIllness?: string|null;
 }
 
 
@@ -2582,6 +2590,7 @@ export interface PatientEncounter {
   hasOrder: boolean;
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
+    historyOfPresentIllness?: string|null;
 }
 
 export interface PatientPaymentServiceItemDTO {
@@ -2950,7 +2959,7 @@ export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
   medicationsId: number;
-  activeIngredientId: number ;
+  activeIngredientId: number;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -3648,9 +3657,9 @@ export type PatientServiceAndProduct = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
-  SourceId?: number | null; 
+  SourceId?: number | null;
 };
- 
+
 export enum ServiceSource {
   LABORATORY = 'LABORATORY',
   RADIOLOGY = 'RADIOLOGY',
@@ -4426,8 +4435,8 @@ export type AppointmentPolicyAssignmentResponseVM = {
   appointment: AppointmentFromTemplate;
   isApplied?: boolean;
   isRequired?: boolean;
-  policyName?:string;
-  policyCode?:string;
+  policyName?: string;
+  policyCode?: string;
 };
 
 export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
@@ -4572,13 +4581,13 @@ export interface PatientUccMedicationOrder {
 
   isHighAlert?: boolean | null;
 
-  status?: 
-    | 'WAITING_DOUBLE_CHECK'
-    | 'ADMINISTERED'
-    | 'CANCELLED'
-    | 'DISCARDED'
-    | 'NEW'
-    | 'SUBMITTED';
+  status?:
+  | 'WAITING_DOUBLE_CHECK'
+  | 'ADMINISTERED'
+  | 'CANCELLED'
+  | 'DISCARDED'
+  | 'NEW'
+  | 'SUBMITTED';
 
   submittedDate?: string | Date | null;
   submittedBy?: string | null;
@@ -4694,4 +4703,206 @@ export interface PatientProblem {
   createdDate?: string | Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | Date | null;
+}
+
+export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
+
+export type NotificationModule = string;
+
+export type NotificationCategory = string;
+
+export type NotificationPriority = string;
+
+export type RecipientRule =
+  | 'PATIENT_EMAIL'
+  | 'PATIENT_PHONE'
+  | 'PRACTITIONER_EMAIL'
+  | 'PRACTITIONER_PHONE'
+  | 'DATA'
+  | 'STATIC'
+  | 'PRACTITIONER_USER'
+  | 'DEPARTMENT_USERS';
+
+export interface NotificationHeaderResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderCreateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderUpdateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderSearchDTO {
+  code?: string | null;
+  name?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+}
+
+export interface NotificationTemplateResponseVM {
+  id?: number;
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateCreateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateUpdateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+}
+
+export type NotificationChannel = NotificationTemplateChannel;
+
+export type NotificationStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface NotificationResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  notificationHeaderId?: number | null;
+  notificationTemplateId?: number | null;
+  code?: string | null;
+  channel?: NotificationChannel | null;
+  language?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toEmails?: string[] | null;
+  ccEmails?: string[] | null;
+  bccEmails?: string[] | null;
+  toPhone?: string | null;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  dataJson?: Record<string, unknown> | null;
+  recipientJson?: Record<string, unknown> | null;
+  resolvedRecipientsJson?: Record<string, unknown> | null;
+  channelPayload?: Record<string, unknown> | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  providerResponse?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  retryCount?: number | null;
+  maxRetryCount?: number | null;
+  nextRetryDate?: string | Date | null;
+  sentDate?: string | Date | null;
+  deliveredDate?: string | Date | null;
+  readDate?: string | Date | null;
+  failedDate?: string | Date | null;
+}
+
+export interface NotificationSearchDTO {
+  code?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  language?: string | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toPhone?: string | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  dateFrom?: string | Date | null;
+  dateTo?: string | Date | null;
+}
+
+export type NotificationEventType =
+  | 'CREATED'
+  | 'PROCESSING'
+  | 'SENT_TO_PROVIDER'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'RETRY'
+  | 'CANCELLED'
+  | 'WEBHOOK_STATUS_UPDATE';
+
+export interface NotificationEventResponseVM {
+  id?: number;
+  notificationId?: number | null;
+  eventType?: NotificationEventType | null;
+  oldStatus?: NotificationStatus | null;
+  newStatus?: NotificationStatus | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  message?: string | null;
+  errorMessage?: string | null;
+  eventPayload?: Record<string, unknown> | null;
+  createdDate?: string | Date | null;
 }

@@ -666,7 +666,17 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
         setOpen(false);
       })
       .catch(e => {
-        dispatch(notify({ msg: extractErrorMessage(e) || 'Save Failed', sev: 'warning' }));
+        const message =
+          e?.status === 404
+            ? 'Published Template Resource cannot be edited'
+            : extractErrorMessage(e);
+
+        dispatch(
+          notify({
+            msg: message || 'Save Failed',
+            sev: 'warning',
+          })
+        );
       });
   };
 

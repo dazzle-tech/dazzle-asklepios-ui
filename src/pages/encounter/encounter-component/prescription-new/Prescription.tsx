@@ -646,31 +646,7 @@ const Prescription = (props: Props) => {
 
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
   const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
-  const handlePrintPrescriptionPdf = async (rowData: any) => {
-    try {
-      const blob = await triggerGetPrescriptionPdf({
-        prescriptionId: rowData.id,
-      }).unwrap();
 
-      const pdfBlob = new Blob([blob], {
-        type: 'application/pdf',
-      });
-
-      const fileURL = window.URL.createObjectURL(pdfBlob);
-
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      } else {
-        console.error('Popup blocked. Please allow popups for this site.');
-      }
-
-      // لا تعمل revokeObjectURL هون
-    } catch (error) {
-      console.error('Failed to open prescription pdf', error);
-    }
-  };
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
 
@@ -896,20 +872,31 @@ const Prescription = (props: Props) => {
       title: 'Actions',
       flexGrow: 1.5,
       render: (rowData: any) => {
+        const isSubmitted =
+          String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+
         return (
           <div className="flex-c8">
             {!edit && (
               <MdModeEdit
-                title="Edit"
+                title={isSubmitted ? 'Prescription is submitted' : 'Edit'}
                 size={20}
-                className={'font-aws'}
+                className="font-aws"
+                style={{
+                  opacity: isSubmitted ? 0.5 : 1,
+                  cursor: isSubmitted ? 'not-allowed' : 'pointer'
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+
+                  if (isSubmitted) return;
+
                   setPatientPrescriptionMedicationObject({
                     ...rowData,
                     key: rowData.key ?? rowData.id,
                     id: rowData.id ?? rowData.key
                   });
+
                   setOpenDetailsModal(true);
                   setOpenToAdd(false);
                 }}
@@ -1040,7 +1027,11 @@ const Prescription = (props: Props) => {
           }
           setOpenCancellation(true);
         }}
-        disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
+        disabled={
+          (!selectedRows.length && !patientPrescriptionMedicationObject?.id) ||
+          edit ||
+          String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
+        }
       >
         Cancel
       </MyButton>
@@ -1176,7 +1167,10 @@ const Prescription = (props: Props) => {
         }
       />
 
-      <AllergyFloatingButton patient={patient} />
+      <AllergyFloatingButton
+          patient={patient}
+          encounter={encounter}
+      />
     </div>
   );
 };

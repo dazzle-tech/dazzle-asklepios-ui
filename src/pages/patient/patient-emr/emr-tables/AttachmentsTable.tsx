@@ -28,6 +28,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 import { initialListRequest } from "@/types/types";
 import { PreviewModal } from "@/components/AttachmentModals";
+import UserDateCell from "@/components/UserDateCell";
 
 const AttachmentsTable = ({ localPatient }) => {
   const dispatch = useAppDispatch();
@@ -314,14 +315,11 @@ const hasPatient = Number.isFinite(patientId);
       title: <Translate>Created By / At</Translate>,
       flexGrow: 3,
       render: row =>
-        row?.createdDate ? (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.createdDate)}
-            </span>
-          </>
+        row?.createdBy || row?.createdDate ? (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         ) : (
           "-"
         )

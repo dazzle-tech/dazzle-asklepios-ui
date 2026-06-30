@@ -26,6 +26,8 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import PatientSearch from '@/components/PatientSearch';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -68,6 +70,11 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+  const [departmentFilter, setDepartmentFilter] = useState<any>({
+  fromDepartmentIdIn: null
+});
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
@@ -129,6 +136,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     };
   }, [dispatch]);
 
+  const { data: departmentsList = [] } =
+    useGetAllDepartmentsWithoutPaginationQuery();
+
   const { data: testsResponse, refetch: fetchAllTests } = useFilterDiagnosticOrderTestsQuery({
     page: 0,
     size: 1000,
@@ -136,6 +146,8 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
     createdDateTo: endOfDay(dateFilter.toDate).toISOString()
   });
+
+
 
   const stepsData = [
     { key: DiagnosticOrderTestStatus.PATIENT_ARRIVED, value: 'Patient Arrived' },
@@ -287,6 +299,29 @@ const filters = (
                     setRecord={setDateFilter}
                     showLabel={false}
                   />
+
+                  <PatientSearch
+                    value={selectedPatient}
+                    onChange={setSelectedPatient}
+                    showLabel={false}
+                    width="22vw"
+                    containerMinWidth={250}
+                  />
+
+                  <MyInput
+                    width="12vw"
+                    placeholder="Department Name"
+                    fieldType="select"
+                    fieldName="fromDepartmentIdIn"
+                    record={departmentFilter}
+                    setRecord={setDepartmentFilter}
+                    selectData={departmentsList}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    showLabel={false}
+                    cleanable
+                  />
+
                   <MyInput
                     width="8vw"
                     placeholder="Order ID"
@@ -351,15 +386,17 @@ const filters = (
         <div className="container">
 
           <div className="left-boxs">
-                <Orders
-                  ref={OrdersRef}
-                  order={order}
-                  setOrder={setOrder}
-                  dateFilter={dateFilter}
-                  loading={globalLoading}
-                  orderNumberFilter={orderNumberFilter}
-                  filters={filters}
-                />
+            <Orders
+              ref={OrdersRef}
+              order={order}
+              setOrder={setOrder}
+              dateFilter={dateFilter}
+              loading={globalLoading}
+              orderNumberFilter={orderNumberFilter}
+              selectedPatient={selectedPatient}
+              departmentFilter={departmentFilter}
+              filters={filters}
+            />
 
 
 

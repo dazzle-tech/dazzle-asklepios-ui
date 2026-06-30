@@ -78,6 +78,8 @@ export const newFacility: modelTypes.Facility = {
   ruleId: null,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -94,6 +96,8 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   isActive: true,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Role -------------------
@@ -3123,4 +3127,129 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
+};
+
+export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderCreateDTO: modelTypes.NotificationHeaderCreateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderUpdateDTO: modelTypes.NotificationHeaderUpdateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateCreateDTO: modelTypes.NotificationTemplateCreateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateUpdateDTO: modelTypes.NotificationTemplateUpdateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+};
+
+export const newNotificationResponseVM: modelTypes.NotificationResponseVM = {
+  facilityId: null,
+  notificationHeaderId: null,
+  notificationTemplateId: null,
+  code: '',
+  channel: 'EMAIL',
+  language: '',
+  status: 'PENDING',
+  priority: null,
+  recipientType: '',
+  recipientId: null,
+  recipientName: '',
+  recipientEmail: '',
+  recipientPhone: '',
+  toEmails: [],
+  ccEmails: [],
+  bccEmails: [],
+  toPhone: '',
+  subject: '',
+  title: '',
+  body: '',
+  relatedEntityType: '',
+  relatedEntityId: null,
+  providerName: '',
+  providerMessageId: '',
+  providerStatus: '',
+  errorMessage: '',
+  retryCount: 0,
+  maxRetryCount: 3,
+};
+
+export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
+  code: '',
+  status: null,
+  priority: null,
+  language: '',
+  recipientType: '',
+  recipientId: null,
+  recipientName: '',
+  recipientEmail: '',
+  recipientPhone: '',
+  toPhone: '',
+  providerName: '',
+  providerMessageId: '',
+  providerStatus: '',
+  relatedEntityType: '',
+  relatedEntityId: null,
+  dateFrom: null,
+  dateTo: null,
 };

@@ -1,66 +1,53 @@
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
+import { faBolt, faFileLines, faMoneyBillWave, faPaperPlane, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
-import { Modal } from 'rsuite';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Badge, Form, Modal, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import 'react-tabs/style/react-tabs.css';
-import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
-import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
-import {
-  useCancelEncounterMutation,
-  useFilterEncountersQuery,
-  useUpdateEncounterMutation
-} from '@/services/encounters/patientEncounterService';
-import { useLocation } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { faBarcode } from '@fortawesome/free-solid-svg-icons';
-import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
-import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { useEnumOptions } from '@/services/enumsApi';
-import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
-import { useNavigate } from 'react-router-dom';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import SendToModal from './component/SendToModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { notify } from '@/utils/uiReducerActions';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import PatientSearch from '@/components/PatientSearch';
-import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
+import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
-import '../styles.less';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import PatientPaymentInfo, {
   PatientPaymentInfoHandle
 } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
-import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import {
   useCreateOrGetEmergencyTriageMutation,
   useGetLatestEmergencyTriageByEncounterQuery
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
+  useCancelEncounterMutation,
+  useFilterEncountersQuery,
+  useUpdateEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+import { useEnumOptions } from '@/services/enumsApi';
+import {
   useGetBulkPatientBasicInfoMutation,
-  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
-import MyModal from '@/components/MyModal/MyModal';
-import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-import { printPatientWristband } from '@/utils/printPatientWristband';
-import { useAppSelector } from '@/hooks';
-import { is } from 'date-fns/locale';
+import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import { faBarcode, faCircleExclamation, faCirclePlay, faCommentMedical, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
+import 'react-tabs/style/react-tabs.css';
+import PatientWritBandPrintLabelButton from '../../urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
+import '../styles.less';
+import SendToModal from './component/SendToModal';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -117,8 +104,7 @@ const ERTriage = () => {
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
-  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
-  
+
 
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
@@ -242,30 +228,7 @@ const ERTriage = () => {
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
-  const handlePrintWristband = async (rowData: any) => {
-  try {
-    const blob = await triggerGetPatientWristbandPdf({
-      patientId: rowData.patientId,
-    }).unwrap();
 
-    const pdfBlob = new Blob([blob], {
-      type: 'application/pdf',
-    });
-
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      console.error('Popup blocked. Please allow popups for this site.');
-    }
-
-  } catch (error) {
-    console.error('Failed to open wristband pdf', error);
-  }
-};
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -1253,17 +1216,9 @@ const ERTriage = () => {
               speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipPrint}
             >
               <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    handlePrintWristband(rowData);
-                  }}
-                  disabled={true}
-                  // disabled={isPendingPayment || isReceptionist}
-                >
-                  <FontAwesomeIcon icon={faBarcode} />
-                </MyButton>
+
+                <PatientWritBandPrintLabelButton patientId={encounter.patientId} disabled={isPendingPayment || isReceptionist} />
+
               </div>
             </Whisper>
 

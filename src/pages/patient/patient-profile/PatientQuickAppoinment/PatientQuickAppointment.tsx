@@ -487,7 +487,7 @@ const PatientQuickAppointment = ({
     <MyModal
       open={quickAppointmentModel}
       setOpen={setQuickAppointmentModel}
-      title="Quick Appointment"
+      title="Walk-in Patient"
       steps={[
         {
           title: 'Encounter',

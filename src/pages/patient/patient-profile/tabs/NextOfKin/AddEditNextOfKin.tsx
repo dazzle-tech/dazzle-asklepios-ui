@@ -58,28 +58,6 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
     return `${normalizedPrefix}${number}`;
   };
 
-  const getDigits = value => String(value ?? '').replace(/\D/g, '');
-  const validateNumberLengths = nok => {
-    const maxDigits = 10;
-    const fields = [
-      { key: 'mobileNumber', label: 'Mobile Number', required: true },
-      { key: 'telephone', label: 'Telephone' },
-      { key: 'internationalNumber', label: 'International Number' },
-      { key: 'landlineNumber', label: 'Landline Number' }
-    ];
-
-    const errors = [];
-    fields.forEach(f => {
-      const raw = nok?.[f.key];
-      const digits = getDigits(raw);
-      if (!digits && !f.required) return;
-      if (digits.length > maxDigits) {
-        errors.push(`${f.label} must be at most ${maxDigits} digits`);
-      }
-    });
-
-    return errors;
-  };
   const formatApiValidationError = err => {
     const data = err?.data ?? err;
     const fieldErrors = data?.fieldErrors ?? [];
@@ -99,16 +77,19 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       message: lines.length ? lines.join('\n') : (data?.detail ?? 'Save failed')
     };
   };
-   const toUpdateDto = nok => ({
-          name: nok?.name ?? '',
-          relationship: nok?.relationship ?? null,
-          address: nok?.address ?? '',
-          email: nok?.email ?? '',
-          mobileNumber: nok?.mobileNumber ?? '',
-          telephone: nok?.telephone ?? null,
-          internationalNumber: nok?.internationalNumber ?? null,
-          landlineNumber: nok?.landlineNumber ?? null,
-        });
+
+  const toUpdateDto = nok => ({
+    name: nok?.name ?? '',
+    relationship: nok?.relationship ?? null,
+    address: nok?.address ?? '',
+    email: nok?.email ?? '',
+    mobileNumber: nok?.mobileNumber ?? '',
+    telephone: nok?.telephone ?? null,
+    internationalNumber: nok?.internationalNumber ?? null,
+    landlineNumber: nok?.landlineNumber ?? null,
+  });
+
+
   const handleSave = async () => {
     if (!patientId) {
       dispatch(notify({ msg: 'Missing patientId', sev: 'error' }));
@@ -134,20 +115,8 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       return;
     }
 
-    const numberErrors = validateNumberLengths(nextOfKin);
-    if (numberErrors.length) {
-      dispatch(
-        notify({
-          msg: numberErrors.join('\n'),
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-
     try {
       if (nextOfKin?.id) {
-       
         await updateNextOfKin({
           id: nextOfKin.id,
           data: { ...toUpdateDto(nextOfKin) }
@@ -225,10 +194,10 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
   );
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal

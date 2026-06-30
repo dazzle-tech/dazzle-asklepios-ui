@@ -7,6 +7,8 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
@@ -71,6 +73,58 @@ const AddEditFacility = ({
       }));
     };
   const timeZone = useEnumOptions('TimeZone');
+
+  const facilityId = facility?.id;
+
+  const { data: labDepartmentsResponse } = useGetDepartmentByTypeAndFacilityAndActiveQuery(
+    facilityId
+      ? { type: 'LABORATORY', facilityId, page: 0, size: 200 }
+      : skipToken
+  );
+
+  const { data: radDepartmentsResponse } = useGetDepartmentByTypeAndFacilityAndActiveQuery(
+    facilityId
+      ? { type: 'RADIOLOGY', facilityId, page: 0, size: 200 }
+      : skipToken
+  );
+
+  const labDepartmentOptions = useMemo(() => {
+    const options = [...(labDepartmentsResponse?.data ?? [])];
+    const selectedId = facility?.defaultLabDepartmentId;
+    if (
+      selectedId != null &&
+      !options.some(department => Number(department.id) === Number(selectedId))
+    ) {
+      options.unshift({
+        id: selectedId,
+        name: facility?.defaultLabDepartmentName || `Department #${selectedId}`,
+      });
+    }
+    return options;
+  }, [
+    labDepartmentsResponse?.data,
+    facility?.defaultLabDepartmentId,
+    facility?.defaultLabDepartmentName,
+  ]);
+
+  const radDepartmentOptions = useMemo(() => {
+    const options = [...(radDepartmentsResponse?.data ?? [])];
+    const selectedId = facility?.defaultRadDepartmentId;
+    if (
+      selectedId != null &&
+      !options.some(department => Number(department.id) === Number(selectedId))
+    ) {
+      options.unshift({
+        id: selectedId,
+        name: facility?.defaultRadDepartmentName || `Department #${selectedId}`,
+      });
+    }
+    return options;
+  }, [
+    radDepartmentsResponse?.data,
+    facility?.defaultRadDepartmentId,
+    facility?.defaultRadDepartmentName,
+  ]);
 
   // modal content
   const conjureFormContent = stepNumber => {
@@ -151,6 +205,38 @@ const AddEditFacility = ({
               setRecord={setFacility}
               width={"100%"}
             />
+            </Row>
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  fieldLabel="Default Lab Department"
+                  fieldType="select"
+                  fieldName="defaultLabDepartmentId"
+                  selectData={labDepartmentOptions}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={facility}
+                  setRecord={setFacility}
+                  width="100%"
+                  disabled={!facilityId}
+                  searchable
+                />
+              </Col>
+              <Col md={12}>
+                <MyInput
+                  fieldLabel="Default Radiology Department"
+                  fieldType="select"
+                  fieldName="defaultRadDepartmentId"
+                  selectData={radDepartmentOptions}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={facility}
+                  setRecord={setFacility}
+                  width="100%"
+                  disabled={!facilityId}
+                  searchable
+                />
+              </Col>
             </Row>
              <Row>
             <MyInput

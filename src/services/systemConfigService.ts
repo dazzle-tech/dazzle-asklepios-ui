@@ -149,5 +149,6 @@ export const {
   useUploadFaviconMutation,
   useUploadLoginBackgroundMutation,
   useUploadSidebarLogoMutation,
-  useUploadSidebarLogoDarkMutation
+  useUploadSidebarLogoDarkMutation,
+  useLazyGetSystemConfigQuery
 } = systemConfigService;

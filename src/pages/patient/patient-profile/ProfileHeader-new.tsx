@@ -11,7 +11,7 @@ import {
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -39,6 +39,7 @@ import usePatientInformationReportPrint from './PatientInformationReportDropdown
 import ScanDocumentModal from './ScanDocumentModal';
 import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
 import { FaCodeMerge } from 'react-icons/fa6';
+import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -82,6 +83,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+
+  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+
   const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
 const {
@@ -190,7 +194,12 @@ const {  patientLabelMenuItem,
           </div>
         </Dropdown.Item> */}
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenPriceListModal(true);
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
             <Translate>View Price List</Translate>
@@ -276,8 +285,13 @@ const {  patientLabelMenuItem,
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
-        console.error('Failed to upload profile picture:', error);
-        dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+        const errorMsg = extractErrorMessage(error);
+        dispatch(
+          notify({
+            msg: errorMsg || 'Failed to Upload Profile Picture',
+            sev: 'error'
+          })
+        );
       }
     }
   };
@@ -540,8 +554,9 @@ const {  patientLabelMenuItem,
                 <Translate>Quick Patient</Translate>
               </MyButton>
 
+
               <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
-                <Translate>Quick Appointment</Translate>
+                <Translate>Walk-in Patient</Translate>
               </MyButton>
               <AdministrativeWarningsModal
                 localPatient={localPatient}
@@ -592,6 +607,12 @@ const {  patientLabelMenuItem,
         open={quickPatientModalOpen}
         setOpen={setQuickPatientModalOpen}
         setPatient={setLocalPatient}
+      />
+
+      <ViewPriceListModal
+        open={openPriceListModal}
+        setOpen={setOpenPriceListModal}
+        patient={localPatient}
       />
 
       <ScanDocumentModal

@@ -19,6 +19,7 @@ import {
   faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
+import MedicalSheetsNavigation from './MedicalSheetsNavigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
@@ -56,7 +57,7 @@ const Encounter = ({
 }: EncounterModalProps = {}) => {
   const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [action, setAction] = useState(() => () => {});
+  const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -65,7 +66,7 @@ const Encounter = ({
   const propsData = inModal
     ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
     : (location.state || {});
-    
+
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
   const encounterId = propsData?.encounter?.id;
@@ -151,7 +152,7 @@ const Encounter = ({
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -196,7 +197,6 @@ const Encounter = ({
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
@@ -212,6 +212,7 @@ useEffect(() => {
 useEffect(() => {
   setEdit(patientToSend?.patientStatus === 'MERGED');
 }, [patientToSend]);
+
 
   useEffect(() => {
     if (
@@ -302,7 +303,7 @@ useEffect(() => {
     if (!aiHasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
       );
 
       if (movedDistance > 5) setAiHasMoved(true);
@@ -485,15 +486,7 @@ useEffect(() => {
                     record={searchTerm}
                     setRecord={setSearchTerm}
                     showLabel={false}
-                    enterClick={() => setIsDrawerOpen(true)}
-                    rightAddon={
-                      <FaSearch
-                        className="icons-style-2"
-                        onClick={() => {
-                          setIsDrawerOpen(true);
-                        }}
-                      />
-                    }
+                    rightAddon={<FaSearch className="icons-style-2" />}
                   />
                 </Form>
               </div>
@@ -616,91 +609,48 @@ useEffect(() => {
             </div>
 
             <Divider />
+<div className="medical-sheets-tabs">
+  <MyButton
+    className={`medical-sheet-tab ${location.pathname === '/encounter' ? 'active' : ''}`}
+    onClick={() => {
+      if (onSheetNavigate) {
+        onSheetNavigate('');
+      } else {
+        navigate('/encounter', { state: sharedNavigationState });
+      }
+    }}
+  >
+    <FontAwesomeIcon icon={faClockRotateLeft} />
+    <Translate>Dashboard</Translate>
+  </MyButton>
 
-            <Drawer
-              open={isDrawerOpen}
-              onClose={() => setIsDrawerOpen(false)}
-              placement="left"
-              style={{ zIndex: 999999999999 }}
-              className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
-            >
-              <Drawer.Header className="header-drawer">
-                <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
-              </Drawer.Header>
+  {visibleSheets.map(({ code, name, icon, path }) => {
+    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
+    const isActive = location.pathname === fullPath;
 
-              <Drawer.Body className="drawer-body">
-                <Form fluid>
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
-                        width="100%"
-                        placeholder="Search screens..."
-                        fieldName={'term'}
-                        record={searchTerm}
-                        setRecord={setSearchTerm}
-                        showLabel={false}
-                        rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                      />
-                    </Col>
-                  </Row>
-                </Form>
-
-                <List hover className="drawer-list-style">
-                  <List.Item
-                    className="drawer-item return-button"
-                    onClick={() => {
-                      if (onSheetNavigate) {
-                        onSheetNavigate('');
-                      } else {
-                        const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                        navigate(basePath, { state: sharedNavigationState });
-                      }
-                      setIsDrawerOpen(false);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                    <Translate>Dashboard</Translate>
-                  </List.Item>
-
-                  {visibleSheets.map(({ code, name, icon, path }) => {
-                    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
-
-                    return (
-                      <List.Item
-                        key={code}
-                        className="drawer-item"
-                        onClick={() => {
-                          setIsDrawerOpen(false);
-                          if (onSheetNavigate) {
-                            const relativePath = path.startsWith('/') ? path.slice(1) : path;
-                            onSheetNavigate(relativePath);
-                          } else {
-                            navigate(fullPath, { state: sharedNavigationState });
-                          }
-                        }}
-                      >
-                        {onSheetNavigate ? (
-                          <span className="inherit-link">
-                            {icon}
-                            <span className="margin-left-10">
-                              <Translate>{name}</Translate>
-                            </span>
-                          </span>
-                        ) : (
-                          <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
-                            {icon}
-                            <span className="margin-left-10">
-                              <Translate>{name}</Translate>
-                            </span>
-                          </Link>
-                        )}
-                      </List.Item>
-                    );
-                  })}
-                </List>
-              </Drawer.Body>
-            </Drawer>
-
+    return (
+      <MyButton
+        key={code}
+        className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
+        onClick={() => {
+          if (onSheetNavigate) {
+            const relativePath = path.startsWith('/') ? path.slice(1) : path;
+            onSheetNavigate(relativePath);
+          } else {
+            navigate(fullPath, { state: sharedNavigationState });
+          }
+        }}
+       
+      >
+        {icon}
+        <span>
+          <Translate>{name}</Translate>
+        </span>
+      </MyButton>
+    );
+  })}
+</div>
+           
             <div className="content-with-sticky">
               <div className="main-content-area">
                 {outletContent !== undefined ? outletContent : (
@@ -770,7 +720,7 @@ useEffect(() => {
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={() => {}}
+        onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />
