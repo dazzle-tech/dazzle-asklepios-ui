@@ -3,6 +3,7 @@ import { BaseQuery } from '@/newApi';
 import type {
   AppointmentWaitingListBookDTO,
   AppointmentWaitingListCreateDTO,
+  AppointmentWaitingListRemoveDTO,
   AppointmentWaitingListVM,
   WaitingListAvailableSlotsByBookingModeVM,
 } from '@/types/model-types-new';
@@ -86,6 +87,21 @@ export const appointmentWaitingListService = createApi({
         'AppointmentWaitingList',
       ],
     }),
+
+    removeAppointmentWaitingList: builder.mutation<
+      AppointmentWaitingListVM,
+      { id: Id; body: AppointmentWaitingListRemoveDTO }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/patient/waiting-list/${id}/remove`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'AppointmentWaitingList', id },
+        'AppointmentWaitingList',
+      ],
+    }),
   }),
 });
 
@@ -96,4 +112,5 @@ export const {
   useGetAppointmentWaitingListAvailableSlotsQuery,
   useLazyGetAppointmentWaitingListAvailableSlotsQuery,
   useBookAppointmentWaitingListMutation,
+  useRemoveAppointmentWaitingListMutation,
 } = appointmentWaitingListService;

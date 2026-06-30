@@ -8,6 +8,7 @@ import {
   useBookAppointmentWaitingListMutation,
   useGetAppointmentWaitingListQuery,
   useLazyGetAppointmentWaitingListAvailableSlotsQuery,
+  useRemoveAppointmentWaitingListMutation,
 } from '@/services/appointment/appointmentWaitingList/appointmentWaitingListService';
 import { useGetServicesBulkByIdsQuery } from '@/services/setup/serviceService';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
@@ -20,12 +21,11 @@ import type {
   WaitingListAvailableSlotVM,
   WaitingListAvailableSlotsByBookingModeVM,
 } from '@/types/model-types-new';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyInput from '@/components/MyInput/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import Translate from '@/components/Translate';
 import MyModal from '@/components/MyModal/MyModal';
+import Translate from '@/components/Translate';
 import AddToWaitingListModal from './AddToWaitingListModal';
 import WaitingListSlotsModal from './WaitingListSlotsModal';
 
@@ -183,6 +183,7 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
     Record<number, WaitingListAvailableSlotsByBookingModeVM>
   >({});
   const [removeTarget, setRemoveTarget] = useState<AppointmentWaitingListVM | null>(null);
+  const [removeReason, setRemoveReason] = useState({ reason: '' });
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [fullViewOpen, setFullViewOpen] = useState(false);
   const [filterDepartmentId, setFilterDepartmentId] = useState<number | null>(
@@ -331,6 +332,7 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
 
   const [fetchSlots, { isFetching: isFetchingSlots }] = useLazyGetAppointmentWaitingListAvailableSlotsQuery();
   const [bookWaitingList, { isLoading: isBooking }] = useBookAppointmentWaitingListMutation();
+  const [removeWaitingList, { isLoading: isRemoving }] = useRemoveAppointmentWaitingListMutation();
 
   const priorityLabelByValue = useMemo(() => {
     const m = new Map<string, string>();
@@ -513,14 +515,47 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
     await handleBookSlots(entry, [firstSlot]);
   };
 
-  const handleRemoveConfirm = () => {
+  const handleRemoveConfirm = async () => {
+    const reason = String(removeReason.reason ?? '').trim();
+    if (!reason) {
+      dispatch(notify({ msg: 'Please enter a reason for removal.', sev: 'warning' }));
+      return;
+    }
+
+    const entryId = Number(removeTarget?.id);
+    if (!Number.isFinite(entryId) || entryId <= 0) {
+      dispatch(notify({ msg: 'Invalid waiting list entry.', sev: 'warning' }));
+      return;
+    }
+
+    dispatch(showSystemLoader());
+    try {
+      await removeWaitingList({ id: entryId, body: { reason } }).unwrap();
+      dispatch(notify({ msg: 'Patient removed from waiting list.', sev: 'success' }));
+      setRemoveTarget(null);
+      setRemoveReason({ reason: '' });
+      setSlotsByEntryId(prev => {
+        const next = { ...prev };
+        delete next[entryId];
+        return next;
+      });
+      await refetch();
+      await onBooked?.();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to remove from waiting list',
+          sev: 'error',
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleCloseRemoveModal = () => {
     setRemoveTarget(null);
-    dispatch(
-      notify({
-        msg: 'Remove from waiting list is not available yet.',
-        sev: 'info',
-      })
-    );
+    setRemoveReason({ reason: '' });
   };
 
   const handleOpenFullViewForEntry = (entry: AppointmentWaitingListVM) => {
@@ -828,14 +863,38 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
         }}
       />
 
-      <DeletionConfirmationModal
+      <MyModal
         open={Boolean(removeTarget)}
         setOpen={open => {
-          if (!open) setRemoveTarget(null);
+          if (!open) handleCloseRemoveModal();
         }}
-        actionType="delete"
-        confirmationQuestion={`Remove ${removeTarget?.patientName ?? 'this patient'} from the waiting list?`}
-        actionButtonFunction={handleRemoveConfirm}
+        title="Remove from Waiting List"
+        size="32vw"
+        actionButtonLabel="Remove"
+        cancelButtonLabel="Cancel"
+        actionButtonFunction={() => void handleRemoveConfirm()}
+        handleCancelFunction={handleCloseRemoveModal}
+        isDisabledActionBtn={isRemoving}
+        actionButtonLoading={isRemoving}
+        content={
+          <Form fluid>
+            <p className="waiting-list-panel__empty" style={{ marginBottom: 12 }}>
+              <Translate>
+                Remove {removeTarget?.patientName ?? 'this patient'} from the waiting list?
+              </Translate>
+            </p>
+            <MyInput
+              fieldType="textarea"
+              fieldName="reason"
+              fieldLabel="Reason"
+              record={removeReason}
+              setRecord={setRemoveReason}
+              width="100%"
+              rows={3}
+              required
+            />
+          </Form>
+        }
       />
     </>
   );

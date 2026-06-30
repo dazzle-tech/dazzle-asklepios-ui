@@ -660,6 +660,10 @@ export interface AppointmentWaitingListBookDTO {
   notes?: string | null;
 }
 
+export interface AppointmentWaitingListRemoveDTO {
+  reason: string;
+}
+
 export type WaitingListBookingMode = string;
 
 export interface WaitingListAvailableSlotVM {
