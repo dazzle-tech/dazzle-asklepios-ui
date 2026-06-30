@@ -361,8 +361,8 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
   // ─── Form ─────────────────────────────────────────────────────────────────────
   const formContent = () => (
     <div className="availability-template-modal">
-      <Row>
-        <Col md={12}>
+      <Row className="availability-template-top-row">
+        <Col md={12} className="availability-template-column--left">
           <SectionContainer
             title="Basic Information"
             content={
@@ -441,16 +441,13 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
                   <Col md={12}>
                     <MyInput fieldName="versionNo" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled showZero/>
                   </Col>
-                  <Col md={12}>
-                    <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} />
-                  </Col>
                 </Row>
               </Form>
             }
           />
         </Col>
 
-        <Col md={12}>
+        <Col md={12} className="availability-template-column--right">
           <SectionContainer
             title="Department Details"
             content={
@@ -504,6 +501,15 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
                   )}
                 </Row>
                 <MyInput width="100%" fieldType="check" fieldName="requirePreAssessment" record={record} setRecord={setRecord} showLabel={false} />
+              </Form>
+            }
+          />
+          <SectionContainer
+            title="Appointment Details"
+            content={
+              <Form fluid>
+                <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} />
+                <MyInput width="100%" fieldType="check" fieldName="allowWalkInBooking" record={record} setRecord={setRecord} showLabel={false} />
               </Form>
             }
           />

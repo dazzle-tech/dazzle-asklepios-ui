@@ -4,6 +4,7 @@ import { Calendar as BigCalendar, Views } from 'react-big-calendar';
 import { Button, ButtonGroup, Calendar as RsCalendar, Panel, Text } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import TodayAppointmentsList from './TodayAppointmentsList';
+import WaitingListPanel from './WaitingListPanel';
 
 type Props = {
   calendarKey: string;
@@ -36,6 +37,10 @@ type Props = {
   todayTimelineRows: any[];
   handleViewAppointment: (appointmentData?: any) => void;
   dispatch: any;
+  facilityId?: number | string | null;
+  waitingListDepartmentId?: number | null;
+  departmentOptions?: any[];
+  onWaitingListBooked?: () => void | Promise<void>;
 };
 
 const ScheduleContentGrid = ({
@@ -68,7 +73,11 @@ const ScheduleContentGrid = ({
   rightPanelAppointmentRows,
   todayTimelineRows,
   handleViewAppointment,
-  dispatch
+  dispatch,
+  facilityId,
+  waitingListDepartmentId,
+  departmentOptions,
+  onWaitingListBooked
 }: Props) => {
   const calendarEvents = React.useMemo(() => {
     return finalAppointments ?? [];
@@ -358,6 +367,13 @@ const ScheduleContentGrid = ({
           rightPanelAppointmentRows={rightPanelAppointmentRows}
           todayTimelineRows={todayTimelineRows}
           onViewAppointment={handleViewAppointment}
+        />
+
+        <WaitingListPanel
+          facilityId={facilityId}
+          departmentId={waitingListDepartmentId}
+          departmentOptions={departmentOptions}
+          onBooked={onWaitingListBooked}
         />
       </div>
     </div>
