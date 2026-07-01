@@ -29,6 +29,7 @@ import AddEditUser from './AddEditUser';
 import AccessRole from './tabs/AccessRole';
 import LicensesTab from './tabs/LicensesTab';
 import DepartmentsTab from './tabs/DepartmentsTab';
+import BookableDepartmentsTab from './tabs/BookableDepartmentsTab';
 import ResetPasswordTab from './tabs/ResetPasswordTab';
 
 import './styles.less';
@@ -465,6 +466,11 @@ const Users = () => {
     {
       title: 'Departments',
       content: <DepartmentsTab user={user} width={width} />,
+      disabled: !user?.id,
+    },
+    {
+      title: 'Bookable Departments',
+      content: <BookableDepartmentsTab user={user} width={width} />,
       disabled: !user?.id,
     },
   ];

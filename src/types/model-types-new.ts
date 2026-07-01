@@ -69,6 +69,31 @@ export interface Department {
   requirePreAssessment: boolean,
   workingDays?: OrganizationWorkingDay[];
 }
+
+export interface DepartmentResponseVM {
+  id: number;
+  facilityId: number | null;
+  name: string;
+  departmentType?: string | null;
+  appointable?: boolean | null;
+  departmentCode?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  encounterType?: string | null;
+  isActive?: boolean | null;
+  hasMedicalSheets?: boolean | null;
+  hasNurseMedicalSheets?: boolean | null;
+  parallelCapacityEnabled?: boolean | null;
+  parallelCapacityValue?: number | null;
+  defaultDurationMinutes?: number | null;
+  defaultBufferBeforeMinutes?: number | null;
+  defaultBufferAfterMinutes?: number | null;
+  requirePractitioner?: boolean | null;
+  requireBilling?: boolean | null;
+  requirePreAssessment?: boolean | null;
+  workingDays?: OrganizationWorkingDay[] | null;
+}
+
 export interface Facility {
   id?: string;
   name?: string;
@@ -126,7 +151,41 @@ export interface UserDepartment {
   departmentId: number;
   isActive?: boolean;
   isDefault?: boolean;
-  appointmentBookingAllowed?: boolean;
+  departmentName?: string | null;
+  facilityName?: string | null;
+}
+
+export interface UserDepartmentResponseVM {
+  id: number | null;
+  userId: number | null;
+  facilityId: number | null;
+  facilityName: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  isActive?: boolean | null;
+  isDefault?: boolean | null;
+}
+
+export interface UserBookableDepartment {
+  id?: number;
+  userId: number;
+  departmentId: number;
+  facilityId?: number;
+  isActive?: boolean;
+}
+
+export interface UserBookableDepartmentCreateVM {
+  userId: number;
+  departmentId: number;
+}
+
+export interface UserBookableDepartmentResponseVM {
+  id: number | null;
+  userId: number | null;
+  facilityId: number | null;
+  facilityName: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
 }
 
 /* =========================
