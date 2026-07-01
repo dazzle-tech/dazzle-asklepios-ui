@@ -91,7 +91,18 @@ const PatientMergeFiles: React.FC = () => {
       }));
     }
   };
+  const getApiErrorMessage = (err: any, fallback: string) => {
+    const data = err?.data;
 
+    return (
+      data?.message ||
+      data?.properties?.message ||
+      data?.detail ||
+      data?.title ||
+      data?.error ||
+      fallback
+    );
+  };
   // Handle confirm merge
   const handleConfirmMerge = async (decisions: any[], reason: string) => {
     try {
@@ -115,76 +126,80 @@ const PatientMergeFiles: React.FC = () => {
       setSummaryData(null);
       setRefetchData(!refetchData); // Trigger patient list refresh
       handleClear();
-    } catch (err: any) {
-      const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to execute merge';
+    }  catch (err: any) {
+      const errorMsg = getApiErrorMessage(
+        err,
+        'Failed to execute merge'
+      );
+
       dispatch(notify({
         msg: errorMsg,
         sev: 'error'
       }));
     }
+};
+
+// Handle undo merge
+const handleUndo = async (mergeLogId: number) => {
+  try {
+    await undoMerge({ mergeLogId }).unwrap();
+
+    dispatch(notify({
+      msg: 'Merge successfully undone',
+      sev: 'success'
+    }));
+
+    setUndoConfirm({ show: false });
+    await refetchTransactions();
+    setRefetchData(!refetchData);
+  } catch (err: any) {
+    const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to undo merge';
+    dispatch(notify({
+      msg: errorMsg,
+      sev: 'error'
+    }));
+  }
+};
+
+const handleTabChange = (eventKey: string | number) => {
+  setActiveTab(String(eventKey));
+};
+
+const handleClear = () => {
+  setToPatient({ ...newPatient });
+  setFromPatient({ ...newPatient });
+};
+
+useEffect(() => {
+  const divContent = (
+    "Files Merge"
+  );
+
+  dispatch(setPageCode('Files_Merge'));
+  dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
   };
+}, [dispatch, pathname]);
 
-  // Handle undo merge
-  const handleUndo = async (mergeLogId: number) => {
-    try {
-      await undoMerge({ mergeLogId }).unwrap();
+// Update autoTransfers from preview data
+useEffect(() => {
+  if (mergePreview?.autoTransfers) {
+    setAutoTransfers(mergePreview.autoTransfers);
+  }
+}, [mergePreview]);
 
-      dispatch(notify({
-        msg: 'Merge successfully undone',
-        sev: 'success'
-      }));
+// Direction handling for RTL/LTR
+const direction = localStorage.getItem('direction') || 'LTR';
+const isRTL = direction === 'RTL';
 
-      setUndoConfirm({ show: false });
-      await refetchTransactions();
-      setRefetchData(!refetchData);
-    } catch (err: any) {
-      const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to undo merge';
-      dispatch(notify({
-        msg: errorMsg,
-        sev: 'error'
-      }));
-    }
-  };
-
-  const handleTabChange = (eventKey: string | number) => {
-    setActiveTab(String(eventKey));
-  };
-
-  const handleClear = () => {
-    setToPatient({ ...newPatient });
-    setFromPatient({ ...newPatient });
-  };
-
-  useEffect(() => {
-    const divContent = (
-      "Files Merge"
-    );
-
-    dispatch(setPageCode('Files_Merge'));
-    dispatch(setDivContent(divContent));
-
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
-    };
-  }, [dispatch, pathname]);
-
-  // Update autoTransfers from preview data
-  useEffect(() => {
-    if (mergePreview?.autoTransfers) {
-      setAutoTransfers(mergePreview.autoTransfers);
-    }
-  }, [mergePreview]);
-
-  // Direction handling for RTL/LTR
-  const direction = localStorage.getItem('direction') || 'LTR';
-  const isRTL = direction === 'RTL';
-
-  const dir = isRTL ? 'rtl' : 'ltr';
+const dir = isRTL ? 'rtl' : 'ltr';
 
 return (
   <div dir={dir} className="patient-merge-files-page">
-   
+
 
     <MyTab
       activeTab={

@@ -145,7 +145,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                                     setStatusFilter(statusFilter === 'UNDO' ? 'ALL' : 'UNDO')
                                 }
                             >
-                                <Translate>Undone</Translate>
+                                <Translate>Undo</Translate>
                                 {/* <div className="count">{undoneCount}</div> */}
                             </div>
 
