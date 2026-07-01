@@ -103,7 +103,6 @@ const PatientMergeFiles: React.FC = () => {
       };
 
       const result = await executeMerge(executeRequest).unwrap();
-      console.log("RESULT", result)
       dispatch(notify({
         msg: `Merge completed successfully. Log Number : ${result.transactionNumber || 'N/A'}`,
         sev: 'success'
