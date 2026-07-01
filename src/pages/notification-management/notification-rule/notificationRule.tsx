@@ -8,7 +8,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useGetAllNotificationHeadersQuery,
-  useSearchNotificationHeadersQuery,
+  useLazySearchNotificationHeadersQuery,
   useToggleNotificationHeaderActiveMutation,
 } from '@/services/notification-management/notificationHeaderService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -22,7 +22,7 @@ import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { Box } from '@mui/material';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { Form, Panel, Whisper, Tooltip } from 'rsuite';
@@ -59,20 +59,51 @@ const NotificationRule = () => {
   });
 
   const [searchParams, setSearchParams] = useState<NotificationHeaderSearchDTO | null>(null);
+  const [isCodeOnlySearch, setIsCodeOnlySearch] = useState(false);
 
   const { data, isFetching, refetch } = useGetAllNotificationHeadersQuery();
-  const { data: filteredData, isFetching: isSearchFetching } = useSearchNotificationHeadersQuery(
-    searchParams ?? {},
-    { skip: !searchParams }
-  );
+  const [searchNotificationHeaders, { data: filteredData, isFetching: isSearchFetching }] =
+    useLazySearchNotificationHeadersQuery();
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const [toggleActive] = useToggleNotificationHeaderActiveMutation();
 
   const moduleOptions = useEnumOptions('NotificationModule');
   const categoryOptions = useEnumOptions('NotificationCategory');
   const priorityOptions = useEnumOptions('NotificationPriority');
+  const codeOptions = useEnumOptions('NotificationCode');
 
-  const tableData = isFiltered ? filteredData ?? [] : data ?? [];
+  const buildSearchParams = (
+    filters: typeof filtersState
+  ): NotificationHeaderSearchDTO | null => {
+    const params: NotificationHeaderSearchDTO = {};
+
+    const code =
+      typeof filters.code === 'string' ? filters.code.trim() : String(filters.code ?? '').trim();
+    if (code) params.code = code;
+
+    const name = filters.name?.trim();
+    if (name) params.name = name;
+
+    if (filters.module) params.module = filters.module as NotificationHeaderSearchDTO['module'];
+    if (filters.category) {
+      params.category = filters.category as NotificationHeaderSearchDTO['category'];
+    }
+    if (filters.priority) {
+      params.priority = filters.priority as NotificationHeaderSearchDTO['priority'];
+    }
+
+    return Object.keys(params).length ? params : null;
+  };
+
+  const tableData = useMemo(() => {
+    if (!isFiltered) return data ?? [];
+
+    if (isCodeOnlySearch && searchParams?.code) {
+      return (data ?? []).filter(row => String(row.code) === String(searchParams.code));
+    }
+
+    return filteredData ?? [];
+  }, [isFiltered, isCodeOnlySearch, searchParams?.code, filteredData, data]);
 
   useEffect(() => {
     dispatch(setPageCode('Notification_Rule'));
@@ -91,16 +122,26 @@ const NotificationRule = () => {
     return '';
   };
 
-  const cleanParams = (obj: Record<string, string>) => {
-    return Object.fromEntries(
-      Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined)
-    );
-  };
-
   const handleSearch = () => {
-    const cleaned = cleanParams(filtersState) as NotificationHeaderSearchDTO;
-    setSearchParams(cleaned);
+    const params = buildSearchParams(filtersState);
+    if (!params) {
+      dispatch(
+        notify({
+          msg: 'Select at least one filter criteria',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+
+    const codeOnly = Boolean(params.code && Object.keys(params).length === 1);
+    setIsCodeOnlySearch(codeOnly);
+    setSearchParams(params);
     setIsFiltered(true);
+
+    if (!codeOnly) {
+      searchNotificationHeaders(params);
+    }
   };
 
   const handleReset = () => {
@@ -112,6 +153,7 @@ const NotificationRule = () => {
       priority: '',
     });
     setSearchParams(null);
+    setIsCodeOnlySearch(false);
     setIsFiltered(false);
   };
 
@@ -188,7 +230,13 @@ const NotificationRule = () => {
   );
 
   const columns = [
-    { key: 'code', title: 'Code' },
+    {
+      key: 'code',
+      title: 'Code',
+      render: (rowData: NotificationHeaderResponseVM) => (
+        <span>{rowData.code ? formatEnumString(rowData.code) : '-'}</span>
+      ),
+    },
     { key: 'name', title: 'Name' },
     {
       key: 'module',
@@ -254,8 +302,11 @@ const NotificationRule = () => {
     <Form layout="inline" fluid className="container-of-filters-notification-rule">
       <MyInput
         fieldName="code"
-        fieldType="text"
+        fieldType="select"
         placeholder="Code"
+        selectData={codeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={filtersState}
         setRecord={setFiltersState}
         column
