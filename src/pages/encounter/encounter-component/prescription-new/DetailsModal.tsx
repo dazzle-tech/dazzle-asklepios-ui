@@ -866,7 +866,7 @@ const DetailsModal = ({
       dispatch(
         notify({
           msg: 'This active ingredient is high alert',
-          sev: 'error'
+          sev: 'warning'
         })
       );
     }
