@@ -66,6 +66,7 @@ import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
+import { userBookableDepartmentService } from './services/security/userBookableDepartments';
 
 import { MedicalsheetsService } from './services/MedicalSheetsService';
 
@@ -358,6 +359,7 @@ export const store = configureStore({
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
+    [userBookableDepartmentService.reducerPath]: userBookableDepartmentService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
 
     // medical sheets
@@ -636,6 +638,7 @@ export const store = configureStore({
         userRoleService.middleware,
         enumService.middleware,
         userDepartmentService.middleware,
+        userBookableDepartmentService.middleware,
         MedicalsheetsService.middleware,
         vitalSignsService.middleware,
         serviceService.middleware,
