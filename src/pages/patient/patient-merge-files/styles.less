@@ -1054,3 +1054,111 @@
   border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
   color: #ffffff !important;
 }
+.merge-transactions-filters {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+.merge-transactions-filters {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.merge-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+  user-select: none;
+
+  .count {
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+.merge-filter-merged {
+  background: #e8f5e9;
+  color: #2e7d32;
+
+  .count {
+    background: rgba(46, 125, 50, .15);
+  }
+
+  &:hover,
+  &.active {
+    background: #2e7d32;
+    color: #fff;
+
+    .count {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+  }
+}
+.merge-filter-undone {
+  background: #fff3e0;
+  color: #ef6c00;
+
+  .count {
+    background: rgba(239, 108, 0, .15);
+  }
+
+  &:hover,
+  &.active {
+    background: #ef6c00;
+    color: #fff;
+
+    .count {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+  }
+}
+.dark .merge-filter-merged,
+.rs-theme-dark .merge-filter-merged {
+  background: rgba(69, 184, 135, 0.18);
+  border: 1px solid rgba(69, 184, 135, 0.45);
+  color: #86efac;
+
+  .count {
+    background: rgba(69, 184, 135, 0.28);
+    color: #86efac;
+  }
+
+  &:hover,
+  &.active {
+    background: rgba(69, 184, 135, 0.28);
+    border-color: #45b887;
+  }
+}
+
+.dark .merge-filter-undone,
+.rs-theme-dark .merge-filter-undone {
+  background: rgba(242, 154, 77, 0.18);
+  border: 1px solid rgba(242, 154, 77, 0.45);
+  color: #fdba74;
+
+  .count {
+    background: rgba(242, 154, 77, 0.28);
+    color: #fdba74;
+  }
+
+  &:hover,
+  &.active {
+    background: rgba(242, 154, 77, 0.28);
+    border-color: #f29a4d;
+  }
+}

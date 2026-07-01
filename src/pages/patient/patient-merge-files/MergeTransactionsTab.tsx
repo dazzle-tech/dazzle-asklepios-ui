@@ -32,6 +32,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
     undoLoading
 }) => {
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'MERGED' | 'UNDO'>('ALL');
     const [changesModalOpen, setChangesModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
@@ -43,20 +44,28 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
     const filteredTransactions = useMemo(() => {
         const searchValue = search.trim().toLowerCase();
 
-        if (!searchValue) {
-            return transactions;
-        }
-
         return transactions.filter((transaction: any) => {
-            return (
+            const matchesSearch =
+                !searchValue ||
                 transaction.fromPatientName?.toLowerCase().includes(searchValue) ||
                 transaction.toPatientName?.toLowerCase().includes(searchValue) ||
                 transaction.fromPatientMrn?.toLowerCase().includes(searchValue) ||
                 transaction.toPatientMrn?.toLowerCase().includes(searchValue) ||
-                transaction.transactionNumber.toLowerCase().includes(searchValue)
-            );
+                transaction.transactionNumber?.toLowerCase().includes(searchValue);
+
+            let matchesStatus = true;
+
+            if (statusFilter === 'MERGED') {
+                matchesStatus = transaction.mergeStatus === 'MERGED';
+            }
+
+            if (statusFilter === 'UNDO') {
+                matchesStatus = transaction.mergeStatus === 'UNDO';
+            }
+
+            return matchesSearch && matchesStatus;
         });
-    }, [transactions, search]);
+    }, [transactions, search, statusFilter]);
 
     const mode = useSelector((state: any) => state.ui.mode);
 
@@ -75,7 +84,7 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
         setSelectedTransaction(null);
     };
 
-  
+
 
     return (
         <>
@@ -116,7 +125,31 @@ const MergeTransactionsTab: React.FC<MergeTransactionsTabProps> = ({
                                 />
                             </Form>
                         </div>
+                        <div className="merge-transactions-filters">
 
+                            <div
+                                className={`merge-filter-badge merge-filter-merged ${statusFilter === 'MERGED' ? 'active' : ''
+                                    }`}
+                                onClick={() =>
+                                    setStatusFilter(statusFilter === 'MERGED' ? 'ALL' : 'MERGED')
+                                }
+                            >
+                                <Translate>Merged</Translate>
+                                {/* <div className="count">{mergedCount}</div> */}
+                            </div>
+
+                            <div
+                                className={`merge-filter-badge merge-filter-undone ${statusFilter === 'UNDO' ? 'active' : ''
+                                    }`}
+                                onClick={() =>
+                                    setStatusFilter(statusFilter === 'UNDO' ? 'ALL' : 'UNDO')
+                                }
+                            >
+                                <Translate>Undone</Translate>
+                                {/* <div className="count">{undoneCount}</div> */}
+                            </div>
+
+                        </div>
                         {transactionsLoading ? (
                             <Panel className="merge-panel-empty">
                                 <Loader
