@@ -151,6 +151,19 @@ export interface UserDepartment {
   departmentId: number;
   isActive?: boolean;
   isDefault?: boolean;
+  departmentName?: string | null;
+  facilityName?: string | null;
+}
+
+export interface UserDepartmentResponseVM {
+  id: number | null;
+  userId: number | null;
+  facilityId: number | null;
+  facilityName: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  isActive?: boolean | null;
+  isDefault?: boolean | null;
 }
 
 export interface UserBookableDepartment {
