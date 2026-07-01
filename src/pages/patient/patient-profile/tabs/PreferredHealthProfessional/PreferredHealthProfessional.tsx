@@ -185,6 +185,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             <FontAwesomeIcon
               icon={faUserPen}
               style={{ cursor: 'pointer' }}
+              disabled={patient?.patientStatus === 'MERGED'}
               onClick={() => {
                 setPatientHP(row);
                 setPractitioner(p || { ...newPractitioner });
@@ -195,6 +196,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             <FontAwesomeIcon
               icon={faTrash}
               style={{ marginLeft: 15, color: 'var(--primary-pink)', cursor: 'pointer' }}
+              disabled={patient?.patientStatus === 'MERGED'}
               onClick={() => {
                 setPatientHP(row);
                 setDeletePreferredHealthModalOpen(true);
@@ -240,7 +242,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewPreferredHP}
-          disabled={isClick}
+          disabled={isClick || patient?.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
         >
           New Primary Care Provider
@@ -252,6 +254,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         loading={isFetching}
         columns={columns}
         onRowClick={row => {
+          
           const p = practitionersMap[row.practitionerId];
           setPatientHP(row);
           setEditable(true);

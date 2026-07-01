@@ -239,6 +239,14 @@ export const MODULES: Module[] =
           navPath: "price-list",
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
+        {
+          name: 'Patient Merge Config',
+          code: 'PATIENT_MERGE_CONFIG',
+          description: "Policy Definition",
+          icon: "faUserDoctor",
+          viewOrder: 24,
+          navPath: 'patient-merge-config'
+        },
         { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
 
       ],

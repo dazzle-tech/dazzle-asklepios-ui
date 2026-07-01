@@ -344,6 +344,7 @@ export interface AvailabilityTemplateResponseVM {
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
   allowPatientPortalBooking?: boolean | null;
+  allowWalkInBooking?: boolean | null;
   requireConfirmation?: boolean | null;
   financialDetails?: string | null;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
@@ -374,6 +375,7 @@ export interface AvailabilityTemplateCreateDTO {
   requireBilling: boolean;
   requirePreAssessment: boolean;
   allowPatientPortalBooking: boolean;
+  allowWalkInBooking: boolean;
   requireConfirmation: boolean;
   financialDetails?: string;
   isActive: boolean;
@@ -612,6 +614,71 @@ export interface AppointmentRequestUpdateDTO {
 
 export interface AppointmentRequestCancelDTO {
   cancelReason: string;
+}
+
+/* =========================
+ *  Appointment Waiting List
+ * ========================= */
+
+export type WaitingListPriority = string;
+export type WaitingListStatus = string;
+
+export interface AppointmentWaitingListVM {
+  id?: number | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  patientMrn?: string | null;
+  departmentId?: number | null;
+  serviceId?: number | null;
+  practitionerId?: number | null;
+  priority?: WaitingListPriority | null;
+  status?: WaitingListStatus | null;
+  preferredDate?: string | null;
+  expectedDurationMinutes?: number | null;
+  reason?: string | null;
+  notes?: string | null;
+  bookingGroupId?: number | null;
+  bookedAt?: string | null;
+  createdDate?: string | null;
+}
+
+export interface AppointmentWaitingListCreateDTO {
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+  serviceId?: number | null;
+  practitionerId?: number | null;
+  priority?: WaitingListPriority | null;
+  preferredDate?: string | null;
+  expectedDurationMinutes: number;
+  reason?: string | null;
+  notes?: string | null;
+}
+
+export interface AppointmentWaitingListBookDTO {
+  appointmentIds: number[];
+  notes?: string | null;
+}
+
+export interface AppointmentWaitingListRemoveDTO {
+  reason: string;
+}
+
+export type WaitingListBookingMode = string;
+
+export interface WaitingListAvailableSlotVM {
+  appointmentId?: number | null;
+  startDatetime?: string | null;
+  endDatetime?: string | null;
+  status?: string | null;
+  bookingMode?: WaitingListBookingMode | null;
+  practitionerId?: number | null;
+  serviceId?: number | null;
+}
+
+export interface WaitingListAvailableSlotsByBookingModeVM {
+  SLOT?: WaitingListAvailableSlotVM[] | null;
+  BUFFER?: WaitingListAvailableSlotVM[] | null;
 }
 
 /* =========================
@@ -1431,7 +1498,7 @@ export interface Patient {
   secondNameSecondaryLang?: string | null;
   thirdNameSecondaryLang?: string | null;
   lastNameSecondaryLang?: string | null;
-
+  
   primaryMobileNumber?: string | null;
   receiveSms?: boolean | null;
   secondMobileNumber?: string | null;
@@ -1470,6 +1537,10 @@ export interface Patient {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  patientStatus?: string | null;
+  mergedIntoPatientId?: number | null;
+  mergedAt?: Date | null;
+  mergedBy?: string | null;
 }
 
 export interface SimpleCountry {
@@ -2123,6 +2194,7 @@ export interface PatientEncounter {
   status: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
+  historyOfPresentIllness?:string |null;
 
 }
 
@@ -2304,6 +2376,7 @@ export interface PatientEncounter {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  historyOfPresentIllness?: string|null;
 }
 
 
@@ -2584,6 +2657,7 @@ export interface PatientEncounter {
   hasOrder: boolean;
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
+    historyOfPresentIllness?: string|null;
 }
 
 export interface PatientPaymentServiceItemDTO {

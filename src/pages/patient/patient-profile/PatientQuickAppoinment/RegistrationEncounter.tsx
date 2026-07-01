@@ -24,6 +24,7 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import './style.less';
+import clsx from 'clsx';
 
 const RegistrationEncounter = ({
   localEncounter,
@@ -415,7 +416,7 @@ useEffect(() => {
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (<div dir={dir}>
+  return (<div dir={dir} className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
     <Form fluid layout="inline" className="fields-container">
       <MyInput
         vr={validationResult}

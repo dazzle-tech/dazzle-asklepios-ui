@@ -24,7 +24,9 @@ const LaboratoryReportButton = ({ resultIds }: { resultIds: number[] }) => {
     const handleDownloadRadiologyReportPdf = async () => {
         try {
             setLoading(true);
-            const blob = await fetchLaboratoryResultPdfData({ resultIds, lang: selectedLang.lang }).unwrap();
+                  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            const blob = await fetchLaboratoryResultPdfData({ resultIds,timezone, lang: selectedLang.lang }).unwrap();
             const pdfBlob = new Blob([blob], { type: 'application/pdf' });
             const fileURL = window.URL.createObjectURL(pdfBlob);
             const win = window.open(fileURL, '_blank');

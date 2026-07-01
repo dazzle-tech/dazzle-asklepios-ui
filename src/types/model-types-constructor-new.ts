@@ -1028,6 +1028,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requireBilling: false,
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
+  allowWalkInBooking: false,
   requireConfirmation: true,
   financialDetails: 'BOTH',
   isActive: true,
@@ -1063,6 +1064,7 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
   requireBilling: null,
   requirePreAssessment: null,
   allowPatientPortalBooking: null,
+  allowWalkInBooking: null,
   requireConfirmation: null,
   financialDetails: null,
   workingDays: [],
@@ -1698,7 +1700,12 @@ export const newPatient: modelTypes.Patient = {
   lastModifiedDate: null,
   visitType: null,
   durationInMinutes: null,
-  resourceSpecific: false
+  resourceSpecific: false,
+  patientStatus: null,
+  mergedIntoPatientId: null,
+  mergedAt: null,
+  mergedBy: null,
+  
 };
 
 export const newAddress: modelTypes.Address = {

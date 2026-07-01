@@ -51,6 +51,7 @@ type AvailabilityTemplateLog = {
   requireBilling: boolean;
   requirePreAssessment: boolean;
   allowPatientPortalBooking: boolean;
+  allowWalkInBooking: boolean;
   requireConfirmation: boolean;
   financialDetails: string;
   workingDays: any;

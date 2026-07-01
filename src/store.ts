@@ -22,6 +22,7 @@ import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
+import { patientMergeService } from './services/patients/patientMergeService';
 
 import { setupService } from '@/services/setupService';
 import { dvmService } from '@/services/dvmService';
@@ -214,6 +215,7 @@ import { departmentServicesService } from './services/departmentServicesService'
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
 import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
+import { appointmentWaitingListService } from '@/services/appointment/appointmentWaitingList/appointmentWaitingListService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
@@ -274,6 +276,7 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
     [setupService.reducerPath]: setupService.reducer,
@@ -456,6 +459,7 @@ export const store = configureStore({
     [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
     [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
     [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
+    [appointmentWaitingListService.reducerPath]: appointmentWaitingListService.reducer,
 
     // Templates
     // report templates
@@ -596,6 +600,7 @@ export const store = configureStore({
         hipaaService.middleware,
         patientPreferredHealthProfessionalService.middleware,
         patientDocumentsService.middleware,
+        patientMergeService.middleware,
         inventoryService.middleware,
         inventoryProductsService.middleware,
         setupService.middleware,
@@ -683,6 +688,7 @@ export const store = configureStore({
         patientBillingInvoiceService.middleware,
         patientBillingInvoiceItemService.middleware,
         appointmentRequestService.middleware,
+        appointmentWaitingListService.middleware,
         ReportTemplateService.middleware,
         DiagnosticTestTemplateService.middleware,
         userStickyNotesService.middleware,

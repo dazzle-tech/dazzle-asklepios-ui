@@ -224,6 +224,7 @@ import SmsNotification from './pages/notification-management/sms-notification';
 import InAppNotification from './pages/notification-management/in-app-notification';
 import WhatsAppNotification from './pages/notification-management/whatsapp-notification';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
+import PatientMergeConfig from '@/pages/setup/patient-merge-config/PatientMergeConfig';
 import { setSelectedDepartment } from './reducers/authSlice';
 import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
 import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
@@ -908,6 +909,7 @@ const dispatch = useAppDispatch();
               <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
               <Route path="nurse-assessment" element={<NurseAssessment />} />
               <Route path="physician-assessment" element={<PhysicianAssessment />} />
+              <Route path="patient-merge-config" element={<PatientMergeConfig />} />
               <Route path="system-configuration" element={<SystemConfiguration />} />
             </Route>
           </Route>

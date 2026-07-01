@@ -1,0 +1,1164 @@
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+
+.merge-patients-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 1vw;
+  background: transparent;
+  color: inherit;
+}
+
+.merge-center-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+}
+
+.merge-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+}
+
+/* ============================================================
+   SECTION & CARD
+   ============================================================ */
+
+.merge-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: inherit;
+}
+
+.merge-section-title svg {
+  font-size: 14px;
+  color: inherit;
+}
+
+.merge-patient-section {
+  padding: 8px;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 12px;
+  background: transparent;
+  box-sizing: border-box;
+  color: inherit;
+}
+
+.merge-patient-card {
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+}
+
+/* ============================================================
+   FLOW CONTAINER
+   ============================================================ */
+
+.merge-flow-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 24px 16px;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 12px;
+  background: transparent;
+  box-sizing: border-box;
+  color: inherit;
+}
+
+.merge-flow-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.merge-flow-line {
+  flex: 1;
+  height: 1px;
+  background: #dcdfe6;
+}
+
+.merge-flow-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-blue);
+  color: var(--white);
+  flex-shrink: 0;
+}
+
+.merge-flow-icon {
+  font-size: 22px;
+}
+
+.merge-flow-arrow {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.merge-flow-text {
+  max-width: 560px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+/* ============================================================
+   ACTION PANEL & BUTTONS
+   ============================================================ */
+
+.merge-action-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  background: transparent;
+  color: inherit;
+}
+
+.merge-btn {
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 320px;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+.merge-btn-primary {
+  min-width: 240px;
+}
+
+/* ============================================================
+   TRANSACTIONS & CHANGES — SHARED
+   ============================================================ */
+
+.merge-transactions-root,
+.merge-changes-modal-content {
+  width: 100%;
+}
+
+.merge-transactions-list,
+.merge-changes-section,
+.merge-changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.merge-transactions-title,
+.merge-changes-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.merge-transactions-title svg,
+.merge-changes-section-title svg {
+  color: var(--primary-blue);
+}
+
+/* Shared badge/pill styles */
+.merge-transactions-count,
+.merge-changes-count,
+.merge-status-badge,
+.merge-change-decision {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.merge-transactions-count,
+.merge-changes-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  color: var(--primary-blue);
+}
+
+.merge-status-badge,
+.merge-change-decision {
+  padding: 4px 10px;
+  background: #f8fafc;
+  color: #475569;
+}
+
+/* Shared card/row borders */
+.merge-panel-empty,
+.merge-transaction-card,
+.merge-change-row,
+.merge-changes-header {
+  border: 1px solid var(--rs-border-primary) !important;
+  border-radius: 12px;
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
+}
+
+/* ============================================================
+   TRANSACTIONS
+   ============================================================ */
+
+.merge-transactions-search {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.merge-transaction-number {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  width: fit-content;
+}
+
+.merge-panel-empty .rs-panel-body {
+  padding: 32px 20px !important;
+  text-align: center;
+}
+
+.merge-transaction-card .rs-panel-body {
+  padding: 20px !important;
+}
+
+.merge-transaction-grid {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.merge-transaction-grid > div:nth-child(1),
+.merge-transaction-grid > div:nth-child(3) {
+  flex: 1;
+  min-width: 0;
+}
+
+.merge-transaction-actions {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.merge-transaction-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.merge-transaction-buttons .rs-btn {
+  flex: 1 1 120px;
+}
+
+.rs-theme-dark,
+.dark {
+  .merge-transaction-card {
+    background: var(--dark-black) !important;
+    border-color: #334155 !important;
+  }
+
+  .merge-transaction-number {
+    background: var(--one-health-theme-select) !important;
+    color: var(--primary-blue) !important;
+  }
+
+  .merge-transaction-title,
+  .merge-transaction-reason-title {
+    color: rgba(255, 255, 255, 0.72) !important;
+  }
+
+  .merge-transaction-heading {
+    color: var(--white) !important;
+  }
+
+  .merge-transaction-meta,
+  .merge-transaction-small,
+  .merge-transaction-reason-text {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .merge-transaction-divider-line {
+    background: #475569 !important;
+  }
+}
+.merge-transaction-meta,
+.merge-transaction-small,
+.merge-transaction-reason-text,
+.merge-panel-empty-text,
+.merge-changes-empty {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.merge-transaction-reason {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f7;
+}
+
+.merge-transaction-divider {
+  width: 90px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.merge-transaction-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #dbe2ea;
+}
+.merge-transaction-arrow,
+.merge-change-arrow {
+  color: var(--primary-blue);
+}
+
+.merge-status-merged {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.merge-status-undone {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.dark .merge-status-badge,
+.dark .merge-change-decision,
+.rs-theme-dark .merge-status-badge,
+.rs-theme-dark .merge-change-decision {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid #475569 !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-status-merged,
+.rs-theme-dark .merge-status-merged {
+  background: rgba(69, 184, 135, 0.18) !important;
+  border-color: rgba(69, 184, 135, 0.45) !important;
+  color: #86efac !important;
+}
+
+.dark .merge-status-undone,
+.rs-theme-dark .merge-status-undone {
+  background: rgba(242, 154, 77, 0.18) !important;
+  border-color: rgba(242, 154, 77, 0.45) !important;
+  color: #fdba74 !important;
+}
+/* ============================================================
+   CHANGES
+   ============================================================ */
+
+.merge-changes-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.merge-change-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.merge-change-field {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.merge-change-values {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+
+.merge-change-old {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+
+
+/* ============================================================
+   PREVIEW
+   ============================================================ */
+
+.merge-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.merge-preview-reason-card {
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.merge-preview-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.merge-preview-conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.merge-preview-conflict-card {
+  background: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.03),
+    0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.merge-preview-conflict-header {
+  margin-bottom: 18px;
+}
+
+.merge-preview-conflict-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #101828;
+  line-height: 1.5;
+}
+
+.merge-preview-values-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.merge-preview-value-card {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.merge-preview-value-card.from {
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  border-color: rgba(var(--primary-blue-rgb), 0.25);
+}
+
+.merge-preview-value-card.to {
+  background: #ecfdf3;
+  border-color: #b7ebc6;
+}
+
+.merge-preview-value-card-header {
+  margin-bottom: 6px;
+}
+
+.merge-preview-value-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.merge-preview-value-badge.from {
+  background: var(--one-health-theme-select);
+  color: var(--primary-blue);
+}
+
+.merge-preview-value-badge.to {
+  background: #d1fadf;
+  color: #15803d;
+}
+
+.merge-preview-value-card-content {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--rs-text-primary, #101828);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 36px;
+}
+
+.merge-preview-decision-area {
+  margin-top: 2px;
+}
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+
+.merge-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.merge-summary-card {
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--rs-bg-card, #ffffff);
+}
+
+.merge-summary-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.merge-summary-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+.merge-summary-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.merge-summary-values-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.merge-summary-value-box {
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f9fafb;
+}
+
+.merge-summary-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.merge-summary-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+.merge-summary-empty {
+  color: #9ca3af;
+}
+
+.merge-summary-arrow {
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.merge-summary-single-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #374151;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   TRANSACTION CHANGES MODAL
+   ============================================================ */
+
+.merge-changes-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.merge-transaction-changes-modal .merge-changes-modal-content {
+  max-height: 64vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.merge-transaction-changes-modal .merge-changes-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.merge-transaction-changes-modal .merge-changes-header-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-card {
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--rs-border-primary);
+  background: var(--rs-bg-card, #ffffff);
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-card.source {
+  background: var(--rs-bg-card, #ffffff)7ed;
+  border-color: #fed7aa;
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-card.target {
+  background: rgba(var(--primary-blue-rgb), 0.08);
+  border-color: rgba(var(--primary-blue-rgb), 0.25);
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.merge-transaction-changes-modal .merge-changes-patient-mrn {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.merge-transaction-changes-modal .merge-changes-loading {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+
+.light .merge-section-title        { color: #101828; }
+.light .merge-section-title svg    { color: #667085; }
+.light .merge-flow-text            { color: #475467; }
+.light .merge-flow-line            { background: #d0d5dd; }
+.light .merge-flow-arrow           { color: #667085; }
+.light .merge-flow-badge           {
+  background: #f9fafb;
+  border: 1px solid #e4e7ec;
+  color: #667085;
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+
+/* Base */
+.dark .merge-section-title         { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff); }
+.dark .merge-section-title svg     { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff); }
+.dark .merge-flow-text             { color: #cbd5e1; }
+.dark .merge-flow-line             { background: #475569; }
+.dark .merge-flow-arrow            { color: #94a3b8; }
+.dark .merge-flow-badge            {
+  background: var(--dark-black);
+  border: 1px solid #475569;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
+}
+
+/* Preview */
+.dark .merge-preview-reason-card,
+.dark .merge-preview-conflict-card {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 255, 255, 0.05);
+}
+
+.dark .merge-preview-conflict-title          { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important; }
+.dark .merge-preview-value-card              { border-color: #334155; box-shadow: none; }
+.dark .merge-preview-value-card.from        { background: rgba(59, 130, 246, 0.10); border-color: var(--primary-blue); }
+.dark .merge-preview-value-card.to          { background: rgba(34, 197, 94, 0.10);  border-color: #22c55e; }
+.dark .merge-preview-value-badge.from       { background: var(--one-health-theme-hover); color: var(--one-health-theme-select); }
+.dark .merge-preview-value-badge.to         { background: rgba(34, 197, 94, 0.18);  color: #86efac; }
+.dark .merge-preview-value-card-content,
+.rs-theme-dark .merge-preview-value-card-content {
+  color: #ffffff !important;
+}
+/* Summary */
+.dark .merge-summary-card {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 255, 255, 0.05);
+}
+
+.dark .merge-summary-title,
+.dark .merge-summary-value        {  color: #ffffff !important; }
+.dark .merge-summary-label,
+.dark .merge-summary-empty        { color: #94a3b8 !important; }
+.dark .merge-summary-badge        {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #475569;
+   color: #ffffff !important;
+}
+.dark .merge-summary-value-box    {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #334155;
+}
+.dark .merge-summary-single-line,
+.dark .merge-summary-arrow        { color: #cbd5e1 !important; }
+
+/* Transactions & Changes panels */
+.dark .merge-panel-empty,
+.dark .merge-transaction-card,
+.dark .merge-change-row,
+.dark .merge-changes-header {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155 !important;
+}
+
+.dark .merge-transaction-heading,
+.dark .merge-change-label,
+.dark .merge-changes-patient-name {
+  color: var(--white) !important;
+}
+.dark .merge-transaction-title,
+.dark .merge-transaction-reason-title,
+.dark .merge-change-meta,
+.dark .merge-changes-patient-label { color: #94a3b8 !important; }
+
+.dark .merge-transaction-meta,
+.dark .merge-transaction-small,
+.dark .merge-transaction-reason-text,
+.dark .merge-panel-empty-text,
+.dark .merge-changes-empty,
+.dark .merge-changes-patient-mrn  { color: #cbd5e1 !important; }
+
+.dark .merge-transaction-reason         { border-top: 1px solid #334155; }
+.dark .merge-transaction-divider-line   { background: #475569; }
+
+.dark .merge-transaction-arrow,
+.dark .merge-change-arrow,
+.dark .merge-changes-header-arrow { color: #94a3b8; }
+
+
+.dark .merge-change-old {
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+}
+.dark .merge-transactions-count,
+.dark .merge-changes-count,
+.merge-transaction-changes-modal.dark .merge-changes-count {
+  background: rgba(var(--primary-blue-rgb), 0.15) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: var(--primary-blue) !important;
+}
+
+.dark .merge-changes-patient-card {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155;
+}
+.dark .merge-changes-patient-card.source {
+  background: rgba(249, 115, 22, 0.08) !important;
+  border-color: #f97316;
+}
+.dark .merge-changes-patient-card.target {
+  background: rgba(59, 130, 246, 0.08) !important;
+  border-color: var(--primary-blue);
+}
+
+/* Form inputs */
+.dark .rs-form-control-label,
+.dark .rs-form-group-label,
+.dark label                        { color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important; }
+
+.dark .rs-input,
+.dark textarea,
+.dark input {
+  background-color: var(--dark-black) !important;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
+  border-color: #475569 !important;
+}
+
+.dark .rs-input::placeholder,
+.dark textarea::placeholder,
+.dark input::placeholder           { color: #94a3b8 !important; }
+
+/* Modal dark overrides */
+.merge-transaction-changes-modal.dark .merge-changes-modal-content {
+  background: var(--dark-black) !important;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
+}
+.merge-transaction-changes-modal.dark .merge-changes-header { background: transparent; }
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-card,
+.merge-transaction-changes-modal.dark .merge-change-row {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 255, 255, 0.05);
+    color:var(--rs-bg-card, #ffffff)
+}
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-card.source {
+  background: rgba(249, 115, 22, 0.08) !important;
+  border-color: #f97316;
+  color:var(--rs-bg-card, #ffffff);
+}
+.merge-transaction-changes-modal.dark .merge-changes-patient-card.target {
+  background: rgba(59, 130, 246, 0.08) !important;
+  border-color: var(--primary-blue);
+  color:var(--rs-bg-card, #ffffff)
+}
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-label,
+.merge-transaction-changes-modal.dark .merge-change-meta,
+.merge-transaction-changes-modal.dark .merge-change-empty { color: #94a3b8 !important; }
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-name,
+.merge-transaction-changes-modal.dark .merge-changes-section-title,
+.merge-transaction-changes-modal.dark .merge-change-label {
+  color: #ffffff !important;
+}
+
+.merge-transaction-changes-modal.dark .merge-changes-patient-mrn {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.merge-transaction-changes-modal.dark .merge-changes-header-arrow,
+.merge-transaction-changes-modal.dark .merge-change-arrow { color: #94a3b8 !important; }
+
+
+.merge-transaction-changes-modal.dark .merge-change-old {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #334155;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff);
+}
+
+.merge-transaction-changes-modal.dark .rs-message {
+  background: var(--dark-black) !important;
+  border: 1px solid #334155;
+  color: var(--rs-bg-card, var(--rs-bg-card, #ffffff)fff) !important;
+}
+
+/* ============================================================
+   RESPONSIVE — ≤ 1400px
+   ============================================================ */
+
+@media (max-width: 1400px) {
+  .merge-patients-layout { gap: 20px; }
+  .merge-sidebar {
+    flex: 0 0 clamp(240px, 20vw, 300px);
+    min-width: 240px;
+    max-width: 300px;
+    width: clamp(240px, 20vw, 300px);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — ≤ 1200px
+   ============================================================ */
+
+@media (max-width: 1200px) {
+  .merge-patients-layout { gap: 16px; padding: 8px; }
+  .merge-sidebar {
+    flex: 0 0 clamp(220px, 19vw, 260px);
+    min-width: 220px;
+    max-width: 260px;
+    width: clamp(220px, 19vw, 260px);
+  }
+  .merge-btn {
+    flex: 1 1 calc(50% - 12px);
+    max-width: none;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — ≤ 992px
+   ============================================================ */
+
+@media (max-width: 992px) {
+  .merge-patients-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .merge-sidebar,
+  .merge-center-content {
+    flex: none;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+  .merge-action-panel { flex-direction: column; align-items: stretch; }
+  .merge-btn {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+
+  /* Transactions & Changes */
+  .merge-transaction-grid,
+  .merge-change-row,
+  .merge-change-values,
+  .merge-transaction-buttons { flex-direction: column; align-items: stretch; }
+  .merge-transaction-actions,
+  .merge-change-field { width: 100%; }
+  .merge-transaction-divider { width: 100%; justify-content: center; }
+  .merge-transaction-buttons .rs-btn { width: 100%; }
+  .merge-change-arrow { align-self: center; transform: rotate(90deg); }
+  .merge-change-decision { align-self: flex-start; }
+}
+
+/* ============================================================
+   RESPONSIVE — ≤ 768px
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .merge-workspace { gap: 12px; }
+  .merge-section-title { font-size: 13px; }
+  .merge-flow-container { padding: 20px 12px; }
+  .merge-flow-badge { width: 48px; height: 48px; }
+  .merge-flow-icon { font-size: 20px; }
+  .merge-flow-text { font-size: 12px; }
+
+  /* Preview */
+  .merge-preview-content { gap: 18px; }
+  .merge-preview-reason-card,
+  .merge-preview-conflict-card { padding: 16px; border-radius: 14px; }
+  .merge-preview-values-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+  .merge-preview-value-card { padding: 9px 10px; }
+  .merge-preview-value-card-content { font-size: 12px; min-height: auto; }
+  .merge-preview-conflict-title { font-size: 13px; }
+}
+
+/* ============================================================
+   RESPONSIVE — ≤ 576px
+   ============================================================ */
+
+@media (max-width: 576px) {
+  .merge-patients-layout { padding: 4px; gap: 12px; }
+  .merge-patient-section,
+  .merge-flow-container { padding: 12px; border-radius: 10px; }
+  .merge-flow-badge { width: 42px; height: 42px; }
+  .merge-flow-icon { font-size: 18px; }
+  .merge-flow-text { font-size: 11px; line-height: 1.5; }
+
+  /* Transactions */
+  .merge-transaction-card .rs-panel-body,
+  .merge-change-row { padding: 12px !important; }
+  .merge-transactions-list,
+  .merge-changes-section,
+  .merge-changes-list { gap: 12px; }
+}
+.merge-change-old,
+.merge-change-new {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.merge-change-old {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.merge-change-new {
+  background: var(--one-health-theme-hover);
+  color: var(--primary-blue);
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.18);
+}
+
+/* Dark mode */
+.dark .merge-change-old,
+.merge-transaction-changes-modal.dark .merge-change-old {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid #334155 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.dark .merge-change-new,
+.merge-transaction-changes-modal.dark .merge-change-new {
+  background: rgba(var(--primary-blue-rgb), 0.14) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: #ffffff !important;
+}
+.merge-transactions-filters {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+.merge-transactions-filters {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.merge-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+  user-select: none;
+
+  .count {
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+.merge-filter-merged {
+  background: #e8f5e9;
+  color: #2e7d32;
+
+  .count {
+    background: rgba(46, 125, 50, .15);
+  }
+
+  &:hover,
+  &.active {
+    background: #2e7d32;
+    color: #fff;
+
+    .count {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+  }
+}
+.merge-filter-undone {
+  background: #fff3e0;
+  color: #ef6c00;
+
+  .count {
+    background: rgba(239, 108, 0, .15);
+  }
+
+  &:hover,
+  &.active {
+    background: #ef6c00;
+    color: #fff;
+
+    .count {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+  }
+}
+.dark .merge-filter-merged,
+.rs-theme-dark .merge-filter-merged {
+  background: rgba(69, 184, 135, 0.18);
+  border: 1px solid rgba(69, 184, 135, 0.45);
+  color: #86efac;
+
+  .count {
+    background: rgba(69, 184, 135, 0.28);
+    color: #86efac;
+  }
+
+  &:hover,
+  &.active {
+    background: rgba(69, 184, 135, 0.28);
+    border-color: #45b887;
+  }
+}
+
+.dark .merge-filter-undone,
+.rs-theme-dark .merge-filter-undone {
+  background: rgba(242, 154, 77, 0.18);
+  border: 1px solid rgba(242, 154, 77, 0.45);
+  color: #fdba74;
+
+  .count {
+    background: rgba(242, 154, 77, 0.28);
+    color: #fdba74;
+  }
+
+  &:hover,
+  &.active {
+    background: rgba(242, 154, 77, 0.28);
+    border-color: #f29a4d;
+  }
+}

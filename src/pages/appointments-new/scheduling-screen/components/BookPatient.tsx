@@ -658,7 +658,9 @@ const BookPatient = ({
     if (!open || !patientSidebarOpen) return;
 
     const compute = () => {
-      const dialog = document.querySelector('.book-patient-modal .rs-modal-dialog') as HTMLElement | null;
+      const dialog =
+        (document.querySelector('.rs-modal-dialog.book-patient-modal') as HTMLElement | null) ??
+        (document.querySelector('.book-patient-modal') as HTMLElement | null);
 
       if (!dialog) return;
 

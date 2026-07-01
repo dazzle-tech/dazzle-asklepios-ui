@@ -5,6 +5,7 @@ import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import clsx from 'clsx';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 interface ContactTabProps {
@@ -72,7 +73,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
 
 
   return (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}> 
       <PhoneNumberInput
         column
         required

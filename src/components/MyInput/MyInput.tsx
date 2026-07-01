@@ -1008,25 +1008,12 @@ const MyInput = ({
         const filteredData = !localSearch
           ? dataList
           : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
 
-            return text.toLowerCase().includes(localSearch.toLowerCase());
-          });
-
-        const longestLabel = dataList.reduce((longest, item) => {
-          const text = isArrayLabel
-            ? buildCombinedLabel(item, labelKeys, '')
-            : String(item?.[primaryLabelKey] ?? '');
-
-          return text.length > longest.length ? text : longest;
-        }, '');
-
-        const popupWidth = Math.max(
-          typeof props?.width === 'number' ? props.width : 145,
-          longestLabel.length * 9 + 120
-        );
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
 
         return (
           <div ref={pickerRef}>
@@ -1035,8 +1022,9 @@ const MyInput = ({
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
-                }`}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
@@ -1048,15 +1036,21 @@ const MyInput = ({
               data={filteredData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              menuClassName={clsx('my-input-picker-popup', props?.menuClassName)}
+              menuClassName={clsx(
+                'my-input-picker-popup',
+                props?.menuClassName
+              )}
               value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
                   const selectedItems = (props?.selectData ?? []).filter(item =>
-                    (value ?? []).some(v => String(v) === String(item?.[valueKey]))
+                    (value ?? []).some(
+                      v => String(v) === String(item?.[valueKey])
+                    )
                   );
+
                   props.onSelectItem(selectedItems);
                 }
               }}
@@ -1108,10 +1102,12 @@ const MyInput = ({
                 setLocalSearch('');
               }}
               menuStyle={{
-                width: popupWidth
+                minWidth: props?.width ?? '12vw',
+                width: 'auto'
               }}
               virtualized={props?.virtualized ?? true}
-              disabledItemValues={getDisabledValues(dataList, valueKey)} />
+              disabledItemValues={getDisabledValues(dataList, valueKey)}
+            />
           </div>
         );
       }

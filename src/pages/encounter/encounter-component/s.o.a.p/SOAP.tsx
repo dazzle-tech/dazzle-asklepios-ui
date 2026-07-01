@@ -26,6 +26,7 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/s
 
 import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
+import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -159,42 +160,50 @@ const SOAP = props => {
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
           <div className="top-section">
-             <div style={{ marginBottom: '16px' }}>
-            <SectionContainer
-              title={<Translate>Chief Complaint </Translate>}
-              content={
-                <Form fluid>
-                  <MyInput
-                    width="100%"
-                    height="95px"
-                    showLabel={false}
-                    fieldType="textarea"
-                    fieldName="chiefComplaint"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <MyInput
-                    width="100%"
-                    height="120px"
-                    fieldLabel="Physical Examination Summary"
-                    fieldType="textarea"
-                    fieldName="physicalExaminationSummery"
-                    record={{
-                      physicalExaminationSummery:
-                        localEncounter?.physicalExaminationSummery || ''
-                    }}
-                    setRecord={() => { }}
-                    disabled
-                  />
-                </Form>
-              }
-              action={
-                <MyButton size="small" onClick={saveChanges}>
-                  Save
-                </MyButton>
-              }
-            />
+            <div style={{ marginBottom: '16px' }}>
+              <SectionContainer
+                title={<Translate>Chief Complaint </Translate>}
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="95px"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="chiefComplaint"
+                      record={localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+
+                    <MyInput
+                      width="100%"
+                      height="120px"
+                      fieldLabel="Physical Examination Summary"
+                      fieldType="textarea"
+                      fieldName="physicalExaminationSummery"
+                      record={{
+                        physicalExaminationSummery:
+                          localEncounter?.physicalExaminationSummery || ''
+                      }}
+                      setRecord={() => { }}
+                      disabled
+                    />
+                  </Form>
+                }
+                action={
+                  <MyButton size="small" onClick={saveChanges}>
+                    Save
+                  </MyButton>
+                }
+              />
             </div>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <HistoryOfPresentIllnessSection
+              encounter={localEncounter}
+              setEncounter={setLocalEncounter}
+              disabled={edit}
+            />
           </div>
           <div style={{ marginBottom: '16px' }}>
             <SectionContainer
@@ -209,13 +218,14 @@ const SOAP = props => {
                 </div>
               }
             /></div>
+
           <div style={{ marginBottom: '16px' }}>
             <EncounterAssessmentSection patient={patient} encounterId={localEncounter?.id} />
           </div>
           <div className="last-section-clinical-visit">
             <div className="half-width-section">
-               <div style={{ marginBottom: '16px' }}>
-              <PatientPlan patient={patient} localEncounter={localEncounter} />
+              <div style={{ marginBottom: '16px' }}>
+                <PatientPlan patient={patient} localEncounter={localEncounter} />
               </div>
             </div>
             <div className="half-width-section">

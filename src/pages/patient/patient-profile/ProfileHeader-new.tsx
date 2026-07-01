@@ -38,6 +38,7 @@ import AdministrativeWarningsModal from './AdministrativeWarning';
 import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
 import ScanDocumentModal from './ScanDocumentModal';
 import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
+import { FaCodeMerge } from 'react-icons/fa6';
 import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 
 interface ProfileHeaderProps {
@@ -102,27 +103,52 @@ const {  patientLabelMenuItem,
   );
 
 
-const handleSendPasswordEmail = async () => {
-  if (!localPatient?.id) return;
 
-  try {
-    await sendPatientPasswordEmail(localPatient.id).unwrap();
-    dispatch(
-      notify({
-        msg: 'Password email sent successfully',
-        sev: 'success'
-      })
-    );
-  } catch (error: any) {
-    const errorMsg = extractErrorMessage(error);
-    dispatch(
-      notify({
-        msg: errorMsg || 'Failed to send password email',
-        sev: 'error'
-      })
-    );
-  }
-};
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg =
+        response?.data?.message ??
+        response?.data?.error ??
+        response?.message ??
+        response?.error;
+
+      if (typeof msg === 'string' && msg.trim()) {
+        return msg.replace(/^error\./i, '').trim();
+      }
+
+      if (response?.data && typeof response?.data === 'object') {
+        const detail = response.data.detail ?? response.data.description;
+        if (typeof detail === 'string' && detail.trim()) {
+          return detail.trim();
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  };
+
+  const handleSendPasswordEmail = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      await sendPatientPasswordEmail(localPatient.id).unwrap();
+      dispatch(
+        notify({
+          msg: 'Password email sent successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      const errorMsg = extractErrorMessage(error);
+      dispatch(
+        notify({
+          msg: errorMsg || 'Failed to send password email',
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const contentOfMoreIconMenu = (
     <Popover>
@@ -315,34 +341,34 @@ const handleSendPasswordEmail = async () => {
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-// useEffect(() => {
-//   if (location.state?.eligibilityDone) {
-//     setEligibilityChecked(true);
-//   }
-// }, [location.state]);
+  // useEffect(() => {
+  //   if (location.state?.eligibilityDone) {
+  //     setEligibilityChecked(true);
+  //   }
+  // }, [location.state]);
 
 
-const whisperRef = useRef<any>(null);
+  const whisperRef = useRef<any>(null);
 
-useEffect(() => {
-  if (quickPatientModalOpen || openScanDocumentModal) {
-    whisperRef.current?.close?.();
-  }
-}, [quickPatientModalOpen, openScanDocumentModal]);
+  useEffect(() => {
+    if (quickPatientModalOpen || openScanDocumentModal) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal]);
 
-useEffect(() => {
-  const handleClick = (e: any) => {
-    if (e.target.closest('.rs-popover')) return;
+  useEffect(() => {
+    const handleClick = (e: any) => {
+      if (e.target.closest('.rs-popover')) return;
 
-    setOpenMoreMenu(false);
-  };
+      setOpenMoreMenu(false);
+    };
 
-  document.addEventListener('mousedown', handleClick);
+    document.addEventListener('mousedown', handleClick);
 
-  return () => {
-    document.removeEventListener('mousedown', handleClick);
-  };
-}, []);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, []);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -441,6 +467,24 @@ useEffect(() => {
                     </div>
                   </Whisper>
                 )}
+
+                {localPatient.patientStatus === 'MERGED' && (
+                  <Whisper
+                    placement="bottom"
+                    controlId="merged-patient-tooltip"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        Merged Patient
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon merged-status-icon">
+                      <Icon color="orange" as={FaCodeMerge} />
+                    </div>
+                  </Whisper>
+                )}
+
               </div>
             </AvatarGroup>
 
@@ -467,9 +511,10 @@ useEffect(() => {
               </MyButton> */}
 
               <MyButton
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => {
                   // setEligibilityChecked(true);
-                  // navigate(`/patient-profile/${localPatient?.id}`);
+                  // navigate(/patient-profile/${localPatient?.id});
                 }}
               >
                 <Translate>Eligibility Check</Translate>
@@ -478,6 +523,7 @@ useEffect(() => {
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
+                disabled={!!localPatient?.id && localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
@@ -485,6 +531,7 @@ useEffect(() => {
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>Clear</Translate>
               </MyButton>
@@ -507,10 +554,10 @@ useEffect(() => {
                 <Translate>Quick Patient</Translate>
               </MyButton>
 
-              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                <Translate>Quick Appointment</Translate>
-              </MyButton>
 
+              <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
+                <Translate>Walk-in Patient</Translate>
+              </MyButton>
               <AdministrativeWarningsModal
                 localPatient={localPatient}
                 validationResult={validationResult}
