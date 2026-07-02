@@ -11,8 +11,8 @@ import {
   formatDateWithoutSeconds,
   formatEnumString,
 } from '@/utils';
-import React, { useEffect, useState } from 'react';
-import { Col, Form, Loader, Row } from 'rsuite';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Checkbox, Col, Form, Loader, Row } from 'rsuite';
 import { getNotificationChannelPageConfig } from './notificationChannelPageConfig';
 import './styles.less';
 
@@ -81,6 +81,16 @@ const emptyViewRecord = (): ViewRecord => ({
 
 const formatListValue = (value?: string[] | null) => (value?.length ? value.join(', ') : '');
 
+const formatJsonValue = (value?: Record<string, unknown> | null) => {
+  if (!value || Object.keys(value).length === 0) return '';
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
 const mapDetailToViewRecord = (
   detail: NotificationResponseVM | null | undefined,
   facilityListResponse: unknown,
@@ -145,10 +155,14 @@ const ViewNotificationModal: React.FC<ViewNotificationModalProps> = ({
 
   const detail = fetchedNotification ?? notification;
   const [viewRecord, setViewRecord] = useState<ViewRecord>(emptyViewRecord);
+  const [showDataJson, setShowDataJson] = useState(false);
+
+  const dataJsonText = useMemo(() => formatJsonValue(detail?.dataJson), [detail?.dataJson]);
 
   useEffect(() => {
     if (!open) return;
     setViewRecord(mapDetailToViewRecord(detail, facilityListResponse, languages));
+    setShowDataJson(false);
   }, [open, detail, facilityListResponse, languages]);
 
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -368,6 +382,29 @@ const ViewNotificationModal: React.FC<ViewNotificationModalProps> = ({
             )}
           </Col>
         </Row>
+        <Row style={{ marginBottom: '12px' }}>
+          <Col md={24}>
+            <Checkbox checked={showDataJson} onChange={(_, checked) => setShowDataJson(checked)}>
+              Show notification data JSON
+            </Checkbox>
+          </Col>
+        </Row>
+        {showDataJson && (
+          <Row>
+            <Col md={24}>
+              <MyInput
+                fieldName="dataJson"
+                fieldType="textarea"
+                fieldLabel="Data JSON"
+                record={{ dataJson: dataJsonText || '-' }}
+                setRecord={() => undefined}
+                width="100%"
+                disabled
+                rows={10}
+              />
+            </Col>
+          </Row>
+        )}
         <Row>
           <Col md={12}>
             <MyInput
