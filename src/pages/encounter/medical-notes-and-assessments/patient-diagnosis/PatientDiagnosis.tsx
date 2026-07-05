@@ -330,21 +330,29 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         key: 'actions',
         title: <Translate>Actions</Translate>,
         flexGrow: 1,
-        render: (row: any) => (
-          <button
-            type="button"
-            className="pd-delete-btn"
-            onClick={() => handleOpenDeleteModal(row)}
-            disabled={disabled || isDeleting}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: disabled || isDeleting ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
-        )
+        render: (row: any) => {
+          const canDelete =
+            Number(row.encounterId) === encounterIdNumber;
+
+          return (
+            <button
+              type="button"
+              className="pd-delete-btn"
+              onClick={() => handleOpenDeleteModal(row)}
+              disabled={disabled || isDeleting || !canDelete}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor:
+                  disabled || isDeleting || !canDelete
+                    ? 'not-allowed'
+                    : 'pointer'
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          );
+        }
       }
     ],
     [icdMap, disabled, isDeleting]
