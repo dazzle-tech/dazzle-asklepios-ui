@@ -511,9 +511,11 @@ export interface AppointmentSearchFilterMultiDepartmentDTO {
   departmentIds?: number[] | null;
   resourceType?: TemplateType | null;
   resourceId?: number | null;
-  status?: AppointmentStatus | null;
+  status?: AppointmentStatus[] | null;
   bookingMode?: BookingMode[] | null;
   patientId?: number | null;
+  startDate?: Date | null;
+  endDate?: Date | null; 
 }
 
 /** @deprecated Use AppointmentSearchFilterMultiDepartmentDTO */
