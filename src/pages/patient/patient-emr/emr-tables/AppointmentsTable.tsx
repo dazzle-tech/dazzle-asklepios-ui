@@ -7,6 +7,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 import { useAppSelector } from '@/hooks';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 
 const AppointmentsTable = ({ patient }: any) => {
 
@@ -45,6 +46,21 @@ const AppointmentsTable = ({ patient }: any) => {
     }
   );
 
+
+    const { data: departments = [] } =
+      useGetAllDepartmentsWithoutPaginationQuery();
+
+    const departmentMap = useMemo(() => {
+      const map: Record<number, any> = {};
+
+      departments.forEach((dept: any) => {
+        map[dept.id] = dept;
+      });
+
+      return map;
+    }, [departments]);
+
+
   const tableData = data?.data ?? [];
   const totalCount = data?.totalCount ?? 0;
 
@@ -65,11 +81,22 @@ const AppointmentsTable = ({ patient }: any) => {
     {
       key: 'resource',
       title: <Translate>Resource</Translate>,
-      render: row =>
-        row?.resourceName ||
-        row?.defaultPractitionerName ||
-        `Res #${row?.resourceId}` ||   // fallback
-        '-'
+      render: (row: any) => {
+        if (row.resourceType === 'DEPARTMENT') {
+          return (
+            departmentMap[row.resourceId]?.name ??
+            departmentMap[row.resourceId]?.departmentName ??
+            `Dept #${row.resourceId}`
+          );
+        }
+
+        return (
+          row.resourceName ||
+          row.defaultPractitionerName ||
+          `Res #${row.resourceId}` ||
+          '-'
+        );
+      }
     },
     {
       key: 'scheduleDate',
