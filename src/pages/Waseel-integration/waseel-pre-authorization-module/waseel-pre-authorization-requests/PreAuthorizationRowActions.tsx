@@ -28,23 +28,6 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
         placement="top"
         trigger="hover"
         container={() => document.body}
-        speaker={<Tooltip>View</Tooltip>}
-      >
-        <span>
-          <FaEye
-            className="icons-style"
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => onView(row)}
-            style={{ cursor: 'pointer' }}
-          />
-        </span>
-      </Whisper>
-
-      <Whisper
-        placement="top"
-        trigger="hover"
-        container={() => document.body}
         speaker={<Tooltip>Search / Refresh from Waseel</Tooltip>}
       >
         <span>
@@ -99,18 +82,6 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
               cursor: canCancel ? 'pointer' : 'not-allowed',
               opacity: canCancel ? 1 : 0.35
             }}
-          />
-        </span>
-      </Whisper>
-
-      <Whisper placement="top" trigger="hover" container={() => document.body} speaker={<Tooltip>Print</Tooltip>}>
-        <span>
-          <FaPrint
-            className="icons-style"
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => window.print()}
-            style={{ cursor: 'pointer' }}
           />
         </span>
       </Whisper>

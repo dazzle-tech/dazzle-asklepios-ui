@@ -4,19 +4,24 @@ import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import type { ColumnConfig } from '@/components/MyTable/MyTable';
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
+import { calculateAgeFormat, formatDateWithoutSeconds,formatDate, formatEnumString } from '@/utils';
+import { Tooltip, Whisper } from 'rsuite';
 
 import PreAuthorizationRowActions from './PreAuthorizationRowActions';
 import { getStatusColor } from './utils';
 import type { PreAuthorizationRowHandlers } from './types';
 
-export const getPreAuthorizationColumns = (
-  handlers: PreAuthorizationRowHandlers
-): ColumnConfig[] => [
-  {
-    key: 'id',
-    title: <Translate>Pre-Auth ID</Translate>,
-    flexGrow: 2
-  },
+type GetPreAuthorizationColumnsParams = {
+  handlers: PreAuthorizationRowHandlers;
+  encounterMap: Map<number, any>;
+  patientMap: Map<string, any>;
+};
+
+export const getPreAuthorizationColumns = ({
+  handlers,
+  encounterMap,
+  patientMap
+}: GetPreAuthorizationColumnsParams): ColumnConfig[] => [
   {
     key: 'preAuthRefNo',
     title: <Translate>Pre-Auth Ref No</Translate>,
@@ -37,18 +42,67 @@ export const getPreAuthorizationColumns = (
   },
   {
     key: 'patientId',
-    title: <Translate>Patient ID</Translate>,
-    flexGrow: 2
+    title: <Translate>Patient</Translate>,
+    flexGrow: 4,
+    fullText: true,
+    render: (row: PreAuthorizationTrackingResponse) => {
+      const patient = patientMap.get(String(row.patientId));
+
+      const firstName = String(patient?.firstName ?? '').trim();
+      const secondName = String(patient?.secondName ?? '').trim();
+      const thirdName = String(patient?.thirdName ?? '').trim();
+      const lastName = String(patient?.lastName ?? '').trim();
+
+      const fullName =
+        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ') || '-';
+      const mrn = patient?.medicalRecordNumber ?? '-';
+      const dob = patient?.dateOfBirth ?? null;
+      const age = dob ? calculateAgeFormat(dob) : '-';
+      const gender = formatEnumString(patient?.sexAtBirth) || patient?.sexAtBirth || '-';
+      const mobile = patient?.primaryMobileNumber ??  '-';
+
+      const speaker = (
+        <Tooltip>
+          <div>MRN: {mrn}</div>
+          <div>Age: {age}</div>
+          <div>Gender: {gender}</div>
+          <div>DOB: {dob ? dob : '-'}</div>
+          <div>Mobile: {mobile}</div>
+        </Tooltip>
+      );
+
+      return (
+        <Whisper trigger="hover" placement="top" speaker={speaker}>
+          <div style={{ cursor: 'pointer' }}>
+            {mrn !== '-' ? `${fullName} - ${mrn}` : fullName}
+          </div>
+        </Whisper>
+      );
+    }
   },
   {
     key: 'encounterId',
-    title: <Translate>Encounter ID</Translate>,
-    flexGrow: 2
+    title: <Translate>Visit Number</Translate>,
+    flexGrow: 2,
+    render: (row: PreAuthorizationTrackingResponse) => {
+      const encounter = encounterMap.get(row.encounterId);
+      return encounter?.encounterNumber || row.encounterId || '-';
+    }
+  },
+  {
+    key: 'visitDate',
+    title: <Translate>Visit Date</Translate>,
+    flexGrow: 3,
+    render: (row: PreAuthorizationTrackingResponse) => {
+      const encounter = encounterMap.get(row.encounterId);
+      return formatDateWithoutSeconds(encounter?.createdDate) || '-';
+    }
   },
   {
     key: 'patientInsuranceId',
     title: <Translate>Insurance ID</Translate>,
-    flexGrow: 2
+    flexGrow: 2,
+    render: (row: PreAuthorizationTrackingResponse) => row.patientInsuranceId || '-'
   },
   {
     key: 'eligibilityResponseId',
@@ -123,7 +177,8 @@ export const getPreAuthorizationColumns = (
     key: 'createdDate',
     title: <Translate>Created Date</Translate>,
     flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.createdDate || '-'
+    render: (row: PreAuthorizationTrackingResponse) =>
+      formatDateWithoutSeconds(row.createdDate) || '-'
   },
   {
     key: 'action',

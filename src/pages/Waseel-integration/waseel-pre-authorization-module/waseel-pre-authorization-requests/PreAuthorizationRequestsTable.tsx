@@ -11,6 +11,7 @@ type PreAuthorizationRequestsTableProps = {
   page: number;
   rowsPerPage: number;
   totalCount: number;
+  loading: boolean;
   rowClassName: (row: PreAuthorizationTrackingResponse) => string;
   onRowClick: (row: PreAuthorizationTrackingResponse) => void;
   onPageChange: (_: unknown, newPage: number) => void;
@@ -25,6 +26,7 @@ const PreAuthorizationRequestsTable: React.FC<PreAuthorizationRequestsTableProps
   page,
   rowsPerPage,
   totalCount,
+  loading,
   rowClassName,
   onRowClick,
   onPageChange,
@@ -35,7 +37,7 @@ const PreAuthorizationRequestsTable: React.FC<PreAuthorizationRequestsTableProps
     data={data}
     columns={columns}
     rowClassName={rowClassName}
-    loading={false}
+    loading={loading}
     onRowClick={onRowClick}
     filters={filters}
     page={page}

@@ -4884,6 +4884,7 @@ export type CancelReason =
   | 'TRANSACTION_ALREADY_SUBMITTED';
 
 export type PreAuthorizationCancelRequest = {
+  preAuthorizationId?: number;
   approvalRequestId?: number;
   cancelReason?: CancelReason;
 };

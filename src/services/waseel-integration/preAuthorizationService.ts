@@ -77,12 +77,16 @@ export const preAuthorizationApi = createApi({
       ]
     }),
 
-    searchPreAuthorization: builder.query<unknown, { requestId: number }>({
-      query: ({ requestId }) => ({
+    searchPreAuthorization: builder.mutation<
+      unknown,
+      { preAuthorizationId: number; requestId: number }
+    >({
+      query: ({ preAuthorizationId, requestId }) => ({
         url: '/api/patient/internal/waseel/pre-authorizations/search',
         method: 'GET',
-        params: { requestId }
+        params: { preAuthorizationId, requestId }
       }),
+      invalidatesTags: ['PreAuthorizationTracking'],
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
@@ -136,7 +140,7 @@ export const preAuthorizationApi = createApi({
 export const {
   useGetPreAuthorizationTrackingQuery,
   useGetPreAuthorizationTrackingByIdQuery,
-  useLazySearchPreAuthorizationQuery,
+  useSearchPreAuthorizationMutation,
   useCommunicatePreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
   useCheckEncounterEligibilityMutation

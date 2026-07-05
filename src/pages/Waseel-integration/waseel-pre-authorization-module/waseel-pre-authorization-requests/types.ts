@@ -49,11 +49,7 @@ export type FilterOption = {
 };
 
 export const filterOptions: FilterOption[] = [
-  { label: 'Pre-Auth ID', value: 'preAuthId', type: 'text' },
   { label: 'Approval Number', value: 'approvalNumber', type: 'text' },
-  { label: 'Encounter ID', value: 'encounterId', type: 'text' },
-  { label: 'Patient ID', value: 'patientId', type: 'text' },
-  { label: 'Insurance ID', value: 'patientInsuranceId', type: 'text' },
   { label: 'Status', value: 'status', type: 'select', data: statusOptions },
   { label: 'Outcome', value: 'outcome', type: 'select', data: outcomeOptions },
   { label: 'Request Date From', value: 'requestDateFrom', type: 'date' },

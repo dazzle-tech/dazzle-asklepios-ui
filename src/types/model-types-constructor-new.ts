@@ -3270,6 +3270,7 @@ export const newPreAuthorizationCommunicationRequest: modelTypes.PreAuthorizatio
 };
 
 export const newPreAuthorizationCancelRequest: modelTypes.PreAuthorizationCancelRequest = {
+  preAuthorizationId: undefined,
   approvalRequestId: undefined,
   cancelReason: undefined
 };
