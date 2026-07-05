@@ -416,7 +416,7 @@ const handleBookAppointment = async () => {
       msg: 'Appointment booked successfully',
       sev: 'success'
     }));
-
+    setAgendaSlotConfirmOpen(false);
   } catch (error: any) {
     dispatch(notify({
       msg: extractErrorMessage(error) || 'Failed to load appointments',
