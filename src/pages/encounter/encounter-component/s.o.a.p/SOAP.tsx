@@ -105,7 +105,12 @@ const SOAP = props => {
 
   const saveChanges = async () => {
     if (!localEncounter?.chiefComplaint?.trim()) {
-      dispatch(notify({ msg: 'Chief Complaint cannot be empty.', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Chief Complaint cannot be empty.',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
@@ -113,11 +118,20 @@ const SOAP = props => {
       const idToUpdate = localEncounter?.id ?? encounterId;
 
       if (!idToUpdate) {
-        dispatch(notify({ msg: 'No encounter id to update', sev: 'error' }));
+        dispatch(
+          notify({
+            msg: 'No encounter id to update',
+            sev: 'error'
+          })
+        );
         return;
       }
 
-      const payload = toEncounterPayload(localEncounter);
+      const payload = {
+        ...toEncounterPayload(localEncounter),
+        physicalExaminationSummery:
+          encounterFromServer?.physicalExaminationSummery ?? null
+      };
 
       if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
         dispatch(
@@ -129,7 +143,10 @@ const SOAP = props => {
         return;
       }
 
-      if (payload.encounterReason === 'FOLLOW_UP' && !payload.followUpEncounterId) {
+      if (
+        payload.encounterReason === 'FOLLOW_UP' &&
+        !payload.followUpEncounterId
+      ) {
         dispatch(
           notify({
             msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
@@ -145,9 +162,75 @@ const SOAP = props => {
       }).unwrap();
 
       setLocalEncounter(updatedEncounter);
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Saved Successfully',
+          sev: 'success'
+        })
+      );
     } catch {
-      dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: 'Save Failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const savePhysicalExamination = async () => {
+    try {
+      const idToUpdate = localEncounter?.id ?? encounterId;
+
+      if (!idToUpdate) {
+        dispatch(
+          notify({
+            msg: 'No encounter id to update',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const payload = {
+        ...toEncounterPayload(localEncounter),
+        chiefComplaint:
+          encounterFromServer?.chiefComplaint ??
+          nurseComplaints?.reasonOfVisit ??
+          null
+      };
+
+      if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
+        dispatch(
+          notify({
+            msg: 'Missing required fields: patientId / facilityId / departmentId',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const updatedEncounter = await updateEncounter({
+        id: idToUpdate,
+        body: payload
+      }).unwrap();
+
+      setLocalEncounter(updatedEncounter);
+
+      dispatch(
+        notify({
+          msg: 'Saved Successfully',
+          sev: 'success'
+        })
+      );
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Save Failed',
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -217,14 +300,15 @@ const SOAP = props => {
                           showLabel={false}
                           fieldType="textarea"
                           fieldName="physicalExaminationSummery"
-                          record={{
-                            physicalExaminationSummery:
-                              localEncounter?.physicalExaminationSummery || ''
-                          }}
-                          setRecord={() => { }}
-                          disabled
+                          record={localEncounter}
+                          setRecord={setLocalEncounter}
                         />
                       </Form>
+                    }
+                    action={
+                      <MyButton size="small" onClick={savePhysicalExamination}>
+                        Save
+                      </MyButton>
                     }
                   />
                 </div>

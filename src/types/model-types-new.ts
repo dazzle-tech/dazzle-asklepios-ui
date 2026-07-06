@@ -1557,7 +1557,7 @@ export interface Patient {
   secondNameSecondaryLang?: string | null;
   thirdNameSecondaryLang?: string | null;
   lastNameSecondaryLang?: string | null;
-  
+
   primaryMobileNumber?: string | null;
   receiveSms?: boolean | null;
   secondMobileNumber?: string | null;
@@ -2253,7 +2253,7 @@ export interface PatientEncounter {
   status: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
-  historyOfPresentIllness?:string |null;
+  historyOfPresentIllness?: string | null;
 
 }
 
@@ -2435,7 +2435,7 @@ export interface PatientEncounter {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
-  historyOfPresentIllness?: string|null;
+  historyOfPresentIllness?: string | null;
 }
 
 
@@ -2716,7 +2716,7 @@ export interface PatientEncounter {
   hasOrder: boolean;
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
-    historyOfPresentIllness?: string|null;
+  historyOfPresentIllness?: string | null;
 }
 
 export interface PatientPaymentServiceItemDTO {
@@ -4847,7 +4847,11 @@ export type RecipientRule =
   | 'DATA'
   | 'STATIC'
   | 'PRACTITIONER_USER'
-  | 'DEPARTMENT_USERS';
+  | 'DEPARTMENT_USERS'
+  | 'CURRENT_USER'
+  | 'CURRENT_USER_PHONE'
+  | 'CREATED_BY_USER'
+  | 'CREATED_BY_USER_PHONE';
 
 export interface NotificationHeaderResponseVM {
   id?: number;

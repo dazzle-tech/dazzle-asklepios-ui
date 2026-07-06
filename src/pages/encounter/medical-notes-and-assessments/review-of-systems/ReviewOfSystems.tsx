@@ -232,8 +232,6 @@ const handleClearSection = async () => {
       <Panel>
         <Grid fluid>
           <div className="top-div">
-         
-
             <div className="bt-right">
               <MyButton
                 disabled={!selectedSystem?.key}
@@ -242,64 +240,52 @@ const handleClearSection = async () => {
                 Clear
               </MyButton>
 
-              <MyButton
-                onClick={() => setOpenModel(true)}
-                prefixIcon={() => <icons.List />}
-              >
-                Findings
-              </MyButton>
+            <MyButton
+              onClick={() => {
+                setOpenModel(!openModel);
+              }}
+              prefixIcon={() => <icons.List />}
+            >
+              Findings
+            </MyButton>
             </div>
           </div>
 
           <div className="details-style">
+            {openModel && (
+              <div className="summary-popup">
+                <Summary
+                  list={rosList}
+                  encounter={encounter}
+                  setEncounter={setEncounter}
+                  system={bodySystemsLovQueryResponse}
+                />
+              </div>
+            )}
+          <div className="system-container">
             <div className="system-style">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}
-                  showArrow={true}
+                  showArrow
                   leftArrow={false}
                   arrowClick={() => setSelectedSystem(item)}
                   footerContant={item.lovDisplayVale}
                   isSelected={selectedSystem?.key === item.key}
-
                 />
               ))}
             </div>
 
             <div className="system-details">
-
-                {openModel && (
-                    <div className="mb-3">
-                        <Summary
-                            list={rosList}
-                            encounter={encounter}
-                            setEncounter={setEncounter}
-                            system={bodySystemsLovQueryResponse}
-                        />
-                    </div>
-                )}
-
-                <MyTable
-                    tablefilters={
-                        <>                
-                          {openModel && (
-                            <div className="mb-3">
-                                <Summary
-                                    list={rosList}
-                                    encounter={encounter}
-                                    setEncounter={setEncounter}
-                                    system={bodySystemsLovQueryResponse}
-                                />
-                            </div>
-                        )}</>}
-                    data={paginatedData}
-                    columns={tableColumns}
-                    loading={rosLoading}
-                />
-
+              <MyTable
+                data={paginatedData}
+                columns={tableColumns}
+                loading={rosLoading}
+              />
             </div>
           </div>
-        </Grid> 
+          </div>
+        </Grid>
       </Panel>
     </>
   );
