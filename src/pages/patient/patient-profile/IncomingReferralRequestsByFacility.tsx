@@ -12,9 +12,8 @@ import {
     useRejectReferralRequestMutation
 } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
 import { useAppSelector } from '@/hooks';
 import { useDispatch } from 'react-redux';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -122,7 +121,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         skip: !queryArgs
     });
 
-    const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+const { data: departmentsResponse } =
+  useGetAllDepartmentsWithoutPaginationQuery(undefined, {
+    skip: !open
+  });
 
     const {
         data: facilitiesResponse,
@@ -159,58 +161,22 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         setFacilityMap(map);
     }, [facilitiesResponse, open]);
 
-    useEffect(() => {
-        let cancelled = false;
+        useEffect(() => {
+        if (!open) return;
 
-        const loadDepartments = async () => {
-            if (!open) return;
+        if (!departmentsResponse?.length) {
+            setDepartmentsMap({});
+            return;
+        }
 
-            if (!tableData.length) {
-                if (!cancelled) {
-                    setDepartmentsMap({});
-                    setDepartmentsLoading(false);
-                }
-                return;
-            }
+        const map: Record<number, string> = {};
 
-            const uniqueIds = Array.from(
-                new Set(
-                    tableData
-                        .flatMap((row: any) => [row.fromDepartmentId, row.toDepartmentId])
-                        .filter((id): id is number => id != null && Number(id) > 0)
-                )
-            );
+        departmentsResponse.forEach((department: any) => {
+            map[department.id] = department.name ?? '';
+        });
 
-            if (!uniqueIds.length) {
-                if (!cancelled) {
-                    setDepartmentsMap({});
-                    setDepartmentsLoading(false);
-                }
-                return;
-            }
-
-            try {
-                if (!cancelled) setDepartmentsLoading(true);
-                const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-
-                if (cancelled) return;
-
-                setDepartmentsMap(
-                    Object.fromEntries((departments ?? []).map((d: any) => [d.id, d.name ?? '']))
-                );
-            } catch {
-                if (!cancelled) setDepartmentsMap({});
-            } finally {
-                if (!cancelled) setDepartmentsLoading(false);
-            }
-        };
-
-        loadDepartments();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [tableData, getDepartmentsBulk, open]);
+        setDepartmentsMap(map);
+        }, [departmentsResponse, open]);
 
     const patientIdsForBulk = useMemo(() => {
         const ids = (tableData as any[])
@@ -482,10 +448,10 @@ const handleBookAppointment = async () => {
             }
         },
         {
-            key: 'toDepartmentId',
-            title: <Translate>Department</Translate>,
-            flexGrow: 2,
-            render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
+        key: 'toDepartmentId',
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
         },
         {
             key: 'priority',
