@@ -1,6 +1,7 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -9,6 +10,12 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+import {
+  useCancelPatientPrescriptionMutation,
+  useGetPatientPrescriptionQuery,
+  useSubmitPatientPrescriptionMutation
+} from '@/services/patients/Prescription/patientPrescriptionService';
+import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faChartLine,
@@ -41,6 +48,7 @@ import PatientHistorySummaryModal from '../encounter-component/patient-history/M
 import AiAssistantPopup from './AiAssistantPopup';
 import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
 
 type EncounterModalProps = {
   patient?: any;
@@ -199,6 +207,45 @@ const Encounter = ({
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
+  const [showDraftPrescriptionModal, setShowDraftPrescriptionModal] = useState(false);
+  const [pendingDraftPrescription, setPendingDraftPrescription] = useState<any>(null);
+  const [isDraftPrescriptionActionInProgress, setIsDraftPrescriptionActionInProgress] = useState(false);
+
+  const [submitPrescription] = useSubmitPatientPrescriptionMutation();
+  const [cancelPrescription] = useCancelPatientPrescriptionMutation();
+
+  const patientIdForPrescriptions = patientToSend?.id ?? patientToSend?.key ?? null;
+  const encounterIdForPrescriptions = propsData?.encounter?.id ?? localEncounter?.id ?? null;
+
+  const { data: patientPrescriptionsResponse } = useGetPatientPrescriptionQuery(
+    {
+      patientId: patientIdForPrescriptions ? Number(patientIdForPrescriptions) : undefined,
+      encounterId: encounterIdForPrescriptions ? Number(encounterIdForPrescriptions) : undefined,
+      page: 0,
+      size: 500,
+      sort: 'prescriptionNum,desc'
+    },
+    { skip: !patientIdForPrescriptions || !encounterIdForPrescriptions }
+  );
+
+  const draftPrescriptions = useMemo(() => {
+    const list = patientPrescriptionsResponse?.data ?? [];
+    return list.filter((item: any) => String(item?.status ?? '').toUpperCase() === 'DRAFT');
+  }, [patientPrescriptionsResponse]);
+
+  const selectedDraftPrescription = draftPrescriptions?.[0] ?? pendingDraftPrescription;
+
+  const { data: draftMedicationResponse } = useGetPatientPrescriptionMedicationsQuery(
+    selectedDraftPrescription?.id
+      ? { prescriptionHeaderId: Number(selectedDraftPrescription.id), page: 0, size: 200, sort: 'id,desc' }
+      : (undefined as any),
+    { skip: !selectedDraftPrescription?.id }
+  );
+
+  const draftPrescriptionMedications = useMemo(() => {
+    const list = (draftMedicationResponse as any)?.data ?? [];
+    return Array.isArray(list) ? list : [];
+  }, [draftMedicationResponse]);
 
   useEffect(() => {
     if (location.state?.fromPage) {
@@ -268,7 +315,7 @@ useEffect(() => {
     };
   }, [patientToSend, encounterId]);
 
-  const handleCompleteEncounter = async () => {
+  const completeEncounterNow = async () => {
     try {
       if (propsData?.encounter) {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
@@ -284,6 +331,49 @@ useEffect(() => {
       const msg = errorMap[backendMessage] || 'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  const handleSubmitEncounter = async () => {
+    const draftPrescription = draftPrescriptions?.[0];
+
+    if (draftPrescription?.id) {
+      setPendingDraftPrescription(draftPrescription);
+      setShowDraftPrescriptionModal(true);
+      return;
+    }
+
+    await completeEncounterNow();
+  };
+
+  const handleDraftPrescriptionAction = async (action: 'submit' | 'cancel') => {
+    if (!pendingDraftPrescription?.id) {
+      await completeEncounterNow();
+      return;
+    }
+
+    setIsDraftPrescriptionActionInProgress(true);
+
+    try {
+      if (action === 'submit') {
+        await submitPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
+        dispatch(notify({ msg: 'Prescription submitted successfully', sev: 'success' }));
+      } else {
+        await cancelPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
+        dispatch(notify({ msg: 'Prescription cancelled', sev: 'info' }));
+      }
+
+      setShowDraftPrescriptionModal(false);
+      setPendingDraftPrescription(null);
+      await completeEncounterNow();
+    } catch (error: any) {
+      const message =
+        action === 'submit'
+          ? 'Failed to submit prescription draft'
+          : 'Failed to cancel prescription draft';
+      dispatch(notify({ msg: error?.message || message, sev: 'error' }));
+    } finally {
+      setIsDraftPrescriptionActionInProgress(false);
     }
   };
 
@@ -554,7 +644,7 @@ useEffect(() => {
                         return;
                       }
 
-                      handleCompleteEncounter();
+                      handleSubmitEncounter();
                     } catch (error) {
                       console.error('Diagnosis check error:', error);
                       dispatch(
@@ -737,6 +827,17 @@ useEffect(() => {
         open={openSickLeaveModal}
         setOpen={setOpenSickLeaveModal}
         encounterId={encounterId ?? localEncounter?.id ?? null}
+      />
+
+      <IncompletePrescriptionModal
+        open={showDraftPrescriptionModal}
+        setOpen={setShowDraftPrescriptionModal}
+        prescription={selectedDraftPrescription}
+        medications={draftPrescriptionMedications}
+        loading={isDraftPrescriptionActionInProgress}
+        onSubmit={() => handleDraftPrescriptionAction('submit')}
+        onCancel={() => handleDraftPrescriptionAction('cancel')}
+        onClose={() => setPendingDraftPrescription(null)}
       />
 
       <EncounterDischarge
