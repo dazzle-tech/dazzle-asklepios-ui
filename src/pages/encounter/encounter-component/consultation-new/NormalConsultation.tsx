@@ -355,6 +355,14 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'consultationType',
+        title: <Translate>CONSULTATION TYPE</Translate>,
+        flexGrow: 1,
+        render: (rowData: Consultation) => (
+          <span>{formatEnumString(String(rowData.consultationType ?? ''))}</span>
+        )
+      },
+      {
         key: 'created',
         title: <Translate>Created By / At</Translate>,
         expandable: true,

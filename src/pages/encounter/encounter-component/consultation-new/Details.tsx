@@ -277,7 +277,7 @@ const Details = ({
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+  const consultationType = useEnumOptions('ConsultationType');
   const consultationLevel = useEnumOptions('ConsultationLevel');
 
   const [createConsultation] = useCreateMutation();
@@ -828,9 +828,9 @@ const Details = ({
                       width={'12vw'}
                       fieldType="select"
                       fieldLabel="Consultation Type"
-                      selectData={consultationTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
+                      selectData={consultationType ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
                       fieldName={'consultationType'}
                       record={formData}
                       setRecord={setFormData}
