@@ -27,7 +27,7 @@ type AddToWaitingListModalProps = {
   facilityId?: number | string | null;
   departmentId?: number | null;
   departmentOptions?: any[];
-  onCreated?: () => void | Promise<void>;
+  onCreated?: (created: { departmentId: number }) => void | Promise<void>;
 };
 
 const emptyForm = () => {
@@ -336,7 +336,7 @@ const AddToWaitingListModal = ({
       await createWaitingList(body).unwrap();
       dispatch(notify({ msg: 'Patient added to waiting list.', sev: 'success' }));
       handleClose();
-      await onCreated?.();
+      await onCreated?.({ departmentId: deptId });
     } catch (error) {
       dispatch(
         notify({

@@ -240,6 +240,17 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
   const { data: waitingListData, isFetching, refetch } = useGetAppointmentWaitingListQuery(queryArgs);
   const waitingList = waitingListData ?? EMPTY_WAITING_LIST;
 
+  const isWaitingListQueryActive = queryArgs !== skipToken;
+
+  const safeRefetchWaitingList = useCallback(async () => {
+    if (!isWaitingListQueryActive) return;
+    try {
+      await refetch();
+    } catch {
+      // Query may not be subscribed yet when department filter was empty.
+    }
+  }, [isWaitingListQueryActive, refetch]);
+
   useEffect(() => {
     if (!waitingList.length) return;
     setFirstSeenAtByEntryId(prev => {
@@ -486,7 +497,7 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
         delete next[entryId];
         return next;
       });
-      await refetch();
+      await safeRefetchWaitingList();
       await onBooked?.();
     } catch (error) {
       dispatch(
@@ -539,7 +550,7 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
         delete next[entryId];
         return next;
       });
-      await refetch();
+      await safeRefetchWaitingList();
       await onBooked?.();
     } catch (error) {
       dispatch(
@@ -857,8 +868,18 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
         facilityId={facilityId}
         departmentId={filterDepartmentId}
         departmentOptions={departmentOptions}
-        onCreated={async () => {
-          await refetch();
+        onCreated={async created => {
+          const createdDeptId = Number(created?.departmentId ?? 0);
+          if (Number.isFinite(createdDeptId) && createdDeptId > 0) {
+            if (filterDepartmentId !== createdDeptId) {
+              userChangedDepartmentFilterRef.current = true;
+              setFilterDepartmentId(createdDeptId);
+            } else {
+              await safeRefetchWaitingList();
+            }
+          } else {
+            await safeRefetchWaitingList();
+          }
           await onBooked?.();
         }}
       />
