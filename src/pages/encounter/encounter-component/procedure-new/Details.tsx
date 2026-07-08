@@ -689,7 +689,6 @@ const Details = ({
                         record={procedure}
                         setRecord={setProcedure}
                         required
-                        disablePastDates
                       />
                     }
                   />
