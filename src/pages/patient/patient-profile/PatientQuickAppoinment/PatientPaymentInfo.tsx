@@ -20,7 +20,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import * as modelTypes from '@/types/model-types-new';
 import { PatientInsurance } from '@/types/model-types-new';
 import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
-
+import { useCalculateInsuranceAmountMutation } from '@/services/encounters/patientPaymentsService';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 
 import {
@@ -349,6 +349,22 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       { patientId: effectivePatientId },
       { skip: !effectivePatientId }
     );
+
+    useEffect(() => {
+      if (!isInsurancePlan) return;
+
+      const copay = Number(payment?.copayAmount ?? 0);
+      const amount = Number(payment?.amount ?? 0);
+
+      if (amount > copay) {
+        dispatch(
+          notify({
+            msg: `Payment exceeds copay (${copay})`,
+            sev: 'warning'
+          })
+        );
+      }
+    }, [payment.amount, payment.copayAmount]);
 
     useEffect(() => {
       const summary: modelTypes.PatientLedgerSummaryDTO | undefined =
@@ -848,6 +864,42 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       );
     };
 
+    const [calculateInsuranceAmount, { isLoading: calculatingInsuranceAmount }] =
+      useCalculateInsuranceAmountMutation();
+    const handleCalculateInsuranceAmount = async () => {
+      try {
+        if (!isInsurancePlan) return;
+        if (!payment?.patientId || !payment?.encounterId) return;
+        if ((servicesRows ?? []).length === 0) return;
+
+        const dto: modelTypes.PatientPaymentDTO = {
+          patientId: payment.patientId,
+          encounterId: payment.encounterId,
+          planId: payment.planId ?? null,
+          paymentTypes: payment.paymentTypes,
+          paymentMethods: payment.paymentMethods,
+          currency: payment.currency,
+          facilityDefaultCurrency: payment.facilityDefaultCurrency,
+
+          services: (servicesRows ?? []).map(serviceRow => ({
+            serviceId: Number((serviceRow as any).serviceId ?? 0),
+            price: Number((serviceRow as any).price ?? 0),
+            isExempted: Boolean((serviceRow as any).isExempted)
+          }))
+        };
+
+        const result = await calculateInsuranceAmount({ body: dto }).unwrap();
+        console.log('Insurance calculation result:', result);
+
+        setPayment((prev: any) => ({
+          ...prev,
+          copayAmount: Number(result.patientShare),
+          amount: Number(result.patientShare)
+        }));
+      } catch (err) {
+        console.error('Insurance calculation failed', err);
+      }
+    };
     const handleConfirm = async () => {
       const hasBillableServices = uiDueAmount > 0;
 
@@ -950,8 +1002,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           )
           .map(
             field =>
-              `• ${PAYMENT_FIELD_LABELS[field] ?? field}: ${
-                validationDetails[field]?.[0]?.message ?? 'is required'
+              `• ${PAYMENT_FIELD_LABELS[field] ?? field}: ${validationDetails[field]?.[0]?.message ?? 'is required'
               }`
           );
 
@@ -1012,6 +1063,13 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     const hasServices = servicesRows.length > 0;
 
+    useEffect(() => {
+      if (!isInsurancePlan) return;
+
+      handleCalculateInsuranceAmount();
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [payment.paymentTypes, payment.planId, servicesRows]);
     return (
       <Form fluid layout="inline" className="fields-container" dir={dir}>
         <MyInput
@@ -1227,7 +1285,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="text"
               fieldName="payorName"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
             <MyInput
               column
@@ -1236,7 +1294,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="text"
               fieldName="planName"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
             <MyInput
               column
@@ -1245,7 +1303,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="number"
               fieldName="policyNumber"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
             <MyInput
               column
@@ -1254,7 +1312,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="number"
               fieldName="groupNumber"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
             <MyInput
               column
@@ -1263,7 +1321,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="date"
               fieldName="expirationDate"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
             <MyInput
               column
@@ -1272,7 +1330,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               fieldType="checkbox"
               fieldName="isPrimary"
               record={patientInsurance as any}
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
           </>
         ) : null}
@@ -1399,15 +1457,54 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
         <Form layout="inline" fluid className="fields-container">
           <MyInput
+            column
+            disabled={true}
+            fieldLabel="Copay Amount"
+            fieldName="copayAmount"
+            record={payment}
+            setRecord={() => { }}
+          />
+          <MyInput
             vr={validationResult}
             column
-            fieldLabel="Amount"
+            fieldLabel="Payment Amount"
             fieldType="number"
             fieldName="amount"
             record={payment}
-            setRecord={setPayment}
+            setRecord={(updated: any) => {
+              const value = Number(updated.amount ?? 0);
+
+              if (value < 0) return;
+
+              setPayment({
+                ...updated,
+                amount: value
+              });
+            }}
             disabled={isReadOnly || isLocked || !hasServices}
-            required
+          />
+
+
+          {isInsurancePlan && (
+            <div style={{ marginTop: 8, color: '#2f7d32', fontWeight: 500 }}>
+              Patient amount is calculated automatically based on insurance coverage
+            </div>
+          )}
+
+          <MyInput
+            column
+            disabled={true}
+            fieldLabel="Remaining Amount"
+            fieldName="remainingPreview"
+            record={{
+              remainingPreview:
+                Math.max(
+                  Number(payment?.copayAmount ?? 0) -
+                  Number(payment?.amount ?? 0),
+                  0
+                )
+            }}
+            setRecord={() => { }}
           />
 
           <MyInput
@@ -1441,7 +1538,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             selectDataLabel="label"
             selectDataValue="value"
             record={payment}
-            setRecord={() => {}}
+            setRecord={() => { }}
             disabled={true}
             searchable={false}
           />
