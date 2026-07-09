@@ -141,17 +141,20 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             >
               New Order
             </MyButton>
-
+            
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}
-              onClick={() => setOrders({ ...orders, isUrgent: !orders.isUrgent })}
-              backgroundColor={orders.isUrgent ? 'var(--primary-orange)' : 'var(--primary-blue)'}
+              onClick={() => {
+                setOrders({
+                  ...orders,
+                  isUrgent: !(orders?.isUrgent ?? false)
+                });
+              }}
+              backgroundColor={orders?.isUrgent ? 'var(--primary-orange)' : 'var(--primary-blue)'}
               disabled={
-                edit
-                  ? true
-                  : orders.id
-                    ? orders?.status !== 'NEW' && orders?.statusLkey !== '164797574082125'
-                    : true
+                edit ||
+                !orders?.id ||
+                (orders?.status !== 'NEW' && orders?.statusLkey !== '164797574082125')
               }
             >
               Urgent
