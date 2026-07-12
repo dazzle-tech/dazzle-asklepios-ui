@@ -12,6 +12,7 @@ import {
   useBulkRejectDiagnosticOrderTestsMutation,
   useFilterDiagnosticOrderTestsQuery,
   useRejectDiagnosticOrderTestMutation,
+  useCancelDiagnosticOrderTestMutation,
   useUndoAcceptDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
@@ -33,7 +34,7 @@ import {
 } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faCalendarCheck, faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay , faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
@@ -89,9 +90,22 @@ const Tests = forwardRef<any, Props>(
     const [openUndoAcceptModal, setOpenUndoAcceptModal] = useState(false);
     const [undoAcceptReason, setUndoAcceptReason] = useState('');
     const [undoAcceptTargetId, setUndoAcceptTargetId] = useState<number | null>(null);
+
+    const [openCancelModal, setOpenCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+    const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
+
+
     const [rescheduleAppointmentsModalOpen, setRescheduleAppointmentsModalOpen] = useState(false);
     const [selectedOrderTestForReschedule, setSelectedOrderTestForReschedule] = useState<any>(null);
 
+
+    const handleCancelClick = (rowData: any) => {
+      setCancelTargetId(rowData.id);
+      setTest(rowData);
+      setCancelReason('');
+      setOpenCancelModal(true);
+    };
 
 
     const notifyFromApiError = (e: any) => {
@@ -223,11 +237,15 @@ const Tests = forwardRef<any, Props>(
       fetchTest
     }));
 
+    const [cancelTest] = useCancelDiagnosticOrderTestMutation();
     const [acceptTest] = useAcceptDiagnosticOrderTestMutation();
     const [rejectTest] = useRejectDiagnosticOrderTestMutation();
     const [undoAcceptTest, { isLoading: isUndoing }] = useUndoAcceptDiagnosticOrderTestMutation();
     const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
     const [bulkRejectReason, setBulkRejectReason] = useState('');
+
+
+
 
     const testsMap = useMemo(() => {
       return new Map(allTests.map(t => [t.id, t]));
@@ -611,6 +629,9 @@ const Tests = forwardRef<any, Props>(
               {isPaused ? 'Resume' : 'Pause'}
             </Dropdown.Item>
 
+
+
+
             <Dropdown.Item
               icon={<FontAwesomeIcon icon={faCircleStop} />}
               disabled={!isRunning}
@@ -759,7 +780,6 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) => {
           const rowId = rowData.id;
-
           const isRescheduled = isRescheduledTest(rowData);
 
           return (
@@ -917,29 +937,40 @@ const Tests = forwardRef<any, Props>(
         render: (rowData: any) => {
           const isRescheduled = isRescheduledTest(rowData);
 
+          const isCancelled =
+            rowData.processingStatus === DiagnosticOrderTestStatus.CANCELLED;
+
           const canAccept =
             !isRescheduled &&
+            !isCancelled &&
             rowData.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
 
           const canUndoAccept =
             !isRescheduled &&
+            !isCancelled &&
             rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED &&
             !rowData.imageStatus;
 
           const canReject =
             !isRescheduled &&
+            !isCancelled &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.ACCEPTED &&
-            rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_READY &&
+            rowData.processingStatus !== DiagnosticOrderTestStatus.EXAM_DONE &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
 
+          const canCancel =
+            !isRescheduled &&
+            !isCancelled;
 
           const canReschedule =
             !isRescheduled &&
+            !isCancelled &&
             [
               DiagnosticOrderTestStatus.NEW,
               DiagnosticOrderTestStatus.REJECTED
             ].includes(rowData.processingStatus);
+
           const rescheduleTooltip = canReschedule
             ? 'Reschedule appointment'
             : 'Reschedule not available';
@@ -951,12 +982,13 @@ const Tests = forwardRef<any, Props>(
           const rescheduleCursor = canReschedule
             ? 'pointer'
             : 'not-allowed';
+
           return (
             <HStack spacing={8}>
               <Whisper speaker={<Tooltip>Accept</Tooltip>}>
                 <span>
                   <CheckRoundIcon
-                    className='icon-radiologist-worklist-size'
+                    className="icon-radiologist-worklist-size"
                     style={{
                       cursor: canAccept ? 'pointer' : 'not-allowed',
                       opacity: canAccept ? 1 : 0.4
@@ -973,7 +1005,7 @@ const Tests = forwardRef<any, Props>(
               <Whisper speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <span>
                   <ReloadIcon
-                    className='icon-radiologist-worklist-size'
+                    className="icon-radiologist-worklist-size"
                     style={{
                       cursor: canUndoAccept ? 'pointer' : 'not-allowed',
                       opacity: canUndoAccept ? 1 : 0.4,
@@ -990,7 +1022,7 @@ const Tests = forwardRef<any, Props>(
               <Whisper speaker={<Tooltip>Reject</Tooltip>}>
                 <span>
                   <WarningRoundIcon
-                    className='icon-radiologist-worklist-size'
+                    className="icon-radiologist-worklist-size"
                     style={{
                       cursor: canReject ? 'pointer' : 'not-allowed',
                       opacity: canReject ? 1 : 0.4
@@ -1003,7 +1035,31 @@ const Tests = forwardRef<any, Props>(
                   />
                 </span>
               </Whisper>
-              <Whisper placement="top" speaker={<Tooltip>{rescheduleTooltip}</Tooltip>}>
+
+              <Whisper speaker={<Tooltip>Cancellation</Tooltip>}>
+                <span>
+                  <FontAwesomeIcon
+                    icon={faXmark}
+                    className="icon-radiologist-worklist-size"
+                    style={{
+                      color: canCancel ? '#dc3545' : '#bdbdbd',
+                      cursor: canCancel ? 'pointer' : 'not-allowed',
+                      opacity: canCancel ? 1 : 0.4,
+                      fontSize: '20px'
+                    }}
+                    onClick={() => {
+                      if (!canCancel) return;
+                      setTest(rowData);
+                      handleCancelClick(rowData);
+                    }}
+                  />
+                </span>
+              </Whisper>
+
+              <Whisper
+                placement="top"
+                speaker={<Tooltip>{rescheduleTooltip}</Tooltip>}
+              >
                 <FontAwesomeIcon
                   icon={faCalendarCheck}
                   className="icons-styles"
@@ -1018,7 +1074,11 @@ const Tests = forwardRef<any, Props>(
                   }}
                 />
               </Whisper>
-              <ThreeDotsMenu rowData={rowData} disabled={isRescheduled} />
+
+              <ThreeDotsMenu
+                rowData={rowData}
+                disabled={isRescheduled || isCancelled}
+              />
             </HStack>
           );
         }
@@ -1072,6 +1132,25 @@ const Tests = forwardRef<any, Props>(
         expandable: true,
         width: 220,
         render: (rowData: any) => rowData.undoAcceptReason ?? '-'
+      },
+            {
+        key: 'cancelledAtBy',
+        title: <Translate>CANCELLED BY/AT</Translate>,
+        expandable: true,
+        width: 180,
+        render: (rowData: any) => (
+          <UserDateCell
+            login={rowData.cancelledBy}
+            date={rowData.cancelledDate}
+          />
+        )
+      },
+      {
+        key: 'cancellationReason',
+        title: <Translate>CANCELLATION REASON</Translate>,
+        expandable: true,
+        width: 220,
+        render: (rowData: any) => rowData.cancellationReason ?? '-'
       }
     ];
 
@@ -1199,6 +1278,64 @@ const Tests = forwardRef<any, Props>(
     }, [orderTests, refetchAllRadData]);
 
 
+
+    const handleCancelConfirm = async () => {
+  if (!cancelTargetId) {
+    dispatch(
+      notify({
+        msg: 'No test selected',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (!cancelReason.trim()) {
+    dispatch(
+      notify({
+        msg: 'Cancellation Reason is required',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  try {
+    await cancelTest({
+      id: cancelTargetId,
+      body: {
+        cancellationReason: cancelReason.trim()
+      }
+    }).unwrap();
+
+    dispatch(
+      notify({
+        msg: 'Test cancelled successfully',
+        sev: 'success'
+      })
+    );
+
+    setOpenCancelModal(false);
+    setCancelReason('');
+    setCancelTargetId(null);
+
+    await refetchAllRadData();
+  } catch (e: any) {
+    const backendMessage =
+      e?.data?.detail ||
+      e?.data?.message ||
+      e?.error ||
+      'Cancellation failed';
+
+    dispatch(
+      notify({
+        msg: backendMessage,
+        sev: 'error'
+      })
+    );
+  }
+      };
+
     // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -1291,6 +1428,21 @@ const Tests = forwardRef<any, Props>(
             facilityId={selectedDepartment?.facilityId}
             onClose={() => setSelectedOrderTestForReschedule(null)}
             onSuccess={refetchAllRadData}
+          />
+
+
+          <CancellationModal
+            open={openCancelModal}
+            setOpen={setOpenCancelModal}
+            fieldName="cancellationReason"
+            object={{ cancellationReason: cancelReason }}
+            setObject={(obj: any) =>
+              setCancelReason(obj.cancellationReason)
+            }
+            fieldLabel="Cancellation Reason"
+            title="Cancellation"
+            required
+            handleCancle={handleCancelConfirm}
           />
 
         </Panel>
