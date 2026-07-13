@@ -132,7 +132,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     saveDepartment(dataToSave)
       .unwrap()
       .then(() => {
-        resetToAddMode();
+        // resetToAddMode();
         dispatch(notify({ msg: 'The Department has been saved successfully', sev: 'success' }));
         refetchUserDepartments();
       })

@@ -139,11 +139,12 @@ const BookPatient = ({
             appointmentData.encounterReason ??
             appointmentData.visitTypeLkey) === 'FOLLOW_UP'
             ? appointmentData.followUpEncounterId ??
+              appointmentData.followUpEncounter?.id ??
               appointmentData.previousEncounterId ??
               prev.followUpEncounterId ??
               null
             : null
-      }));
+              }));
 
       return;
     }
@@ -552,22 +553,27 @@ const BookPatient = ({
     });
   }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
-  useEffect(() => {
-    const rows = prevList?.data ?? [];
+    useEffect(() => {
+      if (!open) return;
 
-    if (!rows.length) return;
+      const rows = prevList?.data ?? [];
 
-    setAllPrevEncounters(previousEncounters => {
-      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
-      const merged = [...previousEncounters];
+      setAllPrevEncounters(previous => {
+        if (!rows.length) return previous;
 
-      rows.forEach((encounter: any) => {
-        if (!seenIds.has(encounter.id)) merged.push(encounter);
+        const seen = new Set(previous.map((e: any) => e.id));
+
+        const merged = [...previous];
+
+        rows.forEach((e: any) => {
+          if (!seen.has(e.id)) {
+            merged.push(e);
+          }
+        });
+
+        return merged;
       });
-
-      return merged;
-    });
-  }, [prevList]);
+    }, [open, prevList?.data]);
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
@@ -981,7 +987,7 @@ const BookPatient = ({
       }
     />
   );
-
+  
   return (
     <>
       {open && patientSidebarOpen && (
