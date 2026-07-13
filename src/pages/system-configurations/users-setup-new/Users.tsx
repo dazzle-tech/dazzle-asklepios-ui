@@ -33,6 +33,8 @@ import BookableDepartmentsTab from './tabs/BookableDepartmentsTab';
 import ResetPasswordTab from './tabs/ResetPasswordTab';
 
 import './styles.less';
+import { formatEnumString } from '@/utils';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -48,7 +50,11 @@ const Users = () => {
     name: '',
     email: '',
     login: '',
+    jobRole: '',
   });
+
+
+  const jobRoles = useEnumOptions('JobRole');
 
   const [saveUser] = useAddUserMutation();
   const [updateUser] = useUpdateUserMutation();
@@ -58,18 +64,19 @@ const Users = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const {
-    data: usersResponse,
-    isLoading,
-    refetch,
-  } = useGetUsersBasicQuery({
-    page: pageIndex,
-    size: rowsPerPage,
-    sort: 'id,asc',
-    name: filters.name,
-    email: filters.email,
-    login: filters.login,
-  });
+const {
+  data: usersResponse,
+  isLoading,
+  refetch,
+} = useGetUsersBasicQuery({
+  page: pageIndex,
+  size: rowsPerPage,
+  sort: 'id,asc',
+  name: filters.name,
+  email: filters.email,
+  login: filters.login,
+  jobRole: filters.jobRole,
+});
 
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -372,6 +379,12 @@ const Users = () => {
       flexGrow: 4,
     },
     {
+      key: 'jobRole',
+      title: <Translate>Job Role</Translate>,
+      flexGrow: 4,
+      render: rowData => formatEnumString(rowData?.jobRole ?? '')
+    },
+    {
       key: 'phoneNumber',
       title: <Translate>Phone Number</Translate>,
       flexGrow: 4,
@@ -443,6 +456,21 @@ const Users = () => {
           record={filters}
           setRecord={setFilters}
         />
+
+        <MyInput
+          fieldName="jobRole"
+          fieldLabel="Job Role"
+          fieldType="select"
+          record={filters}
+          setRecord={setFilters}
+          selectData={jobRoles ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          cleanable
+          isEnum
+        />
+
+
       </div>
     </Form>
   );

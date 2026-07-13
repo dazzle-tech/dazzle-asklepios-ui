@@ -161,7 +161,7 @@ const BookableDepartmentsTab: React.FC<BookableDepartmentsTabProps> = ({ user, w
     })
       .unwrap()
       .then(() => {
-        resetToAddMode();
+        // resetToAddMode();
         dispatch(notify({ msg: 'The Bookable Department has been saved successfully', sev: 'success' }));
         refetchBookableDepartments();
       })
