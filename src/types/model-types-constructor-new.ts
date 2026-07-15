@@ -1939,6 +1939,20 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   workingDays: [],
 };
 
+export const newEmailSettings: modelTypes.EmailSettings = {
+  id: undefined,
+  serverName: '',
+  host: '',
+  description: '',
+  smtpPort: undefined,
+  fromAddress: '',
+  password: '',
+  protocol: 'smtp',
+  tls: false,
+  emailPrefix: '',
+  emailFooter: '',
+};
+
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
   id: undefined,
   organizationDefinitionId: 0,

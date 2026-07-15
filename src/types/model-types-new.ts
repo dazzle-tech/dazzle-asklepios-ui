@@ -2940,6 +2940,73 @@ export interface OrganizationDefinition {
   workingDays?: OrganizationWorkingDay[];
 }
 
+/** Form model aligned with EmailSettings entity. */
+export interface EmailSettings {
+  id?: number;
+  /** @NotNull, max 255 */
+  serverName?: string;
+  /** @NotNull, max 255 */
+  host?: string;
+  /** @NotNull, max 500 */
+  description?: string;
+  /** @NotNull */
+  smtpPort?: number;
+  /** @NotNull, max 255 */
+  fromAddress?: string;
+  /** @NotNull */
+  password?: string;
+  /** @NotNull */
+  protocol?: string;
+  /** @NotNull */
+  tls?: boolean;
+  /** optional, max 255 */
+  emailPrefix?: string | null;
+  /** optional */
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsCreateDTO {
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsUpdateDTO extends EmailSettingsCreateDTO {
+  id: number;
+}
+
+export interface EmailSettingsTestConnectionDTO {
+  id?: number;
+  serverName: string;
+  host: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+}
+
+export interface EmailSettingsResponseVM {
+  id: number;
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
 export interface OrganizationWorkingDay {
   id?: number;
   dayOfWeek?: string;
