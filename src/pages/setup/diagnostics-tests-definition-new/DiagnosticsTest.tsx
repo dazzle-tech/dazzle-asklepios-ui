@@ -376,7 +376,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   const handleToggleActive = async (id: number) => {
     try {
-      // هات الصف الحالي من الجدول
       const currentItem = (
         isFiltered
           ? filteredList
@@ -390,14 +389,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       
       await toggleDiagnosticTestActive(id).unwrap();
 
-      // حدث الصف المختار
       setDiagnosticsTest(prev => ({
         ...prev,
         isActive: newActiveStatus
       }));
 
       if (isFiltered) {
-        // حدث الجدول مباشرة
         setFilteredList(prev =>
           prev.map(item =>
             item.id === id
@@ -409,7 +406,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           )
         );
 
-        // وبعدها حدث البيانات من السيرفر
 
       } else {
         await refetchDiagnostics();
