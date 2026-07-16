@@ -29,6 +29,7 @@ import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/enco
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { ShieldCheck, Check, X } from 'lucide-react';
 import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from '@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { useGetPrimaryDocumentByPatientQuery } from '@/services/patients/patientDocumentsService';
 
 type BookPatientProps = {
   open: boolean;
@@ -337,6 +338,7 @@ const BookPatient = ({
 
   const appointmentDetailsRecord = useMemo(
     () => ({
+      
       facility: (facilityByIdResponse as any)?.name || '-',
       department:
         (departmentByIdResponse as any)?.name ||
@@ -360,8 +362,8 @@ const BookPatient = ({
                 .join(' ')
             : isCatalogResource
               ? (resourceCatalogById as any)?.name
-              : isDiagnosticTestResource
-                ? (resourceDiagnosticTestById as any)?.name
+            : isDiagnosticTestResource
+              ? (resourceDiagnosticTestById as any)?.data?.name
                 : isRoomResource
                   ? (resourceRoomById as any)?.name || (resourceRoomById as any)?.roomName
                   : isServiceResource
@@ -507,6 +509,15 @@ const BookPatient = ({
   }, [open, readOnly, appointmentData, viewPatientById]);
 
   const bookingPatientId = Number(record?.patientId);
+
+
+    const {
+      data: primaryDocument
+    } = useGetPrimaryDocumentByPatientQuery(bookingPatientId, {
+      skip: !bookingPatientId
+    });
+
+  
   const isFollowUpService = record?.service === 'FOLLOW_UP';
 
   useEffect(() => {
@@ -1132,12 +1143,16 @@ const BookPatient = ({
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentTypeLkey || '-'}</p>
-                          </div>
+                            <p style={{ margin: 0 }}>
+                              {formatEnumString(primaryDocument?.type || '-')}
+                            </p>   
+                       </div>
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentNo || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {primaryDocument?.number || '-'}
+                            </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
@@ -1341,6 +1356,34 @@ const BookPatient = ({
                             disabled={readOnly}
                           />
 
+                          {record?.service === 'FOLLOW_UP' && (
+                            <div style={{ gridColumn: '1 / -1' }}>
+                              <MyInput
+                                fieldType="selectPagination"
+                                fieldName="followUpEncounterId"
+                                fieldLabel="Previous encounter"
+                                record={record}
+                                setRecord={setRecord}
+                                selectData={modifiedPrevEncounters}
+                                selectDataLabel="combinedLabel"
+                                selectDataValue="id"
+                                width="100%"
+                                menuMaxHeight={200}
+                                loading={isPrevFetching}
+                                searchable={false}
+                                hasMore={prevHasMore}
+                                required={!readOnly && record?.service === 'FOLLOW_UP'}
+                                disabled={readOnly || !bookingPatientId || !appointmentDepartmentId}
+                                onFetchMore={() => {
+                                  if (prevList?.links?.next) {
+                                    const { page } = extractPaginationFromLink(prevList.links.next);
+                                    setPrevPage(page);
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+
                           <MyInput
                             fieldType="select"
                             fieldName="priority"
@@ -1381,33 +1424,7 @@ const BookPatient = ({
                             disabled={readOnly}
                           />
 
-                          {record?.service === 'FOLLOW_UP' && (
-                            <div style={{ gridColumn: '1 / -1' }}>
-                              <MyInput
-                                fieldType="selectPagination"
-                                fieldName="followUpEncounterId"
-                                fieldLabel="Previous encounter"
-                                record={record}
-                                setRecord={setRecord}
-                                selectData={modifiedPrevEncounters}
-                                selectDataLabel="combinedLabel"
-                                selectDataValue="id"
-                                width="100%"
-                                menuMaxHeight={200}
-                                loading={isPrevFetching}
-                                searchable={false}
-                                hasMore={prevHasMore}
-                                required={!readOnly && record?.service === 'FOLLOW_UP'}
-                                disabled={readOnly || !bookingPatientId || !appointmentDepartmentId}
-                                onFetchMore={() => {
-                                  if (prevList?.links?.next) {
-                                    const { page } = extractPaginationFromLink(prevList.links.next);
-                                    setPrevPage(page);
-                                  }
-                                }}
-                              />
-                            </div>
-                          )}
+
                         </div>
                       </Panel>
                     }
