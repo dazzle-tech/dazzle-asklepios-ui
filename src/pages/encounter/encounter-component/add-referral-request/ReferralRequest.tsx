@@ -15,7 +15,7 @@ import {
 } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newReferralRequest } from '@/types/model-types-constructor-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom';
@@ -288,7 +288,7 @@ const ReferralRequest = () => {
       refetch();
       return true;
     } catch (err: any) {
-      handleCrudError(err, dispatch, REFERRAL_ERROR_MAP);
+      dispatch(notify({ msg: extractErrorMessage(err) || 'Save Failed', sev: 'warning' }));
       return false;
     } finally {
       dispatch(hideSystemLoader());
