@@ -1192,6 +1192,8 @@ export const newAppointmentSearchFilterMultiDepartmentDTO: modelTypes.Appointmen
   status: null,
   bookingMode: null,
   patientId: null,
+  startDate: null,
+  endDate: null
 };
 
 /** @deprecated Use newAppointmentSearchFilterMultiDepartmentDTO */

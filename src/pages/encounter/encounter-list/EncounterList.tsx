@@ -56,6 +56,7 @@ import {
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 import VisitReportPrintButton from './VisitReportPrintButton';
+import DoctorAppoitmentsView from './appointments';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -236,6 +237,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
+  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -1034,6 +1036,7 @@ const EncounterList = () => {
           />
         </Form>
       </div>
+      
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1221,6 +1224,9 @@ const EncounterList = () => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
+          <div style={{display: 'flex', justifyContent:'end'}}>
+          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          </div>
           <MyTable
             filters={filters()}
             height={600}
@@ -1308,6 +1314,12 @@ const EncounterList = () => {
           />
 
         </Panel>
+        <DoctorAppoitmentsView
+         open={openDoctorAppointments}
+         setOpen={setOpenDoctorAppointments}
+         facilityId={selectedDepartment?.facilityId}
+         departmentId={departmentId}
+        />
       </div>
     </>
   );
