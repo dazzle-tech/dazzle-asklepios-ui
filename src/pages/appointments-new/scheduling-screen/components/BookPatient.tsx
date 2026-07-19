@@ -140,12 +140,12 @@ const BookPatient = ({
             appointmentData.encounterReason ??
             appointmentData.visitTypeLkey) === 'FOLLOW_UP'
             ? appointmentData.followUpEncounterId ??
-              appointmentData.followUpEncounter?.id ??
-              appointmentData.previousEncounterId ??
-              prev.followUpEncounterId ??
-              null
+            appointmentData.followUpEncounter?.id ??
+            appointmentData.previousEncounterId ??
+            prev.followUpEncounterId ??
+            null
             : null
-              }));
+      }));
 
       return;
     }
@@ -186,13 +186,18 @@ const BookPatient = ({
       followUpEncounterId:
         (appointmentService ?? prev.service) === 'FOLLOW_UP'
           ? appointmentData?.followUpEncounterId ??
-            appointmentData?.previousEncounterId ??
-            prev.followUpEncounterId ??
-            null
+          appointmentData?.previousEncounterId ??
+          prev.followUpEncounterId ??
+          null
           : null
     }));
 
     if (!hasPatientOnAppointment) {
+      setRecord(prev => ({
+        ...prev,
+        patientId: null
+      }));
+
       setSelectedPatient(null);
       setPatientAction('select');
       setQuickPatientModalOpen(false);
@@ -338,7 +343,7 @@ const BookPatient = ({
 
   const appointmentDetailsRecord = useMemo(
     () => ({
-      
+
       facility: (facilityByIdResponse as any)?.name || '-',
       department:
         (departmentByIdResponse as any)?.name ||
@@ -354,16 +359,16 @@ const BookPatient = ({
           ? (resourceDepartmentById as any)?.name
           : isPractitionerResource
             ? (resourcePractitionerById as any)?.fullName ||
-              [
-                (resourcePractitionerById as any)?.firstName,
-                (resourcePractitionerById as any)?.lastName
-              ]
-                .filter(Boolean)
-                .join(' ')
+            [
+              (resourcePractitionerById as any)?.firstName,
+              (resourcePractitionerById as any)?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ')
             : isCatalogResource
               ? (resourceCatalogById as any)?.name
-            : isDiagnosticTestResource
-              ? (resourceDiagnosticTestById as any)?.data?.name
+              : isDiagnosticTestResource
+                ? (resourceDiagnosticTestById as any)?.data?.name
                 : isRoomResource
                   ? (resourceRoomById as any)?.name || (resourceRoomById as any)?.roomName
                   : isServiceResource
@@ -511,13 +516,13 @@ const BookPatient = ({
   const bookingPatientId = Number(record?.patientId);
 
 
-    const {
-      data: primaryDocument
-    } = useGetPrimaryDocumentByPatientQuery(bookingPatientId, {
-      skip: !bookingPatientId
-    });
+  const {
+    data: primaryDocument
+  } = useGetPrimaryDocumentByPatientQuery(bookingPatientId, {
+    skip: !bookingPatientId
+  });
 
-  
+
   const isFollowUpService = record?.service === 'FOLLOW_UP';
 
   useEffect(() => {
@@ -564,27 +569,27 @@ const BookPatient = ({
     });
   }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
-    useEffect(() => {
-      if (!open) return;
+  useEffect(() => {
+    if (!open) return;
 
-      const rows = prevList?.data ?? [];
+    const rows = prevList?.data ?? [];
 
-      setAllPrevEncounters(previous => {
-        if (!rows.length) return previous;
+    setAllPrevEncounters(previous => {
+      if (!rows.length) return previous;
 
-        const seen = new Set(previous.map((e: any) => e.id));
+      const seen = new Set(previous.map((e: any) => e.id));
 
-        const merged = [...previous];
+      const merged = [...previous];
 
-        rows.forEach((e: any) => {
-          if (!seen.has(e.id)) {
-            merged.push(e);
-          }
-        });
-
-        return merged;
+      rows.forEach((e: any) => {
+        if (!seen.has(e.id)) {
+          merged.push(e);
+        }
       });
-    }, [open, prevList?.data]);
+
+      return merged;
+    });
+  }, [open, prevList?.data]);
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
@@ -998,7 +1003,7 @@ const BookPatient = ({
       }
     />
   );
-  
+
   return (
     <>
       {open && patientSidebarOpen && (
@@ -1145,8 +1150,8 @@ const BookPatient = ({
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
                             <p style={{ margin: 0 }}>
                               {formatEnumString(primaryDocument?.type || '-')}
-                            </p>   
-                       </div>
+                            </p>
+                          </div>
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
@@ -1411,7 +1416,7 @@ const BookPatient = ({
                             width="100%"
                             searchable={false}
                             disabled={readOnly}
-                                    disableByField='isValid'
+                            disableByField='isValid'
 
                           />
 
