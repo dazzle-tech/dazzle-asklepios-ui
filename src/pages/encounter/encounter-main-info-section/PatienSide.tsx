@@ -1094,8 +1094,8 @@ const patientConditionItems =
                     placement="top"
                     speaker={
                       <Tooltip>
-                        {med.instructions ? (
-                          <Translate>{med.instructions}</Translate>
+                        {med.dosage || med.unit || med.frequency ? (
+                          `${med.dosage ?? ''} ${med.unit ?? ''} ${med.frequency ?? ''}`.trim()
                         ) : (
                           <Translate>Current Medication</Translate>
                         )}

@@ -12,6 +12,7 @@ import {
 } from '@/services/patients/currentMedicationService';
 
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -58,9 +59,13 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
     id: undefined,
     patientId: 0,
     activeIngredientId: undefined,
-    instructions: '',
+    dosage: null,
+    unit: null,
+    frequency: null,
     startDate: null
   });
+
+  const [startDateResetKey, setStartDateResetKey] = useState(0);
 
   const [addCurrentMedication] = useAddCurrentMedicationMutation();
   const [updateCurrentMedication] = useUpdateCurrentMedicationMutation();
@@ -69,6 +74,9 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
     page: 0,
     size: 1000
   });
+
+  const unitOptions = useEnumOptions('UOM');
+  const frequencyOptions = useEnumOptions('MedFrequency');
 
   const activeIngredientOptions =
     activeIngredientsResponse?.data
@@ -89,10 +97,13 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
         id: undefined,
         patientId: Number(patient?.id),
         activeIngredientId: undefined,
-        instructions: '',
+        dosage: null,
+        unit: null,
+        frequency: null,
         startDate: null
       });
     }
+    setStartDateResetKey(prev => prev + 1);
   }, [initialData, open, patient?.id]);
 
   const handleSave = async () => {
@@ -112,7 +123,9 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
           id: formData.id,
           patientId: Number(patient?.id),
           activeIngredientId: formData.activeIngredientId,
-          instructions: formData.instructions,
+          dosage: formData.dosage,
+          unit: formData.unit,
+          frequency: formData.frequency,
           startDate: formData.startDate
         };
 
@@ -123,19 +136,24 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
         const payload: CurrentMedicationCreate = {
           patientId: Number(patient?.id),
           activeIngredientId: formData.activeIngredientId,
-          instructions: formData.instructions,
+          dosage: formData.dosage,
+          unit: formData.unit,
+          frequency: formData.frequency,
           startDate: formData.startDate
         };
-
+        console.log('Adding current medication with payload:', payload);
         await addCurrentMedication(payload).unwrap();
         dispatch(notify({ msg: 'Medication added successfully', sev: 'success' }));
         setFormData({
           id: undefined,
           patientId: Number(patient?.id),
           activeIngredientId: undefined,
-          instructions: '',
+          dosage: null,
+          unit: null,
+          frequency: null,
           startDate: null
         });
+        setStartDateResetKey(prev => prev + 1);
       }
     } catch (err) {
       handleCrudError(err, dispatch);
@@ -169,6 +187,7 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
 
         <Col md={12}>
           <MyInput
+            key={startDateResetKey}
             width="100%"
             column
             fieldLabel="Start Date"
@@ -183,13 +202,43 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
       </Row>
 
       <Row gutter={16} style={{ marginTop: 10 }}>
-        <Col md={24}>
+        <Col md={8}>
           <MyInput
             width="100%"
             column
-            fieldLabel="Instructions"
-            fieldType="textarea"
-            fieldName="instructions"
+            fieldLabel="Dosage"
+            fieldType="number"
+            fieldName="dosage"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldType="select"
+            fieldLabel="Unit"
+            selectData={unitOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            fieldName="unit"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldType="select"
+            fieldLabel="Frequency"
+            selectData={frequencyOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            fieldName="frequency"
             record={formData}
             setRecord={setFormData}
           />
