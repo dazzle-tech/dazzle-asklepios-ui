@@ -3008,6 +3008,64 @@ export interface EmailSettingsResponseVM {
   emailFooter?: string | null;
 }
 
+/** Form model aligned with WhatsAppSettings entity. */
+export interface WhatsAppSettings {
+  id?: number;
+  /** @NotNull, max 255 */
+  name?: string;
+  /** @NotNull, max 500 */
+  description?: string;
+  /** @NotNull */
+  apiVersion?: string;
+  /** @NotNull */
+  phoneNumberId?: string;
+  /** @NotNull */
+  whatsappBusinessAccountId?: string;
+  /** @NotNull */
+  accessToken?: string;
+  /** @NotNull */
+  verifyToken?: string;
+  /** optional, max 500 */
+  webhookUrl?: string | null;
+  /** @NotNull */
+  enabled?: boolean;
+}
+
+export interface WhatsAppSettingsCreateDTO {
+  name: string;
+  description: string;
+  apiVersion: string;
+  phoneNumberId: string;
+  whatsappBusinessAccountId: string;
+  accessToken: string;
+  verifyToken: string;
+  webhookUrl?: string | null;
+  enabled: boolean;
+}
+
+export interface WhatsAppSettingsUpdateDTO extends WhatsAppSettingsCreateDTO {
+  id: number;
+}
+
+export interface WhatsAppSettingsTestConnectionDTO {
+  apiVersion: string;
+  phoneNumberId: string;
+  accessToken: string;
+}
+
+export interface WhatsAppSettingsResponseVM {
+  id: number;
+  name: string;
+  description: string;
+  apiVersion: string;
+  phoneNumberId: string;
+  whatsappBusinessAccountId: string;
+  accessToken: string;
+  verifyToken: string;
+  webhookUrl?: string | null;
+  enabled: boolean;
+}
+
 export interface OrganizationWorkingDay {
   id?: number;
   dayOfWeek?: string;

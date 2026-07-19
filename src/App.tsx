@@ -218,6 +218,7 @@ import PolicyDefinitions from './pages/setup/policy-definition';
 import SkillDefinitions from './pages/setup/skill-definition';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
 import EmailSettings from './pages/system-configurations/email-settings';
+import WhatsAppSettings from './pages/system-configurations/whatsapp-settings';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import NotificationRule from './pages/notification-management/notification-rule';
 import EmailNotification from './pages/notification-management/email-notification';
@@ -621,6 +622,7 @@ const dispatch = useAppDispatch();
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="email-settings" element={<EmailSettings />} />
+              <Route path="whatsapp-settings" element={<WhatsAppSettings />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="notification-rule" element={<NotificationRule />} />
               <Route path="email-notification" element={<EmailNotification />} />

@@ -1954,6 +1954,19 @@ export const newEmailSettings: modelTypes.EmailSettings = {
   emailFooter: '',
 };
 
+export const newWhatsAppSettings: modelTypes.WhatsAppSettings = {
+  id: undefined,
+  name: '',
+  description: '',
+  apiVersion: 'v21.0',
+  phoneNumberId: '',
+  whatsappBusinessAccountId: '',
+  accessToken: '',
+  verifyToken: '',
+  webhookUrl: '',
+  enabled: false,
+};
+
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
   id: undefined,
   organizationDefinitionId: 0,
