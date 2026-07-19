@@ -174,10 +174,16 @@ const columns = [
       ) ?? ''
   },
   {
-    key: 'instructions',
-    title: 'INSTRUCTIONS',
-    flexGrow: 5,
-    render: (row: any) => row.instructions ?? ''
+    key: 'dosage',
+    title: 'DOSAGE',
+    flexGrow: 2,
+    render: (row: any) => (row.dosage ?? row.unit ? `${row.dosage ?? ''} ${formatEnumString(row.unit) ?? ''}`.trim() : '')
+  },
+  {
+    key: 'frequency',
+    title: 'FREQUENCY',
+    flexGrow: 3,
+    render: (row: any) => row.frequency ? formatEnumString(row.frequency) : ''
   },
   {
     key: 'startDate',

@@ -1,6 +1,6 @@
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { usePreviewMergeQuery, useExecuteMergeMutation, useSummarizeMergeMutation, useGetMergeTransactionsQuery, useUndoMergeMutation } from '@/services/patients/patientMergeService';
+import { useLazyPreviewMergeQuery, useExecuteMergeMutation, useSummarizeMergeMutation, useGetMergeTransactionsQuery, useUndoMergeMutation } from '@/services/patients/patientMergeService';
 import { notify } from '@/utils/uiReducerActions';
 import { Patient } from '@/types/model-types-new';
 import { newPatient } from '@/types/model-types-constructor-new';
@@ -34,13 +34,8 @@ const PatientMergeFiles: React.FC = () => {
   const { pathname } = useLocation();
 
   // API hooks
-  const { data: mergePreview, isLoading: previewLoading, isFetching: previewFetching } = usePreviewMergeQuery(
-    {
-      fromPatientId: fromPatient.id || 0,
-      toPatientId: toPatient.id || 0
-    },
-    { skip: !showMergeModal || !fromPatient.id || !toPatient.id }
-  );
+  const [triggerPreviewMerge, { data: mergePreviewResponse, isLoading: previewLoading, isFetching: previewFetching }] = useLazyPreviewMergeQuery();
+  const mergePreview = mergePreviewResponse?.preview ?? mergePreviewResponse;
   const [executeMerge, { isLoading: executeLoading }] = useExecuteMergeMutation();
   const [summarizeMerge, { isLoading: summarizeLoading }] = useSummarizeMergeMutation();
   const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMergeTransactionsQuery();
@@ -48,7 +43,6 @@ const PatientMergeFiles: React.FC = () => {
 
   // Trigger merge flow
   const handleMergeClick = async () => {
-    // Validation
     if (!fromPatient.id || !toPatient.id) {
       dispatch(notify({
         msg: 'Please select both patients to merge',
@@ -65,52 +59,118 @@ const PatientMergeFiles: React.FC = () => {
       return;
     }
 
-    // Show modal to load preview
-    setShowMergeModal(true);
-  };
-
-  // Handle confirm merge
-  const handleReviewSummary = async (decisions: any[], reason: string) => {
     try {
-      const summaryRequest = {
+      const result = await triggerPreviewMerge({
         fromPatientId: fromPatient.id,
-        toPatientId: toPatient.id,
-        reason: reason || 'Duplicate patient record',
-        decisions: decisions,
-        autoTransfers: autoTransfers
-      };
+        toPatientId: toPatient.id
+      }).unwrap();
 
-      const result = await summarizeMerge(summaryRequest).unwrap();
-      setSummaryData(result);
-      setShowSummary(true);
+      const issues = Array.isArray(result?.issues) ? result.issues : [];
+
+      if (result?.valid === false) {
+        setShowMergeModal(false);
+        setShowSummary(false);
+        setSummaryData(null);
+        setAutoTransfers([]);
+
+        const normalizedIssues = issues.map((issue: any) => ({
+          ...issue,
+          severity: String(issue?.severity || 'error').toLowerCase()
+        }));
+
+        const isAllErrors = normalizedIssues.length > 0 && normalizedIssues.every((issue: any) => issue.severity === 'error');
+
+        if (isAllErrors && normalizedIssues.length > 1) {
+          const combinedMessage = normalizedIssues
+            .map((issue: any, index: number) => `${index + 1}. ${[issue?.message, issue?.actionRequired].filter(Boolean).join('. ')}`)
+            .filter(Boolean)
+            .join('\n');
+
+          dispatch(notify({
+            msg: combinedMessage || 'Merge preview validation failed',
+            sev: 'error'
+          }));
+        } else {
+          normalizedIssues.forEach((issue: any) => {
+            const message = [issue?.message, issue?.actionRequired].filter(Boolean).join('. ');
+            // const severity = issue.severity === 'warning' ? 'warning' : 'error';
+
+            dispatch(notify({
+              msg: message || 'Merge preview validation failed',
+              sev: 'warning'
+            }));
+          });
+        }
+
+        return;
+      }
+
+      setShowMergeModal(true);
+      setShowSummary(false);
+      setSummaryData(null);
     } catch (err: any) {
-      const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to generate merge summary';
+      const errorMsg = getApiErrorMessage(err, 'Failed to load merge preview');
       dispatch(notify({
         msg: errorMsg,
         sev: 'error'
       }));
     }
   };
-  const getApiErrorMessage = (err: any, fallback: string) => {
-    const data = err?.data;
 
-    return (
-      data?.message ||
-      data?.properties?.message ||
-      data?.detail ||
-      data?.title ||
-      data?.error ||
-      fallback
+const getApiErrorMessage = (err: any, fallback: string): string => {
+  const data = err?.data;
+
+  return (
+    data?.message ||
+    data?.properties?.message ||
+    data?.detail ||
+    data?.title ||
+    data?.error ||
+    fallback
+  );
+};
+
+const handleReviewSummary = async (
+  decisions: any[],
+  reason: string
+) => {
+  try {
+    const summaryRequest = {
+      fromPatientId: fromPatient.id,
+      toPatientId: toPatient.id,
+      reason: reason || 'Duplicate patient record',
+      decisions,
+      autoTransfers
+    };
+
+    const result = await summarizeMerge(summaryRequest).unwrap();
+
+    setSummaryData(result);
+    setShowSummary(true);
+
+  } catch (err: any) {
+
+    const errorMsg = getApiErrorMessage(
+      err,
+      'Failed to generate merge summary'
     );
-  };
-  // Handle confirm merge
+
+    dispatch(
+      notify({
+        msg: errorMsg,
+        sev: 'error'
+      })
+    );
+  }
+};
+
   const handleConfirmMerge = async (decisions: any[], reason: string) => {
     try {
       const executeRequest = {
         fromPatientId: fromPatient.id,
         toPatientId: toPatient.id,
         reason: reason || 'Duplicate patient record',
-        decisions: decisions,
+        decisions
       };
 
       const result = await executeMerge(executeRequest).unwrap();
@@ -119,55 +179,50 @@ const PatientMergeFiles: React.FC = () => {
         sev: 'success'
       }));
 
-      // Close modal and clear
       setShowMergeModal(false);
       setShowSummary(false);
       setSummaryData(null);
-      setRefetchData(!refetchData); // Trigger patient list refresh
+      setRefetchData(!refetchData);
       handleClear();
-    }  catch (err: any) {
-      const errorMsg = getApiErrorMessage(
-        err,
-        'Failed to execute merge'
-      );
+    } catch (err: any) {
+      const errorMsg = getApiErrorMessage(err, 'Failed to execute merge');
 
       dispatch(notify({
         msg: errorMsg,
         sev: 'error'
       }));
     }
-};
+  };
 
-// Handle undo merge
-const handleUndo = async (mergeLogId: number) => {
-  try {
-    await undoMerge({ mergeLogId }).unwrap();
+  const handleUndo = async (mergeLogId: number) => {
+    try {
+      await undoMerge({ mergeLogId }).unwrap();
 
-    dispatch(notify({
-      msg: 'Merge successfully undone',
-      sev: 'success'
-    }));
+      dispatch(notify({
+        msg: 'Merge successfully undone',
+        sev: 'success'
+      }));
 
-    setUndoConfirm({ show: false });
-    await refetchTransactions();
-    setRefetchData(!refetchData);
-  } catch (err: any) {
-    const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to undo merge';
-    dispatch(notify({
-      msg: errorMsg,
-      sev: 'error'
-    }));
-  }
-};
+      setUndoConfirm({ show: false });
+      await refetchTransactions();
+      setRefetchData(!refetchData);
+    } catch (err: any) {
+      const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to undo merge';
+      dispatch(notify({
+        msg: errorMsg,
+        sev: 'error'
+      }));
+    }
+  };
 
-const handleTabChange = (eventKey: string | number) => {
-  setActiveTab(String(eventKey));
-};
+  const handleTabChange = (eventKey: string | number) => {
+    setActiveTab(String(eventKey));
+  };
 
-const handleClear = () => {
-  setToPatient({ ...newPatient });
-  setFromPatient({ ...newPatient });
-};
+  const handleClear = () => {
+    setToPatient({ ...newPatient });
+    setFromPatient({ ...newPatient });
+  };
 
 useEffect(() => {
   const divContent = (

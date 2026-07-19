@@ -4802,7 +4802,9 @@ export interface PatientEncounterDischarge {
 export interface CurrentMedication {
   patientId: number;
   activeIngredientId: number;
-  instructions?: string | null;
+  dosage?: number | null;
+  unit?: string | null;
+  frequency?: string | null;
   startDate: string | Date | null;
 }
 
