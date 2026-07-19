@@ -107,7 +107,7 @@ const AddToWaitingListModal = ({
   const dispatch = useAppDispatch();
   const mode = useAppSelector((state: any) => state.ui.mode);
   const authSlice = useAppSelector((state: any) => state.auth);
-  const priorityOptions = useEnumOptions('WaitingListPriority');
+  const priorityOptions = useEnumOptions('EncounterPriority');
 
   const [record, setRecord] = useState(emptyForm);
   const [selectedFacility, setSelectedFacility] = useState<{ id: number | null }>({ id: null });
