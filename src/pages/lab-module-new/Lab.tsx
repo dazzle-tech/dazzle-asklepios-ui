@@ -399,10 +399,10 @@ const Lab = () => {
         </>
       )
     },
-    {
-      title: 'Requested Tests',
-      content: <RequestedTest requestType="LABORATORY" />
-    },
+    // {
+    //   title: 'Requested Tests',
+    //   content: <RequestedTest requestType="LABORATORY" />
+    // },
     {
       title: 'Reviewed Results',
       content: (

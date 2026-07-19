@@ -62,6 +62,7 @@ import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
+import { emailSettingsService } from './services/system-configurations/emailSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -352,6 +353,7 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+    [emailSettingsService.reducerPath]: emailSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
@@ -634,6 +636,7 @@ export const store = configureStore({
         facilityService.middleware,
         departmentService.middleware,
         organizationDefinitionService.middleware,
+        emailSettingsService.middleware,
         roleService.middleware,
         userRoleService.middleware,
         enumService.middleware,

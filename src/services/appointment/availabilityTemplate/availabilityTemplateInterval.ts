@@ -63,7 +63,18 @@ export const availabilityTemplateIntervalService = createApi({
         method: 'DELETE'
       }),
       invalidatesTags: ['AvailabilityTemplateInterval']
-    })
+    }),
+
+    applyAvailabilityTemplateIntervalToAllWorkingDays: builder.mutation<
+  void,
+  { id: Id }
+>({
+  query: ({ id }) => ({
+    url: `/api/patient/availability-template-intervals/${id}/apply-to-all-working-days`,
+    method: 'POST'
+  }),
+  invalidatesTags: ['AvailabilityTemplateInterval']
+}),
   })
 });
 
@@ -74,5 +85,6 @@ export const {
   useLazyGetAvailabilityTemplateIntervalQuery,
   useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery,
   useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery,
-  useDeleteAvailabilityTemplateIntervalMutation
+  useDeleteAvailabilityTemplateIntervalMutation,
+  useApplyAvailabilityTemplateIntervalToAllWorkingDaysMutation
 } = availabilityTemplateIntervalService;

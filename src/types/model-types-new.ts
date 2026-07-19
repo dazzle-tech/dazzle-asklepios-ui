@@ -352,7 +352,6 @@ export interface AvailabilityTemplateIntervalCreateDTO {
   endTime: string;
   slotStrategy: string;
   slotDurationMinutes: number;
-  applyToAllWorkingDays?: boolean | null;
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
@@ -572,9 +571,11 @@ export interface AppointmentSearchFilterMultiDepartmentDTO {
   departmentIds?: number[] | null;
   resourceType?: TemplateType | null;
   resourceId?: number | null;
-  status?: AppointmentStatus | null;
+  status?: AppointmentStatus[] | null;
   bookingMode?: BookingMode[] | null;
   patientId?: number | null;
+  startDate?: Date | null;
+  endDate?: Date | null; 
 }
 
 /** @deprecated Use AppointmentSearchFilterMultiDepartmentDTO */
@@ -2940,6 +2941,73 @@ export interface OrganizationDefinition {
   workingDays?: OrganizationWorkingDay[];
 }
 
+/** Form model aligned with EmailSettings entity. */
+export interface EmailSettings {
+  id?: number;
+  /** @NotNull, max 255 */
+  serverName?: string;
+  /** @NotNull, max 255 */
+  host?: string;
+  /** @NotNull, max 500 */
+  description?: string;
+  /** @NotNull */
+  smtpPort?: number;
+  /** @NotNull, max 255 */
+  fromAddress?: string;
+  /** @NotNull */
+  password?: string;
+  /** @NotNull */
+  protocol?: string;
+  /** @NotNull */
+  tls?: boolean;
+  /** optional, max 255 */
+  emailPrefix?: string | null;
+  /** optional */
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsCreateDTO {
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsUpdateDTO extends EmailSettingsCreateDTO {
+  id: number;
+}
+
+export interface EmailSettingsTestConnectionDTO {
+  id?: number;
+  serverName: string;
+  host: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+}
+
+export interface EmailSettingsResponseVM {
+  id: number;
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
 export interface OrganizationWorkingDay {
   id?: number;
   dayOfWeek?: string;
@@ -3234,7 +3302,9 @@ export enum DiagnosticOrderTestStatus {
   SUBMITTED = 'SUBMITTED',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
+  EXAM_DONE = 'EXAM_DONE',
   RESULT_READY = 'RESULT_READY',
+
   SAMPLE_COLLECTED = 'SAMPLE_COLLECTED',
   RESULT_APPROVED = 'RESULT_APPROVED',
   CANCELLED = 'CANCELLED',

@@ -984,7 +984,6 @@ export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTe
   endTime: '',
   slotStrategy: '',
   slotDurationMinutes: 0,
-  applyToAllWorkingDays: false,
   allowedServices: []
 };
 
@@ -1193,6 +1192,8 @@ export const newAppointmentSearchFilterMultiDepartmentDTO: modelTypes.Appointmen
   status: null,
   bookingMode: null,
   patientId: null,
+  startDate: null,
+  endDate: null
 };
 
 /** @deprecated Use newAppointmentSearchFilterMultiDepartmentDTO */
@@ -1937,6 +1938,20 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   defaultTimeZone: '',
   defaultLanguageId: undefined,
   workingDays: [],
+};
+
+export const newEmailSettings: modelTypes.EmailSettings = {
+  id: undefined,
+  serverName: '',
+  host: '',
+  description: '',
+  smtpPort: undefined,
+  fromAddress: '',
+  password: '',
+  protocol: 'smtp',
+  tls: false,
+  emailPrefix: '',
+  emailFooter: '',
 };
 
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
