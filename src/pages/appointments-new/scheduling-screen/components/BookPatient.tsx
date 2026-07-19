@@ -1149,14 +1149,18 @@ const BookPatient = ({
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
                             <p style={{ margin: 0 }}>
-                              {formatEnumString(primaryDocument?.type || '-')}
+                              {bookingPatientId
+                                ? formatEnumString(primaryDocument?.type || '-')
+                                : '-'}
                             </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
                             <p style={{ margin: 0 }}>
-                              {primaryDocument?.number || '-'}
+                              {bookingPatientId
+                                ? primaryDocument?.number || '-'
+                                : '-'}
                             </p>
                           </div>
 
