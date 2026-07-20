@@ -28,6 +28,9 @@ import './styles.less';
 import CancellationModal from '@/components/CancellationModal';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { skipToken } from '@reduxjs/toolkit/query';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import MyNestedTable from '@/components/MyNestedTable';
 
 type MedicationOrderRow = {
   id: number;
@@ -57,6 +60,16 @@ type MedicationOrderRow = {
   discardedBy?: string;
   discardedDate?: string;
   discardReason?: string;
+
+  medications?: MedicationOrderRow[];
+};
+
+type MedicationPatientRow = {
+  patientId?: number;
+  patient?: {
+    id?: number;
+  };
+  medications: MedicationOrderRow[];
 };
 
     const UserFullName = ({ login }: { login?: string }) => {
@@ -193,9 +206,6 @@ const MedicationRecord = () => {
   const [adminSortColumn, setAdminSortColumn] = useState('createdDate');
   const [adminSortType, setAdminSortType] = useState<'asc' | 'desc'>('desc');
 
-  // =========================
-  // ORDERED QUERY
-  // =========================
   const {
     data: orderedResponse,
     isLoading: orderedLoading,
@@ -208,9 +218,6 @@ const MedicationRecord = () => {
     statusIn: ['SUBMITTED']
   });
 
-  // =========================
-  // ADMIN QUERY
-  // =========================
   const {
     data: adminResponse,
     isLoading: adminLoading,
@@ -223,6 +230,8 @@ const MedicationRecord = () => {
     statusIn: ['ADMINISTERED', 'DISCARDED', 'WAITING_DOUBLE_CHECK']
   });
 
+
+
   const orderedRows: MedicationOrderRow[] = useMemo(() => {
     return (orderedResponse?.data || [])
       .filter((r: any) => r?.id)
@@ -232,6 +241,29 @@ const MedicationRecord = () => {
       }));
   }, [orderedResponse]);
 
+const orderedDisplayRows = useMemo(() => {
+  const grouped = new Map<number, MedicationPatientRow>();
+
+  orderedRows.forEach(row => {
+    const patientId = row.patient?.id || row.patientId;
+
+    if (!patientId) return;
+
+    if (!grouped.has(patientId)) {
+      grouped.set(patientId, {
+        patientId,
+        patient: row.patient,
+        medications: []
+      });
+    }
+
+    grouped.get(patientId)!.medications.push(row);
+  });
+
+  return Array.from(grouped.values());
+}, [orderedRows]);
+
+
   const administeredRows: MedicationOrderRow[] = useMemo(() => {
     return (adminResponse?.data || [])
       .filter((r: any) => r?.id)
@@ -240,6 +272,31 @@ const MedicationRecord = () => {
         id: r.id as number
       }));
   }, [adminResponse]);
+
+  const administeredDisplayRows = useMemo(() => {
+    const grouped = new Map<number, MedicationPatientRow>();
+
+    administeredRows.forEach(row => {
+      const patientId = row.patient?.id || row.patientId;
+
+      if (!patientId) return;
+
+      if (!grouped.has(patientId)) {
+        grouped.set(patientId, {
+          patientId,
+          patient: row.patient,
+          medications: []
+        });
+      }
+
+      grouped.get(patientId)!.medications.push(row);
+    });
+
+    return Array.from(grouped.values());
+  }, [administeredRows]);
+
+
+
 
   const orderedTotalCount = orderedResponse?.totalCount || 0;
   const administeredTotalCount = adminResponse?.totalCount || 0;
@@ -287,6 +344,33 @@ const MedicationRecord = () => {
   // =========================
   // LOVS / ENUMS
   // =========================
+
+
+  const patientColumns = useMemo(
+  () => [
+  {
+    key: 'patientName',
+    title: <Translate>PATIENT_NAME</Translate>,
+    minWidth: 200,
+    render: (row: MedicationPatientRow) => {
+      const patient =
+        patientsMap[row.patientId || 0];
+
+      if (!patient) return '-';
+
+      return [
+        patient.firstName,
+        patient.secondName,
+        patient.lastName
+      ]
+      .filter(Boolean)
+      .join(' ');
+    }
+  }
+  ],
+  [patientsMap]
+  );
+
   const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
   const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
   const roaOptions = useEnumOptions('RouteOfAdministration');
@@ -563,53 +647,262 @@ const MedicationRecord = () => {
 
 
 
-  const orderedColumns = useMemo(
-    () => [
-      ...commonColumns,
-      {
-        key: 'actions',
-        title: <Translate>ACTIONS</Translate>,
-        align: 'center',
-        width: 140,
-        render: (row: MedicationOrderRow) => {
-          const canAdminister = row.status === 'SUBMITTED';
+const orderedColumns = useMemo(
+  () => [
+    ...commonColumns,
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      align: 'center',
+      width: 140,
+      render: (row: MedicationOrderRow) => {
+        const canAdminister = row.status === 'SUBMITTED';
+        return (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12
+            }}
+          >
+            <CheckRoundIcon
+              className="medication-record-order-icons-size"
+              style={{
+                cursor: canAdminister ? 'pointer' : 'not-allowed',
+                opacity: canAdminister ? 1 : 0.4
+              }}
+              onClick={() => {
+                if (!canAdminister) return;
+                handleAdminister(row);
+              }}
+            />
 
+            <FontAwesomeIcon
+              icon={faXmark}
+              className="medication-record-order-icons-size"
+              style={{
+                cursor: canAdminister ? 'pointer' : 'not-allowed',
+                opacity: canAdminister ? 1 : 0.4
+              }}
+              onClick={() => {
+                if (!canAdminister) return;
+
+                setSelectedRow(row);
+                setCancelObject({
+                  discardReason: ''
+                });
+                setOpenDiscardModal(true);
+              }}
+            />
+          </div>
+        );
+      }
+    }
+  ],
+[
+  commonColumns,
+  activeIngredientMap
+]
+);
+
+
+// const orderedColumnsWithoutReviewButton = useMemo(
+//   () =>
+//     orderedColumns.map(col => {
+//       if (col.key !== 'actions') return col;
+
+//       return {
+//         ...col,
+//         render: (row: MedicationOrderRow) => {
+//           const canAdminister = row.status === 'SUBMITTED';
+
+//           return (
+//             <div
+//               style={{
+//                 display: 'flex',
+//                 alignItems: 'center',
+//                 gap: 12
+//               }}
+//             >
+//               <CheckRoundIcon
+//                 className="medication-record-order-icons-size"
+//                 style={{
+//                   cursor: canAdminister ? 'pointer' : 'not-allowed',
+//                   opacity: canAdminister ? 1 : 0.4
+//                 }}
+//                 onClick={() => {
+//                   if (!canAdminister) return;
+//                   handleAdminister(row);
+//                 }}
+//               />
+
+//               <FontAwesomeIcon
+//                 icon={faXmark}
+//                 className="medication-record-order-icons-size"
+//                 style={{
+//                   cursor: canAdminister ? 'pointer' : 'not-allowed',
+//                   opacity: canAdminister ? 1 : 0.4
+//                 }}
+//                 onClick={() => {
+//                   if (!canAdminister) return;
+
+//                   setSelectedRow(row);
+//                   setCancelObject({
+//                     discardReason: ''
+//                   });
+
+//                   setOpenDiscardModal(true);
+//                 }}
+//               />
+//             </div>
+//           );
+//         }
+//       };
+//     }),
+//   [orderedColumns]
+// );
+
+
+const nestedMedicationColumns = useMemo(
+  () => [
+    {
+      key: 'medicationName',
+      title: <Translate>MEDICATION NAME</Translate>,
+      minWidth: 180,
+      render: (row: MedicationOrderRow) =>
+        activeIngredientMap[row?.activeIngredientId || 0]?.name || '-'
+    },
+    {
+      key: 'class',
+      title: <Translate>MEDICATION CLASS</Translate>,
+      minWidth: 160,
+      render: (row: MedicationOrderRow) => (
+        <MedicationClassCell
+          drugClassId={
+            activeIngredientMap[row?.activeIngredientId || 0]?.drugClassId
+          }
+        />
+      )
+    },
+    {
+      key: 'instructions',
+      title: <Translate>INSTRUCTIONS</Translate>,
+      minWidth: 260,
+      render: (row: MedicationOrderRow) => (
+        <InstructionsCell
+          text={row.instructionText}
+          unitMap={unitMap}
+          frequencyMap={frequencyMap}
+          roaMap={roaMap}
+        />
+      )
+    },
+    {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      minWidth: 120,
+      render: (row: any) =>
+        formatEnumString(row.status)
+    },
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      width: 120,
+      align: 'center',
+      render: (row: MedicationOrderRow) => {
+
+        if (row.status === 'SUBMITTED') {
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 12
+              }}
+            >
+
               <CheckRoundIcon
                 className="medication-record-order-icons-size"
                 style={{
-                  cursor: canAdminister ? 'pointer' : 'not-allowed',
-                  opacity: canAdminister ? 1 : 0.4
+                  cursor: 'pointer'
                 }}
-                onClick={() => {
-                  if (!canAdminister) return;
-                  handleAdminister(row);
-                }}
+                onClick={() => handleAdminister(row)}
               />
 
               <FontAwesomeIcon
                 icon={faXmark}
                 className="medication-record-order-icons-size"
                 style={{
-                  cursor: canAdminister ? 'pointer' : 'not-allowed',
-                  opacity: canAdminister ? 1 : 0.4
+                  cursor: 'pointer'
                 }}
                 onClick={() => {
-                  if (!canAdminister) return;
-
                   setSelectedRow(row);
-                  setCancelObject({ discardReason: '' });
+                  setCancelObject({
+                    discardReason: ''
+                  });
                   setOpenDiscardModal(true);
                 }}
               />
+
             </div>
           );
         }
+
+
+        if (row.status === 'WAITING_DOUBLE_CHECK') {
+
+          const currentUser = user?.login || user?.username;
+
+          const isSameUser =
+            row.administeredBy &&
+            currentUser &&
+            row.administeredBy.toLowerCase() ===
+              currentUser.toLowerCase();
+
+
+          return (
+            <FontAwesomeIcon
+              icon={faCheckDouble}
+              className="medication-record-order-icons-size"
+              style={{
+                cursor: isSameUser
+                  ? 'not-allowed'
+                  : 'pointer',
+                opacity: isSameUser ? 0.4 : 1
+              }}
+              onClick={() => {
+                if (isSameUser) {
+                  dispatch(
+                    notify({
+                      msg:
+                        'Double check must be done by another user',
+                      sev: 'warning'
+                    })
+                  );
+                  return;
+                }
+
+                handleDoubleCheck(row);
+              }}
+            />
+          );
+        }
+
+
+        return null;
       }
-    ],
-    [commonColumns]
-  );
+    }
+
+  ],
+  [
+    activeIngredientMap,
+    roaMap,
+    frequencyMap,
+    unitMap,
+    user,
+    dispatch
+  ]
+);
 
   // =========================
   // ADMIN COLUMNS
@@ -715,10 +1008,11 @@ const MedicationRecord = () => {
         <SectionContainer
           title="Ordered Medications"
           content={
-            <MyTable
+            <MyNestedTable
+              enableRowSelection
               autoHeight
-              data={orderedRows}
-              columns={orderedColumns}
+              data={orderedDisplayRows}
+              columns={patientColumns}
               loading={tableLoading}
               page={orderedParams.page}
               rowsPerPage={orderedParams.size}
@@ -736,6 +1030,10 @@ const MedicationRecord = () => {
               onSortChange={handleOrderedSortChange}
               sortColumn={orderedSortColumn}
               sortType={orderedSortType}
+              getNestedTable={(row) => ({
+                  columns: nestedMedicationColumns,
+                  data: row.medications || []
+                })}
             />
           }
         />
@@ -743,15 +1041,20 @@ const MedicationRecord = () => {
         <SectionContainer
           title="Administered Medications"
           content={
-            <MyTable
+            <MyNestedTable
+              enableRowSelection
               autoHeight
-              data={administeredRows}
-              columns={administeredColumns}
+              data={administeredDisplayRows}
+              columns={patientColumns}
               loading={tableLoading}
               page={adminParams.page}
               rowsPerPage={adminParams.size}
               totalCount={administeredTotalCount}
               onPageChange={handleAdminPageChange}
+              getNestedTable={(row) => ({
+                columns: nestedMedicationColumns,
+                data: row.medications || []
+              })}
               onRowsPerPageChange={(e: any) => {
                 const newSize = Number(e.target.value);
 
@@ -780,6 +1083,7 @@ const MedicationRecord = () => {
         title="Discard Medication"
         required={true}
       />
+
     </div>
   );
   };
