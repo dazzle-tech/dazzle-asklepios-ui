@@ -59,6 +59,7 @@ interface MyNestedTableProps {
   onPageChange?: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   getNestedTable?: (rowData: any) => NestedTableConfig | null;
+  enableRowSelection?: boolean;
 }
 
 const MyNestedTable: React.FC<MyNestedTableProps> = ({
@@ -79,7 +80,8 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
   totalCount,
   onPageChange,
   onRowsPerPageChange,
-  getNestedTable
+  getNestedTable,
+  enableRowSelection = false
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
@@ -87,6 +89,13 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
   };
+
+
+  const [selectedMainRow, setSelectedMainRow] = useState<number | null>(null);
+
+  const [selectedNestedRows, setSelectedNestedRows] = useState<
+    Record<number, number | null>
+  >({});
 
   const emptyTable = () => (
     <TableRow>
@@ -180,9 +189,23 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                     <React.Fragment key={index}>
                       {/* Main row */}
                       <TableRow
-                        onClick={() => onRowClick?.(row)}
-                        className={clsx('main-row', rowClassName?.(row), { 'even-row': isEvenRow })}
-                        hover
+                        onClick={() => {
+                          if (enableRowSelection) {
+                            setSelectedMainRow(index);
+                          }
+
+                          onRowClick?.(row);
+                        }}
+                        className={clsx(
+                          'main-row',
+                          rowClassName?.(row),
+                          {
+                            'even-row': isEvenRow,
+                            'selected-row':
+                              enableRowSelection &&
+                              selectedMainRow === index
+                          }
+                        )}
                       >
                         {getNestedTable && (
                           <TableCell padding="checkbox">
@@ -254,8 +277,23 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                                     </TableRow>
                                   ) : (
                                     nestedTable.data.map((nRow, nIndex) => (
-                                      <TableRow key={nIndex}>
-                                        {nestedTable.columns.map(nCol => (
+                                      <TableRow
+  key={nIndex}
+  hover
+  onClick={() => {
+    if (enableRowSelection) {
+      setSelectedNestedRows(prev => ({
+        ...prev,
+        [index]: nIndex
+      }));
+    }
+  }}
+  className={clsx({
+    'selected-row':
+      enableRowSelection &&
+      selectedNestedRows[index] === nIndex
+  })}
+>                                        {nestedTable.columns.map(nCol => (
                                           <TableCell
                                             key={nCol.key}
                                             align={nCol.align || 'left'}
