@@ -433,8 +433,7 @@ const PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
   { key: 'lastName', label: 'Last Name' },
   { key: 'dateOfBirth', label: 'DOB' },
   { key: 'sexAtBirth', label: 'Gender' },
-  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
-  { key: 'email', label: 'Email' }
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' }
 ];
 
 const validatePatientNameFields = (patient: Patient): string | null => {
@@ -1299,7 +1298,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
               width={200}
             />
             <MyInput
-              required
               column
               fieldName="email"
               record={localPatient}
