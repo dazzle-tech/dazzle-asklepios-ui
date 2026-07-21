@@ -226,6 +226,7 @@ import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
+import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -615,6 +616,7 @@ const App = () => {
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
+              <Route path="tax-setup" element={<TaxSetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />

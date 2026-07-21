@@ -3387,3 +3387,50 @@ modelTypes.BillingConfiguration = {
   status: 'DRAFT'
 };
 
+export const newTax:
+modelTypes.Tax = {
+  id:
+    undefined,
+
+  facilityId:
+    undefined,
+
+  code:
+    '',
+
+  name:
+    '',
+
+  taxType:
+    'PERCENTAGE',
+
+  percentage:
+    null,
+
+  fixedAmount:
+    null,
+
+  currency:
+    null,
+
+  calculationType:
+    'EXCLUSIVE',
+
+  applicableOn:
+    'INVOICE',
+
+  validFrom:
+    '',
+
+  validTo:
+    null,
+
+  isDefault:
+    false,
+
+  active:
+    true,
+
+  description:
+    null
+};

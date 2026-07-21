@@ -263,6 +263,14 @@ export const MODULES: Module[] =
           icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
           viewOrder: 27,
           navPath: "billing-configuration"
+        },
+        {
+          name: "Tax Configuration",
+          code: "TAX_CONFIGURATION",
+          description: "Tax Configuration",
+          icon: "FaPercentage",
+          viewOrder: 28,
+          navPath: "tax-setup"
         }
       ],
     },

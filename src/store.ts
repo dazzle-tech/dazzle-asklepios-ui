@@ -231,6 +231,7 @@ import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSe
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import {billingConfigurationService} from './services/billing/billingConfigurationService';
+import { taxService } from './services/billing/taxService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -582,6 +583,7 @@ export const store = configureStore({
 
   [priceListSetupService.reducerPath]: priceListSetupService.reducer,
   [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+  [taxService.reducerPath]: taxService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -784,7 +786,8 @@ export const store = configureStore({
         systemConfigService.middleware,
         NphiesPayerService.middleware,
         priceListSetupService.middleware,
-        billingConfigurationService.middleware
+        billingConfigurationService.middleware,
+        taxService.middleware
       ) as any
 });
 

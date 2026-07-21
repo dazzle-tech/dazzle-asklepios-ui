@@ -1,5 +1,3 @@
-// src/pages/setup/BillingConfiguration/BillingConfigurationSetup.tsx
-
 import React, {
   useEffect,
   useMemo,
@@ -73,6 +71,10 @@ import {
 
 import AddEditBillingConfiguration from './AddEditBillingConfiguration';
 
+import {
+  extractBillingConfigurationErrorMessage
+} from './billingConfigurationErrorHandler';
+
 import './styles.less';
 
 type FilterCriteria =
@@ -81,7 +83,8 @@ type FilterCriteria =
   | 'status';
 
 type BillingConfigurationFilter = {
-  criteria: FilterCriteria;
+  criteria:
+    FilterCriteria;
 
   configurationKey:
     BillingConfigurationKey | '';
@@ -163,13 +166,17 @@ React.FC = () => {
     modalOpen,
     setModalOpen
   ] =
-    useState(false);
+    useState(
+      false
+    );
 
   const [
     deleteConfirmationOpen,
     setDeleteConfirmationOpen
   ] =
-    useState(false);
+    useState(
+      false
+    );
 
   const [
     width,
@@ -256,9 +263,6 @@ React.FC = () => {
         .status
     );
 
-  /*
-   * Default paginated query.
-   */
   const allConfigurationsQuery =
     useGetBillingConfigurationsByFacilityQuery(
       {
@@ -285,9 +289,6 @@ React.FC = () => {
       }
     );
 
-  /*
-   * Paginated status query.
-   */
   const configurationsByStatusQuery =
     useGetBillingConfigurationsByStatusQuery(
       {
@@ -318,10 +319,6 @@ React.FC = () => {
       }
     );
 
-  /*
-   * Configuration Key is unique per facility, so this endpoint returns
-   * one record instead of a paginated list.
-   */
   const configurationByKeyQuery =
     useGetBillingConfigurationByFacilityAndKeyQuery(
       {
@@ -364,9 +361,6 @@ React.FC = () => {
   ] =
     useChangeBillingConfigurationActivationStatusMutation();
 
-  /*
-   * Choose the currently active query response.
-   */
   const activeResponse =
     useMemo(() => {
       if (
@@ -433,6 +427,13 @@ React.FC = () => {
     configurationByKeyQuery
       .isFetching;
 
+  const activeQueryError =
+    hasConfigurationKeyFilter
+      ? configurationByKeyQuery.error
+      : hasStatusFilter
+        ? configurationsByStatusQuery.error
+        : allConfigurationsQuery.error;
+
   const refetchActiveQuery =
     async () => {
       if (
@@ -479,7 +480,9 @@ React.FC = () => {
         setDivContent('')
       );
     };
-  }, [dispatch]);
+  }, [
+    dispatch
+  ]);
 
   useEffect(() => {
     const resizeHandler =
@@ -522,7 +525,40 @@ React.FC = () => {
     setAppliedBillingConfigurationFilter({
       ...initialBillingConfigurationFilter
     });
-  }, [facilityId]);
+
+    setSelectedConfiguration({
+      ...newBillingConfiguration
+    });
+  }, [
+    facilityId
+  ]);
+
+  /*
+   * Handle errors returned from list/filter queries.
+   */
+  useEffect(() => {
+    if (
+      !activeQueryError
+    ) {
+      return;
+    }
+
+    dispatch(
+      notify({
+        msg:
+          extractBillingConfigurationErrorMessage(
+            activeQueryError,
+            'Failed to load billing configurations.'
+          ),
+
+        sev:
+          'error'
+      })
+    );
+  }, [
+    activeQueryError,
+    dispatch
+  ]);
 
   const handleResetFilter =
     () => {
@@ -567,11 +603,49 @@ React.FC = () => {
         !status;
 
       if (
-        !criteria ||
-        isInvalidConfigurationKeyFilter ||
+        !criteria
+      ) {
+        dispatch(
+          notify({
+            msg:
+              'Please select filter criteria.',
+
+            sev:
+              'warning'
+          })
+        );
+
+        return;
+      }
+
+      if (
+        isInvalidConfigurationKeyFilter
+      ) {
+        dispatch(
+          notify({
+            msg:
+              'Please select a configuration key.',
+
+            sev:
+              'warning'
+          })
+        );
+
+        return;
+      }
+
+      if (
         isInvalidStatusFilter
       ) {
-        handleResetFilter();
+        dispatch(
+          notify({
+            msg:
+              'Please select a status.',
+
+            sev:
+              'warning'
+          })
+        );
 
         return;
       }
@@ -599,6 +673,22 @@ React.FC = () => {
 
   const handleNew =
     () => {
+      if (
+        !facilityId
+      ) {
+        dispatch(
+          notify({
+            msg:
+              'Please select a facility first.',
+
+            sev:
+              'warning'
+          })
+        );
+
+        return;
+      }
+
       setSelectedConfiguration({
         ...newBillingConfiguration,
 
@@ -610,6 +700,9 @@ React.FC = () => {
         configurationValue:
           '',
 
+        enumCode:
+          null,
+
         active:
           true,
 
@@ -617,7 +710,9 @@ React.FC = () => {
           'DRAFT'
       });
 
-      setModalOpen(true);
+      setModalOpen(
+        true
+      );
     };
 
   const handleEdit = (
@@ -628,7 +723,9 @@ React.FC = () => {
       ...row
     });
 
-    setModalOpen(true);
+    setModalOpen(
+      true
+    );
   };
 
   const handleDeleteRequest = (
@@ -650,6 +747,16 @@ React.FC = () => {
         !selectedConfiguration
           .id
       ) {
+        dispatch(
+          notify({
+            msg:
+              'Billing configuration ID is missing.',
+
+            sev:
+              'warning'
+          })
+        );
+
         return;
       }
 
@@ -680,18 +787,16 @@ React.FC = () => {
 
         await refetchActiveQuery();
       } catch (
-        error: any
+        error:
+          any
       ) {
         dispatch(
           notify({
             msg:
-              error?.data
-                ?.detail ||
-              error?.data
-                ?.title ||
-              error?.data
-                ?.message ||
-              'Failed to delete billing configuration',
+              extractBillingConfigurationErrorMessage(
+                error,
+                'Failed to delete billing configuration.'
+              ),
 
             sev:
               'error'
@@ -705,9 +810,26 @@ React.FC = () => {
       row:
         BillingConfiguration
     ) => {
-      if (!row.id) {
+      if (
+        !row.id
+      ) {
+        dispatch(
+          notify({
+            msg:
+              'Billing configuration ID is missing.',
+
+            sev:
+              'warning'
+          })
+        );
+
         return;
       }
+
+      const nextActive =
+        !Boolean(
+          row.active
+        );
 
       try {
         await changeActivationStatus({
@@ -715,17 +837,15 @@ React.FC = () => {
             row.id,
 
           active:
-            !Boolean(
-              row.active
-            )
+            nextActive
         }).unwrap();
 
         dispatch(
           notify({
             msg:
-              row.active
-                ? 'Billing configuration deactivated successfully'
-                : 'Billing configuration activated successfully',
+              nextActive
+                ? 'Billing configuration activated successfully'
+                : 'Billing configuration deactivated successfully',
 
             sev:
               'success'
@@ -734,18 +854,19 @@ React.FC = () => {
 
         await refetchActiveQuery();
       } catch (
-        error: any
+        error:
+          any
       ) {
         dispatch(
           notify({
             msg:
-              error?.data
-                ?.detail ||
-              error?.data
-                ?.title ||
-              error?.data
-                ?.message ||
-              'Failed to update activation status',
+              extractBillingConfigurationErrorMessage(
+                error,
+
+                nextActive
+                  ? 'Failed to activate billing configuration.'
+                  : 'Failed to deactivate billing configuration.'
+              ),
 
             sev:
               'error'
@@ -756,7 +877,13 @@ React.FC = () => {
 
   const handleSaveSuccess =
     async () => {
-      setModalOpen(false);
+      setModalOpen(
+        false
+      );
+
+      setSelectedConfiguration({
+        ...newBillingConfiguration
+      });
 
       setPaginationParams(
         previous => ({
@@ -770,17 +897,34 @@ React.FC = () => {
         })
       );
 
-      await refetchActiveQuery();
+      try {
+        await refetchActiveQuery();
+      } catch (
+        error:
+          any
+      ) {
+        dispatch(
+          notify({
+            msg:
+              extractBillingConfigurationErrorMessage(
+                error,
+                'Billing configuration was saved, but the list could not be refreshed.'
+              ),
+
+            sev:
+              'error'
+          })
+        );
+      }
     };
 
   const handlePageChange = (
-    _event: unknown,
-    newPage: number
+    _event:
+      unknown,
+
+    newPage:
+      number
   ) => {
-    /*
-     * Configuration Key returns a single unique record,
-     * so pagination is not needed for this filter.
-     */
     if (
       hasConfigurationKeyFilter
     ) {
@@ -815,6 +959,26 @@ React.FC = () => {
         event.target.value
       );
 
+    if (
+      !Number.isFinite(
+        newSize
+      ) ||
+      newSize <=
+        0
+    ) {
+      dispatch(
+        notify({
+          msg:
+            'Invalid rows per page value.',
+
+          sev:
+            'warning'
+        })
+      );
+
+      return;
+    }
+
     setPaginationParams(
       previous => ({
         ...previous,
@@ -832,13 +996,19 @@ React.FC = () => {
   };
 
   const handleSortChange = (
-    column: string,
+    column:
+      string,
+
     type:
       'asc' | 'desc'
   ) => {
-    setSortColumn(column);
+    setSortColumn(
+      column
+    );
 
-    setSortType(type);
+    setSortType(
+      type
+    );
 
     setPaginationParams(
       previous => ({
@@ -876,9 +1046,12 @@ React.FC = () => {
         conjureValueBasedOnIDFromList(
           facilityListResponse ??
             [],
+
           row.facilityId,
+
           'name'
-        )
+        ) ||
+        '-'
     },
     {
       key:
@@ -932,6 +1105,33 @@ React.FC = () => {
     },
     {
       key:
+        'enumCode',
+
+      title:
+        <Translate>
+          Enum Type
+        </Translate>,
+
+      flexGrow:
+        3,
+
+      render: (
+        row:
+          BillingConfiguration
+      ) =>
+        row.valueType ===
+          'ENUM'
+          ? (
+              row.enumCode
+                ? formatEnumString(
+                    row.enumCode
+                  )
+                : '-'
+            )
+          : '-'
+    },
+    {
+      key:
         'configurationValue',
 
       title:
@@ -979,12 +1179,16 @@ React.FC = () => {
           return (
             <span
               title={
-                row.configurationValue
+                String(
+                  row.configurationValue ??
+                    ''
+                )
               }
               className="billing-configuration-value"
             >
               {
-                row.configurationValue
+                row.configurationValue ||
+                '-'
               }
             </span>
           );
@@ -1094,7 +1298,9 @@ React.FC = () => {
             size={23}
             fill="var(--primary-gray)"
             onClick={() =>
-              handleEdit(row)
+              handleEdit(
+                row
+              )
             }
           />
 
@@ -1126,9 +1332,19 @@ React.FC = () => {
 
           <MdDelete
             className="icons-style"
-            title="Delete"
+            title={
+              row.status ===
+                'ACTIVE'
+                ? 'Active configuration cannot be deleted'
+                : 'Delete'
+            }
             size={23}
-            fill="var(--primary-pink)"
+            fill={
+              row.status ===
+                'ACTIVE'
+                ? '#b1acac'
+                : 'var(--primary-pink)'
+            }
             onClick={() =>
               handleDeleteRequest(
                 row
@@ -1159,7 +1375,8 @@ React.FC = () => {
             billingConfigurationFilter
           }
           setRecord={(
-            updated: any
+            updated:
+              any
           ) => {
             const next =
               typeof updated ===
@@ -1176,7 +1393,9 @@ React.FC = () => {
               ) as
                 FilterCriteria;
 
-            if (!nextCriteria) {
+            if (
+              !nextCriteria
+            ) {
               handleResetFilter();
 
               return;
@@ -1214,7 +1433,8 @@ React.FC = () => {
               billingConfigurationFilter
             }
             setRecord={(
-              updated: any
+              updated:
+                any
             ) => {
               const next =
                 typeof updated ===
@@ -1232,12 +1452,6 @@ React.FC = () => {
                 ) as
                   BillingConfigurationKey
                   | '';
-
-              if (!nextValue) {
-                handleResetFilter();
-
-                return;
-              }
 
               setBillingConfigurationFilter(
                 previous => ({
@@ -1270,7 +1484,8 @@ React.FC = () => {
               billingConfigurationFilter
             }
             setRecord={(
-              updated: any
+              updated:
+                any
             ) => {
               const next =
                 typeof updated ===
@@ -1283,16 +1498,10 @@ React.FC = () => {
               const nextStatus =
                 (
                   next?.status ??
-                  ''
+                    ''
                 ) as
                   BillingConfigurationStatus
                   | '';
-
-              if (!nextStatus) {
-                handleResetFilter();
-
-                return;
-              }
 
               setBillingConfigurationFilter(
                 previous => ({
@@ -1450,9 +1659,7 @@ React.FC = () => {
         setOpen={
           setDeleteConfirmationOpen
         }
-        itemToDelete={
-          'Billing Configuration'
-        }
+        itemToDelete="Billing Configuration"
         actionButtonFunction={
           handleDelete
         }

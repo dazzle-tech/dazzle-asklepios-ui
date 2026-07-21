@@ -5158,3 +5158,90 @@ export type SaveBillingConfigurationRequest = {
   status:
     BillingConfigurationStatus;
 };
+
+export type TaxType =
+  | 'PERCENTAGE'
+  | 'FIXED_AMOUNT';
+
+export type TaxCalculationType =
+  | 'EXCLUSIVE'
+  | 'INCLUSIVE';
+
+export type TaxApplicableOn =
+  | 'INVOICE'
+  | 'INVOICE_LINE'
+  | 'SERVICE'
+  | 'PRODUCT';
+
+/*
+ * إذا كان Currency موجودًا عندك مسبقًا،
+ * لا تعيدي تعريفه.
+ */
+export type Currency =
+  string;
+
+export type Tax = {
+  id?: number;
+
+  facilityId?: number;
+
+  code?: string;
+
+  name?: string;
+
+  taxType?: TaxType;
+
+  percentage?: number | null;
+
+  fixedAmount?: number | null;
+
+  currency?: Currency | null;
+
+  calculationType?:
+    TaxCalculationType;
+
+  applicableOn?:
+    TaxApplicableOn;
+
+  validFrom?: string;
+
+  validTo?: string | null;
+
+  isDefault?: boolean;
+
+  active?: boolean;
+
+  description?: string | null;
+};
+
+export type SaveTaxRequest = {
+  facilityId: number;
+
+  code: string;
+
+  name: string;
+
+  taxType: TaxType;
+
+  percentage?: number | null;
+
+  fixedAmount?: number | null;
+
+  currency?: Currency | null;
+
+  calculationType:
+    TaxCalculationType;
+
+  applicableOn:
+    TaxApplicableOn;
+
+  validFrom: string;
+
+  validTo?: string | null;
+
+  isDefault?: boolean;
+
+  active?: boolean;
+
+  description?: string | null;
+};

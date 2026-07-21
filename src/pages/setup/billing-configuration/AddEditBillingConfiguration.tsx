@@ -1,5 +1,3 @@
-// src/pages/setup/BillingConfiguration/AddEditBillingConfiguration.tsx
-
 import React, {
   useEffect
 } from 'react';
@@ -44,6 +42,10 @@ import type {
   BillingConfigurationValueType,
   SaveBillingConfigurationRequest
 } from '@/types/model-types-new';
+
+import {
+  extractBillingConfigurationErrorMessage
+} from './billingConfigurationErrorHandler';
 
 type Props = {
   open: boolean;
@@ -111,25 +113,9 @@ React.FC<Props> = ({
       'BillingConfigurationStatus'
     );
 
-  /*
-   * All available enum names.
-   *
-   * Expected values:
-   *
-   * BillingRoundingMethod
-   * SequenceResetFrequency
-   */
   const enumNames =
     useEnumNames();
 
-  /*
-   * The selected enum code is stored directly in the record.
-   *
-   * Example:
-   *
-   * billingConfiguration.enumCode =
-   * 'BillingRoundingMethod'
-   */
   const selectedEnumCode =
     billingConfiguration
       .enumCode
@@ -139,9 +125,6 @@ React.FC<Props> = ({
         )
       : '';
 
-  /*
-   * Load enum values dynamically using the selected enum code.
-   */
   const enumValueOptions =
     useEnumOptions(
       selectedEnumCode
@@ -246,15 +229,9 @@ React.FC<Props> = ({
           valueType as
             BillingConfigurationValueType,
 
-        /*
-         * Clear the old value whenever Value Type changes.
-         */
         configurationValue:
           '',
 
-        /*
-         * enumCode is used only when the type is ENUM.
-         */
         enumCode:
           valueType ===
             'ENUM'
@@ -288,16 +265,13 @@ React.FC<Props> = ({
       updated ??
       '';
 
-    /*
-     * Store only the short enum code.
-     *
-     * If a complete class name is returned accidentally,
-     * extract its final part.
-     */
     const enumCodeParts =
       String(
-        selectedValue || ''
-      ).split('.');
+        selectedValue ||
+        ''
+      ).split(
+        '.'
+      );
 
     const enumCode =
       enumCodeParts[
@@ -313,9 +287,6 @@ React.FC<Props> = ({
           enumCode ||
           null,
 
-        /*
-         * Clear the previous default value when Enum Type changes.
-         */
         configurationValue:
           ''
       })
@@ -323,26 +294,35 @@ React.FC<Props> = ({
   };
 
   const validate = ():
-    string | null => {
+    string[] => {
+    const messages:
+      string[] = [];
+
     if (
       !billingConfiguration
         .facilityId
     ) {
-      return 'Facility is required.';
+      messages.push(
+        'Facility is required.'
+      );
     }
 
     if (
       !billingConfiguration
         .configurationKey
     ) {
-      return 'Configuration key is required.';
+      messages.push(
+        'Configuration key is required.'
+      );
     }
 
     if (
       !billingConfiguration
         .valueType
     ) {
-      return 'Value type is required.';
+      messages.push(
+        'Value type is required.'
+      );
     }
 
     if (
@@ -352,39 +332,50 @@ React.FC<Props> = ({
       !billingConfiguration
         .enumCode
     ) {
-      return 'Enum type is required.';
+      messages.push(
+        'Enum type is required.'
+      );
     }
 
+    const configurationValue =
+      billingConfiguration
+        .configurationValue;
+
     if (
-      billingConfiguration
-        .configurationValue ===
-          undefined ||
-      billingConfiguration
-        .configurationValue ===
-          null ||
+      configurationValue ===
+        undefined ||
+      configurationValue ===
+        null ||
       String(
-        billingConfiguration
-          .configurationValue
-      ).trim() === ''
+        configurationValue
+      ).trim() ===
+        ''
     ) {
-      return 'Default value is required.';
+      messages.push(
+        'Default value is required.'
+      );
     }
 
     if (
       billingConfiguration
         .valueType ===
         'BOOLEAN' &&
+      configurationValue !==
+        undefined &&
+      configurationValue !==
+        null &&
       ![
         'true',
         'false'
       ].includes(
         String(
-          billingConfiguration
-            .configurationValue
+          configurationValue
         ).toLowerCase()
       )
     ) {
-      return 'Boolean value must be true or false.';
+      messages.push(
+        'Boolean value must be True or False.'
+      );
     }
 
     if (
@@ -393,51 +384,74 @@ React.FC<Props> = ({
         'LONG',
         'DECIMAL'
       ].includes(
-        billingConfiguration
-          .valueType
+        String(
+          billingConfiguration
+            .valueType
+        )
       ) &&
+      configurationValue !==
+        undefined &&
+      configurationValue !==
+        null &&
+      String(
+        configurationValue
+      ).trim() !==
+        '' &&
       Number.isNaN(
         Number(
-          billingConfiguration
-            .configurationValue
+          configurationValue
         )
       )
     ) {
-      return 'Default value must be numeric.';
+      messages.push(
+        'Default value must be numeric.'
+      );
     }
 
     if (
       billingConfiguration
         .valueType ===
-        'JSON'
+        'JSON' &&
+      configurationValue !==
+        undefined &&
+      configurationValue !==
+        null &&
+      String(
+        configurationValue
+      ).trim() !==
+        ''
     ) {
       try {
         JSON.parse(
           String(
-            billingConfiguration
-              .configurationValue
+            configurationValue
           )
         );
       } catch {
-        return 'Default value must contain valid JSON.';
+        messages.push(
+          'Default value must contain valid JSON.'
+        );
       }
     }
 
-    return null;
+    return messages;
   };
 
   const handleSave =
     async () => {
-      const validationMessage =
+      const validationMessages =
         validate();
 
       if (
-        validationMessage
+        validationMessages.length >
+        0
       ) {
         dispatch(
           notify({
             msg:
-              validationMessage,
+              validationMessages.join(
+                '\n'
+              ),
 
             sev:
               'warning'
@@ -542,26 +556,24 @@ React.FC<Props> = ({
           );
         }
 
-        setOpen(false);
+        setOpen(
+          false
+        );
 
         onSaveSuccess?.();
       } catch (
         error:
           any
       ) {
-        const detail =
-          error?.data?.detail ||
-          error?.data?.title ||
-          error?.data?.message;
-
         dispatch(
           notify({
             msg:
-              detail ||
-              (
+              extractBillingConfigurationErrorMessage(
+                error,
+
                 isEdit
-                  ? 'Failed to update billing configuration'
-                  : 'Failed to create billing configuration'
+                  ? 'Failed to update billing configuration.'
+                  : 'Failed to create billing configuration.'
               ),
 
             sev:
@@ -764,135 +776,139 @@ React.FC<Props> = ({
       }
     };
 
-  const content = () => (
-    <Form fluid>
-      <div className="billing-configuration-two-columns">
+  const content =
+    () => (
+      <Form fluid>
+        <div className="billing-configuration-two-columns">
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Facility"
+            fieldType="select"
+            fieldName="facilityId"
+            selectData={
+              facilityListResponse ??
+              []
+            }
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={
+              billingConfiguration
+            }
+            setRecord={
+              setBillingConfiguration
+            }
+            placeholder="Select Facility"
+            searchable
+            disabled={
+              isEdit
+            }
+          />
+
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Configuration Key"
+            fieldType="select"
+            fieldName="configurationKey"
+            selectData={
+              configurationKeyOptions
+            }
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={
+              billingConfiguration
+            }
+            setRecord={
+              setBillingConfiguration
+            }
+            placeholder="Select Configuration Key"
+            searchable
+          />
+        </div>
+
+        <br />
+
+        <div className="billing-configuration-two-columns">
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Value Type"
+            fieldType="select"
+            fieldName="valueType"
+            selectData={
+              valueTypeOptions
+            }
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={
+              billingConfiguration
+            }
+            setRecord={
+              handleValueTypeChange
+            }
+            placeholder="Select Value Type"
+            searchable={false}
+          />
+
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Status"
+            fieldType="select"
+            fieldName="status"
+            selectData={
+              statusOptions
+            }
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={
+              billingConfiguration
+            }
+            setRecord={
+              setBillingConfiguration
+            }
+            placeholder="Select Status"
+            searchable={false}
+          />
+        </div>
+
+        <br />
+
+        {renderDefaultValueInput()}
+
+        <br />
+
         <MyInput
-          required
           width="100%"
-          fieldLabel="Facility"
-          fieldType="select"
-          fieldName="facilityId"
-          selectData={
-            facilityListResponse ??
-            []
-          }
-          selectDataLabel="name"
-          selectDataValue="id"
+          fieldLabel="Description"
+          fieldType="textarea"
+          fieldName="description"
           record={
             billingConfiguration
           }
           setRecord={
             setBillingConfiguration
           }
-          placeholder="Select Facility"
-          searchable
+          placeholder="Enter Description"
         />
 
+        <br />
+
         <MyInput
-          required
           width="100%"
-          fieldLabel="Configuration Key"
-          fieldType="select"
-          fieldName="configurationKey"
-          selectData={
-            configurationKeyOptions
-          }
-          selectDataLabel="label"
-          selectDataValue="value"
+          fieldLabel="Active"
+          fieldType="checkbox"
+          fieldName="active"
           record={
             billingConfiguration
           }
           setRecord={
             setBillingConfiguration
           }
-          placeholder="Select Configuration Key"
-          searchable
         />
-      </div>
-
-      <br />
-
-      <div className="billing-configuration-two-columns">
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Value Type"
-          fieldType="select"
-          fieldName="valueType"
-          selectData={
-            valueTypeOptions
-          }
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={
-            billingConfiguration
-          }
-          setRecord={
-            handleValueTypeChange
-          }
-          placeholder="Select Value Type"
-          searchable={false}
-        />
-
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Status"
-          fieldType="select"
-          fieldName="status"
-          selectData={
-            statusOptions
-          }
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={
-            billingConfiguration
-          }
-          setRecord={
-            setBillingConfiguration
-          }
-          placeholder="Select Status"
-          searchable={false}
-        />
-      </div>
-
-      <br />
-
-      {renderDefaultValueInput()}
-
-      <br />
-
-      <MyInput
-        width="100%"
-        fieldLabel="Description"
-        fieldType="textarea"
-        fieldName="description"
-        record={
-          billingConfiguration
-        }
-        setRecord={
-          setBillingConfiguration
-        }
-        placeholder="Enter Description"
-      />
-
-      <br />
-
-      <MyInput
-        width="100%"
-        fieldLabel="Active"
-        fieldType="checkbox"
-        fieldName="active"
-        record={
-          billingConfiguration
-        }
-        setRecord={
-          setBillingConfiguration
-        }
-      />
-    </Form>
-  );
+      </Form>
+    );
 
   const direction =
     localStorage.getItem(
