@@ -3434,3 +3434,64 @@ modelTypes.Tax = {
   description:
     null
 };
+
+
+export const newDiscount:
+modelTypes.Discount= {
+  id:
+    undefined,
+
+  facilityId:
+    undefined,
+
+  code:
+    '',
+
+  name:
+    '',
+
+  discountType:
+    'PERCENTAGE',
+
+  percentage:
+    null,
+
+  fixedAmount:
+    null,
+
+  currency:
+    null,
+
+  applicableOn:
+    'INVOICE',
+
+  validFrom:
+    '',
+
+  validTo:
+    null,
+
+  maximumDiscountAmount:
+    null,
+
+  minimumInvoiceAmount:
+    null,
+
+  requiresReason:
+    false,
+
+  requiresApproval:
+    false,
+
+  combinable:
+    false,
+
+  isDefault:
+    false,
+
+  active:
+    true,
+
+  description:
+    null
+};

@@ -227,6 +227,7 @@ import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
+import DiscountSetup from './pages/setup/discount/DiscountSetup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -704,6 +705,7 @@ const App = () => {
               <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
+              <Route path="discount-setup" element={<DiscountSetup />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />

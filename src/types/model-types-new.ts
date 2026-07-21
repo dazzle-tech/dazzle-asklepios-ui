@@ -5245,3 +5245,120 @@ export type SaveTaxRequest = {
 
   description?: string | null;
 };
+
+export type DiscountType =
+  | 'PERCENTAGE'
+  | 'FIXED_AMOUNT';
+
+export type DiscountApplicableOn =
+  | 'INVOICE'
+  | 'INVOICE_LINE'
+  | 'SERVICE'
+  | 'PRODUCT';
+
+
+export type Discount = {
+  id?: number;
+
+  facilityId?: number;
+
+  code?: string;
+
+  name?: string;
+
+  discountType?:
+    DiscountType;
+
+  percentage?:
+    number | null;
+
+  fixedAmount?:
+    number | null;
+
+  currency?:
+    Currency | null;
+
+  applicableOn?:
+    DiscountApplicableOn;
+
+  validFrom?: string;
+
+  validTo?:
+    string | null;
+
+  maximumDiscountAmount?:
+    number | null;
+
+  minimumInvoiceAmount?:
+    number | null;
+
+  requiresReason?:
+    boolean;
+
+  requiresApproval?:
+    boolean;
+
+  combinable?:
+    boolean;
+
+  isDefault?:
+    boolean;
+
+  active?:
+    boolean;
+
+  description?:
+    string | null;
+};
+
+export type SaveDiscountRequest = {
+  facilityId: number;
+
+  code: string;
+
+  name: string;
+
+  discountType:
+    DiscountType;
+
+  percentage?:
+    number | null;
+
+  fixedAmount?:
+    number | null;
+
+  currency?:
+    Currency | null;
+
+  applicableOn:
+    DiscountApplicableOn;
+
+  validFrom: string;
+
+  validTo?:
+    string | null;
+
+  maximumDiscountAmount?:
+    number | null;
+
+  minimumInvoiceAmount?:
+    number | null;
+
+  requiresReason?:
+    boolean;
+
+  requiresApproval?:
+    boolean;
+
+  combinable?:
+    boolean;
+
+  isDefault?:
+    boolean;
+
+  active?:
+    boolean;
+
+  description?:
+    string | null;
+};

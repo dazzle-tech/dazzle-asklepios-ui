@@ -271,6 +271,14 @@ export const MODULES: Module[] =
           icon: "FaPercentage",
           viewOrder: 28,
           navPath: "tax-setup"
+        },
+        {
+          name: "Discount Configuration",
+          code: "DISCOUNT_CONFIGURATION",
+          description: "Discount Configuration",
+          icon: "FaTags",
+          viewOrder: 29,
+          navPath: "discount-setup"
         }
       ],
     },
