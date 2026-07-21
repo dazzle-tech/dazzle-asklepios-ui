@@ -230,6 +230,7 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -540,6 +541,8 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    [autoPopulationService.reducerPath]: autoPopulationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -782,7 +785,8 @@ export const store = configureStore({
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        systemConfigService.middleware
+        systemConfigService.middleware,
+        autoPopulationService.middleware
       ) as any
 });
 

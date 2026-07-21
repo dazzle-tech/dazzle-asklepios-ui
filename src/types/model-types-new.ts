@@ -5108,3 +5108,56 @@ export interface NotificationEventResponseVM {
   eventPayload?: Record<string, unknown> | null;
   createdDate?: string | Date | null;
 }
+
+export interface AutoPopulateRequest {
+  userText: string;
+  patientId: number;
+}
+
+export interface AutoPopulationStructuredFields {
+  chief_complaint?: string | null;
+  history_of_present_illness?: string | null;
+  diagnosis?: string[] | null;
+  medications?: Record<string, any>[] | null;
+  vitals?: Record<string, any> | null;
+  procedures?: string[] | null;
+  allergies?: string[] | null;
+  assessment?: string | null;
+  plan?: string | null;
+  past_medical_history?: string | null;
+  family_history?: string | null;
+  social_history?: string | null;
+  review_of_systems?: Record<string, string> | null;
+}
+
+export interface AutoPopulationUncertaintyFlag {
+  field_name: string;
+  reason: string;
+  confidence?: string | null;
+}
+
+export interface AutoPopulationContradictionFlag {
+  field_name: string;
+  user_text_value: any;
+  patient_record_value: any;
+  recommendation: string;
+  severity: string;
+}
+
+export interface AutoPopulationWarning {
+  level: string;
+  message: string;
+  field_name?: string | null;
+}
+
+export interface AutoPopulationResponse {
+  request_id: string;
+  task_type: string;
+  output_language: string;
+  structured_fields: AutoPopulationStructuredFields;
+  uncertainty_flags: AutoPopulationUncertaintyFlag[];
+  contradictions: AutoPopulationContradictionFlag[];
+  source_trace: any[];
+  warnings: AutoPopulationWarning[];
+  processing_metadata?: Record<string, any>;
+}
