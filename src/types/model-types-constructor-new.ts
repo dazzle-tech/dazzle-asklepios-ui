@@ -3318,3 +3318,72 @@ export type WaseelItemMappingSearchParams = {
   size: number;
   sort?: string;
 };
+
+export const newPriceListSetup: modelTypes.PriceListSetup = {
+  id: undefined,
+
+  facilityId: undefined,
+  facilityName: undefined,
+
+  type: undefined,
+
+  payerId: undefined,
+  payerName: undefined,
+
+  name: undefined,
+  description: undefined,
+
+  versionNumber: 1,
+
+  effectiveFrom: undefined,
+  effectiveTo: undefined,
+
+  status: 'DRAFT',
+
+  currency: undefined,
+
+  isActive: true
+};
+
+export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
+  id: undefined,
+
+  priceListSetupId: undefined,
+
+  waseelItemMappingId: undefined,
+  sbsCatalogId: undefined,
+
+  itemType: undefined,
+
+  sourceId: undefined,
+
+  itemCode: undefined,
+  itemName: undefined,
+
+
+  unitPrice: undefined,
+  discountPercentage: 0,
+
+  isActive: true
+};
+export const newBillingConfiguration:
+modelTypes.BillingConfiguration = {
+  id: undefined,
+
+  facilityId: undefined,
+
+  configurationKey: undefined,
+
+  valueType: 'STRING',
+
+  configurationValue: '',
+
+  enumClass: null,
+
+  description: '',
+
+  active: true,
+
+  status: 'DRAFT'
+};
+

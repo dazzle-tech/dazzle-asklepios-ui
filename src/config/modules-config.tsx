@@ -247,6 +247,22 @@ export const MODULES: Module[] =
           icon: "FaBuilding",
           viewOrder: 25,
           navPath: "waseel-sbs-setup"
+        },
+        {
+          name: "Price List Setup",
+          code: "PRICE_LIST_SETUP",
+          description: "Price List Setup",
+          icon: "FaListAlt",
+          viewOrder: 26,
+          navPath: "price-list-setup"
+        },
+        {
+          name: "Billing Configuration",
+          code: "BILLING_CONFIGURATION",
+          description: "Billing Configuration",
+          icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
+          viewOrder: 27,
+          navPath: "billing-configuration"
         }
       ],
     },

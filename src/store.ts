@@ -229,6 +229,8 @@ import { appointmentPolicyAssignmentService } from './services/appointment/appoi
 import { systemConfigService } from '@/services/systemConfigService';
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
+import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
+import {billingConfigurationService} from './services/billing/billingConfigurationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -578,6 +580,8 @@ export const store = configureStore({
   [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
 
+  [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+  [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -778,7 +782,9 @@ export const store = configureStore({
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
-        NphiesPayerService.middleware
+        NphiesPayerService.middleware,
+        priceListSetupService.middleware,
+        billingConfigurationService.middleware
       ) as any
 });
 

@@ -4944,3 +4944,217 @@ export type WaseelItemMapping = {
   isActive: boolean;
   notes?: string;
 };
+
+export type PriceListSetupType =
+  | 'CASH'
+  | 'INSURANCE'
+  | 'CORPORATE'
+  | 'PACKAGE'
+  | 'EMPLOYEE';
+
+export type PriceListSetupStatus =
+  | 'DRAFT'
+  | 'APPROVED'
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export type PriceListItemType =
+  | 'MEDICATION'
+  | 'LABORATORY'
+  | 'RADIOLOGY'
+  | 'PATHOLOGY'
+  | 'SERVICE'
+  | 'PROCEDURE';
+
+export type PricingMethod =
+  | 'FIXED_PRICE'
+  | 'DISCOUNT'
+  | 'MARKUP'
+  | 'NO_CHARGE'
+  | 'MANUAL';
+
+  export type PriceListSetup = {
+  id?: number;
+
+  facilityId?: number;
+  facilityName?: string;
+
+  type?: PriceListSetupType;
+
+  payerId?: number;
+  payerName?: string;
+
+  name?: string;
+  description?: string;
+
+  versionNumber?: number;
+
+  effectiveFrom?: string;
+  effectiveTo?: string;
+
+  status?: PriceListSetupStatus;
+
+  currency?: string;
+
+  isActive?: boolean;
+};
+
+export type PriceListSetupItem = {
+  id?: number;
+
+  priceListSetupId?: number;
+
+  waseelItemMappingId?: number;
+  sbsCatalogId?: number;
+
+  itemType?: PriceListItemType;
+
+  sourceId?: number;
+
+  itemCode?: string;
+  itemName?: string;
+
+
+  unitPrice?: number;
+  discountPercentage?: number;
+
+  isActive?: boolean;
+};
+export type SavePriceListSetupItemRequest = {
+  waseelItemMappingId?: number | null;
+  sbsCatalogId?: number | null;
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode: string;
+  itemName: string;
+  pricingMethod: PricingMethod;
+  unitPrice: number;
+  discountPercentage: number;
+  isActive?: boolean;
+};
+export type SavePriceListSetupRequest = {
+  facilityId: number;
+  type: PriceListSetupType;
+  payerId?: number | null;
+  name: string;
+  description?: string | null;
+  versionNumber: number;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  currency: string;
+};
+export type BillingConfigurationKey =
+  | 'DEFAULT_CURRENCY_ID'
+  | 'DEFAULT_PRICE_LIST_ID'
+  | 'DEFAULT_CASH_PAYER_ID'
+  | 'DEFAULT_PAYMENT_METHOD_ID'
+  | 'DEFAULT_TAX_ID'
+  | 'DECIMAL_PRECISION'
+  | 'ROUNDING_METHOD'
+  | 'PRICES_INCLUDE_TAX'
+  | 'APPLY_TAX_AUTOMATICALLY'
+  | 'ALLOW_TAX_OVERRIDE'
+  | 'ALLOW_INVOICE_WITHOUT_PAYER'
+  | 'ALLOW_MANUAL_PRICE_OVERRIDE'
+  | 'REQUIRE_PRICE_OVERRIDE_REASON'
+  | 'ALLOW_NEGATIVE_INVOICE_LINES'
+  | 'REQUIRE_ENCOUNTER_REFERENCE'
+  | 'REQUIRE_PATIENT_REFERENCE'
+  | 'ALLOW_DRAFT_INVOICE'
+  | 'AUTO_FINALIZE_INVOICE'
+  | 'ALLOW_DISCOUNT'
+  | 'ALLOW_MANUAL_DISCOUNT'
+  | 'MAXIMUM_MANUAL_DISCOUNT_PERCENTAGE'
+  | 'REQUIRE_DISCOUNT_REASON'
+  | 'ALLOW_PARTIAL_PAYMENT'
+  | 'ALLOW_MULTIPLE_PAYMENT_METHODS'
+  | 'ALLOW_OVERPAYMENT'
+  | 'ALLOW_PAYMENT_BEFORE_INVOICE_FINALIZATION'
+  | 'AUTO_CLOSE_FULLY_PAID_INVOICE'
+  | 'ALLOW_UNALLOCATED_PAYMENT'
+  | 'ALLOW_INVOICE_CANCELLATION'
+  | 'REQUIRE_CANCELLATION_REASON'
+  | 'ALLOW_CANCELLATION_AFTER_PAYMENT'
+  | 'ALLOW_CREDIT_NOTES'
+  | 'REQUIRE_CREDIT_NOTE_REASON'
+  | 'ALLOW_REOPEN_FINALIZED_INVOICE'
+  | 'REQUIRE_CANCELLATION_APPROVAL'
+  | 'INVOICE_PREFIX'
+  | 'CREDIT_NOTE_PREFIX'
+  | 'RECEIPT_PREFIX'
+  | 'PAYMENT_PREFIX'
+  | 'INCLUDE_YEAR'
+  | 'INCLUDE_FACILITY_CODE'
+  | 'SEQUENCE_LENGTH'
+  | 'RESET_FREQUENCY'
+  | 'NUMBER_SEPARATOR';
+
+export type BillingConfigurationValueType =
+  | 'STRING'
+  | 'BOOLEAN'
+  | 'INTEGER'
+  | 'LONG'
+  | 'DECIMAL'
+  | 'ENUM'
+  | 'DATE'
+  | 'DATETIME'
+  | 'JSON';
+
+export type BillingConfigurationStatus =
+  | 'DRAFT'
+  | 'ACTIVE'
+  | 'INACTIVE';
+
+export type BillingConfiguration = {
+  id?: number;
+
+  facilityId?: number;
+
+  configurationKey?:
+    BillingConfigurationKey;
+
+  valueType?:
+    BillingConfigurationValueType;
+
+  configurationValue?: string;
+
+  enumClass?: string | null;
+
+  description?: string | null;
+
+  active?: boolean;
+
+  status?:
+    BillingConfigurationStatus;
+
+  createdBy?: string;
+
+  createdDate?: string;
+
+  lastModifiedBy?: string;
+
+  lastModifiedDate?: string;
+};
+
+export type SaveBillingConfigurationRequest = {
+  facilityId: number;
+
+  configurationKey:
+    BillingConfigurationKey;
+
+  valueType:
+    BillingConfigurationValueType;
+
+  configurationValue: string;
+
+  enumClass?: string | null;
+
+  description?: string | null;
+
+  active: boolean;
+
+  status:
+    BillingConfigurationStatus;
+};

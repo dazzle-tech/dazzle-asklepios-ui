@@ -224,6 +224,8 @@ import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pr
 import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
 import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
+import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -362,28 +364,28 @@ const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
- useEffect(() => {
-  const handleStorageChange = (event: StorageEvent) => {
-    if (event.key === 'selectedDepartment') {
-      const newDepartment = event.newValue
-        ? JSON.parse(event.newValue)
-        : null;
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'selectedDepartment') {
+        const newDepartment = event.newValue
+          ? JSON.parse(event.newValue)
+          : null;
 
-      dispatch(setSelectedDepartment(newDepartment));
+        dispatch(setSelectedDepartment(newDepartment));
 
-      window.location.reload();
-    }
-  };
+        window.location.reload();
+      }
+    };
 
-  window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
 
-  return () => {
-    window.removeEventListener('storage', handleStorageChange);
-  };
-}, [dispatch]);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [dispatch]);
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
@@ -842,6 +844,8 @@ const dispatch = useAppDispatch();
               <Route path="rad-module" element={<Rad />} />
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
+              <Route path="/price-list-setup" element={<PriceListSetup />} />
+               <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />

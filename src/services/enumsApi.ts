@@ -126,6 +126,39 @@ export function useEnumOptions(
   }, [values, exclude, labelOverrides, labelFormatter]);
 }
 
+export function useEnumNames(
+  params: {
+    exclude?: string[];
+    labelOverrides?: Record<string, string>;
+    labelFormatter?: (value: string) => string;
+  } = {}
+): { value: string; label: string }[] {
+  const token = localStorage.getItem("id_token");
+
+  const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
+    skip: !token
+  });
+
+  const {
+    exclude = [],
+    labelOverrides = {},
+    labelFormatter = formatClassNameLabel
+  } = params;
+
+  return useMemo(() => {
+    return Object.keys(allEnums)
+      .filter(name => !exclude.includes(name))
+      .sort()
+      .map(name => {
+        const className = name.substring(name.lastIndexOf(".") + 1);
+
+        return {
+          value: className, // ActiveIngredientsControlled
+          label: labelOverrides[className] ?? labelFormatter(className) // Active Ingredients Controlled
+        };
+      });
+  }, [allEnums, exclude, labelOverrides, labelFormatter]);
+}
 export function useEnumCapitalized(
   name: string,
   params: Omit<EnumOptionsParams, 'labelFormatter'> & {
@@ -189,4 +222,12 @@ export function useEnumOptionsWithScore(
       score: extractScoreFromEnumValue(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
+}
+function formatClassNameLabel(value: string) {
+  const className = value.split('.').pop() ?? value;
+
+  return className
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .trim();
 }

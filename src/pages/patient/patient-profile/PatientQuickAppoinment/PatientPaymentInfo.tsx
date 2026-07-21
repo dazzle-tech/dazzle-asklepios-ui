@@ -321,7 +321,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       applySavedServicesToTable(existingPaymentDetails);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingPaymentDetails, lockAfterConfirm]);
-    // ─────────────────────────────────────────────────────────────────────
 
     useEffect(() => {
       if (!facilityDefaultCurrency) return;
