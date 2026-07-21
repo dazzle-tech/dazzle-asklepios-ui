@@ -5120,7 +5120,7 @@ export type BillingConfiguration = {
 
   configurationValue?: string;
 
-  enumClass?: string | null;
+  enumCode?: string | null;
 
   description?: string | null;
 
@@ -5149,7 +5149,7 @@ export type SaveBillingConfigurationRequest = {
 
   configurationValue: string;
 
-  enumClass?: string | null;
+  enumCode?: string | null;
 
   description?: string | null;
 

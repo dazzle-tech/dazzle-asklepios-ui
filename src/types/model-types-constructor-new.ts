@@ -3378,7 +3378,7 @@ modelTypes.BillingConfiguration = {
 
   configurationValue: '',
 
-  enumClass: null,
+  enumCode: null,
 
   description: '',
 
