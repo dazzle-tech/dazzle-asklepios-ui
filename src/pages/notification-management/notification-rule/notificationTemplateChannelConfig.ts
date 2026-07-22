@@ -25,6 +25,7 @@ export interface NotificationTemplateChannelFieldConfig {
   requirePhoneRecipientRule: boolean;
   requireWhatsappTemplateName: boolean;
   requireWhatsappLanguageCode: boolean;
+  requireWhatsappTemplateCategory: boolean;
 }
 
 const NO_WHATSAPP_FIELDS = {
@@ -40,6 +41,7 @@ const NO_WHATSAPP_FIELDS = {
   whatsappTemplateVersion: false,
   requireWhatsappTemplateName: false,
   requireWhatsappLanguageCode: false,
+  requireWhatsappTemplateCategory: false,
 };
 
 const WHATSAPP_FIELDS = {
@@ -55,6 +57,7 @@ const WHATSAPP_FIELDS = {
   whatsappTemplateVersion: true,
   requireWhatsappTemplateName: true,
   requireWhatsappLanguageCode: true,
+  requireWhatsappTemplateCategory: true,
 };
 
 const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemplateChannelFieldConfig> = {

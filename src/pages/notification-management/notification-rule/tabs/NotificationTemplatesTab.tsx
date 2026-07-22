@@ -7,7 +7,9 @@ import { useAppDispatch } from '@/hooks';
 import {
   useGetNotificationTemplatesByHeaderQuery,
   useRegisterWhatsAppTemplateMutation,
+  useRefreshRegisteredWhatsAppTemplateMutation,
   useToggleNotificationTemplateActiveMutation,
+  useUpdateRegisteredWhatsAppTemplateMutation,
 } from '@/services/notification-management/notificationTemplateService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import {
@@ -21,11 +23,11 @@ import { extractErrorMessage, formatEnumString } from '@/utils';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useMemo, useState } from 'react';
 import { FaUndo, FaWhatsapp } from 'react-icons/fa';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdRefresh } from 'react-icons/md';
 import { Form } from 'rsuite';
 import AddEditNotificationTemplate from '../components/AddEditNotificationTemplate';
 import { getNotificationTemplateChannelConfig } from '../notificationTemplateChannelConfig';
-import { formatRecipientRuleDisplay, formatWhatsappButtons, stripHtmlBody } from '../notificationTemplateValidation';
+import { formatRecipientRuleDisplay, formatWhatsappButtons, formatWhatsappParameters, stripHtmlBody } from '../notificationTemplateValidation';
 
 interface NotificationTemplatesTabProps {
   header: NotificationHeaderResponseVM;
@@ -42,9 +44,10 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
   const [popupOpen, setPopupOpen] = useState(false);
   const [load, setLoad] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [openRegisterModal, setOpenRegisterModal] = useState(false);
+  const [whatsappAction, setWhatsappAction] = useState<'create' | 'update' | null>(null);
   const [activationAction, setActivationAction] = useState<'deactivate' | 'reactivate'>('deactivate');
-  const [registeringTemplateId, setRegisteringTemplateId] = useState<number | null>(null);
+  const [processingTemplateId, setProcessingTemplateId] = useState<number | null>(null);
+  const [refreshingTemplateId, setRefreshingTemplateId] = useState<number | null>(null);
   const [searchRecord, setSearchRecord] = useState({ language: '' });
 
   const {
@@ -57,6 +60,8 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
 
   const [toggleTemplateActive] = useToggleNotificationTemplateActiveMutation();
   const [registerWhatsAppTemplate] = useRegisterWhatsAppTemplateMutation();
+  const [updateRegisteredWhatsAppTemplate] = useUpdateRegisteredWhatsAppTemplateMutation();
+  const [refreshRegisteredWhatsAppTemplate] = useRefreshRegisteredWhatsAppTemplateMutation();
   const { data: languages } = useGetAllLanguagesQuery({});
 
   const languageNameByKey = useMemo(() => {
@@ -128,40 +133,110 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
     setLoad(false);
   };
 
-  const handleRegisterWhatsAppTemplate = async () => {
-    if (!template?.id) return;
-    setRegisteringTemplateId(template.id);
+  const handleWhatsAppTemplateAction = async () => {
+    if (!template?.id || !whatsappAction) return;
+
+    setProcessingTemplateId(template.id);
     setLoad(true);
     try {
-      await registerWhatsAppTemplate(template.id).unwrap();
+      if (whatsappAction === 'create') {
+        await registerWhatsAppTemplate(template.id).unwrap();
+        dispatch(notify({ msg: 'WhatsApp template created successfully on Meta', sev: 'success' }));
+      } else {
+        await updateRegisteredWhatsAppTemplate(template.id).unwrap();
+        dispatch(notify({ msg: 'WhatsApp template updated successfully on Meta', sev: 'success' }));
+      }
       refetch();
-      dispatch(notify({ msg: 'WhatsApp template created successfully on Meta', sev: 'success' }));
-      setOpenRegisterModal(false);
+      setWhatsappAction(null);
     } catch (error) {
       dispatch(
         notify({
-          msg: extractErrorMessage(error) || 'Failed to create WhatsApp template on Meta',
+          msg:
+            extractErrorMessage(error) ||
+            (whatsappAction === 'create'
+              ? 'Failed to create WhatsApp template on Meta'
+              : 'Failed to update WhatsApp template on Meta'),
           sev: 'error',
         })
       );
     }
-    setRegisteringTemplateId(null);
+    setProcessingTemplateId(null);
     setLoad(false);
   };
+
+  const hasMetaTemplateId = (rowData: NotificationTemplateResponseVM) =>
+    Boolean(rowData.whatsappMetaTemplateId?.trim());
+
+  const handleRefreshWhatsAppTemplate = async (rowData: NotificationTemplateResponseVM) => {
+    if (!rowData.id || !hasMetaTemplateId(rowData) || processingTemplateId || refreshingTemplateId) {
+      return;
+    }
+
+    const previousStatus = rowData.whatsappTemplateStatus ?? null;
+    setRefreshingTemplateId(rowData.id);
+    setLoad(true);
+    try {
+      const result = await refreshRegisteredWhatsAppTemplate(rowData.id).unwrap();
+      refetch();
+
+      const newStatus = result.whatsappTemplateStatus ?? null;
+      if (newStatus !== previousStatus) {
+        const formattedStatus = newStatus ? formatEnumString(newStatus) : 'unknown';
+        dispatch(
+          notify({
+            msg: `WhatsApp template status updated to ${formattedStatus}`,
+            sev: 'success',
+          })
+        );
+      } else {
+        const formattedStatus = newStatus ? formatEnumString(newStatus) : 'unchanged';
+        dispatch(
+          notify({
+            msg: `WhatsApp template refreshed. Status is still ${formattedStatus}.`,
+            sev: 'info',
+          })
+        );
+      }
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to refresh WhatsApp template from Meta',
+          sev: 'error',
+        })
+      );
+    }
+    setRefreshingTemplateId(null);
+    setLoad(false);
+  };
+
+  const getWhatsAppTemplateActionLabel = (rowData: NotificationTemplateResponseVM) =>
+    hasMetaTemplateId(rowData) ? 'Update WhatsApp Template on Meta' : 'Create WhatsApp Template on Meta';
 
   const iconsForActions = (rowData: NotificationTemplateResponseVM) => (
     <div className="container-of-icons">
       {channel === 'WHATSAPP' && rowData?.id && (
         <FaWhatsapp
-          title="Create WhatsApp Template on Meta"
+          title={getWhatsAppTemplateActionLabel(rowData)}
           size={22}
-          fill={registeringTemplateId === rowData.id ? 'var(--primary-gray)' : 'var(--deep-blue)'}
-          className={`icons-style${registeringTemplateId === rowData.id ? ' icons-style--loading' : ''}`}
+          fill={processingTemplateId === rowData.id ? 'var(--primary-gray)' : 'var(--deep-blue)'}
+          className={`icons-style${processingTemplateId === rowData.id ? ' icons-style--loading' : ''}`}
           onClick={event => {
             event.stopPropagation();
-            if (registeringTemplateId) return;
+            if (processingTemplateId || refreshingTemplateId) return;
             setTemplate({ ...rowData });
-            setOpenRegisterModal(true);
+            setWhatsappAction(hasMetaTemplateId(rowData) ? 'update' : 'create');
+          }}
+        />
+      )}
+      {channel === 'WHATSAPP' && rowData?.id && hasMetaTemplateId(rowData) && (
+        <MdRefresh
+          title="Refresh WhatsApp Template from Meta"
+          size={24}
+          fill={refreshingTemplateId === rowData.id ? 'var(--primary-gray)' : 'var(--deep-blue)'}
+          className={`icons-style${refreshingTemplateId === rowData.id ? ' icons-style--loading' : ''}`}
+          onClick={event => {
+            event.stopPropagation();
+            handleRefreshWhatsAppTemplate(rowData);
           }}
         />
       )}
@@ -330,12 +405,7 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
             title: <Translate>WhatsApp Parameters</Translate>,
             flexGrow: 3,
             render: (rowData: NotificationTemplateResponseVM) =>
-              truncateCell(
-                rowData.whatsappParameters?.length
-                  ? rowData.whatsappParameters.join(', ')
-                  : null,
-                80
-              ),
+              truncateCell(formatWhatsappParameters(rowData.whatsappParameters), 80),
           },
         ]
       : []),
@@ -491,13 +561,21 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
       />
 
       <DeletionConfirmationModal
-        open={openRegisterModal}
-        setOpen={setOpenRegisterModal}
+        open={whatsappAction !== null}
+        setOpen={open => {
+          if (!open) {
+            setWhatsappAction(null);
+          }
+        }}
         itemToDelete="WhatsApp Template"
-        actionButtonFunction={handleRegisterWhatsAppTemplate}
+        actionButtonFunction={handleWhatsAppTemplateAction}
         actionType="confirm"
-        actionButtonLabel="Create on Meta"
-        confirmationQuestion={`Create the WhatsApp template "${template.whatsappTemplateName || getLanguageName(template.language)}" on Meta?`}
+        actionButtonLabel={whatsappAction === 'update' ? 'Update on Meta' : 'Create on Meta'}
+        confirmationQuestion={
+          whatsappAction === 'update'
+            ? `Update the WhatsApp template "${template.whatsappTemplateName || getLanguageName(template.language)}" on Meta?`
+            : `Create the WhatsApp template "${template.whatsappTemplateName || getLanguageName(template.language)}" on Meta?`
+        }
       />
     </>
   );

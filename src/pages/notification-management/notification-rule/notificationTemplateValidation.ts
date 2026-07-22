@@ -1,4 +1,4 @@
-import { NotificationTemplateChannel, RecipientRule, WhatsAppButton } from '@/types/model-types-new';
+import { NotificationTemplateChannel, RecipientRule, WhatsAppButton, WhatsAppTemplateParameter } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 
 export const RECIPIENT_RULE_VALUES: RecipientRule[] = [
@@ -106,25 +106,28 @@ export const stripHtmlBody = (html?: string | null): string =>
 
 export const isHtmlBodyEmpty = (html?: string | null): boolean => !stripHtmlBody(html);
 
-export const parseWhatsappParameters = (
-  value?: string | string[] | null
-): string[] => {
-  if (Array.isArray(value)) {
-    return value.map(item => String(item).trim()).filter(Boolean);
-  }
+export const formatWhatsappParameters = (
+  parameters?: WhatsAppTemplateParameter[] | null
+): string => {
+  if (!parameters?.length) return '';
 
-  if (!value?.trim()) {
-    return [];
-  }
-
-  return value
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
+  return parameters
+    .map(parameter => {
+      const name = parameter.parameterName?.trim();
+      const example = parameter.exampleValue?.trim();
+      if (name && example) return `${name}: ${example}`;
+      return name ?? example ?? '';
+    })
+    .filter(Boolean)
+    .join(', ');
 };
 
-export const formatWhatsappParameters = (value?: string[] | null): string =>
-  (value ?? []).join(', ');
+export const sanitizeWhatsappParameters = (
+  parameters?: WhatsAppTemplateParameter[] | null
+): WhatsAppTemplateParameter[] =>
+  (parameters ?? []).filter(
+    parameter => parameter.parameterName?.trim() || parameter.exampleValue?.trim()
+  );
 
 export const formatWhatsappButtons = (
   buttons?: {
@@ -191,6 +194,13 @@ const normalizeWhatsappButton = (button: WhatsAppButton): WhatsAppButton => ({
   flowId: toOptionalString(button.flowId),
 });
 
+const normalizeWhatsappParameter = (
+  parameter: WhatsAppTemplateParameter
+): WhatsAppTemplateParameter => ({
+  parameterName: toOptionalString(parameter.parameterName),
+  exampleValue: toOptionalString(parameter.exampleValue),
+});
+
 export const normalizeNotificationTemplatePayload = <
   T extends NotificationTemplateFormValues & {
     whatsappTemplateCategory?: string | null;
@@ -213,6 +223,11 @@ export const normalizeNotificationTemplatePayload = <
   whatsappTemplateCategory: toOptionalEnum(dto.whatsappTemplateCategory),
   whatsappHeaderType: toOptionalEnum(dto.whatsappHeaderType),
   whatsappMetaTemplateFooter: toOptionalString(dto.whatsappMetaTemplateFooter),
+  whatsappParameters: dto.whatsappParameters?.length
+    ? dto.whatsappParameters.map(normalizeWhatsappParameter).filter(
+        parameter => parameter.parameterName || parameter.exampleValue
+      )
+    : null,
   whatsappMetaTemplateButtons: dto.whatsappMetaTemplateButtons?.length
     ? dto.whatsappMetaTemplateButtons.map(normalizeWhatsappButton)
     : null,
@@ -229,7 +244,7 @@ export interface NotificationTemplateFormValues {
   phoneRecipientRule?: string | null;
   whatsappTemplateName?: string | null;
   whatsappLanguageCode?: string | null;
-  whatsappParameters?: string[] | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
   whatsappTemplateCategory?: string | null;
   whatsappHeaderType?: string | null;
   whatsappMetaTemplateFooter?: string | null;
@@ -272,6 +287,9 @@ export const validateNotificationTemplate = (
     }
     if (!dto.whatsappLanguageCode?.trim()) {
       errors.push('WhatsApp language code is required');
+    }
+    if (!dto.whatsappTemplateCategory?.trim()) {
+      errors.push('WhatsApp template category is required');
     }
     if (!dto.body?.trim()) {
       errors.push('WhatsApp body is required');

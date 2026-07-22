@@ -3207,6 +3207,11 @@ export const newWhatsAppButton: modelTypes.WhatsAppButton = {
   flowId: '',
 };
 
+export const newWhatsAppTemplateParameter: modelTypes.WhatsAppTemplateParameter = {
+  parameterName: '',
+  exampleValue: '',
+};
+
 export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
   notificationHeaderId: 0,
   channel: 'EMAIL',

@@ -20,7 +20,7 @@ import {
   newNotificationTemplateCreateDTO,
   newNotificationTemplateUpdateDTO,
 } from '@/types/model-types-constructor-new';
-import { extractErrorMessage } from '@/utils';
+import { extractErrorMessage, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -28,16 +28,16 @@ import { MdMailOutline } from 'react-icons/md';
 import { Col, Form, Row } from 'rsuite';
 import { getNotificationTemplateChannelConfig } from '../notificationTemplateChannelConfig';
 import {
-  formatWhatsappParameters,
   normalizeWhatsappTemplateName,
   normalizeNotificationTemplatePayload,
-  parseWhatsappParameters,
+  sanitizeWhatsappParameters,
   sanitizeWhatsappTemplateNameInput,
   validateNotificationTemplate,
 } from '../notificationTemplateValidation';
 import HtmlBodyEditor from './HtmlBodyEditor';
 import RecipientRuleInput from './RecipientRuleInput';
 import WhatsAppButtonsInput from './WhatsAppButtonsInput';
+import WhatsAppParametersInput from './WhatsAppParametersInput';
 import '../styles.less';
 
 interface AddEditNotificationTemplateProps {
@@ -64,14 +64,12 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
   const [updateDTO, setUpdateDTO] = useState<NotificationTemplateUpdateDTO>({
     ...newNotificationTemplateUpdateDTO,
   });
-  const [whatsappParametersText, setWhatsappParametersText] = useState('');
 
   const [createTemplate] = useCreateNotificationTemplateMutation();
   const [updateTemplate] = useUpdateNotificationTemplateMutation();
   const { data: languages } = useGetAllLanguagesQuery({});
   const whatsappLanguageCodeOptions = useEnumOptions('WhatsAppLanguageCode');
   const whatsappTemplateCategoryOptions = useEnumOptions('WhatsAppTemplateCategory');
-  const whatsappHeaderTypeOptions = useEnumOptions('WhatsAppHeaderType');
 
   const fieldConfig = getNotificationTemplateChannelConfig(channel);
 
@@ -98,14 +96,12 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
         whatsappMetaTemplateButtons: template.whatsappMetaTemplateButtons ?? [],
         whatsappHeaderType: template.whatsappHeaderType ?? '',
       });
-      setWhatsappParametersText(formatWhatsappParameters(template.whatsappParameters));
     } else {
       setCreateDTO({
         ...newNotificationTemplateCreateDTO,
         notificationHeaderId: header.id ?? 0,
         channel,
       });
-      setWhatsappParametersText('');
     }
   }, [template, header, channel, open]);
 
@@ -122,25 +118,48 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
     );
   };
 
-  const buildSubmitPayload = () => {
-    const whatsappParameters = parseWhatsappParameters(whatsappParametersText);
-    const whatsappMetaTemplateButtons = sanitizeWhatsappButtons();
-
-    if (template?.id) {
-      return normalizeNotificationTemplatePayload({
-        ...updateDTO,
-        whatsappTemplateName: normalizeWhatsappTemplateName(updateDTO.whatsappTemplateName),
-        whatsappParameters: whatsappParameters.length ? whatsappParameters : null,
-        whatsappMetaTemplateButtons,
-      });
+  const applyWhatsappHeaderType = <
+    T extends NotificationTemplateCreateDTO | NotificationTemplateUpdateDTO,
+  >(
+    dto: T
+  ): T => {
+    if (channel !== 'WHATSAPP') {
+      return dto;
     }
 
-    return normalizeNotificationTemplatePayload({
-      ...createDTO,
-      whatsappTemplateName: normalizeWhatsappTemplateName(createDTO.whatsappTemplateName),
-      whatsappParameters: whatsappParameters.length ? whatsappParameters : null,
-      whatsappMetaTemplateButtons,
-    });
+    const subject = dto.subject?.trim() || null;
+    return {
+      ...dto,
+      subject,
+      whatsappHeaderType: subject ? 'TEXT' : null,
+    };
+  };
+
+  const buildSubmitPayload = () => {
+    const whatsappMetaTemplateButtons = sanitizeWhatsappButtons();
+    const whatsappParameters = sanitizeWhatsappParameters(
+      template?.id ? updateDTO.whatsappParameters : createDTO.whatsappParameters
+    );
+
+    if (template?.id) {
+      return normalizeNotificationTemplatePayload(
+        applyWhatsappHeaderType({
+          ...updateDTO,
+          whatsappTemplateName: normalizeWhatsappTemplateName(updateDTO.whatsappTemplateName),
+          whatsappParameters,
+          whatsappMetaTemplateButtons,
+        })
+      );
+    }
+
+    return normalizeNotificationTemplatePayload(
+      applyWhatsappHeaderType({
+        ...createDTO,
+        whatsappTemplateName: normalizeWhatsappTemplateName(createDTO.whatsappTemplateName),
+        whatsappParameters,
+        whatsappMetaTemplateButtons,
+      })
+    );
   };
 
   const handleSubmit = async () => {
@@ -161,7 +180,6 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
           setOpen(false);
           setCreateDTO({ ...newNotificationTemplateCreateDTO });
           setUpdateDTO({ ...newNotificationTemplateUpdateDTO });
-          setWhatsappParametersText('');
         })
         .catch(error => {
           dispatch(
@@ -182,7 +200,6 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
         setOpen(false);
         setCreateDTO({ ...newNotificationTemplateCreateDTO });
         setUpdateDTO({ ...newNotificationTemplateUpdateDTO });
-        setWhatsappParametersText('');
       })
       .catch(error => {
         dispatch(
@@ -253,22 +270,10 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
             )}
             {fieldConfig.whatsappParameters && (
               <Row>
-                <div className="whatsapp-parameters-field">
-                  <MyInput
-                    fieldName="whatsappParametersText"
-                    fieldType="textarea"
-                    fieldLabel="WhatsApp Parameters"
-                    placeholder="facility_name, patient_name, appointment_date"
-                    record={{ whatsappParametersText }}
-                    setRecord={record => setWhatsappParametersText(record.whatsappParametersText ?? '')}
-                    width="100%"
-                    rows={3}
-                  />
-                  <div className="whatsapp-parameters-field__hint">
-                    Enter parameter names separated by commas. Example:{' '}
-                    <code>facility_name, patient_name, appointment_date</code>
-                  </div>
-                </div>
+                <WhatsAppParametersInput
+                  value={dto.whatsappParameters}
+                  onChange={parameters => setDTO({ ...dto, whatsappParameters: parameters })}
+                />
               </Row>
             )}
             {fieldConfig.whatsappTemplateCategory && (
@@ -284,22 +289,7 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
                   record={dto}
                   setRecord={setDTO}
                   width="100%"
-                />
-              </Row>
-            )}
-            {fieldConfig.whatsappHeaderType && (
-              <Row>
-                <MyInput
-                  fieldName="whatsappHeaderType"
-                  fieldType="select"
-                  fieldLabel="WhatsApp Header Type"
-                  selectData={whatsappHeaderTypeOptions}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  isEnum
-                  record={dto}
-                  setRecord={setDTO}
-                  width="100%"
+                  required={fieldConfig.requireWhatsappTemplateCategory}
                 />
               </Row>
             )}
@@ -312,6 +302,22 @@ const AddEditNotificationTemplate: React.FC<AddEditNotificationTemplateProps> = 
                   record={dto}
                   setRecord={setDTO}
                   width="100%"
+                />
+              </Row>
+            )}
+            {fieldConfig.whatsappHeaderType && (
+              <Row>
+                <MyInput
+                  fieldName="whatsappHeaderTypeDisplay"
+                  fieldType="text"
+                  fieldLabel="WhatsApp Header Type"
+                  record={{
+                    whatsappHeaderTypeDisplay: dto.subject?.trim()
+                      ? formatEnumString('TEXT')
+                      : '',
+                  }}
+                  width="100%"
+                  disabled
                 />
               </Row>
             )}

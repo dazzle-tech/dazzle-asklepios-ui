@@ -4980,6 +4980,11 @@ export interface WhatsAppButton {
   flowId?: string | null;
 }
 
+export interface WhatsAppTemplateParameter {
+  parameterName?: string | null;
+  exampleValue?: string | null;
+}
+
 export type NotificationModule = string;
 
 export type NotificationCategory = string;
@@ -5056,7 +5061,7 @@ export interface NotificationTemplateResponseVM {
   phoneRecipientRule?: string | null;
   whatsappTemplateName?: string | null;
   whatsappLanguageCode?: WhatsAppLanguageCode | null;
-  whatsappParameters?: string[] | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
   whatsappMetaTemplateId?: string | null;
   whatsappTemplateStatus?: string | null;
   whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
@@ -5080,7 +5085,7 @@ export interface NotificationTemplateCreateDTO {
   phoneRecipientRule?: string | null;
   whatsappTemplateName?: string | null;
   whatsappLanguageCode?: WhatsAppLanguageCode | null;
-  whatsappParameters?: string[] | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
   whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
   whatsappMetaTemplateFooter?: string | null;
   whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
@@ -5101,7 +5106,7 @@ export interface NotificationTemplateUpdateDTO {
   phoneRecipientRule?: string | null;
   whatsappTemplateName?: string | null;
   whatsappLanguageCode?: WhatsAppLanguageCode | null;
-  whatsappParameters?: string[] | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
   whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
   whatsappMetaTemplateFooter?: string | null;
   whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
