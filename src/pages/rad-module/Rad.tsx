@@ -153,7 +153,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     { key: DiagnosticOrderTestStatus.PATIENT_ARRIVED, value: 'Patient Arrived' },
     { key: DiagnosticOrderTestStatus.ACCEPTED, value: 'Accepted' },
     { key: DiagnosticOrderTestStatus.REJECTED, value: 'Rejected', isError: true },
-    { key: DiagnosticOrderTestStatus.RESULT_READY, value: 'Result Ready' },
+    { key: DiagnosticOrderTestStatus.EXAM_DONE, value: 'Exam Done' },
     { key: DiagnosticOrderTestStatus.RESULT_APPROVED, value: 'Result Approved' }
   ];
 

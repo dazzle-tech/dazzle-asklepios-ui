@@ -48,6 +48,7 @@ const PatientWritBandPrintLabelButton = ({ patientId ,disabled}: Props) => {
 
             if (win) {
                 win.focus();
+                setOpenLangModal(false);
             } else {
                 dispatch(
                     notify({
@@ -65,6 +66,7 @@ const PatientWritBandPrintLabelButton = ({ patientId ,disabled}: Props) => {
             );
         } finally {
             setLoading(false);
+            setOpenLangModal(false);
         }
     };
     const langOptions = [

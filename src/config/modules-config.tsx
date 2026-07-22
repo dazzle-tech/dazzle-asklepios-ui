@@ -108,7 +108,14 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   // { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   // { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
-  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
+  {
+    name: 'Progress Notes / Additional Notes',
+    code: 'PROGRESS_NOTES',
+    icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
+    path: '/progress-notes',
+    isDefaultMedicalSheet: true,
+    isDefaultNurseMedicalSheet: true
+  },
   // { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   // { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   // { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
@@ -168,6 +175,7 @@ export const MODULES: Module[] =
       viewOrder: 0.5,
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
+        { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
@@ -175,6 +183,7 @@ export const MODULES: Module[] =
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
       ],
     },
+   
     {
       name: "System Setup",
       description: "",
@@ -231,11 +240,31 @@ export const MODULES: Module[] =
           navPath: "price-list",
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
+        {
+          name: 'Patient Merge Config',
+          code: 'PATIENT_MERGE_CONFIG',
+          description: "Policy Definition",
+          icon: "faUserDoctor",
+          viewOrder: 24,
+          navPath: 'patient-merge-config'
+        },
         { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
 
       ],
     },
-
+    {
+      name: "Notification Management",
+      description: "",
+      icon: "FaBell",
+      viewOrder: 0.6,
+      screens: [
+        { name: "Notification Rule", code: "NOTIFICATION_RULE", description: "", icon: "FaListCheck", viewOrder: 0, navPath: "notification-rule" },
+        { name: "Email Notification", code: "EMAIL_NOTIFICATION", description: "", icon: "FaEnvelope", viewOrder: 1, navPath: "email-notification" },
+        { name: "SMS Notification", code: "SMS_NOTIFICATION", description: "", icon: "FaCommentSms", viewOrder: 2, navPath: "sms-notification" },
+        { name: "In-App Notification", code: "IN_APP_NOTIFICATION", description: "", icon: "FaDesktop", viewOrder: 3, navPath: "in-app-notification" },
+        { name: "WhatsApp Notification", code: "WHATSAPP_NOTIFICATION", description: "", icon: "FaWhatsapp", viewOrder: 4, navPath: "whatsapp-notification" },
+      ],
+    },
     {
       name: "Coding Module",
       description: "Coding Module",

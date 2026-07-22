@@ -22,51 +22,52 @@ const VisitReportPrintButton = ({ row }: Props) => {
     const [loading, setLoading] = useState(false);
     const [openlangModal, setOpenLangModal] = useState(false);
     const [selectedLang, setSelectedLang] = useState({ lang: 'en' } as any);
-    const handlePrintVisitReport = async () => {
-        const encounterId = row?.id ?? null;
+  const handlePrintVisitReport = async () => {
+  const encounterId = row?.id ?? null;
 
-        if (!encounterId) {
-            dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-            return;
-        }
+  if (!encounterId) {
+    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
+    return;
+  }
 
-        try {
-            setLoading(true);
+  try {
+    setLoading(true);
 
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            const blob = await triggerVisitReportPdf({
-                encounterId,
-                timezone,
-                lang: selectedLang.lang,
-            }).unwrap();
+    const blob = await triggerVisitReportPdf({
+      encounterId,
+      timezone,
+      lang: selectedLang.lang,
+    }).unwrap();
 
-            const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-            const fileURL = window.URL.createObjectURL(pdfBlob);
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+    const fileURL = window.URL.createObjectURL(pdfBlob);
 
-            const win = window.open(fileURL, '_blank');
+    const win = window.open(fileURL, '_blank');
 
-            if (win) {
-                win.focus();
-            } else {
-                dispatch(
-                    notify({
-                        msg: 'Popup blocked. Please allow popups for this site.',
-                        sev: 'warning',
-                    })
-                );
-            }
-        } catch (error: any) {
-            dispatch(
-                notify({
-                    msg: error?.data?.message || 'Error while opening visit report',
-                    sev: 'error',
-                })
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (win) {
+      win.focus();
+      setOpenLangModal(false);
+    } else {
+      dispatch(
+        notify({
+          msg: 'Popup blocked. Please allow popups for this site.',
+          sev: 'warning',
+        })
+      );
+    }
+  } catch (error: any) {
+    dispatch(
+      notify({
+        msg: error?.data?.message || 'Error while opening visit report',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setLoading(false);
+  }
+};
     const langOptions = [
         { label: 'English', value: 'en' },
         { label: 'Arabic', value: 'ar' },

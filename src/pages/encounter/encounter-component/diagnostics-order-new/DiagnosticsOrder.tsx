@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import './styles.less';
@@ -11,6 +11,7 @@ import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
 
 const DiagnosticsOrder = (props: any) => {
+  const patientPrevTestsRef = useRef<any>(null);
   const location = useLocation();
   //add new patient edits
   const patient = location.state?.patient;
@@ -21,7 +22,12 @@ const DiagnosticsOrder = (props: any) => {
     viewMode === 'readOnly' ||
     (props.edit ?? location.state?.edit ?? false);
 
-  const vm = useDiagnosticsOrder({ patient, encounter, edit });
+    const vm = useDiagnosticsOrder({
+        patient,
+        encounter,
+        edit,
+        patientPrevTestsRef
+    });
 
   const isInsideModalOrPopup = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
@@ -104,6 +110,7 @@ const DiagnosticsOrder = (props: any) => {
       />
 
       <DiagnosticsOrderTable
+        patientPrevTestsRef={patientPrevTestsRef}
         tableContainerRef={vm.tableContainerRef}
         orderId={vm.orderId}
         tableVersion={vm.tableVersion}
@@ -127,6 +134,7 @@ const DiagnosticsOrder = (props: any) => {
         previewDiagnosticsOrder={vm.previewDiagnosticsOrder}
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
         patient={vm.patient}
+        departments={vm.departments}
       />
 
       <DiagnosticsOrderModals

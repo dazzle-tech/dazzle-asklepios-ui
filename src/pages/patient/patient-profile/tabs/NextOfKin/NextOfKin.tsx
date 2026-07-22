@@ -43,6 +43,7 @@ const NextOfKin = ({ patient, isClick }) => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
+        disabled={!rowData.id || patient?.patientStatus === 'MERGED'}
         onClick={() => {
           setNextOfKin(rowData);
           setOpen(true);
@@ -53,6 +54,7 @@ const NextOfKin = ({ patient, isClick }) => {
         title="Delete"
         size={24}
         fill="var(--primary-pink)"
+        disabled={!rowData.id || patient?.patientStatus === 'MERGED'}
         onClick={() => {
           setNextOfKin(rowData);
           setOpenConfirmationDeleteNextOfKinModal(true);
@@ -139,7 +141,7 @@ const NextOfKin = ({ patient, isClick }) => {
           setNextOfKin={setNextOfKin}
         />
 
-        <MyButton onClick={handleNewNextOfKin} disabled={isClick || !patientId} prefixIcon={() => <PlusRound />}>
+        <MyButton onClick={handleNewNextOfKin} disabled={isClick || !patientId || patient?.patientStatus === 'MERGED'} prefixIcon={() => <PlusRound />}>
           Add
         </MyButton>
       </div>

@@ -51,6 +51,9 @@ import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import AllGraphsModal from '../encounter-pre-observations-new/previous-measurements/AllGraphsModal';
+
 
 const PatientSide = ({
   patient,
@@ -72,14 +75,21 @@ const PatientSide = ({
 }) => {
   const profileImageFileInputRef = useRef(null);
 
-  const { data: freshPatient } = useGetPatientByIdQuery(
+const {
+    data: freshPatient,
+    refetch: refetchPatient
+} = useGetPatientByIdQuery(
     { id: patient?.id },
     { skip: !patient?.id }
-  );
+);
+
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
   const dispatch = useDispatch();
+
+
+  const [openGraphsModal, setOpenGraphsModal] = useState(false);
 
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
@@ -186,12 +196,16 @@ const PatientSide = ({
   });
   // ─────────────────────────────────────────────────────────────────────────
 
-  const patientConditionItems =
-    (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
-      .split(',')
-      .map((item: string) => item.trim())
-      .filter(Boolean);
+const patientConditionItems =
+  (freshPatient?.patientConditions ?? (patient as any)?.patientConditions ?? '')
+    .split(',')
+    .map((item: string) => item.trim())
+    .filter((item: string) => {
+      const value = item.trim().toLowerCase();
+      return value && value !== 'null' && value !== 'undefined';
+    });
 
+    
   const getPatientConditionColors = () => {
     return {
       bg: 'var(--light-purple, #f3e8ff)',
@@ -638,12 +652,28 @@ const PatientSide = ({
 
       {showMeasurements && (
         <>
-          <Text className="main-info-patient-side">
-            <FaWeight className="icon-color" />{' '}
-            <span className="section-title-patient-side">
-              <Translate>Measurements</Translate>
-            </span>
-          </Text>
+        <Text className="main-info-patient-side">
+          <FaWeight className="icon-color" />{' '}
+
+          <span className="section-title-patient-side">
+            <Translate>Measurements</Translate>
+          </span>
+
+          <Whisper
+              placement="top"
+              speaker={<Tooltip>Graph</Tooltip>}
+          >
+              <FontAwesomeIcon
+                  icon={faChartLine}
+                  className="icons-style"
+                  style={{
+                      cursor: 'pointer',
+                      marginInlineStart: '10px'
+                  }}
+                  onClick={() => setOpenGraphsModal(true)}
+              />
+          </Whisper>
+        </Text>
 
           <div className="details-sections">
             <br />
@@ -1002,7 +1032,6 @@ const PatientSide = ({
               <Translate>Condition</Translate>
             </span>
           </Text>
-          <br />
 
           <div className="container-of-allergies-and-warnings">
             {patientConditionItems.length > 0 ? (
@@ -1053,7 +1082,6 @@ const PatientSide = ({
               <Translate>Current Meds</Translate>
             </span>
           </Text>
-          <br />
 
           <div className="container-of-allergies-and-warnings">
             {currentMeds.length > 0 ? (
@@ -1066,8 +1094,8 @@ const PatientSide = ({
                     placement="top"
                     speaker={
                       <Tooltip>
-                        {med.instructions ? (
-                          <Translate>{med.instructions}</Translate>
+                        {med.dosage || med.unit || med.frequency ? (
+                          `${med.dosage ?? ''} ${med.unit ?? ''} ${med.frequency ?? ''}`.trim()
                         ) : (
                           <Translate>Current Medication</Translate>
                         )}
@@ -1137,6 +1165,13 @@ const PatientSide = ({
           <Divider className="divider-style" />
         </div>
       )}
+
+        <AllGraphsModal
+            open={openGraphsModal}
+            setOpen={setOpenGraphsModal}
+            patient={patient}
+        />
+
     </Panel>
   );
 };

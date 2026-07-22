@@ -78,6 +78,8 @@ export const newFacility: modelTypes.Facility = {
   ruleId: null,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -94,6 +96,8 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   isActive: true,
   workingDays: [],
   timeZone: '',
+  defaultLabDepartmentId: null,
+  defaultRadDepartmentId: null,
 };
 
 // ------------------- Role -------------------
@@ -116,8 +120,14 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   userId: undefined,
   departmentId: undefined,
   isActive: true,
-  isDefault: false,
-  appointmentBookingAllowed: false
+  isDefault: false
+};
+
+// ------------------- User Bookable Department -------------------
+export const newUserBookableDepartment: modelTypes.UserBookableDepartment = {
+  id: undefined,
+  userId: undefined,
+  departmentId: undefined,
 };
 
 // Patient Attachment Constructors
@@ -974,7 +984,6 @@ export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTe
   endTime: '',
   slotStrategy: '',
   slotDurationMinutes: 0,
-  applyToAllWorkingDays: false,
   allowedServices: []
 };
 
@@ -1024,6 +1033,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requireBilling: false,
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
+  allowWalkInBooking: false,
   requireConfirmation: true,
   financialDetails: 'BOTH',
   isActive: true,
@@ -1059,6 +1069,7 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
   requireBilling: null,
   requirePreAssessment: null,
   allowPatientPortalBooking: null,
+  allowWalkInBooking: null,
   requireConfirmation: null,
   financialDetails: null,
   workingDays: [],
@@ -1181,6 +1192,8 @@ export const newAppointmentSearchFilterMultiDepartmentDTO: modelTypes.Appointmen
   status: null,
   bookingMode: null,
   patientId: null,
+  startDate: null,
+  endDate: null
 };
 
 /** @deprecated Use newAppointmentSearchFilterMultiDepartmentDTO */
@@ -1694,7 +1707,12 @@ export const newPatient: modelTypes.Patient = {
   lastModifiedDate: null,
   visitType: null,
   durationInMinutes: null,
-  resourceSpecific: false
+  resourceSpecific: false,
+  patientStatus: null,
+  mergedIntoPatientId: null,
+  mergedAt: null,
+  mergedBy: null,
+  
 };
 
 export const newAddress: modelTypes.Address = {
@@ -1920,6 +1938,20 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   defaultTimeZone: '',
   defaultLanguageId: undefined,
   workingDays: [],
+};
+
+export const newEmailSettings: modelTypes.EmailSettings = {
+  id: undefined,
+  serverName: '',
+  host: '',
+  description: '',
+  smtpPort: undefined,
+  fromAddress: '',
+  password: '',
+  protocol: 'smtp',
+  tls: false,
+  emailPrefix: '',
+  emailFooter: '',
 };
 
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
@@ -3129,4 +3161,129 @@ export const newOCRParsingResponseDTO: modelTypes.OCRParsingResponseDTO = {
    dateOfBirth: null, // change it later
    sex : '',// change it later
    placeOfBirth: ''
+}
+
+export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderCreateDTO: modelTypes.NotificationHeaderCreateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationHeaderUpdateDTO: modelTypes.NotificationHeaderUpdateDTO = {
+  code: '',
+  name: '',
+  description: '',
+  facilityId: null,
+  module: null,
+  category: null,
+  priority: null,
+  isActive: true,
+};
+
+export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateCreateDTO: modelTypes.NotificationTemplateCreateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+  isActive: true,
+};
+
+export const newNotificationTemplateUpdateDTO: modelTypes.NotificationTemplateUpdateDTO = {
+  notificationHeaderId: 0,
+  channel: 'EMAIL',
+  language: '',
+  subject: '',
+  title: '',
+  body: '',
+  toRecipientRule: '',
+  ccRecipientRule: '',
+  bccRecipientRule: '',
+  phoneRecipientRule: '',
+};
+
+export const newNotificationResponseVM: modelTypes.NotificationResponseVM = {
+  facilityId: null,
+  notificationHeaderId: null,
+  notificationTemplateId: null,
+  code: '',
+  channel: 'EMAIL',
+  language: '',
+  status: 'PENDING',
+  priority: null,
+  recipientType: '',
+  recipientId: null,
+  recipientName: '',
+  recipientEmail: '',
+  recipientPhone: '',
+  toEmails: [],
+  ccEmails: [],
+  bccEmails: [],
+  toPhone: '',
+  subject: '',
+  title: '',
+  body: '',
+  relatedEntityType: '',
+  relatedEntityId: null,
+  providerName: '',
+  providerMessageId: '',
+  providerStatus: '',
+  errorMessage: '',
+  retryCount: 0,
+  maxRetryCount: 3,
+};
+
+export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
+  code: '',
+  status: null,
+  priority: null,
+  language: '',
+  recipientType: '',
+  recipientId: null,
+  recipientName: '',
+  recipientEmail: '',
+  recipientPhone: '',
+  toPhone: '',
+  providerName: '',
+  providerMessageId: '',
+  providerStatus: '',
+  relatedEntityType: '',
+  relatedEntityId: null,
+  dateFrom: null,
+  dateTo: null,
 };

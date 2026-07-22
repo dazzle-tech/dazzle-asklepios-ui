@@ -265,6 +265,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
               <MyButton
                 className="icons-style"
                 appearance="subtle"
+                disabled={!rowData.id || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => handleEditModal(rowData)}
               >
                 <FontAwesomeIcon
@@ -285,6 +286,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
               <MyButton
                 className="icons-style"
                 appearance="subtle"
+                disabled={!rowData.id || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => handleOpenSpecificCoverage(rowData)}
               >
                 <FontAwesomeIcon
@@ -301,6 +303,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
               <MyButton
                 className="icons-style"
                 appearance="subtle"
+                disabled={!rowData.id || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => handleDeleteInsurance(rowData)}
               >
                 <FontAwesomeIcon
@@ -321,6 +324,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
               <MyButton
                 className="icons-style"
                 appearance="subtle"
+                disabled={!rowData.id || localPatient?.patientStatus === 'MERGED'}
                 onClick={() => handleShowInsuranceDetails(rowData)}
               >
                 <FontAwesomeIcon
@@ -346,7 +350,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
             setInsuranceBrowsing(false);
             setHideSaveBtn(false);
           }}
-          disabled={!localPatient.id}
+          disabled={!localPatient.id || localPatient.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
         >
           New Insurance

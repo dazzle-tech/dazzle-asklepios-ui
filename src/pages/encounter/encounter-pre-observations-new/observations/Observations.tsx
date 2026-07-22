@@ -32,7 +32,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   const [localPatient] = useState<Patient>({ ...patient });
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({ ...(encounter as any) });
-
+console.log(localPatient);
   useEffect(() => {
     if (localEncounter?.status === 'CLOSED') {
       setIsEncounterStatusClosed(true);
@@ -87,8 +87,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                 <BodyMeasurements
                   width="100%"
                   disabled={isEncounterStatusClosed || readOnly}
-                  patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
-                  encounterId={Number((localEncounter as any)?.id)}
+                  patient={localPatient}
+                  patientId={Number(localPatient?.id)}
+                  encounterId={Number(localEncounter?.id)}
                   encounter={localEncounter}
                 />
               </Col>

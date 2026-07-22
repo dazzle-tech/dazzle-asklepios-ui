@@ -15,6 +15,9 @@ import React, {
   useState
 } from 'react';
 import { Form, Tooltip, Whisper } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 
 import './styles.less';
 import MyInput from '@/components/MyInput';
@@ -63,6 +66,13 @@ const Orders = forwardRef<any, OrdersProps>(
       size: 5,
       sort: ['isUrgent,desc', 'submittedDate,desc']
     });
+
+
+const [showPatientEMR, setShowPatientEMR] = useState(false);
+const [selectedPatientForEMR, setSelectedPatientForEMR] = useState<any>(null);
+const [selectedEncounterForEMR, setSelectedEncounterForEMR] = useState<any>(null);
+
+const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
     const [fetchBulkPatients] = useGetBulkPatientBasicInfoMutation();
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -246,12 +256,46 @@ const Orders = forwardRef<any, OrdersProps>(
         render: (r: any) => {
           const patient = patientsMap[String(r.patientId)];
 
+          const fullName = patient
+            ? [patient.firstName, patient.secondName, patient.lastName]
+                .filter(Boolean)
+                .join(' ')
+            : ' ';
+
           return (
             <>
-              <span>
-                {patient ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ') : ' '}
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: 'var(--primary-blue)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+                onClick={async e => {
+                  e.stopPropagation();
+
+                  setSelectedPatientForEMR(patient);
+
+                  try {
+                    const encounter = await getEncounterById({
+                      id: r.encounterId
+                    }).unwrap();
+
+                    setSelectedEncounterForEMR(encounter);
+                  } catch {
+                    setSelectedEncounterForEMR({
+                      id: r.encounterId
+                    });
+                  }
+
+                  setShowPatientEMR(true);
+                }}
+              >
+                {fullName}
               </span>
+
               <br />
+
               <span className="date-table-style">
                 {patient?.medicalRecordNumber ?? ' '}
               </span>
@@ -304,6 +348,23 @@ const Orders = forwardRef<any, OrdersProps>(
         sortType={sortType}
         filters={filters}
         onSortChange={handleSortChange}
+      />
+
+      <MyModal
+        open={showPatientEMR}
+        setOpen={setShowPatientEMR}
+        title="Patient EMR"
+        size="70vw"
+        bodyheight="80vh"
+        hideActionBtn
+        content={
+          selectedPatientForEMR && (
+            <PatientEMRModal
+              patient={selectedPatientForEMR}
+              encounter={selectedEncounterForEMR}
+            />
+          )
+        }
       />
     </div>
     );

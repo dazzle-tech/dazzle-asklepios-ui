@@ -12,12 +12,11 @@ import {
     useRejectReferralRequestMutation
 } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
 import { useAppSelector } from '@/hooks';
 import { useDispatch } from 'react-redux';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
@@ -26,6 +25,10 @@ import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
+import ApproveRequestAgendaModal from '@/pages/appointments-new/scheduling-screen/components/ApproveRequestAgendaModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { AppointmentFromTemplate } from '@/types/model-types-new';
+import { useBookPatientAppointmentMutation } from '@/services/appointment/appointmentService';
 
 interface IncomingReferralRequestsByFacilityProps {
     open: boolean;
@@ -71,8 +74,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
     const [selectedReferral, setSelectedReferral] = useState<any>(null);
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentFromTemplate>(null);
 
     const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
+    const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
     const [facilityMap, setFacilityMap] = useState<Record<number, string>>({});
     const [departmentsMap, setDepartmentsMap] = useState<Record<number, string>>({});
@@ -80,6 +85,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
     const [acceptReferralRequest] = useAcceptReferralRequestMutation();
     const [rejectReferralRequest] = useRejectReferralRequestMutation();
+    const [bookPatientAppointment] = useBookPatientAppointmentMutation();
 
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectObject, setRejectObject] = useState<any>({
@@ -115,7 +121,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         skip: !queryArgs
     });
 
-    const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+const { data: departmentsResponse } =
+  useGetAllDepartmentsWithoutPaginationQuery(undefined, {
+    skip: !open
+  });
 
     const {
         data: facilitiesResponse,
@@ -152,58 +161,22 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         setFacilityMap(map);
     }, [facilitiesResponse, open]);
 
-    useEffect(() => {
-        let cancelled = false;
+        useEffect(() => {
+        if (!open) return;
 
-        const loadDepartments = async () => {
-            if (!open) return;
+        if (!departmentsResponse?.length) {
+            setDepartmentsMap({});
+            return;
+        }
 
-            if (!tableData.length) {
-                if (!cancelled) {
-                    setDepartmentsMap({});
-                    setDepartmentsLoading(false);
-                }
-                return;
-            }
+        const map: Record<number, string> = {};
 
-            const uniqueIds = Array.from(
-                new Set(
-                    tableData
-                        .flatMap((row: any) => [row.fromDepartmentId, row.toDepartmentId])
-                        .filter((id): id is number => id != null && Number(id) > 0)
-                )
-            );
+        departmentsResponse.forEach((department: any) => {
+            map[department.id] = department.name ?? '';
+        });
 
-            if (!uniqueIds.length) {
-                if (!cancelled) {
-                    setDepartmentsMap({});
-                    setDepartmentsLoading(false);
-                }
-                return;
-            }
-
-            try {
-                if (!cancelled) setDepartmentsLoading(true);
-                const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-
-                if (cancelled) return;
-
-                setDepartmentsMap(
-                    Object.fromEntries((departments ?? []).map((d: any) => [d.id, d.name ?? '']))
-                );
-            } catch {
-                if (!cancelled) setDepartmentsMap({});
-            } finally {
-                if (!cancelled) setDepartmentsLoading(false);
-            }
-        };
-
-        loadDepartments();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [tableData, getDepartmentsBulk, open]);
+        setDepartmentsMap(map);
+        }, [departmentsResponse, open]);
 
     const patientIdsForBulk = useMemo(() => {
         const ids = (tableData as any[])
@@ -228,7 +201,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
         getBulkPatientBasicInfo(patientIdsForBulk as any)
             .unwrap()
-            .catch(() => {});
+            .catch(() => { });
     }, [open, patientIdsForBulk, getBulkPatientBasicInfo]);
 
     const patientMap = useMemo(() => {
@@ -253,7 +226,6 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         return (tableData as any[]).map(row => {
             const patientId = row?.patient?.id ?? null;
             const patientFromMap = patientId != null ? patientMap.get(String(patientId)) : null;
-
             const firstName = String(patientFromMap?.firstName ?? row?.patient?.firstName ?? '').trim();
             const secondName = String(
                 patientFromMap?.secondName ?? row?.patient?.secondName ?? ''
@@ -274,6 +246,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
 
             const isPrivate =
                 patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
+            const patientStatus = patientFromMap?.patientStatus ?? row?.patient?.patientStatus ?? null;
 
             return {
                 ...row,
@@ -284,12 +257,38 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                     medicalRecordNumber: mrn,
                     dateOfBirth: dob,
                     sexAtBirth,
-                    isPrivatePatient: isPrivate
+                    isPrivatePatient: isPrivate,
+                    patientStatus
                 },
                 patientAge: dob ? calculateAgeFormat(dob) : null
             };
         });
     }, [tableData, patientMap]);
+
+    const extractErrorMessage = (response: any): string => {
+    try {
+      const data = response?.data ?? response?.error?.data ?? null;
+      const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
+      const path = data?.path ?? data?.detail ?? data?.instance ?? '';
+      const rawMessage =
+        data?.message ??
+        data?.error ??
+        response?.error?.message ??
+        response?.message ??
+        response?.toString?.() ??
+        '';
+      const message =
+        typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
+
+      const parts = [message];
+      if (status) parts.push(`HTTP ${status}`);
+      if (path && typeof path === 'string') parts.push(path);
+
+      return parts.filter(Boolean).join(' | ');
+    } catch {
+      return '';
+    }
+  };
 
     const handleOpenQuickAppointment = (row: any) => {
         const patientId = row?.patient?.id;
@@ -328,18 +327,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             setRejectModalOpen(false);
             setRejectObject({ cancelReason: '' });
             await refetch();
-        } catch {}
-    };
-
-    const handleEncounterSaved = async () => {
-        if (selectedReferral?.id) {
-            try {
-                await acceptReferralRequest({ id: selectedReferral.id }).unwrap();
-            } catch {}
-        }
-
-        await refetch();
-        setQuickAppointmentModel(false);
+        } catch { }
     };
 
     const handlePageChange = (_event: any, newPage: number) => {
@@ -351,6 +339,57 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
     };
 
+    const handleApproveAgendaSelectAppointment = (appointmentFromAgenda: any) => {
+    setSelectedAppointment(appointmentFromAgenda)
+    setAgendaSlotConfirmOpen(true);
+  };
+
+const handleBookAppointment = async () => {
+  try {
+    if (!selectedAppointment?.id || !selectedReferral?.patient?.id) {
+      dispatch(notify({ msg: 'Missing appointment or patient data', sev: 'warning' }));
+      return;
+    }
+
+    if (!selectedAppointment?.priority) {
+      dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
+      return;
+    }
+
+    // 1. Accept referral
+    await acceptReferralRequest({
+      id: selectedReferral.id,
+      appointmentId: selectedAppointment.id
+    }).unwrap();
+
+    // 2. Book appointment
+    await bookPatientAppointment({
+      id: selectedAppointment.id,
+      patientId: Number(selectedReferral.patient.id),
+      defaultService: null,
+      defaultPractitioner: selectedAppointment.defaultPractitionerId ?? null,
+      reason: "REFERRAL",
+      service: "REFERRAL",
+      note: null,
+      originType: null,
+      originName: null,
+      status: 'BOOKED',
+      priority: selectedAppointment.priority,
+      followUpEncounterId: null
+    }).unwrap();
+
+    dispatch(notify({
+      msg: 'Appointment booked successfully',
+      sev: 'success'
+    }));
+    setAgendaSlotConfirmOpen(false);
+  } catch (error: any) {
+    dispatch(notify({
+      msg: extractErrorMessage(error) || 'Failed to load appointments',
+      sev: 'error'
+    }));
+  }
+};
     const tableColumns = [
         {
             key: 'referralType',
@@ -409,10 +448,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             }
         },
         {
-            key: 'toDepartmentId',
-            title: <Translate>Department</Translate>,
-            flexGrow: 2,
-            render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
+        key: 'toDepartmentId',
+        title: <Translate>Department</Translate>,
+        flexGrow: 2,
+        render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
         },
         {
             key: 'priority',
@@ -506,7 +545,6 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             render: (row: any) => {
                 const statusUpper = String(row?.status ?? '').toUpperCase();
                 const isRequested = statusUpper === 'REQUESTED';
-
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper
@@ -518,7 +556,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                             <div>
                                 <MyButton
                                     size="small"
-                                    disabled={!isRequested}
+                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
                                     onClick={() => handleOpenQuickAppointment(row)}
                                 >
                                     <FontAwesomeIcon icon={faCircleCheck} />
@@ -536,7 +574,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                                 <MyButton
                                     size="small"
                                     backgroundColor="var(--primary-pink)"
-                                    disabled={!isRequested}
+                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
                                     onClick={() => handleOpenReject(row)}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -604,7 +642,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         <div dir={dir}>
             <Drawer open={open} onClose={() => setOpen(false)} size="full">
                 <Drawer.Header>
-                    <Drawer.Title>Referral Requests</Drawer.Title>
+                    <Drawer.Title>Referral Requests </Drawer.Title>
                 </Drawer.Header>
 
                 <Drawer.Body>
@@ -655,17 +693,23 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
             />
 
             {quickAppointmentModel && selectedPatient && (
-                <PatientQuickAppointment
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
-                    localPatient={selectedPatient}
-                    localVisit={null}
-                    localReferral={selectedReferral}
-                    openedFromReferral={true}
-                    isDisabeld={false}
-                    initialStep={0}
-                    onEncounterSaved={handleEncounterSaved}
+                <>
+                <ApproveRequestAgendaModal
+                    open={quickAppointmentModel}
+                    setOpen={ setQuickAppointmentModel}
+                    request={{...selectedReferral, departmentId: selectedReferral?.toDepartmentId, facilityId: selectedReferral?.toFacilityId}}
+                    onSelectAppointment={handleApproveAgendaSelectAppointment}
                 />
+                <DeletionConfirmationModal
+                        open={agendaSlotConfirmOpen}
+                        setOpen={setAgendaSlotConfirmOpen}
+                        actionType="confirm"
+                        confirmationQuestion="Approve the request and book this time slot?"
+                        cancelButtonLabel="No"
+                        actionButtonLabel="Yes"
+                        actionButtonFunction={() => handleBookAppointment()}
+                      />
+                      </>
             )}
         </div>
     );

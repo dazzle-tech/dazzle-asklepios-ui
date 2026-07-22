@@ -374,18 +374,18 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={!localPatient?.id && !localPatient?.key}
+                    disabled={!localPatient?.id && !localPatient?.key || localPatient?.patientStatus === 'MERGED'}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter' || localPatient?.patientStatus === 'MERGED'}
                     onClick={handleOpenEditModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}>
                     Edit
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter' || localPatient?.patientStatus === 'MERGED'}
                     onClick={() => setDeleteModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
                     Delete

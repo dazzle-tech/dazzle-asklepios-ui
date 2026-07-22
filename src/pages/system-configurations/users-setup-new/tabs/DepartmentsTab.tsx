@@ -95,7 +95,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       facilityId: nextFacilityId,
       departmentId: undefined,
       isDefault: false,
-      appointmentBookingAllowed: false,
     }));
     if (nextFacilityId) {
       await getDepartmentsByFacility({ facilityId: nextFacilityId });
@@ -133,7 +132,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     saveDepartment(dataToSave)
       .unwrap()
       .then(() => {
-        resetToAddMode();
+        // resetToAddMode();
         dispatch(notify({ msg: 'The Department has been saved successfully', sev: 'success' }));
         refetchUserDepartments();
       })
@@ -158,8 +157,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
 
     updateToggles({
       id: userDepartment.id,
-      isDefault: !!userDepartment.isDefault,
-      appointmentBookingAllowed: !!userDepartment.appointmentBookingAllowed,
+      isDefault: !!userDepartment.isDefault
     })
       .unwrap()
       .then(() => {
@@ -222,14 +220,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
       title: <Translate>Default</Translate>,
       flexGrow: 2,
       render: (rowData: any) => <p>{rowData?.isDefault ? 'Yes' : 'No'}</p>,
-    },
-    {
-      key: 'appointmentBookingAllowed',
-      title: <Translate>Appointment Booking Allowed</Translate>,
-      flexGrow: 3,
-      render: (rowData: any) => (
-        <p>{rowData?.appointmentBookingAllowed ? 'Yes' : 'No'}</p>
-      ),
     },
     {
       key: 'isActive',
@@ -351,14 +341,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
             fieldLabel="Set as Default"
             fieldType="checkbox"
             fieldName="isDefault"
-            record={userDepartment}
-            setRecord={setUserDepartment}
-          />
-          <MyInput
-            column
-            fieldLabel="Appointment Booking Allowed"
-            fieldType="checkbox"
-            fieldName="appointmentBookingAllowed"
             record={userDepartment}
             setRecord={setUserDepartment}
           />

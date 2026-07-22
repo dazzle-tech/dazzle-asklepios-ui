@@ -69,6 +69,31 @@ export interface Department {
   requirePreAssessment: boolean,
   workingDays?: OrganizationWorkingDay[];
 }
+
+export interface DepartmentResponseVM {
+  id: number;
+  facilityId: number | null;
+  name: string;
+  departmentType?: string | null;
+  appointable?: boolean | null;
+  departmentCode?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  encounterType?: string | null;
+  isActive?: boolean | null;
+  hasMedicalSheets?: boolean | null;
+  hasNurseMedicalSheets?: boolean | null;
+  parallelCapacityEnabled?: boolean | null;
+  parallelCapacityValue?: number | null;
+  defaultDurationMinutes?: number | null;
+  defaultBufferBeforeMinutes?: number | null;
+  defaultBufferAfterMinutes?: number | null;
+  requirePractitioner?: boolean | null;
+  requireBilling?: boolean | null;
+  requirePreAssessment?: boolean | null;
+  workingDays?: OrganizationWorkingDay[] | null;
+}
+
 export interface Facility {
   id?: string;
   name?: string;
@@ -84,6 +109,10 @@ export interface Facility {
   ruleId?: number;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
+  defaultLabDepartmentName?: string | null;
+  defaultRadDepartmentName?: string | null;
 }
 
 export interface CreateFacility {
@@ -99,6 +128,8 @@ export interface CreateFacility {
   isActive?: boolean;
   workingDays?: OrganizationWorkingDay[];
   timeZone?: string;
+  defaultLabDepartmentId?: number | null;
+  defaultRadDepartmentId?: number | null;
 }
 
 export interface Role {
@@ -120,7 +151,41 @@ export interface UserDepartment {
   departmentId: number;
   isActive?: boolean;
   isDefault?: boolean;
-  appointmentBookingAllowed?: boolean;
+  departmentName?: string | null;
+  facilityName?: string | null;
+}
+
+export interface UserDepartmentResponseVM {
+  id: number | null;
+  userId: number | null;
+  facilityId: number | null;
+  facilityName: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  isActive?: boolean | null;
+  isDefault?: boolean | null;
+}
+
+export interface UserBookableDepartment {
+  id?: number;
+  userId: number;
+  departmentId: number;
+  facilityId?: number;
+  isActive?: boolean;
+}
+
+export interface UserBookableDepartmentCreateVM {
+  userId: number;
+  departmentId: number;
+}
+
+export interface UserBookableDepartmentResponseVM {
+  id: number | null;
+  userId: number | null;
+  facilityId: number | null;
+  facilityName: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
 }
 
 /* =========================
@@ -287,7 +352,6 @@ export interface AvailabilityTemplateIntervalCreateDTO {
   endTime: string;
   slotStrategy: string;
   slotDurationMinutes: number;
-  applyToAllWorkingDays?: boolean | null;
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
@@ -338,6 +402,7 @@ export interface AvailabilityTemplateResponseVM {
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
   allowPatientPortalBooking?: boolean | null;
+  allowWalkInBooking?: boolean | null;
   requireConfirmation?: boolean | null;
   financialDetails?: string | null;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
@@ -368,6 +433,7 @@ export interface AvailabilityTemplateCreateDTO {
   requireBilling: boolean;
   requirePreAssessment: boolean;
   allowPatientPortalBooking: boolean;
+  allowWalkInBooking: boolean;
   requireConfirmation: boolean;
   financialDetails?: string;
   isActive: boolean;
@@ -505,9 +571,11 @@ export interface AppointmentSearchFilterMultiDepartmentDTO {
   departmentIds?: number[] | null;
   resourceType?: TemplateType | null;
   resourceId?: number | null;
-  status?: AppointmentStatus | null;
+  status?: AppointmentStatus[] | null;
   bookingMode?: BookingMode[] | null;
   patientId?: number | null;
+  startDate?: Date | null;
+  endDate?: Date | null; 
 }
 
 /** @deprecated Use AppointmentSearchFilterMultiDepartmentDTO */
@@ -541,7 +609,7 @@ export interface AppointmentRequestResponseVM {
   patientId?: number | null;
   patientName?: string | null;
   patientMrn?: string | null;
-  
+
   facilityId?: number | null;
   facilityName?: string | null;
 
@@ -609,6 +677,71 @@ export interface AppointmentRequestCancelDTO {
 }
 
 /* =========================
+ *  Appointment Waiting List
+ * ========================= */
+
+export type WaitingListPriority = string;
+export type WaitingListStatus = string;
+
+export interface AppointmentWaitingListVM {
+  id?: number | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  patientMrn?: string | null;
+  departmentId?: number | null;
+  serviceId?: number | null;
+  practitionerId?: number | null;
+  priority?: WaitingListPriority | null;
+  status?: WaitingListStatus | null;
+  preferredDate?: string | null;
+  expectedDurationMinutes?: number | null;
+  reason?: string | null;
+  notes?: string | null;
+  bookingGroupId?: number | null;
+  bookedAt?: string | null;
+  createdDate?: string | null;
+}
+
+export interface AppointmentWaitingListCreateDTO {
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+  serviceId?: number | null;
+  practitionerId?: number | null;
+  priority?: WaitingListPriority | null;
+  preferredDate?: string | null;
+  expectedDurationMinutes: number;
+  reason?: string | null;
+  notes?: string | null;
+}
+
+export interface AppointmentWaitingListBookDTO {
+  appointmentIds: number[];
+  notes?: string | null;
+}
+
+export interface AppointmentWaitingListRemoveDTO {
+  reason: string;
+}
+
+export type WaitingListBookingMode = string;
+
+export interface WaitingListAvailableSlotVM {
+  appointmentId?: number | null;
+  startDatetime?: string | null;
+  endDatetime?: string | null;
+  status?: string | null;
+  bookingMode?: WaitingListBookingMode | null;
+  practitionerId?: number | null;
+  serviceId?: number | null;
+}
+
+export interface WaitingListAvailableSlotsByBookingModeVM {
+  SLOT?: WaitingListAvailableSlotVM[] | null;
+  BUFFER?: WaitingListAvailableSlotVM[] | null;
+}
+
+/* =========================
  *  Clinical Staff / Practitioner
  * ========================= */
 
@@ -641,7 +774,7 @@ export interface Practitioner {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  nationalNumber?:string | null;
+  nationalNumber?: string | null;
 }
 
 /* =========================
@@ -815,7 +948,7 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
-  modality:string
+  modality: string
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -938,7 +1071,7 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  isLookAlikeSoundAlike?: boolean ;
+  isLookAlikeSoundAlike?: boolean;
   highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
@@ -1464,6 +1597,10 @@ export interface Patient {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  patientStatus?: string | null;
+  mergedIntoPatientId?: number | null;
+  mergedAt?: Date | null;
+  mergedBy?: string | null;
 }
 
 export interface SimpleCountry {
@@ -2117,6 +2254,7 @@ export interface PatientEncounter {
   status: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
+  historyOfPresentIllness?: string | null;
 
 }
 
@@ -2298,6 +2436,7 @@ export interface PatientEncounter {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  historyOfPresentIllness?: string | null;
 }
 
 
@@ -2578,6 +2717,7 @@ export interface PatientEncounter {
   hasOrder: boolean;
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
+  historyOfPresentIllness?: string | null;
 }
 
 export interface PatientPaymentServiceItemDTO {
@@ -2801,6 +2941,73 @@ export interface OrganizationDefinition {
   workingDays?: OrganizationWorkingDay[];
 }
 
+/** Form model aligned with EmailSettings entity. */
+export interface EmailSettings {
+  id?: number;
+  /** @NotNull, max 255 */
+  serverName?: string;
+  /** @NotNull, max 255 */
+  host?: string;
+  /** @NotNull, max 500 */
+  description?: string;
+  /** @NotNull */
+  smtpPort?: number;
+  /** @NotNull, max 255 */
+  fromAddress?: string;
+  /** @NotNull */
+  password?: string;
+  /** @NotNull */
+  protocol?: string;
+  /** @NotNull */
+  tls?: boolean;
+  /** optional, max 255 */
+  emailPrefix?: string | null;
+  /** optional */
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsCreateDTO {
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
+export interface EmailSettingsUpdateDTO extends EmailSettingsCreateDTO {
+  id: number;
+}
+
+export interface EmailSettingsTestConnectionDTO {
+  id?: number;
+  serverName: string;
+  host: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+}
+
+export interface EmailSettingsResponseVM {
+  id: number;
+  serverName: string;
+  host: string;
+  description: string;
+  smtpPort: number;
+  fromAddress: string;
+  password: string;
+  protocol: string;
+  tls: boolean;
+  emailPrefix?: string | null;
+  emailFooter?: string | null;
+}
+
 export interface OrganizationWorkingDay {
   id?: number;
   dayOfWeek?: string;
@@ -2946,7 +3153,7 @@ export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
   medicationsId: number;
-  activeIngredientId: number ;
+  activeIngredientId: number;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -3095,7 +3302,9 @@ export enum DiagnosticOrderTestStatus {
   SUBMITTED = 'SUBMITTED',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
+  EXAM_DONE = 'EXAM_DONE',
   RESULT_READY = 'RESULT_READY',
+
   SAMPLE_COLLECTED = 'SAMPLE_COLLECTED',
   RESULT_APPROVED = 'RESULT_APPROVED',
   CANCELLED = 'CANCELLED',
@@ -3644,9 +3853,9 @@ export type PatientServiceAndProduct = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
-  SourceId?: number | null; 
+  SourceId?: number | null;
 };
- 
+
 export enum ServiceSource {
   LABORATORY = 'LABORATORY',
   RADIOLOGY = 'RADIOLOGY',
@@ -4422,8 +4631,8 @@ export type AppointmentPolicyAssignmentResponseVM = {
   appointment: AppointmentFromTemplate;
   isApplied?: boolean;
   isRequired?: boolean;
-  policyName?:string;
-  policyCode?:string;
+  policyName?: string;
+  policyCode?: string;
 };
 
 export type AppointmentPolicyAssignmentAppliedUpdateDTO = {
@@ -4535,7 +4744,9 @@ export interface PatientEncounterDischarge {
 export interface CurrentMedication {
   patientId: number;
   activeIngredientId: number;
-  instructions?: string | null;
+  dosage?: number | null;
+  unit?: string | null;
+  frequency?: string | null;
   startDate: string | Date | null;
 }
 
@@ -4568,13 +4779,13 @@ export interface PatientUccMedicationOrder {
 
   isHighAlert?: boolean | null;
 
-  status?: 
-    | 'WAITING_DOUBLE_CHECK'
-    | 'ADMINISTERED'
-    | 'CANCELLED'
-    | 'DISCARDED'
-    | 'NEW'
-    | 'SUBMITTED';
+  status?:
+  | 'WAITING_DOUBLE_CHECK'
+  | 'ADMINISTERED'
+  | 'CANCELLED'
+  | 'DISCARDED'
+  | 'NEW'
+  | 'SUBMITTED';
 
   submittedDate?: string | Date | null;
   submittedBy?: string | null;
@@ -4701,4 +4912,209 @@ export interface OCRParsingResponseDTO {
    dateOfBirth: Date | null,  // change it later
    sex : string | null, // change it later
    placeOfBirth: string;
+}
+export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
+
+export type NotificationModule = string;
+
+export type NotificationCategory = string;
+
+export type NotificationPriority = string;
+
+export type RecipientRule =
+  | 'PATIENT_EMAIL'
+  | 'PATIENT_PHONE'
+  | 'PRACTITIONER_EMAIL'
+  | 'PRACTITIONER_PHONE'
+  | 'DATA'
+  | 'STATIC'
+  | 'PRACTITIONER_USER'
+  | 'DEPARTMENT_USERS'
+  | 'CURRENT_USER'
+  | 'CURRENT_USER_PHONE'
+  | 'CREATED_BY_USER'
+  | 'CREATED_BY_USER_PHONE';
+
+export interface NotificationHeaderResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderCreateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderUpdateDTO {
+  facilityId?: number | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+  isActive?: boolean;
+}
+
+export interface NotificationHeaderSearchDTO {
+  code?: string | null;
+  name?: string | null;
+  module?: NotificationModule | null;
+  category?: NotificationCategory | null;
+  priority?: NotificationPriority | null;
+}
+
+export interface NotificationTemplateResponseVM {
+  id?: number;
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateCreateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+  isActive?: boolean;
+}
+
+export interface NotificationTemplateUpdateDTO {
+  notificationHeaderId: number;
+  channel: NotificationTemplateChannel;
+  language: string;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  toRecipientRule?: string | null;
+  ccRecipientRule?: string | null;
+  bccRecipientRule?: string | null;
+  phoneRecipientRule?: string | null;
+}
+
+export type NotificationChannel = NotificationTemplateChannel;
+
+export type NotificationStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface NotificationResponseVM {
+  id?: number;
+  facilityId?: number | null;
+  notificationHeaderId?: number | null;
+  notificationTemplateId?: number | null;
+  code?: string | null;
+  channel?: NotificationChannel | null;
+  language?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toEmails?: string[] | null;
+  ccEmails?: string[] | null;
+  bccEmails?: string[] | null;
+  toPhone?: string | null;
+  subject?: string | null;
+  title?: string | null;
+  body?: string | null;
+  dataJson?: Record<string, unknown> | null;
+  recipientJson?: Record<string, unknown> | null;
+  resolvedRecipientsJson?: Record<string, unknown> | null;
+  channelPayload?: Record<string, unknown> | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  providerResponse?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  retryCount?: number | null;
+  maxRetryCount?: number | null;
+  nextRetryDate?: string | Date | null;
+  sentDate?: string | Date | null;
+  deliveredDate?: string | Date | null;
+  readDate?: string | Date | null;
+  failedDate?: string | Date | null;
+}
+
+export interface NotificationSearchDTO {
+  code?: string | null;
+  status?: NotificationStatus | null;
+  priority?: NotificationPriority | null;
+  language?: string | null;
+  recipientType?: string | null;
+  recipientId?: number | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  recipientPhone?: string | null;
+  toPhone?: string | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: number | null;
+  dateFrom?: string | Date | null;
+  dateTo?: string | Date | null;
+}
+
+export type NotificationEventType =
+  | 'CREATED'
+  | 'PROCESSING'
+  | 'SENT_TO_PROVIDER'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'READ'
+  | 'FAILED'
+  | 'RETRY'
+  | 'CANCELLED'
+  | 'WEBHOOK_STATUS_UPDATE';
+
+export interface NotificationEventResponseVM {
+  id?: number;
+  notificationId?: number | null;
+  eventType?: NotificationEventType | null;
+  oldStatus?: NotificationStatus | null;
+  newStatus?: NotificationStatus | null;
+  providerName?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  message?: string | null;
+  errorMessage?: string | null;
+  eventPayload?: Record<string, unknown> | null;
+  createdDate?: string | Date | null;
 }

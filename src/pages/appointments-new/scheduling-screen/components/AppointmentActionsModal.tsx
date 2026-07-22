@@ -437,7 +437,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setPolicySettingsModalOpen(false);
             setPolicyAppliedDraft({});
             setPaymentModalOpen(false);
-            setCreatedEncounter(null);
+            // setCreatedEncounter(null);
             resetPaymentState();
         }
     }, [appointment]);
@@ -558,7 +558,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
              dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
-
     const normalizeEncounterStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     const isEncounterPendingPayment = normalizeEncounterStatus((createdEncounter as any)?.status) === 'PENDINGPAYMENT';
     const canOpenAddPayment = currentStatus === 'CHECKEDIN' && isEncounterPendingPayment;

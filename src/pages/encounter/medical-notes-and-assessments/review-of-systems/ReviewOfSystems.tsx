@@ -61,6 +61,51 @@ const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) 
   }, [rosList]);
 
 
+const handleClearSection = async () => {
+  if (!selectedSystem?.key) return;
+
+  try {
+    const sectionItems =
+      bodySystemsDetailLovQueryResponse?.object ?? [];
+
+    for (const item of sectionItems) {
+      const existing = mainData[String(item.key)];
+
+      if (existing?.id) {
+        await deleteRos(existing.id).unwrap();
+      }
+    }
+
+    setMainData(prev => {
+      const clone = { ...prev };
+
+      sectionItems.forEach(item => {
+        delete clone[String(item.key)];
+      });
+
+      return clone;
+    });
+
+    setSelectedSystem({ ...newApLovValues });
+
+    refetchRos();
+
+    dispatch(
+      notify({
+        msg: 'Section cleared successfully',
+        sev: 'success'
+      })
+    );
+  } catch (e) {
+    dispatch(
+      notify({
+        msg: 'Failed to clear section',
+        sev: 'error'
+      })
+    );
+  }
+};
+
 
 
   const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
@@ -179,49 +224,68 @@ const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) 
     ]
   );
 
+
+
+
   return (
     <>
       <Panel>
         <Grid fluid>
           <div className="top-div">
-         
-
             <div className="bt-right">
-              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />} >
-                Findings
+              <MyButton
+                disabled={!selectedSystem?.key}
+                onClick={handleClearSection}
+              >
+                Clear
               </MyButton>
+
+            <MyButton
+              onClick={() => {
+                setOpenModel(!openModel);
+              }}
+              prefixIcon={() => <icons.List />}
+            >
+              Findings
+            </MyButton>
             </div>
           </div>
 
           <div className="details-style">
+            {openModel && (
+              <div className="summary-popup">
+                <Summary
+                  list={rosList}
+                  encounter={encounter}
+                  setEncounter={setEncounter}
+                  system={bodySystemsLovQueryResponse}
+                />
+              </div>
+            )}
+          <div className="system-container">
             <div className="system-style">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}
-                  showArrow={true}
+                  showArrow
                   leftArrow={false}
                   arrowClick={() => setSelectedSystem(item)}
                   footerContant={item.lovDisplayVale}
                   isSelected={selectedSystem?.key === item.key}
-
                 />
               ))}
             </div>
 
             <div className="system-details">
-              <MyTable data={paginatedData} columns={tableColumns} loading={rosLoading} />
+              <MyTable
+                data={paginatedData}
+                columns={tableColumns}
+                loading={rosLoading}
+              />
             </div>
           </div>
+          </div>
         </Grid>
-
-        <Summary
-          open={openModel}
-          setOpen={setOpenModel}
-          list={rosList}
-          encounter={encounter}
-          setEncounter={setEncounter}
-          system={bodySystemsLovQueryResponse}
-        />
       </Panel>
     </>
   );

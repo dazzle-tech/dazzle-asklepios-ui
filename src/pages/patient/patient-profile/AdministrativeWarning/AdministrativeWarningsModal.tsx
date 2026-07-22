@@ -27,6 +27,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import React, { useMemo, useState } from 'react';
 import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
+import UserDateCell from '@/components/UserDateCell';
 
 interface AdministrativeWarningsModalProps {
   localPatient: Patient;
@@ -146,7 +147,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
           </InputGroup.Button>
         </InputGroup>
 
-        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew}>
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew} disabled={localPatient?.patientStatus === 'MERGED'}>
           Add
         </MyButton>
       </div>
@@ -193,36 +194,33 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                     <span className="meta-label">
                       <Translate>ADDITION BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.createdBy || 'By User'}</span>
-                    <span className="meta-date">
-                      {warning.createdDate
-                        ? new Date(warning.createdDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.createdBy}
+                      date={warning.createdDate}
+                    />
                   </div>
 
                   <div className="meta-item">
                     <span className="meta-label">
                       <Translate>RESOLVED BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.resolvedBy || '-'}</span>
-                    <span className="meta-date">
-                      {warning.resolvedDate
-                        ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.resolvedBy}
+                      date={warning.resolvedDate}
+                    />
                   </div>
 
                   <div className="meta-item">
                     <span className="meta-label">
                       <Translate>RESOLUTION UNDO BY/DATE</Translate>
                     </span>
-                    <span className="meta-value">{warning.undoResolvedBy || '-'}</span>
-                    <span className="meta-date">
-                      {warning.undoResolvedDate
-                        ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
-                        : '-'}
-                    </span>
+
+                    <UserDateCell
+                      login={warning.undoResolvedBy}
+                      date={warning.undoResolvedDate}
+                    />
                   </div>
                 </div>
               </div>
@@ -230,7 +228,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
               <div className="right-side-card">
                 <button
                   className="action-btn accept-btn"
-                  disabled={warning.resolved}
+                  disabled={warning.resolved || localPatient?.patientStatus === 'MERGED'}
                   onClick={() => handleResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faCircleCheck} />
@@ -238,7 +236,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
                 <button
                   className="action-btn undo-btn"
-                  disabled={!warning.resolved}
+                  disabled={!warning.resolved || localPatient?.patientStatus === 'MERGED'}
                   onClick={() => handleUndoResolve(warning)}
                 >
                   <FontAwesomeIcon icon={faRotateLeft} />
@@ -246,6 +244,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
                 <button
                   className="action-btn delete-btn"
+                  disabled={localPatient?.patientStatus === 'MERGED'}
                   onClick={() => {
                     setWarningToDelete(warning);
                     setDeleteModalOpen(true);

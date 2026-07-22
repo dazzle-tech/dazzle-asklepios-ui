@@ -176,8 +176,9 @@ const ScheduleFiltersPanel = ({
                   width={'11.5vw'}
                   column
                   fieldLabel="Booking Mode"
-                  fieldType="select"
+                  fieldType="checkPicker"
                   fieldName="bookingMode"
+                  placeholder="Quick, Slot"
                   selectData={BookingModeEnum ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"

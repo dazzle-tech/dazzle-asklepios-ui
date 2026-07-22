@@ -42,6 +42,9 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
       category: ''
     });
 
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+
     /* ===================== FILTERS ===================== */
     const cleanFilters = (filters: any) => {
       const cleaned: any = Object.fromEntries(
@@ -92,17 +95,19 @@ const queryParams =
     ? skipToken
     : {
         orderIdIn: orderIds,
+        page,
+        size: pageSize,
         ...(showCancelled
           ? {}
           : { excludeStatus: DiagnosticOrderTestStatus.CANCELLED }),
         ...cleanedFilters
       };
 
-const {
-  data: orderTestResponse,
-  isLoading,
-  refetch
-} = useFilterDiagnosticOrderTestsQuery(queryParams);
+    const {
+      data: orderTestResponse,
+      isLoading,
+      refetch
+    } = useFilterDiagnosticOrderTestsQuery(queryParams);
 
 
     /* 🔥 expose refetch to parent */
@@ -113,6 +118,7 @@ const {
     }));
 
     const orderTestList: any[] = orderTestResponse?.data ?? [];
+    const totalCount = orderTestResponse?.totalCount ?? 0;
 
     /* ===================== ALL TESTS ===================== */
     const { data: testsResponse } = useGetAllDiagnosticTestsQuery({
@@ -238,6 +244,18 @@ const {
 
     /* ===================== RENDER ===================== */
 
+    const handlePageChange = (_: unknown, newPage: number) => {
+      setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      setPageSize(parseInt(event.target.value, 10));
+      setPage(0);
+    };
+
+
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -259,6 +277,11 @@ const {
           data={normalizedRows}
           columns={tableColumns}
           filters={tableFilters}
+          page={page}
+          rowsPerPage={pageSize}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
       </div>
       </>

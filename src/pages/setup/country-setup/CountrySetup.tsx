@@ -48,7 +48,7 @@ const CountrySetup: React.FC = () => {
     setSelectedCommunity(c);
   };
 
-                // Direction handling for RTL/LTR
+  // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 

@@ -345,7 +345,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
             </div>
           </div>
 
-          <MultiSelectAppender
+          {/* <MultiSelectAppender
             key={clearKey}
             label="Patient Conditions"
             options={patientConditions ?? []}
@@ -358,7 +358,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
                 patientConditions: value
               }))
             }
-          />
+          /> */}
 
           <MyInput
             width="100%"

@@ -56,6 +56,7 @@ import {
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 import VisitReportPrintButton from './VisitReportPrintButton';
+import DoctorAppoitmentsView from './appointments';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -236,6 +237,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
+  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -653,52 +655,7 @@ const EncounterList = () => {
     }
   };
 
-  const handlePrintVisitReport = async (row: any) => {
-    const encounterId = row?.id ?? null;
-
-    if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-      return;
-    }
-
-    try {
-      setPrintingVisitReportId(encounterId);
-
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const blob = await triggerVisitReportPdf({
-        encounterId,
-        timezone,
-      }).unwrap();
-
-      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-      const fileURL = window.URL.createObjectURL(pdfBlob);
-
-      const win = window.open(fileURL, '_blank');
-
-      if (win) {
-        win.focus();
-      } else {
-        dispatch(
-          notify({
-            msg: 'Popup blocked. Please allow popups for this site.',
-            sev: 'warning',
-          })
-        );
-      }
-
-
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.message || 'Error while opening visit report',
-          sev: 'error',
-        })
-      );
-    } finally {
-      setPrintingVisitReportId(null);
-    }
-  };
+  
 
   const tableColumns = [
     {
@@ -1079,6 +1036,7 @@ const EncounterList = () => {
           />
         </Form>
       </div>
+      
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1266,6 +1224,9 @@ const EncounterList = () => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
+          <div style={{display: 'flex', justifyContent:'end'}}>
+          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          </div>
           <MyTable
             filters={filters()}
             height={600}
@@ -1353,6 +1314,12 @@ const EncounterList = () => {
           />
 
         </Panel>
+        <DoctorAppoitmentsView
+         open={openDoctorAppointments}
+         setOpen={setOpenDoctorAppointments}
+         facilityId={selectedDepartment?.facilityId}
+         departmentId={departmentId}
+        />
       </div>
     </>
   );

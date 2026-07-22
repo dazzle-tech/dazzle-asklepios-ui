@@ -34,14 +34,14 @@ const user = authSlice?.user;
         </div>
       )
     },
-    {
-      title: 'Requested Tests',
-      content: (
-        <div dir={dir}>
-          <RequestedTest requestType="RADIOLOGY" />
-        </div>
-      )
-    },
+    // {
+    //   title: 'Requested Tests',
+    //   content: (
+    //     <div dir={dir}>
+    //       <RequestedTest requestType="RADIOLOGY" />
+    //     </div>
+    //   )
+    // },
     {
       title : 'Reviewed Reports',
       content : (

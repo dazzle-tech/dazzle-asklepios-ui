@@ -3,6 +3,27 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  .availability-template-top-row {
+    align-items: stretch;
+
+    > .rs-col {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .availability-template-column--left {
+    > .container-form-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .availability-template-column--right {
+    gap: 16px;
+  }
 }
 
 .template-header {

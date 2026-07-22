@@ -216,7 +216,10 @@ const DepartmentSwitcher = ({
                       String(dept.departmentId ?? '') &&
                     String(selectedDepartment?.facilityId ?? '') === String(dept.facilityId ?? '');
 
-                  const departmentDisplayName = dept.departmentName ?? 'Unnamed Department';
+                  const departmentDisplayName =
+                    dept.departmentName ??
+                    (dept as { name?: string | null }).name ??
+                    'Unnamed Department';
 
                   return (
                     <div

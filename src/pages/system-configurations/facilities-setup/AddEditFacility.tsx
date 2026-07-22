@@ -7,9 +7,13 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
+import { useGetCountriesQuery } from '@/services/setup/country/countryService';
+import { PhoneNumberInput } from '@/components';
 
 
 const AddEditFacility = ({
@@ -70,7 +74,81 @@ const AddEditFacility = ({
         workingDays: nextWorkingDays,
       }));
     };
+
+  const { data: countriesResponse } = useGetCountriesQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+
+    const enumOptions = useEnumOptions('CountryName');
+
+    const countriesOptions = useMemo(() => {
+      const labelMap = Object.fromEntries(
+        enumOptions.map(item => [item.value, item.label])
+      );
+
+      return (countriesResponse?.data ?? []).map(country => ({
+        ...country,
+        displayName: labelMap[country.name] || country.name
+      }));
+    }, [countriesResponse, enumOptions]);
+
+
   const timeZone = useEnumOptions('TimeZone');
+
+  const facilityId = facility?.id;
+
+  const { data: labDepartmentsResponse } = useGetDepartmentByTypeAndFacilityAndActiveQuery(
+    facilityId
+      ? { type: 'LABORATORY', facilityId, page: 0, size: 200 }
+      : skipToken
+  );
+
+  const { data: radDepartmentsResponse } = useGetDepartmentByTypeAndFacilityAndActiveQuery(
+    facilityId
+      ? { type: 'RADIOLOGY', facilityId, page: 0, size: 200 }
+      : skipToken
+  );
+
+  const labDepartmentOptions = useMemo(() => {
+    const options = [...(labDepartmentsResponse?.data ?? [])];
+    const selectedId = facility?.defaultLabDepartmentId;
+    if (
+      selectedId != null &&
+      !options.some(department => Number(department.id) === Number(selectedId))
+    ) {
+      options.unshift({
+        id: selectedId,
+        name: facility?.defaultLabDepartmentName || `Department #${selectedId}`,
+      });
+    }
+    return options;
+  }, [
+    labDepartmentsResponse?.data,
+    facility?.defaultLabDepartmentId,
+    facility?.defaultLabDepartmentName,
+  ]);
+
+  const radDepartmentOptions = useMemo(() => {
+    const options = [...(radDepartmentsResponse?.data ?? [])];
+    const selectedId = facility?.defaultRadDepartmentId;
+    if (
+      selectedId != null &&
+      !options.some(department => Number(department.id) === Number(selectedId))
+    ) {
+      options.unshift({
+        id: selectedId,
+        name: facility?.defaultRadDepartmentName || `Department #${selectedId}`,
+      });
+    }
+    return options;
+  }, [
+    radDepartmentsResponse?.data,
+    facility?.defaultRadDepartmentId,
+    facility?.defaultRadDepartmentName,
+  ]);
 
   // modal content
   const conjureFormContent = stepNumber => {
@@ -152,6 +230,38 @@ const AddEditFacility = ({
               width={"100%"}
             />
             </Row>
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  fieldLabel="Default Lab Department"
+                  fieldType="select"
+                  fieldName="defaultLabDepartmentId"
+                  selectData={labDepartmentOptions}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={facility}
+                  setRecord={setFacility}
+                  width="100%"
+                  disabled={!facilityId}
+                  searchable
+                />
+              </Col>
+              <Col md={12}>
+                <MyInput
+                  fieldLabel="Default Radiology Department"
+                  fieldType="select"
+                  fieldName="defaultRadDepartmentId"
+                  selectData={radDepartmentOptions}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={facility}
+                  setRecord={setFacility}
+                  width="100%"
+                  disabled={!facilityId}
+                  searchable
+                />
+              </Col>
+            </Row>
              <Row>
             <MyInput
               fieldName="facilityBriefDesc"
@@ -187,16 +297,14 @@ const AddEditFacility = ({
               })}
             >
               <MyInput
-                width={"13vw"}
+                width="13vw"
                 vr={validationResult}
                 fieldLabel="Facility Country"
                 fieldType="select"
                 fieldName="countryLkey"
-                selectData={contryLovQueryResponse?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                selectDataValue="key"
+                selectData={countriesOptions}
+                selectDataLabel="displayName"
+                selectDataValue="code"
                 record={address}
                 setRecord={setAddress}
               />
@@ -207,9 +315,8 @@ const AddEditFacility = ({
                 fieldType="select"
                 fieldName="cityLkey"
                 selectData={cityLovQueryResponse?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                selectDataLabel="lovDisplayVale"
+                disableByField='isValid'
                 selectDataValue="key"
                 record={address}
                 setRecord={setAddress}
@@ -259,20 +366,21 @@ const AddEditFacility = ({
                 'container-of-two-fields-facility': width > 600
               })}
             >
-              <MyInput
-                fieldName="phone1"
-                fieldLabel="Primary Phone Number"
-                record={facility}
-                setRecord={setFacility}
-                width={"13vw"}
-              />
-              <MyInput
-                fieldName="phone2"
-                fieldLabel="Secondary Phone Number"
-                record={facility}
-                setRecord={setFacility}
-                width={"13vw"}
-              />
+            <PhoneNumberInput
+              fieldName="phone1"
+              fieldLabel="Primary Phone Number"
+              record={facility}
+              setRecord={setFacility}
+              width="13vw"
+            />
+
+            <PhoneNumberInput
+              fieldName="phone2"
+              fieldLabel="Secondary Phone Number"
+              record={facility}
+              setRecord={setFacility}
+              width="13vw"
+            />
             </div>
             <MyInput
               fieldName="emailAddress"
