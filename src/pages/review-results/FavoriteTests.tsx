@@ -26,7 +26,7 @@ const FavoriteTests: React.FC = () => {
   const mode = useAppSelector((state) => state.ui.mode);
   const dispatch = useDispatch();
 
-    const PAGE_SIZE = 15;
+    const PAGE_SIZE = 60;
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,

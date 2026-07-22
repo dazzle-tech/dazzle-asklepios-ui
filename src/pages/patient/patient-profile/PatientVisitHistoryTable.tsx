@@ -27,7 +27,7 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 import type { Practitioner, Department } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import { formatEnumString } from '@/utils';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
@@ -48,12 +48,21 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
     {}
   );
-  const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+
+  const { data: departments = [] } = useGetAllDepartmentsWithoutPaginationQuery();
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
   const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
     useLazyGetDiagnosisFlagsByEncounterIdsQuery();
+
+
+  const departmentsMap = useMemo(
+    () =>
+      Object.fromEntries(
+        departments.map((d: Department) => [d.id, d])
+      ),
+    [departments]
+  );
 
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     {
@@ -131,12 +140,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     [encounters]
   );
 
-  const departmentIds = useMemo(
-    () =>
-      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
-    [encounters]
-  );
-
   const encounterIds = useMemo(
     () => encounters.map((e: any) => e.id).filter((id: any) => id != null),
     [encounters]
@@ -169,36 +172,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
     load();
   }, [practitionerIds, getPractitionersBulk]);
-
-  useEffect(() => {
-    if (!departmentIds.length) {
-      setDepartmentsMap(prev => (Object.keys(prev).length ? {} : prev));
-      return;
-    }
-
-    const loadDepartments = async () => {
-      try {
-        const departments = await getDepartmentsBulk(departmentIds).unwrap();
-        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
-
-        setDepartmentsMap(prev => {
-          const prevKeys = Object.keys(prev);
-          const nextKeys = Object.keys(nextMap);
-          if (
-            prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
-          ) {
-            return prev;
-          }
-          return nextMap;
-        });
-      } catch (err) {
-        console.error('getDepartmentsBulk error:', err);
-      }
-    };
-
-    loadDepartments();
-  }, [departmentIds, getDepartmentsBulk]);
 
   useEffect(() => {
     if (!encounterIds.length) return;
@@ -295,6 +268,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                     <MyButton
                       appearance="subtle"
                       size="small"
+                      disabled={!row.id || localPatient?.patientStatus === 'MERGED'}
                       onClick={() => {
                         setSelectedVisit(row);
                         setOpenCancelModal(true);
@@ -313,7 +287,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                   container={getTooltipContainer}
                 >
                   <span className="visit-history__tooltip-trigger">
-                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
+                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)} disabled={localPatient?.patientStatus === 'MERGED'}>
                       <FontAwesomeIcon icon={faCheckDouble} />
                     </MyButton>
                   </span>
@@ -334,6 +308,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                         setSelectedVisit(row);
                         setOpenDischargeModal(true);
                       }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
                     >
                       <FontAwesomeIcon icon={faPowerOff} />
                     </MyButton>
@@ -356,6 +331,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                         setQuickInitialStep(1);
                         setQuickAppointmentModel(true);
                       }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
                     >
                       <FontAwesomeIcon icon={faFileInvoiceDollar} />
                     </MyButton>

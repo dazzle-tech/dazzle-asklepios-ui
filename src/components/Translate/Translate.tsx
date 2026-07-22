@@ -16,7 +16,6 @@ const Translate = ({ children }: { children?: any }) => {
   const key = toKey(children);
   const translated = (lang && translations[lang]?.[key]) ? translations[lang][key] : children;
 
-  return <>{translated}</>;
-};
+return <span className="translate-text">{translated}</span>;};
 
 export default Translate;

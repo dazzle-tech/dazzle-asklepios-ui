@@ -696,8 +696,8 @@ useEffect(() => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
-      mainSize="37vw"
-      childSize="47vw"
+      mainSize="xs"
+      childSize="30vw"
     />
   );
 };

@@ -53,256 +53,327 @@ import PatientSearch from '@/components/PatientSearch';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 
 
-const renderMarker = (Marker?: string) => {
-  switch (Marker) {
-    case 'ABNORMAL_MARKER':
-      return <FontAwesomeIcon icon={faCircleExclamation} />;
-    case 'UPPER_LIMIT':
-      return <FontAwesomeIcon icon={faArrowUp} />;
-    case 'LOWER_LIMIT':
-      return <FontAwesomeIcon icon={faArrowDown} />;
-    case 'CRITICAL_UPPER':
-      return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowUp} />
-        </HStack>
-      );
-    case 'CRITICAL_LOWER':
-      return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowDown} />
-        </HStack>
-      );
-    default:
-      return formatEnumString(Marker);
-  }
-};
+  const renderMarker = (marker?: string) => {
+    switch (marker) {
+      case 'ABNORMAL_MARKER':
+        return (
+          <FontAwesomeIcon
+            icon={faCircleExclamation}
+            style={{ color: '#f44336' }}
+          />
+        );
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+      case 'UPPER_LIMIT':
+        return (
+          <FontAwesomeIcon
+            icon={faArrowUp}
+          />
+        );
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
+      case 'LOWER_LIMIT':
+        return (
+          <FontAwesomeIcon
+            icon={faArrowDown}
+          />
+        );
 
-  const normalizedKey = String(key);
+      case 'CRITICAL_UPPER':
+        return (
+          <HStack spacing={6} style={{ color: '#d32f2f' }}>
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <FontAwesomeIcon icon={faArrowUp} />
+          </HStack>
+        );
 
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
+      case 'CRITICAL_LOWER':
+        return (
+          <HStack spacing={6} style={{ color: '#d32f2f' }}>
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <FontAwesomeIcon icon={faArrowDown} />
+          </HStack>
+        );
 
-  if (!lovDef?.lovCode) return key;
+      default:
+        return formatEnumString(marker);
+    }
+  };
 
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === normalizedKey
-    )?.lovDisplayVale ?? key
-  );
-};
+  const isLovProfile = (profile?: any) =>
+    profile?.resultType?.toUpperCase() === 'LOV';
 
-const ReviewResults = forwardRef<any, any>(
-  ({ loading, setTest, refetchAllLabData, setPatient, setEncounter }, ref) => {
-    const today = new Date();
-    const [page, setPage] = useState(0);
-    const [size, setSize] = useState(15);
-    const [openNotesModal, setOpenNotesModal] = useState(false);
-    const [approvalDate, setApprovalDate] = useState({
-      fromDate: today,
-      toDate: today
-    });
+  const resolveLovDisplayValue = (
+    profile: any,
+    key: any,
+    lovDefinitions: any,
+    allLovValues: any
+  ) => {
+    if (
+      !profile?.listOfValueId ||
+      key == null ||
+      !lovDefinitions?.object ||
+      !allLovValues?.object
+    ) {
+      return key;
+    }
 
-    const dispatch = useDispatch();
-    const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
-    const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
-    const [showReview, setShowReview] = useState(false);
-    const [showAbnormal, setShowAbnormal] = useState(false);
-    const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
-    const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
-    const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
-    const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-    const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const normalizedKey = String(key);
 
-    const [filtersKey, setFiltersKey] = useState(0);
-
-    const [orderIdFilter, setOrderIdFilter] = useState('');
-
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
-
-    const [departmentFilter, setDepartmentFilter] = useState<any>({
-      fromDepartmentIdIn: null
-    });
-
-    const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
-    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-
-    const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
-    const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
-
-    const [toggleReviewDiagnosticOrderTestResult] =
-      useToggleReviewDiagnosticOrderTestResultMutation();
-
-    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-
-    const { data: allLovValues } = useGetLovAllValuesQuery({
-      ...initialListRequestAllValues
-    });
-
-    const { data: lovDefinitions } = useGetLovsQuery({
-      ...initialListRequest,
-      pageSize: 1000
-    });
-
-
-    const { data: departmentsList = [] } =
-      useGetAllDepartmentsWithoutPaginationQuery();
-
-    const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
-      if (from && to && from > to) {
-        return { from: to, to: from };
-      }
-      return { from, to };
-    };
-
-    const endOfDay = (date: Date) => {
-      const d = new Date(date);
-      d.setHours(23, 59, 59, 999);
-      return d;
-    };
-
-    const startOfDay = (date: Date) => {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    };
-
-    const filterParams = useMemo(() => {
-      const params: any = {
-        page,
-        size,
-        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
-      };
-
-      params.reviewed = showReview;
-
-      if (selectedPatient?.id) {
-        params.patientIdIn = [selectedPatient.id];
-      }
-
-      if (departmentFilter?.fromDepartmentIdIn) {
-          params.fromDepartmentIdIn = [
-            Number(departmentFilter.fromDepartmentIdIn)
-          ];
-      }
-
-      if (showAbnormal) {
-        params.excludeMarkerIn = ['NORMAL_MARKER', 'UNKNOWN'];
-      }
-
-      const approval = normalizeDateRange(
-        approvalDate.fromDate,
-        approvalDate.toDate
-      );
-
-      if (approval.from) {
-        params.approvedDateFrom = startOfDay(approval.from).toISOString();
-      }
-
-      if (approval.to) {
-        params.approvedDateTo = endOfDay(approval.to).toISOString();
-      }
-
-      const orderIdNumber = Number(orderIdFilter);
-
-      if (orderIdFilter.trim() && Number.isFinite(orderIdNumber)) {
-        params.orderNumber = orderIdNumber;
-      }
-
-      if (
-        selectedPatient?.id ||
-        departmentFilter?.fromDepartmentIdIn ||
-        orderDate.fromDate ||
-        orderDate.toDate
-      ) {
-        if (orderIdIn && orderIdIn.length > 0) {
-          params.orderIdIn = orderIdIn;
-        } else {
-          params.orderIdIn = [-1];
-        }
-      }
-
-      return params;
-      }, [
-            page,
-            size,
-            approvalDate,
-            showReview,
-            showAbnormal,
-            orderIdIn,
-            orderDate,
-            orderIdFilter,
-            selectedPatient?.id,
-            departmentFilter?.fromDepartmentIdIn
-          ]);
-    const {
-      data: resultsResponse,
-      isFetching,
-      refetch
-    } = useFilterDiagnosticOrderTestResultsQuery({
-      page,
-      size: rowsPerPage,
-      sort: 'id,desc',
-      ...filterParams
-    });
-
-    useEffect(() => {
-      dispatch(setPageCode('review-results'));
-      dispatch(setDivContent('Review Results'));
-
-      return () => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(' '));
-      };
-    }, [dispatch]);
-
-    const patientIds = useMemo(() => {
-      return Object.values(ordersMap)
-        .map((o: any) => o?.patientId)
-        .filter(Boolean)
-        .map(String)
-        .filter((id, i, arr) => arr.indexOf(id) === i);
-    }, [ordersMap]);
-
-    useImperativeHandle(ref, () => ({ refetch }));
-
-    const results = resultsResponse?.data ?? [];
-    const totalCount = resultsResponse?.totalCount ?? 0;
-
-    const { data: notesResponse } = useGetNotesByResultIdQuery(
-      openNotesModal && selectedResultId ? selectedResultId : skipToken
+    const lovDef = lovDefinitions.object.find(
+      (d: any) => String(d.key) === String(profile.listOfValueId)
     );
 
-    useEffect(() => {
-      if (!results.length) return;
+    if (!lovDef?.lovCode) return key;
 
-      results.forEach((r) => {
-        if (r.orderTestId && orderTestsMap[r.orderTestId]) {
-          const orderId = orderTestsMap[r.orderTestId]?.orderId;
+    return (
+      allLovValues.object.find(
+        (v: any) =>
+          String(v.lovCode) === String(lovDef.lovCode) &&
+          String(v.key) === normalizedKey
+      )?.lovDisplayVale ?? key
+    );
+  };
+
+  const ReviewResults = forwardRef<any, any>(
+    ({ loading, setTest, refetchAllLabData, setPatient, setEncounter }, ref) => {
+      const today = new Date();
+      const [page, setPage] = useState(0);
+      const [size, setSize] = useState(15);
+      const [openNotesModal, setOpenNotesModal] = useState(false);
+      const [approvalDate, setApprovalDate] = useState({
+        fromDate: today,
+        toDate: today
+      });
+
+      const dispatch = useDispatch();
+      const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
+      const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
+      const [showReview, setShowReview] = useState(false);
+      const [showAbnormal, setShowAbnormal] = useState(false);
+      const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+      const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+      const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+      const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+      const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+      const [rowsPerPage, setRowsPerPage] = useState(10);
+
+      const [filtersKey, setFiltersKey] = useState(0);
+
+      const [orderIdFilter, setOrderIdFilter] = useState('');
+
+      const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+      const [departmentFilter, setDepartmentFilter] = useState<any>({
+        fromDepartmentIdIn: null
+      });
+
+      const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+      const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+
+      const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+      const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
+
+      const [toggleReviewDiagnosticOrderTestResult] =
+        useToggleReviewDiagnosticOrderTestResultMutation();
+
+      const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+
+      const { data: allLovValues } = useGetLovAllValuesQuery({
+        ...initialListRequestAllValues
+      });
+
+      const { data: lovDefinitions } = useGetLovsQuery({
+        ...initialListRequest,
+        pageSize: 1000
+      });
+
+
+      const { data: departmentsList = [] } =
+        useGetAllDepartmentsWithoutPaginationQuery();
+
+      const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
+        if (from && to && from > to) {
+          return { from: to, to: from };
+        }
+        return { from, to };
+      };
+
+      const endOfDay = (date: Date) => {
+        const d = new Date(date);
+        d.setHours(23, 59, 59, 999);
+        return d;
+      };
+
+      const startOfDay = (date: Date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
+
+      const filterParams = useMemo(() => {
+        const params: any = {
+          page,
+          size,
+          processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
+        };
+
+        params.reviewed = showReview;
+
+        if (selectedPatient?.id) {
+          params.patientIdIn = [selectedPatient.id];
+        }
+
+        if (departmentFilter?.fromDepartmentIdIn) {
+            params.fromDepartmentIdIn = [
+              Number(departmentFilter.fromDepartmentIdIn)
+            ];
+        }
+
+        if (showAbnormal) {
+          params.excludeMarkerIn = ['NORMAL_MARKER', 'UNKNOWN'];
+        }
+
+        const approval = normalizeDateRange(
+          approvalDate.fromDate,
+          approvalDate.toDate
+        );
+
+        if (approval.from) {
+          params.approvedDateFrom = startOfDay(approval.from).toISOString();
+        }
+
+        if (approval.to) {
+          params.approvedDateTo = endOfDay(approval.to).toISOString();
+        }
+
+        const orderIdNumber = Number(orderIdFilter);
+
+        if (orderIdFilter.trim() && Number.isFinite(orderIdNumber)) {
+          params.orderNumber = orderIdNumber;
+        }
+
+        if (
+          selectedPatient?.id ||
+          departmentFilter?.fromDepartmentIdIn ||
+          orderDate.fromDate ||
+          orderDate.toDate
+        ) {
+          if (orderIdIn && orderIdIn.length > 0) {
+            params.orderIdIn = orderIdIn;
+          } else {
+            params.orderIdIn = [-1];
+          }
+        }
+
+        return params;
+        }, [
+              page,
+              size,
+              approvalDate,
+              showReview,
+              showAbnormal,
+              orderIdIn,
+              orderDate,
+              orderIdFilter,
+              selectedPatient?.id,
+              departmentFilter?.fromDepartmentIdIn
+            ]);
+      const {
+        data: resultsResponse,
+        isFetching,
+        refetch
+      } = useFilterDiagnosticOrderTestResultsQuery({
+        page,
+        size: rowsPerPage,
+        sort: 'id,desc',
+        ...filterParams
+      });
+
+      useEffect(() => {
+        dispatch(setPageCode('review-results'));
+        dispatch(setDivContent('Review Results'));
+
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent(' '));
+        };
+      }, [dispatch]);
+
+      const patientIds = useMemo(() => {
+        return Object.values(ordersMap)
+          .map((o: any) => o?.patientId)
+          .filter(Boolean)
+          .map(String)
+          .filter((id, i, arr) => arr.indexOf(id) === i);
+      }, [ordersMap]);
+
+      useImperativeHandle(ref, () => ({ refetch }));
+
+      const results = resultsResponse?.data ?? [];
+      const totalCount = resultsResponse?.totalCount ?? 0;
+
+      const { data: notesResponse } = useGetNotesByResultIdQuery(
+        openNotesModal && selectedResultId ? selectedResultId : skipToken
+      );
+
+      useEffect(() => {
+        if (!results.length) return;
+
+        results.forEach((r) => {
+          if (r.orderTestId && orderTestsMap[r.orderTestId]) {
+            const orderId = orderTestsMap[r.orderTestId]?.orderId;
+
+            if (orderId && !ordersMap[orderId]) {
+              fetchOrderById(orderId)
+                .unwrap()
+                .then((order) => {
+                  setOrdersMap((prev) => ({
+                    ...prev,
+                    [String(order.id)]: order
+                  }));
+                })
+                .catch(() => { });
+            }
+          }
+
+          if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
+            fetchOrderTestById(r.orderTestId)
+              .unwrap()
+              .then((test) => {
+                setOrderTestsMap((prev) => ({
+                  ...prev,
+                  [String(test.id)]: test
+                }));
+              })
+              .catch(() => { });
+          }
+        });
+      }, [results]);
+
+      useEffect(() => {
+        if (!patientIds.length) return;
+
+        const numericIds = patientIds.map((id) => Number(id));
+
+        getBulkPatientBasicInfo(numericIds)
+          .unwrap()
+          .then((res: any[]) => {
+            const map: Record<string, any> = {};
+
+            res.forEach((p: any, index: number) => {
+              const originalId = numericIds[index];
+              map[String(originalId)] = p;
+            });
+
+            setPatientsMap(map);
+          })
+          .catch((err) => {
+            console.error('❌ Bulk patient error:', err);
+          });
+      }, [patientIds]);
+
+      useEffect(() => {
+        Object.values(orderTestsMap).forEach((test: any) => {
+          const orderId = test?.orderId;
 
           if (orderId && !ordersMap[orderId]) {
             fetchOrderById(orderId)
@@ -315,512 +386,459 @@ const ReviewResults = forwardRef<any, any>(
               })
               .catch(() => { });
           }
-        }
-
-        if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
-          fetchOrderTestById(r.orderTestId)
-            .unwrap()
-            .then((test) => {
-              setOrderTestsMap((prev) => ({
-                ...prev,
-                [String(test.id)]: test
-              }));
-            })
-            .catch(() => { });
-        }
-      });
-    }, [results]);
-
-    useEffect(() => {
-      if (!patientIds.length) return;
-
-      const numericIds = patientIds.map((id) => Number(id));
-
-      getBulkPatientBasicInfo(numericIds)
-        .unwrap()
-        .then((res: any[]) => {
-          const map: Record<string, any> = {};
-
-          res.forEach((p: any, index: number) => {
-            const originalId = numericIds[index];
-            map[String(originalId)] = p;
-          });
-
-          setPatientsMap(map);
-        })
-        .catch((err) => {
-          console.error('❌ Bulk patient error:', err);
         });
-    }, [patientIds]);
+      }, [orderTestsMap]);
 
-    useEffect(() => {
-      Object.values(orderTestsMap).forEach((test: any) => {
-        const orderId = test?.orderId;
-
-        if (orderId && !ordersMap[orderId]) {
-          fetchOrderById(orderId)
-            .unwrap()
-            .then((order) => {
-              setOrdersMap((prev) => ({
-                ...prev,
-                [String(order.id)]: order
-              }));
-            })
-            .catch(() => { });
-        }
-      });
-    }, [orderTestsMap]);
-
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-
-    const profilesMap = useMemo(
-      () => new Map(profilesResponse?.data?.map((p) => [p.id, p]) ?? []),
-      [profilesResponse]
-    );
-
-    const normalizedResults = useMemo(() => {
-      return results.map((r) => {
-        const orderTest = orderTestsMap[String(r?.orderTestId)];
-        const order = ordersMap[String(orderTest?.orderId)];
-        const patient = patientsMap[String(order?.patientId)];
-        const profile = profilesMap.get(r.profileTestId);
-
-        return {
-          ...r,
-          _patientName: patient
-            ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
-            : '—',
-          _profile: profile,
-          _testName: profile?.name ?? '-',
-          _approvedDate: r.approvedDate,
-          encounterId: order?.encounterId
-        };
-      });
-    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
-
-    const resolveUnitDisplay = (row: any) => {
-      const profile = row._profile;
-      if (!profile || isLovProfile(profile)) return null;
-
-      const unit = valueUnitLov?.object?.find(
-        (u) => String(u.key) === String(profile.resultUnit)
-      )?.lovDisplayVale;
-
-      return unit || null;
-    };
-
-    const resetFilters = () => {
-      const now = new Date();
-
-      setApprovalDate({
-        fromDate: new Date(now),
-        toDate: new Date(now)
+      const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
+        page: 0,
+        size: 10000,
+        sort: 'id,asc'
       });
 
-      setOrderDate({
-        fromDate: null,
-        toDate: null
-      });
+      const profilesMap = useMemo(
+        () => new Map(profilesResponse?.data?.map((p) => [p.id, p]) ?? []),
+        [profilesResponse]
+      );
 
-      setShowReview(false);
-      setShowAbnormal(false);
-      setOrderIdIn(null);
-      setSelectedPatient(null);
+      const normalizedResults = useMemo(() => {
+        return results.map((r) => {
+          const orderTest = orderTestsMap[String(r?.orderTestId)];
+          const order = ordersMap[String(orderTest?.orderId)];
+          const patient = patientsMap[String(order?.patientId)];
+          const profile = profilesMap.get(r.profileTestId);
 
-      setDepartmentFilter({
-        fromDepartmentIdIn: null
-      });
-      setOrderIdFilter('');
-      setPage(0);
+          return {
+            ...r,
+            _patientName: patient
+              ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
+              : '—',
+            _profile: profile,
+            _testName: profile?.name ?? '-',
+            _approvedDate: r.approvedDate,
+            encounterId: order?.encounterId
+          };
+        });
+      }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
 
-      setFiltersKey(prev => prev + 1);
-    };
+      const resolveUnitDisplay = (row: any) => {
+        const profile = row._profile;
+        if (!profile || isLovProfile(profile)) return null;
 
-    const columns: ColumnConfig[] = useMemo(
-      () => [
-        {
-          key: 'patient',
-          title: <Translate>PATIENT NAME</Translate>,
-          render: (r: any) => r._patientName
-        },
-        {
-          key: 'approvedAt',
-          title: <Translate>RESULT DATE</Translate>,
-          render: (row: any) => formatDateWithoutSeconds(row.approvedDate)
-        },
-        {
-          key: 'testName',
-          title: <Translate>TEST NAME</Translate>,
-          render: (row: any) => (
-            <>
-              {row._profile?.name ?? '-'}
-              <br />
-              <span style={{ fontSize: 10, color: '#666' }}>
-                {row._profile?.testName ?? ''}
-              </span>
-            </>
-          )
-        },
-        {
-          key: 'resultValue',
-          title: <Translate>RESULT VALUE</Translate>,
-          render: (row: any) => {
-            const profile = row._profile;
+        const unit = valueUnitLov?.object?.find(
+          (u) => String(u.key) === String(profile.resultUnit)
+        )?.lovDisplayVale;
 
-            const value = row.resultValueNumber ?? row.resultValueText ?? '';
+        return unit || null;
+      };
 
-            if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                value,
-                lovDefinitions,
-                allLovValues
-              );
-            }
+      const resetFilters = () => {
+        const now = new Date();
 
-            const unit = resolveUnitDisplay(row);
+        setApprovalDate({
+          fromDate: new Date(now),
+          toDate: new Date(now)
+        });
 
-            return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
-          }
-        },
-        {
-          key: 'normalRange',
-          title: <Translate>NORMAL RANGE</Translate>,
-          render: (row: any) => {
-            const profile = row._profile;
-            const hasViewRange =
-              row.normalRangeValue && row.normalRangeValue.trim() !== '';
+        setOrderDate({
+          fromDate: null,
+          toDate: null
+        });
 
-            const hasMinMaxRange =
-              row.minValue !== null &&
-              row.minValue !== undefined &&
-              row.maxValue !== null &&
-              row.maxValue !== undefined;
+        setShowReview(false);
+        setShowAbnormal(false);
+        setOrderIdIn(null);
+        setSelectedPatient(null);
 
-            if (hasViewRange) {
+        setDepartmentFilter({
+          fromDepartmentIdIn: null
+        });
+        setOrderIdFilter('');
+        setPage(0);
+
+        setFiltersKey(prev => prev + 1);
+      };
+
+      const columns: ColumnConfig[] = useMemo(
+        () => [
+          {
+            key: 'patient',
+            title: <Translate>PATIENT NAME</Translate>,
+            render: (r: any) => r._patientName
+          },
+          {
+            key: 'approvedAt',
+            title: <Translate>RESULT DATE</Translate>,
+            render: (row: any) => formatDateWithoutSeconds(row.approvedDate)
+          },
+          {
+            key: 'testName',
+            title: <Translate>TEST NAME</Translate>,
+            render: (row: any) => (
+              <>
+                {row._profile?.name ?? '-'}
+                <br />
+                <span style={{ fontSize: 10, color: '#666' }}>
+                  {row._profile?.testName ?? ''}
+                </span>
+              </>
+            )
+          },
+          {
+            key: 'resultValue',
+            title: <Translate>RESULT VALUE</Translate>,
+            render: (row: any) => {
+              const profile = row._profile;
+
+              const value = row.resultValueNumber ?? row.resultValueText ?? '';
+
               if (isLovProfile(profile)) {
                 return resolveLovDisplayValue(
                   profile,
-                  String(row.normalRangeValue),
+                  value,
                   lovDefinitions,
                   allLovValues
                 );
               }
 
               const unit = resolveUnitDisplay(row);
-              return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
+
+              return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
             }
+          },
+          {
+            key: 'normalRange',
+            title: <Translate>NORMAL RANGE</Translate>,
+            render: (row: any) => {
+              const profile = row._profile;
+              const hasViewRange =
+                row.normalRangeValue && row.normalRangeValue.trim() !== '';
 
-            if (hasMinMaxRange) {
-              const unit = resolveUnitDisplay(row);
-              return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
+              const hasMinMaxRange =
+                row.minValue !== null &&
+                row.minValue !== undefined &&
+                row.maxValue !== null &&
+                row.maxValue !== undefined;
+
+              if (hasViewRange) {
+                if (isLovProfile(profile)) {
+                  return resolveLovDisplayValue(
+                    profile,
+                    String(row.normalRangeValue),
+                    lovDefinitions,
+                    allLovValues
+                  );
+                }
+
+                const unit = resolveUnitDisplay(row);
+                return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
+              }
+
+              if (hasMinMaxRange) {
+                const unit = resolveUnitDisplay(row);
+                return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
+              }
+
+              return ' ';
             }
+          },
+          {
+            key: 'marker',
+            title: <Translate>MARKER</Translate>,
+            align: 'center',
+            width: 90,
+            render: (row: any) => renderMarker(row.marker)
+          },
+          {
+            key: 'comments',
+            title: <Translate>COMMENTS</Translate>,
+            align: 'center',
+            render: (row: any) => (
+              <FontAwesomeIcon
+                icon={faComment}
+                className="icon-radiologist-worklist-size"
+                style={{
+                  cursor: 'pointer',
+                  color: row.hasNote ? '#1675e0' : 'gray'
+                }}
+                onClick={() => {
+                  setSelectedResultId(row.id);
+                  setOpenNotesModal(true);
+                }}
+              />
+            )
+          },
+          {
+            key: 'action',
+            title: <Translate>Review</Translate>,
+            flexGrow: 1,
+            align: 'center',
+            render: (rowData: any) => {
+              const isReviewed = !!rowData.reviewDate;
 
-            return ' ';
-          }
-        },
-        {
-          key: 'marker',
-          title: <Translate>MARKER</Translate>,
-          align: 'center',
-          width: 90,
-          render: (row: any) => renderMarker(row.marker)
-        },
-        {
-          key: 'comments',
-          title: <Translate>COMMENTS</Translate>,
-          align: 'center',
-          render: (row: any) => (
-            <FontAwesomeIcon
-              icon={faComment}
-              className="icon-radiologist-worklist-size"
-              style={{
-                cursor: 'pointer',
-                color: row.hasNote ? '#1675e0' : 'gray'
-              }}
-              onClick={() => {
-                setSelectedResultId(row.id);
-                setOpenNotesModal(true);
-              }}
-            />
-          )
-        },
-        {
-          key: 'action',
-          title: <Translate>Review</Translate>,
-          flexGrow: 1,
-          align: 'center',
-          render: (rowData: any) => {
-            const isReviewed = !!rowData.reviewDate;
+              return (
+                <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
+                  <span>
+                    <FontAwesomeIcon
+                      icon={faStar}
+                      className={`review-icon-base ${isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
+                        }`}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setSelectedResultId(rowData.id);
 
-            return (
-              <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
-                <span>
-                  <FontAwesomeIcon
-                    icon={faStar}
-                    className={`review-icon-base ${isReviewed ? 'review-icon-reviewed' : 'review-icon-unreviewed'
-                      }`}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      setSelectedResultId(rowData.id);
+                        try {
+                          await toggleReviewDiagnosticOrderTestResult(
+                            rowData.id
+                          ).unwrap();
+                          await refetchAllLabData();
+                          refetch();
+                        } catch (e) {
+                          console.error('Review toggle failed', e);
+                        }
+                      }}
+                    />
+                  </span>
+                </Whisper>
+              );
+            }
+          },
+          {
+            key: 'reviewDate',
+            title: 'Review By/At',
+            expandable: true,
+            flexGrow: 2,
+            render: (row: any) => (
+              <UserDateCell
+                login={row.reviewBy}
+                date={row.reviewDate}
+              />
+            )
+          },
+        ],
+        [patientsMap, normalizedResults]
+      );
 
-                      try {
-                        await toggleReviewDiagnosticOrderTestResult(
-                          rowData.id
-                        ).unwrap();
-                        await refetchAllLabData();
-                        refetch();
-                      } catch (e) {
-                        console.error('Review toggle failed', e);
-                      }
-                    }}
-                  />
-                </span>
-              </Whisper>
-            );
-          }
-        },
-        {
-          key: 'reviewDate',
-          title: 'Review By/At',
-          expandable: true,
-          flexGrow: 2,
-          render: (row: any) => (
-            <UserDateCell
-              login={row.reviewBy}
-              date={row.reviewDate}
-            />
-          )
-        },
-      ],
-      [patientsMap, normalizedResults]
-    );
-
-    const filters = () => (
-      <Form fluid key={filtersKey}>
-        <div className="results-table-filters-review-results-main-container">
-          <MyInput
-            fieldType="date"
-            fieldLabel="Approval From Date"
-            fieldName="fromDate"
-            record={approvalDate}
-            setRecord={setApprovalDate}
-          />
-
-          <MyInput
-            fieldType="date"
-            fieldLabel="Approval To Date"
-            fieldName="toDate"
-            record={approvalDate}
-            setRecord={setApprovalDate}
-          />
-
-          <MyInput
-            fieldType="date"
-            fieldLabel="Order From Date"
-            fieldName="fromDate"
-            record={orderDate}
-            setRecord={setOrderDate}
-          />
-
-          <MyInput
-            fieldType="date"
-            fieldLabel="Order To Date"
-            fieldName="toDate"
-            record={orderDate}
-            setRecord={setOrderDate}
-          />
-
-          <div className='check-box-review-results-handle'>
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatient}
-              showLabel={false}
-              width="22vw"
-              containerMinWidth={250}
+      const filters = () => (
+        <Form fluid key={filtersKey}>
+          <div className="results-table-filters-review-results-main-container">
+            <MyInput
+              fieldType="date"
+              fieldLabel="Approval From Date"
+              fieldName="fromDate"
+              record={approvalDate}
+              setRecord={setApprovalDate}
             />
 
             <MyInput
-              width="12vw"
-              placeholder="Department Name"
-              fieldType="select"
-              fieldName="fromDepartmentIdIn"
-              record={departmentFilter}
-              setRecord={setDepartmentFilter}
-              selectData={departmentsList}
-              selectDataLabel="name"
-              selectDataValue="id"
-              showLabel={false}
-              cleanable
+              fieldType="date"
+              fieldLabel="Approval To Date"
+              fieldName="toDate"
+              record={approvalDate}
+              setRecord={setApprovalDate}
             />
 
-          <MyInput
-            fieldType="text"
-            fieldLabel="Order ID"
-            fieldName="orderId"
-            showLabel={false}
-            placeholder="Order ID"
-            record={{ orderId: orderIdFilter }}
-            setRecord={(record: any) => {
-              setOrderIdFilter(record.orderId ?? '');
-              setPage(0);
-            }}
-          />
+            <MyInput
+              fieldType="date"
+              fieldLabel="Order From Date"
+              fieldName="fromDate"
+              record={orderDate}
+              setRecord={setOrderDate}
+            />
+
+            <MyInput
+              fieldType="date"
+              fieldLabel="Order To Date"
+              fieldName="toDate"
+              record={orderDate}
+              setRecord={setOrderDate}
+            />
+
+            <div className='check-box-review-results-handle'>
+              <PatientSearch
+                value={selectedPatient}
+                onChange={setSelectedPatient}
+                showLabel={false}
+                width="22vw"
+                containerMinWidth={250}
+              />
+
+              <MyInput
+                width="12vw"
+                placeholder="Department Name"
+                fieldType="select"
+                fieldName="fromDepartmentIdIn"
+                record={departmentFilter}
+                setRecord={setDepartmentFilter}
+                selectData={departmentsList}
+                selectDataLabel="name"
+                selectDataValue="id"
+                showLabel={false}
+                cleanable
+              />
+
+            <MyInput
+              fieldType="text"
+              fieldLabel="Order ID"
+              fieldName="orderId"
+              showLabel={false}
+              placeholder="Order ID"
+              record={{ orderId: orderIdFilter }}
+              setRecord={(record: any) => {
+                setOrderIdFilter(record.orderId ?? '');
+                setPage(0);
+              }}
+            />
+              </div>
+            <div className='check-box-review-results-handle'>
+              <MyInput
+                fieldType="check"
+                fieldLabel="Show Reviewed Results"
+                showLabel={false}
+                fieldName="showReview"
+                record={{ showReview }}
+                setRecord={(obj: any) => setShowReview(!!obj.showReview)}
+              />
             </div>
-          <div className='check-box-review-results-handle'>
-            <MyInput
-              fieldType="check"
-              fieldLabel="Show Reviewed Results"
-              showLabel={false}
-              fieldName="showReview"
-              record={{ showReview }}
-              setRecord={(obj: any) => setShowReview(!!obj.showReview)}
-            />
+
+
           </div>
 
+          <AdvancedSearchFilters
+            searchFilter={false}
+            showAdvancedButton={false}
+            clearOnClick={resetFilters}
+          />
+        </Form>
+      );
 
-        </div>
+      const isSelected = (rowData: any) =>
+        selectedResultId === rowData.id ? 'selected-row' : '';
 
-        <AdvancedSearchFilters
-          searchFilter={false}
-          showAdvancedButton={false}
-          clearOnClick={resetFilters}
-        />
-      </Form>
-    );
+      useEffect(() => {
+        const today = new Date();
+        setApprovalDate({
+          fromDate: today,
+          toDate: today
+        });
+      }, []);
 
-    const isSelected = (rowData: any) =>
-      selectedResultId === rowData.id ? 'selected-row' : '';
+      useEffect(() => {
+        const { fromDate, toDate } = orderDate;
 
-    useEffect(() => {
-      const today = new Date();
-      setApprovalDate({
-        fromDate: today,
-        toDate: today
-      });
-    }, []);
+        fetchOrders({
+          submittedDateFrom: fromDate
+            ? startOfDay(fromDate).toISOString()
+            : undefined,
 
-    useEffect(() => {
-      const { fromDate, toDate } = orderDate;
+          submittedDateTo: toDate
+            ? endOfDay(toDate).toISOString()
+            : undefined,
 
-      fetchOrders({
-        submittedDateFrom: fromDate
-          ? startOfDay(fromDate).toISOString()
-          : undefined,
+          ...(selectedPatient?.id
+            ? {
+                patientIdIn: [selectedPatient.id]
+              }
+            : {}),
 
-        submittedDateTo: toDate
-          ? endOfDay(toDate).toISOString()
-          : undefined,
+          ...(departmentFilter?.fromDepartmentIdIn
+            ? {
+                fromDepartmentIdIn: [
+                  Number(departmentFilter.fromDepartmentIdIn)
+                ]
+              }
+            : {}),
 
-        ...(selectedPatient?.id
-          ? {
-              patientIdIn: [selectedPatient.id]
-            }
-          : {}),
-
-        ...(departmentFilter?.fromDepartmentIdIn
-          ? {
-              fromDepartmentIdIn: [
-                Number(departmentFilter.fromDepartmentIdIn)
-              ]
-            }
-          : {}),
-
-        page: 0,
-        size: 10000
-      })
-        .unwrap()
-        .then((res) => {
-          const ids = (res?.data ?? []).map((o: any) => o.id);
-          setOrderIdIn(ids);
+          page: 0,
+          size: 10000
         })
-        .catch(() => setOrderIdIn([]));
-    }, [
-      orderDate,
-      selectedPatient?.id,
-      departmentFilter?.fromDepartmentIdIn
-    ]);
-
-
-    useEffect(() => {
-      setPage(0);
-    }, [
+          .unwrap()
+          .then((res) => {
+            const ids = (res?.data ?? []).map((o: any) => o.id);
+            setOrderIdIn(ids);
+          })
+          .catch(() => setOrderIdIn([]));
+      }, [
         orderDate,
         selectedPatient?.id,
         departmentFilter?.fromDepartmentIdIn
       ]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+      useEffect(() => {
+        setPage(0);
+      }, [
+          orderDate,
+          selectedPatient?.id,
+          departmentFilter?.fromDepartmentIdIn
+        ]);
 
-    return (
-      <div dir={dir}>
-        <Panel defaultExpanded>
-          <MyTable
-            filters={filters()}
-            columns={columns}
-            data={normalizedResults}
-            loading={loading || isFetching}
-            page={page}
-            rowsPerPage={size}
-            totalCount={totalCount}
-            onPageChange={(_, newPage) => setPage(newPage)}
-            rowClassName={isSelected}
-            onRowsPerPageChange={(e) => {
-              setSize(Number(e.target.value));
-              setPage(0);
-            }}
-            onRowClick={async (row: any) => {
-              const orderTest = orderTestsMap[String(row.orderTestId)];
-              const order = ordersMap[String(orderTest?.orderId)];
+      // Direction handling for RTL/LTR
+      const direction = localStorage.getItem('direction') || 'LTR';
+      const isRTL = direction === 'RTL';
 
-              const patientId = order?.patientId;
-              if (!patientId) return;
+      const dir = isRTL ? 'rtl' : 'ltr';
 
-              const rawPatient = patientsMap[String(patientId)];
-              if (!rawPatient) return;
+      return (
+        <div dir={dir}>
+          <Panel defaultExpanded>
+            <MyTable
+              filters={filters()}
+              columns={columns}
+              data={normalizedResults}
+              loading={loading || isFetching}
+              page={page}
+              rowsPerPage={size}
+              totalCount={totalCount}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowClassName={isSelected}
+              onRowsPerPageChange={(e) => {
+                setSize(Number(e.target.value));
+                setPage(0);
+              }}
+              onRowClick={async (row: any) => {
+                const orderTest = orderTestsMap[String(row.orderTestId)];
+                const order = ordersMap[String(orderTest?.orderId)];
 
-              setSelectedResultId(row.id);
-              setPatient(rawPatient);
+                const patientId = order?.patientId;
+                if (!patientId) return;
 
-              const encounterId = order?.encounterId;
-              if (!encounterId) {
-                setEncounter({ ...newPatientEncounter });
-                return;
-              }
-              console.log("Order's encounterId", encounterId);
+                const rawPatient = patientsMap[String(patientId)];
+                if (!rawPatient) return;
 
-              try {
-                const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
+                setSelectedResultId(row.id);
+                setPatient(rawPatient);
 
-                setEncounter?.(encounter);
-              } catch (err) {
-                console.error('Failed to fetch encounter', err);
-                setEncounter({ ...newPatientEncounter });
-              }
-            }}
-          />
+                const encounterId = order?.encounterId;
+                if (!encounterId) {
+                  setEncounter({ ...newPatientEncounter });
+                  return;
+                }
+                console.log("Order's encounterId", encounterId);
 
-          <ChatModal
-            open={openNotesModal}
-            setOpen={setOpenNotesModal}
-            title="Comments"
-            list={openNotesModal ? notesResponse ?? [] : []}
-            fieldShowName="note"
-            handleSendMessage={{}}
-            disabled
-          />
-        </Panel>
-      </div>
-    );
-  }
-);
+                try {
+                  const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
+
+                  setEncounter?.(encounter);
+                } catch (err) {
+                  console.error('Failed to fetch encounter', err);
+                  setEncounter({ ...newPatientEncounter });
+                }
+              }}
+            />
+
+            <ChatModal
+              open={openNotesModal}
+              setOpen={setOpenNotesModal}
+              title="Comments"
+              list={openNotesModal ? notesResponse ?? [] : []}
+              fieldShowName="note"
+              handleSendMessage={{}}
+              disabled
+            />
+          </Panel>
+        </div>
+      );
+    }
+  );
 
 export default ReviewResults;

@@ -28,7 +28,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ViewAppointmentRequests from './components/ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
-import { calculateAgeFormat } from '@/utils';
+import { extractErrorMessage } from '@/utils';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
@@ -131,11 +131,6 @@ const normalizeAppointmentStatusKey = (raw: unknown): string =>
     .toUpperCase()
     .replace(/[\s-]+/g, '_');
 
-const appointmentStatusFromRecord = (appointmentData: any): string =>
-  normalizeAppointmentStatusKey(
-    appointmentData?.status
-  );
-
 const isOpenSlotStatus = (rawStatus: unknown): boolean => {
   const status = normalizeAppointmentStatusKey(rawStatus);
   return status === 'NEW' || status === 'RESCHEDULE';
@@ -179,7 +174,6 @@ const ScheduleScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
-  const didInitialAppointmentSearchRef = useRef(false);
   const pendingAgendaSlotRef = useRef<any>(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
@@ -305,9 +299,7 @@ const ScheduleScreen = () => {
   const authSlice = useAppSelector((state: any) => state.auth);
   const TemplateTypeEnum = useEnumOptions('TemplateType');
   const AppointmentStatusEnum = useEnumOptions('AppointmentStatus');
-  const BookingModeEnum = useEnumOptions('BookingMode', {
-    exclude: ['BUFFER']
-  });
+  const BookingModeEnum = useEnumOptions('BookingMode');
 
   useEffect(() => {
     if (selectedFacility?.id) return;
@@ -482,8 +474,9 @@ const ScheduleScreen = () => {
         const startRaw = appointment?.startDatetime;
         const endRaw = appointment?.endDatetime;
 
-        const startDate = convertDate(startRaw);
-        const endDate = convertDate(endRaw);
+        const startDate = parseAppointmentDate(startRaw);
+        const endDate = parseAppointmentDate(endRaw) ?? startDate;
+        if (!startDate) return null;
         const dob = new Date(appointment?.patient?.dob);
         const patientIdNum = getAppointmentPatientId(appointment);
         const fromPatientService =
@@ -558,7 +551,7 @@ const ScheduleScreen = () => {
           fromTo: `${extractTimeFromTimestamp(startRaw)} - ${extractTimeFromTimestamp(endRaw)}`
         };
       });
-      setAppointmentsData(formattedAppointments);
+      setAppointmentsData(formattedAppointments.filter(Boolean));
     }
   }, [
     searchedAppointments,
@@ -728,29 +721,35 @@ const ScheduleScreen = () => {
     setActionsModalOpen(true);
   };
 
-  const convertDate = appointmentTime => {
-    return new Date(appointmentTime);
+  const parseAppointmentDate = (value: unknown): Date | null => {
+    if (value == null || value === '') return null;
+    const date = value instanceof Date ? new Date(value) : new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
   };
 
   const handleSearchAppointmentsByCriteria = useCallback(async () => {
     if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
-    await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+    try {
+      await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to load appointments',
+          sev: 'warning',
+        })
+      );
+    }
   }, [
     appointmentSearchFilter,
+    dispatch,
     shouldSearchAppointments,
-    triggerAppointmentSearch
+    triggerAppointmentSearch,
   ]);
 
   useEffect(() => {
-    if (didInitialAppointmentSearchRef.current) return;
-    if (!selectedFacility?.id || !shouldSearchAppointments) return;
-    didInitialAppointmentSearchRef.current = true;
+    if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
     void handleSearchAppointmentsByCriteria();
-  }, [
-    selectedFacility?.id,
-    shouldSearchAppointments,
-    handleSearchAppointmentsByCriteria
-  ]);
+  }, [appointmentSearchFilter, shouldSearchAppointments, handleSearchAppointmentsByCriteria]);
 
   const openEditorForNewAppointment = useCallback(
     async ({
@@ -923,7 +922,6 @@ const ScheduleScreen = () => {
     dispatch(setPageCode('Schedule_Screen'));
     dispatch(setDivContent('Scheduling'));
     return () => {
-      didInitialAppointmentSearchRef.current = false;
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
     };
@@ -954,82 +952,11 @@ const ScheduleScreen = () => {
     return deptColumns;
   }, [selectedDepartmentIds?.departmentIds, departmentOptions]);
 
-  const selectedResourceKeysForFilter = useMemo(() => {
-    const rk = selectedResources?.resourceKey;
-    if (rk != null && String(rk).trim() !== '') {
-      return new Set([String(rk)]);
-    }
-    if (selectedResourceType?.resourcesType?.length) {
-      const all = resourcesWithAvailabilityResponse?.object ?? [];
-      const normalizeType = (v: any) => String(v ?? '').trim().toUpperCase();
-      const selectedTypes = selectedResourceType.resourcesType.map(normalizeType).filter(Boolean);
-      const keys = all
-        .filter((r: any) => {
-          const resourceTypes = [r?.resourceTypeLkey, r?.resource_type, r?.resourceType]
-            .map(normalizeType)
-            .filter(Boolean);
-          return resourceTypes.some((t: string) => selectedTypes.includes(t));
-        })
-        .map((r: any) => String(r?.key));
-      return new Set(keys);
-    }
-    return null;
-  }, [selectedResources?.resourceKey, selectedResourceType?.resourcesType, resourcesWithAvailabilityResponse]);
-
-  const filteredAppointments = useMemo(() => {
-    let list = appointmentsData;
-
-    const selectedIds = selectedDepartmentIds?.departmentIds;
-    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
-      const idSet = new Set(selectedIds.map(id => String(id)));
-      list = list.filter(event => idSet.has(String((event as any).resourceId ?? '')));
-    }
-
-    if (selectedResourceKeysForFilter) {
-      list = list.filter(event =>
-        selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
-      );
-    }
-
-    if (selectedAppointmentStatus?.status) {
-      const statusNeedle = normalizeAppointmentStatusKey(selectedAppointmentStatus.status);
-      list = list.filter(
-        event => appointmentStatusFromRecord((event as any)?.appointmentData) === statusNeedle
-      );
-    }
-
-    if (selectedBookingMode?.bookingMode) {
-      const selectedModes = Array.isArray(selectedBookingMode.bookingMode)
-        ? selectedBookingMode.bookingMode.map(v => String(v ?? '').trim().toUpperCase()).filter(Boolean)
-        : [String(selectedBookingMode.bookingMode ?? '').trim().toUpperCase()].filter(Boolean);
-      list = list.filter(event => {
-        const eventMode = String(event?.appointmentData?.bookingMode ?? '').trim().toUpperCase();
-        return selectedModes.includes(eventMode);
-      });
-    }
-
-    if (schedulePatientIdForSearch != null) {
-      const pid = schedulePatientIdForSearch;
-      list = list.filter(event => {
-        const evPid = getAppointmentPatientId((event as any)?.appointmentData ?? {});
-        return evPid != null && Number(evPid) === pid;
-      });
-    }
-
-    return list;
-  }, [
-    appointmentsData,
-    selectedDepartmentIds?.departmentIds,
-    selectedResourceKeysForFilter,
-    selectedAppointmentStatus?.status,
-    selectedBookingMode?.bookingMode,
-    schedulePatientIdForSearch
-  ]);
-
-  const visibleAppointments =
-    currentView === 'agenda' || showCanceled
-      ? filteredAppointments
-      : filteredAppointments.filter(event => !event.hidden);
+  const visibleAppointments = useMemo(() => {
+    const list = appointmentsData ?? [];
+    if (currentView === 'agenda' || showCanceled) return list;
+    return list.filter(event => !event.hidden);
+  }, [appointmentsData, currentView, showCanceled]);
 
   const calendarViewRange = useMemo(() => {
     const a = moment(currentCalendarDate);
@@ -1153,6 +1080,13 @@ const ScheduleScreen = () => {
       setActionsModalOpen(true);
     }
   }, [ActionsModalOpen, selectedEvent, finalAppointments]);
+
+  const waitingListDepartmentId = useMemo(() => {
+    const ids = selectedDepartmentIds?.departmentIds;
+    if (!Array.isArray(ids) || ids.length === 0) return null;
+    const first = Number(ids[0]);
+    return Number.isFinite(first) && first > 0 ? first : null;
+  }, [selectedDepartmentIds?.departmentIds]);
 
   const handleActionsStatusRefresh = useCallback(async () => {
     await handleSearchAppointmentsByCriteria();
@@ -1343,15 +1277,6 @@ const ScheduleScreen = () => {
     const out = parts.join(' | ').trim();
     return out || head || res || templateName || 'Appointment';
   };
-
-  const [currentCalView, setCurrentCalView] = useState('month');
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   const ResourceHeader = ({ resource }) => {
     return (
@@ -1621,8 +1546,13 @@ const ScheduleScreen = () => {
               color: '#8F98AB'
             }}
           >
-            {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ›{' '}
-            {event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {event.start instanceof Date && !Number.isNaN(event.start.getTime())
+              ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}{' '}
+            ›{' '}
+            {event.end instanceof Date && !Number.isNaN(event.end.getTime())
+              ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}
           </p>
         </div>
       </div>
@@ -1930,6 +1860,10 @@ const ScheduleScreen = () => {
             todayTimelineRows={todayTimelineRows}
             handleViewAppointment={handleViewAppointment}
             dispatch={dispatch}
+            facilityId={selectedFacility?.id}
+            waitingListDepartmentId={waitingListDepartmentId}
+            departmentOptions={departmentOptions as any[]}
+            onWaitingListBooked={handleSearchAppointmentsByCriteria}
           />
         </Panel>
       </div>

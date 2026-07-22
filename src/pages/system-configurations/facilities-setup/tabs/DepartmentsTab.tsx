@@ -18,7 +18,6 @@ import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import {
   useAddDepartmentMutation,
-  useGetDepartmentsQuery,
   useLazyGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByNameQuery,
   useLazyGetDepartmentByTypeQuery,
@@ -28,7 +27,7 @@ import {
 import { MedicalSheets } from '@/config/modules-config';
 import { useBulkSaveMedicalSheetsMutation, useBulkSaveNurseMedicalSheetsMutation } from '@/services/MedicalSheetsService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import {  formatEnumString } from '@/utils';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import ChooseScreen from '@/pages/setup/departments-setup/ChooseScreen';
 import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse';

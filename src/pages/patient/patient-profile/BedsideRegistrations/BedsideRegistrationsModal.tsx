@@ -26,6 +26,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
         <FontAwesomeIcon
           icon={faRepeat}
           className="icons-style"
+          disabled={rowData?.patientStatus !== 'MERGED'}
           onClick={() => {
             setOpenMergePatient(true);
           }}
@@ -36,6 +37,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
         <FontAwesomeIcon
           icon={faUser}
           className="icons-style"
+          disabled={rowData?.patientStatus !== 'MERGED'}
           onClick={() => {
             setLocalPatient(rowData);
             setOpen(false);

@@ -13,20 +13,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
-import NoticeIcon from '@rsuite/icons/Notice';
 import { FaEarthAmericas } from 'react-icons/fa6';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import './style.less';
 import {
   Avatar,
-  Badge,
-  Button,
   Divider,
   Dropdown,
-  List,
   Popover,
-  Stack,
   Whisper,
   WhisperInstance
 } from 'rsuite';
@@ -40,6 +35,7 @@ import { formatEnumString } from '@/utils';
 import { setLang, setMode } from '@/reducers/uiSlice';
 import { Tooltip, IconButton } from '@mui/material';
 import DepartmentSwitcher from '../DepartmentSwitcher/DepartmentSwitcher';
+import InAppNotificationBell from './InAppNotificationBell';
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -155,39 +151,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       </Dropdown.Menu>
     </Popover>
   );
-
-  const renderNoticeSpeaker = ({ onClose, left, top, className }: any, ref) => {
-    const notifications = [
-      ['7 hours ago', 'Demo notification 1.'],
-      ['13 hours ago', 'Demo notification 2.']
-    ];
-
-    return (
-      <Popover
-        ref={ref}
-        className={className}
-        style={{ left, top, width: 300 }}
-        title="Last updates"
-      >
-        <List>
-          {notifications.map((item, index) => {
-            const [time, content] = item;
-            return (
-              <List.Item key={index}>
-                <Stack spacing={4}>
-                  <Badge /> <span style={{ color: '#57606a' }}>{time}</span>
-                </Stack>
-                <p>{content}</p>
-              </List.Item>
-            );
-          })}
-        </List>
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Button onClick={onClose}>More notifications</Button>
-        </div>
-      </Popover>
-    );
-  };
 
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
     const handleSelect = () => {
@@ -459,19 +422,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </IconButton>
             </Whisper>
 
-            <Whisper
-              placement="bottomEnd"
-              trigger="click"
-              ref={trigger}
-              speaker={renderNoticeSpeaker}
-            >
-              <IconButton size="small">
-                <NoticeIcon
-                  style={{ fontSize: 20 }}
-                  color={mode === 'light' ? '#333' : 'var(--white)'}
-                />
-              </IconButton>
-            </Whisper>
+            <InAppNotificationBell />
 
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
 

@@ -35,6 +35,7 @@ import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
 import { extractErrorMessage, normalizeAllowedServices } from './utils';
+import './styles.less';
 import './AddResourceModal.less';
 import { AvailabilityTemplateCreateDTO, AvailabilityTemplateUpdateDTO } from '@/types/model-types-new';
 
@@ -682,9 +683,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
 
   // ─── Form Content ─────────────────────────────────────────────────────────────
   const formContent = () => (
+    <div className="availability-template-modal">
     <Form fluid>
-      <Row>
-        <Col md={12}>
+      <Row className="availability-template-top-row">
+        <Col md={12} className="availability-template-column--left">
           <SectionContainer
             title="Basic Information"
             content={
@@ -762,15 +764,12 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                   <Col md={12}>
                     <MyInput fieldName="versionNo" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled />
                   </Col>
-                  <Col md={12}>
-                    <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} disabled={readOnly} />
-                  </Col>
                 </Row>
               </Form>
             }
           />
         </Col>
-        <Col md={12}>
+        <Col md={12} className="availability-template-column--right">
           <SectionContainer
             title="Department Details"
             content={
@@ -829,6 +828,15 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
               </Form>
             }
           />
+          <SectionContainer
+            title="Appointment Details"
+            content={
+              <Form fluid>
+                <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} disabled={readOnly} />
+                <MyInput width="100%" fieldType="check" fieldName="allowWalkInBooking" record={record} setRecord={setRecord} showLabel={false} disabled={readOnly} />
+              </Form>
+            }
+          />
         </Col>
       </Row>
 
@@ -884,6 +892,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
         }
       />
     </Form>
+    </div>
   );
 
   return (

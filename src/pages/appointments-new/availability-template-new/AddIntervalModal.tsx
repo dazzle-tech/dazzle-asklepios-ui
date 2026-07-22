@@ -172,7 +172,6 @@ const AddIntervalModal: React.FC<Props> = ({ open, setOpen, resource, day, inter
       templateId: resource?.id ?? (record as AvailabilityTemplateIntervalCreateDTO).templateId,
       dayOfWeek: day,
       slotDurationMinutes: Number(record?.slotDurationMinutes),
-      applyToAllWorkingDays: Boolean((record as any)?.applyToAllWorkingDays),
     };
     await createInterval(payload)
       .unwrap()
@@ -246,19 +245,6 @@ const AddIntervalModal: React.FC<Props> = ({ open, setOpen, resource, day, inter
           />
         </Form>
       </div>
-
-      {!isEditMode && (
-        <div style={{ marginTop: 12 }}>
-          <MyInput
-            fieldName="applyToAllWorkingDays"
-            fieldType="check"
-            record={record}
-            setRecord={setRecord}
-            label="Apply to all working days in this template"
-            disabled={readOnly}
-          />
-        </div>
-      )}
       <Divider />
     </Form>
   );

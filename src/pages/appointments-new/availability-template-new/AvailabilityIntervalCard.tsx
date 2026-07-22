@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { CiSquareMinus } from 'react-icons/ci';
 import { FaRegEdit } from 'react-icons/fa';
 import { MdDelete, MdOutlineTimerOff } from 'react-icons/md';
+import { FaRepeat } from "react-icons/fa6";
 import { AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
-import { useDeleteAvailabilityTemplateIntervalMutation } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { useApplyAvailabilityTemplateIntervalToAllWorkingDaysMutation, useDeleteAvailabilityTemplateIntervalMutation } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { hexToRGBA } from './utils';
 import AddBreakModal from './AddBreakModal';
 import './availability-interval-card.less';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import { extractErrorMessage } from '@/utils';
 
 interface Props {
   interval: AvailabilityTemplateIntervalResponseVM;
@@ -26,10 +30,13 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
   backgroundColor = '#6982F0',
   readOnly,
 }) => {
+  const dispatch = useAppDispatch();
   const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
   const [openAddBreak, setOpenAddBreak] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
   const [deleteInterval] = useDeleteAvailabilityTemplateIntervalMutation();
+  const [applyToAllWorkingDays, { isLoading: isApplying }] =
+  useApplyAvailabilityTemplateIntervalToAllWorkingDaysMutation();
 
   const startLabel = interval?.startTime ?? '';
   const endLabel = interval?.endTime ?? '';
@@ -47,17 +54,34 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
     }
   };
 
+  const handleApplyToAll = async () => {
+  if (!interval?.id) return;
+
+  try {
+    await applyToAllWorkingDays({ id: interval.id }).unwrap();
+    dispatch(notify({ msg: 'Applied Successfully', sev: 'success' }));
+  } catch(error) {
+    console.log("errrrrrror: ", error)
+    dispatch(
+              notify({
+                msg: extractErrorMessage(error) || 'Failed to apply',
+                sev: 'warning',
+              })
+            );
+  }
+};
   return (
     <div className="availability-template-summary-card" style={{ backgroundColor: hexToRGBA(backgroundColor, 0.2) }}>
       <div className="header-of-availability-template-summary-card" style={{ backgroundColor }}>
         <span>{startLabel} - {endLabel}</span>
         <div style={{ display: 'flex', gap: '5px' }}>
-          <CiSquareMinus className="icons-style" onClick={() => setShowDetails(!showDetails)} />
-          <FaRegEdit className="icons-style" onClick={onEdit} />
+          <CiSquareMinus className="icons-style" title={showDetails ? "Hide Details" : "Show Details"} onClick={() => setShowDetails(!showDetails)} />
+          <FaRegEdit className="icons-style" title='Edit' onClick={onEdit} />
           {!readOnly && (
-            <MdDelete className="icons-style" onClick={() => setOpenConfirmDelete(true)} />
+            <MdDelete className="icons-style" title='Delete' onClick={() => setOpenConfirmDelete(true)} />
           )}
-          <MdOutlineTimerOff className="icons-style" onClick={() => setOpenAddBreak(true)} />
+          <MdOutlineTimerOff className="icons-style" title="Add Break" onClick={() => setOpenAddBreak(true)} />
+          <FaRepeat className="icons-style" title="apply to all working days"  onClick={handleApplyToAll}/>
         </div>
       </div>
 

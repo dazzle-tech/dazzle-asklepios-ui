@@ -11,7 +11,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useDispatch } from 'react-redux';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import type { Department, Practitioner } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
@@ -50,10 +50,17 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
     {}
   );
-  const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+  const { data: departments = [] } = useGetAllDepartmentsWithoutPaginationQuery();
+
+  const departmentsMap = useMemo(
+    () =>
+      Object.fromEntries(
+        departments.map(d => [d.id, d])
+      ),
+    [departments]
+  );
 
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     localPatient?.id
@@ -68,14 +75,15 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
 
   const encountersRaw = useMemo(() => data?.data ?? [], [data?.data]);
 
-  const encounters = useMemo(() => {
-    if (!departmentType) return encountersRaw;
+    const encounters = useMemo(() => {
+      if (!departmentType) return encountersRaw;
 
-    return encountersRaw.filter(e => {
-      const dept = departmentsMap[e.departmentId];
-      return dept?.type === departmentType;
-    });
-  }, [encountersRaw, departmentsMap, departmentType]);
+      return encountersRaw.filter(e => {
+        const dept = departmentsMap[e.departmentId];
+        return dept?.departmentType === departmentType;
+      });
+    }, [encountersRaw, departmentsMap, departmentType]);
+
 
   const [cancelEncounter] = useCancelEncounterMutation();
 
@@ -135,22 +143,6 @@ const handleViewTriage = (row: any) => {
     loadPractitioners();
   }, [encountersRaw]);
 
-  useEffect(() => {
-    const loadDepartments = async () => {
-      const uniqueIds = Array.from(
-        new Set(encountersRaw.map(e => e.departmentId).filter(id => id != null))
-      );
-
-      if (!uniqueIds.length) return;
-
-      try {
-        const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
-      } catch {}
-    };
-
-    loadDepartments();
-  }, [encountersRaw]);
 
   const columns = [
     {

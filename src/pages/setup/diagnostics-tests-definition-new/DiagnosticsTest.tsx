@@ -376,17 +376,69 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   const handleToggleActive = async (id: number) => {
     try {
+      const currentItem = (
+        isFiltered
+          ? filteredList
+          : diagnodticsTestList?.data ?? []
+      ).find(item => item.id === id);
+
+      if (!currentItem) return;
+
+      const newActiveStatus = !currentItem.isActive;
+
+      
       await toggleDiagnosticTestActive(id).unwrap();
-      dispatch(notify({ msg: 'Status updated successfully', sev: 'success' }));
-      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch {
-      dispatch(notify({ msg: 'Failed to update status', sev: 'error' }));
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        isActive: newActiveStatus
+      }));
+
+      if (isFiltered) {
+        setFilteredList(prev =>
+          prev.map(item =>
+            item.id === id
+              ? {
+                  ...item,
+                  isActive: newActiveStatus
+                }
+              : item
+          )
+        );
+
+
+      } else {
+        await refetchDiagnostics();
+      }
+
+      dispatch(
+        notify({
+          msg: newActiveStatus
+            ? 'Diagnostic Test activated successfully'
+            : 'Diagnostic Test deactivated successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      console.error(error);
+
+      dispatch(
+        notify({
+          msg: 'Failed to update status',
+          sev: 'error'
+        })
+      );
     }
   };
 
-  const handleDeactiveReactivateDiagnostic = () => {
-    handleToggleActive(diagnosticsTest.id);
-    setOpenConfirmDeleteDiagnosticTest(false);
+  const handleDeactiveReactivateDiagnostic = async () => {
+    if (!diagnosticsTest?.id) return;
+
+    try {
+      await handleToggleActive(diagnosticsTest.id);
+    } finally {
+      setOpenConfirmDeleteDiagnosticTest(false);
+    }
   };
 
 
@@ -450,7 +502,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         return;
       }
 
-      setFilteredList(response.data ?? []);
+      setFilteredList([...(response.data ?? [])]);
       setFilteredTotal(response.totalCount ?? 0);
       setFilterPagination(prev => ({
         ...prev,
@@ -800,6 +852,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   return (
     <Panel dir={dir}>
       <MyTable
+        key={`${isFiltered}-${filteredTotal}-${filteredList.length}-${paginationParams.timestamp}`}
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

@@ -1,12 +1,12 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
+import { useEnumOptions } from '@/services/enumsApi';
 import {
   useUpdateRadiologyReportMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import { useGetDiagnosticTestTemplateByTestIdQuery } from '@/services/setup/report-template/DiagnosticTestTemplate';
 import { useGetActiveReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -74,8 +74,7 @@ const AddReportModal = ({
 
   const [updateReport] = useUpdateRadiologyReportMutation();
 
-  const { data: severityLovQueryResponse } =
-    useGetLovValuesByCodeQuery('SEVERITY');
+const severityOptions = useEnumOptions('Severity');
 
   const { data: readyTemplatesResponse } =
     useGetActiveReportTemplatesQuery({
@@ -257,20 +256,18 @@ const AddReportModal = ({
         <div dir={dir}>
         <div className='add-report-modal-radiologist-work-list'>
           <Form fluid>
-                <MyInput
-                  width="12vw"
-                  disabled={isDisabled}
-                  fieldName="severity"
-                  fieldLabel='Severity'
-                  fieldType="select"
-                  selectData={severityLovQueryResponse?.object ?? []}
-                   selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                  selectDataValue="key"
-                  record={report}
-                  setRecord={setReport}
-                />
+            <MyInput
+                width="12vw"
+                disabled={isDisabled}
+                fieldName="severity"
+                fieldLabel="Severity"
+                fieldType="select"
+                selectData={severityOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={report}
+                setRecord={setReport}
+            />
 
           </Form>
 

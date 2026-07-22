@@ -1,0 +1,143 @@
+.merge-preview-content,
+.merge-preview-reason-card,
+.merge-preview-sections,
+.merge-preview-entity-section,
+.merge-preview-conflict-list {
+  background: transparent;
+  color: inherit;
+}
+
+.light {
+  .merge-preview-reason-card {
+    background: transparent;
+  }
+}
+
+.dark {
+  .merge-preview-reason-card {
+    background: transparent;
+    color: #ffffff;
+  }
+  .merge-preview-reason-card label,
+  .merge-preview-reason-card .rs-form-control-label,
+  .merge-preview-reason-card .rs-form-group-label {
+    color: #ffffff !important;
+  }
+  .merge-preview-reason-card textarea,
+  .merge-preview-reason-card .rs-input {
+    background-color: var(--dark-black) !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+  }
+  .merge-preview-reason-card textarea::placeholder,
+  .merge-preview-reason-card .rs-input::placeholder {
+    color: #94a3b8 !important;
+  }
+  .merge-preview-content,
+  .merge-preview-sections,
+  .merge-preview-entity-section,
+  .merge-preview-conflict-list {
+    background: transparent;
+    color: #ffffff;
+  }
+}
+/* ================================
+   Merge Dark Mode Fixes
+================================ */
+
+.dark .merge-transaction-card,
+.merge-transaction-changes-modal.dark {
+  background: var(--dark-black) !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-transaction-heading,
+.dark .merge-change-label,
+.dark .merge-changes-patient-name,
+.merge-transaction-changes-modal.dark .merge-changes-patient-name,
+.merge-transaction-changes-modal.dark .merge-changes-section-title,
+.merge-transaction-changes-modal.dark .merge-change-label {
+  color: #ffffff !important;
+}
+
+.dark .merge-transaction-title,
+.dark .merge-transaction-reason-title,
+.dark .merge-change-meta,
+.dark .merge-changes-patient-label,
+.merge-transaction-changes-modal.dark .merge-changes-patient-label,
+.merge-transaction-changes-modal.dark .merge-change-meta {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.dark .merge-transaction-meta,
+.dark .merge-transaction-small,
+.dark .merge-transaction-reason-text,
+.dark .merge-panel-empty-text,
+.dark .merge-changes-empty,
+.dark .merge-changes-patient-mrn,
+.merge-transaction-changes-modal.dark .merge-changes-patient-mrn {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.dark .merge-transaction-number,
+.dark .merge-transactions-count,
+.dark .merge-changes-count,
+.merge-transaction-changes-modal.dark .merge-changes-count {
+  background: rgba(var(--primary-blue-rgb), 0.15) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-status-badge,
+.dark .merge-change-decision {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid #475569 !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-status-merged {
+  background: rgba(69, 184, 135, 0.18) !important;
+  border-color: rgba(69, 184, 135, 0.45) !important;
+  color: #86efac !important;
+}
+
+.dark .merge-status-undone {
+  background: rgba(242, 154, 77, 0.18) !important;
+  border-color: rgba(242, 154, 77, 0.45) !important;
+  color: #fdba74 !important;
+}
+
+.dark .merge-change-old,
+.merge-transaction-changes-modal.dark .merge-change-old {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid #334155 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.dark .merge-change-new,
+.merge-transaction-changes-modal.dark .merge-change-new {
+  background: rgba(var(--primary-blue-rgb), 0.14) !important;
+  border: 1px solid rgba(var(--primary-blue-rgb), 0.35) !important;
+  color: #ffffff !important;
+}
+
+.dark .merge-changes-header,
+.dark .merge-change-row,
+.dark .merge-changes-patient-card,
+.merge-transaction-changes-modal.dark .merge-changes-header,
+.merge-transaction-changes-modal.dark .merge-change-row,
+.merge-transaction-changes-modal.dark .merge-changes-patient-card {
+  background: var(--dark-black) !important;
+  border-color: #334155 !important;
+}
+
+.dark .merge-transaction-divider-line,
+.dark .merge-flow-line {
+  background: #475569 !important;
+}
+
+.dark .merge-transaction-arrow,
+.dark .merge-change-arrow,
+.dark .merge-changes-header-arrow {
+  color: var(--primary-blue) !important;
+}
