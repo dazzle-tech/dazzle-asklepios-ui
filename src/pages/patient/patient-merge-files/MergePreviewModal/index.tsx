@@ -28,29 +28,35 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
     loading = false,
     showSummary = false,
     summaryData,
+    ruleConflicts,
     onBackToConflicts
 }) => {
+
     const [reason, setReason] = useState('Duplicate patient record');
     const [decisions, setDecisions] = useState<ConflictDecision[]>([]);
     const [summaryDecisions, setSummaryDecisions] = useState<ConflictDecision[]>([]);
     const [summaryReason, setSummaryReason] = useState('');
+    console.log("Summary Data in MergePreviewModal:", summaryData);
+    // ✅ ✅ NEW → rule decisions
+    const [ruleDecisions, setRuleDecisions] = useState<Record<string, string>>({});
 
+
+    // ✅ group conflicts
     const groupedConflicts = useMemo(() => {
         const groups: Record<string, ConflictDecision[]> = {};
 
         conflicts.forEach(conflict => {
             const key = conflict.entityName || 'OTHER';
-
             if (!groups[key]) {
                 groups[key] = [];
             }
-
             groups[key].push(conflict);
         });
 
         return groups;
     }, [conflicts]);
 
+    // ✅ initialize decisions
     React.useEffect(() => {
         if (open && conflicts.length > 0) {
             const initialized = conflicts.map(conflict => ({
@@ -76,6 +82,7 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
         }
     }, [open, conflicts]);
 
+    // ✅ LOV
     const lovKeys = useMemo(() => {
         return Array.from(
             new Set(
@@ -88,11 +95,11 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
 
     const { data: lovBulkResponse } = useGetLovValuesBulkByKeysQuery(
         lovKeys,
-        {
-            skip: lovKeys.length === 0
-        }
+        { skip: lovKeys.length === 0 }
     );
 
+
+    // ✅ field decision
     const handleDecisionChange = (index: number, finalDecision: string) => {
         const updated = [...decisions];
 
@@ -121,6 +128,15 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
         setDecisions(updated);
     };
 
+    // ✅ ✅ NEW → rule decisions handler
+    const handleRuleDecisionChange = (code: string, decision: string) => {
+        setRuleDecisions(prev => ({
+            ...prev,
+            [code]: decision
+        }));
+    };
+
+    // ✅ validation
     const allDecisionsComplete = useMemo(() => {
         return decisions.every(d => {
             if (!d.finalDecision) return false;
@@ -137,31 +153,35 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
         });
     }, [decisions]);
 
-  const handleReviewSummary = () => {
-    if (!allDecisionsComplete) {
-        toaster.push(
-            <Message showIcon type="warning">
-                Please complete all decisions before reviewing summary.
-            </Message>,
-            { placement: 'topCenter' }
+    // ✅ review
+    const handleReviewSummary = () => {
+        if (!allDecisionsComplete) {
+            toaster.push(
+                <Message showIcon type="warning">
+                    Please complete all decisions before reviewing summary.
+                </Message>,
+                { placement: 'topCenter' }
+            );
+            return;
+        }
+
+        const apiDecisions = sanitizeDecisionsForApi(decisions);
+
+        setSummaryDecisions(apiDecisions as ConflictDecision[]);
+        setSummaryReason(reason);
+
+        onReviewSummary(apiDecisions, reason, conflicts, autoTransfers);
+    };
+
+    // ✅ ✅ confirm merge (with ruleDecisions)
+    const handleConfirmMerge = () => {
+        onConfirmMerge(
+            sanitizeDecisionsForApi(summaryDecisions),
+            summaryReason,
+            ruleDecisions   // ✅ CRITICAL
         );
-        return;
-    }
+    };
 
-    const apiDecisions = sanitizeDecisionsForApi(decisions);
-
-    setSummaryDecisions(apiDecisions as ConflictDecision[]);
-    setSummaryReason(reason);
-
-    onReviewSummary(apiDecisions, reason, conflicts, autoTransfers);
-};
-
- const handleConfirmMerge = () => {
-    onConfirmMerge(
-        sanitizeDecisionsForApi(summaryDecisions),
-        summaryReason
-    );
-};
     const setModalOpen = (nextOpen: boolean) => {
         if (!nextOpen) {
             onCancel();
@@ -182,11 +202,7 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
 
     const renderFooterButtons = () => (
         <>
-            <MyButton
-                onClick={onCancel}
-                disabled={loading}
-                appearance="subtle"
-            >
+            <MyButton onClick={onCancel} disabled={loading} appearance="subtle">
                 <Translate>Cancel</Translate>
             </MyButton>
 
@@ -241,7 +257,7 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
             }
             content={
                 <div style={{ maxHeight: '70vh', overflowY: 'auto', padding: '24px' }}>
-                    {showSummary ? (
+                    {showSummary && summaryData ? (
                         <MergeSummaryView
                             summaryReason={summaryReason}
                             summaryData={summaryData}
@@ -255,6 +271,10 @@ const MergePreviewModal: React.FC<MergePreviewModalProps> = ({
                             lovBulkResponse={lovBulkResponse}
                             handleDecisionChange={handleDecisionChange}
                             handleValueChange={handleValueChange}
+
+                            // ✅ ✅ FIX HERE
+                            ruleConflicts={ruleConflicts || []}
+                            handleRuleDecisionChange={handleRuleDecisionChange}
                         />
                     )}
                 </div>

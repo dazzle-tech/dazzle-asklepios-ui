@@ -23,25 +23,31 @@ export interface ConflictDecision {
 export interface MergePreviewModalProps {
     open: boolean;
     conflicts: any[];
-    autoTransfers?: any[];
-    fromPatientId?: number;
-    toPatientId?: number;
- onReviewSummary: (
-    decisions: any[],
-    reason: string,
-    conflicts: any[],
-    autoTransfers: any[]
-) => void;
+    autoTransfers: any[];
+    ruleConflicts: any[];
+
+    onReviewSummary: (
+        decisions: any[],
+        reason: string,
+        conflicts: any[],
+        autoTransfers: any[]
+    ) => void;
+
+
     onConfirmMerge: (
         decisions: any[],
         reason: string,
+        ruleDecisions: Record<string, string>
     ) => void;
+
     onCancel: () => void;
+
     loading?: boolean;
     showSummary?: boolean;
     summaryData?: any;
     onBackToConflicts?: () => void;
 }
+
 
 export interface PatientMergeDecisionPayload {
     entityName: string;

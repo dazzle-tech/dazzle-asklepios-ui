@@ -1,15 +1,19 @@
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyPreviewMergeQuery, useExecuteMergeMutation, useSummarizeMergeMutation, useGetMergeTransactionsQuery, useUndoMergeMutation } from '@/services/patients/patientMergeService';
+import {
+  useLazyPreviewMergeQuery,
+  useExecuteMergeMutation,
+  useSummarizeMergeMutation,
+  useGetMergeTransactionsQuery,
+  useUndoMergeMutation
+} from '@/services/patients/patientMergeService';
 import { notify } from '@/utils/uiReducerActions';
 import { Patient } from '@/types/model-types-new';
 import { newPatient } from '@/types/model-types-constructor-new';
-import { faCodeMerge } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Col, Grid, Panel, Row, Message, toaster, Tabs, Button, Modal } from 'rsuite';
 import { getHeight } from 'rsuite/esm/DOMHelper';
+
 import MergePreviewModal from './MergePreviewModal';
 import MergePatientsTab from './MergePatientsTab';
 import MergeTransactionsTab from './MergeTransactionsTab';
@@ -17,45 +21,54 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import MyTab from '@/components/MyTab';
+
 const PatientMergeFiles: React.FC = () => {
+
   const [, setExpand] = useState(false);
   const [windowHeight] = useState(getHeight(window));
+
   const [fromPatient, setFromPatient] = useState<Patient>({ ...newPatient });
   const [toPatient, setToPatient] = useState<Patient>({ ...newPatient });
+
   const [refetchData, setRefetchData] = useState(false);
+
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [summaryData, setSummaryData] = useState<any>(null);
   const [autoTransfers, setAutoTransfers] = useState<any[]>([]);
+
   const [activeTab, setActiveTab] = useState('merge-patients');
+
   const [undoConfirm, setUndoConfirm] = useState<{ show: boolean; mergeLogId?: number }>({ show: false });
 
   const dispatch = useAppDispatch();
   const { pathname } = useLocation();
 
-  // API hooks
-  const [triggerPreviewMerge, { data: mergePreviewResponse, isLoading: previewLoading, isFetching: previewFetching }] = useLazyPreviewMergeQuery();
+  // ✅ APIs
+  const [triggerPreviewMerge, { data: mergePreviewResponse, isLoading: previewLoading, isFetching: previewFetching }] =
+    useLazyPreviewMergeQuery();
+    console.log("Merge Preview Response:", mergePreviewResponse);
   const mergePreview = mergePreviewResponse?.preview ?? mergePreviewResponse;
+
   const [executeMerge, { isLoading: executeLoading }] = useExecuteMergeMutation();
   const [summarizeMerge, { isLoading: summarizeLoading }] = useSummarizeMergeMutation();
-  const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMergeTransactionsQuery();
+
+  const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } =
+    useGetMergeTransactionsQuery();
+
   const [undoMerge, { isLoading: undoLoading }] = useUndoMergeMutation();
 
-  // Trigger merge flow
+
+  // ✅ preview
   const handleMergeClick = async () => {
+
     if (!fromPatient.id || !toPatient.id) {
-      dispatch(notify({
-        msg: 'Please select both patients to merge',
-        sev: 'warning'
-      }));
+      dispatch(notify({ msg: 'Please select both patients to merge', sev: 'warning' }));
       return;
     }
 
     if (fromPatient.id === toPatient.id) {
-      dispatch(notify({
-        msg: 'Cannot merge a patient with themselves',
-        sev: 'error'
-      }));
+      dispatch(notify({ msg: 'Cannot merge a patient with themselves', sev: 'error' }));
       return;
     }
 
@@ -68,39 +81,18 @@ const PatientMergeFiles: React.FC = () => {
       const issues = Array.isArray(result?.issues) ? result.issues : [];
 
       if (result?.valid === false) {
+
         setShowMergeModal(false);
         setShowSummary(false);
         setSummaryData(null);
         setAutoTransfers([]);
 
-        const normalizedIssues = issues.map((issue: any) => ({
-          ...issue,
-          severity: String(issue?.severity || 'error').toLowerCase()
-        }));
-
-        const isAllErrors = normalizedIssues.length > 0 && normalizedIssues.every((issue: any) => issue.severity === 'error');
-
-        if (isAllErrors && normalizedIssues.length > 1) {
-          const combinedMessage = normalizedIssues
-            .map((issue: any, index: number) => `${index + 1}. ${[issue?.message, issue?.actionRequired].filter(Boolean).join('. ')}`)
-            .filter(Boolean)
-            .join('\n');
-
+        issues.forEach((issue: any) => {
           dispatch(notify({
-            msg: combinedMessage || 'Merge preview validation failed',
-            sev: 'error'
+            msg: issue?.message,
+            sev: 'warning'
           }));
-        } else {
-          normalizedIssues.forEach((issue: any) => {
-            const message = [issue?.message, issue?.actionRequired].filter(Boolean).join('. ');
-            // const severity = issue.severity === 'warning' ? 'warning' : 'error';
-
-            dispatch(notify({
-              msg: message || 'Merge preview validation failed',
-              sev: 'warning'
-            }));
-          });
-        }
+        });
 
         return;
       }
@@ -108,72 +100,53 @@ const PatientMergeFiles: React.FC = () => {
       setShowMergeModal(true);
       setShowSummary(false);
       setSummaryData(null);
+
     } catch (err: any) {
-      const errorMsg = getApiErrorMessage(err, 'Failed to load merge preview');
       dispatch(notify({
-        msg: errorMsg,
+        msg: 'Failed to load merge preview',
         sev: 'error'
       }));
     }
   };
 
-const getApiErrorMessage = (err: any, fallback: string): string => {
-  const data = err?.data;
 
-  return (
-    data?.message ||
-    data?.properties?.message ||
-    data?.detail ||
-    data?.title ||
-    data?.error ||
-    fallback
-  );
-};
+  // ✅ summary
+  const handleReviewSummary = async (decisions: any[], reason: string) => {
 
-const handleReviewSummary = async (
-  decisions: any[],
-  reason: string
-) => {
-  try {
-    const summaryRequest = {
+    const request = {
       fromPatientId: fromPatient.id,
       toPatientId: toPatient.id,
-      reason: reason || 'Duplicate patient record',
+      reason,
       decisions,
       autoTransfers
     };
 
-    const result = await summarizeMerge(summaryRequest).unwrap();
+    const result = await summarizeMerge(request).unwrap();
 
     setSummaryData(result);
     setShowSummary(true);
+  };
 
-  } catch (err: any) {
 
-    const errorMsg = getApiErrorMessage(
-      err,
-      'Failed to generate merge summary'
-    );
 
-    dispatch(
-      notify({
-        msg: errorMsg,
-        sev: 'error'
-      })
-    );
-  }
-};
+  const handleConfirmMerge = async (
+    decisions: any[],
+    reason: string,
+    ruleDecisions: Record<string, string>   // ✅ NEW
+  ) => {
 
-  const handleConfirmMerge = async (decisions: any[], reason: string) => {
     try {
+
       const executeRequest = {
         fromPatientId: fromPatient.id,
         toPatientId: toPatient.id,
-        reason: reason || 'Duplicate patient record',
-        decisions
+        reason,
+        decisions,
+        ruleDecisions  
       };
 
       const result = await executeMerge(executeRequest).unwrap();
+
       dispatch(notify({
         msg: `Merge completed successfully. Log Number : ${result.transactionNumber || 'N/A'}`,
         sev: 'success'
@@ -183,232 +156,144 @@ const handleReviewSummary = async (
       setShowSummary(false);
       setSummaryData(null);
       setRefetchData(!refetchData);
+
       handleClear();
-    } catch (err: any) {
-      const errorMsg = getApiErrorMessage(err, 'Failed to execute merge');
 
+    } catch (err: any) {
       dispatch(notify({
-        msg: errorMsg,
+        msg: 'Failed to execute merge',
         sev: 'error'
       }));
     }
   };
 
+
+  // ✅ undo
   const handleUndo = async (mergeLogId: number) => {
-    try {
-      await undoMerge({ mergeLogId }).unwrap();
 
-      dispatch(notify({
-        msg: 'Merge successfully undone',
-        sev: 'success'
-      }));
+    await undoMerge({ mergeLogId }).unwrap();
 
-      setUndoConfirm({ show: false });
-      await refetchTransactions();
-      setRefetchData(!refetchData);
-    } catch (err: any) {
-      const errorMsg = err?.data?.detail || err?.data?.message || 'Failed to undo merge';
-      dispatch(notify({
-        msg: errorMsg,
-        sev: 'error'
-      }));
-    }
+    dispatch(notify({
+      msg: 'Merge successfully undone',
+      sev: 'success'
+    }));
+
+    setUndoConfirm({ show: false });
+    await refetchTransactions();
   };
 
-  const handleTabChange = (eventKey: string | number) => {
-    setActiveTab(String(eventKey));
-  };
 
   const handleClear = () => {
-    setToPatient({ ...newPatient });
     setFromPatient({ ...newPatient });
+    setToPatient({ ...newPatient });
   };
 
-useEffect(() => {
-  const divContent = (
-    "Files Merge"
-  );
 
-  dispatch(setPageCode('Files_Merge'));
-  dispatch(setDivContent(divContent));
-
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch, pathname]);
-
-// Update autoTransfers from preview data
-useEffect(() => {
-  if (mergePreview?.autoTransfers) {
-    setAutoTransfers(mergePreview.autoTransfers);
-  }
-}, [mergePreview]);
-
-// Direction handling for RTL/LTR
-const direction = localStorage.getItem('direction') || 'LTR';
-const isRTL = direction === 'RTL';
-
-const dir = isRTL ? 'rtl' : 'ltr';
-
-return (
-  <div dir={dir} className="patient-merge-files-page">
+  // ✅ auto transfers
+  useEffect(() => {
+    if (mergePreview?.autoTransfers) {
+      setAutoTransfers(mergePreview.autoTransfers);
+    }
+  }, [mergePreview]);
 
 
-    <MyTab
-      activeTab={
-        activeTab === 'merge-patients'
-          ? '1'
-          : activeTab === 'transactions'
-            ? '2'
-            : '1'
-      }
-      setActiveTab={(key: string) => {
-        if (key === '1') {
-          setActiveTab('merge-patients');
-        } else if (key === '2') {
-          setActiveTab('transactions');
+  useEffect(() => {
+    dispatch(setPageCode('Files_Merge'));
+    dispatch(setDivContent('Files Merge'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
+
+
+  return (
+    <div>
+
+      <MyTab
+        activeTab={activeTab === 'merge-patients' ? '1' : '2'}
+        setActiveTab={(key: string) =>
+          setActiveTab(key === '1' ? 'merge-patients' : 'transactions')
         }
-      }}
-      data={[
-        {
-          title: 'Merge Patients',
-          content: (
-            <MergePatientsTab
-              fromPatient={fromPatient}
-              toPatient={toPatient}
-              setFromPatient={setFromPatient}
-              setToPatient={setToPatient}
-              refetchData={refetchData}
-              setRefetchData={setRefetchData}
-              previewLoading={previewLoading}
-              previewFetching={previewFetching}
-              handleMergeClick={handleMergeClick}
-              handleClear={handleClear}
-              setExpand={setExpand}
-              windowHeight={windowHeight}
-            />
-          )
-        },
-        {
-          title: 'Transactions',
-          content: (
-            <MergeTransactionsTab
-              transactions={transactions}
-              transactionsLoading={transactionsLoading}
-              onRequestUndo={(mergeLogId: number) =>
-                setUndoConfirm({
-                  show: true,
-                  mergeLogId
-                })
+        data={[
+          {
+            title: 'Merge Patients',
+            content: (
+              <MergePatientsTab
+                fromPatient={fromPatient}
+                toPatient={toPatient}
+                setFromPatient={setFromPatient}
+                setToPatient={setToPatient}
+                handleMergeClick={handleMergeClick}
+                handleClear={handleClear}
+                windowHeight={windowHeight}
+              />
+            )
+          },
+          {
+            title: 'Transactions',
+            content: (
+              <MergeTransactionsTab
+                transactions={transactions}
+                transactionsLoading={transactionsLoading}
+                onRequestUndo={(mergeLogId: number) =>
+                  setUndoConfirm({ show: true, mergeLogId })
+                }
+              />
+            )
+          }
+        ]}
+      />
+
+      {/* ✅ MODAL */}
+      <MergePreviewModal
+        open={showMergeModal}
+        conflicts={mergePreview?.conflicts || []}
+        autoTransfers={mergePreview?.autoTransfers || []}
+        onReviewSummary={handleReviewSummary}
+
+        // ✅ IMPORTANT
+        onConfirmMerge={handleConfirmMerge}
+
+        onCancel={() => setShowMergeModal(false)}
+
+        loading={previewLoading || previewFetching || executeLoading || summarizeLoading}
+        showSummary={showSummary}
+       summaryData={summaryData}
+       ruleConflicts={mergePreview?.ruleConflicts || []}
+        onBackToConflicts={() => setShowSummary(false)}
+      />
+
+      {/* ✅ UNDO */}
+      <MyModal
+        open={undoConfirm.show}
+        setOpen={(open: boolean) =>
+          setUndoConfirm({ show: open })
+        }
+        size="sm"
+        title="Confirm Undo"
+        content="Undo this merge?"
+        footerButtons={
+          <>
+            <MyButton onClick={() => setUndoConfirm({ show: false })}>
+              <Translate>Cancel</Translate>
+            </MyButton>
+
+            <MyButton
+              onClick={() =>
+                undoConfirm.mergeLogId && handleUndo(undoConfirm.mergeLogId)
               }
-              undoLoading={undoLoading}
-            />
-          )
+              loading={undoLoading}
+            >
+              <Translate>Confirm</Translate>
+            </MyButton>
+          </>
         }
-      ]}
-    />
+      />
 
-    <MergePreviewModal
-      open={showMergeModal}
-      conflicts={mergePreview?.conflicts || []}
-      autoTransfers={mergePreview?.autoTransfers || []}
-      fromPatientId={fromPatient.id}
-      toPatientId={toPatient.id}
-      onReviewSummary={handleReviewSummary}
-      onConfirmMerge={handleConfirmMerge}
-      onCancel={() => {
-        setShowMergeModal(false);
-        setShowSummary(false);
-        setSummaryData(null);
-      }}
-      loading={
-        previewLoading ||
-        previewFetching ||
-        executeLoading ||
-        summarizeLoading
-      }
-      showSummary={showSummary}
-      summaryData={summaryData}
-      onBackToConflicts={() => setShowSummary(false)}
-    />
-
-    <MyModal
-      open={undoConfirm.show}
-      setOpen={(open: boolean) =>
-        setUndoConfirm({
-          show: open,
-          mergeLogId: open
-            ? undoConfirm.mergeLogId
-            : undefined
-        })
-      }
-      size="sm"
-      title="Confirm Undo"
-      hideCancel
-      hideBack
-      hideActionBtn
-      content={
-        <div className="patient-merge-files-undo-content">
-          Are you sure you want to undo this merge transaction?
-          This action cannot be undone.
-        </div>
-      }
-      footerButtons={
-        <>
-          <MyButton
-            onClick={() =>
-              setUndoConfirm({ show: false })
-            }
-            appearance="subtle"
-          >
-            <Translate>Cancel</Translate>
-          </MyButton>
-
-          <MyButton
-            onClick={() =>
-              undoConfirm.mergeLogId &&
-              handleUndo(undoConfirm.mergeLogId)
-            }
-            loading={undoLoading}
-          >
-            <Translate>Confirm Undo</Translate>
-          </MyButton>
-        </>
-      }
-    />
-  </div>
-);
+    </div>
+  );
 };
 
 export default PatientMergeFiles;
-
-export const calculateAgeFormat = (dateOfBirth: string | Date) => {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
-
-  if (isNaN(dob.getTime())) {
-    return '';
-  }
-
-  let years = today.getFullYear() - dob.getFullYear();
-  let months = today.getMonth() - dob.getMonth();
-  let days = today.getDate() - dob.getDate();
-
-  if (months < 0 || (months === 0 && days < 0)) {
-    years--;
-    months += 12;
-  }
-  if (days < 0) {
-    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-    days += lastMonth.getDate();
-    months--;
-  }
-
-  let ageString = '';
-  if (years > 0) ageString += `${years}y `;
-  if (months > 0) ageString += `${months}m `;
-  if (days > 0) ageString += `${days}d`;
-
-  return ageString.trim();
-};

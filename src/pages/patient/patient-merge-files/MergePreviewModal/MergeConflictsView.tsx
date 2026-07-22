@@ -7,6 +7,7 @@ import './styles.less';
 import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 
 import { ConflictDecision } from './types';
 import { getEntityLabel } from './utils';
@@ -20,6 +21,10 @@ interface Props {
     lovBulkResponse: any;
     handleDecisionChange: (index: number, finalDecision: string) => void;
     handleValueChange: (index: number, value: any) => void;
+
+    // ✅ Smart rules
+    ruleConflicts?: any[];
+    handleRuleDecisionChange?: (code: string, decision: string) => void;
 }
 
 const MergeConflictsView: React.FC<Props> = ({
@@ -29,8 +34,11 @@ const MergeConflictsView: React.FC<Props> = ({
     decisions,
     lovBulkResponse,
     handleDecisionChange,
-    handleValueChange
+    handleValueChange,
+    ruleConflicts,
+    handleRuleDecisionChange
 }) => {
+    console.log("MergeConflictsView - groupedConflicts:", groupedConflicts);
     const mode = useSelector((state: any) => state.ui.mode);
 
     return (
@@ -39,6 +47,8 @@ const MergeConflictsView: React.FC<Props> = ({
                 mode === 'dark' ? 'dark' : 'light'
             }`}
         >
+
+            {/* ✅ Reason */}
             <div className="merge-preview-reason-card">
                 <Form fluid>
                     <MyInput
@@ -56,6 +66,7 @@ const MergeConflictsView: React.FC<Props> = ({
                 </Form>
             </div>
 
+            {/* ✅ Field Conflicts */}
             <div className="merge-preview-sections">
                 {Object.entries(groupedConflicts).map(
                     ([entityName, entityConflicts]) => (
@@ -74,40 +85,29 @@ const MergeConflictsView: React.FC<Props> = ({
                                     <div className="merge-preview-conflict-list">
                                         {entityConflicts.map(
                                             (conflict, idx) => {
+
                                                 const globalIdx =
                                                     decisions.findIndex(
                                                         d =>
-                                                            d.entityName ===
-                                                                conflict.entityName &&
-                                                            d.fieldName ===
-                                                                conflict.fieldName &&
-                                                            d.fromRecordId ===
-                                                                conflict.fromRecordId
+                                                            d.entityName === conflict.entityName &&
+                                                            d.fieldName === conflict.fieldName &&
+                                                            d.fromRecordId === conflict.fromRecordId
                                                     );
 
-                                                const decision =
-                                                    decisions[globalIdx];
+                                                const decision = decisions[globalIdx];
 
                                                 if (!decision) return null;
 
                                                 return (
                                                     <ConflictCard
                                                         key={`${entityName}-${conflict.fieldName || conflict.matchKey}-${idx}`}
-                                                        entityName={
-                                                            entityName
-                                                        }
+                                                        entityName={entityName}
                                                         conflict={conflict}
                                                         decision={decision}
                                                         globalIdx={globalIdx}
-                                                        lovBulkResponse={
-                                                            lovBulkResponse
-                                                        }
-                                                        handleDecisionChange={
-                                                            handleDecisionChange
-                                                        }
-                                                        handleValueChange={
-                                                            handleValueChange
-                                                        }
+                                                        lovBulkResponse={lovBulkResponse}
+                                                        handleDecisionChange={handleDecisionChange}
+                                                        handleValueChange={handleValueChange}
                                                     />
                                                 );
                                             }
@@ -119,6 +119,79 @@ const MergeConflictsView: React.FC<Props> = ({
                     )
                 )}
             </div>
+
+            {/* ✅ ✅ ✅ Smart Rules (NEW SECTION) */}
+            {ruleConflicts && ruleConflicts.length > 0 && (
+                <div className="merge-preview-entity-section">
+                    <SectionContainer
+                        title={<Translate>Smart Rules</Translate>}
+                        icon={faExclamationTriangle}
+                        content={
+                            <div>
+
+                                {ruleConflicts.map((rule: any) => (
+
+                                    <div
+                                        key={rule.code}
+                                        style={{
+                                            border: '1px solid #e5e5e5',
+                                            borderRadius: 8,
+                                            padding: 16,
+                                            marginBottom: 16,
+                                            background: '#fafafa'
+                                        }}
+                                    >
+
+                                        {/* ✅ Rule title */}
+                                        <div style={{ fontWeight: 600, marginBottom: 10 }}>
+                                            {rule.message}
+                                        </div>
+
+                                        {/* ✅ Records */}
+                                        <div style={{ display: 'flex', gap: 16 }}>
+                                            {rule.records?.map((rec: any, i: number) => (
+                                                <div
+                                                    key={i}
+                                                    style={{
+                                                        border: '1px solid #ddd',
+                                                        padding: 10,
+                                                        borderRadius: 6,
+                                                        background: '#fff'
+                                                    }}
+                                                >
+                                                    {Object.entries(rec).map(([key, value]) => (
+                                                        <div key={key}>
+                                                            <strong>{key}:</strong> {String(value)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* ✅ Decision buttons */}
+                                        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                                            {rule.decisionOptions?.map((option: string) => (
+                                                <MyButton
+                                                    key={option}
+                                                    appearance="subtle"
+                                                    onClick={() =>
+                                                        handleRuleDecisionChange?.(rule.code, option)
+                                                    }
+                                                >
+                                                    {option}
+                                                </MyButton>
+                                            ))}
+                                        </div>
+
+                                    </div>
+                                ))}
+
+                            </div>
+                        }
+                    />
+                </div>
+            )}
+
         </div>
     );
 };

@@ -70,7 +70,7 @@ const MergeSummaryView: React.FC<Props> = ({
 }) => {
     const renderSummarySection = (title: string, items: any[]) => {
         if (!items || items.length === 0) return null;
-
+console.log("SUMMARY DATA IN MODAL", summaryData);
         return (
             <SectionContainer
                 title={<Translate>{title}</Translate>}
