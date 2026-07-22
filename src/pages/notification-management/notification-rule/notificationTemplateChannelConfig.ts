@@ -8,12 +8,54 @@ export interface NotificationTemplateChannelFieldConfig {
   ccRecipientRule: boolean;
   bccRecipientRule: boolean;
   phoneRecipientRule: boolean;
+  whatsappTemplateName: boolean;
+  whatsappLanguageCode: boolean;
+  whatsappParameters: boolean;
+  whatsappTemplateCategory: boolean;
+  whatsappMetaTemplateFooter: boolean;
+  whatsappMetaTemplateButtons: boolean;
+  whatsappHeaderType: boolean;
+  whatsappMetaTemplateId: boolean;
+  whatsappTemplateStatus: boolean;
+  whatsappTemplateVersion: boolean;
   requireSubject: boolean;
   requireTitle: boolean;
   requireBody: boolean;
   requireToRecipientRule: boolean;
   requirePhoneRecipientRule: boolean;
+  requireWhatsappTemplateName: boolean;
+  requireWhatsappLanguageCode: boolean;
 }
+
+const NO_WHATSAPP_FIELDS = {
+  whatsappTemplateName: false,
+  whatsappLanguageCode: false,
+  whatsappParameters: false,
+  whatsappTemplateCategory: false,
+  whatsappMetaTemplateFooter: false,
+  whatsappMetaTemplateButtons: false,
+  whatsappHeaderType: false,
+  whatsappMetaTemplateId: false,
+  whatsappTemplateStatus: false,
+  whatsappTemplateVersion: false,
+  requireWhatsappTemplateName: false,
+  requireWhatsappLanguageCode: false,
+};
+
+const WHATSAPP_FIELDS = {
+  whatsappTemplateName: true,
+  whatsappLanguageCode: true,
+  whatsappParameters: true,
+  whatsappTemplateCategory: true,
+  whatsappMetaTemplateFooter: true,
+  whatsappMetaTemplateButtons: true,
+  whatsappHeaderType: true,
+  whatsappMetaTemplateId: true,
+  whatsappTemplateStatus: true,
+  whatsappTemplateVersion: true,
+  requireWhatsappTemplateName: true,
+  requireWhatsappLanguageCode: true,
+};
 
 const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemplateChannelFieldConfig> = {
   EMAIL: {
@@ -24,6 +66,7 @@ const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemp
     ccRecipientRule: true,
     bccRecipientRule: true,
     phoneRecipientRule: false,
+    ...NO_WHATSAPP_FIELDS,
     requireSubject: true,
     requireTitle: false,
     requireBody: true,
@@ -38,6 +81,7 @@ const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemp
     ccRecipientRule: false,
     bccRecipientRule: false,
     phoneRecipientRule: true,
+    ...NO_WHATSAPP_FIELDS,
     requireSubject: false,
     requireTitle: false,
     requireBody: true,
@@ -47,14 +91,15 @@ const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemp
   WHATSAPP: {
     subject: true,
     title: false,
-    body: false,
+    body: true,
     toRecipientRule: false,
     ccRecipientRule: false,
     bccRecipientRule: false,
     phoneRecipientRule: true,
+    ...WHATSAPP_FIELDS,
     requireSubject: false,
     requireTitle: false,
-    requireBody: false,
+    requireBody: true,
     requireToRecipientRule: false,
     requirePhoneRecipientRule: true,
   },
@@ -66,6 +111,7 @@ const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemp
     ccRecipientRule: false,
     bccRecipientRule: false,
     phoneRecipientRule: false,
+    ...NO_WHATSAPP_FIELDS,
     requireSubject: false,
     requireTitle: true,
     requireBody: true,

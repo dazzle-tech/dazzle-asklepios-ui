@@ -90,6 +90,17 @@ export const notificationTemplateService = createApi({
       }),
       invalidatesTags: ['NotificationTemplate'],
     }),
+
+    registerWhatsAppTemplate: builder.mutation<NotificationTemplateResponseVM, number>({
+      query: id => ({
+        url: `/api/notification/notification-template/${id}/whatsapp/create-template`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'NotificationTemplate', id },
+        'NotificationTemplate',
+      ],
+    }),
   }),
 });
 
@@ -101,4 +112,5 @@ export const {
   useCreateNotificationTemplateMutation,
   useUpdateNotificationTemplateMutation,
   useToggleNotificationTemplateActiveMutation,
+  useRegisterWhatsAppTemplateMutation,
 } = notificationTemplateService;

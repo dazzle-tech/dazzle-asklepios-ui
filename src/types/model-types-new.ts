@@ -4963,6 +4963,23 @@ export interface PatientProblem {
 
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
+export type WhatsAppLanguageCode = string;
+
+export type WhatsAppTemplateCategory = string;
+
+export type WhatsAppHeaderType = string;
+
+export type WhatsAppButtonType = string;
+
+export interface WhatsAppButton {
+  type?: WhatsAppButtonType | null;
+  text?: string | null;
+  url?: string | null;
+  phoneNumber?: string | null;
+  couponCode?: string | null;
+  flowId?: string | null;
+}
+
 export type NotificationModule = string;
 
 export type NotificationCategory = string;
@@ -5037,6 +5054,16 @@ export interface NotificationTemplateResponseVM {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: string[] | null;
+  whatsappMetaTemplateId?: string | null;
+  whatsappTemplateStatus?: string | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappTemplateVersion?: number | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
   isActive?: boolean;
 }
 
@@ -5051,6 +5078,13 @@ export interface NotificationTemplateCreateDTO {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: string[] | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
   isActive?: boolean;
 }
 
@@ -5065,6 +5099,13 @@ export interface NotificationTemplateUpdateDTO {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: string[] | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
 }
 
 export type NotificationChannel = NotificationTemplateChannel;

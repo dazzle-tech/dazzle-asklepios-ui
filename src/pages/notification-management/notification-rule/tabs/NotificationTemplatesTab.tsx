@@ -6,6 +6,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
   useGetNotificationTemplatesByHeaderQuery,
+  useRegisterWhatsAppTemplateMutation,
   useToggleNotificationTemplateActiveMutation,
 } from '@/services/notification-management/notificationTemplateService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
@@ -16,14 +17,15 @@ import {
 } from '@/types/model-types-new';
 import { newNotificationTemplateResponseVM } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
+import { extractErrorMessage, formatEnumString } from '@/utils';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useMemo, useState } from 'react';
-import { FaUndo } from 'react-icons/fa';
+import { FaUndo, FaWhatsapp } from 'react-icons/fa';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { Form } from 'rsuite';
 import AddEditNotificationTemplate from '../components/AddEditNotificationTemplate';
 import { getNotificationTemplateChannelConfig } from '../notificationTemplateChannelConfig';
-import { formatRecipientRuleDisplay, stripHtmlBody } from '../notificationTemplateValidation';
+import { formatRecipientRuleDisplay, formatWhatsappButtons, stripHtmlBody } from '../notificationTemplateValidation';
 
 interface NotificationTemplatesTabProps {
   header: NotificationHeaderResponseVM;
@@ -40,7 +42,9 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
   const [popupOpen, setPopupOpen] = useState(false);
   const [load, setLoad] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [activationAction, setActivationAction] = useState<'deactivate' | 'reactivate'>('deactivate');
+  const [registeringTemplateId, setRegisteringTemplateId] = useState<number | null>(null);
   const [searchRecord, setSearchRecord] = useState({ language: '' });
 
   const {
@@ -52,6 +56,7 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
   });
 
   const [toggleTemplateActive] = useToggleNotificationTemplateActiveMutation();
+  const [registerWhatsAppTemplate] = useRegisterWhatsAppTemplateMutation();
   const { data: languages } = useGetAllLanguagesQuery({});
 
   const languageNameByKey = useMemo(() => {
@@ -123,8 +128,43 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
     setLoad(false);
   };
 
+  const handleRegisterWhatsAppTemplate = async () => {
+    if (!template?.id) return;
+    setRegisteringTemplateId(template.id);
+    setLoad(true);
+    try {
+      await registerWhatsAppTemplate(template.id).unwrap();
+      refetch();
+      dispatch(notify({ msg: 'WhatsApp template created successfully on Meta', sev: 'success' }));
+      setOpenRegisterModal(false);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to create WhatsApp template on Meta',
+          sev: 'error',
+        })
+      );
+    }
+    setRegisteringTemplateId(null);
+    setLoad(false);
+  };
+
   const iconsForActions = (rowData: NotificationTemplateResponseVM) => (
     <div className="container-of-icons">
+      {channel === 'WHATSAPP' && rowData?.id && (
+        <FaWhatsapp
+          title="Create WhatsApp Template on Meta"
+          size={22}
+          fill={registeringTemplateId === rowData.id ? 'var(--primary-gray)' : 'var(--deep-blue)'}
+          className={`icons-style${registeringTemplateId === rowData.id ? ' icons-style--loading' : ''}`}
+          onClick={event => {
+            event.stopPropagation();
+            if (registeringTemplateId) return;
+            setTemplate({ ...rowData });
+            setOpenRegisterModal(true);
+          }}
+        />
+      )}
       <MdModeEdit
         title="Edit"
         size={24}
@@ -185,7 +225,7 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
       ? [
           {
             key: 'subject',
-            title: <Translate>Subject</Translate>,
+            title: <Translate>{channel === 'WHATSAPP' ? 'Header' : 'Subject'}</Translate>,
             flexGrow: 2,
             render: (rowData: NotificationTemplateResponseVM) => rowData.subject ?? '-',
           },
@@ -259,6 +299,127 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
           },
         ]
       : []),
+    ...(fieldConfig.whatsappTemplateName
+      ? [
+          {
+            key: 'whatsappTemplateName',
+            title: <Translate>WhatsApp Template Name</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappTemplateName ?? '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappLanguageCode
+      ? [
+          {
+            key: 'whatsappLanguageCode',
+            title: <Translate>WhatsApp Language Code</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappLanguageCode
+                ? formatEnumString(rowData.whatsappLanguageCode)
+                : '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappParameters
+      ? [
+          {
+            key: 'whatsappParameters',
+            title: <Translate>WhatsApp Parameters</Translate>,
+            flexGrow: 3,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              truncateCell(
+                rowData.whatsappParameters?.length
+                  ? rowData.whatsappParameters.join(', ')
+                  : null,
+                80
+              ),
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappTemplateCategory
+      ? [
+          {
+            key: 'whatsappTemplateCategory',
+            title: <Translate>WhatsApp Category</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappTemplateCategory
+                ? formatEnumString(rowData.whatsappTemplateCategory)
+                : '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappHeaderType
+      ? [
+          {
+            key: 'whatsappHeaderType',
+            title: <Translate>WhatsApp Header Type</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappHeaderType ? formatEnumString(rowData.whatsappHeaderType) : '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappMetaTemplateFooter
+      ? [
+          {
+            key: 'whatsappMetaTemplateFooter',
+            title: <Translate>WhatsApp Footer</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              truncateCell(rowData.whatsappMetaTemplateFooter),
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappMetaTemplateButtons
+      ? [
+          {
+            key: 'whatsappMetaTemplateButtons',
+            title: <Translate>WhatsApp Buttons</Translate>,
+            flexGrow: 3,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              truncateCell(formatWhatsappButtons(rowData.whatsappMetaTemplateButtons), 80),
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappMetaTemplateId
+      ? [
+          {
+            key: 'whatsappMetaTemplateId',
+            title: <Translate>Meta Template ID</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappMetaTemplateId ?? '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappTemplateStatus
+      ? [
+          {
+            key: 'whatsappTemplateStatus',
+            title: <Translate>WhatsApp Template Status</Translate>,
+            flexGrow: 2,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappTemplateStatus
+                ? formatEnumString(rowData.whatsappTemplateStatus)
+                : '-',
+          },
+        ]
+      : []),
+    ...(fieldConfig.whatsappTemplateVersion
+      ? [
+          {
+            key: 'whatsappTemplateVersion',
+            title: <Translate>Template Version</Translate>,
+            flexGrow: 1,
+            render: (rowData: NotificationTemplateResponseVM) =>
+              rowData.whatsappTemplateVersion ?? '-',
+          },
+        ]
+      : []),
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
@@ -327,6 +488,16 @@ const NotificationTemplatesTab: React.FC<NotificationTemplatesTabProps> = ({ hea
         itemToDelete="Notification Template"
         actionButtonFunction={handleToggle}
         actionType={activationAction}
+      />
+
+      <DeletionConfirmationModal
+        open={openRegisterModal}
+        setOpen={setOpenRegisterModal}
+        itemToDelete="WhatsApp Template"
+        actionButtonFunction={handleRegisterWhatsAppTemplate}
+        actionType="confirm"
+        actionButtonLabel="Create on Meta"
+        confirmationQuestion={`Create the WhatsApp template "${template.whatsappTemplateName || getLanguageName(template.language)}" on Meta?`}
       />
     </>
   );

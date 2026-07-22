@@ -1,4 +1,4 @@
-import { NotificationTemplateChannel, RecipientRule } from '@/types/model-types-new';
+import { NotificationTemplateChannel, RecipientRule, WhatsAppButton } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 
 export const RECIPIENT_RULE_VALUES: RecipientRule[] = [
@@ -9,7 +9,9 @@ export const RECIPIENT_RULE_VALUES: RecipientRule[] = [
   'PRACTITIONER_USER',
   'DEPARTMENT_USERS',
   'CURRENT_USER',
+  'CURRENT_USER_PHONE',
   'CREATED_BY_USER',
+  'CREATED_BY_USER_PHONE',
   'DATA',
   'STATIC',
 ];
@@ -104,6 +106,118 @@ export const stripHtmlBody = (html?: string | null): string =>
 
 export const isHtmlBodyEmpty = (html?: string | null): boolean => !stripHtmlBody(html);
 
+export const parseWhatsappParameters = (
+  value?: string | string[] | null
+): string[] => {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item).trim()).filter(Boolean);
+  }
+
+  if (!value?.trim()) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+};
+
+export const formatWhatsappParameters = (value?: string[] | null): string =>
+  (value ?? []).join(', ');
+
+export const formatWhatsappButtons = (
+  buttons?: {
+    type?: string | null;
+    text?: string | null;
+    url?: string | null;
+    phoneNumber?: string | null;
+    couponCode?: string | null;
+    flowId?: string | null;
+  }[] | null
+): string => {
+  if (!buttons?.length) return '';
+
+  return buttons
+    .map(button => {
+      const type = button.type ? formatEnumString(button.type) : 'Button';
+      const text = button.text?.trim();
+      const details = [button.url, button.phoneNumber, button.couponCode, button.flowId]
+        .map(value => value?.trim())
+        .filter(Boolean)
+        .join(' | ');
+      if (text && details) return `${type}: ${text} (${details})`;
+      if (text) return `${type}: ${text}`;
+      if (details) return `${type}: ${details}`;
+      return type;
+    })
+    .filter(Boolean)
+    .join(', ');
+};
+
+export const sanitizeWhatsappTemplateNameInput = (value?: string | null): string => {
+  if (!value) return '';
+
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+};
+
+export const normalizeWhatsappTemplateName = (value?: string | null): string => {
+  if (!value) return '';
+
+  return sanitizeWhatsappTemplateNameInput(value)
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+};
+
+const toOptionalString = (value?: string | null): string | null => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+const toOptionalEnum = (value?: string | null): string | null => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+const normalizeWhatsappButton = (button: WhatsAppButton): WhatsAppButton => ({
+  type: toOptionalEnum(button.type),
+  text: toOptionalString(button.text),
+  url: toOptionalString(button.url),
+  phoneNumber: toOptionalString(button.phoneNumber),
+  couponCode: toOptionalString(button.couponCode),
+  flowId: toOptionalString(button.flowId),
+});
+
+export const normalizeNotificationTemplatePayload = <
+  T extends NotificationTemplateFormValues & {
+    whatsappTemplateCategory?: string | null;
+    whatsappHeaderType?: string | null;
+    whatsappMetaTemplateFooter?: string | null;
+    whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  },
+>(
+  dto: T
+): T => ({
+  ...dto,
+  subject: toOptionalString(dto.subject),
+  title: toOptionalString(dto.title),
+  body: toOptionalString(dto.body),
+  toRecipientRule: toOptionalString(dto.toRecipientRule),
+  ccRecipientRule: toOptionalString(dto.ccRecipientRule),
+  bccRecipientRule: toOptionalString(dto.bccRecipientRule),
+  phoneRecipientRule: toOptionalString(dto.phoneRecipientRule),
+  whatsappLanguageCode: toOptionalEnum(dto.whatsappLanguageCode),
+  whatsappTemplateCategory: toOptionalEnum(dto.whatsappTemplateCategory),
+  whatsappHeaderType: toOptionalEnum(dto.whatsappHeaderType),
+  whatsappMetaTemplateFooter: toOptionalString(dto.whatsappMetaTemplateFooter),
+  whatsappMetaTemplateButtons: dto.whatsappMetaTemplateButtons?.length
+    ? dto.whatsappMetaTemplateButtons.map(normalizeWhatsappButton)
+    : null,
+});
+
 export interface NotificationTemplateFormValues {
   language?: string | null;
   subject?: string | null;
@@ -113,6 +227,13 @@ export interface NotificationTemplateFormValues {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: string | null;
+  whatsappParameters?: string[] | null;
+  whatsappTemplateCategory?: string | null;
+  whatsappHeaderType?: string | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
 }
 
 export const validateNotificationTemplate = (
@@ -140,6 +261,20 @@ export const validateNotificationTemplate = (
   if (channel === 'SMS' || channel === 'WHATSAPP') {
     if (!dto.phoneRecipientRule?.trim()) {
       errors.push('Phone recipient rule is required for SMS/WhatsApp');
+    }
+  }
+
+  if (channel === 'WHATSAPP') {
+    if (!dto.whatsappTemplateName?.trim()) {
+      errors.push('WhatsApp template name is required');
+    } else if (!/^[a-z0-9_]+$/.test(dto.whatsappTemplateName.trim())) {
+      errors.push('WhatsApp template name must contain only lowercase letters, numbers, and underscores');
+    }
+    if (!dto.whatsappLanguageCode?.trim()) {
+      errors.push('WhatsApp language code is required');
+    }
+    if (!dto.body?.trim()) {
+      errors.push('WhatsApp body is required');
     }
   }
 
