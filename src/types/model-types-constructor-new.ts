@@ -3152,6 +3152,17 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedDate: null
 };
 
+export const newOCRParsingResponseDTO: modelTypes.OCRParsingResponseDTO = {
+  type: '',
+   documentNumber: undefined,
+   familyName: '',
+   givenNames: '',
+   nationality: '',
+   dateOfBirth: null, // change it later
+   sex : '',// change it later
+   placeOfBirth: ''
+}
+
 export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
   code: '',
   name: '',

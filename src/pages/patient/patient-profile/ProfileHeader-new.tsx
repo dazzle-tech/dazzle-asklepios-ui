@@ -150,6 +150,10 @@ const {  patientLabelMenuItem,
     }
   };
 
+const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -509,9 +513,9 @@ const {  patientLabelMenuItem,
                 justifyContent: 'flex-end'
               }}
             >
-              {/* <MyButton onClick={handleScanDocumentClick}>
+              <MyButton onClick={handleScanDocumentClick}>
                 <Translate>Scan Document</Translate>
-              </MyButton> */}
+              </MyButton>
 
               <MyButton
                 disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
@@ -626,6 +630,8 @@ const {  patientLabelMenuItem,
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
       {patientInformationModal}
       {patientLabelModal}
