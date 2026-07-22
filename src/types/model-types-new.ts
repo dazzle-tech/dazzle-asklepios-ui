@@ -4903,6 +4903,16 @@ export interface PatientProblem {
   lastModifiedDate?: string | Date | null;
 }
 
+export interface OCRParsingResponseDTO {
+   type: string | null;
+   documentNumber: number | null;
+   familyName: string | null;
+   givenNames: string | null;
+   nationality: string | null,
+   dateOfBirth: Date | null,  // change it later
+   sex : string | null, // change it later
+   placeOfBirth: string;
+}
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
 export type NotificationModule = string;
