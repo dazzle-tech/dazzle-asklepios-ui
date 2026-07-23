@@ -63,6 +63,7 @@ import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { emailSettingsService } from './services/system-configurations/emailSettingsService';
+import { whatsappSettingsService } from './services/system-configurations/whatsappSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -354,6 +355,7 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
     [emailSettingsService.reducerPath]: emailSettingsService.reducer,
+    [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
@@ -637,6 +639,7 @@ export const store = configureStore({
         departmentService.middleware,
         organizationDefinitionService.middleware,
         emailSettingsService.middleware,
+        whatsappSettingsService.middleware,
         roleService.middleware,
         userRoleService.middleware,
         enumService.middleware,
