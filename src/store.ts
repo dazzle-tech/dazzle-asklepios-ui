@@ -231,6 +231,7 @@ import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncou
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -577,6 +578,7 @@ export const store = configureStore({
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
+    [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
   
@@ -782,6 +784,7 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
+        patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
         ocrParsingService.middleware
