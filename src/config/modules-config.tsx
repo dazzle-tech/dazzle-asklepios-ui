@@ -176,6 +176,7 @@ export const MODULES: Module[] =
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
         { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
+        { name: "WhatsApp Settings", code: "WHATSAPP_SETTINGS", description: "", icon: "FaWhatsapp", viewOrder: 0.6, navPath: "whatsapp-settings" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
