@@ -1,6 +1,12 @@
 import { Icon } from '@rsuite/icons';
 import Box from '@mui/material/Box';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
@@ -23,213 +29,217 @@ import Error500Page from './pages/authentication/500';
 import Error503Page from './pages/authentication/503';
 import AuthGuard from './pages/authentication/AuthGuard';
 import SignInPage from './pages/authentication/sign-in';
-import Dashboard from './pages/dashboard';
-import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
-import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
-import DentalProcedures from './pages/encounter/dental-procedures/DentalProcedures';
-import Dental from './pages/encounter/dental-screen';
-import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
-import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
-import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
-import BloodOrder from './pages/encounter/encounter-component/blood-order';
-import Cardiology from './pages/encounter/encounter-component/cardiology';
-import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-and-goals';
-import ConsultationNew from './pages/encounter/encounter-component/consultation-new';
-import DayCaseContent from './pages/encounter/encounter-component/day-case-content';
-import DiagnosticsOrderNew from './pages/encounter/encounter-component/diagnostics-order-new';
-import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
-import DialysisRequest from './pages/encounter/encounter-component/dialysis-request/DialysisRequest';
-import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
-import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
-import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
-import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
-import DrugOrderNew from './pages/encounter/encounter-component/drug-order-new';
-import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
-import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma-scale';
-import HendrichFallRisk from './pages/encounter/encounter-component/hendrich-fall-risk';
-import ICU from './pages/encounter/encounter-component/i.c.u/ICU';
-import IntakeOutputBalance from './pages/encounter/encounter-component/intake-output-balance';
-import IVFluidAdministration from './pages/encounter/encounter-component/iv-fluid-administration/IVFluidAdministration';
-import IVFluidOrder from './pages/encounter/encounter-component/iv-fluid-order';
-import MAR from './pages/encounter/encounter-component/mar';
-import MedicationsRecord from './pages/encounter/encounter-component/medications-record';
-import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
-import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
-import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
-import OccupationalTherapy from './pages/encounter/encounter-component/occupational-therapy';
-import OperationRequestNew from './pages/encounter/encounter-component/operation-request-new/OperationRequest';
-import OptometricExam from './pages/encounter/encounter-component/optometric-exam';
-import SlidingScale from './pages/encounter/encounter-component/order-details';
-import PatientHistory from './pages/encounter/encounter-component/patient-history';
-import PatientSummary from './pages/encounter/encounter-component/patient-summary';
-import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component';
-import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
-import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
-import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
-import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
-import ProcedureNew from './pages/encounter/encounter-component/procedure-new/Procedure';
+  const Dashboard = lazy(() => import('./pages/dashboard'));
+  const ContinuousObservations = lazy(() => import ('./pages/encounter/continuous-observations/ContinuousObservations'));
+  const DayCaseList= lazy (() => import('./pages/encounter/day-case/DayCaseList/DayCaseList'));
+  const DentalProcedures = lazy (() => import ('./pages/encounter/dental-procedures/DentalProcedures'));
+  const Dental = lazy (() => import ( './pages/encounter/dental-screen'));
+  const ReferralRequest = lazy (() => import ( './pages/encounter/encounter-component/add-referral-request'));
+  const AudiometryPuretone = lazy (() => import ( './pages/encounter/encounter-component/audiometry-puretone'));
+  const BedsideProceduresRequests = lazy (() => import ( './pages/encounter/encounter-component/bedside-procedures-requests'));
+  const BloodOrder = lazy (() => import ( './pages/encounter/encounter-component/blood-order'));
+  const Cardiology = lazy (() => import ( './pages/encounter/encounter-component/cardiology'));
+  const CarePlanAndGoals = lazy (() => import ( './pages/encounter/encounter-component/care-plan-and-goals'));
+  const ConsultationNew = lazy (() => import ( './pages/encounter/encounter-component/consultation-new'));
+  const DayCaseContent = lazy (() => import ( './pages/encounter/encounter-component/day-case-content'));
+  const DiagnosticsOrderNew = lazy (() => import ( './pages/encounter/encounter-component/diagnostics-order-new'));
+const DiagnosticsResult = lazy (() => import ( './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult'));
+const DialysisRequest = lazy (() => import ( './pages/encounter/encounter-component/dialysis-request/DialysisRequest'));
+const DietaryRequest = lazy (() => import ( './pages/encounter/encounter-component/dietary-request/DietaryRequests'));
+const DischargePlanning = lazy (() => import ( './pages/encounter/encounter-component/discharged-planning'));
+const DoctorRound = lazy (() => import ( './pages/encounter/encounter-component/doctor-round/DoctorRound'));
+const ViewRound = lazy (() => import ( './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound'));
+const DrugOrderNew = lazy (() => import ( './pages/encounter/encounter-component/drug-order-new'));
+const JohnsHopkinsTool = lazy (() => import ( './pages/encounter/encounter-component/fall-risk-assessments'));
+const GlasgowComaScale = lazy (() => import ( './pages/encounter/encounter-component/glasgow-coma-scale'));
+const HendrichFallRisk = lazy (() => import ( './pages/encounter/encounter-component/hendrich-fall-risk'));
+const ICU = lazy (() => import ( './pages/encounter/encounter-component/i.c.u/ICU'));
+const IntakeOutputBalance = lazy (() => import ( './pages/encounter/encounter-component/intake-output-balance'));
+const IVFluidAdministration = lazy (() => import ( './pages/encounter/encounter-component/iv-fluid-administration/IVFluidAdministration'));
+const IVFluidOrder = lazy (() => import ( './pages/encounter/encounter-component/iv-fluid-order'));
+const MAR = lazy (() => import ( './pages/encounter/encounter-component/mar'));
+const MedicationsRecord = lazy (() => import ( './pages/encounter/encounter-component/medications-record'));
+const MorseFallScale = lazy (() => import ( './pages/encounter/encounter-component/morse-fall-scale'));
+const MultidisciplinaryTeamNotes = lazy (() => import ( './pages/encounter/encounter-component/multidisciplinary-team-notes'));
+const NutritionStateAsssessment = lazy (() => import ( './pages/encounter/encounter-component/nutrition-state-asssessment'));
+const OccupationalTherapy = lazy (() => import ( './pages/encounter/encounter-component/occupational-therapy'));
+const OperationRequestNew = lazy (() => import ( './pages/encounter/encounter-component/operation-request-new/OperationRequest'));
+const OptometricExam = lazy (() => import ( './pages/encounter/encounter-component/optometric-exam'));
+const SlidingScale = lazy (() => import ( './pages/encounter/encounter-component/order-details'));
+const PatientHistory = lazy (() => import ( './pages/encounter/encounter-component/patient-history'));
+const PatientSummary = lazy (() => import ( './pages/encounter/encounter-component/patient-summary'));
+const PhysicianOrderSummary = lazy (() => import ( './pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component'));
+const PhysiotherapyPlan = lazy (() => import ( './pages/encounter/encounter-component/physiotherapy-plan'));
+const PregnancyFollowup = lazy (() => import ( './pages/encounter/encounter-component/pregnancy-follow-up'));
+const PrescriptionNew = lazy (() => import ( './pages/encounter/encounter-component/prescription-new'));
+const PressureUlcerRiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/pressure-ulce-risk-assessment'));
+const ProcedureNew = lazy (() => import ( './pages/encounter/encounter-component/procedure-new/Procedure'));
 
 import { MODULES } from '@/config/modules-config';
-import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTemplateList';
-import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
-import Accounting from './pages/billing-module';
-import CreatePassword from './pages/create-password/CreatePassword';
-import InsuranceEligibilityRequests from './pages/Waseel integration/insurance-eligibility-requests';
-import CreatePatientPassword from './pages/patient/patient-profile/CreatePatientPassword';
-import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
-import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
-import SOAP from './pages/encounter/encounter-component/s.o.a.p';
-import SpeechTherapy from './pages/encounter/encounter-component/speech-therapy';
-import StratifyScale from './pages/encounter/encounter-component/stratify-scale';
-import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccord';
-import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
-import EncounterList from './pages/encounter/encounter-list';
-import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
-import Allergies from './pages/encounter/encounter-pre-observations-new/AllergiesNurse';
-import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
-import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
-import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
-import Warning from './pages/encounter/encounter-pre-observations-new/warning';
-import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
-import EncounterRegistration from './pages/encounter/encounter-registration';
-import Encounter from './pages/encounter/encounter-screen';
-import ERDashboardsNew from './pages/encounter/ER-triage-new/Er-dashboard/ERDashboard';
-import ERTabsDepartmentAndWaitingListNew from './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList';
-import ERStartTriageNew from './pages/encounter/ER-triage-new/Triage/ERStartTriage';
-import ERTriageNew from './pages/encounter/ER-triage-new/Triage/ERTriage';
-import QuickVisitNew from './pages/encounter/ER-triage-new/Triage/QuickVisit';
-import ViewTriageNew from './pages/encounter/ER-triage-new/Triage/ViewTriage';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
-import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
-import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
-import InpatientList from './pages/Inpatient/inpatientList';
-import InpatientWaitingLists from './pages/Inpatient/waitingList/InpatientWaitingLists';
-import ProductSetup from './pages/inventory-management/product-setup/ProductSetup';
-import InventoryTransactionNew from './pages/inventory-transaction/inventory-transaction-new';
-import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
-import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
-import ProductCatalog from './pages/inventory-transaction/product-catalog';
-import Lab from './pages/lab-module-new';
-import ListOfRequisition from './pages/list-of-requisition';
-import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
-import GenericMedications from './pages/medications/generic-medications-new';
-import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
-import Operation from './pages/operation-module';
-import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
-import PatientOldFacilityPatientList from './pages/patient-old/facility-patient-list';
-import PatientChartLegacy from './pages/patient-old/patient-chart';
-import PatientEMRLegacy from './pages/patient-old/patient-emr';
-import PatientListLegacy from './pages/patient-old/patient-list';
-import PatientMergeFilesLegacy from './pages/patient-old/patient-merge-files';
-import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
-import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
-import PatientChart from './pages/patient/patient-chart';
-import PatientEMR from './pages/patient/patient-emr';
-import PatientList from './pages/patient/patient-list';
-import PatientMergeFiles from './pages/patient/patient-merge-files';
-import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
-import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
-import ControlledMedications from './pages/pharmacy/controlled-medications';
-import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
-import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
-import Playground from './pages/playground';
-import ProcedureModule from './pages/procedure-module/ProcedureModule';
-import PurchasingRequisition from './pages/purchasing-requisition/PurchasingRequisition';
-import Questionnaire from './pages/questionnaire-setup/Questionnaire';
-import Rad from './pages/rad-module/RadiologyMain';
-import Recovery from './pages/recovery';
-import ResetPassword from './pages/reset-password/ResetPassword';
-import AccessRoles from './pages/setup/access-roles';
-import AgeGroupSetup from './pages/setup/age-group';
-import Allergens from './pages/setup/allergens-setup';
-import Room from './pages/setup/bed-room-setup';
-import Catalog from './pages/setup/catalog-setup-new';
-import CDTSetup from './pages/setup/cdt-setup';
-import CPTSetup from './pages/setup/cpt-setup';
-import DentalActions from './pages/setup/dental-actions-new';
-import NewDepartments from './pages/setup/departments-setup/Departments-new';
-import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
-import DVM from './pages/setup/dvm-setup';
-import ICD10Setup from './pages/setup/icd10-setup';
-import LOINCSetup from './pages/setup/lonic-setup';
-import Lov from './pages/setup/lov-setup';
-import MedicationMatrix from './pages/setup/med-matrix-setup-new';
-import MedicationSchedule from './pages/setup/medication-schedule-setup';
-import Metadata from './pages/setup/metadata-view';
-import Modules from './pages/setup/modules-setup';
-import OperationSetup from './pages/setup/operation-setup';
-import Checklist from './pages/setup/operations/checklist';
-import PotintialDuplicate from './pages/setup/potential-duplicate - new';
-import Practitioners from './pages/setup/practioners-setup-new';
-import ProcedureSetup from './pages/setup/procedure-setup';
-import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
-import ReportResultTemplate from './pages/setup/report-result-template';
-import ServiceSetup from './pages/setup/service-setup';
-import Shifts from './pages/setup/shift-setup';
-import SupplierSetup from './pages/setup/supplier-setup/Supplier';
-import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
-import UOMGroup from './pages/setup/uom-group-new';
-import Vaccine from './pages/setup/vaccine-setup';
-import VisitDurationSetup from './pages/setup/visit-duration-setup';
-import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
-import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
-import Facilities from './pages/system-configurations/facilities-setup';
-import UsersNew from './pages/system-configurations/users-setup-new';
+const ApplyTemplateList = lazy (() => import ( './pages/appointments-new/ApplyTemplate/ApplyTemplateList'));
+const ScheduleScreen = lazy (() => import ( './pages/appointments-new/scheduling-screen/ScheduleScreen'));
+const Accounting = lazy (() => import ( './pages/billing-module'));
+const CreatePassword = lazy (() => import ( './pages/create-password/CreatePassword'));
+const InsuranceEligibilityRequests = lazy (() => import ( './pages/Waseel integration/insurance-eligibility-requests'));
+const CreatePatientPassword = lazy (() => import ( './pages/patient/patient-profile/CreatePatientPassword'));
+const ProgressNotes = lazy (() => import ( './pages/encounter/encounter-component/progress-notes/ProgressNotes'));
+const PsychologicalExam = lazy (() => import ( './pages/encounter/encounter-component/psychological-exam'));
+const SOAP = lazy (() => import ( './pages/encounter/encounter-component/s.o.a.p'));
+const SpeechTherapy = lazy (() => import ( './pages/encounter/encounter-component/speech-therapy'));
+const StratifyScale = lazy (() => import ( './pages/encounter/encounter-component/stratify-scale'));
+const VaccineReccord = lazy (() => import ( './pages/encounter/encounter-component/vaccine-reccord'));
+const VTERiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/vte-risk-assessment'));
+const EncounterList = lazy (() => import ( './pages/encounter/encounter-list'));
+const EncounterPatientPrivateLogin = lazy (() => import ( './pages/encounter/encounter-patient-private'));
+const Allergies = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/AllergiesNurse'));
+const EncounterPreObservationsNew = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/EncounterPreObservations'));
+const Observations = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/observations/Observations'));
+const VaccinationTab = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/vaccination-tab'));
+const Warning = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/warning'));
+const InpatientNurseStation = lazy (() => import ( './pages/encounter/encounter-pre-observations/InpatientNurseStation'));
+const EncounterRegistration = lazy (() => import ( './pages/encounter/encounter-registration'));
+const Encounter = lazy (() => import ( './pages/encounter/encounter-screen'));
+const ERDashboardsNew = lazy (() => import ( './pages/encounter/ER-triage-new/Er-dashboard/ERDashboard'));
+const ERTabsDepartmentAndWaitingListNew = lazy (() => import ( './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList'));
+const ERStartTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERStartTriage'));
+const ERTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERTriage'));
+const QuickVisitNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/QuickVisit'));
+const ViewTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ViewTriage'));
+const NeonatesPainAssessment = lazy (() => import ( './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment'));
+const TeleconsultationScreen = lazy (() => import ( './pages/encounter/tele-consultation-screen'));
+const StartTeleConsultation = lazy (() => import ( './pages/encounter/tele-consultation-screen/start-tele-consultation'));
+const DepartmentStock = lazy (() => import ( './pages/Inpatient/departmentStock/DepartmentStock'));
+const InpatientList = lazy (() => import ( './pages/Inpatient/inpatientList'));
+const InpatientWaitingLists = lazy (() => import ( './pages/Inpatient/waitingList/InpatientWaitingLists'));
+const ProductSetup = lazy (() => import ( './pages/inventory-management/product-setup/ProductSetup'));
+const InventoryTransactionNew = lazy (() => import ( './pages/inventory-transaction/inventory-transaction-new'));
+const InventoryTransferApproval = lazy (() => import ( './pages/inventory-transaction/inventory-transfer-approval'));
+const InventoryTransferNew = lazy (() => import ( './pages/inventory-transaction/inventory-transfer-new'));
+const ProductCatalog = lazy (() => import ( './pages/inventory-transaction/product-catalog'));
+const Lab = lazy (() => import ( './pages/lab-module-new'));
+const ListOfRequisition = lazy (() => import ( './pages/list-of-requisition'));
+const ActiveIngredientsSetup = lazy (() => import ( './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup'));
+const GenericMedications = lazy (() => import ( './pages/medications/generic-medications-new'));
+const PrescriptionInstructions = lazy (() => import ( './pages/medications/prescription_instructions-new'));
+const Operation = lazy (() => import ( './pages/operation-module'));
+const OperationRoomMaterials = lazy (() => import ( './pages/operation-theater/operation-room-materials/OperationRoomMaterials'));
+const PatientOldFacilityPatientList = lazy (() => import ( './pages/patient-old/facility-patient-list'));
+const PatientChartLegacy = lazy (() => import ( './pages/patient-old/patient-chart'));
+const PatientEMRLegacy = lazy (() => import ( './pages/patient-old/patient-emr'));
+const PatientListLegacy = lazy (() => import ( './pages/patient-old/patient-list'));
+const PatientMergeFilesLegacy = lazy (() => import ( './pages/patient-old/patient-merge-files'));
+const PatientProfileOLD = lazy (() => import ( './pages/patient-old/patient-profile/PatientProfileCopy-new'));
+const FacilityPatientList = lazy (() => import ( './pages/patient/facility-patient-list/FacilityPatientList'));
+const PatientChart = lazy (() => import ( './pages/patient/patient-chart'));
+const PatientEMR = lazy (() => import ( './pages/patient/patient-emr'));
+const PatientList = lazy (() => import ( './pages/patient/patient-list'));
+const PatientMergeFiles = lazy (() => import ( './pages/patient/patient-merge-files'));
+const PatientProfileNew = lazy (() => import ( './pages/patient/patient-profile/PatientProfileCopy-new'));
+const PatientQuickAppointment = lazy (() => import ( './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment'));
+const ControlledMedications = lazy (() => import ( './pages/pharmacy/controlled-medications'));
+const EPrepscriptions = lazy (() => import ( './pages/pharmacy/ePrescriptions/EPrescription'));
+const InternalDrugOrder = lazy (() => import ( './pages/pharmacy/internal-drug-order'));
+const Playground = lazy (() => import ( './pages/playground'));
+const ProcedureModule = lazy (() => import ( './pages/procedure-module/ProcedureModule'));
+const PurchasingRequisition = lazy (() => import ( './pages/purchasing-requisition/PurchasingRequisition'));
+const Questionnaire = lazy (() => import ( './pages/questionnaire-setup/Questionnaire'));
+const Rad = lazy (() => import ( './pages/rad-module/RadiologyMain'));
+const Recovery = lazy (() => import ( './pages/recovery'));
+const ResetPassword = lazy (() => import ( './pages/reset-password/ResetPassword'));
+const AccessRoles = lazy (() => import ( './pages/setup/access-roles'));
+const AgeGroupSetup = lazy (() => import ( './pages/setup/age-group'));
+const Allergens = lazy (() => import ( './pages/setup/allergens-setup'));
+const Room = lazy (() => import ( './pages/setup/bed-room-setup'));
+const Catalog = lazy (() => import ( './pages/setup/catalog-setup-new'));
+const CDTSetup = lazy (() => import ( './pages/setup/cdt-setup'));
+const CPTSetup = lazy (() => import ( './pages/setup/cpt-setup'));
+const DentalActions = lazy (() => import ( './pages/setup/dental-actions-new'));
+const NewDepartments = lazy (() => import ( './pages/setup/departments-setup/Departments-new'));
+const Diagnostics = lazy (() => import ( './pages/setup/diagnostics-tests-definition-new'));
+const DVM = lazy (() => import ( './pages/setup/dvm-setup'));
+const ICD10Setup = lazy (() => import ( './pages/setup/icd10-setup'));
+const LOINCSetup = lazy (() => import ( './pages/setup/lonic-setup'));
+const Lov = lazy (() => import ( './pages/setup/lov-setup'));
+const MedicationMatrix = lazy (() => import ( './pages/setup/med-matrix-setup-new'));
+const MedicationSchedule = lazy (() => import ( './pages/setup/medication-schedule-setup'));
+const Metadata = lazy (() => import ( './pages/setup/metadata-view'));
+const Modules = lazy (() => import ( './pages/setup/modules-setup'));
+const OperationSetup = lazy (() => import ( './pages/setup/operation-setup'));
+const Checklist = lazy (() => import ( './pages/setup/operations/checklist'));
+const PotintialDuplicate = lazy (() => import ( './pages/setup/potential-duplicate - new'));
+const Practitioners = lazy (() => import ( './pages/setup/practioners-setup-new'));
+const ProcedureSetup = lazy (() => import ( './pages/setup/procedure-setup'));
+const PurchaseApprovalSetup = lazy (() => import ( './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup'));
+const ReportResultTemplate = lazy (() => import ( './pages/setup/report-result-template'));
+const ServiceSetup = lazy (() => import ( './pages/setup/service-setup'));
+const Shifts = lazy (() => import ( './pages/setup/shift-setup'));
+const SupplierSetup = lazy (() => import ( './pages/setup/supplier-setup/Supplier'));
+const SurgicalKitsSetup = lazy (() => import ( './pages/setup/surgical-kits-setup'));
+const UOMGroup = lazy (() => import ( './pages/setup/uom-group-new'));
+const Vaccine = lazy (() => import ( './pages/setup/vaccine-setup'));
+const VisitDurationSetup = lazy (() => import ( './pages/setup/visit-duration-setup'));
+const WarehouseItemsSetup = lazy (() => import ( './pages/setup/warehouse-Items-setup'));
+const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/WarehouseSetup'));
+const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
+const UsersNew = lazy (() => import ( './pages/system-configurations/users-setup-new'));
 
 import 'survey-core/survey-core.min.css';
 import 'survey-creator-core/survey-creator-core.min.css';
-import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
-import MyConsultations from './components/MyConsultations/MyConsultations';
-import CallOverlay from './components/Overlay/CallOverlay';
-import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
-import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
-import Claimscreen from './pages/billing-module/billingClaims/Claims';
-import PriceLists from './pages/billing-module/priceList/PriceLists';
-import Pediatric from './pages/encounter/encounter-component/pediatric';
-import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
-import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
-import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
-import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
-import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
-import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
-import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
-import UrgentCareViewTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
-import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
-import FormTemplates from './pages/form-template/FormTemplate';
-import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
-import IncidentPortal from './pages/Incident/IncidentPortal';
-import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
-import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
-import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
-import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
-import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
-import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
-import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
-import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
-import FavoriteTests from './pages/review-results';
-import AvailabilityTemplatePage from './pages/setup/availability_template';
-import CountrySetup from './pages/setup/country-setup/CountrySetup';
-import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
-import Enums from './pages/setup/Enums';
-import LanguagesSetup from './pages/setup/language-setup/Language';
-import PayerSetup from './pages/setup/payer-setup';
-import PolicyDefinitions from './pages/setup/policy-definition';
-import SkillDefinitions from './pages/setup/skill-definition';
-import OrganizationDefinition from './pages/system-configurations/organization-definition';
-import EmailSettings from './pages/system-configurations/email-settings';
-import WhatsAppSettings from './pages/system-configurations/whatsapp-settings';
-import OrganizationHolidays from './pages/system-configurations/organization-holidays';
-import NotificationRule from './pages/notification-management/notification-rule';
-import EmailNotification from './pages/notification-management/email-notification';
-import SmsNotification from './pages/notification-management/sms-notification';
-import InAppNotification from './pages/notification-management/in-app-notification';
-import WhatsAppNotification from './pages/notification-management/whatsapp-notification';
+
+const FormTemplatesUseScreen = lazy (() => import ( './components/FormsTemplate/FormTemplatesUseScreen'));
+const MyConsultations = lazy (() => import ( './components/MyConsultations/MyConsultations'));
+const CallOverlay = lazy (() => import ( './components/Overlay/CallOverlay'));
+const AvailabilityTemplatePageNew = lazy (() => import ( './pages/appointments-new/availability-template-new'));
+const ErrorDepartmentTypePage = lazy (() => import ( './pages/authentication/error-department-type'));
+const Claimscreen = lazy (() => import ( './pages/billing-module/billingClaims/Claims'));
+const PriceLists = lazy (() => import ( './pages/billing-module/priceList/PriceLists'));
+const Pediatric = lazy (() => import ( './pages/encounter/encounter-component/pediatric'));
+const UccMedicationOrder = lazy (() => import ( './pages/encounter/encounter-component/ucc-medication-order'));
+const NurseAssessment = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment'));
+const PhysicianAssessment = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment'));
+const PreviousMeasurementsMainScreen = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen'));
+const ServiceAndProductsTab = lazy (() => import ( './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts'));
+const UrgentCareStartTriage = lazy (() => import ( './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage'));
+const UrgentCareTriage = lazy (() => import ( './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage'));
+const UrgentCareViewTriage = lazy (() => import ( './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage'));
+const UrgentCareListMain = lazy (() => import ( './pages/encounter/urgent-care/UrgentCateListMain'));
+const FormTemplates = lazy (() => import ( './pages/form-template/FormTemplate'));
+const FormTemplateBuilderPage = lazy (() => import ( './pages/form-template/FormTemplateBuilderPage'));
+const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
+const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
+const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
+const InventoryManagementTransferApproval = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transfer-approval'));
+const InventoryManagementTransfer = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transfer-new'));
+const InventoryManagementProductCatalog = lazy (() => import ( './pages/inventory-management/product-catalog'));
+const InventoryManagementProductSetup = lazy (() => import ( './pages/inventory-management/product-setup/ProductSetup'));
+const InventoryManagementWarehouseItemsSetup = lazy (() => import ( './pages/inventory-management/warehouse-Items-setup'));
+const InventoryManagementWarehouseSetup = lazy (() => import ( './pages/inventory-management/warehouse-setup/WarehouseSetup'));
+const FavoriteTests = lazy (() => import ( './pages/review-results'));
+const AvailabilityTemplatePage = lazy (() => import ( './pages/setup/availability_template'));
+const CountrySetup = React.lazy(() =>
+    import('./pages/setup/country-setup/CountrySetup')
+);
+const CountryDistrictPage = lazy (() => import ( './pages/setup/country-setup/district-country/CountryDistrictPage'));
+const Enums = lazy (() => import ( './pages/setup/Enums'));
+const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
+const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
+const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
+const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
+const OrganizationDefinition = lazy (() => import ( './pages/system-configurations/organization-definition'));
+const EmailSettings = lazy (() => import ( './pages/system-configurations/email-settings'));
+const WhatsAppSettings = lazy (() => import ( './pages/system-configurations/whatsapp-settings'));
+const OrganizationHolidays = lazy (() => import ( './pages/system-configurations/organization-holidays'));
+const NotificationRule = lazy (() => import ( './pages/notification-management/notification-rule'));
+const EmailNotification = lazy (() => import ( './pages/notification-management/email-notification'));
+const SmsNotification = lazy (() => import ( './pages/notification-management/sms-notification'));
+const InAppNotification = lazy (() => import ( './pages/notification-management/in-app-notification'));
+const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
+
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
-import PatientMergeConfig from '@/pages/setup/patient-merge-config/PatientMergeConfig';
+const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
-import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
-import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
+const WaseelPreAuthorizationRequests = lazy (() => import ( './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests'));
+const SystemConfiguration = lazy (() => import ( './pages/system-configurations/system-configuration-theme-setup'));
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -548,7 +558,9 @@ const dispatch = useAppDispatch();
 
       <MyToast />
       <SessionExpiredBackdrop />
+
       <CustomProvider locale={enGB}>
+      <Suspense fallback={<SystemLoader open />}>
         <Routes>
           <Route
             element={
@@ -579,7 +591,7 @@ const dispatch = useAppDispatch();
                   </Box>
                 </ProtectedRoute>
               </AuthGuard>
-            }
+            }   
           >
             {/* {/* protected routes (needs authintication) */}
             {/* TODO load them dynamically based on user authorization matrix */}
@@ -917,14 +929,18 @@ const dispatch = useAppDispatch();
               <Route path="system-configuration" element={<SystemConfiguration />} />
             </Route>
           </Route>
+
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
+      </Suspense>
+
         <CallOverlay />
       </CustomProvider>
+
     </IntlProvider>
   );
 };

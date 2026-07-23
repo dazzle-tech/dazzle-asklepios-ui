@@ -95,7 +95,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Patient History', code: 'PATIENT_HISTORY', icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />, path: '/patient-history', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
   { name: 'Referral Request', code: 'REFERRAL_REQUEST', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/referral-request', isDefaultMedicalSheet: true },
   // { name: 'Multidisciplinary Team Notes', code: 'MULTIDISCIPLINARY_TEAM_NOTES', icon: <FontAwesomeIcon icon={faComment} className="icon" />, path: '/multidisciplinary-team-notes' },
-  // { name: 'Discharge Planning', code: 'DISCHARGE_PLANNING', icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />, path: '/discharge-planning' },
+  { name: 'Discharge Planning', code: 'DISCHARGE_PLANNING', icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />, path: '/discharge-planning' },
   // { name: 'Bedside Procedures', code: 'BEDSIDE_PROCEDURES_REQUEST', icon: <FontAwesomeIcon icon={faSuitcaseMedical} className="icon" />, path: '/bedside-procedures-requests' },
   // { name: 'Blood Order', code: 'BLOOD_ORDER', icon: <FontAwesomeIcon icon={faDroplet} className="icon" />, path: '/blood-order' },
   // { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
