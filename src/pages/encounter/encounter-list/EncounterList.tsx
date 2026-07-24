@@ -816,7 +816,7 @@ const EncounterList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };

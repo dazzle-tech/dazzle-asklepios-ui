@@ -123,7 +123,7 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
   };
 
   useEffect(() => {
-    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'CLOSED' || encounter?.discharge) {
+    if (String(encounter?.status).toUpperCase() === 'COMPLETED' || encounter?.discharge) {
       setIsEncounterStatusClosed(true);
     }
   }, [encounter?.status, encounter?.encounterStatus, encounter?.discharge]);
