@@ -428,7 +428,7 @@ const EncounterPriorityAction = ({
 
 const UrgentCareTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
-  const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
+  const COMPLETE_TRIAGE_STATUS_CODE = 'COMPLETED';
 
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -571,7 +571,7 @@ const UrgentCareTriage = () => {
       'NEW',
       'ONGOING',
       'CANCELLED',
-      'CLOSED',
+      'COMPLETED',
       'DISCHARGED',
       'IN_OPERATION',
       'CONFIRM_RETURN',

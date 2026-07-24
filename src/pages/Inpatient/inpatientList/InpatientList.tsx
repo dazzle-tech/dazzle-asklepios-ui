@@ -185,7 +185,7 @@ useEffect(() => {
         state: {
           patient: patientData,
           encounter: encounterData,
-          edit: encounterData.encounterStatusLvalue.valueCode == 'CLOSED'
+          edit: encounterData.encounterStatusLvalue.valueCode == 'COMPLETED'
         }
       });
     }
