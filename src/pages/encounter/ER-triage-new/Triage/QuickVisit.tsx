@@ -82,7 +82,7 @@ const QuickVisit = () => {
     if (
       String(
         (localEncounter as any)?.status ?? (localEncounter as any)?.encounterStatus ?? ''
-      ).toUpperCase() === 'CLOSED'
+      ).toUpperCase() === 'COMPLETED'
     ) {
       setIsEncounterStatusClosed(true);
     }
@@ -123,7 +123,7 @@ const QuickVisit = () => {
                       (localEncounter as any)?.status ??
                         (localEncounter as any)?.encounterStatus ??
                         ''
-                    ).toUpperCase() !== 'CLOSED' && (
+                    ).toUpperCase() !== 'COMPLETED' && (
                       <MyButton
                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                         onClick={() =>
