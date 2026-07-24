@@ -63,13 +63,12 @@ const NurseStation = ({
     isFromEMR ||
     viewMode === 'readOnly' ||
     location.state?.edit ||
-    localEncounter?.status === 'CLOSED';
+    localEncounter?.status === 'COMPLETED';
 
   const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId

@@ -705,7 +705,7 @@ useEffect(() => {
         fromPage: 'Urgent_Care_List',
         patient: fullPatient,
         encounter: encounterData,
-        edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+        edit: String(encounterData?.status ?? '').toUpperCase() === 'COMPLETED'
       }
     });
   };
@@ -870,7 +870,7 @@ useEffect(() => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
+        if (statusUpper === 'COMPLETED') {
           return <span className="location-table-style">Closed</span>;
         }
 
@@ -990,7 +990,7 @@ useEffect(() => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -1090,7 +1090,7 @@ useEffect(() => {
               </div>
             </Whisper>
 
-            {statusUpper !== 'CLOSED' &&
+            {statusUpper !== 'COMPLETED' &&
               statusUpper !== 'DISCHARGED' &&
               statusUpper !== 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
