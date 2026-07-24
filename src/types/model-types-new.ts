@@ -2252,6 +2252,7 @@ export interface PatientEncounter {
   notes?: string | null;
 
   status: string;
+  encounterStatus: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
@@ -2417,6 +2418,7 @@ export interface PatientEncounter {
   encounterReason: string;
   priorityLevel: string;
   status: string;
+  encounterStatus: string;
 
   followUpEncounter?: {
     id: number;
@@ -2707,6 +2709,7 @@ export interface PatientEncounter {
   encounterDate?: Date | null;
 
   status: string;
+    encounterStatus: string;
 
   chiefComplaint?: string | null;
 

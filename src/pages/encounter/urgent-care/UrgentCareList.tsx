@@ -1003,6 +1003,29 @@ useEffect(() => {
         );
       }
     },
+        {
+          key :'encounterStatus',
+          title: 'ENCOUNTER STATUS',
+          render: (row: any) => {
+            const statusUpper = String(row?.encounterStatus ?? '').toUpperCase();
+            const statusColorMap: Record<string, string> = {
+              OPEN: '#0d6efd',
+              IN_PROGRESS: '#198754',
+        
+              CANCELLED: '#ffc107',
+              CLOSED: '#6c757d'
+            };  
+    
+            return (
+              <MyBadgeStatus
+                color={statusColorMap[statusUpper] ?? '#969fb0'}
+                contant={formatEnumString(row?.encounterStatus) ?? row?.encounterStatus ?? ''}
+              />
+            );
+          }
+    
+    
+        },
     {
       key: 'actions',
       title: ' ',
