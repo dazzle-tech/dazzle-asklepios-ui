@@ -826,8 +826,8 @@ const ERList = () => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
+        if (statusUpper === 'COMPLETED') {
+          return <span className="location-table-style">Completed</span>;
         }
 
         const assignments = row?.activeAssignmentsForEncounter ?? [];
@@ -925,7 +925,7 @@ const ERList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -973,7 +973,7 @@ const ERList = () => {
               </div>
             </Whisper>
 
-            {statusUpper != 'CLOSED' &&
+            {statusUpper != 'COMPLETED' &&
               statusUpper != 'DISCHARGED' &&
               statusUpper != 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
