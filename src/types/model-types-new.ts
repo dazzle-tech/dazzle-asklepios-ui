@@ -5362,3 +5362,454 @@ export type SaveDiscountRequest = {
   description?:
     string | null;
 };
+export type BillingWalletStatus =
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'BLOCKED'
+  | 'CLOSED';
+
+export type BillingChargeStatus =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingChargeLineStatus =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingResponsibilityStatus =
+  | 'CALCULATED'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'SUPERSEDED';
+
+export type ResponsiblePartyType =
+  | 'PATIENT'
+  | 'INSURANCE'
+  | 'OTHER_PAYER';
+
+export type ResponsibilityRole =
+  | 'PRIMARY'
+  | 'SECONDARY'
+  | 'TERTIARY'
+  | string;
+
+export type BillingLedgerSourceChannel =
+  | 'BILLING_ENGINE'
+  | 'CASHIER'
+  | 'PATIENT_PORTAL'
+  | 'INSURANCE'
+  | 'API'
+  | 'SYSTEM'
+  | 'MANUAL';
+
+export type BillingPaymentStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export type BillingPaymentTransactionStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingPaymentTransactionType =
+  | 'PAYMENT'
+  | 'AUTHORIZATION'
+  | 'CAPTURE'
+  | 'REFUND'
+  | 'VOID'
+  | 'REVERSAL';
+
+export type BillingRefundStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'PROCESSING'
+  | 'PARTIALLY_COMPLETED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'REVERSED'
+  | 'FAILED';
+
+export type BillingRefundSourceType =
+  | 'ORIGINAL_PAYMENT'
+  | 'AVAILABLE_WALLET'
+  | string;
+
+export type BillingCancellationReason =
+  | 'SERVICE_DELETED'
+  | 'QUANTITY_ZERO'
+  | 'ENCOUNTER_CANCELLED'
+  | 'SERVICE_CANCELLED'
+  | 'ORDER_CANCELLED'
+  | 'CLINICAL_DECISION'
+  | 'DUPLICATE_ENTRY'
+  | 'MANUAL_CANCELLATION';
+
+export type BillingWalletSummary = {
+  walletId: number | null;
+  creditedAmount: number;
+  availableBalance: number;
+  reservedBalance: number;
+  consumedAmount: number;
+  refundedAmount: number;
+  currency: Currency | null;
+  status: BillingWalletStatus | null;
+};
+
+export type BillingResponsibilitySummary = {
+  responsibilityId: number;
+  responsiblePartyType: ResponsiblePartyType;
+  responsibilityRole: ResponsibilityRole;
+  payerId: number | null;
+  patientInsuranceId: number | null;
+  responsibilityAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  coveragePercentage: number;
+  deductibleAmount: number;
+  copayAmount: number;
+  coinsuranceAmount: number;
+  nonCoveredAmount: number;
+  currency: Currency;
+  status: BillingResponsibilityStatus;
+};
+
+export type EncounterBillingItemSummary = {
+  patientServiceProductId: number | null;
+  chargeLineId: number;
+  billingItemType: string | null;
+  sourceId: number | null;
+  itemCode: string | null;
+  itemName: string | null;
+  quantity: number;
+  unitPrice: number;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  patientResponsibilityAmount: number;
+  insuranceResponsibilityAmount: number;
+  otherPayerResponsibilityAmount: number;
+  reservedAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  exempted: boolean;
+  currency: Currency;
+  status: BillingChargeLineStatus;
+  responsibilities: BillingResponsibilitySummary[];
+};
+
+export type EncounterBillingSummary = {
+  chargeId: number | null;
+  chargeNumber: string | null;
+  patientId: number;
+  encounterId: number;
+  chargeDate: string | null;
+  currency: Currency | null;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  lineCount: number;
+  chargeStatus: BillingChargeStatus | null;
+  patientResponsibilityAmount: number;
+  patientAllocatedAmount: number;
+  patientOutstandingAmount: number;
+  insuranceResponsibilityAmount: number;
+  insuranceAllocatedAmount: number;
+  insuranceOutstandingAmount: number;
+  otherPayerResponsibilityAmount: number;
+  otherPayerAllocatedAmount: number;
+  otherPayerOutstandingAmount: number;
+  wallet: BillingWalletSummary;
+  items: EncounterBillingItemSummary[];
+};
+
+export type CreateAdvancePaymentRequest = {
+  patientId: number;
+  encounterId?: number | null;
+  paymentCategory: string;
+  payerType: string;
+  payerId?: number | null;
+  amount: number;
+  currency: Currency;
+  paymentStatus: BillingPaymentStatus;
+  transactionType: BillingPaymentTransactionType;
+  paymentMethodId: number;
+  paymentMethodCode: string;
+  transactionStatus: BillingPaymentTransactionStatus;
+  receiptNumber?: string | null;
+  externalReference?: string | null;
+  authorizationCode?: string | null;
+  processorReference?: string | null;
+  cardLastFour?: string | null;
+  bankReference?: string | null;
+  cashRegisterId?: number | null;
+  notes?: string | null;
+  patientServiceProductIds?: number[];
+  requestId: string;
+};
+
+export type BillingPaymentReservationResult = {
+  patientServiceProductId: number;
+  reservationId: number | null;
+  reservationNumber: string | null;
+  patientResponsibilityAmount: number;
+  reservedAmount: number;
+  uncoveredAmount: number;
+  fullyCovered: boolean;
+};
+
+export type BillingPaymentResult = {
+  paymentId: number;
+  paymentNumber: string;
+  paymentTransactionId: number | null;
+  paymentTransactionNumber: string | null;
+  walletId: number;
+  paymentAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  walletRefundedAmount: number;
+  totalReservedAmount: number;
+  currency: Currency;
+  paymentStatus: BillingPaymentStatus;
+  transactionStatus: BillingPaymentTransactionStatus | null;
+  reservations: BillingPaymentReservationResult[];
+};
+
+export type BillingCheckoutRequest = {
+  chargeId: number;
+  allowDebit: boolean;
+  creditLimit: number;
+  debitApprovalRequired: boolean;
+  approvedBy?: string | null;
+  debitDueDate?: string | null;
+  checkoutBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingCheckoutLineResult = {
+  chargeLineId: number;
+  patientServiceProductId: number;
+  responsibilityId: number;
+  originalResponsibilityAmount: number;
+  reservedAllocationAmount: number;
+  availableWalletAllocationAmount: number;
+  debitAllocationAmount: number;
+  finalOutstandingAmount: number;
+  settled: boolean;
+};
+
+export type BillingCheckoutResult = {
+  chargeId: number;
+  chargeNumber: string;
+  patientId: number;
+  encounterId: number;
+  netAmount: number;
+  reservedAllocatedAmount: number;
+  availableWalletAllocatedAmount: number;
+  debitCreatedAmount: number;
+  patientOutstandingAmount: number;
+  insuranceOutstandingAmount: number;
+  otherPayerOutstandingAmount: number;
+  totalOutstandingAmount: number;
+  currency: Currency;
+  chargeStatus: BillingChargeStatus;
+  patientSettled: boolean;
+  financiallyClosed: boolean;
+  lines: BillingCheckoutLineResult[];
+};
+
+export type BillingCancellationRequest = {
+  patientServiceProductId: number;
+  cancellationReason: BillingCancellationReason;
+  reason: string;
+  cancelledBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingCancellationResult = {
+  patientServiceProductId: number;
+  chargeId: number | null;
+  chargeLineId: number | null;
+  walletAllocationReversedAmount: number;
+  debitAllocationReversedAmount: number;
+  totalReversedAllocationAmount: number;
+  releasedReservationAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  cancelled: boolean;
+};
+
+export type BillingRefundRequest = {
+  patientId: number;
+  encounterId?: number | null;
+  originalPaymentId?: number | null;
+  originalPaymentTransactionId?: number | null;
+  refundSourceType: BillingRefundSourceType;
+  requestedAmount: number;
+  refundMethodCode: string;
+  refundMethodId: number;
+  requestedBy: string;
+  reason: string;
+  externalReference?: string | null;
+  processorReference?: string | null;
+  referenceDocumentType?: string | null;
+  referenceDocumentId?: number | null;
+  referenceDocumentNumber?: string | null;
+  notes?: string | null;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingRefundResult = {
+  refundId: number;
+  refundNumber: string;
+  refundPaymentTransactionId: number | null;
+  refundPaymentTransactionNumber: string | null;
+  walletId: number;
+  originalPaymentId: number | null;
+  requestedAmount: number;
+  approvedAmount: number;
+  refundedAmount: number;
+  reversedAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  walletRefundedAmount: number;
+  currency: Currency;
+  refundSourceType: BillingRefundSourceType;
+  status: BillingRefundStatus;
+};
+
+export type BillingRefundReversalRequest = {
+  refundId: number;
+  amount: number;
+  reason: string;
+  reversedBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingRefundReversalResult = {
+  originalRefundId: number;
+  reversalRefundId: number;
+  reversalRefundNumber: string;
+  reversedAmount: number;
+  remainingReversibleAmount: number;
+  walletAvailableBalance: number;
+  walletRefundedAmount: number;
+  originalRefundStatus: BillingRefundStatus;
+  reversalStatus: BillingRefundStatus;
+};
+
+/*
+ * Add these types to:
+ * src/types/model-types-new.ts
+ */
+
+export type BillingCoverageType =
+  | 'SELF_PAY'
+  | 'INSURANCE';
+
+export type PrepareDefaultServiceItem = {
+  serviceId: number;
+  quantity: number;
+  sequence: number;
+  isExempted: boolean;
+};
+
+export type PrepareDefaultServicesRequest = {
+  patientId: number;
+  facilityId: number;
+  currency: Currency;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PrepareDefaultServiceItem[];
+  requestId: string;
+};
+
+export type PreparedDefaultServiceResult = {
+  patientServiceProductId: number;
+  serviceId: number;
+  sequence: number;
+  billingResult: BillingOperationResult;
+};
+
+export type PrepareDefaultServicesResult = {
+  patientId: number;
+  encounterId: number;
+  facilityId: number;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PreparedDefaultServiceResult[];
+  processed: boolean;
+  message: string;
+};
+
+export type BillingOperationResult = {
+  patientServiceProductId: number;
+  chargeId: number | null;
+  chargeLineId: number | null;
+  pricingSnapshotId: number | null;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  patientResponsibilityAmount: number;
+  insuranceResponsibilityAmount: number;
+  reservedAmount: number;
+  processed: boolean;
+  message: string | null;
+};
+
+/*
+ * Keep your existing billing types below these additions:
+ *
+ * BillingWalletStatus
+ * BillingChargeStatus
+ * BillingChargeLineStatus
+ * BillingResponsibilityStatus
+ * ResponsiblePartyType
+ * BillingWalletSummary
+ * EncounterBillingItemSummary
+ * EncounterBillingSummary
+ * CreateAdvancePaymentRequest
+ * BillingPaymentResult
+ * BillingCheckoutRequest
+ * BillingCheckoutResult
+ * BillingCancellationRequest
+ * BillingCancellationResult
+ * BillingRefundRequest
+ * BillingRefundResult
+ * BillingRefundReversalRequest
+ * BillingRefundReversalResult
+ */

@@ -1,81 +1,101 @@
-// PatientPaymentInfo.tsx
 import React, {
   forwardRef,
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState
 } from 'react';
 
-import { Form, Checkbox } from 'rsuite';
+import {
+  Checkbox,
+  Form,
+  Message,
+  Panel,
+  Tag
+} from 'rsuite';
 
-import MyInput from '@/components/MyInput';
-import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
-
-import * as modelTypes from '@/types/model-types-new';
-import { PatientInsurance } from '@/types/model-types-new';
-import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
-import { useCalculateInsuranceAmountMutation } from '@/services/encounters/patientPaymentsService';
-import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import {
+  ColumnConfig
+} from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
 
 import {
-  useCreatePaymentMutation,
-  useUpdatePaymentMutation,
-  useGetPatientBalanceQuery,
-  useGetPatientLedgerSummaryQuery,
-  useGetPaymentByEncounterQuery
-} from '@/services/encounters/patientPaymentsService';
+  useAppDispatch,
+  useAppSelector
+} from '@/hooks';
 
-import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import {
+  useEnumOptions
+} from '@/services/enumsApi';
 
-import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
-import { useLazyGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import {
+  useGetFacilityByIdQuery
+} from '@/services/security/facilityService';
 
-import { conjureValueBasedOnIDFromList } from '@/utils';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import {
+  useLazyGetServicesByDepartmentQuery
+} from '@/services/setup/serviceService';
 
-import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import {
+  useGetInsurancesByPatientQuery
+} from '@/services/patients/patientInsurancesService';
+
+import {
+  useCreateAdvancePaymentMutation,
+  useGetEncounterBillingSummaryQuery,
+  usePrepareDefaultServicesMutation
+} from '@/services/billing/billingTransactionService';
+
+import {
+  newCreateAdvancePaymentRequest,
+  newEncounterBillingSummary,
+  newPatientInsurance
+} from '@/types/model-types-constructor-new';
+
+import type {
+  BillingCoverageType,
+  CreateAdvancePaymentRequest,
+  EncounterBillingItemSummary,
+  EncounterBillingSummary,
+  PatientInsurance,
+  PrepareDefaultServicesRequest
+} from '@/types/model-types-new';
+
+import {
+  notify
+} from '@/utils/uiReducerActions';
 
 import './style.less';
 
-async function convertCurrencyFree(amount: number, from: string, to: string): Promise<number> {
-  if (!amount || amount <= 0) return 0;
-  if (!from || !to) return 0;
+type DefaultServiceRow = {
+  id: number;
+  serviceId: number;
+  serviceType: string;
+  serviceName: string;
+  selected: boolean;
+  isExempted: boolean;
+  quantity: number;
+  sequence: number;
+};
 
-  const fromCurrency = String(from).toUpperCase();
-  const toCurrency = String(to).toUpperCase();
+type BillingFormState = {
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | string | null;
 
-  if (fromCurrency === toCurrency) return amount;
+  paymentAmount: number;
+  paymentMethodId: number | null;
+  paymentMethodCode: string;
 
-  const url = `https://open.er-api.com/v6/latest/${encodeURIComponent(fromCurrency)}`;
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error('Currency API failed');
-
-  const jsonResponse = await response.json();
-
-  if (jsonResponse?.result !== 'success') {
-    throw new Error('Currency API error');
-  }
-
-  const rate = jsonResponse?.rates?.[toCurrency];
-  const numericRate = Number(rate ?? 0);
-
-  return Number.isFinite(numericRate) ? amount * numericRate : 0;
-}
-
-type UiPaymentServiceRow = modelTypes.PatientPaymentServices & {
-  serviceType?: string;
-  serviceName?: string;
-  defaultCurrency?: string;
-  isExempted?: boolean;
+  authorizationCode: string;
+  processorReference: string;
+  cardLastFour: string;
+  bankReference: string;
+  cashRegisterId: number | null;
+  notes: string;
 };
 
 export type PatientPaymentInfoHandle = {
@@ -84,1558 +104,2869 @@ export type PatientPaymentInfoHandle = {
   validate: () => boolean;
 };
 
-const PAYMENT_ERROR_MAP: Record<string, string> = {
-  'payload.required': 'Payment data is required.',
-  'patient.invalid': 'Invalid patient id.',
-  'patient.notfound': 'Patient not found.',
-  'patient.required': 'Patient is required.',
-  'encounter.invalid': 'Invalid encounter id.',
-  'encounter.notfound': 'Encounter not found.',
-  'encounter.required': 'Encounter is required.',
-  'encounter.invalid.status':
-    'Encounter is not ready for payment (must be in Pending Payment status).',
-  'payment.duplicate.encounter': 'Payment already exists for this encounter.',
-  'id.notfound': 'Payment record not found.',
-  notfound: 'Payment record not found.',
-  duplicate: 'Duplicate record.',
-  'db.constraint': 'Database constraint violation while saving payment.',
-  'no.services': 'No services to pay for',
-  'http.400': 'Please review the payment data. Some required values are missing or invalid.'
+type PatientPaymentInfoProps = {
+  localPatient?: any;
+  localEncounter?: any;
+  isReadOnly?: boolean;
+  showInternalButtons?: boolean;
+
+  payment?: any;
+  setPayment?: (value: any) => void;
+
+  patientInsurance?: PatientInsurance;
+  setPatientInsurance?: (
+    value:
+      PatientInsurance
+  ) => void;
+
+  onPaymentSaved?: () =>
+    void | Promise<void>;
 };
 
-const PAYMENT_FIELD_LABELS: Record<string, string> = {
-  patientId: 'Patient',
-  encounterId: 'Encounter',
-  planId: 'Plan',
-  paymentTypes: 'Payment Type',
-  paymentMethods: 'Payment Method',
-  amount: 'Amount',
-  currency: 'Currency',
-  facilityDefaultCurrency: 'Default Currency',
-  amountInFacilityCurrency: 'Amount in default currency',
-  exchangeRate: 'Exchange Rate',
-  remaining: 'Remaining',
-  refunds: 'Refunds',
-  addToFreeBalance: 'Add to free balance',
-  useBalanceToSettleDebts: 'Use balance to settle debts',
-  paidFromAmount: 'Paid from amount',
-  paidFromBalance: 'Paid from balance',
-  debt: 'Debt',
-  cardNumber: 'Card Number',
-  cardHolderName: 'Holder Name',
-  cardValidUntil: 'Valid until',
-  chequeNumber: 'Cheque Number',
-  chequeBankName: 'Bank Name',
-  chequeDueDate: 'Cheque Due Date',
-  transferNumber: 'Transfer Number',
-  transferBankName: 'Bank Name',
-  transferDate: 'Transfer Date'
+const initialFormState:
+BillingFormState = {
+  coverageType:
+    'SELF_PAY',
+
+  patientInsuranceId:
+    null,
+
+  paymentAmount:
+    0,
+
+  paymentMethodId:
+    null,
+
+  paymentMethodCode:
+    '',
+
+  authorizationCode:
+    '',
+
+  processorReference:
+    '',
+
+  cardLastFour:
+    '',
+
+  bankReference:
+    '',
+
+  cashRegisterId:
+    null,
+
+  notes:
+    ''
 };
 
-const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
-  const responseData = error?.data ?? error ?? {};
-  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
-  const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
+const makeRequestId =
+  (prefix: string) =>
+    `${prefix}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
 
-  const normalizeFieldErrorMessage = (message: string) => {
-    const lowerMessage = (message || '').toLowerCase();
-    if (lowerMessage.includes('must not be null')) return 'is required';
-    if (lowerMessage.includes('must not be blank')) return 'must not be blank';
-    if (lowerMessage.includes('size')) return 'length is out of range';
-    if (lowerMessage.includes('greater')) return 'value is too small';
-    if (lowerMessage.includes('less')) return 'value is too large';
-    return message || 'invalid value';
+const formatMoney =
+  (
+    amount: number | null | undefined,
+    currency?: string | null
+  ) => {
+    const value =
+      Number.isFinite(
+        Number(amount)
+      )
+        ? Number(amount)
+        : 0;
+
+    const formatted =
+      value.toLocaleString(
+        undefined,
+        {
+          minimumFractionDigits:
+            2,
+          maximumFractionDigits:
+            2
+        }
+      );
+
+    return currency
+      ? `${formatted} ${currency}`
+      : formatted;
   };
 
-  const getFieldLabel = (field: string) => PAYMENT_FIELD_LABELS[field] ?? field;
-
-  if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
-    const errorLines = responseData.fieldErrors.map(
-      (fieldError: any) =>
-        `• ${getFieldLabel(fieldError.field)}: ${normalizeFieldErrorMessage(fieldError.message)}`
-    );
-
-    dispatch(
-      notify({
-        msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
-  const messageProp: string = responseData?.message || '';
-  const detailProp: string = responseData?.detail || '';
-  const titleProp: string = responseData?.title || '';
-
-  const errorKey =
-    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
-    responseData?.errorKey;
-
-  if (errorKey && keyMap[errorKey]) {
-    dispatch(
-      notify({
-        msg: keyMap[errorKey] + traceSuffix,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
-  if (
-    messageProp === 'error.http.400' ||
-    detailProp.toLowerCase().includes('validation failure') ||
-    titleProp.toLowerCase() === 'bad request'
-  ) {
-    dispatch(
-      notify({
-        msg: 'Please review the payment form. Some values are missing or invalid.' + traceSuffix,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
-  const stripErrorPrefix = (raw: string) =>
-    raw && raw.startsWith('error.') ? raw.substring(6) : raw;
-
-  const status = error?.status ?? error?.originalStatus;
-  const statusText = error?.error || error?.statusText;
-
-  const humanReadableMessage =
-    responseData?.detail ||
-    stripErrorPrefix(responseData?.message || '') ||
-    responseData?.title ||
-    statusText ||
-    (status ? `Request failed (HTTP ${status})` : 'Unexpected error');
-
-  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
-};
-const toDateOnlyOrNull = (value: any) => {
-  if (!value) return null;
-  const dateObj = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(dateObj.getTime())) return null;
-  return dateObj.toISOString().slice(0, 10);
-};
-
-const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
+const toNumber =
   (
-    {
-      localPatient,
-      localEncounter,
-      isReadOnly,
-      showInternalButtons = true,
-      payment,
-      setPayment,
-      patientInsurance,
-      setPatientInsurance,
-      onPaymentSaved
-    }: any,
-    ref
+    value: unknown,
+    defaultValue = 0
   ) => {
-    const dispatch = useAppDispatch();
+    const parsed =
+      Number(value);
 
-    const PaymentTypesEnum = useEnumOptions('PaymentTypes');
+    return Number.isFinite(parsed)
+      ? parsed
+      : defaultValue;
+  };
 
-    const CurrencyEnum = useEnumCapitalized('Currency', {
-      labelFormatter: (value: any) => String(value).toUpperCase()
-    });
+const extractResponseList =
+  (response: any): any[] => {
+    if (
+      Array.isArray(response)
+    ) {
+      return response;
+    }
 
-    const [validationResult, setValidationResult] = useState<any>({});
-    const authSlice = useAppSelector(state => state.auth);
+    if (
+      Array.isArray(
+        response?.data
+      )
+    ) {
+      return response.data;
+    }
 
-    const selectedFacilityId =
-      localEncounter?.facilityId ??
-      localEncounter?.facility?.id ??
-      authSlice?.tenant?.selectedFacility?.id ??
-      null;
+    if (
+      Array.isArray(
+        response?.data?.data
+      )
+    ) {
+      return response.data.data;
+    }
 
-    const { data: facilityResponse } = useGetFacilityByIdQuery(selectedFacilityId, {
-      skip: !selectedFacilityId
-    });
+    if (
+      Array.isArray(
+        response?.object
+      )
+    ) {
+      return response.object;
+    }
 
-    const facilityDefaultCurrency =
-      facilityResponse?.defaultCurrency ?? facilityResponse?.data?.defaultCurrency ?? null;
+    return [];
+  };
 
-    const [lockAfterConfirm, setLockAfterConfirm] = useState(false);
+const normalizeError =
+  (error: any) => {
+    const data =
+      error?.data ??
+      error ??
+      {};
 
-    const isLocked = Boolean(isReadOnly || lockAfterConfirm);
+    const traceId =
+      data?.traceId ??
+      data?.requestId ??
+      data?.correlationId;
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Auto-fill: load existing payment when opening a completed encounter
-    // ─────────────────────────────────────────────────────────────────────
-    const encounterId = localEncounter?.id;
+    const message =
+      data?.detail ??
+      data?.message ??
+      data?.title ??
+      error?.error ??
+      'Unexpected billing error';
 
-    const { data: existingPaymentDetails } = useGetPaymentByEncounterQuery(
-      { encounterId: encounterId! },
-      { skip: !encounterId }
-    );
+    return traceId
+      ? `${message}\nTrace ID: ${traceId}`
+      : message;
+  };
 
-    // Ref prevents re-applying saved data on every re-render after first load
-    const existingPaymentAppliedRef = useRef(false);
-
-    // Reset the ref whenever we switch to a different encounter
-    useEffect(() => {
-      existingPaymentAppliedRef.current = false;
-    }, [encounterId]);
-
-    useEffect(() => {
-      if (!existingPaymentDetails) return;
-      if (existingPaymentAppliedRef.current) return;
-      if (lockAfterConfirm) return;
-
-      const savedPayment: any = existingPaymentDetails?.payment;
-      if (!savedPayment || !savedPayment.id) return;
-      if (!savedPayment?.id) return;
-
-      existingPaymentAppliedRef.current = true;
-
-      setPayment((prev: any) => ({
-        ...prev,
-        id: savedPayment.id,
-        paymentTypes: savedPayment.paymentTypes,
-        paymentMethods: savedPayment.paymentMethods,
-        amount: savedPayment.amount,
-        currency: savedPayment.currency,
-        amountInFacilityCurrency: savedPayment.amountInFacilityCurrency,
-        exchangeRate: savedPayment.exchangeRate,
-        dueAmount: savedPayment.dueAmount,
-        remaining: savedPayment.remaining,
-        refunds: savedPayment.refunds,
-        paidFromAmount: savedPayment.paidFromAmount,
-        paidFromBalance: savedPayment.paidFromBalance,
-        addToFreeBalance: savedPayment.addToFreeBalance,
-        useBalanceToSettleDebts: savedPayment.useBalanceToSettleDebts,
-        planId: savedPayment.planId,
-        cardNumber: savedPayment.cardNumber,
-        cardHolderName: savedPayment.cardHolderName,
-        cardValidUntil: savedPayment.cardValidUntil,
-        chequeNumber: savedPayment.chequeNumber,
-        chequeBankName: savedPayment.chequeBankName,
-        chequeDueDate: savedPayment.chequeDueDate,
-        transferNumber: savedPayment.transferNumber,
-        transferBankName: savedPayment.transferBankName,
-        transferDate: savedPayment.transferDate
-      }));
-
-      applySavedServicesToTable(existingPaymentDetails);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [existingPaymentDetails, lockAfterConfirm]);
-
-    useEffect(() => {
-      if (!facilityDefaultCurrency) return;
-      setPayment((prev: any) => ({
-        ...prev,
-        patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
-        encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
-        facilityDefaultCurrency: facilityDefaultCurrency,
-        currency:
-          prev.currency && String(prev.currency).trim() !== ''
-            ? prev.currency
-            : facilityDefaultCurrency
-      }));
-    }, [
-      localPatient?.id,
-      localPatient?.key,
-      localEncounter?.id,
-      facilityDefaultCurrency,
-      setPayment
-    ]);
-
-    const effectivePatientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
-
-    const ledgerSummaryResponse = useGetPatientLedgerSummaryQuery(
-      { patientId: effectivePatientId },
-      { skip: !effectivePatientId }
-    );
-
-    useEffect(() => {
-      if (!isInsurancePlan) return;
-
-      const copay = Number(payment?.copayAmount ?? 0);
-      const amount = Number(payment?.amount ?? 0);
-
-      if (amount > copay) {
-        dispatch(
-          notify({
-            msg: `Payment exceeds copay (${copay})`,
-            sev: 'warning'
-          })
-        );
-      }
-    }, [payment.amount, payment.copayAmount]);
-
-    useEffect(() => {
-      const summary: modelTypes.PatientLedgerSummaryDTO | undefined =
-        ledgerSummaryResponse?.data as any;
-      if (!summary) return;
-
-      const totalDebt = Number((summary as any)?.totalDebt ?? 0);
-
-      if (Number(payment?.debt ?? NaN) !== totalDebt) {
-        setPayment((previousPayment: any) => ({ ...previousPayment, debt: totalDebt }));
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ledgerSummaryResponse?.data]);
-
-    const DefaultCurrencySelectData = useMemo(() => {
-      const defaultCurrency = payment?.facilityDefaultCurrency;
-      const baseOptions = CurrencyEnum ?? [];
-      if (!defaultCurrency) return baseOptions;
-
-      const alreadyExists = baseOptions.some((option: any) => option?.value === defaultCurrency);
-      return alreadyExists
-        ? baseOptions
-        : [{ label: defaultCurrency, value: defaultCurrency }, ...baseOptions];
-    }, [CurrencyEnum, payment?.facilityDefaultCurrency]);
-
-    const [servicesRows, setServicesRows] = useState<UiPaymentServiceRow[]>([]);
-    const savedExemptedByServiceIdRef = useRef<Map<number, boolean>>(new Map());
-
-    const PaymentMethodsEnum = useEnumOptions('PaymentMethods', {
-      // exclude: payment?.paymentTypes === 'CASH' ? ['INSURANCE_COVERAGE'] : []
-
-      exclude: ['INSURANCE_COVERAGE']
-    });
-
-    const patientInsuranceResponse = useGetInsurancesByPatientQuery(
+const PatientPaymentInfo =
+  forwardRef<
+    PatientPaymentInfoHandle,
+    PatientPaymentInfoProps
+  >(
+    (
       {
-        patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-        page: 0,
-        size: 100,
-        sort: 'id,desc'
+        localPatient,
+        localEncounter,
+        isReadOnly = false,
+        showInternalButtons = true,
+        payment,
+        setPayment,
+        patientInsurance,
+        setPatientInsurance,
+        onPaymentSaved
       },
-      { skip: !(localPatient?.id ?? localPatient?.key) }
-    );
+      ref
+    ) => {
+      const dispatch =
+        useAppDispatch();
 
-    const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
-      page: 0,
-      size: 1000,
-      sort: 'name,asc'
-    });
-    const payorsList = payorListResponse?.data ?? [];
-
-    const [plansByPayorId, setPlansByPayorId] = useState<Record<number, any[]>>({});
-    const [triggerGetPlans] = useLazyGetPlansByPayorQuery();
-
-    const patientInsurancesList: PatientInsurance[] = useMemo(() => {
-      const responseData: any = patientInsuranceResponse?.data;
-      if (Array.isArray(responseData?.data)) return responseData.data;
-      if (Array.isArray(responseData?.data?.data)) return responseData.data.data;
-      if (Array.isArray(responseData?.object)) return responseData.object;
-      return [];
-    }, [patientInsuranceResponse?.data]);
-
-    const [insurancePage, setInsurancePage] = useState(0);
-    const [insuranceSearchKeyword, setInsuranceSearchKeyword] = useState('');
-    const INSURANCE_PAGE_SIZE = 20;
-
-    useEffect(() => {
-      setInsurancePage(0);
-    }, [insuranceSearchKeyword]);
-
-    const filteredInsurances = useMemo(() => {
-      const keyword = insuranceSearchKeyword.trim().toLowerCase();
-      if (!keyword) return patientInsurancesList ?? [];
-
-      return (patientInsurancesList ?? []).filter((insuranceItem: any) => {
-        const payorName =
-          conjureValueBasedOnIDFromList(payorsList, insuranceItem?.payorId, 'name') ||
-          insuranceItem?.payorName ||
-          insuranceItem?.insuranceProvider ||
-          '';
-
-        const plans = plansByPayorId[Number(insuranceItem?.payorId)] ?? [];
-        const planName =
-          conjureValueBasedOnIDFromList(plans, insuranceItem?.planId, 'name') ||
-          insuranceItem?.planName ||
-          insuranceItem?.plan?.name ||
-          '';
-
-        const policyNumber = String(insuranceItem?.policyNumber ?? '');
-        const groupNumber = String(insuranceItem?.groupNumber ?? '');
-
-        const searchableText =
-          `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
-        return searchableText.includes(keyword);
-      });
-    }, [patientInsurancesList, insuranceSearchKeyword, payorsList, plansByPayorId]);
-
-    const insurancePageSlice = useMemo(() => {
-      const startIndex = insurancePage * INSURANCE_PAGE_SIZE;
-      return (filteredInsurances ?? []).slice(startIndex, startIndex + INSURANCE_PAGE_SIZE);
-    }, [filteredInsurances, insurancePage]);
-
-    const hasMoreInsurances = useMemo(() => {
-      return (insurancePage + 1) * INSURANCE_PAGE_SIZE < (filteredInsurances?.length ?? 0);
-    }, [filteredInsurances?.length, insurancePage]);
-
-    const handleLoadMoreInsurances = () => {
-      if (hasMoreInsurances) setInsurancePage(previousPage => previousPage + 1);
-    };
-
-    const visiblePayorIdsForInsurance = useMemo(() => {
-      const payorIdSet = new Set<number>();
-      (insurancePageSlice ?? []).forEach((insuranceRow: any) => {
-        const payorId = Number(insuranceRow?.payorId);
-        if (!Number.isNaN(payorId)) payorIdSet.add(payorId);
-      });
-      return Array.from(payorIdSet);
-    }, [insurancePageSlice]);
-
-    useEffect(() => {
-      const loadPlans = async () => {
-        for (const payorId of visiblePayorIdsForInsurance) {
-          if (plansByPayorId[payorId]) continue;
-
-          try {
-            const plansResponse = await triggerGetPlans(
-              { payorId, page: 0, size: 1000, sort: 'name,asc' },
-              true
-            ).unwrap();
-            setPlansByPayorId(previousPlans => ({
-              ...previousPlans,
-              [payorId]: plansResponse?.data ?? []
-            }));
-          } catch {
-            setPlansByPayorId(previousPlans => ({ ...previousPlans, [payorId]: [] }));
-          }
-        }
-      };
-
-      if (visiblePayorIdsForInsurance.length > 0) loadPlans();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visiblePayorIdsForInsurance]);
-
-    const insuranceSelectData = useMemo(() => {
-      return (insurancePageSlice ?? []).map((insuranceItem: any) => {
-        const payorName =
-          conjureValueBasedOnIDFromList(payorsList, insuranceItem?.payorId, 'name') ||
-          insuranceItem?.payorName ||
-          insuranceItem?.insuranceProvider ||
-          '';
-
-        const plans = plansByPayorId[Number(insuranceItem?.payorId)] ?? [];
-        const planName =
-          conjureValueBasedOnIDFromList(plans, insuranceItem?.planId, 'name') ||
-          insuranceItem?.planName ||
-          insuranceItem?.plan?.name ||
-          '';
-
-        const displayLabel = `${payorName || 'Payor'} • ${planName || 'Plan'}`;
-        return {
-          ...insuranceItem,
-          label: displayLabel,
-          payorDisplayName: payorName,
-          planDisplayName: planName
-        };
-      });
-    }, [insurancePageSlice, payorsList, plansByPayorId]);
-
-    const isInsurancePlan = payment?.paymentTypes === 'INSURANCE_PLAN';
-    const paymentMethod = payment?.paymentMethods;
-
-    const showCardFields = paymentMethod === 'CREDIT_DEBIT_CARD';
-    const showChequeFields = paymentMethod === 'CHEQUE';
-    const showBankTransferFields = paymentMethod === 'BANK_TRANSFER';
-
-    const isCurrencyChanged =
-      !!payment?.currency &&
-      !!payment?.facilityDefaultCurrency &&
-      payment.currency !== payment.facilityDefaultCurrency;
-
-    const patientBalanceResponse = useGetPatientBalanceQuery(
-      { patientId: effectivePatientId },
-      { skip: !effectivePatientId }
-    );
-
-    useEffect(() => {
-      const balance = patientBalanceResponse?.data;
-      if (balance == null) return;
-
-      if (Number(payment?.patientBalance ?? NaN) !== Number(balance)) {
-        setPayment((previousPayment: any) => ({
-          ...previousPayment,
-          patientBalance: Number(balance)
-        }));
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientBalanceResponse?.data]);
-
-    const departmentId =
-      localEncounter?.departmentId ??
-      localEncounter?.department?.id ??
-      localEncounter?.clinicDepartmentId ??
-      null;
-
-    const [triggerGetServicesByDepartment, lazyServicesByDepartmentResponse] =
-      useLazyGetServicesByDepartmentQuery();
-
-    useEffect(() => {
-      const departmentIdNum = Number(departmentId ?? 0);
-      if (!departmentIdNum) {
-        setServicesRows([]);
-        return;
-      }
-
-      triggerGetServicesByDepartment(
-        { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
-        true
-      );
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [departmentId]);
-
-    useEffect(() => {
-      const responseData: any = lazyServicesByDepartmentResponse?.data;
-      const rows = Array.isArray(responseData?.data) ? responseData.data : [];
-      const defaultCurrency = payment?.facilityDefaultCurrency || '';
-
-      const mappedRows: UiPaymentServiceRow[] = (rows ?? []).map((serviceItem: any) => {
-        const price = Number(
-          serviceItem?.price ?? serviceItem?.servicePrice ?? serviceItem?.defaultPrice ?? 0
+      const authSlice =
+        useAppSelector(
+          state =>
+            state.auth
         );
-        const serviceId = Number(serviceItem?.id ?? serviceItem?.serviceId ?? 0);
 
-        const savedExempted = serviceId
-          ? savedExemptedByServiceIdRef.current.get(serviceId)
-          : undefined;
+      const patientId =
+        toNumber(
+          localPatient?.id ??
+            localPatient?.key
+        );
 
-        return {
-          id: serviceItem?.id ?? serviceItem?.serviceId ?? `${serviceItem?.id ?? ''}`,
-          serviceId: serviceItem?.id ?? serviceItem?.serviceId ?? null,
-          price,
-          isExempted:
-            savedExempted != null ? Boolean(savedExempted) : Boolean(serviceItem?.isExempted),
-          serviceType: serviceItem?.serviceType ?? serviceItem?.type ?? serviceItem?.category ?? '',
-          serviceName: serviceItem?.name ?? serviceItem?.serviceName ?? '',
-          defaultCurrency: String(
-            serviceItem?.currency ?? serviceItem?.defaultCurrency ?? defaultCurrency
-          )
-        } as any;
-      });
+      const encounterId =
+        toNumber(
+          localEncounter?.id
+        );
 
-      if (!departmentId) return;
+      const facilityId =
+        toNumber(
+          localEncounter?.facilityId ??
+            localEncounter?.facility?.id ??
+            authSlice?.tenant
+              ?.selectedFacility?.id
+        );
 
-      setServicesRows(previousRows => {
-        const previousByServiceId = new Map<string, UiPaymentServiceRow>();
-        (previousRows ?? []).forEach(previousRow => {
-          const key = String((previousRow as any).serviceId ?? previousRow.id ?? '');
-          previousByServiceId.set(key, previousRow);
-        });
+      const departmentId =
+        toNumber(
+          localEncounter?.departmentId ??
+            localEncounter?.department?.id ??
+            localEncounter?.clinicDepartmentId
+        );
 
-        return mappedRows.map(mappedRow => {
-          const key = String((mappedRow as any).serviceId ?? mappedRow.id ?? '');
-          const existingRow = previousByServiceId.get(key);
-          return existingRow
-            ? { ...mappedRow, isExempted: Boolean(existingRow.isExempted) }
-            : mappedRow;
-        });
-      });
+      const {
+        data:
+          facilityResponse
+      } =
+        useGetFacilityByIdQuery(
+          facilityId,
+          {
+            skip:
+              !facilityId
+          }
+        );
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lazyServicesByDepartmentResponse?.data, departmentId, payment?.facilityDefaultCurrency]);
+      const facilityCurrency =
+        facilityResponse?.defaultCurrency ??
+        facilityResponse?.data
+          ?.defaultCurrency ??
+        'SAR';
 
-    const uiDueAmount = useMemo(() => {
-      return (servicesRows ?? [])
-        .filter(serviceRow => !Boolean((serviceRow as any).isExempted))
-        .reduce((accumulator, serviceRow: any) => accumulator + Number(serviceRow?.price ?? 0), 0);
-    }, [servicesRows]);
+      const [
+        formState,
+        setFormState
+      ] =
+        useState<BillingFormState>(
+          initialFormState
+        );
 
-    useEffect(() => {
-      let isCancelled = false;
+      const [
+        defaultServiceRows,
+        setDefaultServiceRows
+      ] =
+        useState<
+          DefaultServiceRow[]
+        >([]);
 
-      (async () => {
-        try {
-          const amount = Number(payment?.amount ?? 0);
-          const fromCurrency = payment?.currency;
-          const toCurrency = payment?.facilityDefaultCurrency;
+      const [
+        preparedPspIds,
+        setPreparedPspIds
+      ] =
+        useState<number[]>([]);
 
-          if (!isCurrencyChanged) {
-            if (payment?.amountInFacilityCurrency != null || payment?.exchangeRate != null) {
-              setPayment((previousPayment: any) => ({
-                ...previousPayment,
-                amountInFacilityCurrency: null,
-                exchangeRate: null
-              }));
+      const [
+        validationResult,
+        setValidationResult
+      ] =
+        useState<any>({});
+
+      const [
+        insuranceSearchKeyword,
+        setInsuranceSearchKeyword
+      ] =
+        useState('');
+
+      const [
+        insurancePage,
+        setInsurancePage
+      ] =
+        useState(0);
+
+      const [
+        page,
+        setPage
+      ] =
+        useState(0);
+
+      const [
+        rowsPerPage,
+        setRowsPerPage
+      ] =
+        useState(5);
+
+      const [
+        lockAfterConfirm,
+        setLockAfterConfirm
+      ] =
+        useState(false);
+
+      const [
+        lastPaymentResult,
+        setLastPaymentResult
+      ] =
+        useState<any>(null);
+
+      const [
+        prepareResultMessage,
+        setPrepareResultMessage
+      ] =
+        useState<string | null>(
+          null
+        );
+
+      const {
+        data:
+          summaryResponse,
+        isFetching:
+          loadingSummary,
+        refetch:
+          refetchSummary
+      } =
+        useGetEncounterBillingSummaryQuery(
+          {
+            encounterId
+          },
+          {
+            skip:
+              !encounterId
+          }
+        );
+
+      const summary:
+      EncounterBillingSummary =
+        summaryResponse ??
+        {
+          ...newEncounterBillingSummary,
+          patientId,
+          encounterId
+        };
+
+      const [
+        prepareDefaultServices,
+        {
+          isLoading:
+            preparingServices
+        }
+      ] =
+        usePrepareDefaultServicesMutation();
+
+      const [
+        createAdvancePayment,
+        {
+          isLoading:
+            creatingPayment
+        }
+      ] =
+        useCreateAdvancePaymentMutation();
+
+      const [
+        triggerGetServices,
+        servicesResponse
+      ] =
+        useLazyGetServicesByDepartmentQuery();
+
+      const insuranceResponse =
+        useGetInsurancesByPatientQuery(
+          {
+            patientId,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,desc'
+          },
+          {
+            skip:
+              !patientId
+          }
+        );
+
+      const paymentMethods =
+        useEnumOptions(
+          'PaymentMethods',
+          {
+            exclude: [
+              'INSURANCE_COVERAGE'
+            ]
+          }
+        ) ?? [];
+
+      const isInsurance =
+        formState.coverageType ===
+        'INSURANCE';
+
+      const showCardFields =
+        formState.paymentMethodCode ===
+        'CREDIT_DEBIT_CARD';
+
+      const showBankReference =
+        formState.paymentMethodCode ===
+          'BANK_TRANSFER' ||
+        formState.paymentMethodCode ===
+          'CHEQUE';
+
+      const isBusy =
+        preparingServices ||
+        creatingPayment;
+
+      const servicesArePrepared =
+        preparedPspIds.length >
+          0 ||
+        (summary.items ?? [])
+          .length >
+          0;
+
+      const isLocked =
+        Boolean(
+          isReadOnly ||
+            lockAfterConfirm ||
+            isBusy
+        );
+
+      const areServicesLocked =
+        Boolean(
+          isLocked ||
+            servicesArePrepared
+        );
+
+      const billedSourceIds =
+        useMemo(
+          () =>
+            new Set(
+              (summary.items ?? [])
+                .map(
+                  item =>
+                    item.sourceId
+                )
+                .filter(
+                  (
+                    id
+                  ): id is number =>
+                    id != null
+                )
+            ),
+          [
+            summary.items
+          ]
+        );
+
+      const activeCurrency =
+        summary.currency ??
+        facilityCurrency;
+
+      const patientInsurances:
+      PatientInsurance[] =
+        useMemo(
+          () =>
+            extractResponseList(
+              insuranceResponse.data
+            ),
+          [
+            insuranceResponse.data
+          ]
+        );
+
+      const filteredInsurances =
+        useMemo(() => {
+          const keyword =
+            insuranceSearchKeyword
+              .trim()
+              .toLowerCase();
+
+          if (
+            !keyword
+          ) {
+            return patientInsurances;
+          }
+
+          return patientInsurances.filter(
+            (insurance: any) => {
+              const text = [
+                insurance?.payerName,
+                insurance?.payerNphiesId,
+                insurance?.memberCardId,
+                insurance?.policyNumber,
+                insurance?.policyClassName,
+                insurance?.groupNumber
+              ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+
+              return text.includes(
+                keyword
+              );
             }
-            return;
-          }
+          );
+        }, [
+          patientInsurances,
+          insuranceSearchKeyword
+        ]);
 
-          const convertedAmount = await convertCurrencyFree(amount, fromCurrency, toCurrency);
-          const rate = amount > 0 ? convertedAmount / amount : null;
+      const insurancePageSize =
+        20;
 
-          if (!isCancelled) {
-            setPayment((previousPayment: any) => ({
-              ...previousPayment,
-              amountInFacilityCurrency: convertedAmount,
-              exchangeRate: rate
-            }));
-          }
-        } catch {
-          if (!isCancelled) {
-            setPayment((previousPayment: any) => ({
-              ...previousPayment,
-              amountInFacilityCurrency: null,
-              exchangeRate: null
-            }));
-          }
-        }
-      })();
+      const insuranceSelectData =
+        useMemo(
+          () =>
+            filteredInsurances
+              .slice(
+                0,
+                (insurancePage + 1) *
+                  insurancePageSize
+              )
+              .map(
+                (
+                  insurance: any
+                ) => {
+                  /*
+                   * MyInput compares the selected value with selectDataValue
+                   * using the value type. The API may return id as a string,
+                   * while the form stores it as a number. Normalize both sides
+                   * so a selected option does not disappear after re-render.
+                   */
+                  const insuranceId =
+                    insurance?.id ??
+                    insurance?.key ??
+                    insurance?.patientInsuranceId;
 
-      return () => {
-        isCancelled = true;
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [payment?.amount, payment?.currency, payment?.facilityDefaultCurrency, isCurrencyChanged]);
+                  return {
+                    ...insurance,
+                    id: insuranceId,
 
-    useEffect(() => {
-      const validationErrors: any = { details: {} };
-      const markRequired = (field: string, message = 'Required') => {
-        validationErrors.details[field] = [{ validationType: 'REJECT', message }];
-      };
-      if (isInsurancePlan) {
-        if (!payment?.insuranceKey && !payment?.planId) markRequired('planId');
-      }
+                    label:
+                      [
+                        insurance?.payerName ||
+                          insurance?.payerNphiesId ||
+                          'Insurance',
 
-      if (showCardFields) {
-        if (!payment?.cardNumber) markRequired('cardNumber');
-        if (!payment?.cardHolderName) markRequired('cardHolderName');
-        if (!payment?.cardValidUntil) markRequired('cardValidUntil');
-      }
+                        insurance?.policyClassName,
 
-      if (showChequeFields) {
-        if (!payment?.chequeNumber) markRequired('chequeNumber');
-        if (!payment?.chequeBankName) markRequired('chequeBankName');
-        if (!payment?.chequeDueDate) markRequired('chequeDueDate');
-      }
-
-      if (showBankTransferFields) {
-        if (!payment?.transferNumber) markRequired('transferNumber');
-        if (!payment?.transferBankName) markRequired('transferBankName');
-        if (!payment?.transferDate) markRequired('transferDate');
-      }
-
-      setValidationResult(validationErrors);
-    }, [
-      payment?.paymentTypes,
-      payment?.paymentMethods,
-      payment?.amount,
-      payment?.currency,
-      payment?.insuranceKey,
-      payment?.planId,
-      payment?.cardNumber,
-      payment?.cardHolderName,
-      payment?.cardValidUntil,
-      payment?.chequeNumber,
-      payment?.chequeBankName,
-      payment?.chequeDueDate,
-      payment?.transferNumber,
-      payment?.transferBankName,
-      payment?.transferDate,
-      isInsurancePlan,
-      showCardFields,
-      showChequeFields,
-      showBankTransferFields
-    ]);
-
-    const allExempted =
-      servicesRows.length > 0 && servicesRows.every(serviceRow => !!serviceRow.isExempted);
-    const someExempted = servicesRows.some(serviceRow => !!serviceRow.isExempted);
-
-    const toggleAllExempted = (checked: boolean) => {
-      setServicesRows(previousRows =>
-        previousRows.map(serviceRow => ({ ...serviceRow, isExempted: checked }))
-      );
-    };
-
-    const toggleOneExempted = (rowId: any, checked: boolean) => {
-      setServicesRows(previousRows =>
-        previousRows.map(serviceRow =>
-          String(serviceRow.id) === String(rowId)
-            ? { ...serviceRow, isExempted: checked }
-            : serviceRow
-        )
-      );
-    };
-
-    const exemptionBadge = (isExempted: boolean | null | undefined) => {
-      const exemptedValue = Boolean(isExempted);
-      const badgeColor = exemptedValue ? '#388E3C' : '#ff8902ff';
-      const badgeLabel = exemptedValue ? 'Yes' : 'No';
-      return <MyBadgeStatus color={badgeColor} contant={badgeLabel} />;
-    };
-
-    const serviceColumns: ColumnConfig[] = [
-      {
-        key: 'isExemptedToggle',
-        title: (
-          <Checkbox
-            checked={allExempted}
-            indeterminate={!allExempted && someExempted}
-            onChange={(_, checked) => toggleAllExempted(checked)}
-            disabled={isReadOnly || isLocked}
-          />
-        ),
-        dataKey: 'isExemptedToggle',
-        width: 60,
-        render: (row: UiPaymentServiceRow) => (
-          <Checkbox
-            checked={!!row.isExempted}
-            onChange={(_, checked) => toggleOneExempted(row.id, checked)}
-            disabled={isReadOnly || isLocked}
-          />
-        )
-      },
-      { key: 'serviceType', title: <Translate>Service Type</Translate>, dataKey: 'serviceType' },
-      { key: 'serviceName', title: <Translate>Service Name</Translate>, dataKey: 'serviceName' },
-      { key: 'price', title: <Translate>Price</Translate>, dataKey: 'price', width: 120 },
-      {
-        key: 'defaultCurrency',
-        title: <Translate>Default Currency</Translate>,
-        dataKey: 'defaultCurrency',
-        width: 160,
-        render: (row: UiPaymentServiceRow) => (
-          <span>{String(row.defaultCurrency ?? '').toUpperCase()}</span>
-        )
-      },
-      {
-        key: 'isExempted',
-        title: <Translate>Exempted</Translate>,
-        dataKey: 'isExempted',
-        width: 140,
-        render: (row: UiPaymentServiceRow) => exemptionBadge(row.isExempted)
-      }
-    ];
-
-    const [createPayment, { isLoading: creating }] = useCreatePaymentMutation();
-    const [updatePayment, { isLoading: updating }] = useUpdatePaymentMutation();
-
-    const handleClear = () => {
-      // Reset the ref so saved data can be re-applied if needed after a clear
-      existingPaymentAppliedRef.current = false;
-
-      setPayment((previousPayment: any) => ({
-        ...newPatientPayments,
-        patientId: previousPayment.patientId,
-        encounterId: previousPayment.encounterId,
-        facilityDefaultCurrency: previousPayment.facilityDefaultCurrency,
-        currency: previousPayment.facilityDefaultCurrency,
-        useBalanceToSettleDebts: false,
-        debt: previousPayment.debt ?? 0
-      }));
-
-      setServicesRows(previousRows =>
-        previousRows.map(serviceRow => ({ ...serviceRow, isExempted: false }))
-      );
-      savedExemptedByServiceIdRef.current = new Map();
-      setPatientInsurance({ ...newPatientInsurance, payorName: '', planName: '' });
-      setValidationResult({});
-    };
-
-    const applySavedServicesToTable = (details: any) => {
-      const savedServices = details?.services ?? details?.payment?.services ?? [];
-
-      if (!Array.isArray(savedServices)) return;
-
-      const exemptedMap = new Map<number, boolean>();
-
-      savedServices.forEach((service: any) => {
-        const serviceId = Number(service?.serviceId ?? 0);
-        if (!serviceId) return;
-
-        exemptedMap.set(serviceId, Boolean(service?.isExempted));
-      });
-
-      savedExemptedByServiceIdRef.current = exemptedMap;
-
-      setServicesRows(prev =>
-        (prev ?? []).map(row => {
-          const serviceId = Number((row as any)?.serviceId ?? 0);
-
-          if (!serviceId) return row;
-          if (!exemptedMap.has(serviceId)) return row;
-
-          return {
-            ...row,
-            isExempted: Boolean(exemptedMap.get(serviceId))
-          };
-        })
-      );
-    };
-
-    const [calculateInsuranceAmount, { isLoading: calculatingInsuranceAmount }] =
-      useCalculateInsuranceAmountMutation();
-    const handleCalculateInsuranceAmount = async () => {
-      try {
-        if (!isInsurancePlan) return;
-        if (!payment?.patientId || !payment?.encounterId) return;
-        if ((servicesRows ?? []).length === 0) return;
-
-        const dto: modelTypes.PatientPaymentDTO = {
-          patientId: payment.patientId,
-          encounterId: payment.encounterId,
-          planId: payment.planId ?? null,
-          paymentTypes: payment.paymentTypes,
-          paymentMethods: payment.paymentMethods,
-          currency: payment.currency,
-          facilityDefaultCurrency: payment.facilityDefaultCurrency,
-
-          services: (servicesRows ?? []).map(serviceRow => ({
-            serviceId: Number((serviceRow as any).serviceId ?? 0),
-            price: Number((serviceRow as any).price ?? 0),
-            isExempted: Boolean((serviceRow as any).isExempted)
-          }))
-        };
-
-        const result = await calculateInsuranceAmount({ body: dto }).unwrap();
-        console.log('Insurance calculation result:', result);
-
-        setPayment((prev: any) => ({
-          ...prev,
-          copayAmount: Number(result.patientShare),
-          amount: Number(result.patientShare)
-        }));
-      } catch (err) {
-        console.error('Insurance calculation failed', err);
-      }
-    };
-    const handleConfirm = async () => {
-      const hasBillableServices = uiDueAmount > 0;
-
-      const paymentDto: modelTypes.PatientPaymentDTO = {
-        id: payment.id,
-        patientId: payment.patientId,
-        encounterId: payment.encounterId,
-        planId: hasBillableServices ? payment.planId ?? null : null,
-
-        paymentTypes: hasBillableServices ? payment.paymentTypes ?? null : null,
-        paymentMethods: hasBillableServices ? payment.paymentMethods ?? null : null,
-
-        amount: hasBillableServices
-          ? payment.amount != null
-            ? Number(payment.amount)
-            : null
-          : null,
-
-        currency: hasBillableServices ? payment.currency ?? null : null,
-        facilityDefaultCurrency: hasBillableServices
-          ? payment.facilityDefaultCurrency ?? null
-          : null,
-        exchangeRate: hasBillableServices ? payment.exchangeRate ?? null : null,
-        amountInFacilityCurrency: hasBillableServices
-          ? payment.amountInFacilityCurrency ?? null
-          : null,
-
-        addToFreeBalance: hasBillableServices ? payment.addToFreeBalance ?? false : null,
-        useBalanceToSettleDebts: hasBillableServices
-          ? payment.useBalanceToSettleDebts ?? false
-          : null,
-
-        cardNumber: hasBillableServices ? payment.cardNumber ?? null : null,
-        cardHolderName: hasBillableServices ? payment.cardHolderName ?? null : null,
-        cardValidUntil: hasBillableServices ? toDateOnlyOrNull(payment.cardValidUntil) : null,
-
-        chequeNumber: hasBillableServices ? payment.chequeNumber ?? null : null,
-        chequeBankName: hasBillableServices ? payment.chequeBankName ?? null : null,
-        chequeDueDate: hasBillableServices ? toDateOnlyOrNull(payment.chequeDueDate) : null,
-
-        transferNumber: hasBillableServices ? payment.transferNumber ?? null : null,
-        transferBankName: hasBillableServices ? payment.transferBankName ?? null : null,
-        transferDate: hasBillableServices ? toDateOnlyOrNull(payment.transferDate) : null,
-
-        services: (servicesRows ?? []).map(serviceRow => ({
-          serviceId: Number((serviceRow as any).serviceId ?? 0),
-          price: Number((serviceRow as any).price ?? 0),
-          isExempted: Boolean((serviceRow as any).isExempted)
-        }))
-      };
-
-      let paymentDetails: modelTypes.PatientPaymentDetails;
-
-      if (paymentDto.id) {
-        paymentDetails = await updatePayment({ id: paymentDto.id, body: paymentDto }).unwrap();
-      } else {
-        paymentDetails = await createPayment({ body: paymentDto }).unwrap();
-      }
-
-      if (paymentDetails?.payment) {
-        const savedPayment: any = paymentDetails.payment;
-
-        setPayment((previousPayment: any) => ({
-          ...previousPayment,
-          ...savedPayment,
-          paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
-          paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
-          refunds: Number(savedPayment?.refunds ?? 0)
-        }));
-      }
-
-      applySavedServicesToTable(paymentDetails);
-
-      const departmentIdNum = Number(departmentId ?? 0);
-      if (departmentIdNum) {
-        const servicesResult: any = triggerGetServicesByDepartment(
-          { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
-          true
+                        insurance?.memberCardId
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')
+                  };
+                }
+              ),
+          [
+            filteredInsurances,
+            insurancePage
+          ]
         );
-        if (servicesResult?.unwrap) await servicesResult.unwrap();
-        applySavedServicesToTable(paymentDetails);
-      }
-    };
 
-    const validateBeforeSave = () => {
-      const validationDetails = validationResult?.details ?? {};
-      const validatedFields = Object.keys(validationDetails);
-      const hasRejectedFields = validatedFields.some(field =>
-        (validationDetails[field] ?? []).some(
-          (validationItem: any) => validationItem?.validationType === 'REJECT'
-        )
-      );
+      const hasMoreInsurances =
+        insuranceSelectData.length <
+        filteredInsurances.length;
 
-      if (hasRejectedFields) {
-        const errorLines = validatedFields
-          .filter(field =>
-            (validationDetails[field] ?? []).some(
-              (validationItem: any) => validationItem?.validationType === 'REJECT'
-            )
-          )
-          .map(
-            field =>
-              `• ${PAYMENT_FIELD_LABELS[field] ?? field}: ${validationDetails[field]?.[0]?.message ?? 'is required'
-              }`
+      /*
+       * Keep MyInput usage simple, exactly like the working
+       * AddPrefferdHealthProfessionalModal example.
+       *
+       * MyInput only updates formState. Related derived values are
+       * synchronized separately here and never inside setRecord.
+       */
+      useEffect(() => {
+        const selected =
+          patientInsurances.find(
+            (insurance: any) =>
+              String(
+                insurance?.id ??
+                  insurance?.key ??
+                  insurance?.patientInsuranceId
+              ) ===
+              String(
+                formState.patientInsuranceId ??
+                  ''
+              )
+          ) ?? null;
+
+        if (setPatientInsurance) {
+          setPatientInsurance(
+            selected
+              ? selected
+              : newPatientInsurance
+          );
+        }
+      }, [
+        formState.patientInsuranceId,
+        patientInsurances,
+        setPatientInsurance
+      ]);
+
+      useEffect(() => {
+        const selected =
+          paymentMethods.find(
+            (option: any) =>
+              String(option?.value) ===
+              String(
+                formState.paymentMethodCode ??
+                  ''
+              )
           );
 
-        dispatch(
-          notify({
-            msg: `Please fix the following fields:\n${errorLines.join('\n')}`,
-            sev: 'warning'
-          })
+        const nextPaymentMethodId =
+          selected?.id ??
+          selected?.key ??
+          selected?.valueId ??
+          selected?.paymentMethodId ??
+          null;
+
+        setFormState(previous => {
+          if (
+            previous.paymentMethodId ===
+            nextPaymentMethodId
+          ) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            paymentMethodId:
+              nextPaymentMethodId
+          };
+        });
+      }, [
+        formState.paymentMethodCode,
+        paymentMethods
+      ]);
+
+      useEffect(() => {
+        setInsurancePage(
+          0
         );
-        return false;
-      }
-      return true;
-    };
+      }, [
+        insuranceSearchKeyword
+      ]);
 
-    const handleConfirmSafe = async () => {
-      if (isReadOnly) return false;
-      if (!validateBeforeSave()) return false;
+      useEffect(() => {
+        if (
+          !departmentId
+        ) {
+          setDefaultServiceRows(
+            []
+          );
+          return;
+        }
 
-      try {
-        await handleConfirm();
-        setLockAfterConfirm(true);
+        triggerGetServices(
+          {
+            sourceId:
+              departmentId,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,asc'
+          },
+          true
+        );
+      }, [
+        departmentId,
+        triggerGetServices
+      ]);
 
-        if (onPaymentSaved) await onPaymentSaved();
+      useEffect(() => {
+        const list =
+          extractResponseList(
+            servicesResponse.data
+          );
 
-        return true;
-      } catch (error: any) {
-        setValidationResult(error?.data ?? error);
-        handleCrudError(error, dispatch, PAYMENT_ERROR_MAP);
-        return false;
-      }
-    };
+        const mapped:
+        DefaultServiceRow[] =
+          list.map(
+            (
+              service: any,
+              index: number
+            ) => ({
+              id:
+                toNumber(
+                  service?.id ??
+                    service?.serviceId
+                ),
 
-    useImperativeHandle(ref, () => ({
-      confirm: handleConfirmSafe,
-      clear: handleClear,
-      validate: validateBeforeSave
-    }));
+              serviceId:
+                toNumber(
+                  service?.id ??
+                    service?.serviceId
+                ),
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+              serviceType:
+                String(
+                  service?.serviceType ??
+                    service?.type ??
+                    service?.category ??
+                    'SERVICE'
+                ),
 
-    const paginatedServices = useMemo(() => {
-      const startIndex = page * rowsPerPage;
-      return servicesRows.slice(startIndex, startIndex + rowsPerPage);
-    }, [servicesRows, page, rowsPerPage]);
+              serviceName:
+                String(
+                  service?.name ??
+                    service?.serviceName ??
+                    ''
+                ),
 
-    useEffect(() => {
-      const maxPage = Math.max(Math.ceil(servicesRows.length / rowsPerPage) - 1, 0);
-      if (page > maxPage) setPage(maxPage);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [servicesRows.length, rowsPerPage]);
+              selected:
+                service?.selected == null
+                  ? true
+                  : Boolean(
+                      service.selected
+                    ),
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+              isExempted:
+                Boolean(
+                  service?.isExempted
+                ),
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+              quantity:
+                1,
 
-    const hasServices = servicesRows.length > 0;
+              sequence:
+                index + 1
+            })
+          );
 
-    useEffect(() => {
-      if (!isInsurancePlan) return;
+        setDefaultServiceRows(
+          previous => {
+            const oldMap =
+              new Map(
+                previous.map(
+                  row => [
+                    row.serviceId,
+                    row
+                  ]
+                )
+              );
 
-      handleCalculateInsuranceAmount();
+            return mapped.map(
+              row => {
+                const old =
+                  oldMap.get(
+                    row.serviceId
+                  );
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [payment.paymentTypes, payment.planId, servicesRows]);
-    return (
-      <Form fluid layout="inline" className="fields-container" dir={dir}>
-        <MyInput
-          vr={validationResult}
-          column
-          disabled={true}
-          fieldLabel="Due Amount"
-          fieldName="dueAmount"
-          record={{ ...payment, dueAmount: payment?.id ? payment?.dueAmount : uiDueAmount }}
-          setRecord={setPayment}
-        />
+                return old
+                  ? {
+                      ...row,
+                      selected:
+                        old.selected,
+                      isExempted:
+                        old.isExempted,
+                      quantity:
+                        old.quantity,
+                      sequence:
+                        old.sequence
+                    }
+                  : row;
+              }
+            );
+          }
+        );
+      }, [
+        servicesResponse.data
+      ]);
 
-        <MyInput
-          vr={validationResult}
-          column
-          disabled={true}
-          fieldLabel="Patient's Balance"
-          fieldName="patientBalance"
-          record={payment}
-          setRecord={setPayment}
-        />
+      useEffect(() => {
+        const summaryPspIds =
+          (summary.items ?? [])
+            .map(
+              item =>
+                item.patientServiceProductId
+            )
+            .filter(
+              (
+                id
+              ): id is number =>
+                id != null
+            );
 
-        <MyInput
-          vr={validationResult}
-          column
-          disabled={true}
-          fieldLabel="Debt"
-          fieldName="debt"
-          record={payment}
-          setRecord={setPayment}
-        />
+        if (
+          summaryPspIds.length >
+          0
+        ) {
+          setPreparedPspIds(
+            summaryPspIds
+          );
+        }
+      }, [
+        summary.items
+      ]);
 
-        <MyInput
-          vr={validationResult}
-          column
-          disabled={true}
-          fieldLabel="Paid From Amount"
-          fieldName="paidFromAmount"
-          record={payment}
-          setRecord={setPayment}
-        />
+      useEffect(() => {
+        if (
+          summary.patientOutstandingAmount >
+            0 &&
+          formState.paymentAmount ===
+            0
+        ) {
+          setFormState(
+            previous => ({
+              ...previous,
 
-        <MyInput
-          vr={validationResult}
-          column
-          disabled={true}
-          fieldLabel="Paid From Balance"
-          fieldName="paidFromBalance"
-          record={payment}
-          setRecord={setPayment}
-        />
+              paymentAmount:
+                summary.patientOutstandingAmount
+            })
+          );
+        }
+      }, [
+        summary.patientOutstandingAmount,
+        formState.paymentAmount
+      ]);
 
-        <MyInput
-          vr={validationResult}
-          column
-          fieldLabel="Payment Type"
-          fieldType="select"
-          fieldName="paymentTypes"
-          selectData={PaymentTypesEnum ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={payment}
-          setRecord={(updatedPayment: any) => {
-            const nextPayment = { ...updatedPayment };
+
+      const updateForm =
+        (
+          partial:
+            Partial<BillingFormState>
+        ) => {
+          setFormState(
+            previous => ({
+              ...previous,
+              ...partial
+            })
+          );
+        };
+
+      const selectedRows =
+        useMemo(
+          () =>
+            defaultServiceRows
+              .filter(
+                row =>
+                  row.selected
+              )
+              .sort(
+                (
+                  first,
+                  second
+                ) =>
+                  first.sequence -
+                  second.sequence
+              ),
+          [
+            defaultServiceRows
+          ]
+        );
+
+      const selectedAll =
+        defaultServiceRows.length >
+          0 &&
+        defaultServiceRows.every(
+          row =>
+            row.selected
+        );
+
+      const selectedSome =
+        defaultServiceRows.some(
+          row =>
+            row.selected
+        );
+
+      const validate =
+        () => {
+          const details:
+          Record<string, any[]> =
+            {};
+
+          const reject =
+            (
+              field: string,
+              message: string
+            ) => {
+              details[field] = [
+                {
+                  validationType:
+                    'REJECT',
+
+                  message
+                }
+              ];
+            };
+
+          if (
+            !patientId
+          ) {
+            reject(
+              'patientId',
+              'Patient is required'
+            );
+          }
+
+          if (
+            !encounterId
+          ) {
+            reject(
+              'encounterId',
+              'Encounter is required'
+            );
+          }
+
+          if (
+            !facilityId
+          ) {
+            reject(
+              'facilityId',
+              'Facility is required'
+            );
+          }
+
+          if (
+            selectedRows.length ===
+            0
+          ) {
+            reject(
+              'services',
+              'Select at least one service'
+            );
+          }
+
+          if (
+            isInsurance &&
+            !formState.patientInsuranceId
+          ) {
+            reject(
+              'patientInsuranceId',
+              'Patient insurance is required'
+            );
+          }
+
+          if (
+            formState.paymentAmount >
+              0 &&
+            !formState.paymentMethodCode
+          ) {
+            reject(
+              'paymentMethodCode',
+              'Payment method is required'
+            );
+          }
+
+          if (
+            showCardFields &&
+            formState.cardLastFour &&
+            !/^[0-9]{4}$/.test(
+              formState.cardLastFour
+            )
+          ) {
+            reject(
+              'cardLastFour',
+              'Enter exactly four digits'
+            );
+          }
+
+          setValidationResult({
+            details
+          });
+
+          if (
+            Object.keys(details)
+              .length > 0
+          ) {
+            dispatch(
+              notify({
+                msg:
+                  'Please review the billing fields.',
+
+                sev:
+                  'warning'
+              })
+            );
+
+            return false;
+          }
+
+          return true;
+        };
+
+      const prepareServices =
+        async () => {
+          const body:
+          PrepareDefaultServicesRequest = {
+            patientId,
+
+            facilityId,
+
+            currency:
+              summary.currency ??
+              facilityCurrency,
+
+            coverageType:
+              formState.coverageType,
+
+            patientInsuranceId:
+              isInsurance
+                ? formState.patientInsuranceId
+                : null,
+
+            items:
+              selectedRows.map(
+                (
+                  row,
+                  index
+                ) => ({
+                  serviceId:
+                    row.serviceId,
+
+                  quantity:
+                    row.quantity,
+
+                  sequence:
+                    index + 1,
+
+                  isExempted:
+                    row.isExempted
+                })
+              ),
+
+            requestId:
+              makeRequestId(
+                'PREPARE-DEFAULT-SERVICES'
+              )
+          };
+
+          const result =
+            await prepareDefaultServices(
+              {
+                encounterId,
+                body
+              }
+            ).unwrap();
+
+          const successful =
+            result.items
+              .filter(
+                item =>
+                  item.billingResult
+                    ?.processed
+              )
+              .sort(
+                (
+                  first,
+                  second
+                ) =>
+                  first.sequence -
+                  second.sequence
+              );
+
+          if (
+            successful.length !==
+            result.items.length
+          ) {
+            const failed =
+              result.items.filter(
+                item =>
+                  !item.billingResult
+                    ?.processed
+              );
+
+            const message =
+              failed
+                .map(
+                  item =>
+                    `Service ${item.serviceId}: ${
+                      item.billingResult
+                        ?.message ??
+                      'Not processed'
+                    }`
+                )
+                .join('\n');
+
+            throw new Error(
+              message ||
+                'Some services were not processed'
+            );
+          }
+
+          const ids =
+            successful.map(
+              item =>
+                item.patientServiceProductId
+            );
+
+          setPreparedPspIds(
+            ids
+          );
+
+          setPrepareResultMessage(
+            result.message ??
+              'Default services prepared and priced successfully.'
+          );
+
+          await refetchSummary();
+
+          return {
+            ids,
+            message:
+              result.message ??
+              'Default services prepared and priced successfully.'
+          };
+        };
+
+      const receivePayment =
+        async (
+          pspIds: number[]
+        ) => {
+          if (
+            formState.paymentAmount <=
+            0
+          ) {
+            return null;
+          }
+
+          const request:
+          CreateAdvancePaymentRequest = {
+            ...newCreateAdvancePaymentRequest,
+
+            patientId,
+
+            encounterId,
+
+            paymentCategory:
+              'ADVANCE',
+
+            payerType:
+              'PATIENT',
+
+            payerId:
+              null,
+
+            amount:
+              formState.paymentAmount,
+
+            currency:
+              summary.currency ??
+              facilityCurrency,
+
+            paymentStatus:
+              'COMPLETED',
+
+            transactionType:
+              'PAYMENT',
+
+            paymentMethodId:
+              toNumber(
+                paymentMethods.find(
+                  (option: any) =>
+                    String(option?.value) ===
+                    String(formState.paymentMethodCode)
+                )?.id ??
+                paymentMethods.find(
+                  (option: any) =>
+                    String(option?.value) ===
+                    String(formState.paymentMethodCode)
+                )?.key ??
+                paymentMethods.find(
+                  (option: any) =>
+                    String(option?.value) ===
+                    String(formState.paymentMethodCode)
+                )?.valueId ??
+                0
+              ),
+
+            paymentMethodCode:
+              formState.paymentMethodCode,
+
+            transactionStatus:
+              'SUCCESS',
+
+            /*
+             * Receipt/payment numbers are generated by the backend.
+             * External references are supplied only by an integrated
+             * payment processor, not typed manually on this screen.
+             */
+            receiptNumber:
+              null,
+
+            externalReference:
+              null,
+
+            authorizationCode:
+              formState.authorizationCode
+                .trim() ||
+              null,
+
+            processorReference:
+              formState.processorReference
+                .trim() ||
+              null,
+
+            cardLastFour:
+              formState.cardLastFour
+                .trim() ||
+              null,
+
+            bankReference:
+              formState.bankReference
+                .trim() ||
+              null,
+
+            cashRegisterId:
+              formState.cashRegisterId,
+
+            notes:
+              formState.notes
+                .trim() ||
+              null,
+
+            patientServiceProductIds:
+              pspIds,
+
+            requestId:
+              makeRequestId(
+                'ADVANCE-PAYMENT'
+              )
+          };
+
+          const result =
+            await createAdvancePayment(
+              request
+            ).unwrap();
+
+          setLastPaymentResult(
+            result
+          );
+
+          return result;
+        };
+
+      const handleConfirm =
+        async () => {
+          if (
+            isReadOnly ||
+            !validate()
+          ) {
+            return false;
+          }
+
+          try {
+            const {
+              ids,
+              message:
+                preparedMessage
+            } =
+              await prepareServices();
+
+            const paymentResult =
+              await receivePayment(
+                ids
+              );
+
+            await refetchSummary();
 
             if (
-              nextPayment.paymentTypes === 'CASH' &&
-              nextPayment.paymentMethods === 'INSURANCE_COVERAGE'
+              paymentResult
             ) {
-              nextPayment.paymentMethods = null;
+              setLockAfterConfirm(
+                true
+              );
             }
 
-            if (nextPayment.paymentTypes !== 'INSURANCE_PLAN') {
-              nextPayment.insuranceKey = null;
-              nextPayment.planId = null;
-              setPatientInsurance({ ...newPatientInsurance, payorName: '', planName: '' });
+            dispatch(
+              notify({
+                msg:
+                  paymentResult
+                    ? `Payment ${paymentResult.paymentNumber} received and reserved successfully.`
+                    : preparedMessage,
+
+                sev:
+                  'success'
+              })
+            );
+
+            if (
+              onPaymentSaved
+            ) {
+              await onPaymentSaved();
             }
 
-            setPayment(nextPayment);
-          }}
-          disabled={isReadOnly || isLocked || !hasServices}
-          required
-          searchable={false}
-          isEnum
-        />
+            return true;
+          } catch (
+            error: any
+          ) {
+            dispatch(
+              notify({
+                msg:
+                  normalizeError(
+                    error
+                  ),
 
-        <MyInput
-          vr={validationResult}
-          column
-          fieldLabel="Payment Method"
-          fieldType="select"
-          fieldName="paymentMethods"
-          selectData={PaymentMethodsEnum ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={payment}
-          setRecord={(updatedPayment: any) => {
-            const nextPayment = { ...updatedPayment };
+                sev:
+                  'warning'
+              })
+            );
 
-            if (nextPayment.paymentMethods !== 'CREDIT_DEBIT_CARD') {
-              nextPayment.cardNumber = null;
-              nextPayment.cardHolderName = null;
-              nextPayment.cardValidUntil = null;
-            }
-            if (nextPayment.paymentMethods !== 'CHEQUE') {
-              nextPayment.chequeNumber = null;
-              nextPayment.chequeBankName = null;
-              nextPayment.chequeDueDate = null;
-            }
-            if (nextPayment.paymentMethods !== 'BANK_TRANSFER') {
-              nextPayment.transferNumber = null;
-              nextPayment.transferBankName = null;
-              nextPayment.transferDate = null;
-            }
+            return false;
+          }
+        };
 
-            setPayment(nextPayment);
-          }}
-          disabled={isReadOnly || isLocked || !hasServices}
-          required
-          searchable={false}
-          isEnum
-        />
+      const handleClear =
+        () => {
+          setFormState(
+            initialFormState
+          );
 
-        {isInsurancePlan ? (
-          <>
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Patient Insurance"
-              fieldType="selectPagination"
-              fieldName="insuranceKey"
-              selectData={insuranceSelectData}
-              selectDataLabel="label"
-              selectDataValue="id"
-              record={payment as any}
-              setRecord={(updatedPayment: any) => {
-                const selectedInsurance = (patientInsurancesList ?? []).find(
-                  (insuranceItem: any) =>
-                    String(insuranceItem?.id) === String(updatedPayment.insuranceKey)
+          setPreparedPspIds(
+            []
+          );
+
+          setValidationResult(
+            {}
+          );
+
+          setLockAfterConfirm(
+            false
+          );
+
+          setLastPaymentResult(
+            null
+          );
+
+          setPrepareResultMessage(
+            null
+          );
+
+          setDefaultServiceRows(
+            previous =>
+              previous.map(
+                (
+                  row,
+                  index
+                ) => ({
+                  ...row,
+
+                  selected:
+                    true,
+
+                  isExempted:
+                    false,
+
+                  quantity:
+                    1,
+
+                  sequence:
+                    index + 1
+                })
+              )
+          );
+
+          if (
+            setPatientInsurance
+          ) {
+            setPatientInsurance(
+              newPatientInsurance
+            );
+          }
+        };
+
+      useImperativeHandle(
+        ref,
+        () => ({
+          confirm:
+            handleConfirm,
+
+          clear:
+            handleClear,
+
+          validate
+        })
+      );
+
+      const summaryDisplayRecord =
+        useMemo(
+          () => ({
+            chargeNumber:
+              summary.chargeNumber ??
+              '-',
+
+            currency:
+              activeCurrency,
+
+            grossAmount:
+              formatMoney(
+                summary.grossAmount,
+                activeCurrency
+              ),
+
+            discountAmount:
+              formatMoney(
+                summary.discountAmount,
+                activeCurrency
+              ),
+
+            exemptionAmount:
+              formatMoney(
+                summary.exemptionAmount,
+                activeCurrency
+              ),
+
+            taxAmount:
+              formatMoney(
+                summary.taxAmount,
+                activeCurrency
+              ),
+
+            netAmount:
+              formatMoney(
+                summary.netAmount,
+                activeCurrency
+              ),
+
+            patientResponsibilityAmount:
+              formatMoney(
+                summary.patientResponsibilityAmount,
+                activeCurrency
+              ),
+
+            insuranceResponsibilityAmount:
+              formatMoney(
+                summary.insuranceResponsibilityAmount,
+                activeCurrency
+              ),
+
+            patientOutstandingAmount:
+              formatMoney(
+                summary.patientOutstandingAmount,
+                activeCurrency
+              ),
+
+            walletAvailableBalance:
+              formatMoney(
+                summary.wallet
+                  ?.availableBalance ??
+                  0,
+                activeCurrency
+              ),
+
+            walletReservedBalance:
+              formatMoney(
+                summary.wallet
+                  ?.reservedBalance ??
+                  0,
+                activeCurrency
+              ),
+
+            paymentNumber:
+              lastPaymentResult?.paymentNumber ??
+              '-',
+
+            paymentTransactionNumber:
+              lastPaymentResult?.paymentTransactionNumber ??
+              '-'
+          }),
+          [
+            summary,
+            activeCurrency,
+            lastPaymentResult
+          ]
+        );
+
+      const paginatedDefaultServices =
+        useMemo(() => {
+          const start =
+            page *
+            rowsPerPage;
+
+          return defaultServiceRows.slice(
+            start,
+            start +
+              rowsPerPage
+          );
+        }, [
+          defaultServiceRows,
+          page,
+          rowsPerPage
+        ]);
+
+      const toggleAllSelected =
+        (
+          checked: boolean
+        ) => {
+          setDefaultServiceRows(
+            previous =>
+              previous.map(
+                row => ({
+                  ...row,
+                  selected:
+                    checked
+                })
+              )
+          );
+        };
+
+      const updateServiceRow =
+        (
+          serviceId: number,
+          partial:
+            Partial<DefaultServiceRow>
+        ) => {
+          setDefaultServiceRows(
+            previous =>
+              previous.map(
+                row =>
+                  row.serviceId ===
+                  serviceId
+                    ? {
+                        ...row,
+                        ...partial
+                      }
+                    : row
+              )
+          );
+        };
+
+      const defaultServiceColumns:
+      ColumnConfig[] = [
+        {
+          key:
+            'selected',
+
+          title: (
+            <Checkbox
+              checked={
+                selectedAll
+              }
+              indeterminate={
+                !selectedAll &&
+                selectedSome
+              }
+              onChange={(
+                _,
+                checked
+              ) =>
+                toggleAllSelected(
+                  checked
+                )
+              }
+              disabled={
+                areServicesLocked
+              }
+            />
+          ),
+
+          dataKey:
+            'selected',
+
+          width:
+            70,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) => (
+              <Checkbox
+                checked={
+                  row.selected
+                }
+                onChange={(
+                  _,
+                  checked
+                ) =>
+                  updateServiceRow(
+                    row.serviceId,
+                    {
+                      selected:
+                        checked
+                    }
+                  )
+                }
+                disabled={
+                  areServicesLocked
+                }
+              />
+            )
+        },
+
+        {
+          key:
+            'sequence',
+
+          title:
+            <Translate>
+              Order
+            </Translate>,
+
+          dataKey:
+            'sequence',
+
+          width:
+            80
+        },
+
+        {
+          key:
+            'serviceType',
+
+          title:
+            <Translate>
+              Service Type
+            </Translate>,
+
+          dataKey:
+            'serviceType',
+
+          width:
+            150
+        },
+
+        {
+          key:
+            'serviceName',
+
+          title:
+            <Translate>
+              Service Name
+            </Translate>,
+
+          dataKey:
+            'serviceName',
+
+          width:
+            240
+        },
+
+        {
+          key:
+            'quantity',
+
+          title:
+            <Translate>
+              Quantity
+            </Translate>,
+
+          dataKey:
+            'quantity',
+
+          width:
+            110
+        },
+
+        {
+          key:
+            'isExempted',
+
+          title:
+            <Translate>
+              Exempted
+            </Translate>,
+
+          dataKey:
+            'isExempted',
+
+          width:
+            120,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) => (
+              <Checkbox
+                checked={
+                  row.isExempted
+                }
+                onChange={(
+                  _,
+                  checked
+                ) =>
+                  updateServiceRow(
+                    row.serviceId,
+                    {
+                      isExempted:
+                        checked
+                    }
+                  )
+                }
+                disabled={
+                  areServicesLocked ||
+                  !row.selected
+                }
+              />
+            )
+        },
+
+        {
+          key:
+            'prepared',
+
+          title:
+            <Translate>
+              Status
+            </Translate>,
+
+          dataKey:
+            'prepared',
+
+          width:
+            120,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) => {
+              const isPrepared =
+                billedSourceIds.has(
+                  row.serviceId
                 );
 
-                if (!selectedInsurance) {
-                  setPatientInsurance({ ...newPatientInsurance, payorName: '', planName: '' });
-                  updatedPayment.planId = null;
-                  setPayment(updatedPayment);
-                  return;
-                }
-
-                const insuranceInfo: any = selectedInsurance;
-
-                const payorId = Number(insuranceInfo?.payorId);
-                const payorPlanId = Number(insuranceInfo?.planId);
-
-                const payorName =
-                  conjureValueBasedOnIDFromList(payorsList, payorId, 'name') ||
-                  insuranceInfo?.payorName ||
-                  insuranceInfo?.insuranceProvider ||
-                  '';
-
-                const cachedPlans = plansByPayorId[payorId] ?? [];
-                const cachedPlanName =
-                  conjureValueBasedOnIDFromList(cachedPlans, payorPlanId, 'name') ||
-                  insuranceInfo?.planName ||
-                  insuranceInfo?.plan?.name ||
-                  '';
-
-                setPatientInsurance({ ...insuranceInfo, payorName, planName: cachedPlanName });
-
-                updatedPayment.planId = insuranceInfo?.id ?? null;
-                setPayment(updatedPayment);
-
-                if (payorId && !plansByPayorId[payorId]) {
-                  triggerGetPlans({ payorId, page: 0, size: 1000, sort: 'name,asc' }, true)
-                    .unwrap()
-                    .then(plansResponse => {
-                      const fetchedPlans = plansResponse?.data ?? [];
-                      setPlansByPayorId(previousPlans => ({
-                        ...previousPlans,
-                        [payorId]: fetchedPlans
-                      }));
-
-                      const fetchedPlanName =
-                        conjureValueBasedOnIDFromList(fetchedPlans, payorPlanId, 'name') ||
-                        insuranceInfo?.planName ||
-                        insuranceInfo?.plan?.name ||
-                        '';
-
-                      setPatientInsurance((previousInsurance: any) => ({
-                        ...previousInsurance,
-                        payorName,
-                        planName: fetchedPlanName
-                      }));
-                    })
-                    .catch(() =>
-                      setPlansByPayorId(previousPlans => ({ ...previousPlans, [payorId]: [] }))
-                    );
-                }
-              }}
-              disabled={isReadOnly || isLocked}
-              searchable={true}
-              loading={patientInsuranceResponse.isFetching || payorFetching}
-              hasMore={hasMoreInsurances}
-              onFetchMore={handleLoadMoreInsurances}
-              searchKeyWard={insuranceSearchKeyword}
-              setSearchKeyWard={setInsuranceSearchKeyword}
-            />
-
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Payor"
-              fieldType="text"
-              fieldName="payorName"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Plan"
-              fieldType="text"
-              fieldName="planName"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Policy Number"
-              fieldType="number"
-              fieldName="policyNumber"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Group Number"
-              fieldType="number"
-              fieldName="groupNumber"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Expiration Date"
-              fieldType="date"
-              fieldName="expirationDate"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-            <MyInput
-              column
-              disabled={true}
-              fieldLabel="Primary Insurance"
-              fieldType="checkbox"
-              fieldName="isPrimary"
-              record={patientInsurance as any}
-              setRecord={() => { }}
-            />
-          </>
-        ) : null}
-
-        {showCardFields || showChequeFields || showBankTransferFields ? (
-          <div className="payment-info__full-width-divider" />
-        ) : null}
-
-        {showCardFields ? (
-          <>
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Card Number"
-              fieldType="number"
-              fieldName="cardNumber"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Holder Name"
-              fieldType="text"
-              fieldName="cardHolderName"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Valid until"
-              fieldType="date"
-              fieldName="cardValidUntil"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-          </>
-        ) : null}
-
-        {showChequeFields ? (
-          <>
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Cheque Number"
-              fieldType="number"
-              fieldName="chequeNumber"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Bank Name"
-              fieldType="text"
-              fieldName="chequeBankName"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Cheque Due Date"
-              fieldType="date"
-              fieldName="chequeDueDate"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-          </>
-        ) : null}
-
-        {showBankTransferFields ? (
-          <>
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Transfer Number"
-              fieldType="number"
-              fieldName="transferNumber"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Bank Name"
-              fieldType="text"
-              fieldName="transferBankName"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-            <MyInput
-              vr={validationResult}
-              column
-              required
-              fieldLabel="Transfer Date"
-              fieldType="date"
-              fieldName="transferDate"
-              record={payment}
-              setRecord={setPayment}
-              disabled={isReadOnly || isLocked}
-            />
-          </>
-        ) : null}
-
-        <br />
-
-        <Form layout="inline" fluid className="fields-container">
-          <MyInput
-            column
-            disabled={true}
-            fieldLabel="Copay Amount"
-            fieldName="copayAmount"
-            record={payment}
-            setRecord={() => { }}
-          />
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Payment Amount"
-            fieldType="number"
-            fieldName="amount"
-            record={payment}
-            setRecord={(updated: any) => {
-              const value = Number(updated.amount ?? 0);
-
-              if (value < 0) return;
-
-              setPayment({
-                ...updated,
-                amount: value
-              });
-            }}
-            disabled={isReadOnly || isLocked || !hasServices}
-          />
-
-
-          {isInsurancePlan && (
-            <div style={{ marginTop: 8, color: '#2f7d32', fontWeight: 500 }}>
-              Patient amount is calculated automatically based on insurance coverage
-            </div>
-          )}
-
-          <MyInput
-            column
-            disabled={true}
-            fieldLabel="Remaining Amount"
-            fieldName="remainingPreview"
-            record={{
-              remainingPreview:
-                Math.max(
-                  Number(payment?.copayAmount ?? 0) -
-                  Number(payment?.amount ?? 0),
-                  0
-                )
-            }}
-            setRecord={() => { }}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Currency"
-            fieldType="select"
-            fieldName="currency"
-            selectData={CurrencyEnum ?? []}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={payment}
-            setRecord={(updatedPayment: any) => {
-              const nextPayment = { ...updatedPayment };
-              if (!nextPayment.currency && nextPayment.facilityDefaultCurrency)
-                nextPayment.currency = nextPayment.facilityDefaultCurrency;
-              setPayment(nextPayment);
-            }}
-            disabled={isReadOnly || isLocked || !hasServices}
-            required
-            searchable
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Default Currency"
-            fieldType="select"
-            fieldName="facilityDefaultCurrency"
-            selectData={DefaultCurrencySelectData}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={payment}
-            setRecord={() => { }}
-            disabled={true}
-            searchable={false}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Amount in default currency"
-            fieldName="amountInFacilityCurrency"
-            record={payment}
-            setRecord={setPayment}
-            disabled={true}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Remaining"
-            fieldName="remaining"
-            record={payment}
-            setRecord={setPayment}
-            disabled={true}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Refunds"
-            fieldName="refunds"
-            record={payment}
-            setRecord={setPayment}
-            disabled={true}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Add to free balance"
-            fieldType="checkbox"
-            fieldName="addToFreeBalance"
-            record={payment}
-            setRecord={setPayment}
-            disabled={isReadOnly || isLocked}
-          />
-
-          <MyInput
-            vr={validationResult}
-            column
-            fieldLabel="Use balance to settle debts"
-            fieldType="checkbox"
-            fieldName="useBalanceToSettleDebts"
-            record={payment}
-            setRecord={setPayment}
-            disabled={isReadOnly || isLocked}
-          />
-        </Form>
-
-        <div className="payment-info__table-wrapper">
-          <MyTable
-            data={paginatedServices}
-            columns={serviceColumns}
-            loading={lazyServicesByDepartmentResponse?.isFetching}
-            height={320}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            totalCount={servicesRows.length}
-            onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={event => {
-              setRowsPerPage(parseInt(event.target.value, 10));
-              setPage(0);
-            }}
-            tableButtons={
-              showInternalButtons ? (
-                <div className="payment-info__table-actions">
-                  <MyButton
-                    appearance="subtle"
-                    onClick={handleClear}
-                    disabled={isReadOnly || isLocked}
-                  >
-                    Clear
-                  </MyButton>
-
-                  <MyButton
-                    appearance="primary"
-                    loading={creating || updating}
-                    onClick={handleConfirmSafe}
-                    disabled={isReadOnly || isLocked}
-                  >
-                    Confirm
-                  </MyButton>
-                </div>
-              ) : null
+              return isPrepared ? (
+                <Tag
+                  size="sm"
+                  color="green"
+                >
+                  Prepared
+                </Tag>
+              ) : (
+                <Tag
+                  size="sm"
+                >
+                  Pending
+                </Tag>
+              );
             }
-          />
+        }
+      ];
+
+      const billedItemColumns:
+      ColumnConfig[] = [
+        {
+          key:
+            'itemName',
+
+          title:
+            <Translate>
+              Item
+            </Translate>,
+
+          dataKey:
+            'itemName',
+
+          width:
+            240,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              row.itemName ??
+              row.itemCode ??
+              row.billingItemType ??
+              '-'
+        },
+
+        {
+          key:
+            'unitPrice',
+
+          title:
+            <Translate>
+              Unit Price
+            </Translate>,
+
+          dataKey:
+            'unitPrice',
+
+          width:
+            110,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.unitPrice,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'netAmount',
+
+          title:
+            <Translate>
+              Net Amount
+            </Translate>,
+
+          dataKey:
+            'netAmount',
+
+          width:
+            120,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.netAmount,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'patientResponsibilityAmount',
+
+          title:
+            <Translate>
+              Patient Share
+            </Translate>,
+
+          dataKey:
+            'patientResponsibilityAmount',
+
+          width:
+            130,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.patientResponsibilityAmount,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'insuranceResponsibilityAmount',
+
+          title:
+            <Translate>
+              Insurance Share
+            </Translate>,
+
+          dataKey:
+            'insuranceResponsibilityAmount',
+
+          width:
+            140,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.insuranceResponsibilityAmount,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'reservedAmount',
+
+          title:
+            <Translate>
+              Reserved
+            </Translate>,
+
+          dataKey:
+            'reservedAmount',
+
+          width:
+            110,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.reservedAmount,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'outstandingAmount',
+
+          title:
+            <Translate>
+              Outstanding
+            </Translate>,
+
+          dataKey:
+            'outstandingAmount',
+
+          width:
+            120,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.outstandingAmount,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
+            'status',
+
+          title:
+            <Translate>
+              Status
+            </Translate>,
+
+          dataKey:
+            'status',
+
+          width:
+            130,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) => (
+              <MyBadgeStatus
+                color={
+                  row.status ===
+                    'CLOSED' ||
+                  row.status ===
+                    'FULLY_ALLOCATED'
+                    ? '#2e7d32'
+                    : row.status ===
+                        'CANCELLED' ||
+                      row.status ===
+                        'REVERSED'
+                    ? '#d32f2f'
+                    : '#1976d2'
+                }
+                contant={
+                  row.status
+                }
+              />
+            )
+        }
+      ];
+
+      const direction =
+        localStorage.getItem(
+          'direction'
+        ) ??
+        'LTR';
+
+      const dir =
+        direction === 'RTL'
+          ? 'rtl'
+          : 'ltr';
+
+      return (
+        <div
+          className="patient-billing-info"
+          dir={dir}
+        >
+          <div className="payment-info__summary-strip">
+            <div className="payment-info__summary-item">
+              <span className="payment-info__summary-label">
+                Charge Number
+              </span>
+              <span className="payment-info__summary-value">
+                {summary.chargeNumber ??
+                  '-'}
+              </span>
+            </div>
+
+            <div className="payment-info__summary-item">
+              <span className="payment-info__summary-label">
+                Currency
+              </span>
+              <span className="payment-info__summary-value">
+                {activeCurrency}
+              </span>
+            </div>
+
+            <div className="payment-info__summary-item">
+              <span className="payment-info__summary-label">
+                Net Amount
+              </span>
+              <span className="payment-info__summary-value">
+                {formatMoney(
+                  summary.netAmount,
+                  activeCurrency
+                )}
+              </span>
+            </div>
+
+            <div className="payment-info__summary-item">
+              <span className="payment-info__summary-label">
+                Patient Outstanding
+              </span>
+              <span className="payment-info__summary-value payment-info__summary-value--highlight">
+                {formatMoney(
+                  summary.patientOutstandingAmount,
+                  activeCurrency
+                )}
+              </span>
+            </div>
+
+            <div className="payment-info__summary-item">
+              <span className="payment-info__summary-label">
+                Wallet Available
+              </span>
+              <span className="payment-info__summary-value payment-info__summary-value--success">
+                {formatMoney(
+                  summary.wallet
+                    ?.availableBalance ??
+                    0,
+                  activeCurrency
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="payment-info__workflow">
+            <span
+              className={`payment-info__workflow-step ${
+                servicesArePrepared
+                  ? 'payment-info__workflow-step--done'
+                  : 'payment-info__workflow-step--active'
+              }`}
+            >
+              1. Coverage
+            </span>
+            <span
+              className={`payment-info__workflow-step ${
+                servicesArePrepared
+                  ? 'payment-info__workflow-step--done'
+                  : ''
+              }`}
+            >
+              2. Prepare Services
+            </span>
+            <span
+              className={`payment-info__workflow-step ${
+                lockAfterConfirm
+                  ? 'payment-info__workflow-step--done'
+                  : servicesArePrepared
+                    ? 'payment-info__workflow-step--active'
+                    : ''
+              }`}
+            >
+              3. Receive Payment
+            </span>
+          </div>
+
+          {prepareResultMessage ? (
+            <Message
+              showIcon
+              type="success"
+              className="payment-info__message"
+            >
+              {prepareResultMessage}
+            </Message>
+          ) : null}
+
+          <Form
+            fluid
+            layout="inline"
+            className="fields-container"
+          >
+          <Panel
+            bordered
+            className="payment-info__panel"
+            header={
+              <div className="payment-info__panel-header">
+                <Translate>
+                  Coverage
+                </Translate>
+              </div>
+            }
+          >
+            <MyInput
+              vr={
+                validationResult
+              }
+              column
+              required
+              fieldLabel="Coverage Type"
+              fieldType="select"
+              fieldName="coverageType"
+              selectData={[
+                {
+                  label:
+                    'Self Pay',
+                  value:
+                    'SELF_PAY'
+                },
+                {
+                  label:
+                    'Insurance',
+                  value:
+                    'INSURANCE'
+                }
+              ]}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={
+                formState
+              }
+              setRecord={(updatedForm: BillingFormState) => {
+                const nextCoverage =
+                  updatedForm.coverageType;
+
+                setFormState({
+                  ...updatedForm,
+                  patientInsuranceId:
+                    nextCoverage === 'INSURANCE'
+                      ? updatedForm.patientInsuranceId
+                      : null
+                });
+              }}
+              disabled={
+                isLocked
+              }
+              searchable={
+                false
+              }
+            />
+
+            {isInsurance ? (
+              <>
+                <MyInput
+                  vr={
+                    validationResult
+                  }
+                  column
+                  required
+                  fieldLabel="Patient Insurance"
+                  fieldType="selectPagination"
+                  fieldName="patientInsuranceId"
+                  selectData={
+                    insuranceSelectData
+                  }
+                  selectDataLabel="label"
+                  selectDataValue="id"
+                  record={
+                    formState
+                  }
+                  setRecord={setFormState}
+                  disabled={
+                    isLocked
+                  }
+                  searchable
+                  loading={
+                    insuranceResponse.isFetching
+                  }
+                  hasMore={
+                    hasMoreInsurances
+                  }
+                  onFetchMore={() =>
+                    setInsurancePage(
+                      previous =>
+                        previous + 1
+                    )
+                  }
+                  searchKeyWard={
+                    insuranceSearchKeyword
+                  }
+                  setSearchKeyWard={
+                    setInsuranceSearchKeyword
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Payer NPHIES ID"
+                  fieldName="payerNphiesId"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Member Card ID"
+                  fieldName="memberCardId"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Policy Number"
+                  fieldName="policyNumber"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Policy Class"
+                  fieldName="policyClassName"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Expiration Date"
+                  fieldType="date"
+                  fieldName="expirationDate"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+              </>
+            ) : null}
+          </Panel>
+
+          <Panel
+            bordered
+            className="payment-info__panel"
+            header={
+              <div className="payment-info__panel-header">
+                <Translate>
+                  Default Services
+                </Translate>
+                <div className="payment-info__panel-status">
+                  {servicesArePrepared ? (
+                    <Tag
+                      size="sm"
+                      color="green"
+                    >
+                      Prepared
+                    </Tag>
+                  ) : (
+                    <Tag size="sm">
+                      Select services to prepare
+                    </Tag>
+                  )}
+                </div>
+              </div>
+            }
+          >
+          <div className="payment-info__table-wrapper">
+            <MyTable
+              data={
+                paginatedDefaultServices
+              }
+              columns={
+                defaultServiceColumns
+              }
+              loading={
+                servicesResponse.isFetching
+              }
+              height={
+                300
+              }
+              page={
+                page
+              }
+              rowsPerPage={
+                rowsPerPage
+              }
+              totalCount={
+                defaultServiceRows.length
+              }
+              onPageChange={(
+                _,
+                newPage
+              ) =>
+                setPage(
+                  newPage
+                )
+              }
+              onRowsPerPageChange={
+                event => {
+                  setRowsPerPage(
+                    parseInt(
+                      event.target.value,
+                      10
+                    )
+                  );
+
+                  setPage(
+                    0
+                  );
+                }
+              }
+            />
+          </div>
+          </Panel>
+
+          <Panel
+            bordered
+            className="payment-info__panel"
+            header={
+              <Translate>
+                Billing Summary
+              </Translate>
+            }
+          >
+          <div className="payment-info__amount-grid">
+            {lastPaymentResult ? (
+              <>
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Payment Number"
+                  fieldName="paymentNumber"
+                  record={
+                    summaryDisplayRecord
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Transaction Number"
+                  fieldName="paymentTransactionNumber"
+                  record={
+                    summaryDisplayRecord
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+              </>
+            ) : null}
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Gross Amount"
+              fieldName="grossAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Discount"
+              fieldName="discountAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Exemption"
+              fieldName="exemptionAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Tax"
+              fieldName="taxAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Net Amount"
+              fieldName="netAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Patient Responsibility"
+              fieldName="patientResponsibilityAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Insurance Responsibility"
+              fieldName="insuranceResponsibilityAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Patient Outstanding"
+              fieldName="patientOutstandingAmount"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Wallet Available"
+              fieldName="walletAvailableBalance"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+
+            <MyInput
+              column
+              disabled
+              fieldLabel="Wallet Reserved"
+              fieldName="walletReservedBalance"
+              record={
+                summaryDisplayRecord
+              }
+              setRecord={() =>
+                undefined
+              }
+            />
+          </div>
+          </Panel>
+
+          <Panel
+            bordered
+            className="payment-info__panel"
+            header={
+              <Translate>
+                Receive Payment
+              </Translate>
+            }
+          >
+            <MyInput
+              vr={
+                validationResult
+              }
+              column
+              fieldLabel="Payment Amount"
+              fieldType="number"
+              fieldName="paymentAmount"
+              record={
+                formState
+              }
+              setRecord={setFormState}
+              disabled={
+                isLocked
+              }
+            />
+
+            <MyInput
+              vr={
+                validationResult
+              }
+              column
+              required={
+                formState.paymentAmount >
+                0
+              }
+              fieldLabel="Payment Method"
+              fieldType="select"
+              fieldName="paymentMethodCode"
+              selectData={
+                paymentMethods
+              }
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={
+                formState
+              }
+              setRecord={setFormState}
+              disabled={
+                isLocked
+              }
+              searchable={
+                false
+              }
+              isEnum
+            />
+
+            <div className="payment-info__field-note">
+              Receipt, payment, and transaction numbers are generated automatically by the backend after payment is received.
+            </div>
+
+            {showCardFields ? (
+              <>
+                <MyInput
+                  column
+                  fieldLabel="Authorization Code"
+                  fieldName="authorizationCode"
+                  record={
+                    formState
+                  }
+                  setRecord={setFormState}
+                  disabled={
+                    isLocked
+                  }
+                />
+
+                <MyInput
+                  column
+                  fieldLabel="Processor Reference"
+                  fieldName="processorReference"
+                  record={
+                    formState
+                  }
+                  setRecord={setFormState}
+                  disabled={
+                    isLocked
+                  }
+                />
+
+                <MyInput
+                  column
+                  fieldLabel="Card Last Four"
+                  fieldName="cardLastFour"
+                  record={
+                    formState
+                  }
+                  setRecord={setFormState}
+                  disabled={
+                    isLocked
+                  }
+                />
+              </>
+            ) : null}
+
+            {showBankReference ? (
+              <MyInput
+                column
+                fieldLabel="Bank Reference"
+                fieldName="bankReference"
+                record={
+                  formState
+                }
+                setRecord={setFormState}
+                disabled={
+                  isLocked
+                }
+              />
+            ) : null}
+
+            <MyInput
+              column
+              fieldLabel="Notes"
+              fieldName="notes"
+              record={
+                formState
+              }
+              setRecord={setFormState}
+              disabled={
+                isLocked
+              }
+            />
+          </Panel>
+
+          <Panel
+            bordered
+            className="payment-info__panel"
+            header={
+              <Translate>
+                Charge Lines
+              </Translate>
+            }
+          >
+          <div className="payment-info__table-wrapper">
+            <MyTable
+              data={
+                summary.items ??
+                []
+              }
+              columns={
+                billedItemColumns
+              }
+              loading={
+                loadingSummary
+              }
+              height={
+                320
+              }
+              page={
+                0
+              }
+              rowsPerPage={
+                Math.max(
+                  summary.items?.length ??
+                    0,
+                  5
+                )
+              }
+              totalCount={
+                summary.items?.length ??
+                0
+              }
+              onPageChange={() =>
+                undefined
+              }
+              onRowsPerPageChange={() =>
+                undefined
+              }
+              tableButtons={
+                showInternalButtons ? (
+                  <div className="payment-info__table-actions">
+                    <MyButton
+                      appearance="subtle"
+                      onClick={
+                        handleClear
+                      }
+                      disabled={
+                        isLocked
+                      }
+                    >
+                      Clear
+                    </MyButton>
+
+                    <MyButton
+                      appearance="ghost"
+                      loading={
+                        preparingServices
+                      }
+                      onClick={async () => {
+                        if (
+                          isReadOnly ||
+                          !validate()
+                        ) {
+                          return;
+                        }
+
+                        try {
+                          const {
+                            message:
+                              preparedMessage
+                          } =
+                            await prepareServices();
+
+                          dispatch(
+                            notify({
+                              msg:
+                                preparedMessage,
+
+                              sev:
+                                'success'
+                            })
+                          );
+                        } catch (
+                          error: any
+                        ) {
+                          dispatch(
+                            notify({
+                              msg:
+                                normalizeError(
+                                  error
+                                ),
+
+                              sev:
+                                'warning'
+                            })
+                          );
+                        }
+                      }}
+                      disabled={
+                        isLocked ||
+                        areServicesLocked ||
+                        selectedRows.length ===
+                          0
+                      }
+                    >
+                      Prepare Services
+                    </MyButton>
+
+                    <MyButton
+                      appearance="primary"
+                      loading={
+                        creatingPayment
+                      }
+                      onClick={async () => {
+                        if (
+                          isReadOnly
+                        ) {
+                          return;
+                        }
+
+                        if (
+                          formState.paymentAmount <=
+                          0
+                        ) {
+                          dispatch(
+                            notify({
+                              msg:
+                                'Enter a payment amount greater than zero.',
+
+                              sev:
+                                'warning'
+                            })
+                          );
+                          return;
+                        }
+
+                        if (
+                          !formState.paymentMethodCode
+                        ) {
+                          dispatch(
+                            notify({
+                              msg:
+                                'Select a payment method.',
+
+                              sev:
+                                'warning'
+                            })
+                          );
+                          return;
+                        }
+
+                        try {
+                          const prepared =
+                            preparedPspIds.length >
+                            0
+                              ? {
+                                  ids:
+                                    preparedPspIds,
+                                  message:
+                                    prepareResultMessage ??
+                                    'Default services already prepared.'
+                                }
+                              : await prepareServices();
+
+                          const result =
+                            await receivePayment(
+                              prepared.ids
+                            );
+
+                          await refetchSummary();
+
+                          setLockAfterConfirm(
+                            true
+                          );
+
+                          dispatch(
+                            notify({
+                              msg:
+                                `Payment ${result?.paymentNumber ?? ''} received and reserved successfully.`,
+
+                              sev:
+                                'success'
+                            })
+                          );
+
+                          if (
+                            onPaymentSaved
+                          ) {
+                            await onPaymentSaved();
+                          }
+                        } catch (
+                          error: any
+                        ) {
+                          dispatch(
+                            notify({
+                              msg:
+                                normalizeError(
+                                  error
+                                ),
+
+                              sev:
+                                'warning'
+                            })
+                          );
+                        }
+                      }}
+                      disabled={
+                        isLocked ||
+                        formState.paymentAmount <=
+                          0
+                      }
+                    >
+                      Receive & Reserve
+                    </MyButton>
+                  </div>
+                ) : null
+              }
+            />
+          </div>
+          </Panel>
+          </Form>
         </div>
-      </Form>
-    );
-  }
-);
+      );
+    }
+  );
+
+PatientPaymentInfo.displayName =
+  'PatientPaymentInfo';
 
 export default PatientPaymentInfo;

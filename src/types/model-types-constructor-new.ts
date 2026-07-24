@@ -3495,3 +3495,159 @@ modelTypes.Discount= {
   description:
     null
 };
+
+
+
+export const newBillingWalletSummary: modelTypes.BillingWalletSummary = {
+  walletId: null,
+  creditedAmount: 0,
+  availableBalance: 0,
+  reservedBalance: 0,
+  consumedAmount: 0,
+  refundedAmount: 0,
+  currency: null,
+  status: null
+};
+
+export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
+  chargeId: null,
+  chargeNumber: null,
+  patientId: 0,
+  encounterId: 0,
+  chargeDate: null,
+  currency: null,
+  grossAmount: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  netAmount: 0,
+  allocatedAmount: 0,
+  outstandingAmount: 0,
+  lineCount: 0,
+  chargeStatus: null,
+  patientResponsibilityAmount: 0,
+  patientAllocatedAmount: 0,
+  patientOutstandingAmount: 0,
+  insuranceResponsibilityAmount: 0,
+  insuranceAllocatedAmount: 0,
+  insuranceOutstandingAmount: 0,
+  otherPayerResponsibilityAmount: 0,
+  otherPayerAllocatedAmount: 0,
+  otherPayerOutstandingAmount: 0,
+  wallet: newBillingWalletSummary,
+  items: []
+};
+
+export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
+  patientId: 0,
+  encounterId: null,
+  paymentCategory: 'ADVANCE',
+  payerType: 'PATIENT',
+  payerId: null,
+  amount: 0,
+  currency: 'SAR',
+  paymentStatus: 'COMPLETED',
+  transactionType: 'PAYMENT',
+  paymentMethodId: 0,
+  paymentMethodCode: '',
+  transactionStatus: 'SUCCESS',
+  receiptNumber: null,
+  externalReference: null,
+  authorizationCode: null,
+  processorReference: null,
+  cardLastFour: null,
+  bankReference: null,
+  cashRegisterId: null,
+  notes: null,
+  patientServiceProductIds: [],
+  requestId: ''
+};
+
+export const newBillingCheckoutRequest: modelTypes.BillingCheckoutRequest = {
+  chargeId: 0,
+  allowDebit: false,
+  creditLimit: 0,
+  debitApprovalRequired: false,
+  approvedBy: null,
+  debitDueDate: null,
+  checkoutBy: '',
+  requestId: '',
+  sourceChannel: 'CASHIER'
+};
+
+export const newBillingCancellationRequest: modelTypes.BillingCancellationRequest = {
+  patientServiceProductId: 0,
+  cancellationReason: 'MANUAL_CANCELLATION',
+  reason: '',
+  cancelledBy: '',
+  requestId: '',
+  sourceChannel: 'MANUAL'
+};
+
+export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
+  patientId: 0,
+  encounterId: null,
+  originalPaymentId: null,
+  originalPaymentTransactionId: null,
+  refundSourceType: 'AVAILABLE_WALLET',
+  requestedAmount: 0,
+  refundMethodCode: '',
+  refundMethodId: 0,
+  requestedBy: '',
+  reason: '',
+  externalReference: null,
+  processorReference: null,
+  referenceDocumentType: null,
+  referenceDocumentId: null,
+  referenceDocumentNumber: null,
+  notes: null,
+  requestId: '',
+  sourceChannel: 'CASHIER'
+};
+
+export const newBillingRefundReversalRequest: modelTypes.BillingRefundReversalRequest = {
+  refundId: 0,
+  amount: 0,
+  reason: '',
+  reversedBy: '',
+  requestId: '',
+  sourceChannel: 'MANUAL'
+};
+export const newPrepareDefaultServiceItem:
+modelTypes.PrepareDefaultServiceItem = {
+  serviceId:
+    0,
+
+  quantity:
+    1,
+
+  sequence:
+    1,
+
+  isExempted:
+    false
+};
+
+export const newPrepareDefaultServicesRequest:
+modelTypes.PrepareDefaultServicesRequest = {
+  patientId:
+    0,
+
+  facilityId:
+    0,
+
+  currency:
+    'SAR',
+
+  coverageType:
+    'SELF_PAY',
+
+  patientInsuranceId:
+    null,
+
+  items:
+    [],
+
+  requestId:
+    ''
+};

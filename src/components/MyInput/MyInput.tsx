@@ -764,7 +764,12 @@ const MyInput = ({
 
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
-        const pickerValue = record?.[fieldName] ?? '';
+        const pickerValue =
+          record?.[fieldName] !== undefined &&
+          record?.[fieldName] !== null &&
+          record?.[fieldName] !== ''
+            ? record[fieldName]
+            : null;
         const dataList = props.selectData ?? [];
 
         return (
@@ -783,7 +788,7 @@ const MyInput = ({
 
                 const text = isArrayLabel
                   ? buildCombinedLabel(item, labelKeys, '')
-                  : String(item?.[primaryLabelKey] ?? '');
+                  : String(item?.[labelKey] ?? '');
 
                 return text
                   .toLowerCase()
@@ -811,8 +816,8 @@ const MyInput = ({
                 props.setSearchKeyWard?.(searchText);
               }}
 
-              onChange={(value, item, event) => {
-                if (item?.isLoadMore || value === '__load_more__') {
+              onChange={(value, event) => {
+                if (value === '__load_more__') {
                   event?.preventDefault?.();
                   event?.stopPropagation?.();
                   loadMoreClickedRef.current = true;
@@ -820,14 +825,22 @@ const MyInput = ({
                   return;
                 }
 
-                if (!value) {
+                if (
+                  value === null ||
+                  value === undefined ||
+                  value === ''
+                ) {
                   handleValueChange(null);
                   props.onSelectItem?.(null);
                   return;
                 }
 
                 const selectedItem =
-                  dataList.find((x: any) => x[valueKey] === value) ?? item ?? null;
+                  dataList.find(
+                    (item: any) =>
+                      String(item?.[valueKey]) ===
+                      String(value)
+                  ) ?? null;
 
                 handleValueChange(value);
                 props.onSelectItem?.(selectedItem);

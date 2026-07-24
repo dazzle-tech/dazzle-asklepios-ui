@@ -233,6 +233,9 @@ import { priceListSetupService } from './services/setup/priceListSetup/priceList
 import {billingConfigurationService} from './services/billing/billingConfigurationService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
+
+
+  import { billingTransactionService } from './services/billing/billingTransactionService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -586,6 +589,8 @@ export const store = configureStore({
   [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
   [taxService.reducerPath]: taxService.reducer,
   [discountService.reducerPath]: discountService.reducer,
+
+  [billingTransactionService.reducerPath]:billingTransactionService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -790,7 +795,8 @@ export const store = configureStore({
         priceListSetupService.middleware,
         billingConfigurationService.middleware,
         taxService.middleware,
-        discountService.middleware
+        discountService.middleware,
+        billingTransactionService.middleware
       ) as any
 });
 
