@@ -145,6 +145,7 @@ export interface Service {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  billingRuleId?: number | null,
 }
 
 export interface ServiceItem {
@@ -322,7 +323,7 @@ export interface AvailabilityTemplateResponseVM {
   templateName: string;
   templateType: string;
   templateColor?: string | null;
-  status: string;
+  status?: string;
   versionNo?: number | null;
   copyFromTemplateId?: number | null;
   parentTemplateId?: number | null;
@@ -352,7 +353,7 @@ export interface AvailabilityTemplateCreateDTO {
   templateType: string;
   resourceId: number;
   templateColor?: string | null;
-  status: string;
+  status?: string;
   versionNo?: number | null;
   copyFromTemplateId?: number | null;
   parentTemplateId?: number | null;
@@ -781,6 +782,7 @@ export interface Procedure {
   facilityId?: number;
   currency?: string | null;
   price?: number | null;
+  billingRuleId?: number | null;
 }
 // DiagnosticTest matches the domain entity fields (incl. raw DB strings + transient lists)
 
@@ -812,6 +814,7 @@ export interface DiagnosticTest {
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
   modality:string
+  billingRuleId?: number | null;
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -1136,6 +1139,7 @@ export interface BrandMedication {
   hasActiveIngredient?: boolean;
   price: number;
   currency: string;
+  billingRuleId?: number | null;
 }
 
 export interface MedicationCategoryClass {
@@ -1712,7 +1716,7 @@ export interface BillingInvoiceResponseVM {
   facilityId: number;
   patientKey?: string | null;
   encounterKey?: string | null;
-  status: string;
+  status?: string;
   totalAmount: number | string;
   paidAmount: number | string;
   balanceAmount: number | string;
@@ -2137,7 +2141,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2178,8 +2182,13 @@ export interface PatientEncounter {
 
   notes?: string | null;
 
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
   encounterDate?: Date | null;
+  startedDate?: string | null;
+  startedBy?: string | null;
   physicalExaminationSummery?: string | null;
 
 }
@@ -2310,7 +2319,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2356,7 +2365,10 @@ export interface PatientEncounter {
   encounterType: string;
   encounterReason: string;
   priorityLevel: string;
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
 
   followUpEncounter?: {
     id: number;
@@ -2551,7 +2563,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2593,7 +2605,7 @@ export interface BillingInvoiceCreateVM {
 
   notes?: string | null;
 
-  status: string;
+  status?: string;
   encounterDate?: Date | null;
 }
 
@@ -2659,7 +2671,10 @@ export interface PatientEncounter {
 
   encounterDate?: Date | null;
 
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
 
   chiefComplaint?: string | null;
 
@@ -2983,7 +2998,7 @@ export interface PatientAllergiesResponseVM {
   byPatient?: boolean;
   sourceOfInformation?: string;
   note?: string;
-  status: string;
+  status?: string;
   allergicReactions: string;
 
   resolvedBy?: string;
@@ -3023,7 +3038,7 @@ export interface PatientPrescription {
   prescriptionNum: number;
   prescriptionDate: string;
   urgencyLevel: string;
-  status: string;
+  status?: string;
   fromFacilityId: number;
   fromDepartmentId: number;
   toFacilityId?: number | null;
@@ -3137,7 +3152,7 @@ export interface PatientAllergiesCreateDTO {
   byPatient?: boolean;
   sourceOfInformation?: string;
   note?: string;
-  status: string;
+  status?: string;
   allergicReactions?: string;
 
   activeIngredients?: number[];
@@ -3736,7 +3751,12 @@ export type PatientServiceAndProduct = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
-  SourceId?: number | null; 
+  SourceId?: number | null;
+  createdDate?: string | null;
+  preAuthorizationStatus?: string | null;
+  preAuthorizationReferenceNo?: string | null;
+  itemName?: string | null;
+  itemCode?: string | null;
 };
  
 export enum ServiceSource {
@@ -5045,6 +5065,36 @@ export type SavePriceListSetupRequest = {
   effectiveTo?: string | null;
   currency: string;
 };
+
+export type BillingTrigger =
+  | 'ENCOUNTER_CREATED'
+  | 'TREATMENT_STARTED'
+  | 'ORDERED'
+  | 'DISPENSED'
+  | 'SERVICE_COMPLETED'
+  | 'CHECKOUT'
+  | 'MANUAL';
+
+export type BillingRule = {
+  id?: number;
+  name?: string;
+  billingItemType?: BillingItemType;
+  billingTrigger?: BillingTrigger;
+  isDefault?: boolean;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+};
+
+export type SaveBillingRuleRequest = {
+  id?: number | null;
+  name: string;
+  billingItemType: BillingItemType;
+  billingTrigger: BillingTrigger;
+  isDefault: boolean;
+};
+
 export type BillingConfigurationKey =
   | 'DEFAULT_CURRENCY_ID'
   | 'DEFAULT_PRICE_LIST_ID'
@@ -5502,6 +5552,9 @@ export type EncounterBillingItemSummary = {
   itemName: string | null;
   quantity: number;
   unitPrice: number;
+  setupUnitPrice?: number | null;
+  priceSource?: string | null;
+  priceListItemCode?: string | null;
   grossAmount: number;
   discountAmount: number;
   exemptionAmount: number;
@@ -5517,6 +5570,32 @@ export type EncounterBillingItemSummary = {
   currency: Currency;
   status: BillingChargeLineStatus;
   responsibilities: BillingResponsibilitySummary[];
+};
+
+export type WaseelBenefitDetail = {
+  categoryKey?: string | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  typeDisplay?: string | null;
+  typeCode?: string | null;
+  value?: string | null;
+  unit?: string | null;
+};
+
+export type WaseelCoverageDetails = {
+  eligibilityRequestId?: number | null;
+  eligibilityResponseId?: string | null;
+  patientInsuranceId?: number | null;
+  memberId?: string | null;
+  policyNumber?: string | null;
+  policyHolder?: string | null;
+  network?: string | null;
+  inforce?: string | null;
+  coverageStatus?: string | null;
+  copaymentPercent?: number | null;
+  copaymentCap?: number | null;
+  eligibilityCheckedAt?: string | null;
+  benefits?: WaseelBenefitDetail[];
 };
 
 export type EncounterBillingSummary = {
@@ -5538,6 +5617,8 @@ export type EncounterBillingSummary = {
   patientResponsibilityAmount: number;
   patientAllocatedAmount: number;
   patientOutstandingAmount: number;
+  patientWalletSettledAmount?: number;
+  patientDebitSettledAmount?: number;
   insuranceResponsibilityAmount: number;
   insuranceAllocatedAmount: number;
   insuranceOutstandingAmount: number;

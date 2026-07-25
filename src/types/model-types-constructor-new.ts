@@ -197,6 +197,7 @@ export const newService: modelTypes.Service = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  billingRuleId: null,
 };
 
 // ------------------- Service Item -------------------
@@ -292,7 +293,8 @@ export const newProcedure: modelTypes.Procedure = {
   lastModifiedDate: null,
   facilityId: undefined,
   currency: null,
-  price: null
+  price: null,
+  billingRuleId: null,
 };
 
 // ------------------- Allergen -------------------
@@ -339,7 +341,8 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
-  modality:null
+  modality:null,
+  billingRuleId: null,
 };
 
 
@@ -625,7 +628,8 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   uomGroupUnitId: null,
   hasActiveIngredient: false,
   price: 0,
-  currency: ''
+  currency: '',
+  billingRuleId: null,
 };
 
 // ------------------- Substitute -------------------
@@ -1881,6 +1885,8 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   notes: null,
 
+  encounterStatus: 'OPEN',
+  treatmentStatus: 'NEW',
   status: 'NEW',
   encounterDate: null,
   chiefComplaint: null,
@@ -3366,6 +3372,15 @@ export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
 
   isActive: true
 };
+
+export const newBillingRule: modelTypes.BillingRule = {
+  id: undefined,
+  name: undefined,
+  billingItemType: 'SERVICE',
+  billingTrigger: 'ENCOUNTER_CREATED',
+  isDefault: false
+};
+
 export const newBillingConfiguration:
 modelTypes.BillingConfiguration = {
   id: undefined,
@@ -3528,6 +3543,8 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   patientResponsibilityAmount: 0,
   patientAllocatedAmount: 0,
   patientOutstandingAmount: 0,
+  patientWalletSettledAmount: 0,
+  patientDebitSettledAmount: 0,
   insuranceResponsibilityAmount: 0,
   insuranceAllocatedAmount: 0,
   insuranceOutstandingAmount: 0,
@@ -3565,7 +3582,7 @@ export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequ
 
 export const newBillingCheckoutRequest: modelTypes.BillingCheckoutRequest = {
   chargeId: 0,
-  allowDebit: false,
+  allowDebit: true,
   creditLimit: 0,
   debitApprovalRequired: false,
   approvedBy: null,

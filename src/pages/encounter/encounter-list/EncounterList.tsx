@@ -16,6 +16,11 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  getEncounterTreatmentStatus,
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import DetailsCard from '@/components/DetailsCard';
 import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
@@ -432,9 +437,7 @@ const EncounterList = () => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -448,6 +451,9 @@ const EncounterList = () => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -853,7 +859,7 @@ const handlePrintVisitReport = async (row: any) => {
       key: 'status',
       title: 'STATUS',
       render: (row: any) => {
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const statusColorMap: Record<string, string> = {
           NEW: '#0d6efd',
           ONGOING: '#198754',
@@ -866,7 +872,7 @@ const handlePrintVisitReport = async (row: any) => {
         return (
           <MyBadgeStatus
             color={statusColorMap[statusUpper] ?? '#969fb0'}
-            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
+            contant={formatEnumString(statusUpper) || '-'}
           />
         );
       }
@@ -891,7 +897,7 @@ const handlePrintVisitReport = async (row: any) => {
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
 
         return (

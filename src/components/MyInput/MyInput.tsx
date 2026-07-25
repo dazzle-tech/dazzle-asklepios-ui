@@ -336,6 +336,12 @@ const MyInput = ({
   };
 
   const resolveContainer = () => {
+    if (props.container) {
+      return typeof props.container === 'function'
+        ? props.container()
+        : props.container;
+    }
+
     const pickerElement = pickerRef.current as HTMLElement | null;
 
     return (
@@ -562,7 +568,7 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={false}
+              searchable={props.searchable ?? false}
 
               data={filteredData}
 

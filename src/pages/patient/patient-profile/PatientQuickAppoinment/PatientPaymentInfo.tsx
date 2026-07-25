@@ -47,6 +47,7 @@ import {
 import {
   useCreateAdvancePaymentMutation,
   useGetEncounterBillingSummaryQuery,
+  useGetWaseelCoverageQuery,
   usePrepareDefaultServicesMutation
 } from '@/services/billing/billingTransactionService';
 
@@ -62,7 +63,9 @@ import type {
   EncounterBillingItemSummary,
   EncounterBillingSummary,
   PatientInsurance,
-  PrepareDefaultServicesRequest
+  PrepareDefaultServicesRequest,
+  WaseelBenefitDetail,
+  WaseelCoverageDetails
 } from '@/types/model-types-new';
 
 import {
@@ -80,6 +83,12 @@ type DefaultServiceRow = {
   isExempted: boolean;
   quantity: number;
   sequence: number;
+  setupPrice?: number | null;
+  calculatedPrice?: number | null;
+  priceSource?: string | null;
+  priceListItemCode?: string | null;
+  patientShare?: number | null;
+  insuranceShare?: number | null;
 };
 
 type BillingFormState = {
@@ -217,6 +226,26 @@ const formatMoney =
       : formatted;
   };
 
+const computeDiscountFactor = (
+  row: EncounterBillingItemSummary
+) => {
+  const quantity = Number(row.quantity ?? 0);
+  const unitPrice = Number(row.unitPrice ?? 0);
+  const baseAmount = quantity * unitPrice;
+
+  if (baseAmount <= 0) {
+    return 1;
+  }
+
+  const grossAmount = Number(row.grossAmount ?? 0);
+  const discountAmount = Number(row.discountAmount ?? 0);
+  const afterDiscount = grossAmount - discountAmount;
+
+  return Number(
+    (afterDiscount / baseAmount).toFixed(4)
+  );
+};
+
 const toNumber =
   (
     value: unknown,
@@ -288,6 +317,105 @@ const normalizeError =
       ? `${message}\nTrace ID: ${traceId}`
       : message;
   };
+
+type MetricVariant =
+  | 'default'
+  | 'highlight'
+  | 'success'
+  | 'muted';
+
+const SummaryMetric = ({
+  label,
+  value,
+  variant = 'default',
+  mono = false
+}: {
+  label: string;
+  value: string;
+  variant?: MetricVariant;
+  mono?: boolean;
+}) => (
+  <div
+    className={`payment-info__summary-card${
+      variant === 'highlight'
+        ? ' payment-info__summary-card--accent'
+        : ''
+    }`}
+  >
+    <span className="payment-info__summary-label">
+      {label}
+    </span>
+    <span
+      className={[
+        'payment-info__summary-value',
+        variant !== 'default'
+          ? `payment-info__summary-value--${variant}`
+          : '',
+        mono
+          ? 'payment-info__summary-value--mono'
+          : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {value}
+    </span>
+  </div>
+);
+
+const BillingMetric = ({
+  label,
+  value,
+  variant = 'default'
+}: {
+  label: string;
+  value: string;
+  variant?: MetricVariant;
+}) => (
+  <div className="payment-info__metric-row">
+    <span className="payment-info__metric-label">
+      {label}
+    </span>
+    <span
+      className={[
+        'payment-info__metric-value',
+        variant !== 'default'
+          ? `payment-info__metric-value--${variant}`
+          : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {value}
+    </span>
+  </div>
+);
+
+type StepperState =
+  | 'pending'
+  | 'active'
+  | 'done';
+
+const WorkflowStep = ({
+  index,
+  label,
+  state
+}: {
+  index: number;
+  label: string;
+  state: StepperState;
+}) => (
+  <div
+    className={`payment-info__stepper-step payment-info__stepper-step--${state}`}
+  >
+    <span className="payment-info__stepper-index">
+      {state === 'done' ? '✓' : index}
+    </span>
+    <span className="payment-info__stepper-label">
+      {label}
+    </span>
+  </div>
+);
 
 const PatientPaymentInfo =
   forwardRef<
@@ -459,6 +587,28 @@ const PatientPaymentInfo =
           patientId,
           encounterId
         };
+
+      const {
+        data: waseelCoverage,
+        isFetching:
+          loadingWaseelCoverage,
+        isError:
+          waseelCoverageError
+      } =
+        useGetWaseelCoverageQuery(
+          {
+            patientId,
+            patientInsuranceId:
+              formState.patientInsuranceId
+          },
+          {
+            skip:
+              !patientId ||
+              formState.coverageType !==
+                'INSURANCE' ||
+              !formState.patientInsuranceId
+          }
+        );
 
       const [
         prepareDefaultServices,
@@ -843,7 +993,27 @@ const PatientPaymentInfo =
                 1,
 
               sequence:
-                index + 1
+                index + 1,
+
+              setupPrice:
+                toNumber(
+                  service?.price
+                ) ?? null,
+
+              calculatedPrice:
+                null,
+
+              priceSource:
+                null,
+
+              priceListItemCode:
+                null,
+
+              patientShare:
+                null,
+
+              insuranceShare:
+                null
             })
           );
 
@@ -909,6 +1079,72 @@ const PatientPaymentInfo =
             summaryPspIds
           );
         }
+      }, [
+        summary.items
+      ]);
+
+      useEffect(() => {
+        if (
+          !summary?.items?.length
+        ) {
+          return;
+        }
+
+        const billedBySourceId =
+          new Map(
+            summary.items
+              .filter(
+                item =>
+                  item.sourceId !=
+                  null
+              )
+              .map(
+                item => [
+                  item.sourceId as number,
+                  item
+                ]
+              )
+          );
+
+        setDefaultServiceRows(
+          previous =>
+            previous.map(
+              row => {
+                const billed =
+                  billedBySourceId.get(
+                    row.serviceId
+                  );
+
+                if (
+                  !billed
+                ) {
+                  return row;
+                }
+
+                return {
+                  ...row,
+                  setupPrice:
+                    billed.setupUnitPrice ??
+                    row.setupPrice,
+                  calculatedPrice:
+                    billed.netAmount ??
+                    null,
+                  priceSource:
+                    billed.priceSource ??
+                    null,
+                  priceListItemCode:
+                    billed.priceListItemCode ??
+                    null,
+                  patientShare:
+                    billed.patientResponsibilityAmount ??
+                    null,
+                  insuranceShare:
+                    billed.insuranceResponsibilityAmount ??
+                    null
+                };
+              }
+            )
+        );
       }, [
         summary.items
       ]);
@@ -1766,6 +2002,146 @@ const PatientPaymentInfo =
 
         {
           key:
+            'setupPrice',
+
+          title:
+            <Translate>
+              Setup Price
+            </Translate>,
+
+          dataKey:
+            'setupPrice',
+
+          width:
+            120,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) =>
+              formatMoney(
+                row.setupPrice,
+                activeCurrency
+              )
+        },
+
+        {
+          key:
+            'calculatedPrice',
+
+          title:
+            <Translate>
+              Calculated Price
+            </Translate>,
+
+          dataKey:
+            'calculatedPrice',
+
+          width:
+            130,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) =>
+              row.calculatedPrice ==
+              null
+                ? '-'
+                : formatMoney(
+                    row.calculatedPrice,
+                    activeCurrency
+                  )
+        },
+
+        ...(formState.coverageType ===
+        'INSURANCE'
+          ? [
+              {
+                key:
+                  'priceListItemCode',
+
+                title:
+                  <Translate>
+                    Waseel Code
+                  </Translate>,
+
+                dataKey:
+                  'priceListItemCode',
+
+                width:
+                  130,
+
+                render:
+                  (
+                    row:
+                      DefaultServiceRow
+                  ) =>
+                    row.priceListItemCode ??
+                    '-'
+              },
+              {
+                key:
+                  'patientShare',
+
+                title:
+                  <Translate>
+                    Patient Co-pay
+                  </Translate>,
+
+                dataKey:
+                  'patientShare',
+
+                width:
+                  120,
+
+                render:
+                  (
+                    row:
+                      DefaultServiceRow
+                  ) =>
+                    row.patientShare ==
+                    null
+                      ? '-'
+                      : formatMoney(
+                          row.patientShare,
+                          activeCurrency
+                        )
+              },
+              {
+                key:
+                  'insuranceShare',
+
+                title:
+                  <Translate>
+                    Payer Share
+                  </Translate>,
+
+                dataKey:
+                  'insuranceShare',
+
+                width:
+                  120,
+
+                render:
+                  (
+                    row:
+                      DefaultServiceRow
+                  ) =>
+                    row.insuranceShare ==
+                    null
+                      ? '-'
+                      : formatMoney(
+                          row.insuranceShare,
+                          activeCurrency
+                        )
+              }
+            ]
+          : []),
+
+        {
+          key:
             'isExempted',
 
           title:
@@ -1881,11 +2257,38 @@ const PatientPaymentInfo =
 
         {
           key:
+            'setupUnitPrice',
+
+          title:
+            <Translate>
+              Setup Price
+            </Translate>,
+
+          dataKey:
+            'setupUnitPrice',
+
+          width:
+            110,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatMoney(
+                row.setupUnitPrice,
+                row.currency ??
+                  activeCurrency
+              )
+        },
+
+        {
+          key:
             'unitPrice',
 
           title:
             <Translate>
-              Unit Price
+              Resolved Price
             </Translate>,
 
           dataKey:
@@ -1906,13 +2309,65 @@ const PatientPaymentInfo =
               )
         },
 
+        ...(isInsurance
+          ? [
+              {
+                key: 'priceListItemCode',
+                title: (
+                  <Translate>
+                    Waseel Code
+                  </Translate>
+                ),
+                dataKey: 'priceListItemCode',
+                width: 120,
+                render: (
+                  row: EncounterBillingItemSummary
+                ) =>
+                  row.priceListItemCode ??
+                  row.itemCode ??
+                  '-'
+              },
+              {
+                key: 'discountFactor',
+                title: (
+                  <Translate>
+                    Factor
+                  </Translate>
+                ),
+                dataKey: 'discountFactor',
+                width: 90,
+                render: (
+                  row: EncounterBillingItemSummary
+                ) =>
+                  computeDiscountFactor(row)
+              },
+              {
+                key: 'taxAmount',
+                title: (
+                  <Translate>
+                    Tax
+                  </Translate>
+                ),
+                dataKey: 'taxAmount',
+                width: 100,
+                render: (
+                  row: EncounterBillingItemSummary
+                ) =>
+                  formatMoney(
+                    row.taxAmount,
+                    row.currency ?? activeCurrency
+                  )
+              }
+            ]
+          : []),
+
         {
           key:
             'netAmount',
 
           title:
             <Translate>
-              Net Amount
+              Calculated (Net)
             </Translate>,
 
           dataKey:
@@ -2094,117 +2549,293 @@ const PatientPaymentInfo =
           ? 'rtl'
           : 'ltr';
 
+      const internalActionButtons =
+        showInternalButtons ? (
+          <div className="payment-info__actions-bar">
+            <MyButton
+              appearance="subtle"
+              onClick={
+                handleClear
+              }
+              disabled={
+                isLocked
+              }
+            >
+              Clear
+            </MyButton>
+
+            <MyButton
+              appearance="ghost"
+              loading={
+                preparingServices
+              }
+              onClick={async () => {
+                if (
+                  isReadOnly ||
+                  !validate()
+                ) {
+                  return;
+                }
+
+                try {
+                  const {
+                    message:
+                      preparedMessage
+                  } =
+                    await prepareServices();
+
+                  dispatch(
+                    notify({
+                      msg:
+                        preparedMessage,
+
+                      sev:
+                        'success'
+                    })
+                  );
+                } catch (
+                  error: any
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        normalizeError(
+                          error
+                        ),
+
+                      sev:
+                        'warning'
+                    })
+                  );
+                }
+              }}
+              disabled={
+                isLocked ||
+                areServicesLocked ||
+                selectedRows.length ===
+                  0
+              }
+            >
+              Prepare Services
+            </MyButton>
+
+            <MyButton
+              appearance="primary"
+              loading={
+                creatingPayment
+              }
+              onClick={async () => {
+                if (
+                  isReadOnly
+                ) {
+                  return;
+                }
+
+                if (
+                  formState.paymentAmount <=
+                  0
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        'Enter a payment amount greater than zero.',
+
+                      sev:
+                        'warning'
+                    })
+                  );
+                  return;
+                }
+
+                if (
+                  !formState.paymentMethodCode
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        'Select a payment method.',
+
+                      sev:
+                        'warning'
+                    })
+                  );
+                  return;
+                }
+
+                try {
+                  const prepared =
+                    preparedPspIds.length >
+                    0
+                      ? {
+                          ids:
+                            preparedPspIds,
+                          message:
+                            prepareResultMessage ??
+                            'Default services already prepared.'
+                        }
+                      : await prepareServices();
+
+                  const result =
+                    await receivePayment(
+                      prepared.ids
+                    );
+
+                  await refetchSummary();
+
+                  setLockAfterConfirm(
+                    true
+                  );
+
+                  dispatch(
+                    notify({
+                      msg:
+                        `Payment ${result?.paymentNumber ?? ''} received and reserved successfully.`,
+
+                      sev:
+                        'success'
+                    })
+                  );
+
+                  if (
+                    onPaymentSaved
+                  ) {
+                    await onPaymentSaved();
+                  }
+                } catch (
+                  error: any
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        normalizeError(
+                          error
+                        ),
+
+                      sev:
+                        'warning'
+                    })
+                  );
+                }
+              }}
+              disabled={
+                isLocked ||
+                formState.paymentAmount <=
+                  0
+              }
+            >
+              Receive & Reserve
+            </MyButton>
+          </div>
+        ) : null;
+
       return (
-        <div
+        <Form
+          fluid
           className="patient-billing-info"
           dir={dir}
         >
-          <div className="payment-info__summary-strip">
-            <div className="payment-info__summary-item">
-              <span className="payment-info__summary-label">
-                Charge Number
-              </span>
-              <span className="payment-info__summary-value">
-                {summary.chargeNumber ??
-                  '-'}
-              </span>
-            </div>
-
-            <div className="payment-info__summary-item">
-              <span className="payment-info__summary-label">
-                Currency
-              </span>
-              <span className="payment-info__summary-value">
-                {activeCurrency}
-              </span>
-            </div>
-
-            <div className="payment-info__summary-item">
-              <span className="payment-info__summary-label">
-                Net Amount
-              </span>
-              <span className="payment-info__summary-value">
-                {formatMoney(
+          <div className="payment-info__header">
+            <div className="payment-info__summary-strip">
+              <SummaryMetric
+                label="Charge Number"
+                value={
+                  summary.chargeNumber ??
+                  '-'
+                }
+                mono
+              />
+              <SummaryMetric
+                label="Currency"
+                value={activeCurrency}
+              />
+              <SummaryMetric
+                label="Net Amount"
+                value={formatMoney(
                   summary.netAmount,
                   activeCurrency
                 )}
-              </span>
-            </div>
-
-            <div className="payment-info__summary-item">
-              <span className="payment-info__summary-label">
-                Patient Outstanding
-              </span>
-              <span className="payment-info__summary-value payment-info__summary-value--highlight">
-                {formatMoney(
+              />
+              <SummaryMetric
+                label="Patient Outstanding"
+                value={formatMoney(
                   summary.patientOutstandingAmount,
                   activeCurrency
                 )}
-              </span>
-            </div>
-
-            <div className="payment-info__summary-item">
-              <span className="payment-info__summary-label">
-                Wallet Available
-              </span>
-              <span className="payment-info__summary-value payment-info__summary-value--success">
-                {formatMoney(
+                variant="highlight"
+              />
+              <SummaryMetric
+                label="Wallet Available"
+                value={formatMoney(
                   summary.wallet
                     ?.availableBalance ??
                     0,
                   activeCurrency
                 )}
-              </span>
+                variant="success"
+              />
             </div>
-          </div>
 
-          <div className="payment-info__workflow">
-            <span
-              className={`payment-info__workflow-step ${
-                servicesArePrepared
-                  ? 'payment-info__workflow-step--done'
-                  : 'payment-info__workflow-step--active'
-              }`}
-            >
-              1. Coverage
-            </span>
-            <span
-              className={`payment-info__workflow-step ${
-                servicesArePrepared
-                  ? 'payment-info__workflow-step--done'
-                  : ''
-              }`}
-            >
-              2. Prepare Services
-            </span>
-            <span
-              className={`payment-info__workflow-step ${
-                lockAfterConfirm
-                  ? 'payment-info__workflow-step--done'
-                  : servicesArePrepared
-                    ? 'payment-info__workflow-step--active'
+            <div className="payment-info__stepper">
+              <WorkflowStep
+                index={1}
+                label="Coverage"
+                state={
+                  servicesArePrepared
+                    ? 'done'
+                    : 'active'
+                }
+              />
+              <div
+                className={`payment-info__stepper-connector${
+                  servicesArePrepared
+                    ? ' payment-info__stepper-connector--done'
                     : ''
-              }`}
-            >
-              3. Receive Payment
-            </span>
+                }`}
+              />
+              <WorkflowStep
+                index={2}
+                label="Prepare Services"
+                state={
+                  servicesArePrepared
+                    ? 'done'
+                    : 'pending'
+                }
+              />
+              <div
+                className={`payment-info__stepper-connector${
+                  lockAfterConfirm
+                    ? ' payment-info__stepper-connector--done'
+                    : servicesArePrepared
+                      ? ' payment-info__stepper-connector--active'
+                      : ''
+                }`}
+              />
+              <WorkflowStep
+                index={3}
+                label="Receive Payment"
+                state={
+                  lockAfterConfirm
+                    ? 'done'
+                    : servicesArePrepared
+                      ? 'active'
+                      : 'pending'
+                }
+              />
+            </div>
+
+            {prepareResultMessage ? (
+              <Message
+                showIcon
+                type="success"
+                className="payment-info__message"
+              >
+                {prepareResultMessage}
+              </Message>
+            ) : null}
           </div>
 
-          {prepareResultMessage ? (
-            <Message
-              showIcon
-              type="success"
-              className="payment-info__message"
-            >
-              {prepareResultMessage}
-            </Message>
-          ) : null}
-
-          <Form
-            fluid
-            layout="inline"
-            className="fields-container"
-          >
+          <div className="payment-info__layout">
+            <div className="payment-info__main-column">
           <Panel
             bordered
             className="payment-info__panel"
@@ -2216,6 +2847,7 @@ const PatientPaymentInfo =
               </div>
             }
           >
+            <div className="payment-info__field-grid payment-info__field-grid--single">
             <MyInput
               vr={
                 validationResult
@@ -2263,9 +2895,10 @@ const PatientPaymentInfo =
                 false
               }
             />
+            </div>
 
             {isInsurance ? (
-              <>
+              <div className="payment-info__field-grid payment-info__field-grid--compact">
                 <MyInput
                   vr={
                     validationResult
@@ -2378,7 +3011,170 @@ const PatientPaymentInfo =
                     undefined
                   }
                 />
-              </>
+              </div>
+            ) : null}
+
+            {isInsurance ? (
+              <Panel
+                bordered
+                className="payment-info__panel payment-info__panel--nested"
+                header={
+                  <div className="payment-info__panel-header">
+                    <Translate>
+                      Waseel Coverage Details
+                    </Translate>
+                  </div>
+                }
+              >
+                {!formState.patientInsuranceId ? (
+                  <Message showIcon type="info">
+                    Select a patient insurance to load Waseel coverage.
+                  </Message>
+                ) : loadingWaseelCoverage ? (
+                  <Message showIcon type="info">
+                    Loading Waseel eligibility benefits...
+                  </Message>
+                ) : waseelCoverageError ? (
+                  <Message showIcon type="warning">
+                    No successful Waseel eligibility found. Please run eligibility check from the patient profile first.
+                  </Message>
+                ) : waseelCoverage ? (
+                  <>
+                    <div className="payment-info__waseel-metrics">
+                      <div className="payment-info__metric-card">
+                        <span className="payment-info__metric-label">
+                          Copayment %
+                        </span>
+                        <strong>
+                          {waseelCoverage.copaymentPercent ?? 0}%
+                        </strong>
+                      </div>
+                      <div className="payment-info__metric-card">
+                        <span className="payment-info__metric-label">
+                          Copayment Cap
+                        </span>
+                        <strong>
+                          {formatMoney(
+                            waseelCoverage.copaymentCap,
+                            activeCurrency
+                          )}
+                        </strong>
+                      </div>
+                      <div className="payment-info__metric-card">
+                        <span className="payment-info__metric-label">
+                          Network
+                        </span>
+                        <strong>
+                          {waseelCoverage.network ?? '-'}
+                        </strong>
+                      </div>
+                      <div className="payment-info__metric-card">
+                        <span className="payment-info__metric-label">
+                          Coverage Status
+                        </span>
+                        <strong>
+                          {waseelCoverage.inforce ??
+                            waseelCoverage.coverageStatus ??
+                            '-'}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="payment-info__table-wrapper payment-info__table-wrapper--compact">
+                      <MyTable
+                        data={
+                          waseelCoverage.benefits ??
+                          []
+                        }
+                        columns={[
+                          {
+                            key: 'categoryKey',
+                            title: 'Category',
+                            dataKey: 'categoryKey',
+                            width: 180,
+                            render: (
+                              row: WaseelBenefitDetail
+                            ) =>
+                              row.categoryKey ?? '-'
+                          },
+                          {
+                            key: 'itemCode',
+                            title: 'Item Code',
+                            dataKey: 'itemCode',
+                            width: 120,
+                            render: (
+                              row: WaseelBenefitDetail
+                            ) =>
+                              row.itemCode ?? '-'
+                          },
+                          {
+                            key: 'itemName',
+                            title: 'Item',
+                            dataKey: 'itemName',
+                            width: 160,
+                            render: (
+                              row: WaseelBenefitDetail
+                            ) =>
+                              row.itemName ?? '-'
+                          },
+                          {
+                            key: 'typeDisplay',
+                            title: 'Benefit Type',
+                            dataKey: 'typeDisplay',
+                            width: 220,
+                            render: (
+                              row: WaseelBenefitDetail
+                            ) =>
+                              row.typeDisplay ??
+                              row.typeCode ??
+                              '-'
+                          },
+                          {
+                            key: 'value',
+                            title: 'Value',
+                            dataKey: 'value',
+                            width: 100,
+                            render: (
+                              row: WaseelBenefitDetail
+                            ) => {
+                              if (
+                                row.value == null
+                              ) {
+                                return '-';
+                              }
+
+                              return row.unit
+                                ? `${row.value} ${row.unit}`
+                                : row.value;
+                            }
+                          }
+                        ]}
+                        loading={
+                          loadingWaseelCoverage
+                        }
+                        height={220}
+                        page={0}
+                        rowsPerPage={
+                          waseelCoverage
+                            .benefits
+                            ?.length ?? 0
+                        }
+                        totalCount={
+                          waseelCoverage
+                            .benefits
+                            ?.length ?? 0
+                        }
+                        onPageChange={() =>
+                          undefined
+                        }
+                        onRowsPerPageChange={() =>
+                          undefined
+                        }
+                      />
+                    </div>
+                  </>
+                ) : null}
+              </Panel>
             ) : null}
           </Panel>
 
@@ -2419,7 +3215,7 @@ const PatientPaymentInfo =
                 servicesResponse.isFetching
               }
               height={
-                300
+                260
               }
               page={
                 page
@@ -2461,182 +3257,182 @@ const PatientPaymentInfo =
             className="payment-info__panel"
             header={
               <Translate>
-                Billing Summary
+                Charge Lines
               </Translate>
             }
           >
-          <div className="payment-info__amount-grid">
-            {lastPaymentResult ? (
-              <>
-                <MyInput
-                  column
-                  disabled
-                  fieldLabel="Payment Number"
-                  fieldName="paymentNumber"
-                  record={
-                    summaryDisplayRecord
-                  }
-                  setRecord={() =>
-                    undefined
-                  }
-                />
-
-                <MyInput
-                  column
-                  disabled
-                  fieldLabel="Transaction Number"
-                  fieldName="paymentTransactionNumber"
-                  record={
-                    summaryDisplayRecord
-                  }
-                  setRecord={() =>
-                    undefined
-                  }
-                />
-              </>
-            ) : null}
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Gross Amount"
-              fieldName="grossAmount"
-              record={
-                summaryDisplayRecord
+          <div className="payment-info__table-wrapper">
+            <MyTable
+              data={
+                summary.items ??
+                []
               }
-              setRecord={() =>
+              columns={
+                billedItemColumns
+              }
+              loading={
+                loadingSummary
+              }
+              height={
+                280
+              }
+              page={
+                0
+              }
+              rowsPerPage={
+                Math.max(
+                  summary.items?.length ??
+                    0,
+                  5
+                )
+              }
+              totalCount={
+                summary.items?.length ??
+                0
+              }
+              onPageChange={() =>
                 undefined
               }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Discount"
-              fieldName="discountAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Exemption"
-              fieldName="exemptionAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Tax"
-              fieldName="taxAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Net Amount"
-              fieldName="netAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Patient Responsibility"
-              fieldName="patientResponsibilityAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Insurance Responsibility"
-              fieldName="insuranceResponsibilityAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Patient Outstanding"
-              fieldName="patientOutstandingAmount"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Wallet Available"
-              fieldName="walletAvailableBalance"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
-                undefined
-              }
-            />
-
-            <MyInput
-              column
-              disabled
-              fieldLabel="Wallet Reserved"
-              fieldName="walletReservedBalance"
-              record={
-                summaryDisplayRecord
-              }
-              setRecord={() =>
+              onRowsPerPageChange={() =>
                 undefined
               }
             />
           </div>
           </Panel>
+            </div>
 
+            <aside className="payment-info__side-column">
           <Panel
             bordered
             className="payment-info__panel"
+            header={
+              <Translate>
+                Billing Summary
+              </Translate>
+            }
+          >
+          {lastPaymentResult ? (
+            <div className="payment-info__payment-success">
+              <div className="payment-info__payment-success-title">
+                Last Payment
+              </div>
+              <div className="payment-info__metric-list payment-info__metric-list--compact">
+                <BillingMetric
+                  label="Payment Number"
+                  value={
+                    summaryDisplayRecord.paymentNumber
+                  }
+                />
+                <BillingMetric
+                  label="Transaction Number"
+                  value={
+                    summaryDisplayRecord.paymentTransactionNumber
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="payment-info__subsection">
+            <h4 className="payment-info__subsection-title">
+              Charge Totals
+            </h4>
+            <div className="payment-info__metric-list">
+              <BillingMetric
+                label="Gross Amount"
+                value={
+                  summaryDisplayRecord.grossAmount
+                }
+              />
+              <BillingMetric
+                label="Discount"
+                value={
+                  summaryDisplayRecord.discountAmount
+                }
+                variant="muted"
+              />
+              <BillingMetric
+                label="Exemption"
+                value={
+                  summaryDisplayRecord.exemptionAmount
+                }
+                variant="muted"
+              />
+              <BillingMetric
+                label="Tax"
+                value={
+                  summaryDisplayRecord.taxAmount
+                }
+              />
+              <BillingMetric
+                label="Net Amount"
+                value={
+                  summaryDisplayRecord.netAmount
+                }
+                variant="highlight"
+              />
+            </div>
+          </div>
+
+          <div className="payment-info__subsection">
+            <h4 className="payment-info__subsection-title">
+              Responsibility
+            </h4>
+            <div className="payment-info__metric-list">
+              <BillingMetric
+                label="Patient Responsibility"
+                value={
+                  summaryDisplayRecord.patientResponsibilityAmount
+                }
+              />
+              <BillingMetric
+                label="Insurance Responsibility"
+                value={
+                  summaryDisplayRecord.insuranceResponsibilityAmount
+                }
+              />
+              <BillingMetric
+                label="Patient Outstanding"
+                value={
+                  summaryDisplayRecord.patientOutstandingAmount
+                }
+                variant="highlight"
+              />
+            </div>
+          </div>
+
+          <div className="payment-info__subsection">
+            <h4 className="payment-info__subsection-title">
+              Wallet
+            </h4>
+            <div className="payment-info__metric-list">
+              <BillingMetric
+                label="Available Balance"
+                value={
+                  summaryDisplayRecord.walletAvailableBalance
+                }
+                variant="success"
+              />
+              <BillingMetric
+                label="Reserved Balance"
+                value={
+                  summaryDisplayRecord.walletReservedBalance
+                }
+              />
+            </div>
+          </div>
+          </Panel>
+
+          <Panel
+            bordered
+            className="payment-info__panel payment-info__panel--payment"
             header={
               <Translate>
                 Receive Payment
               </Translate>
             }
           >
+            <div className="payment-info__field-grid payment-info__field-grid--single">
             <MyInput
               vr={
                 validationResult
@@ -2683,11 +3479,14 @@ const PatientPaymentInfo =
               }
               isEnum
             />
+            </div>
 
             <div className="payment-info__field-note">
               Receipt, payment, and transaction numbers are generated automatically by the backend after payment is received.
             </div>
 
+            {showCardFields || showBankReference ? (
+              <div className="payment-info__field-grid payment-info__field-grid--compact">
             {showCardFields ? (
               <>
                 <MyInput
@@ -2745,7 +3544,10 @@ const PatientPaymentInfo =
                 }
               />
             ) : null}
+              </div>
+            ) : null}
 
+            <div className="payment-info__field-grid payment-info__field-grid--single">
             <MyInput
               column
               fieldLabel="Notes"
@@ -2758,236 +3560,13 @@ const PatientPaymentInfo =
                 isLocked
               }
             />
+            </div>
           </Panel>
 
-          <Panel
-            bordered
-            className="payment-info__panel"
-            header={
-              <Translate>
-                Charge Lines
-              </Translate>
-            }
-          >
-          <div className="payment-info__table-wrapper">
-            <MyTable
-              data={
-                summary.items ??
-                []
-              }
-              columns={
-                billedItemColumns
-              }
-              loading={
-                loadingSummary
-              }
-              height={
-                320
-              }
-              page={
-                0
-              }
-              rowsPerPage={
-                Math.max(
-                  summary.items?.length ??
-                    0,
-                  5
-                )
-              }
-              totalCount={
-                summary.items?.length ??
-                0
-              }
-              onPageChange={() =>
-                undefined
-              }
-              onRowsPerPageChange={() =>
-                undefined
-              }
-              tableButtons={
-                showInternalButtons ? (
-                  <div className="payment-info__table-actions">
-                    <MyButton
-                      appearance="subtle"
-                      onClick={
-                        handleClear
-                      }
-                      disabled={
-                        isLocked
-                      }
-                    >
-                      Clear
-                    </MyButton>
-
-                    <MyButton
-                      appearance="ghost"
-                      loading={
-                        preparingServices
-                      }
-                      onClick={async () => {
-                        if (
-                          isReadOnly ||
-                          !validate()
-                        ) {
-                          return;
-                        }
-
-                        try {
-                          const {
-                            message:
-                              preparedMessage
-                          } =
-                            await prepareServices();
-
-                          dispatch(
-                            notify({
-                              msg:
-                                preparedMessage,
-
-                              sev:
-                                'success'
-                            })
-                          );
-                        } catch (
-                          error: any
-                        ) {
-                          dispatch(
-                            notify({
-                              msg:
-                                normalizeError(
-                                  error
-                                ),
-
-                              sev:
-                                'warning'
-                            })
-                          );
-                        }
-                      }}
-                      disabled={
-                        isLocked ||
-                        areServicesLocked ||
-                        selectedRows.length ===
-                          0
-                      }
-                    >
-                      Prepare Services
-                    </MyButton>
-
-                    <MyButton
-                      appearance="primary"
-                      loading={
-                        creatingPayment
-                      }
-                      onClick={async () => {
-                        if (
-                          isReadOnly
-                        ) {
-                          return;
-                        }
-
-                        if (
-                          formState.paymentAmount <=
-                          0
-                        ) {
-                          dispatch(
-                            notify({
-                              msg:
-                                'Enter a payment amount greater than zero.',
-
-                              sev:
-                                'warning'
-                            })
-                          );
-                          return;
-                        }
-
-                        if (
-                          !formState.paymentMethodCode
-                        ) {
-                          dispatch(
-                            notify({
-                              msg:
-                                'Select a payment method.',
-
-                              sev:
-                                'warning'
-                            })
-                          );
-                          return;
-                        }
-
-                        try {
-                          const prepared =
-                            preparedPspIds.length >
-                            0
-                              ? {
-                                  ids:
-                                    preparedPspIds,
-                                  message:
-                                    prepareResultMessage ??
-                                    'Default services already prepared.'
-                                }
-                              : await prepareServices();
-
-                          const result =
-                            await receivePayment(
-                              prepared.ids
-                            );
-
-                          await refetchSummary();
-
-                          setLockAfterConfirm(
-                            true
-                          );
-
-                          dispatch(
-                            notify({
-                              msg:
-                                `Payment ${result?.paymentNumber ?? ''} received and reserved successfully.`,
-
-                              sev:
-                                'success'
-                            })
-                          );
-
-                          if (
-                            onPaymentSaved
-                          ) {
-                            await onPaymentSaved();
-                          }
-                        } catch (
-                          error: any
-                        ) {
-                          dispatch(
-                            notify({
-                              msg:
-                                normalizeError(
-                                  error
-                                ),
-
-                              sev:
-                                'warning'
-                            })
-                          );
-                        }
-                      }}
-                      disabled={
-                        isLocked ||
-                        formState.paymentAmount <=
-                          0
-                      }
-                    >
-                      Receive & Reserve
-                    </MyButton>
-                  </div>
-                ) : null
-              }
-            />
+          {internalActionButtons}
+            </aside>
           </div>
-          </Panel>
-          </Form>
-        </div>
+        </Form>
       );
     }
   );

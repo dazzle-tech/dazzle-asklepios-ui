@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, Divider, Panel, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faIdCard, faScaleBalanced, faUser } from '@fortawesome/free-solid-svg-icons';
+import {
+  faIdCard,
+  faScaleBalanced,
+  faUser,
+  faWallet
+} from '@fortawesome/free-solid-svg-icons';
 import { IoMdClose } from 'react-icons/io';
+
+import MyButton from '@/components/MyButton/MyButton';
 
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPrimaryDocumentByPatientQuery } from '@/services/patients/patientDocumentsService';
@@ -21,9 +28,11 @@ interface PatientBillingSideProps {
   financeDetails?: {
     walletBalance: number;
     totalDebt: number;
+    reservedBalance?: number;
     simulatedInvoiceIncrease: number;
     simulatedPaymentDecrease: number;
   };
+  onDeposit?: () => void;
   setPatient?: (patient: any) => void;
 }
 
@@ -31,6 +40,7 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
   patient,
   balance,
   financeDetails,
+  onDeposit,
   setPatient,
 }) => {
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -189,6 +199,33 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
           </Text>
         </div>
       </div>
+
+      {financeDetails?.reservedBalance != null && (
+        <div className="info-section" style={{ marginTop: '10px' }}>
+          <div className="info-column">
+            <Text className="info-label">Reserved balance</Text>
+            <Text className="info-value">
+              {Number(financeDetails.reservedBalance).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+          </div>
+        </div>
+      )}
+
+      {onDeposit && (
+        <div style={{ marginTop: '14px' }}>
+          <MyButton
+            block
+            appearance="primary"
+            prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
+            onClick={onDeposit}
+          >
+            Deposit funds
+          </MyButton>
+        </div>
+      )}
 
       <div className="info-section" style={{ marginTop: '10px' }}>
         <div className="info-column">

@@ -19,7 +19,8 @@ import type {
   CreateAdvancePaymentRequest,
   EncounterBillingSummary,
   PrepareDefaultServicesRequest,
-  PrepareDefaultServicesResult
+  PrepareDefaultServicesResult,
+  WaseelCoverageDetails
 } from '@/types/model-types-new';
 
 export type BillingId =
@@ -85,6 +86,34 @@ export const billingTransactionService =
 
               'BillingWallet'
             ]
+          }),
+
+        getWaseelCoverage:
+          builder.query<
+            WaseelCoverageDetails,
+            {
+              patientId: BillingId;
+              patientInsuranceId?: BillingId | null;
+            }
+          >({
+            query: ({
+              patientId,
+              patientInsuranceId
+            }) => ({
+              url:
+                `/api/patient/billing/patients/${encodeURIComponent(
+                  String(patientId)
+                )}/waseel-coverage`,
+
+              method: 'GET',
+
+              params:
+                patientInsuranceId == null
+                  ? undefined
+                  : {
+                      patientInsuranceId
+                    }
+            })
           }),
 
         prepareDefaultServices:
@@ -284,6 +313,7 @@ export const billingTransactionService =
 export const {
   useGetEncounterBillingSummaryQuery,
   useLazyGetEncounterBillingSummaryQuery,
+  useGetWaseelCoverageQuery,
 
   usePrepareDefaultServicesMutation,
 

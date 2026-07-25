@@ -18,6 +18,7 @@ import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/d
 import { useGetRoomByIdQuery } from '@/services/setup/room/roomService';
 import { useGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -552,7 +553,7 @@ const BookPatient = ({
   const modifiedPrevEncounters = useMemo(() => {
     return (allPrevEncounters ?? []).map((encounter: any) => ({
       ...encounter,
-      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${encounter.status ?? ''}`
+      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${getEncounterTreatmentStatus(encounter)}`
     }));
   }, [allPrevEncounters]);
 

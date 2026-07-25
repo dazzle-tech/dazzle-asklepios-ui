@@ -57,6 +57,10 @@ import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
 import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
 
@@ -600,9 +604,7 @@ useEffect(() => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -616,6 +618,9 @@ useEffect(() => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {

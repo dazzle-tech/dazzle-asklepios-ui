@@ -225,6 +225,7 @@ import SystemConfiguration from './pages/system-configurations/system-configurat
 import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
@@ -849,6 +850,7 @@ const App = () => {
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
               <Route path="/price-list-setup" element={<PriceListSetup />} />
+              <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
                <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />

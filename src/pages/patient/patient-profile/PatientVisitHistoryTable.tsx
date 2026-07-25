@@ -27,6 +27,10 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 import type { Practitioner, Department } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import { formatEnumString } from '@/utils';
+import {
+  getEncounterLifecycleStatus,
+  getEncounterTreatmentStatus
+} from '@/utils/encounterStatusHelpers';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
@@ -263,17 +267,23 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         render: (row: any) => formatEnumString(row.priorityLevel)
       },
       {
-        key: 'status',
-        title: <Translate>Status</Translate>,
-        render: (row: any) => formatEnumString(row.status)
+        key: 'encounterStatus',
+        title: <Translate>Encounter Status</Translate>,
+        render: (row: any) => formatEnumString(getEncounterLifecycleStatus(row) || '-')
+      },
+      {
+        key: 'treatmentStatus',
+        title: <Translate>Treatment Status</Translate>,
+        render: (row: any) => formatEnumString(getEncounterTreatmentStatus(row))
       },
       {
         key: 'actions',
         title: '',
         render: (row: any) => {
-          const isOngoing = row.status === 'ONGOING';
-          const isNew = row.status === 'NEW';
-          const isPendingPayment = row.status === 'PENDING_PAYMENT';
+          const treatmentStatus = getEncounterTreatmentStatus(row);
+          const isOngoing = treatmentStatus === 'ONGOING';
+          const isNew = treatmentStatus === 'NEW';
+          const isPendingPayment = treatmentStatus === 'PENDING_PAYMENT';
 
           const departmentType = departmentsMap[row.departmentId]?.type;
           const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';

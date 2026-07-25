@@ -15,6 +15,7 @@ import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import {
   newPatientEncounter,
   newPatientInsurance,
@@ -268,8 +269,8 @@ const PatientQuickAppointment = ({
       return list.some((e: any) => {
         const sameDept =
           Number(e?.departmentId ?? e?.department?.id ?? 0) === Number(departmentId);
-        const status = String(e?.status ?? '').toUpperCase();
-        const isCancelled = status === 'CANCELLED';
+        const treatmentStatus = getEncounterTreatmentStatus(e);
+        const isCancelled = treatmentStatus === 'CANCELLED';
         const dateValue = e?.encounterDate ?? e?.createdDate;
         return sameDept && !isCancelled && isSameLocalDate(dateValue, encounterDate);
       });
@@ -537,8 +538,8 @@ const PatientQuickAppointment = ({
         }
       ]}
       content={(step: number) => <div dir={dir}>{conjureFormContent(step)}</div>}
-      size="55vw"
-      bodyheight="65vh"
+      size="68vw"
+      bodyheight="72vh"
       hideActionBtn={true}
       initialStep={initialStep}
     />

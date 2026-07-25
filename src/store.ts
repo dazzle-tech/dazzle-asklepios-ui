@@ -230,6 +230,7 @@ import { systemConfigService } from '@/services/systemConfigService';
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
+import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
 import {billingConfigurationService} from './services/billing/billingConfigurationService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
@@ -586,6 +587,7 @@ export const store = configureStore({
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
 
   [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+  [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
   [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
   [taxService.reducerPath]: taxService.reducer,
   [discountService.reducerPath]: discountService.reducer,
@@ -793,6 +795,7 @@ export const store = configureStore({
         systemConfigService.middleware,
         NphiesPayerService.middleware,
         priceListSetupService.middleware,
+        billingRuleSetupService.middleware,
         billingConfigurationService.middleware,
         taxService.middleware,
         discountService.middleware,

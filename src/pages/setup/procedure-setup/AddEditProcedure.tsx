@@ -9,6 +9,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
+import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
 
 import {
   useAddProcedureMutation,
@@ -319,6 +320,18 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   record={normalizedProcedure}
                   setRecord={setProcedure}
                   disabled
+                />
+              </div>
+            </div>
+
+            <br />
+
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <BillingRuleSelect
+                  billingItemType="PROCEDURE"
+                  record={procedure}
+                  setRecord={setProcedure}
                 />
               </div>
             </div>

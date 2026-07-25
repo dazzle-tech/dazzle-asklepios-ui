@@ -257,11 +257,19 @@ export const MODULES: Module[] =
           navPath: "price-list-setup"
         },
         {
+          name: "Billing Rule Setup",
+          code: "BILLING_RULE_SETUP",
+          description: "Billing Rule Setup",
+          icon: "FaGavel",
+          viewOrder: 27,
+          navPath: "billing-rule-setup"
+        },
+        {
           name: "Billing Configuration",
           code: "BILLING_CONFIGURATION",
           description: "Billing Configuration",
           icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
-          viewOrder: 27,
+          viewOrder: 28,
           navPath: "billing-configuration"
         },
         {
@@ -269,7 +277,7 @@ export const MODULES: Module[] =
           code: "TAX_CONFIGURATION",
           description: "Tax Configuration",
           icon: "FaPercentage",
-          viewOrder: 28,
+          viewOrder: 29,
           navPath: "tax-setup"
         },
         {
@@ -277,7 +285,7 @@ export const MODULES: Module[] =
           code: "DISCOUNT_CONFIGURATION",
           description: "Discount Configuration",
           icon: "FaTags",
-          viewOrder: 29,
+          viewOrder: 30,
           navPath: "discount-setup"
         }
       ],
