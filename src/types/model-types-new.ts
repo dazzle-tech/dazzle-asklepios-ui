@@ -5209,6 +5209,76 @@ export type SaveBillingConfigurationRequest = {
     BillingConfigurationStatus;
 };
 
+export type FinancialDocumentNumbering = {
+  id?: number;
+
+  facilityId?: number;
+
+  documentType?: string;
+
+  prefix?: string;
+
+  sequenceLength?: number;
+
+  includeYear?: boolean;
+
+  includeFacilityCode?: boolean;
+
+  numberSeparator?: string;
+
+  resetFrequency?: string;
+
+  startingNumber?: number;
+
+  active?: boolean;
+
+  status?: BillingConfigurationStatus;
+};
+
+export type SaveFinancialDocumentNumberingRequest = {
+  id?: number | null;
+
+  facilityId: number;
+
+  documentType: string;
+
+  prefix: string;
+
+  sequenceLength: number;
+
+  includeYear: boolean;
+
+  includeFacilityCode: boolean;
+
+  numberSeparator: string;
+
+  resetFrequency: string;
+
+  startingNumber: number;
+
+  active: boolean;
+
+  status: BillingConfigurationStatus;
+};
+
+export type FinancialDocumentNumberingBulkRequest = {
+  facilityId: number;
+
+  configurations: SaveFinancialDocumentNumberingRequest[];
+};
+
+export type FinancialDocumentSequenceStatus = {
+  documentType?: string;
+
+  periodKey?: string;
+
+  lastNumber?: number;
+
+  nextNumber?: number;
+
+  sampleDocumentNumber?: string;
+};
+
 export type TaxType =
   | 'PERCENTAGE'
   | 'FIXED_AMOUNT';

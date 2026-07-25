@@ -3402,6 +3402,33 @@ modelTypes.BillingConfiguration = {
   status: 'DRAFT'
 };
 
+export const newFinancialDocumentNumbering:
+modelTypes.FinancialDocumentNumbering = {
+  id: undefined,
+
+  facilityId: undefined,
+
+  documentType: undefined,
+
+  prefix: '',
+
+  sequenceLength: 6,
+
+  includeYear: true,
+
+  includeFacilityCode: false,
+
+  numberSeparator: '-',
+
+  resetFrequency: 'YEARLY',
+
+  startingNumber: 1,
+
+  active: true,
+
+  status: 'DRAFT'
+};
+
 export const newTax:
 modelTypes.Tax = {
   id:

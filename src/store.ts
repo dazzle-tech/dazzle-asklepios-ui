@@ -232,6 +232,7 @@ import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupServi
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
 import {billingConfigurationService} from './services/billing/billingConfigurationService';
+import {financialDocumentNumberingService} from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
 
@@ -589,6 +590,7 @@ export const store = configureStore({
   [priceListSetupService.reducerPath]: priceListSetupService.reducer,
   [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
   [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+  [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
   [taxService.reducerPath]: taxService.reducer,
   [discountService.reducerPath]: discountService.reducer,
 
@@ -797,6 +799,7 @@ export const store = configureStore({
         priceListSetupService.middleware,
         billingRuleSetupService.middleware,
         billingConfigurationService.middleware,
+        financialDocumentNumberingService.middleware,
         taxService.middleware,
         discountService.middleware,
         billingTransactionService.middleware

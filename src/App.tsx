@@ -227,6 +227,7 @@ import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
 import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
+import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 const PUBLIC_PATHS = new Set([
@@ -852,6 +853,7 @@ const App = () => {
               <Route path="/price-list-setup" element={<PriceListSetup />} />
               <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
                <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
+               <Route path="/financial-document-numbering" element={<FinancialDocumentNumberingSetup />} />
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />

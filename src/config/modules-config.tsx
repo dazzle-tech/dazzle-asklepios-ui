@@ -265,11 +265,19 @@ export const MODULES: Module[] =
           navPath: "billing-rule-setup"
         },
         {
+          name: "Financial Document Numbering",
+          code: "FINANCIAL_DOCUMENT_NUMBERING",
+          description: "Financial Document Numbering Setup",
+          icon: "FaHashtag",
+          viewOrder: 28,
+          navPath: "financial-document-numbering"
+        },
+        {
           name: "Billing Configuration",
           code: "BILLING_CONFIGURATION",
           description: "Billing Configuration",
           icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
-          viewOrder: 28,
+          viewOrder: 29,
           navPath: "billing-configuration"
         },
         {
@@ -277,7 +285,7 @@ export const MODULES: Module[] =
           code: "TAX_CONFIGURATION",
           description: "Tax Configuration",
           icon: "FaPercentage",
-          viewOrder: 29,
+          viewOrder: 30,
           navPath: "tax-setup"
         },
         {
@@ -285,7 +293,7 @@ export const MODULES: Module[] =
           code: "DISCOUNT_CONFIGURATION",
           description: "Discount Configuration",
           icon: "FaTags",
-          viewOrder: 30,
+          viewOrder: 31,
           navPath: "discount-setup"
         }
       ],
