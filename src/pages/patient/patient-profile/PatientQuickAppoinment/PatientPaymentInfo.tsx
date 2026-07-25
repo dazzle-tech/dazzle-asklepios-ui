@@ -165,6 +165,30 @@ const makeRequestId =
       .toString(36)
       .slice(2, 10)}`;
 
+const resolvePaymentCategory =
+  (
+    paymentMethodCode: string
+  ): string => {
+    switch (
+      paymentMethodCode
+    ) {
+      case 'CASH':
+        return 'CASH';
+      case 'CREDIT_DEBIT_CARD':
+        return 'CARD';
+      case 'CHEQUE':
+        return 'CHEQUE';
+      case 'BANK_TRANSFER':
+        return 'BANK_TRANSFER';
+      case 'DEDUCT_FROM_FREE_BALANCE':
+        return 'WALLET';
+      case 'INSURANCE_COVERAGE':
+        return 'INSURANCE';
+      default:
+        return 'OTHER';
+    }
+  };
+
 const formatMoney =
   (
     amount: number | null | undefined,
@@ -1219,7 +1243,9 @@ const PatientPaymentInfo =
             encounterId,
 
             paymentCategory:
-              'ADVANCE',
+              resolvePaymentCategory(
+                formState.paymentMethodCode
+              ),
 
             payerType:
               'PATIENT',
