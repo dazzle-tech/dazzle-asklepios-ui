@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader, Tag, Text } from 'rsuite';
 
 import type { WaseelCoverageDetails } from '@/types/model-types-new';
-import { formatBillingTimestamp, formatMoney } from '../utils/billingAccountingUtils';
+import { formatBillingTimestamp, formatBillingEnum, formatMoney } from '../utils/billingAccountingUtils';
 
 type WaseelCoveragePanelProps = {
   coverageType: 'SELF_PAY' | 'INSURANCE';
@@ -85,7 +85,9 @@ const WaseelCoveragePanel: React.FC<WaseelCoveragePanelProps> = ({
           <div className="billing-accounting__metric-label">Status</div>
           <div className="billing-accounting__metric-value">
             <Tag color="green" size="sm">
-              {waseelCoverage.inforce ?? waseelCoverage.coverageStatus ?? 'Unknown'}
+              {formatBillingEnum(
+                waseelCoverage.inforce ?? waseelCoverage.coverageStatus ?? 'Unknown'
+              )}
             </Tag>
           </div>
         </div>

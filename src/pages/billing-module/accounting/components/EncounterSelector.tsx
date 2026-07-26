@@ -2,11 +2,14 @@ import React from 'react';
 import { Loader, Tag, Text } from 'rsuite';
 
 import type { PatientEncounter } from '@/types/model-types-new';
-import { formatBillingTimestamp, formatMoney } from '../utils/billingAccountingUtils';
 import {
-  getEncounterLifecycleStatus,
-  getEncounterTreatmentStatus
-} from '@/utils/encounterStatusHelpers';
+  formatBillingEnum,
+  formatBillingTimestamp,
+  formatEncounterDisplayLabel,
+  formatEncounterLifecycleLabel,
+  formatEncounterTreatmentLabel,
+  formatMoney
+} from '../utils/billingAccountingUtils';
 
 type EncounterSelectorProps = {
   encounters: PatientEncounter[];
@@ -44,10 +47,6 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
   return (
     <div className="billing-accounting__encounter-list">
       {encounters.map(encounter => {
-        const encounterAny = encounter as PatientEncounter & {
-          encounterNumber?: string | null;
-          createdAt?: string | null;
-        };
         const isActive = encounter.id === selectedEncounterId;
 
         return (
@@ -60,16 +59,15 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
             onClick={() => onSelect(encounter.id)}
           >
             <Text weight="semibold">
-              {encounterAny.encounterNumber
-                ? `#${encounterAny.encounterNumber}`
-                : `Encounter #${encounter.id}`}
+              {formatEncounterDisplayLabel(encounter) ??
+                'Encounter'}
             </Text>
             <div className="billing-accounting__encounter-meta">
-              <span>{encounter.encounterType}</span>
+              <span>{formatBillingEnum(encounter.encounterType)}</span>
               <span>{formatBillingTimestamp(encounter.encounterDate?.toString())}</span>
-              <Tag size="sm">{getEncounterLifecycleStatus(encounter) || 'OPEN'}</Tag>
+              <Tag size="sm">{formatEncounterLifecycleLabel(encounter)}</Tag>
               <Tag size="sm" color="blue">
-                {getEncounterTreatmentStatus(encounter) || 'NEW'}
+                {formatEncounterTreatmentLabel(encounter)}
               </Tag>
               {isActive && (
                 <Tag

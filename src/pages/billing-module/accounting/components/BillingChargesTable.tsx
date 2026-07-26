@@ -14,6 +14,8 @@ import {
 
   computeRowRemainingAmount,
 
+  formatBillingChargeStatus,
+
   formatBillingSource,
 
   formatBillingTimestamp,
@@ -411,7 +413,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
         }
 
-        return <Tag size="sm">{row.status}</Tag>;
+        return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
 
       }
 

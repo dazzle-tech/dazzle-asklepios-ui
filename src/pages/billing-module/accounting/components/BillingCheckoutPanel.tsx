@@ -12,6 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   computeAmountToCollect,
   computeEncounterRemainingToPay,
+  formatBillingChargeStatus,
   formatMoney,
   makeRequestId,
   shouldShowInsuranceSummary,
@@ -168,7 +169,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
         <div className="billing-accounting__metric">
           <div className="billing-accounting__metric-label">Charge status</div>
           <div className="billing-accounting__metric-value">
-            <Tag size="sm">{summary.chargeStatus ?? 'OPEN'}</Tag>
+            <Tag size="sm">{formatBillingChargeStatus(summary.chargeStatus ?? 'OPEN')}</Tag>
           </div>
         </div>
         <div className="billing-accounting__metric">

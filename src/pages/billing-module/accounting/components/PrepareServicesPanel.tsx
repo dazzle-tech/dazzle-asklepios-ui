@@ -18,6 +18,7 @@ import {
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
   extractResponseList,
+  formatBillingEnum,
   formatMoney,
   makeRequestId,
   normalizeBillingError,
@@ -258,7 +259,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       key: 'serviceType',
       title: 'Type',
       width: 120,
-      dataKey: 'serviceType'
+      render: (row: PrepareServiceRow) => formatBillingEnum(row.serviceType)
     },
     {
       key: 'serviceName',
@@ -285,7 +286,11 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       title: 'Price source',
       width: 110,
       render: (row: PrepareServiceRow) =>
-        row.priceSource ? <Tag size="sm">{row.priceSource}</Tag> : '-'
+        row.priceSource ? (
+          <Tag size="sm">{formatBillingEnum(row.priceSource)}</Tag>
+        ) : (
+          '-'
+        )
     },
     {
       key: 'patientShare',

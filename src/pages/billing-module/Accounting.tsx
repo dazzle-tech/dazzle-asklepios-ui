@@ -31,7 +31,7 @@ import CollectPaymentModal from './accounting/components/CollectPaymentModal';
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, WALLET_DEPOSIT_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
+import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -227,12 +227,10 @@ const Accounting: React.FC = () => {
     [summary]
   );
 
-  const selectedEncounterLabel = useMemo(() => {
-    const encounterAny = selectedEncounter as { encounterNumber?: string | null } | null;
-    if (encounterAny?.encounterNumber) return `#${encounterAny.encounterNumber}`;
-    if (selectedEncounterId != null) return `#${selectedEncounterId}`;
-    return null;
-  }, [selectedEncounter, selectedEncounterId]);
+  const selectedEncounterLabel = useMemo(
+    () => formatEncounterDisplayLabel(selectedEncounter),
+    [selectedEncounter]
+  );
 
   const billingWorkspace = useMemo(
     () => (
@@ -325,9 +323,9 @@ const Accounting: React.FC = () => {
             <div className="billing-accounting__panel">
               <div className="billing-accounting__panel-title">
                 Billing timeline
-                {selectedEncounterId != null && (
+                {selectedEncounterLabel && (
                   <span className="billing-accounting__badge">
-                    Encounter #{selectedEncounterId}
+                    Encounter {selectedEncounterLabel}
                   </span>
                 )}
               </div>

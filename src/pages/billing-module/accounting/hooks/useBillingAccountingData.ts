@@ -260,8 +260,15 @@ export const useBillingAccountingData = ({
   );
 
   const timelineEvents = useMemo(
-    () => buildTimelineEvents(selectedEncounter, summary, pspRows),
-    [selectedEncounter, summary, pspRows]
+    () =>
+      buildTimelineEvents(
+        selectedEncounter,
+        summary,
+        pspRows,
+        serviceCatalog,
+        medicationNames
+      ),
+    [selectedEncounter, summary, pspRows, serviceCatalog, medicationNames]
   );
 
   const rejectedPreAuthItems = useMemo(

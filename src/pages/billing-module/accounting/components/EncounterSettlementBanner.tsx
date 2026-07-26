@@ -5,6 +5,7 @@ import type { EncounterBillingSummary } from '@/types/model-types-new';
 import {
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
+  formatBillingChargeStatus,
   formatMoney
 } from '../utils/billingAccountingUtils';
 
@@ -81,7 +82,7 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
         ) : isSettled ? (
           <>
             This encounter has no remaining patient balance. Charge status:{' '}
-            <strong>{summary.chargeStatus ?? 'OPEN'}</strong>.
+            <strong>{formatBillingChargeStatus(summary.chargeStatus ?? 'OPEN')}</strong>.
           </>
         ) : (
           <>

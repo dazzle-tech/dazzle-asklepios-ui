@@ -9,6 +9,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   isTechnicalBillingLabel,
+  formatBillingItemType,
   resolveBillingItemName
 } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import {
@@ -481,12 +482,7 @@ export const buildWalletDepositReceipt = ({
     paymentDate: new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),
     patientMrn: resolvePatientMrn(patient),
-    encounterNumber:
-      encounter?.encounterNumber != null
-        ? String(encounter.encounterNumber)
-        : encounter?.id != null
-          ? String(encounter.id)
-          : 'Advance wallet',
+    encounterNumber: resolveEncounterNumber(encounter) ?? 'Advance wallet',
     facilityName,
     coverageType: 'Wallet deposit',
     currency,
@@ -546,7 +542,9 @@ export const isPreAuthRejected = (status?: string | null): boolean =>
 export const buildTimelineEvents = (
   encounter: PatientEncounter | null | undefined,
   summary: EncounterBillingSummary | null | undefined,
-  pspRows: PatientServiceAndProduct[]
+  pspRows: PatientServiceAndProduct[],
+  serviceCatalog: BillingServiceLookup[] = [],
+  medicationNames: Record<number, string> = {}
 ): BillingTimelineEvent[] => {
   const events: BillingTimelineEvent[] = [];
 
@@ -568,11 +566,11 @@ export const buildTimelineEvents = (
         encounterAny.encounterNumber
           ? `#${encounterAny.encounterNumber}`
           : null,
-        encounter.encounterType,
-        getEncounterLifecycleStatus(encounter),
-        getEncounterTreatmentStatus(encounter)
+        formatBillingEnum(encounter.encounterType),
+        formatEncounterLifecycleLabel(encounter),
+        formatEncounterTreatmentLabel(encounter)
       ]
-        .filter(Boolean)
+        .filter(part => part && part !== '-')
         .join(' · ')
     });
 
@@ -608,17 +606,30 @@ export const buildTimelineEvents = (
       preAuthorizationStatus?: string | null;
     };
 
+    const itemLabel =
+      resolveCatalogItemName(
+        row.billingItemType,
+        row,
+        getPspSourceId(row),
+        serviceCatalog,
+        medicationNames
+      ) ??
+      (rowAny.itemName &&
+      !isTechnicalBillingLabel(rowAny.itemName, row.billingItemType)
+        ? rowAny.itemName.trim()
+        : null);
+
     events.push({
       id: `psp-${row.id}`,
       type: 'SERVICE_CHARGED',
       label: 'Service / product added',
       timestamp: rowAny.createdDate ?? null,
       detail: [
-        row.serviceSource,
-        row.billingItemType,
-        rowAny.itemName ?? `Item #${row.id}`
+        formatBillingSource(row.serviceSource),
+        formatBillingItemType(row.billingItemType),
+        itemLabel
       ]
-        .filter(Boolean)
+        .filter(part => part && part !== '-')
         .join(' · ')
     });
 
@@ -628,7 +639,12 @@ export const buildTimelineEvents = (
         type: 'PRE_AUTH_REJECTED',
         label: 'Waseel pre-authorization rejected',
         timestamp: rowAny.createdDate ?? null,
-        detail: rowAny.itemName ?? `Item #${row.id}`
+        detail:
+          itemLabel ??
+          (rowAny.itemName &&
+          !isTechnicalBillingLabel(rowAny.itemName, row.billingItemType)
+            ? rowAny.itemName.trim()
+            : undefined)
       });
     }
   });
@@ -673,8 +689,61 @@ const resolvePspItemName = (
   return '-';
 };
 
+export const formatBillingEnum = (
+  value: string | null | undefined
+): string => {
+  const formatted = formatEnumString(String(value ?? '').trim());
+  return formatted || '-';
+};
+
+export const formatEncounterLifecycleLabel = (
+  encounter: PatientEncounter | null | undefined
+): string => formatBillingEnum(getEncounterLifecycleStatus(encounter));
+
+export const formatEncounterTreatmentLabel = (
+  encounter: PatientEncounter | null | undefined
+): string => formatBillingEnum(getEncounterTreatmentStatus(encounter));
+
+export const formatBillingChargeStatus = (
+  status: string | null | undefined
+): string => formatBillingEnum(status);
+
+export const resolveEncounterNumber = (
+  encounter: PatientEncounter | null | undefined
+): string | null => {
+  if (!encounter) {
+    return null;
+  }
+
+  const encounterAny = encounter as PatientEncounter & {
+    encounterNumber?: string | null;
+    visitId?: string | null;
+  };
+
+  const value = String(
+    encounterAny.encounterNumber ?? encounterAny.visitId ?? ''
+  ).trim();
+
+  return value || null;
+};
+
+/** User-facing encounter label such as #E00069 — never the internal database id. */
+export const formatEncounterDisplayLabel = (
+  encounter: PatientEncounter | null | undefined,
+  options?: { withHash?: boolean }
+): string | null => {
+  const encounterNumber = resolveEncounterNumber(encounter);
+  if (!encounterNumber) {
+    return null;
+  }
+
+  return options?.withHash === false
+    ? encounterNumber
+    : `#${encounterNumber}`;
+};
+
 export const formatBillingSource = (source: string | null | undefined): string =>
-  formatEnumString(String(source ?? '')) || '-';
+  formatBillingEnum(source);
 
 const resolveChargeRowItemName = (
   item: EncounterBillingItemSummary,
