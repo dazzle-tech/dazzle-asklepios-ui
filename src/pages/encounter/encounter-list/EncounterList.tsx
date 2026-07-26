@@ -254,7 +254,7 @@ const EncounterList = () => {
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
   const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -264,7 +264,8 @@ const EncounterList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -1046,9 +1047,9 @@ const EncounterList = () => {
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}
