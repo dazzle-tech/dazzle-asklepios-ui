@@ -53,6 +53,7 @@ export const billingTransactionService =
                 BillingId;
 
               timestamp?: number;
+              refreshKey?: number;
             }
           >({
             query: ({
@@ -181,9 +182,20 @@ export const billingTransactionService =
                 body
               }),
 
-            invalidatesTags: [
+            invalidatesTags: (
+              _result,
+              _error,
+              arg
+            ) => [
               'BillingPayment',
               'BillingWallet',
+              {
+                type:
+                  'EncounterBillingSummary',
+                id: String(
+                  arg.encounterId
+                )
+              },
               'EncounterBillingSummary'
             ]
           }),

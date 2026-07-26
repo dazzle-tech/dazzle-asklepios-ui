@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState
 } from 'react';
 
@@ -74,6 +75,22 @@ import {
 
 import './style.less';
 
+import {
+  buildPreviewChargeLines,
+  computePreviewBillingTotals,
+  filterPayableServiceRows,
+  formatBillingItemType,
+  getUnpaidSummaryItems,
+  getLineDueAmount,
+  isDefaultServicePayable,
+  isEncounterFullyPaid,
+  resolveBillingItemName,
+  resolvePatientOutstandingAmount,
+  type PaymentReceiptData
+} from './paymentPreviewUtils';
+import { formatEnumString } from '@/utils';
+import PaymentReceiptModal from './PaymentReceiptModal';
+
 type DefaultServiceRow = {
   id: number;
   serviceId: number;
@@ -130,6 +147,18 @@ type PatientPaymentInfoProps = {
 
   onPaymentSaved?: () =>
     void | Promise<void>;
+
+  onReceiptReady?: (
+    receipt: PaymentReceiptData
+  ) => void;
+
+  onReceiptClosed?: () => void;
+
+  onNothingToPay?: () => void;
+
+  onViewOnlyChange?: (
+    viewOnly: boolean
+  ) => void;
 };
 
 const initialFormState:
@@ -432,12 +461,19 @@ const PatientPaymentInfo =
         setPayment,
         patientInsurance,
         setPatientInsurance,
-        onPaymentSaved
+        onPaymentSaved,
+        onReceiptReady,
+        onReceiptClosed,
+        onNothingToPay,
+        onViewOnlyChange
       },
       ref
     ) => {
       const dispatch =
         useAppDispatch();
+
+      const fullyPaidNotifiedRef =
+        useRef(false);
 
       const authSlice =
         useAppSelector(
@@ -561,6 +597,26 @@ const PatientPaymentInfo =
           null
         );
 
+      const [
+        receiptPreview,
+        setReceiptPreview
+      ] =
+        useState<PaymentReceiptData | null>(
+          null
+        );
+
+      const [
+        receiptModalOpen,
+        setReceiptModalOpen
+      ] =
+        useState(false);
+
+      const [
+        summaryRefreshKey,
+        setSummaryRefreshKey
+      ] =
+        useState(0);
+
       const {
         data:
           summaryResponse,
@@ -571,7 +627,9 @@ const PatientPaymentInfo =
       } =
         useGetEncounterBillingSummaryQuery(
           {
-            encounterId
+            encounterId,
+            refreshKey:
+              summaryRefreshKey
           },
           {
             skip:
@@ -587,6 +645,16 @@ const PatientPaymentInfo =
           patientId,
           encounterId
         };
+
+      const encounterFullyPaid =
+        isEncounterFullyPaid(
+          summary
+        );
+
+      const unpaidSummaryItemsEarly =
+        getUnpaidSummaryItems(
+          summary
+        );
 
       const {
         data: waseelCoverage,
@@ -686,9 +754,15 @@ const PatientPaymentInfo =
           .length >
           0;
 
-      const isLocked =
+      const isViewOnlyMode =
         Boolean(
           isReadOnly ||
+            encounterFullyPaid
+        );
+
+      const isLocked =
+        Boolean(
+          isViewOnlyMode ||
             lockAfterConfirm ||
             isBusy
         );
@@ -1151,25 +1225,34 @@ const PatientPaymentInfo =
 
       useEffect(() => {
         if (
-          summary.patientOutstandingAmount >
-            0 &&
-          formState.paymentAmount ===
-            0
+          !(summary.items ?? []).length
         ) {
-          setFormState(
-            previous => ({
-              ...previous,
-
-              paymentAmount:
-                summary.patientOutstandingAmount
-            })
-          );
+          return;
         }
-      }, [
-        summary.patientOutstandingAmount,
-        formState.paymentAmount
-      ]);
 
+        setDefaultServiceRows(
+          previous =>
+            previous.map(
+              row => {
+                if (
+                  !isDefaultServicePayable(
+                    row.serviceId,
+                    summary
+                  )
+                ) {
+                  return {
+                    ...row,
+                    selected: false
+                  };
+                }
+
+                return row;
+              }
+            )
+        );
+      }, [
+        summary.items
+      ]);
 
       const updateForm =
         (
@@ -1204,6 +1287,325 @@ const PatientPaymentInfo =
             defaultServiceRows
           ]
         );
+
+      const payableSelectedRows =
+        useMemo(
+          () =>
+            filterPayableServiceRows(
+              selectedRows,
+              summary
+            ),
+          [
+            selectedRows,
+            summary
+          ]
+        );
+
+      const unpaidSummaryItems =
+        unpaidSummaryItemsEarly;
+
+      const previewTotals =
+        useMemo(
+          () =>
+            computePreviewBillingTotals(
+              summary,
+              payableSelectedRows.length >
+                0
+                ? payableSelectedRows
+                : selectedRows,
+              isInsurance
+            ),
+          [
+            summary,
+            payableSelectedRows,
+            selectedRows,
+            isInsurance
+          ]
+        );
+
+      const displayChargeLines =
+        useMemo(
+          () =>
+            buildPreviewChargeLines(
+              summary,
+              payableSelectedRows.length >
+                0
+                ? payableSelectedRows
+                : selectedRows,
+              activeCurrency,
+              isInsurance
+            ),
+          [
+            summary,
+            payableSelectedRows,
+            selectedRows,
+            activeCurrency,
+            isInsurance
+          ]
+        );
+
+      const resolvedOutstanding =
+        resolvePatientOutstandingAmount(
+          summary
+        );
+
+      const hasPayableBalance =
+        resolvedOutstanding > 0 ||
+        previewTotals.patientOutstandingAmount >
+          0;
+
+      const paymentMethodSelected =
+        Boolean(
+          formState.paymentMethodCode
+        );
+
+      useEffect(() => {
+        fullyPaidNotifiedRef.current =
+          false;
+      }, [
+        encounterId
+      ]);
+
+      useEffect(() => {
+        if (
+          onViewOnlyChange
+        ) {
+          onViewOnlyChange(
+            isViewOnlyMode
+          );
+        }
+      }, [
+        isViewOnlyMode,
+        onViewOnlyChange
+      ]);
+
+      useEffect(() => {
+        if (
+          loadingSummary ||
+          !encounterId ||
+          fullyPaidNotifiedRef.current ||
+          !encounterFullyPaid
+        ) {
+          return;
+        }
+
+        fullyPaidNotifiedRef.current =
+          true;
+
+        dispatch(
+          notify({
+            msg:
+              'This encounter is already paid. Payment details are shown in read-only mode.',
+            sev: 'info'
+          })
+        );
+      }, [
+        loadingSummary,
+        encounterId,
+        encounterFullyPaid,
+        dispatch
+      ]);
+
+      useEffect(() => {
+        const outstanding =
+          previewTotals.patientOutstandingAmount;
+
+        if (
+          !paymentMethodSelected ||
+          outstanding <= 0 ||
+          lockAfterConfirm
+        ) {
+          return;
+        }
+
+        setFormState(
+          previous => {
+            if (
+              previous.paymentAmount >
+              0
+            ) {
+              return previous;
+            }
+
+            return {
+              ...previous,
+              paymentAmount:
+                outstanding
+            };
+          }
+        );
+      }, [
+        paymentMethodSelected,
+        previewTotals.patientOutstandingAmount,
+        lockAfterConfirm
+      ]);
+
+      const buildReceiptData =
+        (
+          paymentResult: any | null,
+          billingSummary: EncounterBillingSummary
+        ): PaymentReceiptData => {
+          const facilityName =
+            facilityResponse?.name ??
+            facilityResponse?.data?.name ??
+            'Healthcare Facility';
+
+          const patientName =
+            [
+              localPatient?.firstName,
+              localPatient?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ') ||
+            localPatient?.fullName ||
+            localPatient?.name ||
+            '-';
+
+          const patientMrn =
+            localPatient?.mrn ??
+            localPatient?.medicalRecordNumber ??
+            localPatient?.patientMrn ??
+            '-';
+
+          const encounterNumber =
+            localEncounter?.encounterNumber ??
+            String(
+              localEncounter?.id ?? '-'
+            );
+
+          const paymentMethodLabel =
+            paymentMethods.find(
+              (option: any) =>
+                String(option?.value) ===
+                String(
+                  formState.paymentMethodCode
+                )
+            )?.label ??
+            formState.paymentMethodCode ??
+            '-';
+
+          const receiptItems =
+            (billingSummary.items ?? [])
+              .length > 0
+              ? billingSummary.items ?? []
+              : displayChargeLines;
+
+          return {
+            receiptNumber:
+              paymentResult?.paymentNumber ??
+              billingSummary.chargeNumber ??
+              '-',
+
+            transactionNumber:
+              paymentResult?.paymentTransactionNumber ??
+              '-',
+
+            paymentDate:
+              new Date().toLocaleString(),
+
+            patientName,
+
+            patientMrn,
+
+            encounterNumber,
+
+            facilityName,
+
+            coverageType:
+              formState.coverageType ===
+              'INSURANCE'
+                ? 'Insurance'
+                : 'Self Pay',
+
+            currency: activeCurrency,
+
+            paymentAmount:
+              paymentResult?.paymentAmount ??
+              formState.paymentAmount,
+
+            paymentMethod:
+              paymentMethodLabel,
+
+            chargeNumber:
+              billingSummary.chargeNumber ??
+              '-',
+
+            items: receiptItems.map(
+              item => ({
+                name: resolveBillingItemName(
+                  item,
+                  defaultServiceRows
+                ),
+
+                type: formatBillingItemType(
+                  item.billingItemType
+                ),
+
+                quantity: toNumber(
+                  item.quantity,
+                  1
+                ),
+
+                unitPrice: toNumber(
+                  item.unitPrice
+                ),
+
+                netAmount: toNumber(
+                  item.netAmount
+                ),
+
+                patientShare: toNumber(
+                  item.patientResponsibilityAmount
+                )
+              })
+            ),
+
+            totals:
+              computePreviewBillingTotals(
+                billingSummary,
+                selectedRows,
+                isInsurance
+              ),
+
+            notes:
+              formState.notes.trim() ||
+              undefined
+          };
+        };
+
+      const openReceipt =
+        (
+          receipt: PaymentReceiptData
+        ) => {
+          if (
+            onReceiptReady
+          ) {
+            onReceiptReady(
+              receipt
+            );
+            return;
+          }
+
+          setReceiptPreview(
+            receipt
+          );
+          setReceiptModalOpen(
+            true
+          );
+        };
+
+      const handleReceiptClose =
+        () => {
+          setReceiptModalOpen(
+            false
+          );
+
+          if (
+            onReceiptClosed
+          ) {
+            onReceiptClosed();
+          }
+        };
 
       const selectedAll =
         defaultServiceRows.length >
@@ -1268,12 +1670,43 @@ const PatientPaymentInfo =
           }
 
           if (
-            selectedRows.length ===
-            0
+            resolvedOutstanding <=
+              0 &&
+            previewTotals.patientOutstandingAmount <=
+              0
           ) {
             reject(
               'services',
-              'Select at least one service'
+              'All services are already paid for this encounter'
+            );
+          }
+
+          if (
+            !formState.paymentMethodCode
+          ) {
+            reject(
+              'paymentMethodCode',
+              'Payment method is required'
+            );
+          }
+
+          if (
+            formState.paymentAmount <=
+            0
+          ) {
+            reject(
+              'paymentAmount',
+              'Enter a payment amount greater than zero'
+            );
+          }
+
+          if (
+            formState.paymentAmount >
+            previewTotals.patientOutstandingAmount
+          ) {
+            reject(
+              'paymentAmount',
+              'Payment amount cannot exceed the outstanding balance'
             );
           }
 
@@ -1284,17 +1717,6 @@ const PatientPaymentInfo =
             reject(
               'patientInsuranceId',
               'Patient insurance is required'
-            );
-          }
-
-          if (
-            formState.paymentAmount >
-              0 &&
-            !formState.paymentMethodCode
-          ) {
-            reject(
-              'paymentMethodCode',
-              'Payment method is required'
             );
           }
 
@@ -1337,6 +1759,51 @@ const PatientPaymentInfo =
 
       const prepareServices =
         async () => {
+          const unpaidExistingIds =
+            unpaidSummaryItems
+              .map(
+                item =>
+                  item.patientServiceProductId
+              )
+              .filter(
+                (
+                  id
+                ): id is number =>
+                  id != null
+              );
+
+          if (
+            payableSelectedRows.length ===
+            0
+          ) {
+            if (
+              unpaidExistingIds.length >
+              0
+            ) {
+              return {
+                ids:
+                  unpaidExistingIds,
+                message:
+                  'Using existing unpaid charge lines.'
+              };
+            }
+
+            if (
+              resolvePatientOutstandingAmount(
+                summary
+              ) >
+              0
+            ) {
+              throw new Error(
+                'Unable to match unpaid services. Please refresh and try again.'
+              );
+            }
+
+            throw new Error(
+              'All services are already paid for this encounter.'
+            );
+          }
+
           const body:
           PrepareDefaultServicesRequest = {
             patientId,
@@ -1356,7 +1823,7 @@ const PatientPaymentInfo =
                 : null,
 
             items:
-              selectedRows.map(
+              payableSelectedRows.map(
                 (
                   row,
                   index
@@ -1470,6 +1937,26 @@ const PatientPaymentInfo =
             return null;
           }
 
+          const outstanding = Math.max(
+            resolvePatientOutstandingAmount(
+              summary
+            ),
+            previewTotals.patientOutstandingAmount
+          );
+
+          if (
+            outstanding <= 0 ||
+            pspIds.length === 0
+          ) {
+            return null;
+          }
+
+          const paymentAmount =
+            Math.min(
+              formState.paymentAmount,
+              outstanding
+            );
+
           const request:
           CreateAdvancePaymentRequest = {
             ...newCreateAdvancePaymentRequest,
@@ -1490,7 +1977,7 @@ const PatientPaymentInfo =
               null,
 
             amount:
-              formState.paymentAmount,
+              paymentAmount,
 
             currency:
               summary.currency ??
@@ -1591,9 +2078,29 @@ const PatientPaymentInfo =
       const handleConfirm =
         async () => {
           if (
+            isViewOnlyMode
+          ) {
+            return false;
+          }
+
+          if (
             isReadOnly ||
             !validate()
           ) {
+            return false;
+          }
+
+          if (
+            !hasPayableBalance
+          ) {
+            dispatch(
+              notify({
+                msg:
+                  'All services for this encounter are already paid.',
+                sev: 'info'
+              })
+            );
+
             return false;
           }
 
@@ -1605,12 +2112,87 @@ const PatientPaymentInfo =
             } =
               await prepareServices();
 
-            const paymentResult =
-              await receivePayment(
-                ids
+            const refreshed =
+              await refetchSummary();
+
+            const billingSummary: EncounterBillingSummary =
+              refreshed?.data ??
+              summary;
+
+            const payableIds =
+              getUnpaidSummaryItems(
+                billingSummary
+              )
+                .map(
+                  item =>
+                    item.patientServiceProductId
+                )
+                .filter(
+                  (
+                    id
+                  ): id is number =>
+                    id != null
+                );
+
+            const paymentTargetIds =
+              payableIds.length >
+              0
+                ? payableIds
+                : ids;
+
+            if (
+              paymentTargetIds.length ===
+              0
+            ) {
+              dispatch(
+                notify({
+                  msg:
+                    'No unpaid services were found for this payment.',
+                  sev: 'warning'
+                })
               );
 
-            await refetchSummary();
+              return false;
+            }
+
+            const refreshedOutstanding =
+              resolvePatientOutstandingAmount(
+                billingSummary
+              );
+
+            if (
+              refreshedOutstanding <=
+                0 &&
+              formState.paymentAmount <=
+                0
+            ) {
+              dispatch(
+                notify({
+                  msg:
+                    'All services for this encounter are already paid.',
+                  sev: 'info'
+                })
+              );
+
+              return false;
+            }
+
+            const paymentResult =
+              await receivePayment(
+                paymentTargetIds
+              );
+
+            setSummaryRefreshKey(
+              previous =>
+                previous + 1
+            );
+
+            const postPaymentRefresh =
+              await refetchSummary();
+
+            const finalBillingSummary: EncounterBillingSummary =
+              postPaymentRefresh?.data ??
+              billingSummary;
 
             if (
               paymentResult
@@ -1618,14 +2200,32 @@ const PatientPaymentInfo =
               setLockAfterConfirm(
                 true
               );
+            } else {
+              dispatch(
+                notify({
+                  msg:
+                    'No payment was collected. The selected services may already be fully paid.',
+                  sev: 'warning'
+                })
+              );
+
+              return false;
             }
+
+            const receipt =
+              buildReceiptData(
+                paymentResult,
+                finalBillingSummary
+              );
+
+            openReceipt(
+              receipt
+            );
 
             dispatch(
               notify({
                 msg:
-                  paymentResult
-                    ? `Payment ${paymentResult.paymentNumber} received and reserved successfully.`
-                    : preparedMessage,
+                  `Payment ${paymentResult.paymentNumber} received and reserved successfully.`,
 
                 sev:
                   'success'
@@ -1684,6 +2284,17 @@ const PatientPaymentInfo =
             null
           );
 
+          setReceiptPreview(
+            null
+          );
+
+          setReceiptModalOpen(
+            false
+          );
+
+          fullyPaidNotifiedRef.current =
+            false;
+
           setDefaultServiceRows(
             previous =>
               previous.map(
@@ -1735,71 +2346,75 @@ const PatientPaymentInfo =
           () => ({
             chargeNumber:
               summary.chargeNumber ??
-              '-',
+              (previewTotals.isPreview
+                ? 'Pending'
+                : '-'),
 
             currency:
               activeCurrency,
 
             grossAmount:
               formatMoney(
-                summary.grossAmount,
+                previewTotals.grossAmount,
                 activeCurrency
               ),
 
             discountAmount:
               formatMoney(
-                summary.discountAmount,
+                previewTotals.discountAmount,
                 activeCurrency
               ),
 
             exemptionAmount:
               formatMoney(
-                summary.exemptionAmount,
+                previewTotals.exemptionAmount,
                 activeCurrency
               ),
 
             taxAmount:
               formatMoney(
-                summary.taxAmount,
+                previewTotals.taxAmount,
                 activeCurrency
               ),
 
             netAmount:
               formatMoney(
-                summary.netAmount,
+                previewTotals.netAmount,
                 activeCurrency
               ),
 
             patientResponsibilityAmount:
               formatMoney(
-                summary.patientResponsibilityAmount,
+                previewTotals.patientResponsibilityAmount,
                 activeCurrency
               ),
 
             insuranceResponsibilityAmount:
               formatMoney(
-                summary.insuranceResponsibilityAmount,
+                previewTotals.insuranceResponsibilityAmount,
                 activeCurrency
               ),
 
             patientOutstandingAmount:
               formatMoney(
-                summary.patientOutstandingAmount,
+                previewTotals.patientOutstandingAmount,
                 activeCurrency
               ),
 
             walletAvailableBalance:
               formatMoney(
-                summary.wallet
-                  ?.availableBalance ??
+                lastPaymentResult?.walletAvailableBalance ??
+                  summary.wallet
+                    ?.availableBalance ??
                   0,
                 activeCurrency
               ),
 
             walletReservedBalance:
               formatMoney(
-                summary.wallet
-                  ?.reservedBalance ??
+                lastPaymentResult?.walletReservedBalance ??
+                  summary.wallet
+                    ?.reservedBalance ??
                   0,
                 activeCurrency
               ),
@@ -1810,10 +2425,14 @@ const PatientPaymentInfo =
 
             paymentTransactionNumber:
               lastPaymentResult?.paymentTransactionNumber ??
-              '-'
+              '-',
+
+            isPreview:
+              previewTotals.isPreview
           }),
           [
             summary,
+            previewTotals,
             activeCurrency,
             lastPaymentResult
           ]
@@ -1930,7 +2549,11 @@ const PatientPaymentInfo =
                   )
                 }
                 disabled={
-                  areServicesLocked
+                  areServicesLocked ||
+                  !isDefaultServicePayable(
+                    row.serviceId,
+                    summary
+                  )
                 }
               />
             )
@@ -1965,7 +2588,16 @@ const PatientPaymentInfo =
             'serviceType',
 
           width:
-            150
+            150,
+
+          render:
+            (
+              row:
+                DefaultServiceRow
+            ) =>
+              formatEnumString(
+                row.serviceType
+              ) || '-'
         },
 
         {
@@ -2208,6 +2840,46 @@ const PatientPaymentInfo =
                 billedSourceIds.has(
                   row.serviceId
                 );
+              const billedItem =
+                (summary.items ?? []).find(
+                  item =>
+                    item.sourceId ===
+                    row.serviceId
+                );
+              const lineDue =
+                billedItem
+                  ? getLineDueAmount(
+                      billedItem
+                    )
+                  : 0;
+              const isPaid =
+                isPrepared &&
+                lineDue <= 0;
+
+              if (isPaid) {
+                return (
+                  <Tag
+                    size="sm"
+                    color="blue"
+                  >
+                    Paid
+                  </Tag>
+                );
+              }
+
+              if (
+                isPrepared &&
+                lineDue > 0
+              ) {
+                return (
+                  <Tag
+                    size="sm"
+                    color="orange"
+                  >
+                    Due
+                  </Tag>
+                );
+              }
 
               return isPrepared ? (
                 <Tag
@@ -2249,10 +2921,35 @@ const PatientPaymentInfo =
               row:
                 EncounterBillingItemSummary
             ) =>
-              row.itemName ??
-              row.itemCode ??
-              row.billingItemType ??
-              '-'
+              resolveBillingItemName(
+                row,
+                defaultServiceRows
+              )
+        },
+
+        {
+          key:
+            'billingItemType',
+
+          title:
+            <Translate>
+              Service Type
+            </Translate>,
+
+          dataKey:
+            'billingItemType',
+
+          width:
+            140,
+
+          render:
+            (
+              row:
+                EncounterBillingItemSummary
+            ) =>
+              formatBillingItemType(
+                row.billingItemType
+              )
         },
 
         {
@@ -2475,7 +3172,7 @@ const PatientPaymentInfo =
 
           title:
             <Translate>
-              Outstanding
+              Balance Due
             </Translate>,
 
           dataKey:
@@ -2680,10 +3377,25 @@ const PatientPaymentInfo =
                       prepared.ids
                     );
 
-                  await refetchSummary();
+                  const refreshed =
+                    await refetchSummary();
+
+                  const billingSummary: EncounterBillingSummary =
+                    refreshed?.data ??
+                    summary;
 
                   setLockAfterConfirm(
                     true
+                  );
+
+                  const receipt =
+                    buildReceiptData(
+                      result,
+                      billingSummary
+                    );
+
+                  openReceipt(
+                    receipt
                   );
 
                   dispatch(
@@ -2751,14 +3463,14 @@ const PatientPaymentInfo =
               <SummaryMetric
                 label="Net Amount"
                 value={formatMoney(
-                  summary.netAmount,
+                  previewTotals.netAmount,
                   activeCurrency
                 )}
               />
               <SummaryMetric
-                label="Patient Outstanding"
+                label="Amount Due"
                 value={formatMoney(
-                  summary.patientOutstandingAmount,
+                  previewTotals.patientOutstandingAmount,
                   activeCurrency
                 )}
                 variant="highlight"
@@ -3256,22 +3968,31 @@ const PatientPaymentInfo =
             bordered
             className="payment-info__panel"
             header={
-              <Translate>
-                Charge Lines
-              </Translate>
+              <div className="payment-info__panel-header">
+                <Translate>
+                  Charge Lines
+                </Translate>
+                {previewTotals.isPreview &&
+                displayChargeLines.length > 0 ? (
+                  <Tag size="sm" color="orange">
+                    Estimated
+                  </Tag>
+                ) : null}
+              </div>
             }
           >
           <div className="payment-info__table-wrapper">
             <MyTable
               data={
-                summary.items ??
-                []
+                displayChargeLines
               }
               columns={
                 billedItemColumns
               }
               loading={
-                loadingSummary
+                loadingSummary &&
+                displayChargeLines.length ===
+                  0
               }
               height={
                 280
@@ -3281,14 +4002,12 @@ const PatientPaymentInfo =
               }
               rowsPerPage={
                 Math.max(
-                  summary.items?.length ??
-                    0,
+                  displayChargeLines.length,
                   5
                 )
               }
               totalCount={
-                summary.items?.length ??
-                0
+                displayChargeLines.length
               }
               onPageChange={() =>
                 undefined
@@ -3306,9 +4025,16 @@ const PatientPaymentInfo =
             bordered
             className="payment-info__panel"
             header={
-              <Translate>
-                Billing Summary
-              </Translate>
+              <div className="payment-info__panel-header">
+                <Translate>
+                  Billing Summary
+                </Translate>
+                {summaryDisplayRecord.isPreview ? (
+                  <Tag size="sm" color="orange">
+                    Estimated
+                  </Tag>
+                ) : null}
+              </div>
             }
           >
           {lastPaymentResult ? (
@@ -3376,23 +4102,23 @@ const PatientPaymentInfo =
 
           <div className="payment-info__subsection">
             <h4 className="payment-info__subsection-title">
-              Responsibility
+              Share Breakdown
             </h4>
             <div className="payment-info__metric-list">
               <BillingMetric
-                label="Patient Responsibility"
+                label="Patient Share"
                 value={
                   summaryDisplayRecord.patientResponsibilityAmount
                 }
               />
               <BillingMetric
-                label="Insurance Responsibility"
+                label="Insurance Share"
                 value={
                   summaryDisplayRecord.insuranceResponsibilityAmount
                 }
               />
               <BillingMetric
-                label="Patient Outstanding"
+                label="Amount Due"
                 value={
                   summaryDisplayRecord.patientOutstandingAmount
                 }
@@ -3432,33 +4158,23 @@ const PatientPaymentInfo =
               </Translate>
             }
           >
+            {encounterFullyPaid ? (
+              <Message
+                showIcon
+                type="info"
+                className="payment-info__message"
+              >
+                This encounter is already paid. Payment details are shown in read-only mode.
+              </Message>
+            ) : null}
+
             <div className="payment-info__field-grid payment-info__field-grid--single">
             <MyInput
               vr={
                 validationResult
               }
               column
-              fieldLabel="Payment Amount"
-              fieldType="number"
-              fieldName="paymentAmount"
-              record={
-                formState
-              }
-              setRecord={setFormState}
-              disabled={
-                isLocked
-              }
-            />
-
-            <MyInput
-              vr={
-                validationResult
-              }
-              column
-              required={
-                formState.paymentAmount >
-                0
-              }
+              required
               fieldLabel="Payment Method"
               fieldType="select"
               fieldName="paymentMethodCode"
@@ -3470,16 +4186,54 @@ const PatientPaymentInfo =
               record={
                 formState
               }
-              setRecord={setFormState}
+              setRecord={(updatedForm: BillingFormState) => {
+                setFormState({
+                  ...updatedForm,
+                  paymentAmount:
+                    updatedForm.paymentMethodCode &&
+                    previewTotals.patientOutstandingAmount >
+                      0
+                      ? previewTotals.patientOutstandingAmount
+                      : 0
+                });
+              }}
               disabled={
-                isLocked
+                isLocked ||
+                !hasPayableBalance
               }
               searchable={
                 false
               }
               isEnum
             />
+
+            <MyInput
+              vr={
+                validationResult
+              }
+              column
+              required
+              fieldLabel="Payment Amount"
+              fieldType="number"
+              fieldName="paymentAmount"
+              record={
+                formState
+              }
+              setRecord={setFormState}
+              disabled={
+                isLocked ||
+                !hasPayableBalance ||
+                !paymentMethodSelected
+              }
+            />
             </div>
+
+            {!paymentMethodSelected &&
+            hasPayableBalance ? (
+              <div className="payment-info__field-note">
+                Select a payment method first to enter the amount.
+              </div>
+            ) : null}
 
             <div className="payment-info__field-note">
               Receipt, payment, and transaction numbers are generated automatically by the backend after payment is received.
@@ -3552,12 +4306,15 @@ const PatientPaymentInfo =
               column
               fieldLabel="Notes"
               fieldName="notes"
+              fieldType="textarea"
+              height={96}
               record={
                 formState
               }
               setRecord={setFormState}
               disabled={
-                isLocked
+                isLocked ||
+                !hasPayableBalance
               }
             />
             </div>
@@ -3566,6 +4323,15 @@ const PatientPaymentInfo =
           {internalActionButtons}
             </aside>
           </div>
+
+          {!onReceiptReady ? (
+            <PaymentReceiptModal
+              open={receiptModalOpen}
+              onClose={handleReceiptClose}
+              receipt={receiptPreview}
+              autoPrint
+            />
+          ) : null}
         </Form>
       );
     }

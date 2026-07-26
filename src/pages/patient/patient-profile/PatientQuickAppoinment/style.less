@@ -499,3 +499,129 @@
     }
   }
 }
+
+.payment-receipt-modal {
+  z-index: 1400 !important;
+}
+
+.payment-receipt {
+  color: #1c1c1e;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.payment-receipt__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 2px solid #0f766e;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.payment-receipt__brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f766e;
+  letter-spacing: -0.02em;
+}
+
+.payment-receipt__subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.payment-receipt__meta {
+  text-align: right;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.payment-receipt__sequence {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0.02em;
+}
+
+.payment-receipt__section {
+  margin-bottom: 18px;
+}
+
+.payment-receipt__section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.payment-receipt__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+
+.payment-receipt__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+
+  th,
+  td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 8px;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  th {
+    background: #f8fafc;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.payment-receipt__totals {
+  margin-top: 18px;
+  border-top: 2px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.payment-receipt__total-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.payment-receipt__total-row--highlight {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f766e;
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
+.payment-receipt__footer {
+  margin-top: 28px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}

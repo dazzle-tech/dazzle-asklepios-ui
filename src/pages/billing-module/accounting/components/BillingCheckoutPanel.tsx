@@ -13,13 +13,16 @@ import {
   computeAmountToCollect,
   computeEncounterRemainingToPay,
   formatMoney,
-  makeRequestId
+  makeRequestId,
+  shouldShowInsuranceSummary,
+  type BillingCoverageType
 } from '../utils/billingAccountingUtils';
 
 type BillingCheckoutPanelProps = {
   summary: EncounterBillingSummary;
   encounterId: number | null;
   currency?: string;
+  coverageType?: BillingCoverageType;
   onCompleted?: () => void;
   onCollectRemaining?: () => void;
 };
@@ -28,6 +31,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
   summary,
   encounterId,
   currency = 'SAR',
+  coverageType = 'SELF_PAY',
   onCompleted,
   onCollectRemaining
 }) => {
@@ -54,6 +58,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
   const canCheckout =
     chargeId != null &&
     summary.chargeStatus !== 'CLOSED';
+  const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
   const handleCheckout = async () => {
     if (chargeId == null) {
@@ -184,12 +189,14 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
             {formatMoney(summary.wallet?.reservedBalance ?? 0, currency)}
           </div>
         </div>
-        <div className="billing-accounting__metric">
-          <div className="billing-accounting__metric-label">Insurance outstanding</div>
-          <div className="billing-accounting__metric-value">
-            {formatMoney(summary.insuranceOutstandingAmount, currency)}
+        {showInsurance && (
+          <div className="billing-accounting__metric">
+            <div className="billing-accounting__metric-label">Insurance outstanding</div>
+            <div className="billing-accounting__metric-value">
+              {formatMoney(summary.insuranceOutstandingAmount, currency)}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {amountToCollect > 0 && allowDebit && (

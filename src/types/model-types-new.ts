@@ -5639,6 +5639,7 @@ export type EncounterBillingItemSummary = {
   exempted: boolean;
   currency: Currency;
   status: BillingChargeLineStatus;
+  chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
 };
 

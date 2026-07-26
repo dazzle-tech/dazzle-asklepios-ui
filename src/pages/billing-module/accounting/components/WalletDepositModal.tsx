@@ -3,16 +3,23 @@ import { Form, Modal } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateAdvancePaymentMutation } from '@/services/billing/billingTransactionService';
 import { newCreateAdvancePaymentRequest } from '@/types/model-types-constructor-new';
-import type { CreateAdvancePaymentRequest } from '@/types/model-types-new';
-import { useAppDispatch } from '@/hooks';
+import type {
+  CreateAdvancePaymentRequest,
+  PatientEncounter
+} from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
+import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
+import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  buildWalletDepositReceipt,
   makeRequestId,
+  normalizeBillingError,
   resolveBillingPaymentCategory
 } from '../utils/billingAccountingUtils';
 
@@ -27,6 +34,8 @@ type WalletDepositModalProps = {
   open: boolean;
   onClose: () => void;
   patientId: number;
+  patient?: any;
+  encounter?: PatientEncounter | null;
   encounterId?: number | null;
   currency?: string;
   onDeposited?: () => void;
@@ -36,11 +45,19 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   open,
   onClose,
   patientId,
+  patient,
+  encounter = null,
   encounterId = null,
   currency = 'SAR',
   onDeposited
 }) => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
+  const facilityName =
+    authSlice?.tenant?.selectedFacility?.name ??
+    authSlice?.tenant?.selectedFacility?.facilityName ??
+    'Healthcare Facility';
+
   const enumPaymentMethods =
     useEnumOptions('PaymentMethods', {
       exclude: ['INSURANCE_COVERAGE', 'DEDUCT_FROM_FREE_BALANCE'],
@@ -55,6 +72,8 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
     paymentMethodCode: '',
     notes: ''
   });
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receipt, setReceipt] = useState<PaymentReceiptData | null>(null);
 
   const [createAdvancePayment, { isLoading }] = useCreateAdvancePaymentMutation();
 
@@ -63,19 +82,10 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
 
     setForm({
       amount: 0,
-      paymentMethodCode: String(paymentMethods[0]?.value ?? ''),
+      paymentMethodCode: '',
       notes: ''
     });
   }, [open]);
-
-  useEffect(() => {
-    if (!open || form.paymentMethodCode || !paymentMethods.length) return;
-
-    setForm(previous => ({
-      ...previous,
-      paymentMethodCode: String(paymentMethods[0]?.value ?? '')
-    }));
-  }, [open, form.paymentMethodCode, paymentMethods]);
 
   const handleSubmit = async () => {
     if (!form.paymentMethodCode) {
@@ -91,6 +101,8 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
     const selectedMethod = paymentMethods.find(
       option => String(option?.value) === String(form.paymentMethodCode)
     );
+    const paymentMethodLabel =
+      selectedMethod?.label ?? form.paymentMethodCode ?? 'Payment';
 
     const request: CreateAdvancePaymentRequest = {
       ...newCreateAdvancePaymentRequest,
@@ -114,18 +126,31 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
 
     try {
       const result = await createAdvancePayment(request).unwrap();
+      const receiptData = buildWalletDepositReceipt({
+        paymentResult: result,
+        patient,
+        encounter,
+        facilityName,
+        currency,
+        paymentMethodLabel,
+        notes: form.notes.trim() || 'Patient wallet deposit'
+      });
+
       dispatch(
         notify({
           msg: `Deposit recorded. Payment #${result.paymentNumber ?? result.paymentId ?? ''}`,
           sev: 'success'
         })
       );
+
       onDeposited?.();
       onClose();
+      setReceipt(receiptData);
+      setReceiptOpen(true);
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.message ?? error?.message ?? 'Failed to record deposit.',
+          msg: normalizeBillingError(error),
           sev: 'error'
         })
       );
@@ -133,53 +158,65 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
-      <Modal.Header>
-        <Modal.Title>Deposit to patient wallet</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="billing-wallet-deposit-modal">
-          <Form fluid>
-            <MyInput
-              column
-              fieldType="number"
-              fieldLabel="Amount"
-              fieldName="amount"
-              record={form}
-              setRecord={setForm}
-              width="100%"
-            />
-            <PaymentMethodSelector
-              value={form.paymentMethodCode}
-              options={paymentMethods}
-              onChange={paymentMethodCode =>
-                setForm(previous => ({
-                  ...previous,
-                  paymentMethodCode
-                }))
-              }
-            />
-            <MyInput
-              column
-              fieldType="textarea"
-              fieldLabel="Notes"
-              fieldName="notes"
-              record={form}
-              setRecord={setForm}
-              width="100%"
-            />
-          </Form>
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <MyButton onClick={onClose} disabled={isLoading}>
-          Cancel
-        </MyButton>
-        <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
-          Record deposit
-        </MyButton>
-      </Modal.Footer>
-    </Modal>
+    <>
+      <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
+        <Modal.Header>
+          <Modal.Title>Deposit to patient wallet</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="billing-wallet-deposit-modal">
+            <Form fluid>
+              <PaymentMethodSelector
+                value={form.paymentMethodCode}
+                options={paymentMethods}
+                onChange={paymentMethodCode =>
+                  setForm(previous => ({
+                    ...previous,
+                    paymentMethodCode
+                  }))
+                }
+              />
+              <MyInput
+                column
+                fieldType="number"
+                fieldLabel="Amount"
+                fieldName="amount"
+                record={form}
+                setRecord={setForm}
+                width="100%"
+              />
+              <MyInput
+                column
+                fieldType="textarea"
+                fieldLabel="Notes"
+                fieldName="notes"
+                record={form}
+                setRecord={setForm}
+                width="100%"
+              />
+            </Form>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <MyButton onClick={onClose} disabled={isLoading}>
+            Cancel
+          </MyButton>
+          <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
+            Record deposit
+          </MyButton>
+        </Modal.Footer>
+      </Modal>
+
+      <PaymentReceiptModal
+        open={receiptOpen}
+        onClose={() => {
+          setReceiptOpen(false);
+          setReceipt(null);
+        }}
+        receipt={receipt}
+        autoPrint
+      />
+    </>
   );
 };
 

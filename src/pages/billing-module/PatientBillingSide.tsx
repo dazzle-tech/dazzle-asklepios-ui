@@ -17,6 +17,8 @@ import { calculateAgeFormat, formatEnumString } from '@/utils';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { ApAttachment } from '@/types/model-types';
 
+import { WALLET_DEPOSIT_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
+
 import '../encounter/encounter-main-info-section/styles.less';
 
 interface PatientBillingSideProps {
@@ -222,7 +224,7 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
             prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
             onClick={onDeposit}
           >
-            Deposit funds
+            {WALLET_DEPOSIT_BUTTON_LABEL}
           </MyButton>
         </div>
       )}

@@ -31,7 +31,7 @@ import CollectPaymentModal from './accounting/components/CollectPaymentModal';
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable } from './accounting/utils/billingAccountingUtils';
+import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, WALLET_DEPOSIT_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -259,7 +259,7 @@ const Accounting: React.FC = () => {
               onClick={() => setDepositModalOpen(true)}
               disabled={patientId == null}
             >
-              Deposit funds
+              {WALLET_DEPOSIT_BUTTON_LABEL}
             </MyButton>
             <MyButton onClick={() => refreshAll()} disabled={patientId == null}>
               Refresh
@@ -273,6 +273,7 @@ const Accounting: React.FC = () => {
           reservedBalance={reservedBalance}
           totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
           currency={summary.currency ?? facilityCurrency}
+          coverageType={coverageType}
         />
 
         <EncounterSettlementBanner
@@ -361,6 +362,7 @@ const Accounting: React.FC = () => {
                 summary={summary}
                 encounterId={selectedEncounterId}
                 currency={summary.currency ?? facilityCurrency}
+                coverageType={coverageType}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
               />
@@ -493,6 +495,8 @@ const Accounting: React.FC = () => {
             open={depositModalOpen}
             onClose={() => setDepositModalOpen(false)}
             patientId={patientId}
+            patient={patient}
+            encounter={selectedEncounter}
             encounterId={selectedEncounterId}
             currency={summary.currency ?? facilityCurrency}
             onDeposited={refreshAll}

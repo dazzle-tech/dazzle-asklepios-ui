@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Radio, RadioGroup } from 'rsuite';
+import { Form, SelectPicker } from 'rsuite';
 
 export type PaymentMethodOption = {
   value: string;
@@ -12,6 +12,7 @@ type PaymentMethodSelectorProps = {
   options: PaymentMethodOption[];
   onChange: (paymentMethodCode: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 };
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
@@ -19,23 +20,25 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   value,
   options,
   onChange,
-  disabled = false
+  disabled = false,
+  placeholder = 'Select payment method'
 }) => (
   <Form.Group>
     <Form.ControlLabel>{label}</Form.ControlLabel>
-    <RadioGroup
-      name="paymentMethodCode"
-      value={value || undefined}
+    <SelectPicker
+      block
+      cleanable={false}
+      searchable={false}
+      disabled={disabled}
+      data={options}
+      labelKey="label"
+      valueKey="value"
+      placeholder={placeholder}
+      value={value || null}
       onChange={nextValue => onChange(nextValue == null ? '' : String(nextValue))}
-    >
-      <div className="billing-payment-method-options">
-        {options.map(option => (
-          <Radio key={option.value} value={option.value} disabled={disabled}>
-            {option.label}
-          </Radio>
-        ))}
-      </div>
-    </RadioGroup>
+      style={{ width: '100%' }}
+      menuStyle={{ zIndex: 2000 }}
+    />
   </Form.Group>
 );
 

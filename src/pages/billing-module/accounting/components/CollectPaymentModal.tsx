@@ -16,6 +16,7 @@ import {
   formatMoney,
   isWalletPaymentMethod,
   makeRequestId,
+  normalizeBillingError,
   resolveBillingPaymentCategory,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
@@ -106,19 +107,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
     setForm({
       amount: Number(suggestedAmount.toFixed(2)),
-      paymentMethodCode: String(paymentMethods[0]?.value ?? ''),
+      paymentMethodCode: '',
       notes: ''
     });
   }, [open, suggestedAmount]);
-
-  useEffect(() => {
-    if (!open || form.paymentMethodCode || !paymentMethods.length) return;
-
-    setForm(previous => ({
-      ...previous,
-      paymentMethodCode: String(paymentMethods[0]?.value ?? '')
-    }));
-  }, [open, form.paymentMethodCode, paymentMethods]);
 
   const handleSubmit = async () => {
     if (!form.paymentMethodCode) {
@@ -144,7 +136,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     if (!pspIds.length) {
       dispatch(
         notify({
-          msg: 'Selected rows must be linked to billable services before collecting payment.',
+          msg: 'Select at least one line with an outstanding patient balance.',
           sev: 'warning'
         })
       );
@@ -190,7 +182,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.message ?? error?.message ?? 'Failed to collect payment.',
+          msg: normalizeBillingError(error),
           sev: 'error'
         })
       );
@@ -220,15 +212,6 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
             </Text>
           )}
           <Form fluid>
-            <MyInput
-              column
-              fieldType="number"
-              fieldLabel="Amount"
-              fieldName="amount"
-              record={form}
-              setRecord={setForm}
-              width="100%"
-            />
             <PaymentMethodSelector
               value={form.paymentMethodCode}
               options={paymentMethods}
@@ -240,11 +223,20 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
               }
             />
             {isWalletMethod && (
-              <Text muted size="sm" style={{ marginBottom: 8 }}>
-                Pays from the patient wallet advance balance. Choose this to use deposited
-                funds instead of cash or card.
+              <Text muted size="sm" style={{ marginBottom: 12 }}>
+                Pays from the patient wallet advance balance. Use deposited funds instead of
+                cash or card.
               </Text>
             )}
+            <MyInput
+              column
+              fieldType="number"
+              fieldLabel="Amount"
+              fieldName="amount"
+              record={form}
+              setRecord={setForm}
+              width="100%"
+            />
             <MyInput
               column
               fieldType="textarea"

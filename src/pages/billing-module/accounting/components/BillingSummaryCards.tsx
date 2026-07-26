@@ -6,7 +6,9 @@ import {
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
   formatMoney,
-  sumEncounterReservedAmount
+  shouldShowInsuranceSummary,
+  sumEncounterReservedAmount,
+  type BillingCoverageType
 } from '../utils/billingAccountingUtils';
 
 type BillingSummaryCardsProps = {
@@ -15,6 +17,7 @@ type BillingSummaryCardsProps = {
   reservedBalance: number;
   totalDebt?: number;
   currency?: string;
+  coverageType?: BillingCoverageType;
 };
 
 const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
@@ -22,13 +25,15 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   walletBalance,
   reservedBalance,
   totalDebt = 0,
-  currency
+  currency,
+  coverageType = 'SELF_PAY'
 }) => {
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
   const patientShare = computeEncounterPatientShare(summary);
   const coveredAmount = computeEncounterCoveredAmount(summary);
   const remainingToPay = computeEncounterRemainingToPay(summary);
+  const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
   const remainingHint = (() => {
     if (patientShare <= 0) return undefined;
@@ -61,10 +66,14 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
       tone: remainingToPay > 0 ? 'danger' : patientShare > 0 ? 'success' : undefined,
       hint: remainingHint
     },
-    {
-      label: 'Insurance due',
-      value: formatMoney(summary.insuranceOutstandingAmount, resolvedCurrency)
-    },
+    ...(showInsurance
+      ? [
+          {
+            label: 'Insurance due',
+            value: formatMoney(summary.insuranceOutstandingAmount, resolvedCurrency)
+          }
+        ]
+      : []),
     {
       label: 'Wallet available',
       value: formatMoney(walletBalance, resolvedCurrency),
@@ -79,7 +88,7 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
       value: formatMoney(totalDebt, resolvedCurrency),
       tone: totalDebt > 0 ? 'danger' : undefined
     }
-  ];
+  ] as const;
 
   return (
     <div className="billing-accounting__cards">
