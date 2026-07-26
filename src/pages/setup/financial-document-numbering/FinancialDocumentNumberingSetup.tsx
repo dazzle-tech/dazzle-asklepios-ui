@@ -36,8 +36,6 @@ import {
   formatEnumString
 } from '@/utils';
 
-import { useEnumOptions } from '@/services/enumsApi';
-
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 import {
@@ -53,6 +51,8 @@ import type {
 import { newFinancialDocumentNumbering } from '@/types/model-types-constructor-new';
 
 import AddEditFinancialDocumentNumbering from './AddEditFinancialDocumentNumbering';
+
+import { useFinancialDocumentTypeOptions } from '@/pages/billing-module/invoices/useFinancialDocumentTypes';
 
 import {
   extractFinancialDocumentNumberingErrorMessage
@@ -92,9 +92,7 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
   const [appliedFilters, setAppliedFilters] =
     useState<FilterState>(initialFilterState);
 
-  const documentTypeOptions = useEnumOptions(
-    'FinancialDocumentType'
-  );
+  const documentTypeOptions = useFinancialDocumentTypeOptions();
 
   const { data: facilityListResponse } =
     useGetAllFacilitiesQuery({});

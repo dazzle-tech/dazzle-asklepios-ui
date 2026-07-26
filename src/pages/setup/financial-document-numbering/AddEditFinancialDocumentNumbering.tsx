@@ -15,6 +15,8 @@ import { notify } from '@/utils/uiReducerActions';
 
 import { useEnumOptions } from '@/services/enumsApi';
 
+import { useFinancialDocumentTypeOptions } from '@/pages/billing-module/invoices/useFinancialDocumentTypes';
+
 import {
   useAddFinancialDocumentNumberingMutation,
   useUpdateFinancialDocumentNumberingMutation
@@ -86,9 +88,7 @@ const AddEditFinancialDocumentNumbering: React.FC<Props> = ({
   const dispatch = useAppDispatch();
   const isEdit = Boolean(configuration.id);
 
-  const documentTypeOptions = useEnumOptions(
-    'FinancialDocumentType'
-  );
+  const documentTypeOptions = useFinancialDocumentTypeOptions();
   const resetFrequencyOptions = useEnumOptions(
     'BillingResetFrequency'
   );

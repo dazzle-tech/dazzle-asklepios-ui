@@ -1,0 +1,166 @@
+.billing-invoices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__empty {
+    padding: 24px;
+    text-align: center;
+  }
+
+  &__snapshot {
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px solid var(--rs-border-primary, #e5e5ea);
+    border-radius: 8px;
+    background: var(--rs-bg-well, #fafafa);
+
+    &--muted {
+      color: var(--rs-text-secondary, #8e8e93);
+      font-size: 13px;
+    }
+  }
+
+  &__snapshot-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &__snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  &__snapshot-empty {
+    padding-top: 4px;
+  }
+
+  &__details {
+    margin-top: 0;
+  }
+
+  &__details-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__patient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .selected-row {
+    background: rgba(52, 152, 219, 0.08);
+  }
+
+  &__invoice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &__adjustments {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--rs-border-primary, #e5e5ea);
+    border-radius: 8px;
+    background: var(--rs-bg-well, #fafafa);
+  }
+
+  &__adjustments-header {
+    margin-bottom: 12px;
+  }
+
+  &__adjustments-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__adjustments-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  &__adjustment-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 12px 0;
+  }
+
+  &__inline-input {
+    width: 88px;
+    padding: 4px 8px;
+    border: 1px solid var(--rs-border-primary, #e5e5ea);
+    border-radius: 4px;
+  }
+
+  &__inline-fields {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__print-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--rs-text-secondary, #8e8e93);
+  }
+
+  &__numbering-hint {
+    display: block;
+    margin-top: 8px;
+    max-width: 720px;
+    line-height: 1.5;
+  }
+}
+
+.invoice-print-modal {
+  .rs-modal-body {
+    background: #eef2f6;
+  }
+
+  &__paper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    padding: 24px;
+    max-height: 72vh;
+    overflow: auto;
+  }
+}

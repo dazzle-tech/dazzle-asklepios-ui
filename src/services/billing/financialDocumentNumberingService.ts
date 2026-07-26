@@ -3,6 +3,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 
 import type {
+  AllocateFinancialDocumentNumberRequest,
+  AllocatedFinancialDocumentNumber,
   BillingConfigurationStatus,
   FinancialDocumentNumbering,
   FinancialDocumentNumberingBulkRequest,
@@ -54,6 +56,19 @@ export const financialDocumentNumberingService = createApi({
       }),
 
       providesTags: ['FinancialDocumentNumbering']
+    }),
+
+    allocateFinancialDocumentNumber: builder.mutation<
+      AllocatedFinancialDocumentNumber,
+      { facilityId: number; body: AllocateFinancialDocumentNumberRequest }
+    >({
+      query: ({ facilityId, body }) => ({
+        url: `/api/setup/financial-document-numbering/by-facility/${encodeURIComponent(String(facilityId))}/allocate`,
+        method: 'POST',
+        body
+      }),
+
+      invalidatesTags: ['FinancialDocumentNumbering']
     }),
 
     saveFinancialDocumentNumberingBulk: builder.mutation<
@@ -135,6 +150,7 @@ export const {
   useLazyGetFinancialDocumentNumberingByFacilityQuery,
   useGetFinancialDocumentNumberingByFacilityAndTypeQuery,
   useGetFinancialDocumentSequenceStatusQuery,
+  useAllocateFinancialDocumentNumberMutation,
   useSaveFinancialDocumentNumberingBulkMutation,
   useAddFinancialDocumentNumberingMutation,
   useUpdateFinancialDocumentNumberingMutation,

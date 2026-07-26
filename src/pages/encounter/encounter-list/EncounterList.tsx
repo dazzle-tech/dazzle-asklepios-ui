@@ -92,6 +92,11 @@ const derivePatientFilters = (appliedSearch: any) => {
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Encounter not found.',
   'patient.notfound': 'Patient not found.',
+  'startedBy.practitioner.notFound':
+    'Your user account is not linked to a practitioner profile. Ask an administrator to link your account before starting encounters.',
+  'startedBy.practitioner.validationFailed':
+    'Unable to validate practitioner profile for the current user.',
+  'startedBy.notDoctor': 'Only physician accounts can start clinical encounters.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
   'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',

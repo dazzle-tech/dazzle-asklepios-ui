@@ -5279,6 +5279,21 @@ export type FinancialDocumentSequenceStatus = {
   sampleDocumentNumber?: string;
 };
 
+export type AllocateFinancialDocumentNumberRequest = {
+  documentType: string;
+  requestId: string;
+};
+
+export type AllocatedFinancialDocumentNumber = {
+  facilityId: number;
+  documentType: string;
+  documentNumber: string;
+  sequenceNumber: number;
+  periodKey?: string;
+  requestId: string;
+  configurationId?: number;
+};
+
 export type TaxType =
   | 'PERCENTAGE'
   | 'FIXED_AMOUNT';
