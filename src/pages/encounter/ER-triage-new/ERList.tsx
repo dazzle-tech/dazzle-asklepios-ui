@@ -225,7 +225,7 @@ const ERList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -234,7 +234,8 @@ const ERList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -1098,9 +1099,9 @@ const ERList = () => {
           column
           width={260}
           fieldType="checkPicker"
-          fieldLabel="Encounter Status"
+          fieldLabel="Treatment Status"
           fieldName="statusIn"
-          selectData={EncounterStatusEnum}
+          selectData={TreatmentStatusEnum}
           selectDataLabel="label"
           selectDataValue="value"
           record={{ statusIn }}
