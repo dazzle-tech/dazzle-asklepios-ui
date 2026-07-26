@@ -1,58 +1,46 @@
-import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
-import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faBolt, faPause } from '@fortawesome/free-solid-svg-icons';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import 'react-tabs/style/react-tabs.css';
-import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
-import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
-import {
-  useCancelEncounterMutation,
-  useFilterEncountersQuery,
-  useUpdateEncounterMutation
-} from '@/services/encounters/patientEncounterService';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { faBarcode } from '@fortawesome/free-solid-svg-icons';
-import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
-import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
-import { useEnumOptions } from '@/services/enumsApi';
-import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
-import { useNavigate } from 'react-router-dom';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { notify } from '@/utils/uiReducerActions';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import PatientSearch from '@/components/PatientSearch';
-import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
+import Translate from '@/components/Translate';
+import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
-import '../styles.less';
-import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import {
   useCreateOrGetEmergencyTriageMutation,
   useGetLatestEmergencyTriageByEncounterQuery
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
-  useGetBulkPatientBasicInfoMutation,
-  useLazyGetPatientWristbandPdfQuery,
-  useLazyGetPatientWristbandQuery
+  useCancelEncounterMutation,
+  useFilterEncountersQuery,
+  useUpdateEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+import { useEnumOptions } from '@/services/enumsApi';
+import {
+  useGetBulkPatientBasicInfoMutation
 } from '@/services/patient/patientService';
-import MyModal from '@/components/MyModal/MyModal';
-import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-import { printPatientWristband } from '@/utils/printPatientWristband';
+import { newApEncounter } from '@/types/model-types-constructor';
+import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import 'react-tabs/style/react-tabs.css';
+import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
-import { useAppSelector } from '@/hooks';
+import '../styles.less';
 import AddPaymentModal from './component/AddPaymentModal';
 import PatientWritBandPrintLabelButton from './PatientWritBandPrintLabelButton';
 
@@ -566,7 +554,7 @@ const UrgentCareTriage = () => {
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams || !hasSearched });
 
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
-  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus', {
+  const treatmentStatusEnumOptions = useEnumOptions('TreatmentStatus', {
     exclude: [
       'NEW',
       'ONGOING',
@@ -577,19 +565,20 @@ const UrgentCareTriage = () => {
       'CONFIRM_RETURN',
       'TEMP_DC',
       'SENT_TO_ER',
-      'WAITING_LIST'
+      'WAITING_LIST',
+      'ASSIGNED_TO_BED'
     ]
   });
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
 
   const encounterStatusLabelMap = useMemo(() => {
     const m = new Map<string, string>();
-    encounterStatusEnumOptions.forEach((opt: any) => {
+    treatmentStatusEnumOptions.forEach((opt: any) => {
       if (opt?.value == null) return;
       m.set(String(opt.value), String(opt.label ?? opt.value));
     });
     return m;
-  }, [encounterStatusEnumOptions]);
+  }, [treatmentStatusEnumOptions]);
 
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo }] =
     useGetBulkPatientBasicInfoMutation();
@@ -654,7 +643,8 @@ const UrgentCareTriage = () => {
         patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
         visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
         encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
-        encounterStatus: encounterRow?.status ?? statusCode,
+        status:encounterRow?.status ?? statusCode,
+        encounterStatus: encounterRow?.encounterStatus ,
         plannedStartDate: encounterRow?.encounterDate ?? null,
         createdAt:
           encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
@@ -748,7 +738,6 @@ const UrgentCareTriage = () => {
   }, [normalizedRows, priorityOrderMap]);
 
   const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
-
   const isSelected = (rowData: any) => {
     if (
       rowData &&
@@ -1246,8 +1235,8 @@ const UrgentCareTriage = () => {
             color={color}
             contant={
               encounterStatusLabelMap.get(
-                String(rowData?.status ?? rowData?.encounterStatus ?? '')
-              ) ?? String(rowData?.status ?? rowData?.encounterStatus ?? '')
+                String(rowData?.status )
+              ) ?? String(rowData?.status)
             }
           />
         );
@@ -1520,9 +1509,9 @@ const UrgentCareTriage = () => {
             <MyInput
               width="10vw"
               fieldType="checkPicker"
-              fieldLabel="Encounter Status"
+              fieldLabel="Treatment Status"
               fieldName="codes"
-              selectData={encounterStatusEnumOptions}
+              selectData={treatmentStatusEnumOptions}
               selectDataLabel="label"
               selectDataValue="value"
               record={encounterStatus}
