@@ -276,12 +276,7 @@ const BedAssignmentModal: React.FC<Props> = ({
         throw err;
       }
 
-      try {
-        await moveWaitingListToNew({ id: encounterId }).unwrap();
-      } catch (err) {
-        console.error('move encounter error', err);
-        throw err;
-      }
+     
 
       dispatch(
         notify({
