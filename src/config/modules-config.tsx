@@ -80,9 +80,9 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
   { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit', isDefaultMedicalSheet: true },
-  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true },
-  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true },
-  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true  },
   { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result', isDefaultMedicalSheet: true },
   // { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
   { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
@@ -101,8 +101,8 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
   // { name: 'Care Plan & Goals', code: 'CARE_PLAN_AND_GOALS', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/care-plan-and-goals' },
   // { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
-  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record' },
-  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
+  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record', isDefaultMedicalSheet: true  },
+  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record', isDefaultMedicalSheet: true  },
   // { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
   // { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
@@ -133,7 +133,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   // { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
-  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
+  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
   // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   // { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
@@ -147,7 +147,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   // { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products', isDefaultNurseMedicalSheet: true },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use', isDefaultMedicalSheet: true  },
   {
     name: 'Nurse Assessment',
     code: 'NURSE_ASSESSMENT',
@@ -159,6 +159,7 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment'
+    , isDefaultMedicalSheet: true 
   },
 
   { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
