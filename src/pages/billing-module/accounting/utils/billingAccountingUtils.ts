@@ -339,11 +339,16 @@ export const computeEncounterCoveredAmount = (
 
 /**
  * Remaining amount to collect or post to debit for this encounter only.
- * Invoice / patient-account balance is handled in the Invoices step.
+ * When an invoice exists, includes invoice outstanding (e.g. invoice-level tax/discount delta).
  */
 export const computeEncounterRemainingToPay = (
   summary: EncounterBillingSummary | null | undefined
 ): number => {
+  const invoiceOutstanding = Number(summary?.invoiceOutstandingAmount ?? 0);
+  if (invoiceOutstanding > 0) {
+    return invoiceOutstanding;
+  }
+
   const outstanding = Number(summary?.patientOutstandingAmount ?? 0);
   if (outstanding > 0) {
     return computeAmountToCollect(summary);
@@ -511,6 +516,106 @@ export const buildWalletDepositReceipt = ({
       isPreview: false
     },
     notes: receiptNotes || undefined
+  };
+};
+
+export const buildBillingPaymentReceipt = ({
+  paymentResult,
+  patient,
+  encounter,
+  facilityName = 'Healthcare Facility',
+  billingSummary,
+  paymentMethodLabel = 'Payment',
+  paymentDate
+}: {
+  paymentResult: BillingPaymentResult;
+  patient?: any;
+  encounter?: PatientEncounter | null;
+  facilityName?: string;
+  billingSummary?: EncounterBillingSummary | null;
+  paymentMethodLabel?: string;
+  paymentDate?: string;
+}): PaymentReceiptData => {
+  const currency = String(paymentResult.currency ?? 'SAR');
+  const amount = Number(paymentResult.paymentAmount ?? 0);
+  const summaryItems = billingSummary?.items ?? [];
+
+  const reservationItems = (paymentResult.reservations ?? [])
+    .map(reservation => {
+      const summaryItem = summaryItems.find(
+        item =>
+          Number(item.patientServiceProductId) ===
+          Number(reservation.patientServiceProductId)
+      );
+      const lineAmount =
+        Number(reservation.patientResponsibilityAmount ?? 0) ||
+        Number(reservation.reservedAmount ?? 0);
+
+      const serviceName =
+        reservation.itemDescription?.trim() ||
+        summaryItem?.itemName?.trim() ||
+        (summaryItem
+          ? resolveBillingItemName(summaryItem, [])
+          : `Service #${reservation.patientServiceProductId ?? '-'}`);
+
+      const serviceType =
+        formatBillingItemType(
+          reservation.billingItemType ?? summaryItem?.billingItemType
+        ) || 'Service';
+
+      return {
+        name: serviceName,
+        type: serviceType,
+        quantity: 1,
+        unitPrice: lineAmount,
+        netAmount: lineAmount,
+        patientShare: lineAmount
+      };
+    })
+    .filter(item => item.netAmount > 0);
+
+  const items =
+    reservationItems.length > 0
+      ? reservationItems
+      : [
+          {
+            name: 'Payment collected',
+            type: 'PAYMENT',
+            quantity: 1,
+            unitPrice: amount,
+            netAmount: amount,
+            patientShare: amount
+          }
+        ];
+
+  const netAmount = items.reduce((sum, item) => sum + Number(item.netAmount ?? 0), 0);
+
+  return {
+    receiptNumber:
+      paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
+    paymentDate: paymentDate ?? new Date().toLocaleString(),
+    patientName: resolvePatientDisplayName(patient),
+    patientMrn: resolvePatientMrn(patient),
+    encounterNumber: resolveEncounterNumber(encounter) ?? 'Patient payment',
+    facilityName,
+    coverageType: 'Self Pay',
+    currency,
+    paymentAmount: amount,
+    paymentMethod: paymentMethodLabel,
+    chargeNumber: billingSummary?.chargeNumber ?? '-',
+    items,
+    totals: {
+      grossAmount: netAmount,
+      discountAmount: 0,
+      exemptionAmount: 0,
+      taxAmount: 0,
+      netAmount,
+      patientResponsibilityAmount: netAmount,
+      insuranceResponsibilityAmount: 0,
+      patientOutstandingAmount: 0,
+      isPreview: false
+    }
   };
 };
 
@@ -914,7 +1019,19 @@ export const mergeBillingChargeRows = (
     .filter(row => !billedPspIds.has(row.id))
     .map(row => mapPspItemToRow(row, serviceCatalog, medicationNames));
 
-  return [...summaryRows, ...unbilledPspRows];
+  const merged = [...summaryRows, ...unbilledPspRows];
+  const seenPspIds = new Set<number>();
+  return merged.filter(row => {
+    const pspId = row.patientServiceProductId;
+    if (pspId == null) {
+      return true;
+    }
+    if (seenPspIds.has(pspId)) {
+      return false;
+    }
+    seenPspIds.add(pspId);
+    return true;
+  });
 };
 
 export const findRejectedPreAuthItems = (

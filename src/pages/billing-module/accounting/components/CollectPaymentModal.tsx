@@ -65,30 +65,45 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   const paymentMethods =
     enumPaymentMethods.length > 0 ? enumPaymentMethods : FALLBACK_PAYMENT_METHODS;
 
+  const dedupedSelectedRows = useMemo(() => {
+    const seenPspIds = new Set<number>();
+    return selectedRows.filter(row => {
+      const pspId = row.patientServiceProductId;
+      if (pspId == null) {
+        return true;
+      }
+      if (seenPspIds.has(pspId)) {
+        return false;
+      }
+      seenPspIds.add(pspId);
+      return true;
+    });
+  }, [selectedRows]);
+
   const suggestedAmount = useMemo(
     () =>
-      selectedRows.reduce(
+      dedupedSelectedRows.reduce(
         (sum, row) => sum + computeRowRemainingAmount(row),
         0
       ),
-    [selectedRows]
+    [dedupedSelectedRows]
   );
 
   const totalReservedOnSelection = useMemo(
     () =>
-      selectedRows.reduce(
+      dedupedSelectedRows.reduce(
         (sum, row) => sum + Number(row.reservedAmount ?? 0),
         0
       ),
-    [selectedRows]
+    [dedupedSelectedRows]
   );
 
   const pspIds = useMemo(
     () =>
-      selectedRows
+      dedupedSelectedRows
         .map(row => row.patientServiceProductId)
         .filter((id): id is number => id != null),
-    [selectedRows]
+    [dedupedSelectedRows]
   );
 
   const [form, setForm] = useState({
@@ -197,8 +212,11 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       <Modal.Body>
         <div className="billing-collect-payment-modal">
           <Text muted size="sm" style={{ marginBottom: 12 }}>
-            {selectedRows.length} line(s) selected · suggested{' '}
+            {dedupedSelectedRows.length} line(s) selected · suggested{' '}
             {formatMoney(suggestedAmount, currency)}
+            {dedupedSelectedRows.length !== selectedRows.length
+              ? ' · duplicate visit lines ignored'
+              : ''}
             {totalReservedOnSelection > 0
               ? ` (${formatMoney(totalReservedOnSelection, currency)} already reserved from advance)`
               : ''}

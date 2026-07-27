@@ -115,6 +115,16 @@ export const ADJUSTMENT_ERROR_MAP: Record<string, string> = {
   'adjustment.service.procedureRequired': 'Select a procedure.',
   'adjustment.service.unsupportedCategory': 'This service category is not supported here.',
   'adjustment.chargeLine.notCreated': 'Billing engine did not create a charge line for the new service.',
+  'medication.duplicate':
+    'This medication is already on the visit. Edit the existing line to change quantity instead of adding it again.',
+  'diagnosticTest.duplicate': 'This diagnostic test is already on the visit.',
+  'service.duplicate': 'This service is already on the visit.',
+  'procedure.duplicate': 'This procedure is already on the visit.',
+  'chargeLine.duplicate': 'A charge line already exists for this service.',
+  'payment.wallet.noReservation':
+    'Wallet payment could not be linked to any service line. Select billable services and try again.',
+  'payment.wallet.exceedsAmount':
+    'The reserved service total exceeds the wallet payment amount.',
   'encounter.facility.required': 'Encounter facility is required to bill a new service.',
   'numbering.configuration.inactive':
     'Financial document numbering is inactive. Activate credit/debit note numbering in setup first.',

@@ -208,6 +208,12 @@ const AdjustmentDocument: React.FC<AdjustmentDocumentProps> = ({
           <span>Gross amount</span>
           <span>{formatMoney(adjustment.totals.grossAmount, adjustment.currency)}</span>
         </div>
+        {adjustment.totals.discountAmount > 0 ? (
+          <div className="invoice-print__total-row">
+            <span>Discount</span>
+            <span>-{formatMoney(adjustment.totals.discountAmount, adjustment.currency)}</span>
+          </div>
+        ) : null}
         <div className="invoice-print__total-row">
           <span>Tax (VAT)</span>
           <span>{formatMoney(adjustment.totals.taxAmount, adjustment.currency)}</span>

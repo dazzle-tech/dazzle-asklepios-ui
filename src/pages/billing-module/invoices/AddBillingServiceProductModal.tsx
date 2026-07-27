@@ -262,7 +262,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
               [itemSelectConfig.fieldName]:
                 selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
               unitPrice: selectedItem?.price ?? record.unitPrice ?? 0,
-              currency: selectedItem?.currency ?? record.currency ?? currency
+              currency
             });
           }}
         />

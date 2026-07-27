@@ -6,7 +6,11 @@ import QRCode from 'qrcode';
 
 import MyButton from '@/components/MyButton/MyButton';
 import type { InvoicePrintData } from './invoicePrintUtils';
-import { invoiceTypeLabel } from './invoicePrintUtils';
+import {
+  formatDiscountRuleLabel,
+  formatTaxRuleLabel,
+  invoiceTypeLabel
+} from './invoicePrintUtils';
 import { INVOICE_PRINT_CSS, INVOICE_PRINT_PAGE_CSS } from './invoicePrintStyles';
 import {
   getInvoicePrintVersion,
@@ -154,15 +158,17 @@ const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
               <th>Service Type</th>
               <th>Qty</th>
               <th>Unit Price</th>
+              <th>Discount</th>
               {isInsurance ? (
                 <>
                   <th>Patient Share</th>
                   <th>Insurance Share</th>
                 </>
               ) : (
-                <th>Amount</th>
+                <th>Before VAT</th>
               )}
               <th>VAT</th>
+              <th>Total</th>
             </tr>
           </thead>
           <tbody>
@@ -173,33 +179,144 @@ const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
                   <td>{item.serviceType}</td>
                   <td>{item.quantity}</td>
                   <td>{formatMoney(item.unitPrice, invoice.currency)}</td>
+                  <td>{formatMoney(item.discountAmount ?? 0, invoice.currency)}</td>
                   {isInsurance ? (
                     <>
                       <td>{formatMoney(item.patientShare ?? 0, invoice.currency)}</td>
                       <td>{formatMoney(item.insuranceShare ?? 0, invoice.currency)}</td>
                     </>
                   ) : (
-                    <td>{formatMoney(item.amount, invoice.currency)}</td>
+                    <td>{formatMoney(item.amountBeforeTax ?? item.amount, invoice.currency)}</td>
                   )}
                   <td>{formatMoney(item.taxAmount ?? 0, invoice.currency)}</td>
+                  <td>{formatMoney(item.amount, invoice.currency)}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={isInsurance ? 7 : 6}>No line items available.</td>
+                <td colSpan={isInsurance ? 9 : 8}>No line items available.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
+      {invoice.items.some(
+        item =>
+          (item.appliedDiscounts?.length ?? 0) > 0 || (item.appliedTaxes?.length ?? 0) > 0
+      ) ? (
+        <div className="invoice-print__section">
+          <div className="invoice-print__section-title">Line Pricing Snapshot</div>
+          <table className="invoice-print__table invoice-print__table--compact">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Kind</th>
+                <th>Rule</th>
+                <th>Type</th>
+                <th>Scope</th>
+                <th>Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.flatMap((item, itemIndex) => [
+                ...(item.appliedDiscounts ?? []).map((rule, index) => (
+                  <tr key={`${itemIndex}-discount-${index}`}>
+                    <td>{item.serviceName}</td>
+                    <td>Discount</td>
+                    <td>{rule.code ?? rule.name ?? rule.source ?? '-'}</td>
+                    <td>
+                      {rule.discountType === 'PERCENTAGE'
+                        ? `${rule.rate ?? 0}%`
+                        : rule.discountType === 'FIXED_AMOUNT'
+                          ? `Fixed ${rule.fixedAmount ?? 0}`
+                          : rule.discountType ?? '-'}
+                    </td>
+                    <td>{rule.applicableOn ?? rule.source ?? '-'}</td>
+                    <td>-{formatMoney(rule.appliedAmount ?? 0, invoice.currency)}</td>
+                  </tr>
+                )),
+                ...(item.appliedTaxes ?? []).map((rule, index) => (
+                  <tr key={`${itemIndex}-tax-${index}`}>
+                    <td>{item.serviceName}</td>
+                    <td>Tax</td>
+                    <td>{rule.code ?? rule.name ?? rule.source ?? '-'}</td>
+                    <td>
+                      {rule.taxType === 'PERCENTAGE'
+                        ? `${rule.rate ?? 0}%`
+                        : rule.taxType === 'FIXED_AMOUNT'
+                          ? `Fixed ${rule.fixedAmount ?? 0}`
+                          : rule.taxType ?? '-'}
+                    </td>
+                    <td>{rule.applicableOn ?? rule.source ?? '-'}</td>
+                    <td>{formatMoney(rule.appliedAmount ?? 0, invoice.currency)}</td>
+                  </tr>
+                ))
+              ])}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      {invoice.pricingSummary &&
+      (invoice.pricingSummary.discountRules.length > 0 ||
+        invoice.pricingSummary.taxRules.length > 0) ? (
+        <div className="invoice-print__section">
+          <div className="invoice-print__section-title">Pricing Rules Applied</div>
+          <table className="invoice-print__table invoice-print__table--compact">
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Type</th>
+                <th>Scope</th>
+                <th>Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.pricingSummary.discountRules.map((rule, index) => (
+                <tr key={`discount-${rule.ruleId ?? index}`}>
+                  <td>{rule.code ?? rule.name ?? 'Discount'}</td>
+                  <td>{formatDiscountRuleLabel(rule)}</td>
+                  <td>{rule.applicableOn ?? '-'}</td>
+                  <td>-{formatMoney(rule.appliedAmount ?? 0, invoice.currency)}</td>
+                </tr>
+              ))}
+              {invoice.pricingSummary.taxRules.map((rule, index) => (
+                <tr key={`tax-${rule.ruleId ?? index}`}>
+                  <td>{rule.code ?? rule.name ?? 'Tax'}</td>
+                  <td>{formatTaxRuleLabel(rule)}</td>
+                  <td>{rule.applicableOn ?? '-'}</td>
+                  <td>{formatMoney(rule.appliedAmount ?? 0, invoice.currency)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
       <div className="invoice-print__totals">
         <div className="invoice-print__total-row">
           <span>Gross amount</span>
           <span>{formatMoney(invoice.totals.grossAmount, invoice.currency)}</span>
         </div>
+        {invoice.totals.discountAmount > 0 ? (
+          <div className="invoice-print__total-row">
+            <span>
+              Discount
+              {invoice.pricingSummary?.discountRules?.[0]
+                ? ` (${formatDiscountRuleLabel(invoice.pricingSummary.discountRules[0])})`
+                : ''}
+            </span>
+            <span>-{formatMoney(invoice.totals.discountAmount, invoice.currency)}</span>
+          </div>
+        ) : null}
         <div className="invoice-print__total-row">
-          <span>Tax (VAT)</span>
+          <span>
+            Tax (VAT)
+            {invoice.pricingSummary?.taxRules?.[0]
+              ? ` (${formatTaxRuleLabel(invoice.pricingSummary.taxRules[0])})`
+              : ''}
+          </span>
           <span>{formatMoney(invoice.totals.taxAmount, invoice.currency)}</span>
         </div>
         <div className="invoice-print__total-row">

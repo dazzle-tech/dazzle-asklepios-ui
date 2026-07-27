@@ -11,6 +11,9 @@ export type FinancialDocumentAdjustmentItem = {
   itemDescription?: string | null;
   quantity?: number;
   unitPrice?: number;
+  grossAmount?: number;
+  discountAmount?: number;
+  taxAmount?: number;
   netAmount?: number;
   currency?: string;
 };
@@ -29,6 +32,66 @@ export type FinancialDocumentAdjustment = {
   items?: FinancialDocumentAdjustmentItem[];
 };
 
+export type InvoicePricingSummary = {
+  invoiceId: number;
+  documentNumber: string;
+  currency?: string;
+  grossAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  discountRules: AppliedDiscountRule[];
+  taxRules: AppliedTaxRule[];
+};
+
+export type AppliedDiscountRule = {
+  ruleId?: number | null;
+  code?: string | null;
+  name?: string | null;
+  applicableOn?: string | null;
+  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT' | string | null;
+  rate?: number | null;
+  fixedAmount?: number | null;
+  appliedAmount?: number | null;
+};
+
+export type AppliedTaxRule = {
+  ruleId?: number | null;
+  code?: string | null;
+  name?: string | null;
+  applicableOn?: string | null;
+  taxType?: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'EXEMPT' | string | null;
+  calculationType?: 'EXCLUSIVE' | 'INCLUSIVE' | string | null;
+  rate?: number | null;
+  fixedAmount?: number | null;
+  appliedAmount?: number | null;
+};
+
+export type InvoiceLineAppliedDiscount = {
+  source?: string | null;
+  ruleId?: number | null;
+  code?: string | null;
+  name?: string | null;
+  applicableOn?: string | null;
+  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT' | string | null;
+  rate?: number | null;
+  fixedAmount?: number | null;
+  appliedAmount?: number | null;
+};
+
+export type InvoiceLineAppliedTax = {
+  source?: string | null;
+  ruleId?: number | null;
+  code?: string | null;
+  name?: string | null;
+  applicableOn?: string | null;
+  taxType?: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'EXEMPT' | string | null;
+  calculationType?: 'EXCLUSIVE' | 'INCLUSIVE' | string | null;
+  rate?: number | null;
+  fixedAmount?: number | null;
+  appliedAmount?: number | null;
+};
+
 export type InvoiceLineItem = {
   id: number;
   patientServiceProductId: number;
@@ -45,6 +108,31 @@ export type InvoiceLineItem = {
   remainingAmount: number;
   status?: string;
   currency?: string;
+  appliedDiscounts?: InvoiceLineAppliedDiscount[];
+  appliedTaxes?: InvoiceLineAppliedTax[];
+  lineSource?: 'INVOICE' | 'DEBIT_NOTE' | string | null;
+};
+
+export type CollectInvoiceBalanceRequest = {
+  amount?: number | null;
+  paymentMethodCode: string;
+  paymentMethodId: number;
+  requestId: string;
+  notes?: string | null;
+};
+
+export type CollectInvoiceBalanceResult = {
+  invoiceId: number;
+  documentNumber: string;
+  currency?: string;
+  collectedAmount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  status: string;
+  paymentId?: number | null;
+  paymentNumber?: string | null;
+  paymentTransactionNumber?: string | null;
+  walletAvailableBalance?: number | null;
 };
 
 export type AddableChargeLine = {
@@ -127,6 +215,16 @@ export const financialDocumentAdjustmentService = createApi({
       ]
     }),
 
+    getInvoicePricingSummary: builder.query<InvoicePricingSummary, number>({
+      query: invoiceId => ({
+        url: `/api/patient/financial-documents/${invoiceId}/pricing-summary`,
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, invoiceId) => [
+        { type: 'InvoiceLineItems', id: invoiceId }
+      ]
+    }),
+
     getAddableChargeLines: builder.query<AddableChargeLine[], number>({
       query: invoiceId => ({
         url: `/api/patient/financial-documents/${invoiceId}/addable-charge-lines`,
@@ -187,6 +285,40 @@ export const financialDocumentAdjustmentService = createApi({
         'PatientLedgerSummary',
         'PatientBalance'
       ]
+    }),
+
+    collectInvoiceBalance: builder.mutation<
+      CollectInvoiceBalanceResult,
+      { invoiceId: number; body: CollectInvoiceBalanceRequest }
+    >({
+      query: ({ invoiceId, body }) => ({
+        url: `/api/patient/financial-documents/${invoiceId}/collect-balance`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: (_result, _error, { invoiceId }) => [
+        { type: 'InvoiceAdjustments', id: invoiceId },
+        { type: 'InvoiceLineItems', id: invoiceId },
+        'PatientFinancialInvoices',
+        'EncounterBillingSummary',
+        'PatientBalance'
+      ]
+    }),
+
+    syncInvoicePayments: builder.mutation<
+      { invoiceId: number; paidAmount: number; outstandingAmount: number },
+      number
+    >({
+      query: invoiceId => ({
+        url: `/api/patient/financial-documents/${invoiceId}/sync-payments`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_result, _error, invoiceId) => [
+        { type: 'InvoiceAdjustments', id: invoiceId },
+        { type: 'InvoiceLineItems', id: invoiceId },
+        'PatientFinancialInvoices',
+        'EncounterBillingSummary'
+      ]
     })
   })
 });
@@ -194,8 +326,13 @@ export const financialDocumentAdjustmentService = createApi({
 export const {
   useGetInvoiceLineItemsQuery,
   useLazyGetInvoiceLineItemsQuery,
+  useGetInvoicePricingSummaryQuery,
+  useLazyGetInvoicePricingSummaryQuery,
   useGetAddableChargeLinesQuery,
   useGetInvoiceAdjustmentsQuery,
+  useLazyGetInvoiceAdjustmentsQuery,
   useCreateCreditNoteMutation,
-  useCreateDebitNoteMutation
+  useCreateDebitNoteMutation,
+  useCollectInvoiceBalanceMutation,
+  useSyncInvoicePaymentsMutation
 } = financialDocumentAdjustmentService;

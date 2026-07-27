@@ -49,6 +49,7 @@ export type AdjustmentPrintData = {
   items: InvoicePrintLineItem[];
   totals: {
     grossAmount: number;
+    discountAmount: number;
     taxAmount: number;
     netAmount: number;
     patientShare: number;
@@ -120,6 +121,44 @@ const findBillingItem = (
   return undefined;
 };
 
+const inferAdjustmentItemType = (
+  item: FinancialDocumentAdjustmentItem,
+  parentLine?: InvoiceLineItem
+): string => {
+  const source = `${item.itemCode ?? ''} ${item.itemDescription ?? ''} ${
+    parentLine?.itemCode ?? ''
+  } ${parentLine?.itemDescription ?? ''}`.toUpperCase();
+  const name = `${item.itemDescription ?? ''} ${parentLine?.itemDescription ?? ''}`.toLowerCase();
+
+  if (
+    source.includes('MEDICATION') ||
+    source.includes('MEDICINE') ||
+    source.includes('DRUG') ||
+    name.includes('medication') ||
+    name.includes('medicine')
+  ) {
+    return 'Medication';
+  }
+  if (
+    source.includes('TEST') ||
+    source.includes('LAB') ||
+    source.includes('DIAGNOSTIC') ||
+    source.includes('CBC') ||
+    name.includes('cbc') ||
+    name.includes('lab')
+  ) {
+    return 'Diagnostic Test';
+  }
+  if (source.includes('PROCEDURE')) {
+    return 'Procedure';
+  }
+  if (source.includes('SERVICE') || source.includes('CONSULT')) {
+    return 'Service';
+  }
+
+  return '-';
+};
+
 const resolveAdjustmentLineDetails = (
   item: FinancialDocumentAdjustmentItem,
   invoiceLineItems: InvoiceLineItem[],
@@ -148,10 +187,18 @@ const resolveAdjustmentLineDetails = (
   );
 
   if (chargeRow?.itemName?.trim()) {
+    const serviceType = formatBillingItemType(chargeRow.billingItemType);
     return {
       serviceName: chargeRow.itemName.trim(),
-      serviceType: formatBillingItemType(chargeRow.billingItemType),
-      taxAmount: formatMoneyValue(billingItem?.taxAmount ?? parentLine?.taxAmount)
+      serviceType:
+        serviceType !== '-'
+          ? serviceType
+          : inferAdjustmentItemType(item, parentLine),
+      grossAmount: formatMoneyValue(item.grossAmount),
+      discountAmount: formatMoneyValue(item.discountAmount),
+      taxAmount: formatMoneyValue(
+        item.taxAmount ?? parentLine?.taxAmount ?? billingItem?.taxAmount
+      )
     };
   }
 
@@ -159,10 +206,13 @@ const resolveAdjustmentLineDetails = (
     parentLine?.itemDescription?.trim() &&
     !isTechnicalBillingLabel(parentLine.itemDescription, billingItem?.billingItemType)
   ) {
+    const serviceType = formatBillingItemType(billingItem?.billingItemType);
     return {
       serviceName: parentLine.itemDescription.trim(),
-      serviceType: formatBillingItemType(billingItem?.billingItemType),
-      taxAmount: formatMoneyValue(parentLine.taxAmount)
+      serviceType: serviceType !== '-' ? serviceType : inferAdjustmentItemType(item, parentLine),
+      grossAmount: formatMoneyValue(item.grossAmount ?? parentLine.grossAmount),
+      discountAmount: formatMoneyValue(item.discountAmount ?? parentLine.discountAmount),
+      taxAmount: formatMoneyValue(item.taxAmount ?? parentLine.taxAmount)
     };
   }
 
@@ -170,17 +220,26 @@ const resolveAdjustmentLineDetails = (
     item.itemDescription?.trim() &&
     !isTechnicalBillingLabel(item.itemDescription, billingItem?.billingItemType)
   ) {
+    const serviceType = formatBillingItemType(billingItem?.billingItemType);
     return {
       serviceName: item.itemDescription.trim(),
-      serviceType: formatBillingItemType(billingItem?.billingItemType),
-      taxAmount: formatMoneyValue(parentLine?.taxAmount)
+      serviceType: serviceType !== '-' ? serviceType : inferAdjustmentItemType(item, parentLine),
+      grossAmount: formatMoneyValue(item.grossAmount),
+      discountAmount: formatMoneyValue(item.discountAmount),
+      taxAmount: formatMoneyValue(
+        item.taxAmount ?? parentLine?.taxAmount ?? billingItem?.taxAmount
+      )
     };
   }
 
   return {
     serviceName: '-',
-    serviceType: formatBillingItemType(billingItem?.billingItemType),
-    taxAmount: formatMoneyValue(parentLine?.taxAmount)
+    serviceType: inferAdjustmentItemType(item, parentLine),
+    grossAmount: formatMoneyValue(item.grossAmount),
+    discountAmount: formatMoneyValue(item.discountAmount),
+    taxAmount: formatMoneyValue(
+      item.taxAmount ?? parentLine?.taxAmount ?? billingItem?.taxAmount
+    )
   };
 };
 
@@ -190,13 +249,11 @@ const mapAdjustmentItemToPrintItem = (
   chargeContext: InvoicePrintChargeContext,
   invoiceType: AdjustmentPrintData['invoiceType']
 ): InvoicePrintLineItem => {
-  const { serviceName, serviceType, taxAmount } = resolveAdjustmentLineDetails(
-    item,
-    invoiceLineItems,
-    chargeContext
-  );
+  const { serviceName, serviceType, grossAmount, discountAmount, taxAmount } =
+    resolveAdjustmentLineDetails(item, invoiceLineItems, chargeContext);
 
   const amount = formatMoneyValue(item.netAmount);
+  const amountBeforeTax = Math.max(0, amount - taxAmount);
 
   return {
     serviceCode: '-',
@@ -204,6 +261,9 @@ const mapAdjustmentItemToPrintItem = (
     serviceType,
     quantity: Number(item.quantity ?? 1),
     unitPrice: formatMoneyValue(item.unitPrice),
+    grossAmount,
+    discountAmount,
+    amountBeforeTax,
     amount,
     patientShare: invoiceType === 'PATIENT' ? amount : 0,
     insuranceShare: invoiceType === 'INSURANCE_CLAIM' ? amount : 0,
@@ -213,7 +273,15 @@ const mapAdjustmentItemToPrintItem = (
 
 const buildTotals = (items: InvoicePrintLineItem[], fallbackNetAmount: number) => {
   const grossAmount = items.reduce(
-    (sum, item) => sum + formatMoneyValue(item.quantity) * formatMoneyValue(item.unitPrice),
+    (sum, item) =>
+      sum +
+      (formatMoneyValue(item.grossAmount) > 0
+        ? formatMoneyValue(item.grossAmount)
+        : formatMoneyValue(item.quantity) * formatMoneyValue(item.unitPrice)),
+    0
+  );
+  const discountAmount = items.reduce(
+    (sum, item) => sum + formatMoneyValue(item.discountAmount),
     0
   );
   const taxAmount = items.reduce((sum, item) => sum + formatMoneyValue(item.taxAmount), 0);
@@ -226,6 +294,7 @@ const buildTotals = (items: InvoicePrintLineItem[], fallbackNetAmount: number) =
 
   return {
     grossAmount,
+    discountAmount,
     taxAmount,
     netAmount: netAmount || fallbackNetAmount,
     patientShare,

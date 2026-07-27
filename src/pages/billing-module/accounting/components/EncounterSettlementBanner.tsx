@@ -24,7 +24,10 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   const walletSettled = Number(summary.patientWalletSettledAmount ?? 0);
   const debitSettled = Number(summary.patientDebitSettledAmount ?? 0);
   const chargeClosed = summary.chargeStatus === 'CLOSED';
+  const invoiceOutstanding = Number(summary.invoiceOutstandingAmount ?? 0);
+  const invoiceNumber = summary.invoiceNumber;
   const isSettled = remainingToPay <= 0 && patientShare > 0;
+  const invoiceBalanceDue = invoiceOutstanding > 0 && chargeClosed;
 
   if (!summary.chargeId || patientShare <= 0) {
     return null;
@@ -78,6 +81,15 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
             <strong>{formatMoney(debitSettled, resolvedCurrency)}</strong> was posted to the patient
             debit account during checkout. This encounter is financially closed here; collect the
             debit balance from the patient in the <strong>Invoices</strong> tab.
+          </>
+        ) : invoiceBalanceDue ? (
+          <>
+            Charge checkout is complete. Invoice{' '}
+            {invoiceNumber ? <strong>{invoiceNumber}</strong> : null} still has{' '}
+            <strong>{formatMoney(invoiceOutstanding, resolvedCurrency)}</strong> outstanding
+            (invoice-level tax/discount). Open the <strong>Invoices</strong> tab →{' '}
+            <strong>Invoice Accounts</strong> → select the invoice →{' '}
+            <strong>Pay outstanding</strong>.
           </>
         ) : isSettled ? (
           <>

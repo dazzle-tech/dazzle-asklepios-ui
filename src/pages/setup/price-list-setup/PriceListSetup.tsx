@@ -7,6 +7,7 @@ import React, {
 import { Panel } from 'rsuite';
 
 import {
+  MdCheckCircle,
   MdDelete,
   MdList,
   MdModeEdit
@@ -37,6 +38,7 @@ import {
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 import {
+  useActivatePriceListSetupMutation,
   useDeletePriceListSetupMutation,
   useGetPriceListSetupsQuery
 } from '@/services/setup/priceListSetup/priceListSetupService';
@@ -124,6 +126,10 @@ const PriceListSetup: React.FC = () => {
     deletePriceListSetup
   ] = useDeletePriceListSetupMutation();
 
+  const [
+    activatePriceListSetup
+  ] = useActivatePriceListSetupMutation();
+
   const tableData = useMemo(
     () => priceListPage?.data ?? [],
     [priceListPage?.data]
@@ -175,9 +181,9 @@ const PriceListSetup: React.FC = () => {
 
       versionNumber: 1,
 
-      type: 'CASH',
+      type: 'SELF_PAY',
 
-      status: 'DRAFT',
+      status: 'ACTIVE',
 
       isActive: true
     });
@@ -213,6 +219,37 @@ const PriceListSetup: React.FC = () => {
     });
 
     setDeleteConfirmationOpen(true);
+  };
+
+  const handleActivate = async (
+    row: PriceListSetupModel
+  ) => {
+    if (!row.id || row.status === 'ACTIVE') {
+      return;
+    }
+
+    try {
+      await activatePriceListSetup({
+        id: row.id
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Price list activated. Billing will now use this list for matching coverage.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.detail ||
+            error?.data?.message ||
+            'Failed to activate price list',
+          sev: 'error'
+        })
+      );
+    }
   };
 
   const handleDelete = async () => {
@@ -403,13 +440,25 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'actions',
       title: <Translate>Actions</Translate>,
-      width: 150,
+      width: 190,
       align: 'center' as const,
 
       render: (
         row: PriceListSetupModel
       ) => (
         <div className="container-of-icons">
+          {row.status !== 'ACTIVE' ? (
+            <MdCheckCircle
+              className="icons-style"
+              title="Activate for billing"
+              size={23}
+              fill="var(--primary-green, #28a745)"
+              onClick={() => {
+                void handleActivate(row);
+              }}
+            />
+          ) : null}
+
           <MdModeEdit
             className="icons-style"
             title="Edit"

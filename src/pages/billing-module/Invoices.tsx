@@ -62,6 +62,8 @@ import {
 
   useGetInvoiceLineItemsQuery,
   useLazyGetInvoiceLineItemsQuery,
+  useGetInvoicePricingSummaryQuery,
+  useLazyGetInvoicePricingSummaryQuery,
 
   type CreateAdjustmentRequest,
   type FinancialDocumentAdjustment
@@ -69,7 +71,7 @@ import {
 
 import EligibilitySnapshotPanel from './invoices/EligibilitySnapshotPanel';
 
-import InvoiceAdjustmentsPanel from './invoices/InvoiceAdjustmentsPanel';
+import InvoiceDetailPanel from './invoices/InvoiceDetailPanel';
 
 import InvoiceAdjustmentModal from './invoices/InvoiceAdjustmentModal';
 
@@ -89,8 +91,6 @@ import {
 import { useFinancialDocumentTypes } from './invoices/useFinancialDocumentTypes';
 
 import {
-
-  buildInvoicePrintBatch,
 
   buildInvoicePrintDataFromIssuedInvoice,
 
@@ -339,7 +339,7 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
   const [pendingInvoicePrint, setPendingInvoicePrint] = useState<{
 
-    invoices: PatientFinancialInvoice[];
+    invoices: InvoicePrintData[];
 
     autoPrint: boolean;
 
@@ -443,7 +443,15 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
   });
 
+  const { data: selectedInvoicePricingSummary } = useGetInvoicePricingSummaryQuery(
+    selectedInvoiceId as number,
+    {
+      skip: selectedInvoiceId == null
+    }
+  );
+
   const [fetchInvoiceLineItemsForPrint] = useLazyGetInvoiceLineItemsQuery();
+  const [fetchInvoicePricingSummaryForPrint] = useLazyGetInvoicePricingSummaryQuery();
 
 
 
@@ -986,22 +994,12 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
     }
 
     openInvoicePrintPreview(
-      buildInvoicePrintBatch({
-        invoices: pendingInvoicePrint.invoices,
-        encounterDetails,
-        eligibilitySnapshot:
-          eligibilitySnapshot ?? encounterDetails.eligibilitySnapshot ?? null,
-        facility: facilityPrintInfo,
-        chargeContext
-      }),
+      pendingInvoicePrint.invoices,
       pendingInvoicePrint.autoPrint
     );
     setPendingInvoicePrint(null);
   }, [
-    chargeContext,
-    eligibilitySnapshot,
     encounterDetails,
-    facilityPrintInfo,
     pendingInvoicePrint,
     printLookupsReady
   ]);
@@ -1117,15 +1115,31 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
 
       if (result.invoices?.length) {
+        const generatedPrintData = await Promise.all(
+          result.invoices.map(async invoice => {
+            const [lineItems, pricingSummary] = await Promise.all([
+              fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
+              fetchInvoicePricingSummaryForPrint(invoice.id).unwrap()
+            ]);
+
+            return buildInvoicePrintDataFromIssuedInvoice({
+              invoice,
+              lineItems,
+              pricingSummary,
+              encounterDetails: encounterDetails ?? null,
+              eligibilitySnapshot:
+                eligibilitySnapshot ?? encounterDetails?.eligibilitySnapshot ?? null,
+              patient,
+              facility: facilityPrintInfo,
+              chargeContext
+            });
+          })
+        );
 
         setPendingInvoicePrint({
-
-          invoices: result.invoices,
-
+          invoices: generatedPrintData,
           autoPrint: true
-
         });
-
       }
 
     } catch (error: any) {
@@ -1177,6 +1191,7 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
           invoice: selectedInvoice,
 
           lineItems: invoiceLineItems,
+          pricingSummary: selectedInvoicePricingSummary ?? null,
 
           encounterDetails: matchingEncounterDetails,
 
@@ -1215,7 +1230,10 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
     }
 
     try {
-      const lineItems = await fetchInvoiceLineItemsForPrint(invoice.id).unwrap();
+      const [lineItems, pricingSummary] = await Promise.all([
+        fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
+        fetchInvoicePricingSummaryForPrint(invoice.id).unwrap()
+      ]);
       const matchingEncounterDetails =
         encounterDetails?.encounterId === invoice.encounterId ? encounterDetails : null;
 
@@ -1224,6 +1242,7 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
           buildInvoicePrintDataFromIssuedInvoice({
             invoice,
             lineItems,
+            pricingSummary,
             encounterDetails: matchingEncounterDetails,
             eligibilitySnapshot:
               matchingEncounterDetails != null
@@ -1921,144 +1940,121 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
       <SectionContainer
 
-        title="Issued Invoices"
+        title="Invoice Accounts"
 
         content={
 
-          <>
+          <div className="billing-invoices__accounts-layout">
 
-            {selectedInvoice != null && (
+            <div className="billing-invoices__accounts-list">
 
-              <div className="billing-invoices__invoice-actions">
+              <div className="billing-invoices__accounts-list-header">
 
-                <Text weight="bold">Selected: {selectedInvoice.documentNumber}</Text>
+                <h3 className="billing-invoices__accounts-list-title">Your invoices</h3>
 
-                {facilityId != null &&
-                !loadingNumberingConfigurations &&
-                (!creditNoteNumberingReady || !debitNoteNumberingReady) ? (
-                  <Text muted size="sm" className="billing-invoices__numbering-hint">
-                    {!creditNoteNumberingReady
-                      ? numberingSetupHint(
-                          financialDocumentTypes.creditNote,
-                          financialDocumentTypes.labelFor(financialDocumentTypes.creditNote)
-                        )
-                      : numberingSetupHint(
-                          financialDocumentTypes.debitNote,
-                          financialDocumentTypes.labelFor(financialDocumentTypes.debitNote)
-                        )}
-                  </Text>
-                ) : null}
+                <p className="billing-invoices__accounts-list-subtitle">
 
-                <div className="billing-invoices__actions">
+                  Select an invoice to view services, payment status, and collect any remaining balance.
 
-                  <MyButton
-
-                    appearance="primary"
-
-                    disabled={loadingInvoiceLineItems || !printLookupsReady}
-
-                    onClick={handlePreviewSelectedInvoice}
-
-                  >
-
-                    <FontAwesomeIcon icon={faPrint} /> Preview / Print Invoice
-
-                  </MyButton>
-
-
-
-                  <MyButton
-
-                    appearance="primary"
-
-                    color="orange"
-
-                    disabled={!canCreateCreditNote}
-
-                    onClick={async () => {
-                      if (selectedInvoiceId != null) {
-                        await refetchInvoiceLineItems();
-                      }
-                      setAdjustmentModal({ open: true, kind: 'CREDIT_NOTE' });
-                    }}
-
-                  >
-
-                    <FontAwesomeIcon icon={faMinusCircle} /> Credit Note
-
-                  </MyButton>
-
-                  <MyButton
-
-                    appearance="primary"
-
-                    color="blue"
-
-                    disabled={!canCreateDebitNote}
-
-                    onClick={() =>
-
-                      setAdjustmentModal({ open: true, kind: 'DEBIT_NOTE' })
-
-                    }
-
-                  >
-
-                    <FontAwesomeIcon icon={faPlusCircle} /> Debit Note
-
-                  </MyButton>
-
-                </div>
+                </p>
 
               </div>
 
-            )}
+              <div className="billing-invoices__accounts-list-body">
 
+                <MyTable
 
+                  data={financialInvoices}
 
-            <MyTable
+                  columns={issuedInvoiceColumns}
 
-              data={financialInvoices}
+                  loading={loadingFinancialInvoices}
 
-              columns={issuedInvoiceColumns}
+                  rowClassName={(row: PatientFinancialInvoice) =>
 
-              loading={loadingFinancialInvoices}
+                    row.id === selectedInvoiceId ? 'selected-row' : ''
 
-              rowClassName={(row: PatientFinancialInvoice) =>
+                  }
 
-                row.id === selectedInvoiceId ? 'selected-row' : ''
+                  onRowClick={(row: PatientFinancialInvoice) =>
+
+                    setSelectedInvoiceId(row.id)
+
+                  }
+
+                />
+
+              </div>
+
+              <div className="billing-invoices__accounts-detail">
+
+                <InvoiceDetailPanel
+
+              invoice={selectedInvoice}
+
+              summary={adjustmentSummary}
+
+              lineItems={invoiceLineItems}
+
+              pricingSummary={selectedInvoicePricingSummary}
+
+              loading={loadingAdjustments || loadingInvoiceLineItems}
+
+              currency={selectedInvoice?.currency ?? 'SAR'}
+
+              patient={patient}
+
+              printDisabled={!printLookupsReady}
+
+              canCreateCreditNote={canCreateCreditNote}
+
+              canCreateDebitNote={canCreateDebitNote}
+
+              onPrintInvoice={handlePreviewSelectedInvoice}
+
+              onPrintAdjustment={handlePreviewAdjustment}
+
+              onCreateCreditNote={async () => {
+
+                if (selectedInvoiceId != null) {
+
+                  await refetchInvoiceLineItems();
+
+                }
+
+                setAdjustmentModal({ open: true, kind: 'CREDIT_NOTE' });
+
+              }}
+
+              onCreateDebitNote={() =>
+
+                setAdjustmentModal({ open: true, kind: 'DEBIT_NOTE' })
 
               }
 
-              onRowClick={(row: PatientFinancialInvoice) =>
+              onRefresh={() => {
 
-                setSelectedInvoiceId(row.id)
+                void Promise.all([
 
-              }
+                  refetchAdjustments(),
+
+                  refetchInvoiceLineItems(),
+
+                  refetchFinancialInvoices(),
+
+                  onSimulatedInvoicePayment?.()
+
+                ]);
+
+              }}
 
             />
 
+              </div>
 
+            </div>
 
-            {selectedInvoiceId != null && (
-
-              <InvoiceAdjustmentsPanel
-
-                summary={adjustmentSummary}
-
-                loading={loadingAdjustments}
-
-                currency={selectedInvoice?.currency ?? 'SAR'}
-
-                printDisabled={!printLookupsReady}
-
-                onPrintAdjustment={handlePreviewAdjustment}
-
-              />
-
-            )}
-
-          </>
+          </div>
 
         }
 

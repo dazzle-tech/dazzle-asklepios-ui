@@ -4967,6 +4967,7 @@ export type WaseelItemMapping = {
 
 export type PriceListSetupType =
   | 'CASH'
+  | 'SELF_PAY'
   | 'INSURANCE'
   | 'CORPORATE'
   | 'PACKAGE'
@@ -5064,6 +5065,7 @@ export type SavePriceListSetupRequest = {
   effectiveFrom: string;
   effectiveTo?: string | null;
   currency: string;
+  status?: PriceListSetupStatus;
 };
 
 export type BillingTrigger =
@@ -5712,6 +5714,11 @@ export type EncounterBillingSummary = {
   otherPayerAllocatedAmount: number;
   otherPayerOutstandingAmount: number;
   wallet: BillingWalletSummary;
+  invoiceId?: number | null;
+  invoiceNumber?: string | null;
+  invoiceTotalAmount?: number;
+  invoicePaidAmount?: number;
+  invoiceOutstandingAmount?: number;
   items: EncounterBillingItemSummary[];
 };
 
@@ -5744,6 +5751,8 @@ export type BillingPaymentReservationResult = {
   patientServiceProductId: number;
   reservationId: number | null;
   reservationNumber: string | null;
+  itemDescription?: string | null;
+  billingItemType?: string | null;
   patientResponsibilityAmount: number;
   reservedAmount: number;
   uncoveredAmount: number;
@@ -5939,6 +5948,42 @@ export type PrepareDefaultServicesResult = {
   items: PreparedDefaultServiceResult[];
   processed: boolean;
   message: string;
+};
+
+export type PreviewDefaultServicesPricingRequest = {
+  patientId: number;
+  facilityId: number;
+  currency: Currency;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PrepareDefaultServiceItem[];
+};
+
+export type PreviewDefaultServicePricingResult = {
+  serviceId: number;
+  sequence: number;
+  setupUnitPrice: number | null;
+  unitPrice: number | null;
+  grossAmount: number | null;
+  discountAmount: number | null;
+  taxAmount: number | null;
+  netAmount: number | null;
+  priceSource: string | null;
+  priceListItemCode: string | null;
+};
+
+export type PreviewDefaultServicesPricingResult = {
+  patientId: number;
+  encounterId: number;
+  facilityId: number;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  currency: Currency;
+  grossAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  items: PreviewDefaultServicePricingResult[];
 };
 
 export type BillingOperationResult = {

@@ -1,4 +1,7 @@
-import type { InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
+import type {
+  InvoiceLineItem,
+  InvoicePricingSummary
+} from '@/services/billing/financialDocumentAdjustmentService';
 import type {
   BillingEligibilitySnapshot,
   EncounterInvoiceDetails,
@@ -19,10 +22,15 @@ export type InvoicePrintLineItem = {
   serviceType: string;
   quantity: number;
   unitPrice: number;
+  grossAmount: number;
+  discountAmount: number;
+  amountBeforeTax: number;
   amount: number;
   patientShare?: number;
   insuranceShare?: number;
   taxAmount?: number;
+  appliedDiscounts?: InvoiceLineItem['appliedDiscounts'];
+  appliedTaxes?: InvoiceLineItem['appliedTaxes'];
 };
 
 export type InvoicePrintData = {
@@ -54,8 +62,10 @@ export type InvoicePrintData = {
   physician?: string;
   currency: string;
   items: InvoicePrintLineItem[];
+  pricingSummary?: InvoicePricingSummary | null;
   totals: {
     grossAmount: number;
+    discountAmount: number;
     taxAmount: number;
     netAmount: number;
     patientShare: number;
@@ -71,6 +81,51 @@ export type FacilityPrintInfo = {
 };
 
 const formatMoneyValue = (value?: number) => Number(value ?? 0);
+
+export const formatApplicableOnLabel = (value?: string | null) => {
+  switch (String(value ?? '').toUpperCase()) {
+    case 'INVOICE':
+      return 'Invoice';
+    case 'INVOICE_LINE':
+      return 'Invoice line';
+    case 'SERVICE':
+      return 'Service';
+    case 'PRODUCT':
+      return 'Product';
+    default:
+      return value ?? '-';
+  }
+};
+
+export const formatDiscountRuleLabel = (
+  rule: InvoicePricingSummary['discountRules'][number]
+) => {
+  const code = rule.code ?? rule.name ?? 'Discount';
+  const applicableOn = formatApplicableOnLabel(rule.applicableOn);
+  if (String(rule.discountType).toUpperCase() === 'PERCENTAGE') {
+    return `${code} · ${Number(rule.rate ?? 0)}% · ${applicableOn}`;
+  }
+  if (String(rule.discountType).toUpperCase() === 'FIXED_AMOUNT') {
+    return `${code} · Fixed ${Number(rule.fixedAmount ?? 0)} · ${applicableOn}`;
+  }
+  return `${code} · ${applicableOn}`;
+};
+
+export const formatTaxRuleLabel = (rule: InvoicePricingSummary['taxRules'][number]) => {
+  const code = rule.code ?? rule.name ?? 'Tax';
+  const applicableOn = formatApplicableOnLabel(rule.applicableOn);
+  const calculation =
+    String(rule.calculationType ?? 'EXCLUSIVE').toUpperCase() === 'INCLUSIVE'
+      ? 'Inclusive'
+      : 'Exclusive';
+  if (String(rule.taxType).toUpperCase() === 'PERCENTAGE') {
+    return `${code} · ${Number(rule.rate ?? 0)}% · ${calculation} · ${applicableOn}`;
+  }
+  if (String(rule.taxType).toUpperCase() === 'FIXED_AMOUNT') {
+    return `${code} · Fixed ${Number(rule.fixedAmount ?? 0)} · ${calculation} · ${applicableOn}`;
+  }
+  return `${code} · ${calculation} · ${applicableOn}`;
+};
 
 export const invoiceStatusLabel = (status?: string) => {
   switch (String(status ?? '').toUpperCase()) {
@@ -199,11 +254,62 @@ const mapChargeRowToPrintItem = (
     serviceType: formatBillingItemType(chargeRow.billingItemType),
     quantity: Number(chargeRow.quantity ?? 1),
     unitPrice: formatMoneyValue(chargeRow.unitPrice),
+    grossAmount:
+      formatMoneyValue(chargeRow.unitPrice) * Number(chargeRow.quantity ?? 1),
+    discountAmount: 0,
+    amountBeforeTax: amount,
     amount,
     patientShare,
     insuranceShare,
     taxAmount: formatMoneyValue(billingItem?.taxAmount)
   };
+};
+
+const resolveLineItemLabel = (lineItem: InvoiceLineItem): string => {
+  const description = lineItem.itemDescription?.trim();
+  if (description && !isTechnicalBillingLabel(description)) {
+    return description;
+  }
+
+  const code = lineItem.itemCode?.trim();
+  if (code && !isTechnicalBillingLabel(code)) {
+    return code;
+  }
+
+  return description || code || '-';
+};
+
+const inferLineItemType = (lineItem: InvoiceLineItem): string => {
+  const source = `${lineItem.itemCode ?? ''} ${lineItem.itemDescription ?? ''}`.toUpperCase();
+  const name = String(lineItem.itemDescription ?? '').toLowerCase();
+
+  if (
+    source.includes('MEDICATION') ||
+    source.includes('MEDICINE') ||
+    source.includes('DRUG') ||
+    name.includes('medication') ||
+    name.includes('medicine')
+  ) {
+    return 'Medication';
+  }
+  if (
+    source.includes('TEST') ||
+    source.includes('LAB') ||
+    source.includes('DIAGNOSTIC') ||
+    source.includes('CBC') ||
+    name.includes('cbc') ||
+    name.includes('lab')
+  ) {
+    return 'Diagnostic Test';
+  }
+  if (source.includes('PROCEDURE')) {
+    return 'Procedure';
+  }
+  if (source.includes('SERVICE') || source.includes('CONSULT')) {
+    return 'Service';
+  }
+
+  return '-';
 };
 
 const mapIssuedLineToPrintItem = (
@@ -220,37 +326,36 @@ const mapIssuedLineToPrintItem = (
           Number(row.patientServiceProductId) === Number(lineItem.patientServiceProductId))
     ) ?? null;
 
-  if (chargeRow) {
-    return mapChargeRowToPrintItem(
-      chargeRow,
-      findBillingItem(
-        chargeContext,
-        chargeRow.chargeLineId,
-        chargeRow.patientServiceProductId
-      ),
-      invoiceType
-    );
-  }
-
   const billingItem = findBillingItem(
     chargeContext,
     lineItem.chargeLineId,
     lineItem.patientServiceProductId
   );
 
-  const patientShare =
-    formatMoneyValue(billingItem?.patientResponsibilityAmount) ||
-    (invoiceType === 'PATIENT' ? formatMoneyValue(lineItem.netAmount) : 0);
-  const insuranceShare =
-    formatMoneyValue(billingItem?.insuranceResponsibilityAmount) ||
-    (invoiceType === 'INSURANCE_CLAIM' ? formatMoneyValue(lineItem.netAmount) : 0);
+  const persistedAmount = formatMoneyValue(lineItem.netAmount);
+  const persistedTaxAmount = formatMoneyValue(lineItem.taxAmount);
+  const persistedGrossAmount = formatMoneyValue(lineItem.grossAmount);
+  const persistedDiscountAmount = formatMoneyValue(lineItem.discountAmount);
+  const quantity = Number(lineItem.quantity ?? chargeRow?.quantity ?? 1);
+  const grossUnitPrice =
+    quantity > 0 ? persistedGrossAmount / quantity : formatMoneyValue(lineItem.unitPrice);
+  const amountBeforeTax = Math.max(0, persistedAmount - persistedTaxAmount);
 
-  const amount = formatMoneyValue(lineItem.netAmount);
-  const serviceName =
-    lineItem.itemDescription?.trim() &&
-    !isTechnicalBillingLabel(lineItem.itemDescription, billingItem?.billingItemType)
-      ? lineItem.itemDescription.trim()
-      : '-';
+  const patientShare =
+    invoiceType === 'PATIENT'
+      ? persistedAmount
+      : formatMoneyValue(billingItem?.patientResponsibilityAmount);
+  const insuranceShare =
+    invoiceType === 'INSURANCE_CLAIM'
+      ? persistedAmount
+      : formatMoneyValue(billingItem?.insuranceResponsibilityAmount);
+
+  const amount = persistedAmount;
+  const serviceName = resolveLineItemLabel(lineItem);
+  const serviceType =
+    formatBillingItemType(billingItem?.billingItemType) !== '-'
+      ? formatBillingItemType(billingItem?.billingItemType)
+      : inferLineItemType(lineItem);
 
   return {
     serviceCode:
@@ -260,14 +365,21 @@ const mapIssuedLineToPrintItem = (
         ? lineItem.itemCode.trim()
         : '-') ||
       '-',
-    serviceName,
-    serviceType: formatBillingItemType(billingItem?.billingItemType),
-    quantity: Number(lineItem.quantity ?? 1),
-    unitPrice: formatMoneyValue(lineItem.unitPrice),
-    amount,
+    serviceName: chargeRow?.itemName || serviceName,
+    serviceType: chargeRow
+      ? formatBillingItemType(chargeRow.billingItemType)
+      : serviceType,
+    quantity,
+    unitPrice: grossUnitPrice,
+    grossAmount: persistedGrossAmount,
+    discountAmount: persistedDiscountAmount,
+    amountBeforeTax,
+    amount: amount || patientShare || insuranceShare,
     patientShare,
     insuranceShare,
-    taxAmount: formatMoneyValue(lineItem.taxAmount)
+    taxAmount: persistedTaxAmount,
+    appliedDiscounts: lineItem.appliedDiscounts,
+    appliedTaxes: lineItem.appliedTaxes
   };
 };
 
@@ -312,21 +424,42 @@ const resolveInsuranceFields = (
   insuranceCompany: eligibilitySnapshot?.policyHolder ?? undefined
 });
 
-const buildTotals = (items: InvoicePrintLineItem[]) => {
+const buildTotals = (
+  items: InvoicePrintLineItem[],
+  options?: {
+    invoiceTotalAmount?: number;
+    lineItems?: InvoiceLineItem[];
+  }
+) => {
   const grossAmount = items.reduce(
     (sum, item) => sum + formatMoneyValue(item.quantity) * formatMoneyValue(item.unitPrice),
     0
   );
   const taxAmount = items.reduce((sum, item) => sum + formatMoneyValue(item.taxAmount), 0);
-  const netAmount = items.reduce((sum, item) => sum + formatMoneyValue(item.amount), 0);
-  const patientShare = items.reduce((sum, item) => sum + formatMoneyValue(item.patientShare), 0);
+  let netAmount = items.reduce((sum, item) => sum + formatMoneyValue(item.amount), 0);
+  let patientShare = items.reduce((sum, item) => sum + formatMoneyValue(item.patientShare), 0);
   const insuranceShare = items.reduce(
     (sum, item) => sum + formatMoneyValue(item.insuranceShare),
     0
   );
 
+  const discountAmount =
+    options?.lineItems?.reduce(
+      (sum, item) => sum + formatMoneyValue(item.discountAmount),
+      0
+    ) ?? Math.max(0, grossAmount + taxAmount - netAmount);
+
+  const invoiceTotalAmount = formatMoneyValue(options?.invoiceTotalAmount);
+  if (invoiceTotalAmount > 0) {
+    netAmount = invoiceTotalAmount;
+    if (patientShare > 0) {
+      patientShare = invoiceTotalAmount;
+    }
+  }
+
   return {
     grossAmount,
+    discountAmount,
     taxAmount,
     netAmount: netAmount || grossAmount,
     patientShare,
@@ -356,9 +489,12 @@ export const buildInvoicePrintDataFromEncounter = ({
 
   const totals =
     items.length > 0
-      ? buildTotals(items)
+      ? buildTotals(items, {
+          invoiceTotalAmount: invoice.totalAmount
+        })
       : {
           grossAmount: formatMoneyValue(invoice.totalAmount),
+          discountAmount: 0,
           taxAmount: formatMoneyValue(encounterDetails.billingSummary?.taxAmount),
           netAmount: formatMoneyValue(invoice.totalAmount),
           patientShare:
@@ -413,6 +549,7 @@ export const buildInvoicePrintDataFromEncounter = ({
 export const buildInvoicePrintDataFromIssuedInvoice = ({
   invoice,
   lineItems,
+  pricingSummary,
   encounterDetails,
   eligibilitySnapshot,
   patient,
@@ -421,6 +558,7 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
 }: {
   invoice: PatientFinancialInvoice;
   lineItems: InvoiceLineItem[];
+  pricingSummary?: InvoicePricingSummary | null;
   encounterDetails?: EncounterInvoiceDetails | null;
   eligibilitySnapshot?: BillingEligibilitySnapshot | null;
   patient?: any;
@@ -436,10 +574,20 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
 
   const totals =
     items.length > 0
-      ? buildTotals(items)
+      ? buildTotals(items, {
+          invoiceTotalAmount: invoice.totalAmount,
+          lineItems
+        })
       : {
           grossAmount: formatMoneyValue(invoice.totalAmount),
-          taxAmount: 0,
+          discountAmount: lineItems.reduce(
+            (sum, item) => sum + formatMoneyValue(item.discountAmount),
+            0
+          ),
+          taxAmount: lineItems.reduce(
+            (sum, item) => sum + formatMoneyValue(item.taxAmount),
+            0
+          ),
           netAmount: formatMoneyValue(invoice.totalAmount),
           patientShare: invoiceType === 'PATIENT' ? formatMoneyValue(invoice.totalAmount) : 0,
           insuranceShare:
@@ -497,7 +645,24 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
     ...insuranceFields,
     currency: invoice.currency ?? 'SAR',
     items,
-    totals
+    pricingSummary: pricingSummary ?? null,
+    totals:
+      pricingSummary != null
+        ? {
+            grossAmount: formatMoneyValue(pricingSummary.grossAmount),
+            discountAmount: formatMoneyValue(pricingSummary.discountAmount),
+            taxAmount: formatMoneyValue(pricingSummary.taxAmount),
+            netAmount: formatMoneyValue(pricingSummary.netAmount),
+            patientShare:
+              invoiceType === 'PATIENT'
+                ? formatMoneyValue(pricingSummary.netAmount)
+                : totals.patientShare,
+            insuranceShare:
+              invoiceType === 'INSURANCE_CLAIM'
+                ? formatMoneyValue(pricingSummary.netAmount)
+                : totals.insuranceShare
+          }
+        : totals
   };
 };
 

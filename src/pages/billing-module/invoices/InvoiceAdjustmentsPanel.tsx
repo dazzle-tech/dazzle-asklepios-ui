@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Tag, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
@@ -7,15 +7,25 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import type {
   FinancialDocumentAdjustment,
-  InvoiceAdjustmentSummary
+  InvoiceAdjustmentSummary,
+  InvoiceLineItem
 } from '@/services/billing/financialDocumentAdjustmentService';
+import {
+  useSyncInvoicePaymentsMutation
+} from '@/services/billing/financialDocumentAdjustmentService';
+import PayInvoiceBalanceModal from './PayInvoiceBalanceModal';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 type InvoiceAdjustmentsPanelProps = {
   summary: InvoiceAdjustmentSummary | null | undefined;
+  invoiceId?: number | null;
+  lineItems?: InvoiceLineItem[];
   loading?: boolean;
   currency?: string;
   printDisabled?: boolean;
   onPrintAdjustment?: (adjustment: FinancialDocumentAdjustment) => void;
+  onPaymentCompleted?: () => void;
 };
 
 type AdjustmentRow = {
@@ -80,13 +90,36 @@ const lineActionLabel = (action?: string) => {
   }
 };
 
+const formatAdjustmentLabel = (
+  type?: string | null,
+  rate?: number | null,
+  fixedAmount?: number | null
+) => {
+  if (type === 'PERCENTAGE' && rate != null) {
+    return `${rate}%`;
+  }
+
+  if (type === 'FIXED_AMOUNT' && fixedAmount != null) {
+    return `Fixed ${fixedAmount}`;
+  }
+
+  return type ?? '-';
+};
+
 const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
   summary,
+  invoiceId,
+  lineItems = [],
   loading = false,
   currency = 'SAR',
   printDisabled = false,
-  onPrintAdjustment
+  onPrintAdjustment,
+  onPaymentCompleted
 }) => {
+  const dispatch = useAppDispatch();
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [syncInvoicePayments, { isLoading: syncingPayments }] =
+    useSyncInvoicePaymentsMutation();
   const resolvedCurrency = summary?.currency ?? currency;
 
   const adjustmentRows = useMemo(
@@ -128,6 +161,69 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
       ),
     [summary?.adjustments]
   );
+
+  const pricingDetailRows = useMemo(
+    () =>
+      lineItems.flatMap(item => {
+        const discounts = item.appliedDiscounts ?? [];
+        const taxes = item.appliedTaxes ?? [];
+
+        if (discounts.length === 0 && taxes.length === 0) {
+          return [];
+        }
+
+        return [
+          ...discounts.map((discount, index) => ({
+            key: `${item.id}-discount-${index}`,
+            service: item.itemDescription ?? item.itemCode ?? '-',
+            kind: 'Discount',
+            rule: discount.code ?? discount.name ?? discount.source ?? '-',
+            type: formatAdjustmentLabel(
+              discount.discountType,
+              discount.rate,
+              discount.fixedAmount
+            ),
+            scope: discount.applicableOn ?? discount.source ?? '-',
+            amount: discount.appliedAmount ?? 0
+          })),
+          ...taxes.map((tax, index) => ({
+            key: `${item.id}-tax-${index}`,
+            service: item.itemDescription ?? item.itemCode ?? '-',
+            kind: 'Tax',
+            rule: tax.code ?? tax.name ?? tax.source ?? '-',
+            type: formatAdjustmentLabel(tax.taxType, tax.rate, tax.fixedAmount),
+            scope: tax.applicableOn ?? tax.source ?? '-',
+            amount: tax.appliedAmount ?? 0
+          }))
+        ];
+      }),
+    [lineItems]
+  );
+
+  const outstandingBalance = Number(summary?.outstandingBalance ?? 0);
+  const canPayOutstanding = outstandingBalance > 0 && invoiceId != null;
+
+  const handleSyncPayments = async () => {
+    if (invoiceId == null) return;
+
+    try {
+      const result = await syncInvoicePayments(invoiceId).unwrap();
+      dispatch(
+        notify({
+          msg: `Synced billing payments. Paid ${formatMoney(result.paidAmount, resolvedCurrency)} · remaining ${formatMoney(result.outstandingAmount, resolvedCurrency)}.`,
+          sev: 'success'
+        })
+      );
+      onPaymentCompleted?.();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message ?? error?.data?.detail ?? 'Unable to sync invoice payments.',
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -208,6 +304,23 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
     <div className="billing-invoices__adjustments">
       <div className="billing-invoices__adjustments-header">
         <Text weight="bold">Invoice Adjustments — {summary.documentNumber}</Text>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {canPayOutstanding && Number(summary.totalPaid ?? 0) === 0 ? (
+            <MyButton
+              size="sm"
+              appearance="ghost"
+              loading={syncingPayments}
+              onClick={handleSyncPayments}
+            >
+              Sync billing payments
+            </MyButton>
+          ) : null}
+          {canPayOutstanding ? (
+            <MyButton size="sm" appearance="primary" onClick={() => setPayModalOpen(true)}>
+              Pay outstanding
+            </MyButton>
+          ) : null}
+        </div>
       </div>
 
       <div className="billing-invoices__adjustments-summary">
@@ -235,7 +348,44 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
         </div>
       </div>
 
+      {pricingDetailRows.length > 0 ? (
+        <>
+          <Text weight="bold" style={{ marginTop: 16, marginBottom: 8 }}>
+            Line pricing snapshot
+          </Text>
+          <MyTable
+            data={pricingDetailRows}
+            loading={loading}
+            columns={[
+              { key: 'service', title: 'Service' },
+              { key: 'kind', title: 'Kind' },
+              { key: 'rule', title: 'Rule' },
+              { key: 'type', title: 'Type / Value' },
+              { key: 'scope', title: 'Scope' },
+              {
+                key: 'amount',
+                title: 'Applied',
+                render: (row: (typeof pricingDetailRows)[number]) =>
+                  formatMoney(row.amount, resolvedCurrency)
+              }
+            ]}
+          />
+        </>
+      ) : null}
+
       <MyTable data={adjustmentRows} columns={columns} loading={loading} />
+
+      {invoiceId != null ? (
+        <PayInvoiceBalanceModal
+          open={payModalOpen}
+          onClose={() => setPayModalOpen(false)}
+          invoiceId={invoiceId}
+          documentNumber={summary.documentNumber}
+          outstandingAmount={outstandingBalance}
+          currency={resolvedCurrency}
+          onPaid={onPaymentCompleted}
+        />
+      ) : null}
     </div>
   );
 };

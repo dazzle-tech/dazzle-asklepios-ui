@@ -71,6 +71,10 @@ export type PatientFinancialInvoice = {
   eligibilityReference?: string;
   claimReference?: string;
   createdDate?: string;
+  parentDocumentId?: number | null;
+  adjustmentReason?: string | null;
+  billingPaymentId?: number | null;
+  encounterNumber?: string | null;
 };
 
 export type BillingEligibilitySnapshot = {
@@ -152,6 +156,16 @@ export const invoiceGenerationService = createApi({
       ]
     }),
 
+    getPatientFinancialDocuments: builder.query<PatientFinancialInvoice[], number>({
+      query: patientId => ({
+        url: `/api/patient/billing/invoice-generation/patients/${patientId}/documents`,
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, patientId) => [
+        { type: 'PatientFinancialInvoices', id: patientId }
+      ]
+    }),
+
     financialCloseEncounter: builder.mutation<
       FinancialCloseResult,
       FinancialCloseRequest
@@ -225,6 +239,8 @@ export const {
   useGetBillableVisitsQuery,
   useGetEncounterInvoiceDetailsQuery,
   useGetPatientFinancialInvoicesQuery,
+  useGetPatientFinancialDocumentsQuery,
+  useLazyGetEncounterInvoiceDetailsQuery,
   useFinancialCloseEncounterMutation,
   useGenerateInvoicesMutation,
   useGetEligibilitySnapshotQuery,
