@@ -1,7 +1,7 @@
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import {
   useFilterDiagnosticOrderTestResultsQuery
@@ -36,6 +36,9 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { Tooltip, Whisper } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowDown, faArrowUp, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   patient: any;
@@ -252,6 +255,45 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       .catch(() => {});
   }, [patientIds, getBulkPatientBasicInfo]);
 
+  const renderMarker = (marker?: string) => {
+    const isCritical =
+      marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+
+    if (isCritical) {
+      return (
+        <Whisper
+          placement="top"
+          speaker={<Tooltip>Critical</Tooltip>}
+        >
+          <span
+            style={{
+              color: 'red',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <FontAwesomeIcon
+              icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+            />
+          </span>
+        </Whisper>
+      );
+    }
+
+    switch (marker) {
+      case 'ABNORMAL_MARKER':
+        return <FontAwesomeIcon icon={faCircleExclamation} />;
+      case 'UPPER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowUp} />;
+      case 'LOWER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowDown} />;
+      default:
+        return formatEnumString(marker);
+    }
+  };
+
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestsMap[String(r.orderTestId)];
@@ -334,12 +376,17 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       )
     },
     {
+      key: 'marker',
+      title: <Translate>MARKER</Translate>,
+      align: 'center',
+      render: (row: any) => renderMarker(row.marker)
+    },
+    {
       key: 'result',
       title: <Translate>RESULT</Translate>,
       render: (row: any) => {
         const profile = row._profile;
         const value = row.resultValueNumber ?? row.resultValueText ?? '';
-
         if (isLovProfile(profile)) {
           return resolveLovDisplayValue(
             profile,

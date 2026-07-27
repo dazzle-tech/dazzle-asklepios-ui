@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import MyTable from '@/components/MyTable';
+import xTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { formatDate, formatEnumString } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -21,7 +21,7 @@ import {
   useDiscardUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
-import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+import { useGetPatientsByIdsQuery, useLazyGetPatientsByFullNameQuery } from '@/services/patient/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import './styles.less';
@@ -31,6 +31,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyNestedTable from '@/components/MyNestedTable';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
 
 type MedicationOrderRow = {
   id: number;
@@ -72,25 +74,14 @@ type MedicationPatientRow = {
   medications: MedicationOrderRow[];
 };
 
-    const UserFullName = ({ login }: { login?: string }) => {
-      const { data } = useGetUserFullNameByLoginQuery(
-        login || skipToken
-      );
+const UserFullName = ({ login }: { login?: string }) => {
+  const { data } = useGetUserFullNameByLoginQuery(
+    login || skipToken
+  );
 
-      return <>{data || login || '-'}</>;
-    };
+  return <>{data || login || '-'}</>;
+};
 
-  const formatUserAt = (user?: string, date?: string) => {
-    return (
-      <>
-        <UserFullName login={user} />
-        <br />
-        <span className="date-table-style">
-          {date ? formatDate(new Date(date)) : ' '}
-        </span>
-      </>
-    );
-  };
 
 const MedicationClassCell = ({ drugClassId }: { drugClassId?: number }) => {
   const { data, isFetching } = useGetMedicationCategoryClassByClassIdQuery(
@@ -143,13 +134,13 @@ const InstructionsCell = ({
           expanded
             ? {}
             : {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                whiteSpace: 'normal',
-                wordBreak: 'break-word'
-              }
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              whiteSpace: 'normal',
+              wordBreak: 'break-word'
+            }
         }
       >
         {parsedText}
@@ -172,19 +163,51 @@ const InstructionsCell = ({
   );
 };
 
+const formatDate = (date: any) => {
+  if (!date) return undefined;
+
+  const d = date instanceof Date ? date : new Date(date);
+
+  if (isNaN(d.getTime())) return undefined;
+
+  return d.toISOString().split('T')[0];
+};
+
 const MedicationRecord = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: any) => state?.auth?.user);
 
+
+  const today = new Date();
+
+  const weekAgo = new Date();
+  weekAgo.setDate(today.getDate() - 7);
+
+  const [getPatientsByFullName] =
+    useLazyGetPatientsByFullNameQuery();
+
+  const [searchRecord, setSearchRecord] = useState({
+    patientName: '',
+    activeIngredientId: null,
+    orderDateFrom: weekAgo,
+    orderDateTo: today
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<{
+    patientIds?: number[];
+    activeIngredientId?: number | null;
+    orderDateFrom?: Date | null;
+    orderDateTo?: Date | null;
+  }>({
+    orderDateFrom: weekAgo,
+    orderDateTo: today
+  });
   const [openDiscardModal, setOpenDiscardModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<MedicationOrderRow | null>(null);
   const [cancelObject, setCancelObject] = useState({
     discardReason: ''
   });
 
-  // =========================
-  // ORDERED TABLE PAGINATION
-  // =========================
   const [orderedParams, setOrderedParams] = useState({
     page: 0,
     size: 5,
@@ -194,14 +217,14 @@ const MedicationRecord = () => {
   const [orderedSortColumn, setOrderedSortColumn] = useState('createdDate');
   const [orderedSortType, setOrderedSortType] = useState<'asc' | 'desc'>('desc');
 
-  // =============================
-  // ADMINISTERED TABLE PAGINATION
-  // =============================
   const [adminParams, setAdminParams] = useState({
     page: 0,
     size: 5,
     sort: 'createdDate,desc'
   });
+
+
+
 
   const [adminSortColumn, setAdminSortColumn] = useState('createdDate');
   const [adminSortType, setAdminSortType] = useState<'asc' | 'desc'>('desc');
@@ -215,6 +238,13 @@ const MedicationRecord = () => {
     page: orderedParams.page,
     size: orderedParams.size,
     sort: orderedParams.sort,
+
+    patientIds: appliedFilters?.patientIds,
+    activeIngredientId:
+      appliedFilters?.activeIngredientId ?? undefined,
+
+    orderDateFrom: formatDate(appliedFilters?.orderDateFrom),
+    orderDateTo: formatDate(appliedFilters?.orderDateTo),
     statusIn: ['SUBMITTED']
   });
 
@@ -231,6 +261,35 @@ const MedicationRecord = () => {
   });
 
 
+  const handleSearch = async () => {
+    let patientIds: number[] | undefined;
+
+    if (searchRecord.patientName?.trim()) {
+      const result = await getPatientsByFullName({
+        keyword: searchRecord.patientName.trim(),
+        page: 0,
+        size: 1000
+      }).unwrap();
+
+      patientIds = result.data.map(patient => patient.id);
+    }
+
+    setAppliedFilters({
+      patientIds,
+      activeIngredientId:
+        searchRecord.activeIngredientId || undefined,
+      orderDateFrom:
+        searchRecord.orderDateFrom || undefined,
+      orderDateTo:
+        searchRecord.orderDateTo || undefined
+    });
+
+    setOrderedParams(prev => ({
+      ...prev,
+      page: 0
+    }));
+  };
+
 
   const orderedRows: MedicationOrderRow[] = useMemo(() => {
     return (orderedResponse?.data || [])
@@ -241,27 +300,27 @@ const MedicationRecord = () => {
       }));
   }, [orderedResponse]);
 
-const orderedDisplayRows = useMemo(() => {
-  const grouped = new Map<number, MedicationPatientRow>();
+  const orderedDisplayRows = useMemo(() => {
+    const grouped = new Map<number, MedicationPatientRow>();
 
-  orderedRows.forEach(row => {
-    const patientId = row.patient?.id || row.patientId;
+    orderedRows.forEach(row => {
+      const patientId = row.patient?.id || row.patientId;
 
-    if (!patientId) return;
+      if (!patientId) return;
 
-    if (!grouped.has(patientId)) {
-      grouped.set(patientId, {
-        patientId,
-        patient: row.patient,
-        medications: []
-      });
-    }
+      if (!grouped.has(patientId)) {
+        grouped.set(patientId, {
+          patientId,
+          patient: row.patient,
+          medications: []
+        });
+      }
 
-    grouped.get(patientId)!.medications.push(row);
-  });
+      grouped.get(patientId)!.medications.push(row);
+    });
 
-  return Array.from(grouped.values());
-}, [orderedRows]);
+    return Array.from(grouped.values());
+  }, [orderedRows]);
 
 
   const administeredRows: MedicationOrderRow[] = useMemo(() => {
@@ -295,15 +354,9 @@ const orderedDisplayRows = useMemo(() => {
     return Array.from(grouped.values());
   }, [administeredRows]);
 
-
-
-
   const orderedTotalCount = orderedResponse?.totalCount || 0;
   const administeredTotalCount = adminResponse?.totalCount || 0;
 
-  // =========================
-  // ACTIVE INGREDIENTS
-  // =========================
   const { data: activeIngredientsRes } = useGetActiveIngredientsQuery({
     page: 0,
     size: 1000
@@ -317,9 +370,9 @@ const orderedDisplayRows = useMemo(() => {
     return map;
   }, [activeIngredientsRes]);
 
-  // =========================
-  // PATIENT IDS FROM BOTH TABLES
-  // =========================
+  const activeIngredients =
+    activeIngredientsRes?.data ?? [];
+
   const patientIds = useMemo(() => {
     return [...orderedRows, ...administeredRows]
       .map(row => row?.patient?.id || row?.patientId)
@@ -341,34 +394,29 @@ const orderedDisplayRows = useMemo(() => {
     return map;
   }, [patientsData]);
 
-  // =========================
-  // LOVS / ENUMS
-  // =========================
-
-
   const patientColumns = useMemo(
-  () => [
-  {
-    key: 'patientName',
-    title: <Translate>PATIENT_NAME</Translate>,
-    minWidth: 200,
-    render: (row: MedicationPatientRow) => {
-      const patient =
-        patientsMap[row.patientId || 0];
+    () => [
+      {
+        key: 'patientName',
+        title: <Translate>PATIENT_NAME</Translate>,
+        minWidth: 200,
+        render: (row: MedicationPatientRow) => {
+          const patient =
+            patientsMap[row.patientId || 0];
 
-      if (!patient) return '-';
+          if (!patient) return '-';
 
-      return [
-        patient.firstName,
-        patient.secondName,
-        patient.lastName
-      ]
-      .filter(Boolean)
-      .join(' ');
-    }
-  }
-  ],
-  [patientsMap]
+          return [
+            patient.firstName,
+            patient.secondName,
+            patient.lastName
+          ]
+            .filter(Boolean)
+            .join(' ');
+        }
+      }
+    ],
+    [patientsMap]
   );
 
   const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
@@ -399,9 +447,6 @@ const orderedDisplayRows = useMemo(() => {
     return map;
   }, [roaOptions]);
 
-  // =========================
-  // MUTATIONS
-  // =========================
   const [administerOrder, { isLoading: administering }] =
     useAdministerUccMedicationOrderMutation();
 
@@ -411,9 +456,6 @@ const orderedDisplayRows = useMemo(() => {
   const [doubleCheckOrder, { isLoading: doubleChecking }] =
     useDoubleCheckUccMedicationOrderMutation();
 
-  // =========================
-  // ACTIONS
-  // =========================
   const handleAdminister = async (row: MedicationOrderRow) => {
     try {
       const isHighAlert = Boolean(
@@ -516,9 +558,6 @@ const orderedDisplayRows = useMemo(() => {
     }
   };
 
-  // =========================
-  // PAGINATION HANDLERS
-  // =========================
   const handleOrderedPageChange = (_: any, newPage: number) => {
     setOrderedParams(prev => ({
       ...prev,
@@ -555,68 +594,42 @@ const orderedDisplayRows = useMemo(() => {
     }));
   };
 
-
-
-
-  // =========================
-  // COMMON COLUMNS
-  // =========================
-  const commonColumns = useMemo(
+  const nestedMedicationColumns = useMemo(
     () => [
-      {
-        key: 'patientName',
-        title: <Translate>PATIENT NAME</Translate>,
-        minWidth: 180,
-        render: (row: MedicationOrderRow) => {
-          const patient = patientsMap[row?.patient?.id || row?.patientId || 0];
-          if (!patient) return ' ';
-
-          return [patient.firstName, patient.secondName, patient.lastName]
-            .filter(Boolean)
-            .join(' ');
-        }
-      },
-      {
-        key: 'prescribedByAt',
-        title: <Translate>PRESCRIBED_BY_AT</Translate>,
-        minWidth: 180,
-        render: (row: MedicationOrderRow) =>
-          formatUserAt(row.submittedBy || row.createdBy, row.submittedDate || row.createdDate)
-      },
       {
         key: 'medicationName',
         title: <Translate>MEDICATION NAME</Translate>,
         minWidth: 180,
         render: (row: MedicationOrderRow) =>
-          activeIngredientMap[row?.activeIngredientId || 0]?.name || ' '
+          activeIngredientMap[row?.activeIngredientId || 0]?.name || '-'
       },
       {
         key: 'class',
-        title: <Translate>Medication Class</Translate>,
+        title: <Translate>MEDICATION CLASS</Translate>,
         minWidth: 160,
         render: (row: MedicationOrderRow) => (
           <MedicationClassCell
-            drugClassId={activeIngredientMap[row?.activeIngredientId || 0]?.drugClassId}
+            drugClassId={
+              activeIngredientMap[row?.activeIngredientId || 0]?.drugClassId
+            }
           />
         )
       },
       {
-        key: 'isHighAlert',
-        title: <Translate>IS HIGH ALERT</Translate>,
-        align: 'center',
-        width: 130,
-        render: (row: MedicationOrderRow) => {
-          const isHighAlert = Boolean(
-            row?.isHighAlert ??
-              activeIngredientMap[row?.activeIngredientId || 0]?.highAlert
-          );
-
-          return isHighAlert ? (
-            <FontAwesomeIcon icon={faTriangleExclamation} color="red" />
-          ) : (
-            ' '
-          );
-        }
+        key: 'prescribedByAt',
+        title: <Translate>PRESCRIBED_BY_AT</Translate>,
+        minWidth: 180,
+        render: (row: MedicationOrderRow) => (
+          <>
+            <UserFullName login={row.createdBy} />
+            <br />
+            <span className="date-table-style">
+              {row.createdDate
+                ? formatDateWithoutSeconds(row.createdDate)
+                : '-'}
+            </span>
+          </>
+        )
       },
       {
         key: 'instructions',
@@ -624,7 +637,7 @@ const orderedDisplayRows = useMemo(() => {
         minWidth: 260,
         render: (row: MedicationOrderRow) => (
           <InstructionsCell
-            text={row?.instructionText}
+            text={row.instructionText}
             unitMap={unitMap}
             frequencyMap={frequencyMap}
             roaMap={roaMap}
@@ -634,363 +647,108 @@ const orderedDisplayRows = useMemo(() => {
       {
         key: 'status',
         title: <Translate>STATUS</Translate>,
-        minWidth: 140,
-        render: (row: any) => formatEnumString(row?.status)
-      }
-    ],
-    [patientsMap, activeIngredientMap, unitMap, frequencyMap, roaMap]
-  );
-
-  // =========================
-  // ORDERED COLUMNS
-  // =========================
-
-
-
-const orderedColumns = useMemo(
-  () => [
-    ...commonColumns,
-    {
-      key: 'actions',
-      title: <Translate>ACTIONS</Translate>,
-      align: 'center',
-      width: 140,
-      render: (row: MedicationOrderRow) => {
-        const canAdminister = row.status === 'SUBMITTED';
-        return (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12
-            }}
-          >
-            <CheckRoundIcon
-              className="medication-record-order-icons-size"
-              style={{
-                cursor: canAdminister ? 'pointer' : 'not-allowed',
-                opacity: canAdminister ? 1 : 0.4
-              }}
-              onClick={() => {
-                if (!canAdminister) return;
-                handleAdminister(row);
-              }}
-            />
-
-            <FontAwesomeIcon
-              icon={faXmark}
-              className="medication-record-order-icons-size"
-              style={{
-                cursor: canAdminister ? 'pointer' : 'not-allowed',
-                opacity: canAdminister ? 1 : 0.4
-              }}
-              onClick={() => {
-                if (!canAdminister) return;
-
-                setSelectedRow(row);
-                setCancelObject({
-                  discardReason: ''
-                });
-                setOpenDiscardModal(true);
-              }}
-            />
-          </div>
-        );
-      }
-    }
-  ],
-[
-  commonColumns,
-  activeIngredientMap
-]
-);
-
-
-// const orderedColumnsWithoutReviewButton = useMemo(
-//   () =>
-//     orderedColumns.map(col => {
-//       if (col.key !== 'actions') return col;
-
-//       return {
-//         ...col,
-//         render: (row: MedicationOrderRow) => {
-//           const canAdminister = row.status === 'SUBMITTED';
-
-//           return (
-//             <div
-//               style={{
-//                 display: 'flex',
-//                 alignItems: 'center',
-//                 gap: 12
-//               }}
-//             >
-//               <CheckRoundIcon
-//                 className="medication-record-order-icons-size"
-//                 style={{
-//                   cursor: canAdminister ? 'pointer' : 'not-allowed',
-//                   opacity: canAdminister ? 1 : 0.4
-//                 }}
-//                 onClick={() => {
-//                   if (!canAdminister) return;
-//                   handleAdminister(row);
-//                 }}
-//               />
-
-//               <FontAwesomeIcon
-//                 icon={faXmark}
-//                 className="medication-record-order-icons-size"
-//                 style={{
-//                   cursor: canAdminister ? 'pointer' : 'not-allowed',
-//                   opacity: canAdminister ? 1 : 0.4
-//                 }}
-//                 onClick={() => {
-//                   if (!canAdminister) return;
-
-//                   setSelectedRow(row);
-//                   setCancelObject({
-//                     discardReason: ''
-//                   });
-
-//                   setOpenDiscardModal(true);
-//                 }}
-//               />
-//             </div>
-//           );
-//         }
-//       };
-//     }),
-//   [orderedColumns]
-// );
-
-
-const nestedMedicationColumns = useMemo(
-  () => [
-    {
-      key: 'medicationName',
-      title: <Translate>MEDICATION NAME</Translate>,
-      minWidth: 180,
-      render: (row: MedicationOrderRow) =>
-        activeIngredientMap[row?.activeIngredientId || 0]?.name || '-'
-    },
-    {
-      key: 'class',
-      title: <Translate>MEDICATION CLASS</Translate>,
-      minWidth: 160,
-      render: (row: MedicationOrderRow) => (
-        <MedicationClassCell
-          drugClassId={
-            activeIngredientMap[row?.activeIngredientId || 0]?.drugClassId
-          }
-        />
-      )
-    },
-    {
-      key: 'instructions',
-      title: <Translate>INSTRUCTIONS</Translate>,
-      minWidth: 260,
-      render: (row: MedicationOrderRow) => (
-        <InstructionsCell
-          text={row.instructionText}
-          unitMap={unitMap}
-          frequencyMap={frequencyMap}
-          roaMap={roaMap}
-        />
-      )
-    },
-    {
-      key: 'status',
-      title: <Translate>STATUS</Translate>,
-      minWidth: 120,
-      render: (row: any) =>
-        formatEnumString(row.status)
-    },
-    {
-      key: 'actions',
-      title: <Translate>ACTIONS</Translate>,
-      width: 120,
-      align: 'center',
-      render: (row: MedicationOrderRow) => {
-
-        if (row.status === 'SUBMITTED') {
-          return (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 12
-              }}
-            >
-
-              <CheckRoundIcon
-                className="medication-record-order-icons-size"
-                style={{
-                  cursor: 'pointer'
-                }}
-                onClick={() => handleAdminister(row)}
-              />
-
-              <FontAwesomeIcon
-                icon={faXmark}
-                className="medication-record-order-icons-size"
-                style={{
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  setSelectedRow(row);
-                  setCancelObject({
-                    discardReason: ''
-                  });
-                  setOpenDiscardModal(true);
-                }}
-              />
-
-            </div>
-          );
-        }
-
-
-        if (row.status === 'WAITING_DOUBLE_CHECK') {
-
-          const currentUser = user?.login || user?.username;
-
-          const isSameUser =
-            row.administeredBy &&
-            currentUser &&
-            row.administeredBy.toLowerCase() ===
-              currentUser.toLowerCase();
-
-
-          return (
-            <FontAwesomeIcon
-              icon={faCheckDouble}
-              className="medication-record-order-icons-size"
-              style={{
-                cursor: isSameUser
-                  ? 'not-allowed'
-                  : 'pointer',
-                opacity: isSameUser ? 0.4 : 1
-              }}
-              onClick={() => {
-                if (isSameUser) {
-                  dispatch(
-                    notify({
-                      msg:
-                        'Double check must be done by another user',
-                      sev: 'warning'
-                    })
-                  );
-                  return;
-                }
-
-                handleDoubleCheck(row);
-              }}
-            />
-          );
-        }
-
-
-        return null;
-      }
-    }
-
-  ],
-  [
-    activeIngredientMap,
-    roaMap,
-    frequencyMap,
-    unitMap,
-    user,
-    dispatch
-  ]
-);
-
-  // =========================
-  // ADMIN COLUMNS
-  // =========================
-  const administeredColumns = useMemo(
-    () => [
-      ...commonColumns,
+        minWidth: 120,
+        render: (row: any) =>
+          formatEnumString(row.status)
+      },
       {
         key: 'actions',
         title: <Translate>ACTIONS</Translate>,
-        align: 'center',
         width: 120,
+        align: 'center',
         render: (row: MedicationOrderRow) => {
-          const currentUser = user?.login || user?.username;
 
-          const isSameUser =
-            row.administeredBy &&
-            currentUser &&
-            row.administeredBy.toLowerCase() === currentUser.toLowerCase();
+          if (row.status === 'SUBMITTED') {
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 12
+                }}
+              >
 
-          const canDoubleCheck = row.status === 'WAITING_DOUBLE_CHECK';
-
-          return (
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              {canDoubleCheck && (
-                <FontAwesomeIcon
-                  icon={faCheckDouble}
+                <CheckRoundIcon
                   className="medication-record-order-icons-size"
                   style={{
-                    cursor: isSameUser ? 'not-allowed' : 'pointer',
-                    opacity: isSameUser ? 0.4 : 1
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleAdminister(row)}
+                />
+
+                <FontAwesomeIcon
+                  icon={faXmark}
+                  className="medication-record-order-icons-size"
+                  style={{
+                    cursor: 'pointer'
                   }}
                   onClick={() => {
-                    if (isSameUser) {
-                      dispatch(
-                        notify({
-                          msg: 'Double check must be done by another user',
-                          sev: 'warning'
-                        })
-                      );
-                      return;
-                    }
-
-                    handleDoubleCheck(row);
+                    setSelectedRow(row);
+                    setCancelObject({
+                      discardReason: ''
+                    });
+                    setOpenDiscardModal(true);
                   }}
                 />
-              )}
-            </div>
-          );
+
+              </div>
+            );
+          }
+
+
+          if (row.status === 'WAITING_DOUBLE_CHECK') {
+
+            const currentUser = user?.login || user?.username;
+
+            const isSameUser =
+              row.administeredBy &&
+              currentUser &&
+              row.administeredBy.toLowerCase() ===
+              currentUser.toLowerCase();
+
+
+            return (
+              <FontAwesomeIcon
+                icon={faCheckDouble}
+                className="medication-record-order-icons-size"
+                style={{
+                  cursor: isSameUser
+                    ? 'not-allowed'
+                    : 'pointer',
+                  opacity: isSameUser ? 0.4 : 1
+                }}
+                onClick={() => {
+                  if (isSameUser) {
+                    dispatch(
+                      notify({
+                        msg:
+                          'Double check must be done by another user',
+                        sev: 'warning'
+                      })
+                    );
+                    return;
+                  }
+
+                  handleDoubleCheck(row);
+                }}
+              />
+            );
+          }
+
+
+          return null;
         }
-      },
-      {
-        key: 'administeredByAt',
-        title: <Translate>ADMINISTERED_BY_AT</Translate>,
-        expandable: true,
-        minWidth: 180,
-        render: (row: MedicationOrderRow) =>
-          formatUserAt(row.administeredBy, row.administeredDate)
-      },
-      {
-        key: 'witnessByAt',
-        title: <Translate>WITNESS_BY_AT</Translate>,
-        expandable: true,
-        minWidth: 180,
-        render: (row: MedicationOrderRow) =>
-          formatUserAt(row.doubleCheckedBy, row.doubleCheckedDate)
-      },
-      {
-        key: 'cancelledByAt',
-        title: <Translate>CANCELLED_BY_AT</Translate>,
-        expandable: true,
-        minWidth: 180,
-        render: (row: MedicationOrderRow) =>
-          formatUserAt(
-            row.cancelledBy || row.discardedBy,
-            row.cancelledDate || row.discardedDate
-          )
-      },
-      {
-        key: 'cancellationReason',
-        title: <Translate>CANCELLATION_REASON</Translate>,
-        expandable: true,
-        minWidth: 200,
-        render: (row: MedicationOrderRow) =>
-          row.cancellationReason || row.discardReason || ' '
       }
+
     ],
-    [commonColumns, user, dispatch]
+    [
+      activeIngredientMap,
+      roaMap,
+      frequencyMap,
+      unitMap,
+      user,
+      dispatch
+    ]
   );
 
   const tableLoading =
@@ -1002,11 +760,82 @@ const nestedMedicationColumns = useMemo(
     discarding ||
     doubleChecking;
 
+  const filters = (
+    <div>
+      <Form fluid className="medication-record-search-form">
+        <MyInput
+          fieldName="patientName"
+          record={searchRecord}
+          setRecord={setSearchRecord}
+          width={180}
+        />
+
+        <MyInput
+          fieldName="orderDateFrom"
+          fieldType="date"
+          record={searchRecord}
+          setRecord={setSearchRecord}
+          width={150}
+        />
+
+        <MyInput
+          fieldName="orderDateTo"
+          fieldType="date"
+          record={searchRecord}
+          setRecord={setSearchRecord}
+          width={150}
+        />
+
+        <MyInput
+          fieldName="activeIngredientId"
+          fieldType="select"
+          record={searchRecord}
+          setRecord={setSearchRecord}
+          selectData={activeIngredients}
+          selectDataLabel="name"
+          selectDataValue="id"
+          width={220}
+        />
+
+        <MyButton
+          appearance="primary"
+          onClick={handleSearch}
+        >
+          <Translate>SEARCH</Translate>
+        </MyButton>
+        <MyButton
+          appearance="subtle"
+          onClick={() => {
+            setSearchRecord({
+              patientName: '',
+              activeIngredientId: null,
+              orderDateFrom: weekAgo,
+              orderDateTo: today
+            });
+
+            setAppliedFilters({
+              orderDateFrom: weekAgo,
+              orderDateTo: today
+            });
+
+            setOrderedParams(prev => ({
+              ...prev,
+              page: 0
+            }));
+          }}
+        >
+          <Translate>CLEAR</Translate>
+        </MyButton>
+      </Form>
+    </div>)
+
+
   return (
     <div>
       <div className="medication-record-container-main">
         <SectionContainer
           title="Ordered Medications"
+          action={filters}
           content={
             <MyNestedTable
               enableRowSelection
@@ -1031,9 +860,9 @@ const nestedMedicationColumns = useMemo(
               sortColumn={orderedSortColumn}
               sortType={orderedSortType}
               getNestedTable={(row) => ({
-                  columns: nestedMedicationColumns,
-                  data: row.medications || []
-                })}
+                columns: nestedMedicationColumns,
+                data: row.medications || []
+              })}
             />
           }
         />
@@ -1086,6 +915,6 @@ const nestedMedicationColumns = useMemo(
 
     </div>
   );
-  };
+};
 
 export default MedicationRecord;

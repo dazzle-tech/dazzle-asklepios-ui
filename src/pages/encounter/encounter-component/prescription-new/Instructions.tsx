@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Dropdown, Row } from 'rsuite';
+import { Dropdown } from 'rsuite';
 import './styles.less';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -111,10 +111,8 @@ const Instructions = ({
       {/* -------- Custom Instruction -------- */}
       {selectedOption === OPTION_CUSTOM && (
         <div className="instructions-inline-row">
-          <Row gutter={16}>
-            <Col md={6}>
               <MyInput
-                width={95}
+                width={"11vw"}
                 fieldType="number"
                 fieldName="dose"
                 fieldLabel="Dose"
@@ -122,16 +120,14 @@ const Instructions = ({
                 setRecord={setCustomeinst}
                 required={true}
               />
-            </Col>
 
-            <Col md={6}>
               <MyInput
-                width={95}
+                width={"11vw"}
                 fieldType="select"
                 fieldLabel="Unit"
                 selectData={unitLovQueryResponse?.object ?? []}
                  selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                disableByField='isValid'
 
                 selectDataValue="key"
                 fieldName="unit"
@@ -139,11 +135,8 @@ const Instructions = ({
                 setRecord={setCustomeinst}
                 required={true}
               />
-            </Col>
-
-            <Col md={6}>
               <MyInput
-                width={95}
+                width={"11vw"}
                 fieldType="select"
                 fieldLabel="Frequency"
                 selectData={frequencyLovQueryResponse?.object ?? []}
@@ -156,11 +149,9 @@ const Instructions = ({
                 setRecord={setCustomeinst}
                 required={true}
               />
-            </Col>
 
-            <Col md={6}>
               <MyInput
-                width={95}
+                width={"11vw"}
                 fieldType="select"
                 fieldLabel="ROA"
                 selectData={roaOptions}
@@ -171,8 +162,6 @@ const Instructions = ({
                 setRecord={setCustomeinst}
                 required={true}
               />
-            </Col>
-          </Row>
         </div>
       )}
 

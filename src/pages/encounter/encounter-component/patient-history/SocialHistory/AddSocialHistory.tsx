@@ -468,30 +468,28 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           {record?.substanceUse && (
             <>
               <MyInput
-                width={'100%'}
+                width={'15vw'}
                 column
                 fieldLabel="Route"
                 fieldName="route"
                 fieldType="select"
                 selectData={routeLov?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                selectDataLabel="lovDisplayVale"
+                disableByField='isValid'
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
               />
 
               <MyInput
-                width={'100%'}
+                width={'15vw'}
                 column
                 fieldLabel="Frequency"
                 fieldName="frequency"
                 fieldType="select"
                 selectData={freqLov?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                selectDataLabel="lovDisplayVale"
+                disableByField='isValid'
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -511,7 +509,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       >
         <Form fluid layout="inline" className="fields-container">
           <MyInput
-            width={'100%'}
+            width={'15vw'}
             column
             fieldLabel="Physical limitations"
             fieldName="physicalLimitation"
@@ -527,15 +525,14 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           />
 
           <MyInput
-            width={'100%'}
+            width={'15vw'}
             column
             fieldLabel="Diagnosed eating disorders"
             fieldName="diagnosedEatingDisorders"
             fieldType="select"
             selectData={diagnoseLov?.object ?? []}
-             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+            selectDataLabel="lovDisplayVale"
+            disableByField='isValid'
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
