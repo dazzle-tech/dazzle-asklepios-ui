@@ -210,6 +210,7 @@ React.FC<Props> = ({
     setPayerPage
   ] = useState(0);
   const typeOptions = useEnumOptions('PriceListSetupType');
+  const statusOptions = useEnumOptions('PriceListSetupStatus');
 
   const [
     payerSearch,
@@ -369,7 +370,11 @@ React.FC<Props> = ({
 
         type:
           previous.type ??
-          'CASH',
+          'SELF_PAY',
+
+        status:
+          previous.status ??
+          'ACTIVE',
 
         versionNumber:
           previous
@@ -758,7 +763,11 @@ React.FC<Props> = ({
         currency:
           String(
             priceList.currency
-          ).toUpperCase()
+          ).toUpperCase(),
+
+        status:
+          (priceList.status as SavePriceListSetupRequest['status']) ??
+          'ACTIVE'
       };
 
       try {
@@ -1130,6 +1139,22 @@ React.FC<Props> = ({
         setRecord={
           setPriceList
         }
+      />
+
+      <br />
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Status"
+        fieldType="select"
+        fieldName="status"
+        selectData={statusOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={priceList}
+        setRecord={setPriceList}
+        searchable={false}
       />
 
       <br />

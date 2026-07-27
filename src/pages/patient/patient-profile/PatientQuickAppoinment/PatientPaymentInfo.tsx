@@ -49,7 +49,8 @@ import {
   useCreateAdvancePaymentMutation,
   useGetEncounterBillingSummaryQuery,
   useGetWaseelCoverageQuery,
-  usePrepareDefaultServicesMutation
+  usePrepareDefaultServicesMutation,
+  usePreviewDefaultServicesPricingMutation
 } from '@/services/billing/billingTransactionService';
 
 import {
@@ -82,6 +83,7 @@ import {
   formatBillingItemType,
   getUnpaidSummaryItems,
   getLineDueAmount,
+  hasCalculatedSummary,
   isDefaultServicePayable,
   isEncounterFullyPaid,
   resolveBillingItemName,
@@ -106,6 +108,10 @@ type DefaultServiceRow = {
   priceListItemCode?: string | null;
   patientShare?: number | null;
   insuranceShare?: number | null;
+  previewGrossAmount?: number | null;
+  previewDiscountAmount?: number | null;
+  previewTaxAmount?: number | null;
+  previewNetAmount?: number | null;
 };
 
 type BillingFormState = {
@@ -686,6 +692,18 @@ const PatientPaymentInfo =
         }
       ] =
         usePrepareDefaultServicesMutation();
+
+      const [
+        previewDefaultServicesPricing
+      ] =
+        usePreviewDefaultServicesPricingMutation();
+
+      const pricingPreviewTimerRef =
+        useRef<
+          ReturnType<
+            typeof setTimeout
+          > | null
+        >(null);
 
       const [
         createAdvancePayment,
@@ -1300,6 +1318,204 @@ const PatientPaymentInfo =
             summary
           ]
         );
+
+      useEffect(() => {
+        if (
+          pricingPreviewTimerRef.current
+        ) {
+          clearTimeout(
+            pricingPreviewTimerRef.current
+          );
+        }
+
+        if (
+          !encounterId ||
+          !patientId ||
+          !facilityId ||
+          hasCalculatedSummary(
+            summary
+          )
+        ) {
+          return;
+        }
+
+        if (
+          isInsurance &&
+          !formState.patientInsuranceId
+        ) {
+          setDefaultServiceRows(
+            previous =>
+              previous.map(
+                row => ({
+                  ...row,
+                  calculatedPrice:
+                    null,
+                  priceSource:
+                    null,
+                  priceListItemCode:
+                    null,
+                  previewGrossAmount:
+                    null,
+                  previewDiscountAmount:
+                    null,
+                  previewTaxAmount:
+                    null,
+                  previewNetAmount:
+                    null
+                })
+              )
+          );
+          return;
+        }
+
+        const rowsToPrice =
+          payableSelectedRows.length >
+          0
+            ? payableSelectedRows
+            : selectedRows;
+
+        if (
+          rowsToPrice.length ===
+          0
+        ) {
+          return;
+        }
+
+        pricingPreviewTimerRef.current =
+          setTimeout(() => {
+            void (async () => {
+              try {
+                const result =
+                  await previewDefaultServicesPricing(
+                    {
+                      encounterId,
+                      body: {
+                        patientId,
+                        facilityId,
+                        currency:
+                          (summary.currency ??
+                            facilityCurrency) as PrepareDefaultServicesRequest['currency'],
+                        coverageType:
+                          formState.coverageType,
+                        patientInsuranceId:
+                          isInsurance
+                            ? toNumber(
+                                formState.patientInsuranceId
+                              )
+                            : null,
+                        items:
+                          rowsToPrice.map(
+                            (
+                              row,
+                              index
+                            ) => ({
+                              serviceId:
+                                row.serviceId,
+                              quantity:
+                                row.quantity,
+                              sequence:
+                                index +
+                                1,
+                              isExempted:
+                                row.isExempted
+                            })
+                          )
+                      }
+                    }
+                  ).unwrap();
+
+                const pricedByServiceId =
+                  new Map(
+                    result.items.map(
+                      item => [
+                        item.serviceId,
+                        item
+                      ]
+                    )
+                  );
+
+                setDefaultServiceRows(
+                  previous =>
+                    previous.map(
+                      row => {
+                        const priced =
+                          pricedByServiceId.get(
+                            row.serviceId
+                          );
+
+                        if (
+                          !priced
+                        ) {
+                          return {
+                            ...row,
+                            calculatedPrice:
+                              null,
+                            priceSource:
+                              null,
+                            priceListItemCode:
+                              null,
+                            previewGrossAmount:
+                              null,
+                            previewDiscountAmount:
+                              null,
+                            previewTaxAmount:
+                              null,
+                            previewNetAmount:
+                              null
+                          };
+                        }
+
+                        return {
+                          ...row,
+                          setupPrice:
+                            priced.setupUnitPrice ??
+                            row.setupPrice,
+                          calculatedPrice:
+                            priced.unitPrice,
+                          priceSource:
+                            priced.priceSource,
+                          priceListItemCode:
+                            priced.priceListItemCode,
+                          previewGrossAmount:
+                            priced.grossAmount,
+                          previewDiscountAmount:
+                            priced.discountAmount,
+                          previewTaxAmount:
+                            priced.taxAmount,
+                          previewNetAmount:
+                            priced.netAmount
+                        };
+                      }
+                    )
+                );
+              } catch {
+                // Keep setup prices when price-list preview is unavailable.
+              }
+            })();
+          }, 400);
+
+        return () => {
+          if (
+            pricingPreviewTimerRef.current
+          ) {
+            clearTimeout(
+              pricingPreviewTimerRef.current
+            );
+          }
+        };
+      }, [
+        encounterId,
+        patientId,
+        facilityId,
+        summary,
+        facilityCurrency,
+        formState.coverageType,
+        formState.patientInsuranceId,
+        isInsurance,
+        payableSelectedRows,
+        selectedRows,
+        previewDefaultServicesPricing
+      ]);
 
       const unpaidSummaryItems =
         unpaidSummaryItemsEarly;

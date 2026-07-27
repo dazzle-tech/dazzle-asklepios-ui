@@ -3579,6 +3579,11 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   otherPayerAllocatedAmount: 0,
   otherPayerOutstandingAmount: 0,
   wallet: newBillingWalletSummary,
+  invoiceId: null,
+  invoiceNumber: null,
+  invoiceTotalAmount: 0,
+  invoicePaidAmount: 0,
+  invoiceOutstandingAmount: 0,
   items: []
 };
 

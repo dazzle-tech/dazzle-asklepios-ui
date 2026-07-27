@@ -294,7 +294,10 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
     {
       key: 'itemDescription',
       title: 'Service',
-      render: (row: InvoiceLineItem) => row.itemDescription ?? '-'
+      render: (row: InvoiceLineItem) =>
+        row.lineSource === 'DEBIT_NOTE'
+          ? `[Debit note] ${row.itemDescription ?? '-'}`
+          : row.itemDescription ?? '-'
     },
     { key: 'quantity', title: 'Qty' },
     {
@@ -568,10 +571,12 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
           {kind === 'CREDIT_NOTE' ? (
             <>
-              <Text weight="bold">Adjust existing invoice services</Text>
+              <Text weight="bold">Select lines to credit</Text>
               {creditableLines.length === 0 ? (
                 <Text size="sm" muted>
-                  All invoice services have already been fully credited or removed.
+                  {Number(summary?.outstandingBalance ?? 0) > 0
+                    ? 'No creditable lines were returned. If a debit note added the outstanding balance, restart the patient service and refresh — or use Pay invoice balance on the Invoice Accounts tab.'
+                    : 'All invoice services have already been fully credited or removed.'}
                 </Text>
               ) : (
                 <MyTable

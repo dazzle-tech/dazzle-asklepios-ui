@@ -430,7 +430,7 @@ const Accounting: React.FC = () => {
       )
     },
     {
-      title: 'Print Receipt(s)',
+      title: 'Issued Documents',
       content: <Receipt patient={patient} />
     }
   ];

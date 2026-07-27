@@ -232,6 +232,33 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    activatePriceListSetup: builder.mutation<
+      PriceListSetup,
+      { id: Id }
+    >({
+      query: ({ id }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(id)
+        )}/activate`,
+        method: 'PUT'
+      }),
+
+      invalidatesTags: (
+        _result,
+        _error,
+        { id }
+      ) => [
+        {
+          type: 'PriceListSetup',
+          id
+        },
+        {
+          type: 'PriceListSetup',
+          id: 'LIST'
+        }
+      ]
+    }),
+
     deletePriceListSetup: builder.mutation<
       void,
       { id: Id }
@@ -486,6 +513,7 @@ export const {
 
   useAddPriceListSetupMutation,
   useUpdatePriceListSetupMutation,
+  useActivatePriceListSetupMutation,
   useDeletePriceListSetupMutation,
 
   useGetPriceListSetupItemsQuery,

@@ -5,6 +5,7 @@ import { faPrint } from '@fortawesome/free-solid-svg-icons';
 
 import MyButton from '@/components/MyButton/MyButton';
 import type { PaymentReceiptData } from './paymentPreviewUtils';
+import { markInvoiceAsPrinted } from '@/pages/billing-module/invoices/invoicePrintVersion';
 
 type PaymentReceiptModalProps = {
   open: boolean;
@@ -101,6 +102,10 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
     };
 
     iframe.contentWindow.onafterprint = cleanup;
+
+    if (receipt?.receiptNumber) {
+      markInvoiceAsPrinted(receipt.receiptNumber);
+    }
 
     iframe.contentWindow.focus();
     iframe.contentWindow.print();

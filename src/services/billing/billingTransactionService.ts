@@ -20,6 +20,8 @@ import type {
   EncounterBillingSummary,
   PrepareDefaultServicesRequest,
   PrepareDefaultServicesResult,
+  PreviewDefaultServicesPricingRequest,
+  PreviewDefaultServicesPricingResult,
   WaseelCoverageDetails
 } from '@/types/model-types-new';
 
@@ -40,7 +42,8 @@ export const billingTransactionService =
       'BillingPayment',
       'BillingWallet',
       'BillingCheckout',
-      'BillingRefund'
+      'BillingRefund',
+      'PatientFinancialInvoices'
     ],
 
     endpoints:
@@ -166,6 +169,29 @@ export const billingTransactionService =
             ]
           }),
 
+        previewDefaultServicesPricing:
+          builder.mutation<
+            PreviewDefaultServicesPricingResult,
+            {
+              encounterId: BillingId;
+              body: PreviewDefaultServicesPricingRequest;
+            }
+          >({
+            query: ({
+              encounterId,
+              body
+            }) => ({
+              url:
+                `/api/patient/billing/encounters/${encodeURIComponent(
+                  String(encounterId)
+                )}/preview-default-services-pricing`,
+
+              method: 'POST',
+
+              body
+            })
+          }),
+
         createAdvancePayment:
           builder.mutation<
             BillingPaymentResult,
@@ -189,6 +215,7 @@ export const billingTransactionService =
             ) => [
               'BillingPayment',
               'BillingWallet',
+              'PatientFinancialInvoices',
               {
                 type:
                   'EncounterBillingSummary',
@@ -328,6 +355,7 @@ export const {
   useGetWaseelCoverageQuery,
 
   usePrepareDefaultServicesMutation,
+  usePreviewDefaultServicesPricingMutation,
 
   useCreateAdvancePaymentMutation,
 

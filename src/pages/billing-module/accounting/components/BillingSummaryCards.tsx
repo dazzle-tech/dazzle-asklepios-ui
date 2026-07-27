@@ -40,6 +40,9 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
 
     if (remainingToPay > 0) {
       const parts = [
+        Number(summary.invoiceOutstandingAmount ?? 0) > 0 && summary.invoiceNumber
+          ? `Invoice ${summary.invoiceNumber}`
+          : null,
         `Patient share ${formatMoney(patientShare, resolvedCurrency)}`,
         coveredAmount > 0
           ? `${formatMoney(coveredAmount, resolvedCurrency)} covered`
@@ -51,14 +54,24 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
       return `${parts.join(' · ')} · per encounter`;
     }
 
+    if (Number(summary.invoiceOutstandingAmount ?? 0) <= 0 && summary.invoiceNumber) {
+      return `Invoice ${summary.invoiceNumber} settled · patient share ${formatMoney(patientShare, resolvedCurrency)} collected at billing`;
+    }
+
     return `Patient share ${formatMoney(patientShare, resolvedCurrency)} settled for this encounter · account balance at invoice`;
   })();
 
+  const invoiceTotal = Number(summary.invoiceTotalAmount ?? 0);
+  const chargeNet = Number(summary.netAmount ?? 0);
+  const hasInvoice = invoiceTotal > 0 && Boolean(summary.invoiceNumber);
+
   const cards = [
     {
-      label: 'Net charges',
-      value: formatMoney(summary.netAmount, resolvedCurrency),
-      hint: 'This encounter'
+      label: hasInvoice ? 'Invoice total' : 'Net charges',
+      value: formatMoney(hasInvoice ? invoiceTotal : chargeNet, resolvedCurrency),
+      hint: hasInvoice
+        ? `Invoice ${summary.invoiceNumber} · incl. tax & discount (charge net ${formatMoney(chargeNet, resolvedCurrency)})`
+        : 'This encounter'
     },
     {
       label: 'Remaining to pay',
