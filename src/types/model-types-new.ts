@@ -4974,6 +4974,29 @@ export interface OCRParsingResponseDTO {
    sex : string | null, // change it later
    placeOfBirth: string;
 }
+
+export interface TimelineEvent {
+  date: string;
+  event_type: string;
+  title: string;
+  description: string;
+  clinical_importance: string;
+  source: string;
+}
+
+export interface ProcessingMetadata {
+  model: string;
+  timestamp: string;
+  input_fields_count: number;
+  timeline_event_count: number;
+}
+
+export interface TimelineResponse {
+  request_id: string;
+  timeline: TimelineEvent[];
+  summary: string;
+  processing_metadata: ProcessingMetadata;
+}
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
 export type WhatsAppLanguageCode = string;
