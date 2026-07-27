@@ -159,7 +159,7 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment',
-    , isDefaultMedicalSheet: true 
+    isDefaultMedicalSheet: true 
   },
 
   { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
