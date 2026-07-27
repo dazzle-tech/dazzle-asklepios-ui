@@ -63,6 +63,7 @@ import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { emailSettingsService } from './services/system-configurations/emailSettingsService';
+import { whatsappSettingsService } from './services/system-configurations/whatsappSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -230,7 +231,7 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
-
+import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -278,6 +279,7 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
@@ -354,6 +356,7 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
     [emailSettingsService.reducerPath]: emailSettingsService.reducer,
+    [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
@@ -637,6 +640,7 @@ export const store = configureStore({
         departmentService.middleware,
         organizationDefinitionService.middleware,
         emailSettingsService.middleware,
+        whatsappSettingsService.middleware,
         roleService.middleware,
         userRoleService.middleware,
         enumService.middleware,
@@ -782,7 +786,8 @@ export const store = configureStore({
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        systemConfigService.middleware
+        systemConfigService.middleware,
+        ocrParsingService.middleware
       ) as any
 });
 

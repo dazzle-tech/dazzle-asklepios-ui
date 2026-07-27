@@ -3,25 +3,35 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
+import { Button } from 'rsuite';
+import { useSummarizeMutation } from '@/services/ai-services/clinicalSummaryService';
 import './styles.less';
+import MyButton from '@/components/MyButton/MyButton';
 
 type Props = {
-  patient: any;
-  encounter: any;
-  edit?: boolean;
+  patientId?: number;
+  encounterId?: number;
   title?: any;
-  button?: any;
-  lang?: string;
+  
 };
 
 const PatientHistorySummary: React.FC<Props> = ({
-  patient,
-  encounter,
-  edit = undefined,
-  title = null,
-  button = null,
-  lang = 'en'
+  patientId,
+  encounterId,
+  title = null
 }) => {
+  const [getClinicalSummary, { data: summaryData, isLoading, error }] =
+    useSummarizeMutation();
+
+  const handleGenerateSummary = () => {
+    if (!patientId || !encounterId) return;
+
+    getClinicalSummary({
+      patientId,
+      encounterId
+    });
+  };
+
   return (
     <div className="medical-container-div">
       <SectionContainer
@@ -34,13 +44,33 @@ const PatientHistorySummary: React.FC<Props> = ({
             <span>{title || 'Patient History Summary'}</span>
           </div>
         }
-        action={<div>{button && <div>{button}</div>}</div>}
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            
+
+            <MyButton
+              loading={isLoading}
+              disabled={!patientId || !encounterId || isLoading}
+              onClick={handleGenerateSummary}
+            >
+              Generate Summary
+            </MyButton>
+          </div>
+        }
         content={
           <div className="medical-table-div2">
             <div className="patient-history-card">
               <div className="patient-history-content">
                 <div className="patient-history-text">
-                  <p style={{ whiteSpace: 'pre-line' }}>No summary available</p>
+                  {error && (
+                    <p style={{ color: 'red' }}>
+                      Unable to generate clinical summary
+                    </p>
+                  )}
+
+                  <p style={{ whiteSpace: 'pre-line' }}>
+                    {summaryData?.ClinicalSummary || 'No summary available'}
+                  </p>
                 </div>
               </div>
             </div>

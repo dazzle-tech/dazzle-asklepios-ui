@@ -205,7 +205,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   // Effects
   useEffect(() => {
     // TODO update status to be a enum value
-    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'CLOSED' || encounter?.discharge) {
+    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'COMPLETED' || encounter?.discharge) {
       setIsEncounterStatusClosed(true);
     }
   }, [encounter?.status, encounter?.encounterStatus, encounter?.discharge]);

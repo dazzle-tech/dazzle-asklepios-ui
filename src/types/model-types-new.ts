@@ -2252,6 +2252,7 @@ export interface PatientEncounter {
   notes?: string | null;
 
   status: string;
+  encounterStatus: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
@@ -2417,6 +2418,7 @@ export interface PatientEncounter {
   encounterReason: string;
   priorityLevel: string;
   status: string;
+  encounterStatus: string;
 
   followUpEncounter?: {
     id: number;
@@ -2707,6 +2709,7 @@ export interface PatientEncounter {
   encounterDate?: Date | null;
 
   status: string;
+    encounterStatus: string;
 
   chiefComplaint?: string | null;
 
@@ -3006,6 +3009,64 @@ export interface EmailSettingsResponseVM {
   tls: boolean;
   emailPrefix?: string | null;
   emailFooter?: string | null;
+}
+
+/** Form model aligned with WhatsAppSettings entity. */
+export interface WhatsAppSettings {
+  id?: number;
+  /** @NotNull, max 255 */
+  name?: string;
+  /** @NotNull, max 500 */
+  description?: string;
+  /** @NotNull */
+  apiVersion?: string;
+  /** @NotNull */
+  phoneNumberId?: string;
+  /** @NotNull */
+  whatsappBusinessAccountId?: string;
+  /** @NotNull */
+  accessToken?: string;
+  /** @NotNull */
+  verifyToken?: string;
+  /** optional, max 500 */
+  webhookUrl?: string | null;
+  /** @NotNull */
+  enabled?: boolean;
+}
+
+export interface WhatsAppSettingsCreateDTO {
+  name: string;
+  description: string;
+  apiVersion: string;
+  phoneNumberId: string;
+  whatsappBusinessAccountId: string;
+  accessToken: string;
+  verifyToken: string;
+  webhookUrl?: string | null;
+  enabled: boolean;
+}
+
+export interface WhatsAppSettingsUpdateDTO extends WhatsAppSettingsCreateDTO {
+  id: number;
+}
+
+export interface WhatsAppSettingsTestConnectionDTO {
+  apiVersion: string;
+  phoneNumberId: string;
+  accessToken: string;
+}
+
+export interface WhatsAppSettingsResponseVM {
+  id: number;
+  name: string;
+  description: string;
+  apiVersion: string;
+  phoneNumberId: string;
+  whatsappBusinessAccountId: string;
+  accessToken: string;
+  verifyToken: string;
+  webhookUrl?: string | null;
+  enabled: boolean;
 }
 
 export interface OrganizationWorkingDay {
@@ -4903,7 +4964,39 @@ export interface PatientProblem {
   lastModifiedDate?: string | Date | null;
 }
 
+export interface OCRParsingResponseDTO {
+   type: string | null;
+   documentNumber: number | null;
+   familyName: string | null;
+   givenNames: string | null;
+   nationality: string | null,
+   dateOfBirth: Date | null,  // change it later
+   sex : string | null, // change it later
+   placeOfBirth: string;
+}
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
+
+export type WhatsAppLanguageCode = string;
+
+export type WhatsAppTemplateCategory = string;
+
+export type WhatsAppHeaderType = string;
+
+export type WhatsAppButtonType = string;
+
+export interface WhatsAppButton {
+  type?: WhatsAppButtonType | null;
+  text?: string | null;
+  url?: string | null;
+  phoneNumber?: string | null;
+  couponCode?: string | null;
+  flowId?: string | null;
+}
+
+export interface WhatsAppTemplateParameter {
+  parameterName?: string | null;
+  exampleValue?: string | null;
+}
 
 export type NotificationModule = string;
 
@@ -4979,6 +5072,16 @@ export interface NotificationTemplateResponseVM {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
+  whatsappMetaTemplateId?: string | null;
+  whatsappTemplateStatus?: string | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappTemplateVersion?: number | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
   isActive?: boolean;
 }
 
@@ -4993,6 +5096,13 @@ export interface NotificationTemplateCreateDTO {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
   isActive?: boolean;
 }
 
@@ -5007,6 +5117,13 @@ export interface NotificationTemplateUpdateDTO {
   ccRecipientRule?: string | null;
   bccRecipientRule?: string | null;
   phoneRecipientRule?: string | null;
+  whatsappTemplateName?: string | null;
+  whatsappLanguageCode?: WhatsAppLanguageCode | null;
+  whatsappParameters?: WhatsAppTemplateParameter[] | null;
+  whatsappTemplateCategory?: WhatsAppTemplateCategory | null;
+  whatsappMetaTemplateFooter?: string | null;
+  whatsappMetaTemplateButtons?: WhatsAppButton[] | null;
+  whatsappHeaderType?: WhatsAppHeaderType | null;
 }
 
 export type NotificationChannel = NotificationTemplateChannel;

@@ -1954,6 +1954,19 @@ export const newEmailSettings: modelTypes.EmailSettings = {
   emailFooter: '',
 };
 
+export const newWhatsAppSettings: modelTypes.WhatsAppSettings = {
+  id: undefined,
+  name: '',
+  description: '',
+  apiVersion: 'v21.0',
+  phoneNumberId: '',
+  whatsappBusinessAccountId: '',
+  accessToken: '',
+  verifyToken: '',
+  webhookUrl: '',
+  enabled: false,
+};
+
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
   id: undefined,
   organizationDefinitionId: 0,
@@ -3152,6 +3165,17 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedDate: null
 };
 
+export const newOCRParsingResponseDTO: modelTypes.OCRParsingResponseDTO = {
+  type: '',
+   documentNumber: undefined,
+   familyName: '',
+   givenNames: '',
+   nationality: '',
+   dateOfBirth: null, // change it later
+   sex : '',// change it later
+   placeOfBirth: ''
+}
+
 export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
   code: '',
   name: '',
@@ -3185,6 +3209,20 @@ export const newNotificationHeaderUpdateDTO: modelTypes.NotificationHeaderUpdate
   isActive: true,
 };
 
+export const newWhatsAppButton: modelTypes.WhatsAppButton = {
+  type: '',
+  text: '',
+  url: '',
+  phoneNumber: '',
+  couponCode: '',
+  flowId: '',
+};
+
+export const newWhatsAppTemplateParameter: modelTypes.WhatsAppTemplateParameter = {
+  parameterName: '',
+  exampleValue: '',
+};
+
 export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
   notificationHeaderId: 0,
   channel: 'EMAIL',
@@ -3196,6 +3234,16 @@ export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateR
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappMetaTemplateId: '',
+  whatsappTemplateStatus: '',
+  whatsappTemplateCategory: '',
+  whatsappTemplateVersion: undefined,
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
   isActive: true,
 };
 
@@ -3210,6 +3258,13 @@ export const newNotificationTemplateCreateDTO: modelTypes.NotificationTemplateCr
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappTemplateCategory: '',
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
   isActive: true,
 };
 
@@ -3224,6 +3279,13 @@ export const newNotificationTemplateUpdateDTO: modelTypes.NotificationTemplateUp
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappTemplateCategory: '',
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
 };
 
 export const newNotificationResponseVM: modelTypes.NotificationResponseVM = {
