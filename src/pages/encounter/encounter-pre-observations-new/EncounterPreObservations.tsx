@@ -63,7 +63,7 @@ const NurseStation = ({
     isFromEMR ||
     viewMode === 'readOnly' ||
     location.state?.edit ||
-    localEncounter?.status === 'CLOSED';
+    localEncounter?.status === 'COMPLETED';
 
   const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 

@@ -31,6 +31,7 @@ import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const EMPTY_ENCOUNTERS: any[] = [];
 
@@ -235,11 +236,54 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         title: <Translate>Priority</Translate>,
         render: (row: any) => formatEnumString(row.priorityLevel)
       },
-      {
-        key: 'status',
-        title: <Translate>Status</Translate>,
-        render: (row: any) => formatEnumString(row.status)
-      },
+        {
+      key: 'status',
+      title: 'STATUS',
+      render: (row: any) => {
+        const statusUpper = String(row?.status ?? '').toUpperCase();
+
+        const statusColorMap: Record<string, string> = {
+          NEW: '#0d6efd',
+          ONGOING: '#198754',
+          CANCELED: '#ffc107',
+          CANCELLED: '#ffc107',
+          COMPLETED: '#6c757d',
+          DISCHARGED: '#adb5bd',
+          PENDING_PAYMENT: '#fd7e14',
+          ASSIGNED_TO_BED: '#76bac8',
+        };
+
+        return (
+          <MyBadgeStatus
+            color={statusColorMap[statusUpper] ?? '#969fb0'}
+            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
+          />
+        );
+      }
+    },
+        {
+          key :'encounterStatus',
+          title: 'ENCOUNTER STATUS',
+          render: (row: any) => {
+            const statusUpper = String(row?.encounterStatus ?? '').toUpperCase();
+            const statusColorMap: Record<string, string> = {
+              OPEN: '#0d6efd',
+              IN_PROGRESS: '#198754',
+        
+              CANCELLED: '#ffc107',
+              CLOSED: '#6c757d'
+            };  
+    
+            return (
+              <MyBadgeStatus
+                color={statusColorMap[statusUpper] ?? '#969fb0'}
+                contant={formatEnumString(row?.encounterStatus) ?? row?.encounterStatus ?? ''}
+              />
+            );
+          }
+    
+    
+        },
       {
         key: 'actions',
         title: '',

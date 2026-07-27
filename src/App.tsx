@@ -185,6 +185,7 @@ const UsersNew = lazy (() => import ( './pages/system-configurations/users-setup
 
 import 'survey-core/survey-core.min.css';
 import 'survey-creator-core/survey-creator-core.min.css';
+
 const FormTemplatesUseScreen = lazy (() => import ( './components/FormsTemplate/FormTemplatesUseScreen'));
 const MyConsultations = lazy (() => import ( './components/MyConsultations/MyConsultations'));
 const CallOverlay = lazy (() => import ( './components/Overlay/CallOverlay'));
@@ -226,12 +227,14 @@ const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
 const OrganizationDefinition = lazy (() => import ( './pages/system-configurations/organization-definition'));
 const EmailSettings = lazy (() => import ( './pages/system-configurations/email-settings'));
+const WhatsAppSettings = lazy (() => import ( './pages/system-configurations/whatsapp-settings'));
 const OrganizationHolidays = lazy (() => import ( './pages/system-configurations/organization-holidays'));
 const NotificationRule = lazy (() => import ( './pages/notification-management/notification-rule'));
 const EmailNotification = lazy (() => import ( './pages/notification-management/email-notification'));
 const SmsNotification = lazy (() => import ( './pages/notification-management/sms-notification'));
 const InAppNotification = lazy (() => import ( './pages/notification-management/in-app-notification'));
 const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
+
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
@@ -631,6 +634,7 @@ const dispatch = useAppDispatch();
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="email-settings" element={<EmailSettings />} />
+              <Route path="whatsapp-settings" element={<WhatsAppSettings />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="notification-rule" element={<NotificationRule />} />
               <Route path="email-notification" element={<EmailNotification />} />
