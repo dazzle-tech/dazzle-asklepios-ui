@@ -335,6 +335,7 @@ const Details = ({
       currentDepartment: true,
       notes: null,
       extraDocumentation: null,
+      result: null,
       scheduledDateTime: null
     });
   };
@@ -414,7 +415,8 @@ const Details = ({
           ? new Date(procedure.scheduledDateTime).toISOString()
           : null,
         notes: procedure.notes,
-        extraDocumentation: procedure.extraDocumentation
+        extraDocumentation: procedure.extraDocumentation,
+        result: procedure.result
       };
 
       if (procedure?.id) {
@@ -436,7 +438,8 @@ const Details = ({
             ? new Date(procedure.scheduledDateTime).toISOString()
             : null,
           notes: procedure.notes,
-          extraDocumentation: procedure.extraDocumentation
+          extraDocumentation: procedure.extraDocumentation,
+          result: procedure.result
         }).unwrap();
       } else {
         await createProcedure(procedureData).unwrap();
@@ -712,6 +715,16 @@ const Details = ({
                           disabled={editing}
                           fieldLabel="Extra Documentation"
                           fieldName="extraDocumentation"
+                          fieldType="textarea"
+                          record={procedure}
+                          setRecord={setProcedure}
+                        />
+
+                        <MyInput
+                          width="100%"
+                          disabled={editing}
+                          fieldLabel="Result"
+                          fieldName="result"
                           fieldType="textarea"
                           record={procedure}
                           setRecord={setProcedure}
