@@ -385,7 +385,7 @@ const Result = forwardRef<any, Props>(
         .filter(
           row =>
             selectedResultIds.includes(row.id) &&
-            row.processingStatus === 'EXAM_DONE'
+            row.processingStatus === 'RESULT_READY'
         )
         .map(row => row.id);
 
@@ -501,7 +501,7 @@ const Result = forwardRef<any, Props>(
     };
 
     const toggleSelectRow = (row: any, checked: boolean) => {
-      if (row.processingStatus !== 'EXAM_DONE') return;
+      if (row.processingStatus !== 'RESULT_READY') return;
 
       setSelectedResultIds(prev =>
         checked
@@ -533,7 +533,7 @@ const Result = forwardRef<any, Props>(
         align: 'center',
         width: 60,
         render: (row: any) => {
-          const disabled = row.processingStatus !== 'EXAM_DONE';
+          const disabled = row.processingStatus !== 'RESULT_READY';
           return (
             <Checkbox
               checked={selectedResultIds.includes(row.id)}
@@ -737,9 +737,9 @@ const Result = forwardRef<any, Props>(
         title: <Translate>ACTION</Translate>,
         align: 'center',
         render: (row: any) => {
-          const canEdit = row.processingStatus === 'EXAM_DONE';
-          const canApprove = row.processingStatus === 'EXAM_DONE';
-          const canReject = row.processingStatus === 'EXAM_DONE';
+          const canEdit = row.processingStatus === 'RESULT_READY';
+          const canApprove = row.processingStatus === 'RESULT_READY';
+          const canReject = row.processingStatus === 'RESULT_READY';
           const canPrint = row.processingStatus === 'RESULT_APPROVED';
 
           return (
