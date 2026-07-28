@@ -231,6 +231,7 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
 const rtkDispatchLoopGuard: Middleware = () => {
@@ -586,7 +587,7 @@ export const store = configureStore({
   
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
-
+  [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -790,6 +791,7 @@ export const store = configureStore({
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
+        labInterpretationService.middleware,
         ocrParsingService.middleware
       ) as any
 });
