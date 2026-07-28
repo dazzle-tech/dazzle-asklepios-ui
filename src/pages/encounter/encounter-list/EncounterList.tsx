@@ -56,6 +56,7 @@ import {
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 import VisitReportPrintButton from './VisitReportPrintButton';
+import DoctorAppoitmentsView from './appointments';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -236,6 +237,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
+  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -252,7 +254,7 @@ const EncounterList = () => {
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
   const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -262,7 +264,8 @@ const EncounterList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -534,7 +537,7 @@ const EncounterList = () => {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        edit: encounterData?.status?.toUpperCase() === 'COMPLETED',
         fromPage: 'EncounterList'
       }
     });
@@ -806,7 +809,7 @@ const EncounterList = () => {
     },
     {
       key: 'status',
-      title: 'STATUS',
+      title: 'TREATMENT STATUS',
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const statusColorMap: Record<string, string> = {
@@ -814,7 +817,7 @@ const EncounterList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -826,6 +829,7 @@ const EncounterList = () => {
         );
       }
     },
+    
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
@@ -1021,9 +1025,9 @@ const EncounterList = () => {
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}
@@ -1034,6 +1038,7 @@ const EncounterList = () => {
           />
         </Form>
       </div>
+      
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1221,6 +1226,9 @@ const EncounterList = () => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
+          <div style={{display: 'flex', justifyContent:'end'}}>
+          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          </div>
           <MyTable
             filters={filters()}
             height={600}
@@ -1308,6 +1316,12 @@ const EncounterList = () => {
           />
 
         </Panel>
+        <DoctorAppoitmentsView
+         open={openDoctorAppointments}
+         setOpen={setOpenDoctorAppointments}
+         facilityId={selectedDepartment?.facilityId}
+         departmentId={departmentId}
+        />
       </div>
     </>
   );

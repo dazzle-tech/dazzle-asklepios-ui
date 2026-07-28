@@ -735,7 +735,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         width: 160,
         align: 'center',
         render: row => {
-          const canApprove = row.processingStatus === 'RESULT_READY';
+          const canApprove = row.processingStatus === 'EXAM_DONE';
 
           const canSecondApprove = row.processingStatus === 'RESULT_APPROVED';
 

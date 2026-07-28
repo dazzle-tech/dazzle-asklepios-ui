@@ -39,6 +39,8 @@ export const userService = createApi({
         return `/api/admin/users/admins/active${queryString ? `?${queryString}` : ''}`;
       },
     }),
+
+
     getUsersBasic: builder.query({
       query: ({
         page = 0,
@@ -47,8 +49,10 @@ export const userService = createApi({
         login,
         email,
         name,
+        jobRole,
       }) => {
         const params = new URLSearchParams();
+
         params.append('page', String(page));
         params.append('size', String(size));
         params.append('sort', sort);
@@ -56,6 +60,7 @@ export const userService = createApi({
         if (login) params.append('login', login);
         if (email) params.append('email', email);
         if (name) params.append('name', name);
+        if (jobRole) params.append('jobRole', jobRole);
 
         return {
           url: `/api/admin/users-basic?${params.toString()}`,
@@ -67,11 +72,12 @@ export const userService = createApi({
         return {
           data: response ?? [],
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-
           links: headers?.get('Link'),
         };
       },
     }),
+
+    
     addUser: builder.mutation({
       query: user => ({
         url: '/api/admin/users',

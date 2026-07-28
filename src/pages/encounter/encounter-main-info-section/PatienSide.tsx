@@ -1032,7 +1032,6 @@ const patientConditionItems =
               <Translate>Condition</Translate>
             </span>
           </Text>
-          <br />
 
           <div className="container-of-allergies-and-warnings">
             {patientConditionItems.length > 0 ? (
@@ -1083,7 +1082,6 @@ const patientConditionItems =
               <Translate>Current Meds</Translate>
             </span>
           </Text>
-          <br />
 
           <div className="container-of-allergies-and-warnings">
             {currentMeds.length > 0 ? (
@@ -1096,8 +1094,8 @@ const patientConditionItems =
                     placement="top"
                     speaker={
                       <Tooltip>
-                        {med.instructions ? (
-                          <Translate>{med.instructions}</Translate>
+                        {med.dosage || med.unit || med.frequency ? (
+                          `${med.dosage ?? ''} ${med.unit ?? ''} ${med.frequency ?? ''}`.trim()
                         ) : (
                           <Translate>Current Medication</Translate>
                         )}

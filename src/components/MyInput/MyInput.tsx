@@ -1126,7 +1126,7 @@ const MyInput = ({
               disabled={props.disabled}
               name={fieldName}
               accepter={CustomDatePicker}
-              defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
+              value={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
                 const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
                 setRecord?.({ ...record, [fieldName]: dateStr });

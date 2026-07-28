@@ -1,5 +1,38 @@
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
+
+/* ===================== Types ===================== */
+
+export type PatientRecommendationRequest = {
+  patientId: number;
+  encounterId: number;
+  focusAreas?: string[];
+};
+
+export type ClinicalRecommendation = {
+  recommendation_id: string;
+  type: string;
+  title: string;
+  description: string;
+  rationale: string;
+  priority: string;
+  actionable_steps?: string[];
+  evidence_level?: string | null;
+  contraindications?: string[];
+  monitoring_requirements?: string | null;
+  follow_up?: string | null;
+};
+
+export type RecommendationsResponse = {
+  request_id?: string | null;
+  patient_id?: string | null;
+  recommendations: ClinicalRecommendation[];
+  summary: string;
+  total_recommendations: number;
+  priority_breakdown?: Record<string, number>;
+  processing_metadata?: Record<string, any>;
+};
 
 /* ===================== Types ===================== */
 
@@ -11,25 +44,28 @@ export type RecommendationRequest = {
   patient_context: PatientContext;
 };
 
-export type RecommendationsResponse = {
-  request_id?: string | null;
-  summary: string;
-  processing_metadata?: Record<string, any>;
-};
+
 
 /** POST /consultation/specialty */
-export type SpecialtyConsultationRequest = {
-  request_id?: string | null;
+
+export type PatientSpecialtyConsultationRequest = {
+  patientId: number;
+  encounterId: number;
   specialty: string;
-  patient_context?: PatientContext;
-  complaint?: string;
 };
 
+export type ConsultationAction = {
+  title: string;
+  description?: string | null;
+  category?: string | null;
+  priority?: string | null;
+};
 export type SpecialtyConsultationResponse = {
   request_id?: string | null;
   summary: string;
-  processing_metadata?: Record<string, any>;
+  actions: ConsultationAction[];
 };
+
 
 /** POST /recommendations/user-role */
 export type UserRoleRecommendationRequest = {
@@ -53,25 +89,24 @@ export const clinicalRecommendationsService = createApi({
       })
     }),
 
-    /* ---------- Generate Recommendations ---------- */
-    getClinicalRecommendations: builder.mutation<
+ 
+       getClinicalRecommendations: builder.mutation<
       RecommendationsResponse,
-      RecommendationRequest
+      PatientRecommendationRequest
     >({
       query: body => ({
-        url: '/api/ai/v1/clinical-recommendations/recommendations',
+        url: '/api/analytics/recommendations',
         method: 'POST',
         body
       })
     }),
-
     /* ---------- Specialty Consultation ---------- */
     getSpecialtyConsultation: builder.mutation<
       SpecialtyConsultationResponse,
-      SpecialtyConsultationRequest
+      PatientSpecialtyConsultationRequest
     >({
       query: body => ({
-        url: '/api/ai/v1/clinical-recommendations/consultation/specialty',
+        url: '/api/analytics/consultation/specialty',
         method: 'POST',
         body
       })

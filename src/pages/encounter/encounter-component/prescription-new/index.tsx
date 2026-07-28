@@ -190,11 +190,6 @@ const Prescription = (props: Props) => {
   const [deleteMedication] = useDeletePatientPrescriptionMedicationMutation();
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
 
-  /**
-   * مهم:
-   * هون ما بنعمل createOrGet تلقائي.
-   * فقط إذا في Draft موجود بنختاره.
-   */
   useEffect(() => {
     if (preKeyRecord.preKey !== null) return;
 
