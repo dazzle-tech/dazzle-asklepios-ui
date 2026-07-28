@@ -10,6 +10,7 @@ type MyButtonProps = {
   prefixIcon?: React.ElementType | null;
   postfixIcon?: React.ElementType | null;
   children?: React.ReactNode;
+  type?: 'button' | 'submit' | 'reset';
   onClick?: () => void;
   appearance?: Appearance;
   size?: 'lg' | 'md' | 'sm' | 'xs' | string;
@@ -27,6 +28,7 @@ const MyButton: React.FC<MyButtonProps> = ({
   prefixIcon: Prefix = null,
   postfixIcon: Postfix = null,
   children = null,
+  type = 'button',
   onClick = () => {},
   appearance = 'primary',
   size = 'small',
@@ -42,6 +44,7 @@ const MyButton: React.FC<MyButtonProps> = ({
   return (
     <Button
       className={`bt ${size} ${mode}`}
+      type={type}
       appearance={appearance}
       disabled={props.disabled}
       style={{
