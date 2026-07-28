@@ -5,6 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
 import { usePostSickLeaveReportPdfMutation } from '@/services/reports/sickLeaveReportService';
 import { showSystemLoader, hideSystemLoader, notify } from '@/utils/uiReducerActions';
+import { useCreatePatientSickLeaveMutation } from '@/services/patients/patientSickLeaveService';
 
 interface SickLeaveReportModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [postSickLeaveReportPdf] = usePostSickLeaveReportPdfMutation();
+  const [createPatientSickLeave] = useCreatePatientSickLeaveMutation();
   const defaultNotes =
     'The above-named patient is advised to rest and refrain from work duties for the duration specified. Please contact the clinic for further clarification if required.';
 
@@ -75,6 +77,14 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
       dispatch(showSystemLoader());
 
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      await createPatientSickLeave({
+        encounterId,
+        startDate: sickLeaveForm.fromDate,
+        endDate: sickLeaveForm.toDate,
+        notes: sickLeaveForm.notes,
+        language: language.lang,
+      }).unwrap();
 
       const blob = await postSickLeaveReportPdf({
         encounterId,
