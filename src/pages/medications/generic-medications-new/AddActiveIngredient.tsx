@@ -3,7 +3,7 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import MyInput from "@/components/MyInput"; // ← تمت إضافته
 import { newBrandMedicationActiveIngredient } from "@/types/model-types-constructor-new";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Row, Col } from "rsuite";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 
@@ -25,12 +25,21 @@ const AddActiveIngredient = ({ open, setOpen, brandMedication, onSaved }) => {
     ...newBrandMedicationActiveIngredient,
   });
 
+  const [page, setPage] = useState(0);
+  const [activeIngredients, setActiveIngredients] = useState([]);
+
+
   const { data: BrandActiveIngrediant } = useGetActiveIngredientsByBrandQuery(
     brandMedication?.id,
     { skip: !brandMedication?.id }
   );
     
-  const {data:activeIngredientList}=useGetActiveIngredientsQuery({})
+  const { data: activeIngredientList } = useGetActiveIngredientsQuery({
+    page,
+    size: 5,
+    sort: "name,asc",
+  });
+
   const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
 
   const [createActive] = useCreateActiveIngredientMutation();
@@ -122,6 +131,24 @@ const handleDelete = async (id) => {
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
+  useEffect(() => {
+    if (!activeIngredientList) return;
+
+    if (page === 0) {
+      setActiveIngredients(activeIngredientList.data);
+    } else {
+      setActiveIngredients(prev => [
+        ...prev,
+        ...activeIngredientList.data,
+      ]);
+    }
+  }, [activeIngredientList, page]);
+
+  const handleFetchMore = () => {
+    if (activeIngredients.length < (activeIngredientList?.totalCount ?? 0)) {
+      setPage(prev => prev + 1);
+    }
+  };
 
   return (
     <MyModal
@@ -139,10 +166,12 @@ const handleDelete = async (id) => {
                 <MyInput
                   required
                   width="100%"
-                  fieldType="select"
+                  fieldType="selectPagination"
                   selectDataLabel="name"
                   selectDataValue="id"
-                  selectData={activeIngredientList?.data??[]}
+                  selectData={activeIngredients}
+                  hasMore={activeIngredients.length < (activeIngredientList?.totalCount ?? 0)}
+                  onFetchMore={handleFetchMore}
                   fieldLabel="Active Ingredient ID"
                   fieldName="activeIngredientId"
                   record={BrandActive}

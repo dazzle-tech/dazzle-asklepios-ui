@@ -23,6 +23,7 @@ import Header from '../Header';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Sidebarlogo from '../../images/Logo_BLUE_New1.svg';
 import { useBranding } from '@/hooks/useBranding';
+
 // MUI imports
 import {
   Drawer,
@@ -424,8 +425,13 @@ const Frame = (props: FrameProps) => {
                                   }
                                 }}
                                 onClick={() => {
-                                  dispatch(setScreenKey(child.eventKey));
-                                  navigate(child.to || '/');
+                                    dispatch(setScreenKey(child.eventKey));
+
+                                    setExpand(false);
+
+                                    setTimeout(() => {
+                                        navigate(child.to || '/');
+                                    }, 0);
                                 }}
                               >
                                 {child.icon ? (
@@ -508,9 +514,13 @@ const Frame = (props: FrameProps) => {
                           <MenuItem
                             key={child.eventKey}
                             onClick={() => {
-                              dispatch(setScreenKey(child.eventKey));
-                              navigate(child.to || '/');
-                              handleCloseMenu();
+                                dispatch(setScreenKey(child.eventKey));
+
+                                handleCloseMenu();
+
+                                setTimeout(() => {
+                                    navigate(child.to || '/');
+                                }, 0);
                             }}
                           >
                             {child.icon ? (
