@@ -85,7 +85,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
       return;
     }
 
-    if (form.amount > outstandingAmount) {
+    if (Number(form.amount.toFixed(4)) > Number(outstandingAmount.toFixed(4))) {
       dispatch(
         notify({
           msg: `Amount exceeds outstanding balance (${formatMoney(outstandingAmount, currency)}).`,

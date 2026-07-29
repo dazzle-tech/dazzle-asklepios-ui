@@ -89,7 +89,8 @@ const actionLabel = (action?: string) => {
 };
 
 const hasCreditableBalance = (line: InvoiceLineItem) =>
-  Number(line.remainingAmount ?? 0) > 0.0001;
+  Number(line.remainingAmount ?? 0) > 0.0001 ||
+  (Number(line.netAmount ?? 0) > 0.0001 && Number(line.paidAmount ?? 0) > 0.0001);
 
 const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
   open,
@@ -135,7 +136,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
           lineId: line.id,
           enabled: false,
           action: 'REMOVE',
-          amount: Number(line.remainingAmount ?? 0),
+          amount: Number(line.netAmount ?? line.remainingAmount ?? 0),
           quantity: Number(line.quantity ?? 1),
           unitPrice: Number(line.unitPrice ?? 0)
         }))
@@ -159,6 +160,25 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
   }, [open, kind, creditableLines, addableChargeLines, invoiceLines, invoice?.id]);
 
   const selectedCreditTotal = useMemo(() => {
+    return creditDrafts.reduce((sum, draft) => {
+      if (!draft.enabled) return sum;
+      const line = invoiceLines.find(item => item.id === draft.lineId);
+      if (!line) return sum;
+
+      if (draft.action === 'REMOVE') {
+        return sum + Number(line.netAmount ?? 0);
+      }
+      if (draft.action === 'PARTIAL_CREDIT') {
+        return sum + Number(draft.amount ?? 0);
+      }
+      const oldNet = Number(line.netAmount ?? 0);
+      const newNet = Number(draft.quantity ?? 0) * Number(draft.unitPrice ?? 0);
+      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - newNet));
+      return sum + credit;
+    }, 0);
+  }, [creditDrafts, invoiceLines]);
+
+  const selectedCreditOutstandingReduction = useMemo(() => {
     return creditDrafts.reduce((sum, draft) => {
       if (!draft.enabled) return sum;
       const line = invoiceLines.find(item => item.id === draft.lineId);
@@ -256,8 +276,23 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
   const totalAmount = kind === 'CREDIT_NOTE' ? selectedCreditTotal : selectedDebitTotal;
   const maxCredit = Number(summary?.outstandingBalance ?? 0);
+  const allowsPaidLineRemoval =
+    kind === 'CREDIT_NOTE' &&
+    creditDrafts.some(
+      draft =>
+        draft.enabled &&
+        draft.action === 'REMOVE' &&
+        invoiceLines.some(
+          line =>
+            line.id === draft.lineId &&
+            Number(line.netAmount ?? 0) > 0.0001 &&
+            Number(line.paidAmount ?? 0) > 0.0001
+        )
+    );
   const creditWithinLimit =
-    kind !== 'CREDIT_NOTE' || totalAmount <= maxCredit + 0.0001;
+    kind !== 'CREDIT_NOTE' ||
+    selectedCreditOutstandingReduction <= maxCredit + 0.0001 ||
+    (maxCredit <= 0 && allowsPaidLineRemoval && selectedCreditTotal > 0);
 
   const handleSubmit = async () => {
     const lines = kind === 'CREDIT_NOTE' ? buildCreditLines() : buildDebitLines();

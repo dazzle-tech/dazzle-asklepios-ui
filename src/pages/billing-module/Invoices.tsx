@@ -769,7 +769,21 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
     canAdjustInvoice(selectedInvoice) &&
 
-    Number(adjustmentSummary?.outstandingBalance ?? selectedInvoice?.totalAmount ?? 0) > 0;
+    (adjustmentSummary?.creditNoteAllowed === true ||
+
+      Number(adjustmentSummary?.outstandingBalance ?? 0) > 0 ||
+
+      invoiceLineItems.some(
+
+        line =>
+
+          Number(line.remainingAmount ?? 0) > 0.0001 ||
+
+          (Number(line.netAmount ?? 0) > 0.0001 &&
+
+            Number(line.paidAmount ?? 0) > 0.0001)
+
+      ));
 
 
 

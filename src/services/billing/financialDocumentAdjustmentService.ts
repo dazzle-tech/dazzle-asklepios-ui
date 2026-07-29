@@ -158,6 +158,7 @@ export type InvoiceAdjustmentSummary = {
   totalDebitNotes: number;
   totalPaid: number;
   outstandingBalance: number;
+  creditNoteAllowed?: boolean;
   currency?: string;
   adjustments: FinancialDocumentAdjustment[];
 };
