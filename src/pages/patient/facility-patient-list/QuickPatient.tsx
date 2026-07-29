@@ -75,7 +75,6 @@ const QUICK_PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }
   { key: 'lastName', label: 'Last Name' },
   { key: 'sexAtBirth', label: 'Gender' },
   { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
-  { key: 'email', label: 'Email' },
   { key: 'dateOfBirth', label: 'DOB' }
 ];
 
@@ -547,7 +546,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         />
 
         <MyInput
-          required
           vr={validationResult}
           column
           fieldName="email"
