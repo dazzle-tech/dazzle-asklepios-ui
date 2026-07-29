@@ -65,6 +65,7 @@ import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
 import MyButton from '@/components/MyButton/MyButton';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -501,7 +502,6 @@ const Result = forwardRef<any, Props>(
     };
 
     const toggleSelectRow = (row: any, checked: boolean) => {
-      if (row.processingStatus !== 'RESULT_READY') return;
 
       setSelectedResultIds(prev =>
         checked
@@ -533,11 +533,9 @@ const Result = forwardRef<any, Props>(
         align: 'center',
         width: 60,
         render: (row: any) => {
-          const disabled = row.processingStatus !== 'RESULT_READY';
           return (
             <Checkbox
               checked={selectedResultIds.includes(row.id)}
-              disabled={disabled}
               onChange={(_, checked) => toggleSelectRow(row, checked)}
               onClick={(e) => e.stopPropagation()}
             />
@@ -982,6 +980,11 @@ const Result = forwardRef<any, Props>(
                       Reject Selected
                     </MyButton>
                   </span>
+                </Whisper>
+                  <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
+                <span style={{display:'inline-block'}}>
+                  <LaboratoryReportButton resultIds={selectedResultIds}/>
+                </span>
                 </Whisper>
               </HStack>
             </div>
