@@ -2806,6 +2806,8 @@ export interface PatientLedgerSummaryDTO {
   patientId: number;
   totalDebt: number;
   walletBalance: number;
+  reservedBalance?: number;
+  consumedAmount?: number;
 }
 
 export interface PatientChargeDTO {
@@ -3757,6 +3759,7 @@ export type PatientServiceAndProduct = {
   preAuthorizationReferenceNo?: string | null;
   itemName?: string | null;
   itemCode?: string | null;
+  priceSource?: string | null;
 };
  
 export enum ServiceSource {

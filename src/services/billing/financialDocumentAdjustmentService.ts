@@ -182,6 +182,29 @@ export type InvoiceLineAdjustmentRequest = {
   itemLabel?: string;
 };
 
+export type PreviewCatalogItemPricingRequest = {
+  patientId: number;
+  encounterId: number;
+  facilityId: number;
+  currency?: string;
+  billingItemType: string;
+  brandMedicationId?: number;
+  diagnosticTestId?: number;
+  serviceId?: number;
+  procedureId?: number;
+  quantity?: number;
+  coverageType?: 'SELF_PAY' | 'INSURANCE';
+  patientInsuranceId?: number | null;
+};
+
+export type PreviewCatalogItemPricingResult = {
+  setupUnitPrice: number | null;
+  unitPrice: number | null;
+  priceSource: string | null;
+  priceListItemCode: string | null;
+  currency?: string;
+};
+
 export type CreateAdjustmentRequest = {
   reason?: string;
   lines: InvoiceLineAdjustmentRequest[];
@@ -246,6 +269,17 @@ export const financialDocumentAdjustmentService = createApi({
       ]
     }),
 
+    previewCatalogItemPricing: builder.mutation<
+      PreviewCatalogItemPricingResult,
+      PreviewCatalogItemPricingRequest
+    >({
+      query: body => ({
+        url: '/api/patient/financial-documents/preview-catalog-item-pricing',
+        method: 'POST',
+        body
+      })
+    }),
+
     createCreditNote: builder.mutation<
       FinancialDocumentAdjustment,
       CreateFinancialDocumentAdjustmentRequest
@@ -302,7 +336,8 @@ export const financialDocumentAdjustmentService = createApi({
         { type: 'InvoiceLineItems', id: invoiceId },
         'PatientFinancialInvoices',
         'EncounterBillingSummary',
-        'PatientBalance'
+        'PatientBalance',
+        'PatientLedgerSummary'
       ]
     }),
 
@@ -318,7 +353,8 @@ export const financialDocumentAdjustmentService = createApi({
         { type: 'InvoiceAdjustments', id: invoiceId },
         { type: 'InvoiceLineItems', id: invoiceId },
         'PatientFinancialInvoices',
-        'EncounterBillingSummary'
+        'EncounterBillingSummary',
+        'PatientLedgerSummary'
       ]
     })
   })
@@ -332,6 +368,7 @@ export const {
   useGetAddableChargeLinesQuery,
   useGetInvoiceAdjustmentsQuery,
   useLazyGetInvoiceAdjustmentsQuery,
+  usePreviewCatalogItemPricingMutation,
   useCreateCreditNoteMutation,
   useCreateDebitNoteMutation,
   useCollectInvoiceBalanceMutation,

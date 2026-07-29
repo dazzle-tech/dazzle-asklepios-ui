@@ -5,10 +5,12 @@ import {
   computeEncounterCoveredAmount,
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
+  computeUnbilledEncounterNetAmount,
   formatMoney,
   shouldShowInsuranceSummary,
   sumEncounterReservedAmount,
-  type BillingCoverageType
+  type BillingCoverageType,
+  type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 
 type BillingSummaryCardsProps = {
@@ -18,6 +20,7 @@ type BillingSummaryCardsProps = {
   totalDebt?: number;
   currency?: string;
   coverageType?: BillingCoverageType;
+  chargeRows?: UnifiedBillingChargeRow[];
 };
 
 const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
@@ -26,13 +29,14 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   reservedBalance,
   totalDebt = 0,
   currency,
-  coverageType = 'SELF_PAY'
+  coverageType = 'SELF_PAY',
+  chargeRows = []
 }) => {
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
-  const patientShare = computeEncounterPatientShare(summary);
+  const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const coveredAmount = computeEncounterCoveredAmount(summary);
-  const remainingToPay = computeEncounterRemainingToPay(summary);
+  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
   const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
   const remainingHint = (() => {
@@ -62,7 +66,7 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   })();
 
   const invoiceTotal = Number(summary.invoiceTotalAmount ?? 0);
-  const chargeNet = Number(summary.netAmount ?? 0);
+  const chargeNet = Number(summary.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows);
   const hasInvoice = invoiceTotal > 0 && Boolean(summary.invoiceNumber);
 
   const cards = [

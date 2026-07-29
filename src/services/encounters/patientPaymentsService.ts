@@ -53,6 +53,8 @@ export type PatientLedgerSummary = {
   patientId: number;
   totalDebt: number;
   walletBalance: number;
+  reservedBalance?: number;
+  consumedAmount?: number;
 };
 
 export const patientPaymentsService = createApi({

@@ -15,6 +15,7 @@ import type {
 import AddBillingServiceProductModal, {
   type PendingNewServiceLine
 } from './AddBillingServiceProductModal';
+import './styles.less';
 
 type AdjustmentKind = 'CREDIT_NOTE' | 'DEBIT_NOTE';
 
@@ -574,7 +575,8 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
   ];
 
   return (
-    <Modal open={open} onClose={onClose} size="lg" overflow={false}>
+    <>
+    <Modal open={open} onClose={onClose} size="lg" overflow={false} enforceFocus={!addServiceOpen}>
       <Modal.Header>
         <Modal.Title>Create {kindLabel(kind)}</Modal.Title>
       </Modal.Header>
@@ -739,6 +741,8 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         </MyButton>
       </Modal.Footer>
 
+    </Modal>
+
       <AddBillingServiceProductModal
         open={addServiceOpen}
         onClose={() => setAddServiceOpen(false)}
@@ -748,7 +752,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         currency={currency}
         onAdd={line => setPendingNewServices(current => [...current, line])}
       />
-    </Modal>
+    </>
   );
 };
 

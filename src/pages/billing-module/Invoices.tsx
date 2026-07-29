@@ -675,6 +675,49 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
     );
   }, [billableVisits, encounterDetails, printEncounterId, selectedVisit]);
 
+  const visitDepartmentId =
+    encounterDetails?.departmentId ?? selectedVisit?.departmentId ?? null;
+
+  const {
+    billingSummary: visitBillingSummary,
+    chargeRows: visitChargeRows,
+    isReady: visitDetailsLookupsReady
+  } = useInvoicePrintLookups(selectedEncounterId, visitDepartmentId);
+
+  const visitDetailRows = useMemo(() => {
+    const summaryByPspId = new Map(
+      (visitBillingSummary?.items ?? [])
+        .filter(item => item.patientServiceProductId != null)
+        .map(item => [Number(item.patientServiceProductId), item])
+    );
+    const summaryByChargeLineId = new Map(
+      (visitBillingSummary?.items ?? [])
+        .filter(item => item.chargeLineId != null)
+        .map(item => [Number(item.chargeLineId), item])
+    );
+
+    return visitChargeRows.map(row => {
+      const summaryItem =
+        (row.patientServiceProductId != null
+          ? summaryByPspId.get(row.patientServiceProductId)
+          : undefined) ??
+        (row.chargeLineId != null
+          ? summaryByChargeLineId.get(row.chargeLineId)
+          : undefined);
+
+      return {
+        itemCode: row.itemCode ?? summaryItem?.itemCode ?? '-',
+        itemName: row.itemName,
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        netAmount: row.netAmount,
+        patientResponsibilityAmount: row.patientAmount,
+        insuranceResponsibilityAmount: row.insuranceAmount,
+        taxAmount: Number(summaryItem?.taxAmount ?? 0)
+      };
+    });
+  }, [visitBillingSummary?.items, visitChargeRows]);
+
   const {
     billingSummary,
     chargeRows,
@@ -1938,11 +1981,11 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
 
           <MyTable
 
-            data={encounterDetails?.billingSummary?.items ?? []}
+            data={visitDetailRows}
 
             columns={serviceColumns}
 
-            loading={loadingEncounterDetails}
+            loading={loadingEncounterDetails || !visitDetailsLookupsReady}
 
           />
 

@@ -295,6 +295,46 @@ export const buildMedicationNameLookup = (
   return lookup;
 };
 
+/** Total open patient obligation across legacy charges, billing, invoices, and debit. */
+export const computePatientRemainingBalance = (
+  ledgerSummary: { totalDebt?: number } | null | undefined,
+  invoiceOutstandingTotal = 0
+): number => {
+  const ledgerDebt = Number(ledgerSummary?.totalDebt ?? 0);
+  const invoiceOutstanding = Number(invoiceOutstandingTotal ?? 0);
+  return Math.max(ledgerDebt, invoiceOutstanding);
+};
+
+/** Patient-level wallet available — matches Patient Billing Side / ledger summary. */
+export const resolvePatientWalletAvailable = (
+  ledgerSummary: { walletBalance?: number } | null | undefined,
+  encounterWalletAvailable?: number | null,
+  legacyWalletBalance?: number | null
+): number => {
+  if (ledgerSummary != null) {
+    return Number(ledgerSummary.walletBalance ?? 0);
+  }
+
+  const encounterWallet = Number(encounterWalletAvailable ?? NaN);
+  if (Number.isFinite(encounterWallet)) {
+    return encounterWallet;
+  }
+
+  return Number(legacyWalletBalance ?? 0);
+};
+
+/** Patient-level wallet reserved — matches Patient Billing Side / ledger summary. */
+export const resolvePatientWalletReserved = (
+  ledgerSummary: { reservedBalance?: number } | null | undefined,
+  encounterWalletReserved?: number | null
+): number => {
+  if (ledgerSummary != null) {
+    return Number(ledgerSummary.reservedBalance ?? 0);
+  }
+
+  return Number(encounterWalletReserved ?? 0);
+};
+
 export const formatMoney = (
   amount: number | null | undefined,
   currency = 'SAR'
@@ -317,16 +357,41 @@ export const sumEncounterReservedAmount = (
 
 /** Total patient share for this encounter (charge-level, not patient account). */
 export const computeEncounterPatientShare = (
-  summary: EncounterBillingSummary | null | undefined
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
 ): number => {
   const fromSummary = Number(summary?.patientResponsibilityAmount ?? 0);
-  if (fromSummary > 0) return fromSummary;
+  const fromItems =
+    fromSummary > 0
+      ? fromSummary
+      : (summary?.items ?? []).reduce(
+          (total, item) => total + Number(item.patientResponsibilityAmount ?? 0),
+          0
+        );
 
-  return (summary?.items ?? []).reduce(
-    (total, item) => total + Number(item.patientResponsibilityAmount ?? 0),
-    0
-  );
+  const unbilledShare = chargeRows
+    .filter(isRowAwaitingBilling)
+    .reduce(
+      (total, row) => total + Number(row.patientAmount ?? row.netAmount ?? 0),
+      0
+    );
+
+  return fromItems + unbilledShare;
 };
+
+export const computeUnbilledEncounterRemaining = (
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number =>
+  chargeRows
+    .filter(isRowAwaitingBilling)
+    .reduce((total, row) => total + computeRowRemainingAmount(row), 0);
+
+export const computeUnbilledEncounterNetAmount = (
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number =>
+  chargeRows
+    .filter(isRowAwaitingBilling)
+    .reduce((total, row) => total + Number(row.netAmount ?? 0), 0);
 
 /** Wallet reservation + allocation already applied on this encounter. */
 export const computeEncounterCoveredAmount = (
@@ -342,19 +407,27 @@ export const computeEncounterCoveredAmount = (
  * When an invoice exists, includes invoice outstanding (e.g. invoice-level tax/discount delta).
  */
 export const computeEncounterRemainingToPay = (
-  summary: EncounterBillingSummary | null | undefined
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
 ): number => {
+  const unbilledRemaining = computeUnbilledEncounterRemaining(chargeRows);
+
   const invoiceOutstanding = Number(summary?.invoiceOutstandingAmount ?? 0);
   if (invoiceOutstanding > 0) {
-    return invoiceOutstanding;
+    return invoiceOutstanding + unbilledRemaining;
+  }
+
+  const debitSettled = Number(summary?.patientDebitSettledAmount ?? 0);
+  if (debitSettled > 0 && summary?.chargeStatus === 'CLOSED') {
+    return debitSettled + unbilledRemaining;
   }
 
   const outstanding = Number(summary?.patientOutstandingAmount ?? 0);
   if (outstanding > 0) {
-    return computeAmountToCollect(summary);
+    return computeAmountToCollect(summary) + unbilledRemaining;
   }
 
-  const patientShare = computeEncounterPatientShare(summary);
+  const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const covered = computeEncounterCoveredAmount(summary);
   return Math.max(0, patientShare - covered);
 };
@@ -392,10 +465,11 @@ export const resolveRowPaymentStatus = (
   const remaining = computeRowRemainingAmount(row);
   const reserved = Number(row.reservedAmount ?? 0);
   const allocated = Number(row.allocatedAmount ?? 0);
+  const amountDue = Math.max(patientAmount, remaining + allocated + reserved);
 
-  if (patientAmount <= 0) return 'SETTLED';
-  if (remaining <= 0 && allocated >= patientAmount) return 'SETTLED';
-  if (remaining <= 0 && allocated > 0) return 'SETTLED';
+  if (amountDue <= 0) return 'SETTLED';
+  if (remaining <= 0 && allocated >= amountDue) return 'SETTLED';
+  if (remaining <= 0 && allocated > 0 && allocated < amountDue) return 'PARTIAL';
   if (reserved > 0 && remaining > 0) return 'PARTIAL';
   if (reserved > 0 && remaining <= 0) return 'RESERVED';
   return 'UNPAID';
@@ -833,6 +907,10 @@ export const resolveEncounterNumber = (
 };
 
 /** User-facing encounter label such as #E00069 — never the internal database id. */
+export const isEncounterClosedForBilling = (
+  encounter: { encounterStatus?: string | null } | null | undefined
+): boolean => getEncounterLifecycleStatus(encounter) === 'CLOSED';
+
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,
   options?: { withHash?: boolean }
@@ -849,6 +927,36 @@ export const formatEncounterDisplayLabel = (
 
 export const formatBillingSource = (source: string | null | undefined): string =>
   formatBillingEnum(source);
+
+export const formatBillingPriceSource = (
+  priceSource: string | null | undefined
+): string => {
+  const normalized = String(priceSource ?? '').trim();
+  return normalized ? formatBillingEnum(normalized) : '-';
+};
+
+const resolveChargeRowPriceSource = (
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string | null => {
+  if (item.priceSource?.trim()) {
+    return item.priceSource.trim();
+  }
+
+  const pspPriceSource = (
+    linkedPsp as PatientServiceAndProduct & { priceSource?: string | null }
+  )?.priceSource;
+
+  if (pspPriceSource?.trim()) {
+    return pspPriceSource.trim();
+  }
+
+  if (item.priceListItemCode?.trim()) {
+    return 'PRICE_LIST';
+  }
+
+  return null;
+};
 
 const resolveChargeRowItemName = (
   item: EncounterBillingItemSummary,
@@ -924,11 +1032,17 @@ export const mapSummaryItemToRow = (
   chargeDate?: string | null,
   serviceCatalog: BillingServiceLookup[] = [],
   medicationNames: Record<number, string> = {}
-): UnifiedBillingChargeRow => ({
-  id: `line-${item.chargeLineId}`,
+): UnifiedBillingChargeRow => {
+  const linkedPsp = pspRows.find(row => row.id === item.patientServiceProductId);
+
+  return {
+  id:
+    item.chargeLineId != null
+      ? `line-${item.chargeLineId}`
+      : `psp-${item.patientServiceProductId}`,
   patientServiceProductId: item.patientServiceProductId,
   chargeLineId: item.chargeLineId,
-  source: item.priceSource ?? 'BILLING_ENGINE',
+  source: linkedPsp?.serviceSource ?? 'BILLING_ENGINE',
   billingItemType: item.billingItemType ?? '-',
   itemCode: item.itemCode,
   itemName: resolveChargeRowItemName(
@@ -940,9 +1054,12 @@ export const mapSummaryItemToRow = (
   quantity: item.quantity,
   unitPrice: item.unitPrice,
   setupUnitPrice: item.setupUnitPrice,
-  priceSource: item.priceSource,
+  priceSource: resolveChargeRowPriceSource(item, linkedPsp),
   netAmount: item.netAmount,
-  patientAmount: item.patientResponsibilityAmount,
+  patientAmount: Math.max(
+    Number(item.patientResponsibilityAmount ?? 0),
+    Number(item.outstandingAmount ?? 0)
+  ),
   insuranceAmount: item.insuranceResponsibilityAmount,
   outstandingAmount: item.outstandingAmount,
   reservedAmount: item.reservedAmount,
@@ -950,8 +1067,9 @@ export const mapSummaryItemToRow = (
   currency: item.currency ?? 'SAR',
   status: item.status,
   chargedAt: item.chargedAt ?? chargeDate ?? null,
-  isBilled: true
-});
+  isBilled: item.chargeLineId != null
+};
+};
 
 export const mapPspItemToRow = (
   row: PatientServiceAndProduct,
@@ -962,6 +1080,7 @@ export const mapPspItemToRow = (
     createdDate?: string | null;
     preAuthorizationStatus?: string | null;
     itemCode?: string | null;
+    priceSource?: string | null;
   };
 
   const netAmount =
@@ -982,6 +1101,7 @@ export const mapPspItemToRow = (
     itemName,
     quantity: row.quantity,
     unitPrice: row.unitPrice,
+    priceSource: rowAny.priceSource?.trim() || null,
     netAmount,
     patientAmount: netAmount,
     insuranceAmount: 0,
@@ -1000,7 +1120,7 @@ export const mergeBillingChargeRows = (
   serviceCatalog: BillingServiceLookup[] = [],
   medicationNames: Record<number, string> = {}
 ): UnifiedBillingChargeRow[] => {
-  const billedPspIds = new Set(
+  const summaryPspIds = new Set(
     (summary?.items ?? [])
       .map(item => item.patientServiceProductId)
       .filter((id): id is number => id != null)
@@ -1016,7 +1136,7 @@ export const mergeBillingChargeRows = (
     )
   );
   const unbilledPspRows = pspRows
-    .filter(row => !billedPspIds.has(row.id))
+    .filter(row => !summaryPspIds.has(row.id))
     .map(row => mapPspItemToRow(row, serviceCatalog, medicationNames));
 
   const merged = [...summaryRows, ...unbilledPspRows];

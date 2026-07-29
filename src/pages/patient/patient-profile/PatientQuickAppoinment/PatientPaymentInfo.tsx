@@ -12,7 +12,8 @@ import {
   Form,
   Message,
   Panel,
-  Tag
+  Tag,
+  Toggle
 } from 'rsuite';
 
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -128,6 +129,7 @@ type BillingFormState = {
   bankReference: string;
   cashRegisterId: number | null;
   notes: string;
+  payZeroNow: boolean;
 };
 
 export type PatientPaymentInfoHandle = {
@@ -159,6 +161,8 @@ type PatientPaymentInfoProps = {
   ) => void;
 
   onReceiptClosed?: () => void;
+
+  onPaymentDeferred?: () => void;
 
   onNothingToPay?: () => void;
 
@@ -200,7 +204,10 @@ BillingFormState = {
     null,
 
   notes:
-    ''
+    '',
+
+  payZeroNow:
+    false
 };
 
 const makeRequestId =
@@ -470,6 +477,7 @@ const PatientPaymentInfo =
         onPaymentSaved,
         onReceiptReady,
         onReceiptClosed,
+        onPaymentDeferred,
         onNothingToPay,
         onViewOnlyChange
       },
@@ -1575,6 +1583,11 @@ const PatientPaymentInfo =
           formState.paymentMethodCode
         );
 
+      const paymentFieldsDisabled =
+        isLocked ||
+        !hasPayableBalance ||
+        formState.payZeroNow;
+
       useEffect(() => {
         fullyPaidNotifiedRef.current =
           false;
@@ -1629,7 +1642,8 @@ const PatientPaymentInfo =
         if (
           !paymentMethodSelected ||
           outstanding <= 0 ||
-          lockAfterConfirm
+          lockAfterConfirm ||
+          formState.payZeroNow
         ) {
           return;
         }
@@ -1653,7 +1667,8 @@ const PatientPaymentInfo =
       }, [
         paymentMethodSelected,
         previewTotals.patientOutstandingAmount,
-        lockAfterConfirm
+        lockAfterConfirm,
+        formState.payZeroNow
       ]);
 
       const buildReceiptData =
@@ -1898,31 +1913,45 @@ const PatientPaymentInfo =
           }
 
           if (
-            !formState.paymentMethodCode
+            !formState.payZeroNow
           ) {
-            reject(
-              'paymentMethodCode',
-              'Payment method is required'
-            );
+            if (
+              !formState.paymentMethodCode
+            ) {
+              reject(
+                'paymentMethodCode',
+                'Payment method is required'
+              );
+            }
+
+            if (
+              formState.paymentAmount <=
+              0
+            ) {
+              reject(
+                'paymentAmount',
+                'Enter a payment amount greater than zero'
+              );
+            }
+
+            if (
+              formState.paymentAmount >
+              previewTotals.patientOutstandingAmount
+            ) {
+              reject(
+                'paymentAmount',
+                'Payment amount cannot exceed the outstanding balance'
+              );
+            }
           }
 
           if (
-            formState.paymentAmount <=
-            0
+            !formState.payZeroNow &&
+            formState.paymentAmount < 0
           ) {
             reject(
               'paymentAmount',
-              'Enter a payment amount greater than zero'
-            );
-          }
-
-          if (
-            formState.paymentAmount >
-            previewTotals.patientOutstandingAmount
-          ) {
-            reject(
-              'paymentAmount',
-              'Payment amount cannot exceed the outstanding balance'
+              'Payment amount cannot be negative'
             );
           }
 
@@ -2147,6 +2176,7 @@ const PatientPaymentInfo =
           pspIds: number[]
         ) => {
           if (
+            formState.payZeroNow ||
             formState.paymentAmount <=
             0
           ) {
@@ -2377,10 +2407,7 @@ const PatientPaymentInfo =
               );
 
             if (
-              refreshedOutstanding <=
-                0 &&
-              formState.paymentAmount <=
-                0
+              refreshedOutstanding <= 0
             ) {
               dispatch(
                 notify({
@@ -2391,6 +2418,56 @@ const PatientPaymentInfo =
               );
 
               return false;
+            }
+
+            const payZeroNow =
+              formState.payZeroNow;
+
+            if (payZeroNow) {
+              setSummaryRefreshKey(
+                previous =>
+                  previous + 1
+              );
+
+              const remainingAmount =
+                Math.max(
+                  refreshedOutstanding,
+                  previewTotals.patientOutstandingAmount
+                );
+
+              dispatch(
+                notify({
+                  msg:
+                    preparedMessage ??
+                    `Services prepared. ${formatMoney(
+                      remainingAmount,
+                      activeCurrency
+                    )} remains to be collected from the patient.`,
+                  sev: 'success'
+                })
+              );
+
+              if (
+                onPaymentSaved
+              ) {
+                await onPaymentSaved();
+              }
+
+              if (
+                onPaymentDeferred
+              ) {
+                onPaymentDeferred();
+              } else if (
+                onNothingToPay
+              ) {
+                onNothingToPay();
+              } else if (
+                onReceiptClosed
+              ) {
+                onReceiptClosed();
+              }
+
+              return true;
             }
 
             const paymentResult =
@@ -3545,6 +3622,49 @@ const PatientPaymentInfo =
                 }
 
                 if (
+                  formState.payZeroNow
+                ) {
+                  if (
+                    !validate()
+                  ) {
+                    return;
+                  }
+
+                  try {
+                    await prepareServices();
+
+                    await refetchSummary();
+
+                    dispatch(
+                      notify({
+                        msg:
+                          `Services prepared. ${formatMoney(
+                            previewTotals.patientOutstandingAmount,
+                            activeCurrency
+                          )} remains to be collected from the patient.`,
+                        sev: 'success'
+                      })
+                    );
+                  } catch (
+                    error: any
+                  ) {
+                    dispatch(
+                      notify({
+                        msg:
+                          normalizeError(
+                            error
+                          ),
+
+                        sev:
+                          'warning'
+                      })
+                    );
+                  }
+
+                  return;
+                }
+
+                if (
                   formState.paymentAmount <=
                   0
                 ) {
@@ -3647,6 +3767,7 @@ const PatientPaymentInfo =
               }}
               disabled={
                 isLocked ||
+                formState.payZeroNow ||
                 formState.paymentAmount <=
                   0
               }
@@ -4390,7 +4511,9 @@ const PatientPaymentInfo =
                 validationResult
               }
               column
-              required
+              required={
+                !formState.payZeroNow
+              }
               fieldLabel="Payment Method"
               fieldType="select"
               fieldName="paymentMethodCode"
@@ -4414,8 +4537,7 @@ const PatientPaymentInfo =
                 });
               }}
               disabled={
-                isLocked ||
-                !hasPayableBalance
+                paymentFieldsDisabled
               }
               searchable={
                 false
@@ -4428,7 +4550,9 @@ const PatientPaymentInfo =
                 validationResult
               }
               column
-              required
+              required={
+                !formState.payZeroNow
+              }
               fieldLabel="Payment Amount"
               fieldType="number"
               fieldName="paymentAmount"
@@ -4437,15 +4561,15 @@ const PatientPaymentInfo =
               }
               setRecord={setFormState}
               disabled={
-                isLocked ||
-                !hasPayableBalance ||
+                paymentFieldsDisabled ||
                 !paymentMethodSelected
               }
             />
             </div>
 
             {!paymentMethodSelected &&
-            hasPayableBalance ? (
+            hasPayableBalance &&
+            !formState.payZeroNow ? (
               <div className="payment-info__field-note">
                 Select a payment method first to enter the amount.
               </div>
@@ -4468,7 +4592,7 @@ const PatientPaymentInfo =
                   }
                   setRecord={setFormState}
                   disabled={
-                    isLocked
+                    paymentFieldsDisabled
                   }
                 />
 
@@ -4481,7 +4605,7 @@ const PatientPaymentInfo =
                   }
                   setRecord={setFormState}
                   disabled={
-                    isLocked
+                    paymentFieldsDisabled
                   }
                 />
 
@@ -4494,7 +4618,7 @@ const PatientPaymentInfo =
                   }
                   setRecord={setFormState}
                   disabled={
-                    isLocked
+                    paymentFieldsDisabled
                   }
                 />
               </>
@@ -4510,7 +4634,7 @@ const PatientPaymentInfo =
                 }
                 setRecord={setFormState}
                 disabled={
-                  isLocked
+                  paymentFieldsDisabled
                 }
               />
             ) : null}
@@ -4529,11 +4653,53 @@ const PatientPaymentInfo =
               }
               setRecord={setFormState}
               disabled={
-                isLocked ||
-                !hasPayableBalance
+                paymentFieldsDisabled
               }
             />
             </div>
+
+            {hasPayableBalance ? (
+              <div className="payment-info__skip-toggle">
+                <Toggle
+                  checked={
+                    formState.payZeroNow
+                  }
+                  disabled={
+                    isLocked
+                  }
+                  onChange={checked => {
+                    setFormState(
+                      previous => ({
+                        ...previous,
+                        payZeroNow:
+                          checked,
+                        ...(checked
+                          ? {
+                              paymentAmount: 0,
+                              paymentMethodCode:
+                                '',
+                              authorizationCode:
+                                '',
+                              processorReference:
+                                '',
+                              cardLastFour:
+                                '',
+                              bankReference:
+                                '',
+                              notes: ''
+                            }
+                          : {})
+                      })
+                    );
+                  }}
+                />
+                <span className="payment-info__skip-toggle-label">
+                  <Translate>
+                    Collect zero now — amount stays on remaining balance
+                  </Translate>
+                </span>
+              </div>
+            ) : null}
           </Panel>
 
           {internalActionButtons}

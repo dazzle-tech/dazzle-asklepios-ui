@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Form, Loader } from 'rsuite';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useEnumOptions } from '@/services/enumsApi';
+import '@/components/ChildModal/styles.less';import { useEnumOptions } from '@/services/enumsApi';
+import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceService';
 import { useGetBrandMedicationsByIsActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetActiveDiagnosticTestsByTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
@@ -39,8 +40,10 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
   onAdd
 }) => {
   const billingItemTypeOptions = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
-  const [record, setRecord] = useState<PatientServiceAndProduct>({
-    ...newPatientServiceAndProduct,
+  const [previewCatalogItemPricing] = usePreviewCatalogItemPricingMutation();
+  const [isResolvingPrice, setIsResolvingPrice] = useState(false);
+  const modalBodyRef = useRef<HTMLDivElement | null>(null);
+  const [record, setRecord] = useState<PatientServiceAndProduct>({    ...newPatientServiceAndProduct,
     patientId,
     encounterId,
     quantity: 1,
@@ -49,6 +52,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
 
   useEffect(() => {
     if (!open) return;
+    setIsResolvingPrice(false);
     setRecord({
       ...newPatientServiceAndProduct,
       patientId,
@@ -57,6 +61,28 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       currency
     });
   }, [open, patientId, encounterId, currency]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const modalElement = document.querySelector(
+      '.billing-add-service-modal.child-right-modal'
+    );
+
+    if (!(modalElement instanceof HTMLElement)) {
+      return;
+    }
+
+    modalElement.style.position = 'fixed';
+    modalElement.style.top = '0';
+    modalElement.style.right = '0';
+    modalElement.style.zIndex = '1060';
+  }, [open]);
+
+  const resolveModalContainer = useCallback(
+    () => modalBodyRef.current ?? document.body,
+    []
+  );
 
   const { data: activeServicesResponse, isFetching: isFetchingServices } =
     useGetActiveServicesByFacilityQuery(
@@ -187,6 +213,96 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     return selected?.[itemSelectConfig.selectDataLabel] ?? record.billingItemType ?? 'Service';
   };
 
+  const buildPricingPreviewRequest = useCallback(
+    (nextRecord: PatientServiceAndProduct) => {
+      if (!facilityId) {
+        return null;
+      }
+
+      const billingItemType = String(nextRecord.billingItemType ?? '');
+      if (!billingItemType) {
+        return null;
+      }
+
+      return {
+        patientId,
+        encounterId,
+        facilityId,
+        currency,
+        billingItemType,
+        brandMedicationId:
+          billingItemType === 'MEDICATION'
+            ? nextRecord.brandMedicationId ?? undefined
+            : undefined,
+        diagnosticTestId: ['LABORATORY', 'RADIOLOGY'].includes(billingItemType)
+          ? nextRecord.diagnosticTestId ?? undefined
+          : undefined,
+        serviceId:
+          billingItemType === 'SERVICE' ? nextRecord.serviceId ?? undefined : undefined,
+        procedureId:
+          billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
+        quantity: Number(nextRecord.quantity ?? 1),
+        coverageType: 'SELF_PAY' as const,
+        patientInsuranceId: null
+      };
+    },
+    [currency, encounterId, facilityId, patientId]
+  );
+
+  const resolveUnitPrice = useCallback(
+    async (nextRecord: PatientServiceAndProduct, setupFallbackPrice?: number | null) => {
+      const previewRequest = buildPricingPreviewRequest(nextRecord);
+      if (!previewRequest) {
+        return Number(setupFallbackPrice ?? 0);
+      }
+
+      setIsResolvingPrice(true);
+
+      try {
+        const preview = await previewCatalogItemPricing(previewRequest).unwrap();
+        const resolvedPrice = Number(
+          preview.unitPrice ?? preview.setupUnitPrice ?? setupFallbackPrice ?? 0
+        );
+        return Number.isFinite(resolvedPrice) ? resolvedPrice : 0;
+      } catch {
+        const fallbackPrice = Number(setupFallbackPrice ?? 0);
+        return Number.isFinite(fallbackPrice) ? fallbackPrice : 0;
+      } finally {
+        setIsResolvingPrice(false);
+      }
+    },
+    [buildPricingPreviewRequest, previewCatalogItemPricing]
+  );
+
+  const handleCatalogItemSelect = useCallback(
+    async (selectedItem: any) => {
+      if (!itemSelectConfig) {
+        return;
+      }
+
+      const setupFallbackPrice = Number(selectedItem?.price ?? 0);
+      const nextRecord = {
+        ...record,
+        [itemSelectConfig.fieldName]:
+          selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+        unitPrice: 0,
+        currency
+      };
+
+      setRecord(nextRecord);
+
+      const resolvedUnitPrice = await resolveUnitPrice(nextRecord, setupFallbackPrice);
+      setRecord(current => ({
+        ...current,
+        [itemSelectConfig.fieldName]:
+          selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+        unitPrice: resolvedUnitPrice,
+        currency
+      }));
+    },
+    [currency, itemSelectConfig, record, resolveUnitPrice]
+  );
+
   const handleAdd = () => {
     const validationError = getValidationError();
     if (validationError) return;
@@ -217,7 +333,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
   };
 
   const modalContent = (
-    <Form fluid>
+    <div ref={modalBodyRef}>
+      <Form fluid>
       <MyInput
         required
         fieldLabel="Category"
@@ -240,6 +357,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         }
         width="100%"
         searchable={false}
+        container={resolveModalContainer}
       />
 
       {itemSelectConfig && (
@@ -256,15 +374,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           width="100%"
           searchable
           loading={itemSelectConfig.loading}
-          onSelectItem={(selectedItem: any) => {
-            setRecord({
-              ...record,
-              [itemSelectConfig.fieldName]:
-                selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
-              unitPrice: selectedItem?.price ?? record.unitPrice ?? 0,
-              currency
-            });
-          }}
+          container={resolveModalContainer}
+          onSelectItem={handleCatalogItemSelect}
         />
       )}
 
@@ -278,16 +389,30 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         width="100%"
       />
 
-      <MyInput
-        required
-        fieldName="unitPrice"
-        fieldLabel="Unit price"
-        fieldType="number"
-        record={record}
-        setRecord={setRecord}
-        width="100%"
-      />
-    </Form>
+      <div style={{ position: 'relative' }}>
+        <MyInput
+          required
+          fieldName="unitPrice"
+          fieldLabel="Unit price"
+          fieldType="number"
+          record={record}
+          setRecord={setRecord}
+          width="100%"
+          disabled={isResolvingPrice}
+        />
+        {isResolvingPrice ? (
+          <Loader
+            content="Resolving price..."
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 28
+            }}
+          />
+        ) : null}
+      </div>
+      </Form>
+    </div>
   );
 
   return (
@@ -299,6 +424,10 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       title="Add service / product"
       actionButtonLabel="Add to debit note"
       actionButtonFunction={handleAdd}
+      isDisabledActionBtn={isResolvingPrice}
+      enforceFocus={false}
+      backdrop={false}
+      customClassName="child-right-modal billing-add-service-modal"
       position="right"
       size="30vw"
       bodyheight="70vh"

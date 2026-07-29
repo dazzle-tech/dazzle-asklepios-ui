@@ -16,6 +16,8 @@ import {
 
   formatBillingChargeStatus,
 
+  formatBillingPriceSource,
+
   formatBillingSource,
 
   formatBillingTimestamp,
@@ -41,21 +43,14 @@ import { formatBillingItemType } from '@/pages/patient/patient-profile/PatientQu
 
 
 type BillingChargesTableProps = {
-
   rows: UnifiedBillingChargeRow[];
-
   loading?: boolean;
-
   currency?: string;
-
   chargeClosed?: boolean;
-
+  disabled?: boolean;
   selectedRowIds?: string[];
-
   onSelectionChange?: (ids: string[]) => void;
-
   onCollectPayment?: () => void;
-
 };
 
 
@@ -69,6 +64,8 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
   currency = 'SAR',
 
   chargeClosed = false,
+
+  disabled = false,
 
   selectedRowIds = [],
 
@@ -111,8 +108,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
 
   const toggleRow = (rowId: string) => {
-
-    if (!onSelectionChange) return;
+    if (disabled || !onSelectionChange) return;
 
     const row = rows.find(item => item.id === rowId);
 
@@ -135,8 +131,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
 
   const toggleAll = () => {
-
-    if (!onSelectionChange) return;
+    if (disabled || !onSelectionChange) return;
 
     if (selectedRowIds.length === collectableRows.length) {
 
@@ -182,7 +177,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
                 indeterminate={isIndeterminate}
 
-                disabled={!collectableRows.length}
+                disabled={disabled || !collectableRows.length}
 
                 onChange={toggleAll}
 
@@ -202,7 +197,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
                   checked={selectedRowIds.includes(row.id)}
 
-                  disabled={!collectable}
+                  disabled={disabled || !collectable}
 
                   onChange={() => toggleRow(row.id)}
 
@@ -266,6 +261,20 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       render: (row: UnifiedBillingChargeRow) => (
         <Tag size="sm">{formatBillingSource(row.source)}</Tag>
+      )
+
+    },
+
+    {
+
+      key: 'priceSource',
+
+      title: 'Price source',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) => (
+        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
       )
 
     },
@@ -467,7 +476,11 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
         </Tag>
 
-        {collectableRows.length === 0 ? (
+        {disabled ? (
+          <span className="billing-accounting__table-summary-text">
+            Encounter closed for billing. Service selection and payment collection are locked.
+          </span>
+        ) : collectableRows.length === 0 ? (
 
           <span className="billing-accounting__table-summary-text">
 
@@ -497,6 +510,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       </div>
 
+      <div className={disabled ? 'billing-accounting__table--locked' : undefined}>
       <MyTable
 
         height={360}
@@ -511,7 +525,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
             <MyButton
 
-              disabled={selectedRowIds.length === 0 || chargeClosed}
+              disabled={
+                disabled || selectedRowIds.length === 0 || chargeClosed
+              }
 
               onClick={onCollectPayment}
 
@@ -526,6 +542,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
         }
 
       />
+      </div>
 
     </div>
 

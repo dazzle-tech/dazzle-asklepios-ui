@@ -19,6 +19,7 @@ import {
   computeEncounterRemainingToPay,
   extractResponseList,
   formatBillingEnum,
+  formatBillingPriceSource,
   formatMoney,
   makeRequestId,
   normalizeBillingError,
@@ -287,7 +288,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       width: 110,
       render: (row: PrepareServiceRow) =>
         row.priceSource ? (
-          <Tag size="sm">{formatBillingEnum(row.priceSource)}</Tag>
+          <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
         ) : (
           '-'
         )

@@ -427,17 +427,25 @@ const PatientQuickAppointment = ({
       const ok = await paymentRef.current?.confirm();
       if (!ok) return;
 
-      setIsPaymentSaved(true);
-
       if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {
       dispatch(notify({ msg: 'Error confirming payment', sev: 'error' }));
     }
   };
 
-  const handleReceiptClosed = () => {
+  const handlePaymentDeferred = () => {
     setQuickAppointmentModel(false);
-    dispatch(notify({ msg: 'Payment Confirmed Successfully', sev: 'success' }));
+  };
+
+  const handleReceiptClosed = () => {
+    setIsPaymentSaved(true);
+    setQuickAppointmentModel(false);
+    dispatch(
+      notify({
+        msg: 'Payment collected successfully.',
+        sev: 'success'
+      })
+    );
   };
 
   const handlePaymentClear = () => {
@@ -473,6 +481,7 @@ const PatientQuickAppointment = ({
             setPatientInsurance={setPatientInsuranceDraft}
             onPaymentSaved={onEncounterSaved}
             onReceiptClosed={handleReceiptClosed}
+            onPaymentDeferred={handlePaymentDeferred}
           />
         );
       default:

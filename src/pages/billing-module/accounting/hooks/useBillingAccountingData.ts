@@ -28,6 +28,8 @@ import {
   findRejectedPreAuthItems,
   mergeBillingChargeRows,
   mergeServiceCatalogs,
+  resolvePatientWalletAvailable,
+  resolvePatientWalletReserved,
   resolvePatientId,
   type BillingServiceLookup
 } from '../utils/billingAccountingUtils';
@@ -134,13 +136,17 @@ export const useBillingAccountingData = ({
   const selectedEncounter =
     encounters.find(encounter => encounter.id === selectedEncounterId) ?? null;
 
-  const summary =
-    billingSummaryResponse ??
-    ({
-      ...newEncounterBillingSummary,
-      patientId: patientId ?? 0,
-      encounterId: selectedEncounterId ?? 0
-    } as typeof billingSummaryResponse);
+  const fallbackSummary = useMemo(
+    () =>
+      ({
+        ...newEncounterBillingSummary,
+        patientId: patientId ?? 0,
+        encounterId: selectedEncounterId ?? 0
+      }) as NonNullable<typeof billingSummaryResponse>,
+    [patientId, selectedEncounterId]
+  );
+
+  const summary = billingSummaryResponse ?? fallbackSummary;
 
   const pspRows = pspResponse?.data ?? [];
   const departmentId = selectedEncounter?.departmentId ?? null;
@@ -169,6 +175,20 @@ export const useBillingAccountingData = ({
   useEffect(() => {
     let cancelled = false;
 
+    const parsedServiceIds = serviceIdsKey
+      ? serviceIdsKey
+          .split(',')
+          .map(value => Number(value))
+          .filter(value => Number.isFinite(value) && value > 0)
+      : [];
+
+    const parsedMedicationIds = medicationIdsKey
+      ? medicationIdsKey
+          .split(',')
+          .map(value => Number(value))
+          .filter(value => Number.isFinite(value) && value > 0)
+      : [];
+
     const loadLookups = async () => {
       if (selectedEncounterId == null) {
         setServiceCatalog([]);
@@ -179,7 +199,7 @@ export const useBillingAccountingData = ({
       const [serviceResults, medicationsResult, departmentResult] =
         await Promise.allSettled([
           Promise.all(
-            serviceIds.map(async serviceId => {
+            parsedServiceIds.map(async serviceId => {
               try {
                 const service = await fetchServiceById(
                   serviceId,
@@ -191,8 +211,11 @@ export const useBillingAccountingData = ({
               }
             })
           ),
-          medicationIds.length > 0
-            ? fetchBrandMedicationsBulk({ ids: medicationIds }, true).unwrap()
+          parsedMedicationIds.length > 0
+            ? fetchBrandMedicationsBulk(
+                { ids: parsedMedicationIds },
+                true
+              ).unwrap()
             : Promise.resolve([]),
           departmentId != null
             ? fetchDepartmentServices(
@@ -241,8 +264,6 @@ export const useBillingAccountingData = ({
     departmentId,
     serviceIdsKey,
     medicationIdsKey,
-    serviceIds,
-    medicationIds,
     fetchServiceById,
     fetchBrandMedicationsBulk,
     fetchDepartmentServices
@@ -276,11 +297,15 @@ export const useBillingAccountingData = ({
     [pspRows]
   );
 
-  const walletBalance = Number(
-    summary?.wallet?.availableBalance ??
-      patientLedgerSummary?.walletBalance ??
-      patientWalletBalance ??
-      0
+  const walletBalance = resolvePatientWalletAvailable(
+    patientLedgerSummary,
+    summary?.wallet?.availableBalance,
+    patientWalletBalance
+  );
+
+  const reservedBalance = resolvePatientWalletReserved(
+    patientLedgerSummary,
+    summary?.wallet?.reservedBalance
   );
 
   const refreshAll = async () => {
@@ -314,7 +339,7 @@ export const useBillingAccountingData = ({
     loadingWaseelCoverage,
     waseelCoverageError,
     walletBalance,
-    reservedBalance: Number(summary?.wallet?.reservedBalance ?? 0),
+    reservedBalance,
     patientLedgerSummary,
     patientInsurances: insuranceResponse?.data ?? [],
     loadingInsurances,

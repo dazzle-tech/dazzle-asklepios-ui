@@ -6,12 +6,19 @@ import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateAdvancePaymentMutation } from '@/services/billing/billingTransactionService';
 import { newCreateAdvancePaymentRequest } from '@/types/model-types-constructor-new';
-import type { CreateAdvancePaymentRequest } from '@/types/model-types-new';
-import { useAppDispatch } from '@/hooks';
+import type {
+  CreateAdvancePaymentRequest,
+  EncounterBillingSummary,
+  PatientEncounter
+} from '@/types/model-types-new';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
+import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  buildBillingPaymentReceipt,
   computeRowRemainingAmount,
   formatMoney,
   isWalletPaymentMethod,
@@ -20,6 +27,24 @@ import {
   resolveBillingPaymentCategory,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
+
+const computeWalletCollectAmounts = (
+  serviceDue: number,
+  walletAvailable: number,
+  requestedAmount?: number
+) => {
+  const due = Math.max(0, Number(serviceDue));
+  const available = Math.max(0, Number(walletAvailable));
+  const requested =
+    requestedAmount != null && requestedAmount > 0
+      ? Number(requestedAmount)
+      : due;
+  const applyAmount = Math.min(due, available, requested);
+  return {
+    applyAmount,
+    remainingAfter: Math.max(0, due - applyAmount)
+  };
+};
 
 const FALLBACK_PAYMENT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
@@ -36,10 +61,13 @@ type CollectPaymentModalProps = {
   open: boolean;
   onClose: () => void;
   patientId: number;
+  patient?: any;
+  encounter?: PatientEncounter | null;
   encounterId: number | null;
   currency?: string;
   walletBalance?: number;
   reservedBalance?: number;
+  billingSummary?: EncounterBillingSummary | null;
   selectedRows: UnifiedBillingChargeRow[];
   onCollected?: () => void;
 };
@@ -48,14 +76,22 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   open,
   onClose,
   patientId,
+  patient,
+  encounter = null,
   encounterId,
   currency = 'SAR',
   walletBalance = 0,
   reservedBalance = 0,
+  billingSummary = null,
   selectedRows,
   onCollected
 }) => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
+  const facilityName =
+    authSlice?.tenant?.selectedFacility?.name ??
+    authSlice?.tenant?.selectedFacility?.facilityName ??
+    'Healthcare Facility';
   const enumPaymentMethods =
     useEnumOptions('PaymentMethods', {
       exclude: ['INSURANCE_COVERAGE'],
@@ -112,10 +148,18 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     notes: ''
   });
 
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receipt, setReceipt] = useState<PaymentReceiptData | null>(null);
+
   const [createAdvancePayment, { isLoading }] = useCreateAdvancePaymentMutation();
 
   const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
-  const walletSpendable = Math.max(0, Number(walletBalance) + Number(reservedBalance));
+  const walletAvailable = Math.max(0, Number(walletBalance));
+  const walletCollectPreview = computeWalletCollectAmounts(
+    suggestedAmount,
+    walletAvailable,
+    form.amount
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -127,21 +171,54 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     });
   }, [open, suggestedAmount]);
 
+  useEffect(() => {
+    if (!open || !isWalletMethod) return;
+
+    setForm(previous => ({
+      ...previous,
+      amount: Number(
+        Math.min(suggestedAmount, walletAvailable, previous.amount || suggestedAmount).toFixed(2)
+      )
+    }));
+  }, [open, isWalletMethod, suggestedAmount, walletAvailable]);
+
   const handleSubmit = async () => {
     if (!form.paymentMethodCode) {
       dispatch(notify({ msg: 'Select a payment method.', sev: 'warning' }));
       return;
     }
 
-    if (!form.amount || form.amount <= 0) {
+    if (isWalletMethod) {
+      if (walletAvailable <= 0) {
+        dispatch(
+          notify({
+            msg: 'No wallet balance available. Deposit funds first or choose another payment method.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (walletCollectPreview.applyAmount <= 0) {
+        dispatch(
+          notify({
+            msg: 'Nothing to apply from the wallet for the selected lines.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
+    if (!isWalletMethod && (!form.amount || form.amount <= 0)) {
       dispatch(notify({ msg: 'Enter a payment amount greater than zero.', sev: 'warning' }));
       return;
     }
 
-    if (isWalletMethod && form.amount > walletSpendable) {
+    if (!isWalletMethod && form.amount > suggestedAmount + 0.0001) {
       dispatch(
         notify({
-          msg: `Wallet balance is ${formatMoney(walletSpendable, currency)}. Reduce the amount or deposit more funds first.`,
+          msg: `Amount cannot exceed the selected balance of ${formatMoney(suggestedAmount, currency)}.`,
           sev: 'warning'
         })
       );
@@ -162,13 +239,17 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       option => String(option?.value) === String(form.paymentMethodCode)
     );
 
+    const paymentAmount = isWalletMethod
+      ? walletCollectPreview.applyAmount
+      : Number(form.amount);
+
     const request: CreateAdvancePaymentRequest = {
       ...newCreateAdvancePaymentRequest,
       patientId,
       encounterId,
       paymentCategory: resolveBillingPaymentCategory(form.paymentMethodCode),
       payerType: 'PATIENT',
-      amount: Number(form.amount),
+      amount: paymentAmount,
       currency,
       paymentStatus: 'COMPLETED',
       transactionType: 'PAYMENT',
@@ -184,16 +265,30 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
     try {
       const result = await createAdvancePayment(request).unwrap();
+      const receiptData = buildBillingPaymentReceipt({
+        paymentResult: result,
+        patient,
+        encounter,
+        facilityName,
+        billingSummary,
+        paymentMethodLabel:
+          selectedMethod?.label ?? form.paymentMethodCode ?? 'Payment'
+      });
+
       dispatch(
         notify({
           msg: isWalletMethod
-            ? `Wallet payment applied. Payment #${result.paymentNumber ?? result.paymentId ?? ''}.`
+            ? walletCollectPreview.remainingAfter > 0
+              ? `Wallet applied ${formatMoney(paymentAmount, currency)}. Remaining to pay ${formatMoney(walletCollectPreview.remainingAfter, currency)}.`
+              : `Wallet payment applied. Payment #${result.paymentNumber ?? result.paymentId ?? ''}.`
             : `Payment #${result.paymentNumber ?? result.paymentId ?? ''} collected and reserved.`,
           sev: 'success'
         })
       );
       onCollected?.();
       onClose();
+      setReceipt(receiptData);
+      setReceiptOpen(true);
     } catch (error: any) {
       dispatch(
         notify({
@@ -205,6 +300,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   };
 
   return (
+    <>
     <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
       <Modal.Header>
         <Modal.Title>Collect payment</Modal.Title>
@@ -221,11 +317,11 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
               ? ` (${formatMoney(totalReservedOnSelection, currency)} already reserved from advance)`
               : ''}
           </Text>
-          {walletSpendable > 0 && (
+          {walletAvailable > 0 && (
             <Text muted size="sm" style={{ marginBottom: 12 }}>
-              Wallet available {formatMoney(walletBalance, currency)}
+              Wallet available {formatMoney(walletAvailable, currency)}
               {reservedBalance > 0
-                ? ` · reserved on encounter ${formatMoney(reservedBalance, currency)}`
+                ? ` · ${formatMoney(reservedBalance, currency)} already reserved on this encounter`
                 : ''}
             </Text>
           )}
@@ -241,18 +337,43 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
               }
             />
             {isWalletMethod && (
-              <Text muted size="sm" style={{ marginBottom: 12 }}>
-                Pays from the patient wallet advance balance. Use deposited funds instead of
-                cash or card.
-              </Text>
+              <>
+                <Text muted size="sm" style={{ marginBottom: 12 }}>
+                  Pays from the patient wallet advance balance. If the service costs more than the
+                  wallet, only the available balance is applied and the rest stays as remaining to
+                  pay.
+                </Text>
+                <Text size="sm" style={{ marginBottom: 12 }}>
+                  Service due {formatMoney(suggestedAmount, currency)} · Wallet will apply{' '}
+                  {formatMoney(walletCollectPreview.applyAmount, currency)} · Remaining to pay{' '}
+                  {formatMoney(walletCollectPreview.remainingAfter, currency)}
+                </Text>
+              </>
             )}
             <MyInput
               column
               fieldType="number"
-              fieldLabel="Amount"
+              fieldLabel={isWalletMethod ? 'Amount to apply from wallet' : 'Amount'}
               fieldName="amount"
               record={form}
-              setRecord={setForm}
+              setRecord={nextRecord => {
+                if (!isWalletMethod) {
+                  setForm(nextRecord);
+                  return;
+                }
+
+                const rawAmount = Number(nextRecord.amount ?? 0);
+                const cappedAmount = Math.min(
+                  Math.max(0, rawAmount),
+                  suggestedAmount,
+                  walletAvailable
+                );
+
+                setForm({
+                  ...nextRecord,
+                  amount: Number(cappedAmount.toFixed(2))
+                });
+              }}
               width="100%"
             />
             <MyInput
@@ -276,6 +397,17 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
         </MyButton>
       </Modal.Footer>
     </Modal>
+
+    <PaymentReceiptModal
+      open={receiptOpen}
+      onClose={() => {
+        setReceiptOpen(false);
+        setReceipt(null);
+      }}
+      receipt={receipt}
+      autoPrint
+    />
+    </>
   );
 };
 

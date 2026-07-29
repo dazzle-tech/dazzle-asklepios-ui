@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Divider, Panel, Text } from 'rsuite';
+import { Avatar, Divider, Loader, Panel, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faIdCard,
@@ -17,46 +17,48 @@ import { calculateAgeFormat, formatEnumString } from '@/utils';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { ApAttachment } from '@/types/model-types';
 
+import { usePatientRemainingBalance } from './accounting/hooks/usePatientRemainingBalance';
 import { WALLET_DEPOSIT_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
 
 import '../encounter/encounter-main-info-section/styles.less';
 
 interface PatientBillingSideProps {
   patient: any;
-  balance?: {
-    freeBalance: number;
-    outstanding: number;
-  };
-  financeDetails?: {
-    walletBalance: number;
-    totalDebt: number;
-    reservedBalance?: number;
-    simulatedInvoiceIncrease: number;
-    simulatedPaymentDecrease: number;
-  };
   onDeposit?: () => void;
   setPatient?: (patient: any) => void;
 }
 
+const formatAmount = (amount: number | null | undefined) =>
+  Number(amount ?? 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
 const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
   patient,
-  balance,
-  financeDetails,
   onDeposit,
-  setPatient,
+  setPatient
 }) => {
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
 
   const patientId = patient?.id ?? patient?.key;
 
+  const {
+    walletAvailable,
+    walletReserved,
+    walletConsumed,
+    remainingBalance,
+    loadingBalance
+  } = usePatientRemainingBalance(patientId);
+
   const { data: primaryDocument } = useGetPrimaryDocumentByPatientQuery(patientId, {
-    skip: !patientId,
+    skip: !patientId
   });
 
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: patientId,
+      refKey: patientId
     },
     { skip: !patientId }
   );
@@ -89,9 +91,6 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
     patient?.medicalRecordNumber || patient?.patientMrn,
     'MRN'
   );
-
-  const totalBalance = (balance?.freeBalance ?? 0) + (balance?.outstanding ?? 0);
-  const dueAmount = balance?.outstanding ?? 0;
 
   return (
     <Panel className="patient-panel">
@@ -178,107 +177,62 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
       </Text>
       <br />
 
-      <div className="info-section">
-        <div className="info-column">
-          <Text className="info-label">Current Balance</Text>
-          <Text className="info-value">
-            {totalBalance.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </div>
-      </div>
-
-      <div className="info-section" style={{ marginTop: '10px' }}>
-        <div className="info-column">
-          <Text className="info-label">Patient Wallet</Text>
-          <Text className="info-value">
-            {Number(financeDetails?.walletBalance ?? 0).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </div>
-      </div>
-
-      {financeDetails?.reservedBalance != null && (
-        <div className="info-section" style={{ marginTop: '10px' }}>
-          <div className="info-column">
-            <Text className="info-label">Reserved balance</Text>
-            <Text className="info-value">
-              {Number(financeDetails.reservedBalance).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
+      {loadingBalance ? (
+        <Loader content="Loading balance..." />
+      ) : (
+        <>
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">Wallet Available</Text>
+              <Text className="info-value">{formatAmount(walletAvailable)}</Text>
+            </div>
           </div>
-        </div>
-      )}
 
-      {onDeposit && (
-        <div style={{ marginTop: '14px' }}>
-          <MyButton
-            block
-            appearance="primary"
-            prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
-            onClick={onDeposit}
-          >
-            {WALLET_DEPOSIT_BUTTON_LABEL}
-          </MyButton>
-        </div>
-      )}
-
-      <div className="info-section" style={{ marginTop: '10px' }}>
-        <div className="info-column">
-          <Text className="info-label">Outstanding Debt</Text>
-          <Text className="info-value">
-            {Number(financeDetails?.totalDebt ?? 0).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </div>
-      </div>
-
-      <div className="info-section" style={{ marginTop: '10px' }}>
-        <div className="info-column">
-          <Text className="info-label">Invoice Impact </Text>
-          <Text className="info-value">
-            +{' '}
-            {Number(financeDetails?.simulatedInvoiceIncrease ?? 0).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </div>
-      </div>
-
-      <div className="info-section" style={{ marginTop: '10px' }}>
-        <div className="info-column">
-          <Text className="info-label">Payment Impact </Text>
-          <Text className="info-value" style={{ color: 'var(--primary-green, #27ae60)' }}>
-            -{' '}
-            {Number(financeDetails?.simulatedPaymentDecrease ?? 0).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </div>
-      </div>
-
-      {dueAmount > 0 && (
-        <div className="info-section" style={{ marginTop: '10px' }}>
-          <div className="info-column">
-            <Text className="info-label">Due Amount</Text>
-            <Text className="info-value" style={{ color: 'var(--primary-red, #e74c3c)' }}>
-              {dueAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
+          <div className="info-section" style={{ marginTop: '10px' }}>
+            <div className="info-column">
+              <Text className="info-label">Wallet Reserved</Text>
+              <Text className="info-value">{formatAmount(walletReserved)}</Text>
+            </div>
           </div>
-        </div>
+
+          {walletConsumed > 0 && (
+            <div className="info-section" style={{ marginTop: '10px' }}>
+              <div className="info-column">
+                <Text className="info-label">Wallet Consumed</Text>
+                <Text className="info-value">{formatAmount(walletConsumed)}</Text>
+              </div>
+            </div>
+          )}
+
+          {onDeposit && (
+            <div style={{ marginTop: '14px' }}>
+              <MyButton
+                block
+                appearance="primary"
+                prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
+                onClick={onDeposit}
+              >
+                {WALLET_DEPOSIT_BUTTON_LABEL}
+              </MyButton>
+            </div>
+          )}
+
+          <div className="info-section" style={{ marginTop: '10px' }}>
+            <div className="info-column">
+              <Text className="info-label">Remaining Balance</Text>
+              <Text
+                className="info-value"
+                style={
+                  remainingBalance > 0
+                    ? { color: 'var(--primary-red, #e74c3c)' }
+                    : undefined
+                }
+              >
+                {formatAmount(remainingBalance)}
+              </Text>
+            </div>
+          </div>
+        </>
       )}
 
       <Divider className="divider-style" />

@@ -217,6 +217,10 @@ export const billingTransactionService =
               'BillingWallet',
               'PatientFinancialInvoices',
               {
+                type: 'PatientLedgerSummary',
+                id: arg.patientId
+              },
+              {
                 type:
                   'EncounterBillingSummary',
                 id: String(
@@ -259,21 +263,72 @@ export const billingTransactionService =
             BillingCheckoutResult,
             BillingCheckoutRequest
           >({
-            query:
-              body => ({
-                url:
-                  '/api/patient/billing/checkout',
+            async queryFn(body, _api, _extraOptions, baseQuery) {
+              const controller = new AbortController();
+              const timeoutId = window.setTimeout(
+                () => controller.abort(),
+                90_000
+              );
 
-                method:
-                  'POST',
+              try {
+                const result = await baseQuery({
+                  url: '/api/patient/billing/checkout',
+                  method: 'POST',
+                  body,
+                  signal: controller.signal
+                });
 
-                body
-              }),
+                if (result.error) {
+                  const aborted =
+                    controller.signal.aborted ||
+                    (result.error.status === 'FETCH_ERROR' &&
+                      String(result.error.error ?? '')
+                        .toLowerCase()
+                        .includes('abort'));
+
+                  if (aborted) {
+                    return {
+                      error: {
+                        status: 'TIMEOUT',
+                        data: {
+                          message:
+                            'Checkout timed out after 90 seconds. Restart the patient service, then try again.'
+                        }
+                      }
+                    };
+                  }
+
+                  return { error: result.error };
+                }
+
+                return {
+                  data: result.data as BillingCheckoutResult
+                };
+              } catch (error: unknown) {
+                const aborted =
+                  error instanceof DOMException &&
+                  error.name === 'AbortError';
+
+                return {
+                  error: {
+                    status: aborted ? 'TIMEOUT' : 'FETCH_ERROR',
+                    data: {
+                      message: aborted
+                        ? 'Checkout timed out after 90 seconds. Check the patient service logs and try again.'
+                        : 'Unable to reach the billing server. Confirm the backend is running.'
+                    }
+                  }
+                };
+              } finally {
+                window.clearTimeout(timeoutId);
+              }
+            },
 
             invalidatesTags: [
               'BillingCheckout',
               'BillingWallet',
-              'EncounterBillingSummary'
+              'EncounterBillingSummary',
+              'PatientLedgerSummary'
             ]
           }),
 

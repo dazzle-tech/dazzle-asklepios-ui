@@ -6,21 +6,24 @@ import {
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
   formatBillingChargeStatus,
-  formatMoney
+  formatMoney,
+  type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 
 type EncounterSettlementBannerProps = {
   summary: EncounterBillingSummary;
   currency?: string;
+  chargeRows?: UnifiedBillingChargeRow[];
 };
 
 const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   summary,
-  currency = 'SAR'
+  currency = 'SAR',
+  chargeRows = []
 }) => {
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
-  const patientShare = computeEncounterPatientShare(summary);
-  const remainingToPay = computeEncounterRemainingToPay(summary);
+  const patientShare = computeEncounterPatientShare(summary, chargeRows);
+  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
   const walletSettled = Number(summary.patientWalletSettledAmount ?? 0);
   const debitSettled = Number(summary.patientDebitSettledAmount ?? 0);
   const chargeClosed = summary.chargeStatus === 'CLOSED';
