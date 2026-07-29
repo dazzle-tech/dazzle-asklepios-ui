@@ -47,23 +47,19 @@ export const facilityService = createApi({
       })
     }),
 
-   getActiveFacilities: builder.query({
-  query: () => {
-    return {
-      url: '/api/setup/facility/active',
-      method: 'GET'
-    };
-  },
-  transformResponse: (response: any) => {
-
-    return response?.data || response;
-  },
-transformErrorResponse: (error: any) => {
-  return error;
-},
-  // onQueryStarted: onQueryStarted,
-  providesTags: ['Facilities']
-})
+    getActiveFacilities: builder.query<any[], void>({
+      query: () => ({
+        url: '/api/setup/facility/active',
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response?.data ?? response?.content ?? [];
+      },
+      providesTags: ['Facilities']
+    })
   })
 });
 export const {
