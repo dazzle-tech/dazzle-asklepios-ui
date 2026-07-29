@@ -1244,7 +1244,6 @@ const UrgentCareTriage = () => {
       }
     },
        
-      
     {
       key: 'actions',
       title: <Translate> </Translate>,
