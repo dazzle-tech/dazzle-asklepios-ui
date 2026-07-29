@@ -915,6 +915,7 @@ const ERList = () => {
       title: 'DATE',
       render: (row: any) => row?.dischargeAt
     },
+  
     {
       key: 'status',
       title: 'STATUS',
@@ -937,8 +938,8 @@ const ERList = () => {
             contant={formatEnumString(row?.status) ?? row?.status ?? ''}
           />
         );
-      }
-    },
+      }}
+    ,
     {
       key: 'duration',
       title: 'DURATION',
