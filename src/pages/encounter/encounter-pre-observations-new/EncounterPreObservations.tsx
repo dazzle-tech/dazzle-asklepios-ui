@@ -69,7 +69,6 @@ const NurseStation = ({
 
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId

@@ -48,6 +48,7 @@ import {
   initialListRequestAllValues
 } from '@/types/types';
 import LaboratoryReportButton from './LaboratoryReportButton';
+import LabInterpretationAI from './LabInterpretationAI';
 
 type Props = {
   patient: any;
@@ -525,6 +526,8 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         handleSendMessage={{}}
         disabled
       />
+
+      <LabInterpretationAI patientId={patientId} />
     </Panel>
   );
 });

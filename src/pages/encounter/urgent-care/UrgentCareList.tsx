@@ -238,6 +238,7 @@ const UrgentCareList = () => {
 
    const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
+      'NEW',
       'IN_OPERATION',
       'CONFIRM_RETURN',
       'TEMP_DC',

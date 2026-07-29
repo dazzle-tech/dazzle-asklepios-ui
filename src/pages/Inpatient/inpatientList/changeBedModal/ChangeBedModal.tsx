@@ -152,7 +152,7 @@ const ChangeBedModal: React.FC<Props> = ({
       sort: 'id,asc'
     },
     {
-      skip: !open || !departmentId || !patientGender
+      skip: !open || !departmentId 
     }
   );
 
@@ -218,10 +218,7 @@ const ChangeBedModal: React.FC<Props> = ({
       return;
     }
 
-    if (!patientGender) {
-      dispatch(notify({ msg: 'Patient gender is required.', sev: 'error' }));
-      return;
-    }
+  
 
     if (!currentActiveAssignmentId) {
       dispatch(notify({ msg: 'Active assignment not found.', sev: 'error' }));

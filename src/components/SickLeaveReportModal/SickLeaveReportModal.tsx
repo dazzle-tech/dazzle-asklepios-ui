@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { usePostSickLeaveReportPdfMutation } from '@/services/reports/sickLeaveReportService';
 import { useCreatePatientSickLeaveMutation } from '@/services/patients/patientSickLeaveService';
 import { showSystemLoader, hideSystemLoader, notify } from '@/utils/uiReducerActions';
+import { useCreatePatientSickLeaveMutation } from '@/services/patients/patientSickLeaveService';
 
 interface SickLeaveReportModalProps {
   open: boolean;
@@ -77,6 +78,14 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
       dispatch(showSystemLoader());
 
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      await createPatientSickLeave({
+        encounterId,
+        startDate: sickLeaveForm.fromDate,
+        endDate: sickLeaveForm.toDate,
+        notes: sickLeaveForm.notes,
+        language: language.lang,
+      }).unwrap();
 
       await createPatientSickLeave({
         encounterId,

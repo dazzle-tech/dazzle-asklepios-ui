@@ -971,7 +971,7 @@ const Result = forwardRef<any, Props>(
                     <MyButton
                       prefixIcon={() => <WarningRoundIcon />}
                       appearance="ghost"
-                      disabled={!selectedResultIds.length}
+                      disabled={!selectedResultIds.length }
                       onClick={() => {
                         setIsBulkRejectMode(true);
                         setOpenResultRejectModal(true);

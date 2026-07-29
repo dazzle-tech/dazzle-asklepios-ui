@@ -566,7 +566,7 @@ const UrgentCareTriage = () => {
       'TEMP_DC',
       'SENT_TO_ER',
       'WAITING_LIST',
-      'ASSIGNED_TO_BED '
+      'ASSIGNED_TO_BED'
     ]
   });
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
@@ -643,7 +643,7 @@ const UrgentCareTriage = () => {
         patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
         visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
         encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
-         status:encounterRow?.status ?? statusCode,
+        status:encounterRow?.status ?? statusCode,
         encounterStatus: encounterRow?.encounterStatus ,
         plannedStartDate: encounterRow?.encounterDate ?? null,
         createdAt:
@@ -738,7 +738,6 @@ const UrgentCareTriage = () => {
   }, [normalizedRows, priorityOrderMap]);
 
   const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
-
   const isSelected = (rowData: any) => {
     if (
       rowData &&
@@ -1236,8 +1235,8 @@ const UrgentCareTriage = () => {
             color={color}
             contant={
               encounterStatusLabelMap.get(
-                String(rowData?.status)
-              ) ?? String(rowData?.status )
+                String(rowData?.status )
+              ) ?? String(rowData?.status)
             }
           />
         );

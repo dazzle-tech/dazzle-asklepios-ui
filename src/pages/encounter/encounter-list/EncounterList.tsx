@@ -537,7 +537,7 @@ const EncounterList = () => {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        edit: encounterData?.status?.toUpperCase() === 'COMPLETED',
         fromPage: 'EncounterList'
       }
     });
@@ -809,7 +809,7 @@ const EncounterList = () => {
     },
     {
       key: 'status',
-      title: 'STATUS',
+      title: 'TREATMENT STATUS',
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const statusColorMap: Record<string, string> = {

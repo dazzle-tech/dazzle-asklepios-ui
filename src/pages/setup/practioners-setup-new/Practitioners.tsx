@@ -81,6 +81,7 @@ const Practitioners = () => {
   // ──────────────────────────── DATA ────────────────────────────
   const { data: practitionerListResponse, isFetching } =
     useGetAllPractitionersQuery(paginationParams);
+    console.log("practitionerListResponse", practitionerListResponse)
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [createPractitioner] = useCreatePractitionerMutation();
   const [updatePractitioner] = useUpdatePractitionerMutation();
@@ -91,7 +92,6 @@ const Practitioners = () => {
   const specility = useEnumOptions('Specialty');
   const [link, setLink] = useState({})
   const totalCount = practitionerListResponse?.totalCount ?? 0;
-  const links = practitionerListResponse?.links || {};
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 

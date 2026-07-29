@@ -2252,6 +2252,7 @@ export interface PatientEncounter {
   notes?: string | null;
 
   status: string;
+  encounterStatus: string;
   encounterDate?: Date | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
@@ -2417,6 +2418,7 @@ export interface PatientEncounter {
   encounterReason: string;
   priorityLevel: string;
   status: string;
+  encounterStatus: string;
 
   followUpEncounter?: {
     id: number;
@@ -2708,6 +2710,7 @@ export interface PatientEncounter {
   encounterDate?: Date | null;
 
   status: string;
+    encounterStatus: string;
 
   chiefComplaint?: string | null;
 
@@ -4964,6 +4967,16 @@ export interface PatientProblem {
   lastModifiedDate?: string | Date | null;
 }
 
+export interface OCRParsingResponseDTO {
+   type: string | null;
+   documentNumber: number | null;
+   familyName: string | null;
+   givenNames: string | null;
+   nationality: string | null,
+   dateOfBirth: Date | null,  // change it later
+   sex : string | null, // change it later
+   placeOfBirth: string;
+}
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
 export type WhatsAppLanguageCode = string;
