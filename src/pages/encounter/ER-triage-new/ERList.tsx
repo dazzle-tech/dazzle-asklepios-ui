@@ -939,8 +939,6 @@ const ERList = () => {
         );
       }
     },
-
-    },
     {
       key: 'duration',
       title: 'DURATION',
