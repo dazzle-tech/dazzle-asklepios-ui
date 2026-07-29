@@ -2565,6 +2565,7 @@ export type PatientProcedure = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 
   status?: ProcStatus;
 
@@ -3436,6 +3437,7 @@ export type PatientProcedureCreateVM = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 };
 
 // UPDATE
@@ -3455,6 +3457,7 @@ export type PatientProcedureUpdateVM = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 };
 
 export type PatientProcedureCancelVM = {
