@@ -143,6 +143,9 @@ export type AddableChargeLine = {
   quantity?: number;
   unitPrice?: number;
   netAmount?: number;
+  grossAmount?: number;
+  discountAmount?: number;
+  taxAmount?: number;
   patientShareAmount?: number;
   insuranceShareAmount?: number;
   currency?: string;
@@ -195,6 +198,7 @@ export type PreviewCatalogItemPricingRequest = {
   quantity?: number;
   coverageType?: 'SELF_PAY' | 'INSURANCE';
   patientInsuranceId?: number | null;
+  invoiceId?: number | null;
 };
 
 export type PreviewCatalogItemPricingResult = {
@@ -203,6 +207,15 @@ export type PreviewCatalogItemPricingResult = {
   priceSource: string | null;
   priceListItemCode: string | null;
   currency?: string;
+  grossAmount?: number | null;
+  discountAmount?: number | null;
+  taxAmount?: number | null;
+  netAmount?: number | null;
+  itemGrossAmount?: number | null;
+  itemDiscountAmount?: number | null;
+  itemTaxAmount?: number | null;
+  invoiceDiscountAmount?: number | null;
+  invoiceTaxAmount?: number | null;
 };
 
 export type CreateAdjustmentRequest = {

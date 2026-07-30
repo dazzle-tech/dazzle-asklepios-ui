@@ -41,6 +41,8 @@ type PrepareServicesPanelProps = {
   onCoverageTypeChange: (value: BillingCoverageType) => void;
   onInsuranceChange: (insuranceId: number | null) => void;
   onPrepared?: () => void;
+  ledgerTotalDebt?: number | null;
+  loadingBillingMetrics?: boolean;
 };
 
 const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
@@ -55,7 +57,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   patientInsurances,
   onCoverageTypeChange,
   onInsuranceChange,
-  onPrepared
+  onPrepared,
+  ledgerTotalDebt,
+  loadingBillingMetrics = false
 }) => {
   const dispatch = useAppDispatch();
   const [serviceRows, setServiceRows] = useState<PrepareServiceRow[]>([]);
@@ -67,7 +71,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   const isInsurance = coverageType === 'INSURANCE';
   const servicesArePrepared = (summary.items ?? []).length > 0;
   const patientShare = computeEncounterPatientShare(summary);
-  const remainingToPay = computeEncounterRemainingToPay(summary);
+  const remainingToPay = loadingBillingMetrics
+    ? null
+    : computeEncounterRemainingToPay(summary, [], ledgerTotalDebt);
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
 
   const insuranceOptions = useMemo(
@@ -416,12 +422,12 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
               <span className="billing-accounting__encounter-pay-label">Remaining to pay</span>
               <strong
                 className={
-                  remainingToPay > 0
+                  remainingToPay != null && remainingToPay > 0
                     ? 'billing-accounting__encounter-pay-value--danger'
                     : 'billing-accounting__encounter-pay-value--success'
                 }
               >
-                {formatMoney(remainingToPay, currency)}
+                {remainingToPay == null ? '—' : formatMoney(remainingToPay, currency)}
               </strong>
             </div>
           </div>

@@ -18,25 +18,58 @@ type BillingSummaryCardsProps = {
   walletBalance: number;
   reservedBalance: number;
   totalDebt?: number;
+  ledgerTotalDebt?: number | null;
+  loading?: boolean;
   currency?: string;
   coverageType?: BillingCoverageType;
   chargeRows?: UnifiedBillingChargeRow[];
 };
+
+const PLACEHOLDER = '—';
 
 const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   summary,
   walletBalance,
   reservedBalance,
   totalDebt = 0,
+  ledgerTotalDebt,
+  loading = false,
   currency,
   coverageType = 'SELF_PAY',
   chargeRows = []
 }) => {
+  if (loading) {
+    const skeletonCards = [
+      'Invoice total',
+      'Remaining to pay',
+      'Wallet available',
+      'Wallet reserved',
+      'Ledger debt'
+    ];
+
+    return (
+      <div className="billing-accounting__cards billing-accounting__cards--loading">
+        {skeletonCards.map(label => (
+          <div key={label} className="billing-accounting__card">
+            <div className="billing-accounting__card-label">{label}</div>
+            <div className="billing-accounting__card-value billing-accounting__card-value--loading">
+              {PLACEHOLDER}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
   const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const coveredAmount = computeEncounterCoveredAmount(summary);
-  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
+  const remainingToPay = computeEncounterRemainingToPay(
+    summary,
+    chargeRows,
+    ledgerTotalDebt ?? totalDebt
+  );
   const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
   const remainingHint = (() => {

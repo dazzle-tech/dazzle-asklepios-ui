@@ -53,6 +53,8 @@ type BillingCheckoutPanelProps = {
   onCollectRemaining?: () => void;
   chargeRows?: UnifiedBillingChargeRow[];
   encounterClosedForBilling?: boolean;
+  ledgerTotalDebt?: number | null;
+  loadingBillingMetrics?: boolean;
 };
 
 
@@ -73,7 +75,11 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   chargeRows = [],
 
-  encounterClosedForBilling = false
+  encounterClosedForBilling = false,
+
+  ledgerTotalDebt,
+
+  loadingBillingMetrics = false
 
 }) => {
 
@@ -121,9 +127,12 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   const amountToCollect = computeAmountToCollect(summary);
 
-  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
+  const remainingToPay = loadingBillingMetrics
+    ? null
+    : computeEncounterRemainingToPay(summary, chargeRows, ledgerTotalDebt);
 
-  const checkoutAmountDue = remainingToPay > 0 ? remainingToPay : amountToCollect;
+  const checkoutAmountDue =
+    remainingToPay == null ? 0 : remainingToPay > 0 ? remainingToPay : amountToCollect;
 
   const checkoutCreditLimit = Math.max(
 
@@ -393,7 +402,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
           <div className="billing-accounting__metric-value">
 
-            {formatMoney(remainingToPay, currency)}
+            {remainingToPay == null ? '—' : formatMoney(remainingToPay, currency)}
 
           </div>
 

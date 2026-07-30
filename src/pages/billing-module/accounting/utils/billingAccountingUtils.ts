@@ -295,14 +295,16 @@ export const buildMedicationNameLookup = (
   return lookup;
 };
 
-/** Total open patient obligation across legacy charges, billing, invoices, and debit. */
+/** Total open patient obligation — ledger summary already includes invoice outstanding. */
 export const computePatientRemainingBalance = (
   ledgerSummary: { totalDebt?: number } | null | undefined,
   invoiceOutstandingTotal = 0
 ): number => {
-  const ledgerDebt = Number(ledgerSummary?.totalDebt ?? 0);
-  const invoiceOutstanding = Number(invoiceOutstandingTotal ?? 0);
-  return Math.max(ledgerDebt, invoiceOutstanding);
+  if (ledgerSummary != null) {
+    return Number(ledgerSummary.totalDebt ?? 0);
+  }
+
+  return Number(invoiceOutstandingTotal ?? 0);
 };
 
 /** Patient-level wallet available — matches Patient Billing Side / ledger summary. */
@@ -404,17 +406,43 @@ export const computeEncounterCoveredAmount = (
 
 /**
  * Remaining amount to collect or post to debit for this encounter only.
- * When an invoice exists, includes invoice outstanding (e.g. invoice-level tax/discount delta).
+ * When an invoice exists, invoice outstanding is authoritative once issued —
+ * charge-level patient outstanding can stay stale after credit notes / wallet refunds.
  */
 export const computeEncounterRemainingToPay = (
   summary: EncounterBillingSummary | null | undefined,
-  chargeRows: UnifiedBillingChargeRow[] = []
+  chargeRows: UnifiedBillingChargeRow[] = [],
+  ledgerTotalDebt?: number | null
 ): number => {
   const unbilledRemaining = computeUnbilledEncounterRemaining(chargeRows);
 
+  const hasInvoice =
+    Number(summary?.invoiceId ?? 0) > 0 ||
+    Boolean(String(summary?.invoiceNumber ?? '').trim()) ||
+    Number(summary?.invoiceTotalAmount ?? 0) > 0;
+
   const invoiceOutstanding = Number(summary?.invoiceOutstandingAmount ?? 0);
-  if (invoiceOutstanding > 0) {
-    return invoiceOutstanding + unbilledRemaining;
+  const ledgerDebt = Number(ledgerTotalDebt ?? NaN);
+
+  if (hasInvoice) {
+    if (invoiceOutstanding > 0) {
+      return invoiceOutstanding + unbilledRemaining;
+    }
+
+    const debitSettled = Number(summary?.patientDebitSettledAmount ?? 0);
+    if (debitSettled > 0 && summary?.chargeStatus === 'CLOSED') {
+      return debitSettled + unbilledRemaining;
+    }
+
+    if (unbilledRemaining <= 0) {
+      return 0;
+    }
+
+    if (Number.isFinite(ledgerDebt) && ledgerDebt <= 0) {
+      return 0;
+    }
+
+    return unbilledRemaining;
   }
 
   const debitSettled = Number(summary?.patientDebitSettledAmount ?? 0);

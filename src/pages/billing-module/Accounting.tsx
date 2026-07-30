@@ -67,6 +67,7 @@ const Accounting: React.FC = () => {
     selectedEncounter,
     summary,
     loadingSummary,
+    loadingBillingMetrics,
     loadingPsp,
     chargeRows,
     timelineEvents,
@@ -78,6 +79,7 @@ const Accounting: React.FC = () => {
     reservedBalance,
     patientLedgerSummary,
     patientInsurances,
+    loadingInsurances,
     refreshAll
   } = useBillingAccountingData({
     patient,
@@ -229,10 +231,22 @@ const Accounting: React.FC = () => {
     [selectedEncounter]
   );
 
-  const encounterRemainingToPay = useMemo(
-    () => computeEncounterRemainingToPay(summary, chargeRows),
-    [summary, chargeRows]
-  );
+  const encounterRemainingToPay = useMemo(() => {
+    if (loadingBillingMetrics) {
+      return null;
+    }
+
+    return computeEncounterRemainingToPay(
+      summary,
+      chargeRows,
+      patientLedgerSummary?.totalDebt
+    );
+  }, [
+    summary,
+    chargeRows,
+    patientLedgerSummary?.totalDebt,
+    loadingBillingMetrics
+  ]);
 
   const selectedEncounterLabel = useMemo(
     () => formatEncounterDisplayLabel(selectedEncounter),
@@ -264,7 +278,12 @@ const Accounting: React.FC = () => {
                 <>
                   {' '}
                   · Encounter {selectedEncounterLabel}: remaining to pay{' '}
-                  {formatMoney(encounterRemainingToPay, summary.currency ?? facilityCurrency)}
+                  {loadingBillingMetrics || selectedEncounterId == null || encounterRemainingToPay == null
+                    ? '—'
+                    : formatMoney(
+                        encounterRemainingToPay,
+                        summary.currency ?? facilityCurrency
+                      )}
                 </>
               ) : null}
             </div>
@@ -288,6 +307,8 @@ const Accounting: React.FC = () => {
           walletBalance={walletBalance}
           reservedBalance={reservedBalance}
           totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
+          ledgerTotalDebt={patientLedgerSummary?.totalDebt}
+          loading={selectedEncounterId == null || loadingBillingMetrics}
           currency={summary.currency ?? facilityCurrency}
           coverageType={coverageType}
           chargeRows={chargeRows}
@@ -297,6 +318,8 @@ const Accounting: React.FC = () => {
           summary={summary}
           currency={summary.currency ?? facilityCurrency}
           chargeRows={chargeRows}
+          ledgerTotalDebt={patientLedgerSummary?.totalDebt}
+          loading={selectedEncounterId == null || loadingBillingMetrics}
         />
 
         <CashFallbackBanner
@@ -313,7 +336,8 @@ const Accounting: React.FC = () => {
               selectedEncounterId={selectedEncounterId}
               loading={loadingEncounters}
               onSelect={setSelectedEncounterId}
-              remainingToPay={encounterRemainingToPay}
+              remainingToPay={encounterRemainingToPay ?? 0}
+              remainingLoading={selectedEncounterId == null || loadingBillingMetrics}
               currency={summary.currency ?? facilityCurrency}
             />
           </div>
@@ -337,6 +361,8 @@ const Accounting: React.FC = () => {
                 onCoverageTypeChange={setCoverageType}
                 onInsuranceChange={setSelectedInsuranceId}
                 onPrepared={refreshAll}
+                ledgerTotalDebt={patientLedgerSummary?.totalDebt}
+                loadingBillingMetrics={loadingBillingMetrics}
               />
             </div>
 
@@ -384,6 +410,8 @@ const Accounting: React.FC = () => {
                 coverageType={coverageType}
                 chargeRows={chargeRows}
                 encounterClosedForBilling={encounterClosedForBilling}
+                ledgerTotalDebt={patientLedgerSummary?.totalDebt}
+                loadingBillingMetrics={loadingBillingMetrics}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
               />
@@ -427,6 +455,7 @@ const Accounting: React.FC = () => {
       selectedEncounterId,
       selectedInsuranceId,
       encounterRemainingToPay,
+      loadingBillingMetrics,
       encounterClosedForBilling,
       selectedEncounterLabel,
       summary,

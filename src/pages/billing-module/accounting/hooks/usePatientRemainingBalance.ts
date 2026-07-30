@@ -21,12 +21,12 @@ const isPatientInvoice = (document: {
 
 export const usePatientRemainingBalance = (patientId: number | null | undefined) => {
   const {
-    data: ledgerSummary,
-    isFetching: loadingLedger,
+    currentData: ledgerSummary,
+    isLoading: loadingLedgerInitial,
     refetch: refetchLedgerSummary
   } = useGetPatientLedgerSummaryQuery(
     { patientId: patientId as number },
-    { skip: patientId == null }
+    { skip: patientId == null, refetchOnMountOrArgChange: true }
   );
 
   const {
@@ -92,7 +92,7 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
     return () => {
       cancelled = true;
     };
-  }, [patientId, invoiceIdsKey, patientInvoices, fetchInvoiceAdjustments]);
+  }, [patientId, invoiceIdsKey, patientInvoices, fetchInvoiceAdjustments, ledgerSummary?.totalDebt]);
 
   const remainingBalance = computePatientRemainingBalance(
     ledgerSummary,
@@ -115,7 +115,9 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
     invoiceOutstandingTotal,
     remainingBalance,
     loadingBalance:
-      (loadingLedger && !ledgerSummary) ||
+      (patientId != null &&
+        loadingLedgerInitial &&
+        ledgerSummary == null) ||
       loadingDocuments ||
       loadingInvoiceOutstanding,
     refreshBalance

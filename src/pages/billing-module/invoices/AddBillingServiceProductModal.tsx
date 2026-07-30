@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Loader } from 'rsuite';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Form, Loader, Radio, RadioGroup } from 'rsuite';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import '@/components/ChildModal/styles.less';import { useEnumOptions } from '@/services/enumsApi';
+import '@/components/ChildModal/styles.less';
+import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceService';
 import { useGetBrandMedicationsByIsActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService';
@@ -13,11 +15,20 @@ import {
   newPatientServiceAndProduct
 } from '@/types/model-types-constructor-new';
 import type { PatientServiceAndProduct } from '@/types/model-types-new';
-import type { InvoiceLineAdjustmentRequest } from '@/services/billing/financialDocumentAdjustmentService';
+import type { InvoiceLineAdjustmentRequest, InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
+import { inferInvoiceScopeAdjustments } from './invoiceLinePricingUtils';
 
 export type PendingNewServiceLine = InvoiceLineAdjustmentRequest & {
   tempId: string;
   itemLabel?: string;
+  grossAmount?: number;
+  itemDiscountAmount?: number;
+  itemTaxAmount?: number;
+  invoiceDiscountAmount?: number;
+  invoiceTaxAmount?: number;
+  discountAmount?: number;
+  taxAmount?: number;
+  netAmount?: number;
 };
 
 type AddBillingServiceProductModalProps = {
@@ -26,7 +37,9 @@ type AddBillingServiceProductModalProps = {
   patientId: number;
   encounterId: number;
   facilityId?: number | null;
+  invoiceId?: number | null;
   currency?: string;
+  referenceInvoiceLines?: InvoiceLineItem[];
   onAdd: (line: PendingNewServiceLine) => void;
 };
 
@@ -36,14 +49,16 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
   patientId,
   encounterId,
   facilityId,
+  invoiceId,
   currency = 'SAR',
+  referenceInvoiceLines,
   onAdd
 }) => {
   const billingItemTypeOptions = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
   const [previewCatalogItemPricing] = usePreviewCatalogItemPricingMutation();
   const [isResolvingPrice, setIsResolvingPrice] = useState(false);
-  const modalBodyRef = useRef<HTMLDivElement | null>(null);
-  const [record, setRecord] = useState<PatientServiceAndProduct>({    ...newPatientServiceAndProduct,
+  const [record, setRecord] = useState<PatientServiceAndProduct>({
+    ...newPatientServiceAndProduct,
     patientId,
     encounterId,
     quantity: 1,
@@ -62,25 +77,58 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     });
   }, [open, patientId, encounterId, currency]);
 
+  const [linePricingPreview, setLinePricingPreview] = useState<{
+    grossAmount: number;
+    itemDiscountAmount: number;
+    itemTaxAmount: number;
+    invoiceDiscountAmount: number;
+    invoiceTaxAmount: number;
+    netAmount: number;
+  } | null>(null);
+
   useEffect(() => {
-    if (!open) return;
-
-    const modalElement = document.querySelector(
-      '.billing-add-service-modal.child-right-modal'
-    );
-
-    if (!(modalElement instanceof HTMLElement)) {
-      return;
+    if (!open) {
+      setLinePricingPreview(null);
     }
-
-    modalElement.style.position = 'fixed';
-    modalElement.style.top = '0';
-    modalElement.style.right = '0';
-    modalElement.style.zIndex = '1060';
   }, [open]);
 
-  const resolveModalContainer = useCallback(
-    () => modalBodyRef.current ?? document.body,
+  const handleCategoryChange = (value: string | number | null) => {
+    setLinePricingPreview(null);
+    setRecord({
+      ...record,
+      billingItemType: value != null ? String(value) : undefined,
+      brandMedicationId: null,
+      diagnosticTestId: null,
+      serviceId: null,
+      procedureId: null,
+      unitPrice: 0,
+      currency
+    });
+  };
+
+  const applyPricingPreview = useCallback(
+    (pricingPreview: {
+      unitPrice: number;
+      grossAmount: number;
+      itemDiscountAmount: number;
+      itemTaxAmount: number;
+      invoiceDiscountAmount: number;
+      invoiceTaxAmount: number;
+      netAmount: number;
+    }) => {
+      setLinePricingPreview({
+        grossAmount: pricingPreview.grossAmount,
+        itemDiscountAmount: pricingPreview.itemDiscountAmount,
+        itemTaxAmount: pricingPreview.itemTaxAmount,
+        invoiceDiscountAmount: pricingPreview.invoiceDiscountAmount,
+        invoiceTaxAmount: pricingPreview.invoiceTaxAmount,
+        netAmount: pricingPreview.netAmount
+      });
+      setRecord(current => ({
+        ...current,
+        unitPrice: pricingPreview.unitPrice
+      }));
+    },
     []
   );
 
@@ -243,35 +291,124 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
         quantity: Number(nextRecord.quantity ?? 1),
         coverageType: 'SELF_PAY' as const,
-        patientInsuranceId: null
+        patientInsuranceId: null,
+        invoiceId: invoiceId ?? undefined
       };
     },
-    [currency, encounterId, facilityId, patientId]
+    [currency, encounterId, facilityId, invoiceId, patientId]
   );
 
-  const resolveUnitPrice = useCallback(
+  const applyInvoiceScopeFallback = useCallback(
+    (
+      preview: {
+        grossAmount: number;
+        itemDiscountAmount: number;
+        itemTaxAmount: number;
+        invoiceDiscountAmount: number;
+        invoiceTaxAmount: number;
+        netAmount: number;
+      },
+      lineGross: number
+    ) => {
+      if (
+        invoiceId == null ||
+        (preview.invoiceDiscountAmount > 0 || preview.invoiceTaxAmount > 0)
+      ) {
+        return preview;
+      }
+
+      const inferred = inferInvoiceScopeAdjustments(lineGross, referenceInvoiceLines);
+      if (!inferred) {
+        return preview;
+      }
+
+      return {
+        ...preview,
+        invoiceDiscountAmount: inferred.invoiceDiscountAmount,
+        invoiceTaxAmount: inferred.invoiceTaxAmount,
+        netAmount: inferred.netAmount
+      };
+    },
+    [invoiceId, referenceInvoiceLines]
+  );
+
+  const resolvePricingPreview = useCallback(
     async (nextRecord: PatientServiceAndProduct, setupFallbackPrice?: number | null) => {
       const previewRequest = buildPricingPreviewRequest(nextRecord);
       if (!previewRequest) {
-        return Number(setupFallbackPrice ?? 0);
+        const unitPrice = Number(setupFallbackPrice ?? 0);
+        const qty = Number(nextRecord.quantity ?? 1);
+        const grossAmount = unitPrice * qty;
+        return applyInvoiceScopeFallback(
+          {
+            unitPrice,
+            grossAmount,
+            itemDiscountAmount: 0,
+            itemTaxAmount: 0,
+            invoiceDiscountAmount: 0,
+            invoiceTaxAmount: 0,
+            netAmount: grossAmount
+          },
+          grossAmount
+        );
       }
 
       setIsResolvingPrice(true);
 
       try {
         const preview = await previewCatalogItemPricing(previewRequest).unwrap();
-        const resolvedPrice = Number(
+        const unitPrice = Number(
           preview.unitPrice ?? preview.setupUnitPrice ?? setupFallbackPrice ?? 0
         );
-        return Number.isFinite(resolvedPrice) ? resolvedPrice : 0;
+        const qty = Number(nextRecord.quantity ?? 1);
+        const lineGross =
+          preview.itemGrossAmount != null
+            ? Number(preview.itemGrossAmount)
+            : preview.grossAmount != null
+              ? Number(preview.grossAmount)
+              : unitPrice * qty;
+        const itemDiscount = Number(preview.itemDiscountAmount ?? 0);
+        const itemTax = Number(preview.itemTaxAmount ?? 0);
+        const invoiceDiscount = Number(preview.invoiceDiscountAmount ?? 0);
+        const invoiceTax = Number(preview.invoiceTaxAmount ?? 0);
+        const lineNet =
+          preview.netAmount != null
+            ? Number(preview.netAmount)
+            : Math.max(0, lineGross - itemDiscount - invoiceDiscount + itemTax + invoiceTax);
+
+        return applyInvoiceScopeFallback(
+          {
+            unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
+            grossAmount: lineGross,
+            itemDiscountAmount: itemDiscount,
+            itemTaxAmount: itemTax,
+            invoiceDiscountAmount: invoiceDiscount,
+            invoiceTaxAmount: invoiceTax,
+            netAmount: lineNet
+          },
+          lineGross
+        );
       } catch {
-        const fallbackPrice = Number(setupFallbackPrice ?? 0);
-        return Number.isFinite(fallbackPrice) ? fallbackPrice : 0;
+        const unitPrice = Number(setupFallbackPrice ?? 0);
+        const qty = Number(nextRecord.quantity ?? 1);
+        const grossAmount = unitPrice * qty;
+        return applyInvoiceScopeFallback(
+          {
+            unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
+            grossAmount,
+            itemDiscountAmount: 0,
+            itemTaxAmount: 0,
+            invoiceDiscountAmount: 0,
+            invoiceTaxAmount: 0,
+            netAmount: grossAmount
+          },
+          grossAmount
+        );
       } finally {
         setIsResolvingPrice(false);
       }
     },
-    [buildPricingPreviewRequest, previewCatalogItemPricing]
+    [applyInvoiceScopeFallback, buildPricingPreviewRequest, previewCatalogItemPricing]
   );
 
   const handleCatalogItemSelect = useCallback(
@@ -291,16 +428,45 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
 
       setRecord(nextRecord);
 
-      const resolvedUnitPrice = await resolveUnitPrice(nextRecord, setupFallbackPrice);
+      const pricingPreview = await resolvePricingPreview(nextRecord, setupFallbackPrice);
       setRecord(current => ({
         ...current,
         [itemSelectConfig.fieldName]:
           selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
-        unitPrice: resolvedUnitPrice,
+        unitPrice: pricingPreview.unitPrice,
         currency
       }));
+      setLinePricingPreview({
+        grossAmount: pricingPreview.grossAmount,
+        itemDiscountAmount: pricingPreview.itemDiscountAmount,
+        itemTaxAmount: pricingPreview.itemTaxAmount,
+        invoiceDiscountAmount: pricingPreview.invoiceDiscountAmount,
+        invoiceTaxAmount: pricingPreview.invoiceTaxAmount,
+        netAmount: pricingPreview.netAmount
+      });
     },
-    [currency, itemSelectConfig, record, resolveUnitPrice]
+    [currency, itemSelectConfig, record, resolvePricingPreview]
+  );
+
+  const handleQuantityChange = useCallback(
+    async (nextRecord: PatientServiceAndProduct) => {
+      setRecord(nextRecord);
+
+      const hasCatalogItem =
+        nextRecord.brandMedicationId != null ||
+        nextRecord.diagnosticTestId != null ||
+        nextRecord.serviceId != null ||
+        nextRecord.procedureId != null;
+
+      if (!hasCatalogItem) {
+        setLinePricingPreview(null);
+        return;
+      }
+
+      const pricingPreview = await resolvePricingPreview(nextRecord);
+      applyPricingPreview(pricingPreview);
+    },
+    [applyPricingPreview, resolvePricingPreview]
   );
 
   const handleAdd = () => {
@@ -322,6 +488,18 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         record.billingItemType === 'PROCEDURE' ? record.procedureId ?? undefined : undefined,
       quantity: Number(record.quantity),
       unitPrice: Number(record.unitPrice),
+      grossAmount: linePricingPreview?.grossAmount,
+      itemDiscountAmount: linePricingPreview?.itemDiscountAmount,
+      itemTaxAmount: linePricingPreview?.itemTaxAmount,
+      invoiceDiscountAmount: linePricingPreview?.invoiceDiscountAmount,
+      invoiceTaxAmount: linePricingPreview?.invoiceTaxAmount,
+      discountAmount:
+        Number(linePricingPreview?.itemDiscountAmount ?? 0) +
+        Number(linePricingPreview?.invoiceDiscountAmount ?? 0),
+      taxAmount:
+        Number(linePricingPreview?.itemTaxAmount ?? 0) +
+        Number(linePricingPreview?.invoiceTaxAmount ?? 0),
+      netAmount: linePricingPreview?.netAmount,
       currency: record.currency,
       serviceSource: 'SERVICE_AND_PRODUCT',
       notes: itemLabel,
@@ -333,32 +511,23 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
   };
 
   const modalContent = (
-    <div ref={modalBodyRef}>
-      <Form fluid>
-      <MyInput
-        required
-        fieldLabel="Category"
-        fieldType="select"
-        fieldName="billingItemType"
-        selectData={billingItemTypeOptions}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={record}
-        setRecord={val =>
-          setRecord({
-            ...val,
-            brandMedicationId: null,
-            diagnosticTestId: null,
-            serviceId: null,
-            procedureId: null,
-            unitPrice: 0,
-            currency
-          })
-        }
-        width="100%"
-        searchable={false}
-        container={resolveModalContainer}
-      />
+    <Form fluid>
+      <Form.Group controlId="billingItemType">
+        <Form.ControlLabel>
+          Category <span className="required-field">*</span>
+        </Form.ControlLabel>
+        <RadioGroup
+          name="billingItemType"
+          value={record.billingItemType ?? null}
+          onChange={handleCategoryChange}
+        >
+          {billingItemTypeOptions.map(option => (
+            <Radio key={option.value} value={option.value}>
+              {option.label}
+            </Radio>
+          ))}
+        </RadioGroup>
+      </Form.Group>
 
       {itemSelectConfig && (
         <MyInput
@@ -374,7 +543,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           width="100%"
           searchable
           loading={itemSelectConfig.loading}
-          container={resolveModalContainer}
+          container={() => document.body}
           onSelectItem={handleCatalogItemSelect}
         />
       )}
@@ -385,7 +554,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         fieldLabel="Quantity"
         fieldType="number"
         record={record}
-        setRecord={setRecord}
+        setRecord={handleQuantityChange}
         width="100%"
       />
 
@@ -393,7 +562,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         <MyInput
           required
           fieldName="unitPrice"
-          fieldLabel="Unit price"
+          fieldLabel="Unit price (price list)"
           fieldType="number"
           record={record}
           setRecord={setRecord}
@@ -411,8 +580,40 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           />
         ) : null}
       </div>
-      </Form>
-    </div>
+
+      {linePricingPreview ? (
+        <div className="billing-add-service-pricing-preview">
+          <div>
+            <span>Price</span>
+            <strong>{linePricingPreview.grossAmount.toFixed(2)} {currency}</strong>
+          </div>
+          <div>
+            <span>Item disc.</span>
+            <strong className="billing-add-service-pricing-preview__discount">
+              -{linePricingPreview.itemDiscountAmount.toFixed(2)} {currency}
+            </strong>
+          </div>
+          <div>
+            <span>Item tax</span>
+            <strong>{linePricingPreview.itemTaxAmount.toFixed(2)} {currency}</strong>
+          </div>
+          <div>
+            <span>Inv. disc.</span>
+            <strong className="billing-add-service-pricing-preview__discount">
+              -{linePricingPreview.invoiceDiscountAmount.toFixed(2)} {currency}
+            </strong>
+          </div>
+          <div>
+            <span>Inv. tax</span>
+            <strong>{linePricingPreview.invoiceTaxAmount.toFixed(2)} {currency}</strong>
+          </div>
+          <div>
+            <span>Net</span>
+            <strong>{linePricingPreview.netAmount.toFixed(2)} {currency}</strong>
+          </div>
+        </div>
+      ) : null}
+    </Form>
   );
 
   return (

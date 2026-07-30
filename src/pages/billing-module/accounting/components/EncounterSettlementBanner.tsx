@@ -14,16 +14,28 @@ type EncounterSettlementBannerProps = {
   summary: EncounterBillingSummary;
   currency?: string;
   chargeRows?: UnifiedBillingChargeRow[];
+  ledgerTotalDebt?: number | null;
+  loading?: boolean;
 };
 
 const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   summary,
   currency = 'SAR',
-  chargeRows = []
+  chargeRows = [],
+  ledgerTotalDebt,
+  loading = false
 }) => {
+  if (loading || !summary.chargeId) {
+    return null;
+  }
+
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
   const patientShare = computeEncounterPatientShare(summary, chargeRows);
-  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
+  const remainingToPay = computeEncounterRemainingToPay(
+    summary,
+    chargeRows,
+    ledgerTotalDebt
+  );
   const walletSettled = Number(summary.patientWalletSettledAmount ?? 0);
   const debitSettled = Number(summary.patientDebitSettledAmount ?? 0);
   const chargeClosed = summary.chargeStatus === 'CLOSED';
@@ -32,7 +44,7 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   const isSettled = remainingToPay <= 0 && patientShare > 0;
   const invoiceBalanceDue = invoiceOutstanding > 0 && chargeClosed;
 
-  if (!summary.chargeId || patientShare <= 0) {
+  if (patientShare <= 0) {
     return null;
   }
 

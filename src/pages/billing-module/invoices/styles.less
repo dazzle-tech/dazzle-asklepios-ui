@@ -598,10 +598,69 @@
 
 .billing-add-service-modal {
   z-index: 1060 !important;
+  pointer-events: auto;
+
+  .rs-modal-dialog,
+  .rs-modal-content {
+    pointer-events: auto;
+  }
+
+  .rs-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .rs-radio {
+    cursor: pointer;
+  }
 
   .rs-picker-popup,
   .rs-picker-select-menu,
   .rs-picker-menu {
     z-index: 1070 !important;
+  }
+}
+
+.billing-add-service-pricing-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+  border-radius: 8px;
+  background: var(--rs-bg-well, #fafafa);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  span {
+    color: var(--rs-text-secondary, #8e8e93);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+
+  strong {
+    font-size: 14px;
+    color: var(--rs-text-heading, #1c1c1e);
+  }
+
+  &__discount {
+    color: var(--primary-orange, #f29a4d);
+  }
+}
+
+.invoice-adjustment-modal--child-open {
+  pointer-events: none;
+
+  .rs-modal-dialog {
+    pointer-events: none;
   }
 }

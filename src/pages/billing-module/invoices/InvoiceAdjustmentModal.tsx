@@ -15,6 +15,10 @@ import type {
 import AddBillingServiceProductModal, {
   type PendingNewServiceLine
 } from './AddBillingServiceProductModal';
+import {
+  lineNetAmount,
+  resolvePricingBreakdown
+} from './invoiceLinePricingUtils';
 import './styles.less';
 
 type AdjustmentKind = 'CREDIT_NOTE' | 'DEBIT_NOTE';
@@ -63,6 +67,55 @@ const formatMoney = (value?: number, currency = 'SAR') => {
   const amount = Number(value ?? 0);
   return `${amount.toFixed(2)} ${currency}`;
 };
+
+const renderDiscount = (amount: number, currency: string) =>
+  amount > 0 ? (
+    <span className="invoice-detail__amount-discount">-{formatMoney(amount, currency)}</span>
+  ) : (
+    formatMoney(0, currency)
+  );
+
+const createPricingColumns = (
+  currency: string,
+  getRow: (row: any) => Parameters<typeof resolvePricingBreakdown>[0]
+) => [
+  {
+    key: 'price',
+    title: 'Price',
+    render: (row: any) => formatMoney(resolvePricingBreakdown(getRow(row)).grossAmount, currency)
+  },
+  {
+    key: 'itemDiscountAmount',
+    title: 'Item disc.',
+    render: (row: any) =>
+      renderDiscount(resolvePricingBreakdown(getRow(row)).itemDiscountAmount, currency)
+  },
+  {
+    key: 'itemTaxAmount',
+    title: 'Item tax',
+    render: (row: any) =>
+      formatMoney(resolvePricingBreakdown(getRow(row)).itemTaxAmount, currency)
+  },
+  {
+    key: 'invoiceDiscountAmount',
+    title: 'Inv. disc.',
+    render: (row: any) =>
+      renderDiscount(resolvePricingBreakdown(getRow(row)).invoiceDiscountAmount, currency)
+  },
+  {
+    key: 'invoiceTaxAmount',
+    title: 'Inv. tax',
+    render: (row: any) =>
+      formatMoney(resolvePricingBreakdown(getRow(row)).invoiceTaxAmount, currency)
+  },
+  {
+    key: 'netAmount',
+    title: 'Net',
+    render: (row: any) => (
+      <strong>{formatMoney(resolvePricingBreakdown(getRow(row)).netAmount, currency)}</strong>
+    )
+  }
+];
 
 const creditActionOptions = [
   { label: 'Remove service', value: 'REMOVE' },
@@ -220,6 +273,9 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
     }, 0);
 
     return addTotal + increaseTotal + pendingNewServices.reduce((sum, line) => {
+      if (line.netAmount != null) {
+        return sum + Number(line.netAmount);
+      }
       const qty = Number(line.quantity ?? 0);
       const unitPrice = Number(line.unitPrice ?? 0);
       return sum + qty * unitPrice;
@@ -481,11 +537,14 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       render: (row: AddableChargeLine) => row.itemDescription ?? '-'
     },
     { key: 'quantity', title: 'Qty' },
-    {
-      key: 'netAmount',
-      title: 'Amount',
-      render: (row: AddableChargeLine) => formatMoney(row.netAmount, currency)
-    }
+    ...createPricingColumns(currency, row => ({
+      unitPrice: row.unitPrice,
+      grossAmount: row.grossAmount,
+      discountAmount: row.discountAmount,
+      taxAmount: row.taxAmount,
+      netAmount: row.netAmount,
+      quantity: row.quantity
+    }))
   ];
 
   const increaseColumns = [
@@ -515,11 +574,16 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       title: 'Service',
       render: (row: InvoiceLineItem) => row.itemDescription ?? '-'
     },
-    {
-      key: 'netAmount',
-      title: 'Current Net',
-      render: (row: InvoiceLineItem) => formatMoney(row.netAmount, currency)
-    },
+    ...createPricingColumns(currency, row => ({
+      unitPrice: row.unitPrice,
+      grossAmount: row.grossAmount,
+      discountAmount: row.discountAmount,
+      taxAmount: row.taxAmount,
+      netAmount: row.netAmount,
+      quantity: row.quantity,
+      appliedDiscounts: row.appliedDiscounts,
+      appliedTaxes: row.appliedTaxes
+    })),
     {
       key: 'quantity',
       title: 'New Qty',
@@ -576,7 +640,14 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
   return (
     <>
-    <Modal open={open} onClose={onClose} size="lg" overflow={false} enforceFocus={!addServiceOpen}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      overflow={false}
+      enforceFocus={!addServiceOpen}
+      className={addServiceOpen ? 'invoice-adjustment-modal--child-open' : undefined}
+    >
       <Modal.Header>
         <Modal.Title>Create {kindLabel(kind)}</Modal.Title>
       </Modal.Header>
@@ -638,11 +709,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
               {pendingNewServices.length > 0 && (
                 <MyTable
-                  data={pendingNewServices.map(line => ({
-                    ...line,
-                    estimatedAmount:
-                      Number(line.quantity ?? 0) * Number(line.unitPrice ?? 0)
-                  }))}
+                  data={pendingNewServices}
                   columns={[
                     {
                       key: 'itemLabel',
@@ -651,16 +718,18 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
                     },
                     { key: 'billingItemType', title: 'Category' },
                     { key: 'quantity', title: 'Qty' },
-                    {
-                      key: 'unitPrice',
-                      title: 'Unit Price',
-                      render: (row: any) => formatMoney(row.unitPrice, currency)
-                    },
-                    {
-                      key: 'estimatedAmount',
-                      title: 'Amount',
-                      render: (row: any) => formatMoney(row.estimatedAmount, currency)
-                    },
+                    ...createPricingColumns(currency, row => ({
+                      unitPrice: row.unitPrice,
+                      grossAmount: row.grossAmount,
+                      itemDiscountAmount: row.itemDiscountAmount,
+                      itemTaxAmount: row.itemTaxAmount,
+                      invoiceDiscountAmount: row.invoiceDiscountAmount,
+                      invoiceTaxAmount: row.invoiceTaxAmount,
+                      discountAmount: row.discountAmount,
+                      taxAmount: row.taxAmount,
+                      netAmount: row.netAmount,
+                      quantity: row.quantity
+                    })),
                     {
                       key: 'actions',
                       title: '',
@@ -749,7 +818,9 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         patientId={patientId as number}
         encounterId={encounterId as number}
         facilityId={facilityId}
+        invoiceId={invoice?.id ?? null}
         currency={currency}
+        referenceInvoiceLines={invoiceLines}
         onAdd={line => setPendingNewServices(current => [...current, line])}
       />
     </>

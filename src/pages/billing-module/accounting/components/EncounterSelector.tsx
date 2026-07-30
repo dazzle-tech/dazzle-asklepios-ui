@@ -17,6 +17,7 @@ type EncounterSelectorProps = {
   loading?: boolean;
   onSelect: (encounterId: number) => void;
   remainingToPay?: number;
+  remainingLoading?: boolean;
   currency?: string;
 };
 
@@ -26,6 +27,7 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
   loading = false,
   onSelect,
   remainingToPay = 0,
+  remainingLoading = false,
   currency = 'SAR'
 }) => {
   if (loading) {
@@ -72,9 +74,10 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
               {isActive && (
                 <Tag
                   size="sm"
-                  color={remainingToPay > 0 ? 'orange' : 'green'}
+                  color={remainingLoading ? 'cyan' : remainingToPay > 0 ? 'orange' : 'green'}
                 >
-                  Remaining {formatMoney(remainingToPay, currency)}
+                  Remaining{' '}
+                  {remainingLoading ? '—' : formatMoney(remainingToPay, currency)}
                 </Tag>
               )}
               {encounter.startedDate && (

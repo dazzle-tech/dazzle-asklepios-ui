@@ -74,17 +74,22 @@ export const useBillingAccountingData = ({
   );
 
   const {
-    data: billingSummaryResponse,
-    isFetching: loadingSummary,
+    currentData: billingSummary,
+    isLoading: loadingSummaryInitial,
+    isFetching: fetchingSummary,
     refetch: refetchSummary
   } = useGetEncounterBillingSummaryQuery(
     { encounterId: selectedEncounterId as number },
-    { skip: selectedEncounterId == null }
+    {
+      skip: selectedEncounterId == null,
+      refetchOnMountOrArgChange: true
+    }
   );
 
   const {
-    data: pspResponse,
-    isFetching: loadingPsp,
+    currentData: pspResponse,
+    isLoading: loadingPspInitial,
+    isFetching: fetchingPsp,
     refetch: refetchPsp
   } = useGetPatientServicesAndProductsByEncounterQuery(
     {
@@ -93,7 +98,7 @@ export const useBillingAccountingData = ({
       size: 500,
       sort: 'id,asc'
     },
-    { skip: selectedEncounterId == null }
+    { skip: selectedEncounterId == null, refetchOnMountOrArgChange: true }
   );
 
   const {
@@ -117,14 +122,17 @@ export const useBillingAccountingData = ({
   const { data: patientWalletBalance, refetch: refetchWalletBalance } =
     useGetPatientBalanceQuery(
       { patientId: patientId as number },
-      { skip: patientId == null }
+      { skip: patientId == null, refetchOnMountOrArgChange: true }
     );
 
-  const { data: patientLedgerSummary, refetch: refetchLedgerSummary } =
-    useGetPatientLedgerSummaryQuery(
-      { patientId: patientId as number },
-      { skip: patientId == null }
-    );
+  const {
+    currentData: patientLedgerSummary,
+    isLoading: loadingLedgerInitial,
+    refetch: refetchLedgerSummary
+  } = useGetPatientLedgerSummaryQuery(
+    { patientId: patientId as number },
+    { skip: patientId == null, refetchOnMountOrArgChange: true }
+  );
 
   const { data: insuranceResponse, isFetching: loadingInsurances } =
     useGetInsurancesByPatientQuery(
@@ -142,11 +150,33 @@ export const useBillingAccountingData = ({
         ...newEncounterBillingSummary,
         patientId: patientId ?? 0,
         encounterId: selectedEncounterId ?? 0
-      }) as NonNullable<typeof billingSummaryResponse>,
+      }) as NonNullable<typeof billingSummary>,
     [patientId, selectedEncounterId]
   );
 
-  const summary = billingSummaryResponse ?? fallbackSummary;
+  const summaryMatchesEncounter =
+    billingSummary != null &&
+    Number(billingSummary.encounterId) === Number(selectedEncounterId);
+
+  const summaryReady =
+    selectedEncounterId == null ||
+    (summaryMatchesEncounter && !(loadingSummaryInitial && billingSummary == null));
+
+  const ledgerReady =
+    patientId == null ||
+    !(loadingLedgerInitial && patientLedgerSummary == null);
+
+  const loadingBillingMetrics =
+    selectedEncounterId != null && (!summaryReady || !ledgerReady);
+
+  const loadingSummary =
+    selectedEncounterId != null &&
+    (loadingSummaryInitial || !summaryMatchesEncounter);
+
+  const loadingPsp =
+    selectedEncounterId != null && (loadingPspInitial || fetchingPsp);
+
+  const summary = summaryMatchesEncounter ? billingSummary : fallbackSummary;
 
   const pspRows = pspResponse?.data ?? [];
   const departmentId = selectedEncounter?.departmentId ?? null;
@@ -297,16 +327,20 @@ export const useBillingAccountingData = ({
     [pspRows]
   );
 
-  const walletBalance = resolvePatientWalletAvailable(
-    patientLedgerSummary,
-    summary?.wallet?.availableBalance,
-    patientWalletBalance
-  );
+  const walletBalance = loadingBillingMetrics
+    ? 0
+    : resolvePatientWalletAvailable(
+        patientLedgerSummary,
+        summary?.wallet?.availableBalance,
+        patientWalletBalance
+      );
 
-  const reservedBalance = resolvePatientWalletReserved(
-    patientLedgerSummary,
-    summary?.wallet?.reservedBalance
-  );
+  const reservedBalance = loadingBillingMetrics
+    ? 0
+    : resolvePatientWalletReserved(
+        patientLedgerSummary,
+        summary?.wallet?.reservedBalance
+      );
 
   const refreshAll = async () => {
     await Promise.all([
@@ -329,7 +363,9 @@ export const useBillingAccountingData = ({
     loadingEncounters,
     selectedEncounter,
     summary,
+    summaryForDisplay: summaryMatchesEncounter ? billingSummary ?? null : null,
     loadingSummary,
+    loadingBillingMetrics,
     pspRows,
     loadingPsp,
     chargeRows,
@@ -340,7 +376,7 @@ export const useBillingAccountingData = ({
     waseelCoverageError,
     walletBalance,
     reservedBalance,
-    patientLedgerSummary,
+    patientLedgerSummary: loadingBillingMetrics ? null : patientLedgerSummary,
     patientInsurances: insuranceResponse?.data ?? [],
     loadingInsurances,
     refreshAll
