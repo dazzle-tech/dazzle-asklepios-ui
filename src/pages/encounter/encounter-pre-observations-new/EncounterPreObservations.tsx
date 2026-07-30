@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Divider, Form, Panel } from 'rsuite';
 
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
@@ -118,7 +118,18 @@ const NurseStation = ({
 
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+  const currentFromPage = propsData?.fromPage || fromPage || '';
 
+  const sharedNavigationState = useMemo(
+    () => ({
+      patient: propsData?.patient,
+      encounter: propsData?.encounter,
+      edit,
+      fromPage: currentFromPage,
+      viewMode: propsData?.viewMode
+    }),
+    [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
+  );
   useEffect(() => {
     if (
       localEncounter?.encounterType === 'INPATIENT' &&
@@ -216,7 +227,7 @@ const NurseStation = ({
 
             {!inModal && (
               <div className="right">
-             <NurseSummeryReportButton encounterId={localEncounter?.id}/>
+                <NurseSummeryReportButton encounterId={localEncounter?.id} />
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -230,105 +241,47 @@ const NurseStation = ({
           </div>
 
           <Divider />
+          <div className="medical-sheets-tabs">
+            <MyButton
+              className={`medical-sheet-tab ${location.pathname === '/nurse-station' ? 'active' : ''}`}
+              onClick={() => {
+                if (onSheetNavigate) {
+                  onSheetNavigate('');
+                } else {
+                  navigate('/nurse-station', { state: sharedNavigationState });
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faClockRotateLeft} />
+              <Translate>Dashboard</Translate>
+            </MyButton>
 
-          <Drawer
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            placement="left"
-            style={{ zIndex: 999999999999 }}
-            className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
-          >
-            <Drawer.Header className="header-drawer">
-              <Drawer.Title>Nurse Station Sheets</Drawer.Title>
-            </Drawer.Header>
+            {visibleSheets.map(({ code, name, icon, path }) => {
+              const fullPath = `/nurse-station${path.startsWith('/') ? path : `/${path}`}`;
+              const isActive = location.pathname === fullPath;
 
-            <Drawer.Body className="drawer-body">
-              <Form fluid>
-                <Row>
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      placeholder="Search screens..."
-                      fieldName={'term'}
-                      record={searchTerm}
-                      setRecord={setSearchTerm}
-                      showLabel={false}
-                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                    />
-                  </Col>
-                </Row>
-              </Form>
-
-              <List hover className="drawer-list-style">
-                <List.Item
-                  className="drawer-item return-button"
+              return (
+                <MyButton
+                  key={code}
+                  className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
                   onClick={() => {
                     if (onSheetNavigate) {
-                      onSheetNavigate('');
+                      const relativePath = path.startsWith('/') ? path.slice(1) : path;
+                      onSheetNavigate(relativePath);
                     } else {
-                      navigate('/nurse-station', { state: location.state });
+                      navigate(fullPath, { state: sharedNavigationState });
                     }
-                    setIsDrawerOpen(false);
                   }}
+
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                  <Translate>Dashboard</Translate>
-                </List.Item>
-
-                {visibleSheets.map(({ code, name, icon, path }) => {
-                  const clean = path.startsWith('/') ? path.slice(1) : path;
-                  const fullPath = `/nurse-station/${clean}`;
-
-                  return (
-                    <List.Item
-                      key={code}
-                      className="drawer-item"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        if (onSheetNavigate) {
-                          onSheetNavigate(clean);
-                        } else {
-                          navigate(fullPath, {
-                            state: {
-                              patient: propsData?.patient,
-                              encounter: propsData?.encounter,
-                              edit,
-                              fromPage: propsData?.fromPage
-                            }
-                          });
-                        }
-                      }}
-                    >
-                      {onSheetNavigate ? (
-                        <span className="inherit-link">
-                          {icon}
-                          <span className="margin-left-10">
-                            <Translate>{name}</Translate>
-                          </span>
-                        </span>
-                      ) : (
-                        <Link
-                          to={fullPath}
-                          state={{
-                            patient: propsData?.patient,
-                            encounter: propsData?.encounter,
-                            edit,
-                            fromPage: propsData?.fromPage
-                          }}
-                          className="inherit-link"
-                        >
-                          {icon}
-                          <span className="margin-left-10">
-                            <Translate>{name}</Translate>
-                          </span>
-                        </Link>
-                      )}
-                    </List.Item>
-                  );
-                })}
-              </List>
-            </Drawer.Body>
-          </Drawer>
+                  {icon}
+                  <span>
+                    <Translate>{name}</Translate>
+                  </span>
+                </MyButton>
+              );
+            })}
+          </div>
           <div
             className={clsx('column-container', { 'disabled-panel': edit && !inModal })}
             style={edit && !inModal ? { pointerEvents: 'none', opacity: 0.6 } : {}}
