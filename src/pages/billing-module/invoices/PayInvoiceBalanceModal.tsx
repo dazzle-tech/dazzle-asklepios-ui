@@ -11,7 +11,9 @@ import { notify } from '@/utils/uiReducerActions';
 import PaymentMethodSelector from '@/pages/billing-module/accounting/components/PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  computeWalletCollectAmounts,
   formatMoney,
+  isWalletPaymentMethod,
   makeRequestId
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
@@ -19,8 +21,17 @@ const FALLBACK_PAYMENT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
   { value: 'CREDIT_DEBIT_CARD', label: BILLING_PAYMENT_METHOD_LABELS.CREDIT_DEBIT_CARD },
   { value: 'CHEQUE', label: BILLING_PAYMENT_METHOD_LABELS.CHEQUE },
-  { value: 'BANK_TRANSFER', label: BILLING_PAYMENT_METHOD_LABELS.BANK_TRANSFER }
+  { value: 'BANK_TRANSFER', label: BILLING_PAYMENT_METHOD_LABELS.BANK_TRANSFER },
+  {
+    value: 'DEDUCT_FROM_FREE_BALANCE',
+    label: BILLING_PAYMENT_METHOD_LABELS.DEDUCT_FROM_FREE_BALANCE
+  }
 ];
+
+export type InvoicePaymentCompletedContext = {
+  paymentMethodLabel: string;
+  paymentMethodCode: string;
+};
 
 type PayInvoiceBalanceModalProps = {
   open: boolean;
@@ -29,7 +40,11 @@ type PayInvoiceBalanceModalProps = {
   documentNumber?: string | null;
   outstandingAmount: number;
   currency?: string;
-  onPaid?: (result: CollectInvoiceBalanceResult) => void;
+  walletBalance?: number;
+  onPaid?: (
+    result: CollectInvoiceBalanceResult,
+    context: InvoicePaymentCompletedContext
+  ) => void;
 };
 
 const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
@@ -39,6 +54,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   documentNumber,
   outstandingAmount,
   currency = 'SAR',
+  walletBalance = 0,
   onPaid
 }) => {
   const dispatch = useAppDispatch();
@@ -64,6 +80,14 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
 
   const [collectInvoiceBalance, { isLoading }] = useCollectInvoiceBalanceMutation();
 
+  const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
+  const walletAvailable = Math.max(0, Number(walletBalance));
+  const walletCollectPreview = computeWalletCollectAmounts(
+    suggestedAmount,
+    walletAvailable,
+    form.amount
+  );
+
   useEffect(() => {
     if (!open) return;
 
@@ -74,18 +98,59 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
     });
   }, [open, suggestedAmount]);
 
+  useEffect(() => {
+    if (!open || !isWalletMethod) return;
+
+    setForm(previous => ({
+      ...previous,
+      amount: Number(
+        Math.min(suggestedAmount, walletAvailable, previous.amount || suggestedAmount).toFixed(2)
+      )
+    }));
+  }, [open, isWalletMethod, suggestedAmount, walletAvailable]);
+
   const handleSubmit = async () => {
     if (!form.paymentMethodCode) {
       dispatch(notify({ msg: 'Select a payment method.', sev: 'warning' }));
       return;
     }
 
-    if (!form.amount || form.amount <= 0) {
+    const selectedMethod = paymentMethods.find(
+      option => String(option?.value) === String(form.paymentMethodCode)
+    );
+    const paymentMethodLabel =
+      selectedMethod?.label ?? form.paymentMethodCode ?? 'Payment';
+
+    let paymentAmount = Number(form.amount);
+
+    if (isWalletMethod) {
+      if (walletAvailable <= 0) {
+        dispatch(
+          notify({
+            msg: 'No wallet balance available. Deposit funds first or choose another payment method.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (walletCollectPreview.applyAmount <= 0) {
+        dispatch(
+          notify({
+            msg: 'Enter a wallet payment amount greater than zero.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      paymentAmount = walletCollectPreview.applyAmount;
+    } else if (!paymentAmount || paymentAmount <= 0) {
       dispatch(notify({ msg: 'Enter a payment amount greater than zero.', sev: 'warning' }));
       return;
     }
 
-    if (Number(form.amount.toFixed(4)) > Number(outstandingAmount.toFixed(4))) {
+    if (Number(paymentAmount.toFixed(4)) > Number(outstandingAmount.toFixed(4))) {
       dispatch(
         notify({
           msg: `Amount exceeds outstanding balance (${formatMoney(outstandingAmount, currency)}).`,
@@ -95,15 +160,11 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
       return;
     }
 
-    const selectedMethod = paymentMethods.find(
-      option => String(option?.value) === String(form.paymentMethodCode)
-    );
-
     try {
       const result = await collectInvoiceBalance({
         invoiceId,
         body: {
-          amount: Number(form.amount),
+          amount: paymentAmount,
           paymentMethodCode: form.paymentMethodCode,
           paymentMethodId: Number(
             selectedMethod?.id ?? selectedMethod?.key ?? selectedMethod?.valueId ?? 0
@@ -115,11 +176,16 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
 
       dispatch(
         notify({
-          msg: `Collected ${formatMoney(result.collectedAmount, currency)} on ${result.documentNumber}. Remaining ${formatMoney(result.outstandingAmount, currency)}.`,
+          msg: isWalletMethod
+            ? `Wallet applied ${formatMoney(result.collectedAmount, currency)} on ${result.documentNumber}. Remaining ${formatMoney(result.outstandingAmount, currency)}.`
+            : `Collected ${formatMoney(result.collectedAmount, currency)} on ${result.documentNumber}. Remaining ${formatMoney(result.outstandingAmount, currency)}.`,
           sev: 'success'
         })
       );
-      onPaid?.(result);
+      onPaid?.(result, {
+        paymentMethodLabel,
+        paymentMethodCode: form.paymentMethodCode
+      });
       onClose();
     } catch (error: any) {
       dispatch(
@@ -145,6 +211,11 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
           <Text muted size="sm" style={{ marginBottom: 12 }}>
             Collect the invoice-level balance (tax/discount delta) after billing checkout.
           </Text>
+          {walletAvailable > 0 && (
+            <Text muted size="sm" style={{ marginBottom: 12 }}>
+              Wallet available {formatMoney(walletAvailable, currency)}
+            </Text>
+          )}
           <Form fluid>
             <PaymentMethodSelector
               value={form.paymentMethodCode}
@@ -164,7 +235,16 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
               record={form}
               setRecord={setForm}
               width="100%"
+              disabled={isWalletMethod && walletAvailable <= 0}
             />
+            {isWalletMethod && walletAvailable > 0 ? (
+              <Text muted size="sm" style={{ marginTop: 8 }}>
+                Will apply {formatMoney(walletCollectPreview.applyAmount, currency)} from wallet
+                {walletCollectPreview.remainingAfter > 0
+                  ? ` · invoice remaining after ${formatMoney(walletCollectPreview.remainingAfter, currency)}`
+                  : ''}
+              </Text>
+            ) : null}
             <MyInput
               column
               fieldType="textarea"

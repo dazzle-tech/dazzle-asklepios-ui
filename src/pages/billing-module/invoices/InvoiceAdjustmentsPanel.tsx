@@ -383,7 +383,7 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
           documentNumber={summary.documentNumber}
           outstandingAmount={outstandingBalance}
           currency={resolvedCurrency}
-          onPaid={onPaymentCompleted}
+          onPaid={(_result, _context) => onPaymentCompleted?.()}
         />
       ) : null}
     </div>

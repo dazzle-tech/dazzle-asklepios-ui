@@ -20,6 +20,7 @@ import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildBillingPaymentReceipt,
   computeRowRemainingAmount,
+  computeWalletCollectAmounts,
   formatMoney,
   isWalletPaymentMethod,
   makeRequestId,
@@ -27,24 +28,6 @@ import {
   resolveBillingPaymentCategory,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
-
-const computeWalletCollectAmounts = (
-  serviceDue: number,
-  walletAvailable: number,
-  requestedAmount?: number
-) => {
-  const due = Math.max(0, Number(serviceDue));
-  const available = Math.max(0, Number(walletAvailable));
-  const requested =
-    requestedAmount != null && requestedAmount > 0
-      ? Number(requestedAmount)
-      : due;
-  const applyAmount = Math.min(due, available, requested);
-  return {
-    applyAmount,
-    remainingAfter: Math.max(0, due - applyAmount)
-  };
-};
 
 const FALLBACK_PAYMENT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },

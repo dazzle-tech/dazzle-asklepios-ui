@@ -31,7 +31,9 @@ import type { PatientFinancialInvoice } from '@/services/billing/invoiceGenerati
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { buildInvoicePaymentReceipt } from '@/pages/billing-module/invoices/invoicePaymentReceiptUtils';
-import PayInvoiceBalanceModal from './PayInvoiceBalanceModal';
+import PayInvoiceBalanceModal, {
+  type InvoicePaymentCompletedContext
+} from './PayInvoiceBalanceModal';
 
 type InvoiceDetailPanelProps = {
   invoice: PatientFinancialInvoice | null;
@@ -41,6 +43,7 @@ type InvoiceDetailPanelProps = {
   loading?: boolean;
   currency?: string;
   patient?: any;
+  walletBalance?: number;
   printDisabled?: boolean;
   canCreateCreditNote?: boolean;
   canCreateDebitNote?: boolean;
@@ -94,6 +97,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   loading = false,
   currency = 'SAR',
   patient,
+  walletBalance = 0,
   printDisabled = false,
   canCreateCreditNote = false,
   canCreateDebitNote = false,
@@ -212,14 +216,18 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
     }
   };
 
-  const handlePaymentCompleted = (result: CollectInvoiceBalanceResult) => {
+  const handlePaymentCompleted = (
+    result: CollectInvoiceBalanceResult,
+    context: InvoicePaymentCompletedContext
+  ) => {
     const receipt = buildInvoicePaymentReceipt({
       paymentResult: result,
       invoice,
       summary,
       lineItems,
       patient,
-      currency: resolvedCurrency
+      currency: resolvedCurrency,
+      paymentMethodLabel: context.paymentMethodLabel
     });
 
     setReceiptModal({ open: true, receipt });
@@ -621,12 +629,14 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
         documentNumber={invoice.documentNumber}
         outstandingAmount={outstandingBalance}
         currency={resolvedCurrency}
+        walletBalance={walletBalance}
         onPaid={handlePaymentCompleted}
       />
 
       <PaymentReceiptModal
         open={receiptModal.open}
         receipt={receiptModal.receipt}
+        autoPrint
         onClose={() => setReceiptModal({ open: false, receipt: null })}
       />
     </div>

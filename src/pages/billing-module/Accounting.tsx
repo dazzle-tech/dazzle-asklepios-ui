@@ -28,6 +28,8 @@ import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
+import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
+import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
@@ -49,6 +51,11 @@ const Accounting: React.FC = () => {
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
   const [selectedChargeRowIds, setSelectedChargeRowIds] = useState<string[]>([]);
+  const [paymentReceiptModal, setPaymentReceiptModal] = useState<{
+    open: boolean;
+    receipt: PaymentReceiptData | null;
+    autoPrint?: boolean;
+  }>({ open: false, receipt: null, autoPrint: false });
 
   const patientId = resolvePatientId(patient);
 
@@ -440,6 +447,7 @@ const Accounting: React.FC = () => {
       content: (
         <Invoices
           patient={patient}
+          walletBalance={walletBalance}
           onSimulatedInvoicePayment={() => {
             void refreshAll();
           }}
@@ -504,6 +512,13 @@ const Accounting: React.FC = () => {
             encounterId={selectedEncounterId}
             currency={summary.currency ?? facilityCurrency}
             onDeposited={refreshAll}
+            onReceiptReady={receipt =>
+              setPaymentReceiptModal({
+                open: true,
+                receipt,
+                autoPrint: true
+              })
+            }
           />
           <CollectPaymentModal
             open={collectPaymentModalOpen}
@@ -521,6 +536,18 @@ const Accounting: React.FC = () => {
               setSelectedChargeRowIds([]);
               void refreshAll();
             }}
+          />
+          <PaymentReceiptModal
+            open={paymentReceiptModal.open}
+            receipt={paymentReceiptModal.receipt}
+            autoPrint={paymentReceiptModal.autoPrint}
+            onClose={() =>
+              setPaymentReceiptModal({
+                open: false,
+                receipt: null,
+                autoPrint: false
+              })
+            }
           />
         </>
       )}

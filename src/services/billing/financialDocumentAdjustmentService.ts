@@ -225,6 +225,7 @@ export const financialDocumentAdjustmentService = createApi({
     'PatientFinancialInvoices',
     'EncounterBillingSummary',
     'BillingWallet',
+    'BillingPayment',
     'PatientLedgerSummary',
     'PatientBalance'
   ],
@@ -336,6 +337,8 @@ export const financialDocumentAdjustmentService = createApi({
         { type: 'InvoiceLineItems', id: invoiceId },
         'PatientFinancialInvoices',
         'EncounterBillingSummary',
+        'BillingWallet',
+        'BillingPayment',
         'PatientBalance',
         'PatientLedgerSummary'
       ]

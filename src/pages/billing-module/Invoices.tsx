@@ -158,6 +158,8 @@ type InvoicesProps = {
 
   patient?: any;
 
+  walletBalance?: number;
+
   onSimulatedInvoicePayment?: () => void | Promise<void>;
 
 };
@@ -282,7 +284,11 @@ const canAdjustInvoice = (invoice?: PatientFinancialInvoice | null) => {
 
 
 
-const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment }) => {
+const Invoices: React.FC<InvoicesProps> = ({
+  patient,
+  walletBalance = 0,
+  onSimulatedInvoicePayment
+}) => {
 
   const dispatch = useAppDispatch();
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
@@ -2060,6 +2066,8 @@ const Invoices: React.FC<InvoicesProps> = ({ patient, onSimulatedInvoicePayment 
               currency={selectedInvoice?.currency ?? 'SAR'}
 
               patient={patient}
+
+              walletBalance={walletBalance}
 
               printDisabled={!printLookupsReady}
 

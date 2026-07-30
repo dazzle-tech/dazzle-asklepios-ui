@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Modal } from 'rsuite';
+import { Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -12,7 +12,6 @@ import type {
   PatientEncounter
 } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
-import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import {
@@ -39,6 +38,7 @@ type WalletDepositModalProps = {
   encounterId?: number | null;
   currency?: string;
   onDeposited?: () => void;
+  onReceiptReady?: (receipt: PaymentReceiptData) => void;
 };
 
 const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
@@ -49,7 +49,8 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   encounter = null,
   encounterId = null,
   currency = 'SAR',
-  onDeposited
+  onDeposited,
+  onReceiptReady
 }) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
@@ -72,8 +73,6 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
     paymentMethodCode: '',
     notes: ''
   });
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  const [receipt, setReceipt] = useState<PaymentReceiptData | null>(null);
 
   const [createAdvancePayment, { isLoading }] = useCreateAdvancePaymentMutation();
 
@@ -145,8 +144,7 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
 
       onDeposited?.();
       onClose();
-      setReceipt(receiptData);
-      setReceiptOpen(true);
+      onReceiptReady?.(receiptData);
     } catch (error: any) {
       dispatch(
         notify({
@@ -158,8 +156,7 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   };
 
   return (
-    <>
-      <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
+    <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
         <Modal.Header>
           <Modal.Title>Deposit to patient wallet</Modal.Title>
         </Modal.Header>
@@ -205,18 +202,7 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
             Record deposit
           </MyButton>
         </Modal.Footer>
-      </Modal>
-
-      <PaymentReceiptModal
-        open={receiptOpen}
-        onClose={() => {
-          setReceiptOpen(false);
-          setReceipt(null);
-        }}
-        receipt={receipt}
-        autoPrint
-      />
-    </>
+    </Modal>
   );
 };
 

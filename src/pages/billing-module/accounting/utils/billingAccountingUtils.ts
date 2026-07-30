@@ -715,6 +715,25 @@ export const resolveBillingPaymentCategory = (paymentMethodCode: string): string
 export const isWalletPaymentMethod = (paymentMethodCode: string): boolean =>
   paymentMethodCode === 'DEDUCT_FROM_FREE_BALANCE';
 
+export const computeWalletCollectAmounts = (
+  amountDue: number,
+  walletAvailable: number,
+  requestedAmount?: number
+) => {
+  const due = Math.max(0, Number(amountDue));
+  const available = Math.max(0, Number(walletAvailable));
+  const requested =
+    requestedAmount != null && requestedAmount > 0
+      ? Number(requestedAmount)
+      : due;
+  const applyAmount = Math.min(due, available, requested);
+
+  return {
+    applyAmount,
+    remainingAfter: Math.max(0, due - applyAmount)
+  };
+};
+
 export const isPreAuthRejected = (status?: string | null): boolean =>
   String(status ?? '').toUpperCase() === 'REJECTED';
 
