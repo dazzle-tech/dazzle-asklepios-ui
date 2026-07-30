@@ -5071,14 +5071,56 @@ export type SavePriceListSetupRequest = {
   status?: PriceListSetupStatus;
 };
 
-export type BillingTrigger =
-  | 'ENCOUNTER_CREATED'
-  | 'TREATMENT_STARTED'
-  | 'ORDERED'
-  | 'DISPENSED'
-  | 'SERVICE_COMPLETED'
-  | 'CHECKOUT'
-  | 'MANUAL';
+export enum BillingTrigger {
+  ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
+  TREATMENT_STARTED = 'TREATMENT_STARTED',
+  ORDERED = 'ORDERED',
+  DISPENSED = 'DISPENSED',
+  SERVICE_COMPLETED = 'SERVICE_COMPLETED',
+  CHECKOUT = 'CHECKOUT',
+  MANUAL = 'MANUAL'
+}
+
+export enum BillingEventType {
+  ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
+  TREATMENT_STARTED = 'TREATMENT_STARTED',
+  ITEM_ORDERED = 'ITEM_ORDERED',
+  ITEM_DISPENSED = 'ITEM_DISPENSED',
+  SERVICE_COMPLETED = 'SERVICE_COMPLETED',
+  ITEM_UPDATED = 'ITEM_UPDATED',
+  ITEM_CANCELLED = 'ITEM_CANCELLED',
+  ENCOUNTER_CANCELLED = 'ENCOUNTER_CANCELLED',
+  CHECKOUT = 'CHECKOUT',
+  MANUAL = 'MANUAL'
+}
+
+export enum BillingSettlementPath {
+  REMAINING_TO_PAY = 'REMAINING_TO_PAY',
+  LEDGER_DEBIT_AT_CHECKOUT = 'LEDGER_DEBIT_AT_CHECKOUT',
+  MANUAL = 'MANUAL'
+}
+
+export type BillingRuleEvaluationRequest = {
+  billingItemType: BillingItemType;
+  billingEvent: BillingEventType;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  diagnosticTestId?: number | null;
+  brandMedicationId?: number | null;
+};
+
+export type BillingRuleEvaluationResponse = {
+  ruleFound: boolean;
+  billingRuleId?: number | null;
+  billingRuleName?: string | null;
+  billingItemType?: BillingItemType | null;
+  billingTrigger?: BillingTrigger | null;
+  settlementPath?: BillingSettlementPath | null;
+  billingEvent?: BillingEventType | null;
+  eventMatches?: boolean;
+  billsOnCurrentEvent?: boolean;
+  message?: string | null;
+};
 
 export type BillingRule = {
   id?: number;

@@ -48,6 +48,7 @@ import {
 } from '@/types/model-types-constructor-new';
 
 import { useEnumOptions } from '@/services/enumsApi';
+import { resolveEnumOptionLabel } from '@/hooks/useBillingEnumLabel';
 
 import AddEditBillingRuleSetup from './AddEditBillingRuleSetup';
 
@@ -160,6 +161,10 @@ const BillingRuleSetup: React.FC = () => {
 
   const itemTypeOptions =
     useEnumOptions('BillingItemTypes') ??
+    [];
+
+  const billingTriggerOptions =
+    useEnumOptions('BillingTrigger') ??
     [];
 
   const tableData = useMemo(
@@ -426,7 +431,8 @@ const BillingRuleSetup: React.FC = () => {
         row: BillingRuleModel
       ) =>
         row.billingTrigger
-          ? formatEnumString(
+          ? resolveEnumOptionLabel(
+              billingTriggerOptions,
               row.billingTrigger
             )
           : '-'

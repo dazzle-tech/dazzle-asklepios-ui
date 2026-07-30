@@ -2173,7 +2173,8 @@ const PatientPaymentInfo =
 
       const receivePayment =
         async (
-          pspIds: number[]
+          pspIds: number[],
+          billingSummary: EncounterBillingSummary = summary
         ) => {
           if (
             formState.payZeroNow ||
@@ -2185,7 +2186,7 @@ const PatientPaymentInfo =
 
           const outstanding = Math.max(
             resolvePatientOutstandingAmount(
-              summary
+              billingSummary
             ),
             previewTotals.patientOutstandingAmount
           );
@@ -2226,7 +2227,7 @@ const PatientPaymentInfo =
               paymentAmount,
 
             currency:
-              summary.currency ??
+              billingSummary.currency ??
               facilityCurrency,
 
             paymentStatus:
@@ -2406,8 +2407,19 @@ const PatientPaymentInfo =
                 billingSummary
               );
 
+            const effectiveOutstanding =
+              Math.max(
+                refreshedOutstanding,
+                previewTotals.patientOutstandingAmount,
+                formState.payZeroNow
+                  ? 0
+                  : formState.paymentAmount
+              );
+
             if (
-              refreshedOutstanding <= 0
+              effectiveOutstanding <= 0 &&
+              !formState.payZeroNow &&
+              paymentTargetIds.length === 0
             ) {
               dispatch(
                 notify({
@@ -2472,7 +2484,8 @@ const PatientPaymentInfo =
 
             const paymentResult =
               await receivePayment(
-                paymentTargetIds
+                paymentTargetIds,
+                billingSummary
               );
 
             setSummaryRefreshKey(

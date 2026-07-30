@@ -9,11 +9,18 @@ import {
   useCreatePatientServiceOrProductMutation,
   useUpdatePatientServiceOrProductMutation
 } from '@/services/encounters/patientServicesAndProductsService';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { notify } from '@/utils/uiReducerActions';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage
+} from '@/utils/billingRuleEvaluationUtils';
 import {
   PatientServiceAndProduct,
   PatientServiceProductCreateDTO,
-  PatientServiceProductUpdateDTO
+  PatientServiceProductUpdateDTO,
+  BillingEventType
 } from '@/types/model-types-new';
 import {
   newPatientServiceAndProduct,
@@ -135,6 +142,8 @@ const AddEditPatientServiceAndProduct = ({
   const [updatePatientServiceAndProduct, { isLoading: isUpdating }] =
     useUpdatePatientServiceOrProductMutation();
 
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+
   const extractErrorMessage = (response: any) => {
     try {
       const msg = response?.data?.message;
@@ -205,6 +214,33 @@ const AddEditPatientServiceAndProduct = ({
     }
 
     return errorMsg;
+  };
+
+  const validateBillingRuleBeforeSave = async () => {
+    const evaluationRequest = buildBillingRuleEvaluationRequest(
+      patientServiceAndProduct.billingItemType,
+      BillingEventType.ITEM_ORDERED,
+      {
+        serviceId: patientServiceAndProduct.serviceId,
+        procedureId: patientServiceAndProduct.procedureId,
+        diagnosticTestId: patientServiceAndProduct.diagnosticTestId,
+        brandMedicationId: patientServiceAndProduct.brandMedicationId
+      }
+    );
+
+    const evaluation = await evaluateBillingRule(evaluationRequest).unwrap();
+
+    if (!evaluation.ruleFound) {
+      dispatch(
+        notify({
+          msg: formatBillingRuleEvaluationMessage(evaluation),
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    return true;
   };
 
   const itemSelectConfig = useMemo(() => {
@@ -304,6 +340,11 @@ const AddEditPatientServiceAndProduct = ({
 
     try {
       if (!patientServiceAndProduct?.id) {
+        const billingRuleReady = await validateBillingRuleBeforeSave();
+        if (!billingRuleReady) {
+          return;
+        }
+
         const createDTO: PatientServiceProductCreateDTO = {
           ...newPatientServiceProductCreateDTO,
           patientId: patient?.id,
@@ -399,7 +440,10 @@ const AddEditPatientServiceAndProduct = ({
       setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
       setOpen(false);
     } catch (error) {
-      const errorMsg = extractErrorMessage(error) || 'Failed to save Billing Item';
+      const errorMsg =
+        extractBillingRuleErrorMessage(error) ||
+        extractErrorMessage(error) ||
+        'Failed to save Billing Item';
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };

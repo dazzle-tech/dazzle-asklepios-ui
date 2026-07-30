@@ -3377,7 +3377,7 @@ export const newBillingRule: modelTypes.BillingRule = {
   id: undefined,
   name: undefined,
   billingItemType: 'SERVICE',
-  billingTrigger: 'ENCOUNTER_CREATED',
+  billingTrigger: modelTypes.BillingTrigger.ENCOUNTER_CREATED,
   isDefault: false
 };
 

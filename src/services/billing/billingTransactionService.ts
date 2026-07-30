@@ -22,6 +22,8 @@ import type {
   PrepareDefaultServicesResult,
   PreviewDefaultServicesPricingRequest,
   PreviewDefaultServicesPricingResult,
+  BillingRuleEvaluationRequest,
+  BillingRuleEvaluationResponse,
   WaseelCoverageDetails
 } from '@/types/model-types-new';
 
@@ -400,6 +402,18 @@ export const billingTransactionService =
               'BillingWallet',
               'EncounterBillingSummary'
             ]
+          }),
+
+        evaluateBillingRule:
+          builder.mutation<
+            BillingRuleEvaluationResponse,
+            BillingRuleEvaluationRequest
+          >({
+            query: body => ({
+              url: '/api/patient/billing/evaluate-billing-rule',
+              method: 'POST',
+              body
+            })
           })
       })
   });
@@ -423,6 +437,8 @@ export const {
 
   useRefundBillingPaymentMutation,
 
-  useReverseBillingRefundMutation
+  useReverseBillingRefundMutation,
+
+  useEvaluateBillingRuleMutation
 } =
   billingTransactionService;

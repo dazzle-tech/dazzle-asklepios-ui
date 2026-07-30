@@ -12,7 +12,13 @@ import {
   useCreateBulkPatientServicesOrProductsMutation,
   useGetPatientServicesAndProductsByEncounterAndSourceQuery,
 } from '@/services/encounters/patientServicesAndProductsService';
-import { PatientServiceProductCreateDTO, ServiceSource } from '@/types/model-types-new';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage
+} from '@/utils/billingRuleEvaluationUtils';
+import { PatientServiceProductCreateDTO, ServiceSource, BillingEventType } from '@/types/model-types-new';
 import { newPatientServiceProductCreateDTO } from '@/types/model-types-constructor-new';
 
 type Props = {
@@ -68,6 +74,7 @@ const AddBulkServicesToConsultationModal = ({
 
   const [createBulkPatientServicesOrProducts, { isLoading: isSaving }] =
     useCreateBulkPatientServicesOrProductsMutation();
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
 
   const {
     data: existingServicesResponse,
@@ -231,6 +238,24 @@ const AddBulkServicesToConsultationModal = ({
     }
 
     try {
+      for (const service of selectedServicesPreview) {
+        const evaluation = await evaluateBillingRule(
+          buildBillingRuleEvaluationRequest('SERVICE', BillingEventType.ENCOUNTER_CREATED, {
+            serviceId: Number(service.id)
+          })
+        ).unwrap();
+
+        if (!evaluation.ruleFound) {
+          dispatch(
+            notify({
+              msg: `${service.name ?? 'Service'}: ${formatBillingRuleEvaluationMessage(evaluation)}`,
+              sev: 'error'
+            })
+          );
+          return;
+        }
+      }
+
       const payload: PatientServiceProductCreateDTO[] = selectedServicesPreview.map((service: any) => {
         const quantity = Number(record.quantities?.[String(service.id)] ?? 1);
 
@@ -268,7 +293,7 @@ const AddBulkServicesToConsultationModal = ({
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Failed to add services',
+          msg: extractBillingRuleErrorMessage(error) || error?.data?.message || 'Failed to add services',
           sev: 'error',
         })
       );
