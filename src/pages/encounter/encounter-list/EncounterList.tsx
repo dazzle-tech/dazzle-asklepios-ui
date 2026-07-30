@@ -298,10 +298,15 @@ const EncounterList = () => {
   });
   const [record, setRecord] = useState<any>({});
 
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+const handlePatientSearchClick = useCallback(() => {
+    setPatientSearchApplied(prev => ({
+        ...prev,
+        ...(patientSearchDraft ?? {})
+    }));
+
     setPage(0);
-  }, [patientSearchDraft]);
+}, [patientSearchDraft]);
+
 
   const {
     data: encountersPaged,
@@ -1015,11 +1020,12 @@ const EncounterList = () => {
             setRecord={setDateFilter}
           />
 
-          <SearchPatientCriteria
-            record={patientSearchDraft}
-            setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
-          />
+<SearchPatientCriteria
+    record={patientSearchDraft}
+    setRecord={setPatientSearchDraft}
+    onSearchClick={handlePatientSearchClick}
+    liveSearchMinLength={3}
+/>
 
           <MyInput
             column

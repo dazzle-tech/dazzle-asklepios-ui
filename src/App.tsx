@@ -182,6 +182,7 @@ const WarehouseItemsSetup = lazy (() => import ( './pages/setup/warehouse-Items-
 const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/WarehouseSetup'));
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
 const UsersNew = lazy (() => import ( './pages/system-configurations/users-setup-new'));
+const FacilityPatients = lazy (() => import ( './pages/patient/facility-patients/FacilityPatients'));
 
 import 'survey-core/survey-core.min.css';
 import 'survey-creator-core/survey-creator-core.min.css';
@@ -683,6 +684,8 @@ const dispatch = useAppDispatch();
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
+              
+
 
                 <Route
                   path="multidisciplinary-team-notes"
@@ -715,6 +718,8 @@ const dispatch = useAppDispatch();
                   element={<ServiceAndProductsTab {...({} as any)} />}
                 />
               </Route>
+
+                <Route path="facility-patients" element={<FacilityPatients />} />
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
