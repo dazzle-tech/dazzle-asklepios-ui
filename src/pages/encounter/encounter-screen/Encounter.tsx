@@ -1,54 +1,51 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
+import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import {
   useCancelPatientPrescriptionMutation,
   useGetPatientPrescriptionQuery,
   useSubmitPatientPrescriptionMutation
 } from '@/services/patients/Prescription/patientPrescriptionService';
-import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
-  faDesktop,
   faFileLines,
   faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import MedicalSheetsNavigation from './MedicalSheetsNavigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
-import { Col, Divider, Drawer, Form, List, Panel, Row, Tooltip, Whisper } from 'rsuite';
+import { Divider, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
+import AiAssistantPopup from './AiAssistantPopup';
 import AllergiesModal from './AllergiesModal';
+import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import WarningiesModal from './WarningiesModal';
-import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
-import AiAssistantPopup from './AiAssistantPopup';
-import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
-import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
-import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
 
 type EncounterModalProps = {
   patient?: any;
