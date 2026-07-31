@@ -160,7 +160,7 @@ export const useBillingAccountingData = ({
 
   const summaryReady =
     selectedEncounterId == null ||
-    (summaryMatchesEncounter && !(loadingSummaryInitial && billingSummary == null));
+    !(loadingSummaryInitial && billingSummary == null);
 
   const ledgerReady =
     patientId == null ||
@@ -171,7 +171,8 @@ export const useBillingAccountingData = ({
 
   const loadingSummary =
     selectedEncounterId != null &&
-    (loadingSummaryInitial || !summaryMatchesEncounter);
+    loadingSummaryInitial &&
+    billingSummary == null;
 
   const loadingPsp =
     selectedEncounterId != null && (loadingPspInitial || fetchingPsp);
@@ -327,20 +328,16 @@ export const useBillingAccountingData = ({
     [pspRows]
   );
 
-  const walletBalance = loadingBillingMetrics
-    ? 0
-    : resolvePatientWalletAvailable(
-        patientLedgerSummary,
-        summary?.wallet?.availableBalance,
-        patientWalletBalance
-      );
+  const walletBalance = resolvePatientWalletAvailable(
+    patientLedgerSummary,
+    summary?.wallet?.availableBalance,
+    patientWalletBalance
+  );
 
-  const reservedBalance = loadingBillingMetrics
-    ? 0
-    : resolvePatientWalletReserved(
-        patientLedgerSummary,
-        summary?.wallet?.reservedBalance
-      );
+  const reservedBalance = resolvePatientWalletReserved(
+    patientLedgerSummary,
+    summary?.wallet?.reservedBalance
+  );
 
   const refreshAll = async () => {
     await Promise.all([
@@ -376,7 +373,7 @@ export const useBillingAccountingData = ({
     waseelCoverageError,
     walletBalance,
     reservedBalance,
-    patientLedgerSummary: loadingBillingMetrics ? null : patientLedgerSummary,
+    patientLedgerSummary,
     patientInsurances: insuranceResponse?.data ?? [],
     loadingInsurances,
     refreshAll

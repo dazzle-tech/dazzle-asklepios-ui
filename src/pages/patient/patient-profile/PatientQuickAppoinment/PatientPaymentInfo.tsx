@@ -54,6 +54,13 @@ import {
   usePreviewDefaultServicesPricingMutation
 } from '@/services/billing/billingTransactionService';
 
+import { useGetPatientLedgerSummaryQuery } from '@/services/encounters/patientPaymentsService';
+
+import {
+  resolvePatientWalletAvailable,
+  resolvePatientWalletReserved
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+
 import {
   newCreateAdvancePaymentRequest,
   newEncounterBillingSummary,
@@ -631,11 +638,35 @@ const PatientPaymentInfo =
       ] =
         useState(0);
 
+      const [
+        pricingPreviewLoading,
+        setPricingPreviewLoading
+      ] =
+        useState(false);
+
+      const [
+        displayReadyEncounterId,
+        setDisplayReadyEncounterId
+      ] =
+        useState<
+          number | null
+        >(null);
+
+      const [
+        previewSettledEncounterId,
+        setPreviewSettledEncounterId
+      ] =
+        useState<
+          number | null
+        >(null);
+
       const {
-        data:
-          summaryResponse,
+        currentData:
+          billingSummary,
+        isLoading:
+          loadingSummaryInitial,
         isFetching:
-          loadingSummary,
+          fetchingSummary,
         refetch:
           refetchSummary
       } =
@@ -647,18 +678,75 @@ const PatientPaymentInfo =
           },
           {
             skip:
-              !encounterId
+              !encounterId,
+            refetchOnMountOrArgChange:
+              true
           }
         );
 
+      const {
+        currentData:
+          patientLedgerSummary,
+        isLoading:
+          loadingLedgerInitial
+      } =
+        useGetPatientLedgerSummaryQuery(
+          {
+            patientId
+          },
+          {
+            skip:
+              !patientId,
+            refetchOnMountOrArgChange:
+              true
+          }
+        );
+
+      const summaryMatchesEncounter =
+        billingSummary !=
+          null &&
+        Number(
+          billingSummary.encounterId
+        ) ===
+          Number(encounterId);
+
+      const loadingEncounterSummary =
+        Boolean(encounterId) &&
+        loadingSummaryInitial &&
+        billingSummary == null;
+
+      const loadingLedgerBalance =
+        Boolean(patientId) &&
+        loadingLedgerInitial &&
+        patientLedgerSummary == null;
+
+      const loadingSummary =
+        loadingEncounterSummary ||
+        fetchingSummary;
+
       const summary:
       EncounterBillingSummary =
-        summaryResponse ??
-        {
-          ...newEncounterBillingSummary,
-          patientId,
-          encounterId
-        };
+        summaryMatchesEncounter &&
+        billingSummary
+          ? billingSummary
+          : {
+              ...newEncounterBillingSummary,
+              patientId,
+              encounterId
+            };
+
+      const walletAvailableBalance =
+        resolvePatientWalletAvailable(
+          patientLedgerSummary,
+          summary.wallet?.availableBalance,
+          null
+        );
+
+      const walletReservedBalance =
+        resolvePatientWalletReserved(
+          patientLedgerSummary,
+          summary.wallet?.reservedBalance
+        );
 
       const encounterFullyPaid =
         isEncounterFullyPaid(
@@ -1327,6 +1415,246 @@ const PatientPaymentInfo =
           ]
         );
 
+      const summaryIsCalculated =
+        useMemo(
+          () =>
+            hasCalculatedSummary(
+              summary
+            ),
+          [
+            summary.items
+              ?.length,
+            summary.netAmount,
+            summary.grossAmount
+          ]
+        );
+
+      const pricingPreviewInputKey =
+        useMemo(() => {
+          const rowsToPrice =
+            payableSelectedRows.length >
+            0
+              ? payableSelectedRows
+              : selectedRows;
+
+          return JSON.stringify(
+            {
+              encounterId,
+              coverageType:
+                formState.coverageType,
+              patientInsuranceId:
+                formState.patientInsuranceId ??
+                '',
+              currency:
+                summary.currency ??
+                facilityCurrency,
+              items:
+                rowsToPrice.map(
+                  row => ({
+                    serviceId:
+                      row.serviceId,
+                    quantity:
+                      row.quantity,
+                    isExempted:
+                      row.isExempted,
+                    selected:
+                      row.selected
+                  })
+                )
+            }
+          );
+        }, [
+          encounterId,
+          formState.coverageType,
+          formState.patientInsuranceId,
+          summary.currency,
+          facilityCurrency,
+          payableSelectedRows,
+          selectedRows
+        ]);
+
+      const pricingPreviewContextRef =
+        useRef({
+          rowsToPrice:
+            [] as DefaultServiceRow[],
+          summary,
+          facilityCurrency,
+          coverageType:
+            formState.coverageType,
+          patientInsuranceId:
+            formState.patientInsuranceId,
+          isInsurance,
+          encounterId,
+          patientId,
+          facilityId
+        });
+
+      pricingPreviewContextRef.current =
+        {
+          rowsToPrice:
+            payableSelectedRows.length >
+            0
+              ? payableSelectedRows
+              : selectedRows,
+          summary,
+          facilityCurrency,
+          coverageType:
+            formState.coverageType,
+          patientInsuranceId:
+            formState.patientInsuranceId,
+          isInsurance,
+          encounterId,
+          patientId,
+          facilityId
+        };
+
+      const lastPricingPreviewKeyRef =
+        useRef<
+          string | undefined
+        >();
+
+      useEffect(() => {
+        lastPricingPreviewKeyRef.current =
+          undefined;
+        setDisplayReadyEncounterId(
+          null
+        );
+        setPreviewSettledEncounterId(
+          null
+        );
+      }, [
+        encounterId,
+        summaryRefreshKey
+      ]);
+
+      useEffect(() => {
+        setPricingPreviewLoading(
+          false
+        );
+      }, [
+        encounterId
+      ]);
+
+      useEffect(() => {
+        if (
+          lastPricingPreviewKeyRef.current ===
+          undefined
+        ) {
+          lastPricingPreviewKeyRef.current =
+            pricingPreviewInputKey;
+          return;
+        }
+
+        if (
+          lastPricingPreviewKeyRef.current !==
+          pricingPreviewInputKey
+        ) {
+          lastPricingPreviewKeyRef.current =
+            pricingPreviewInputKey;
+          setDisplayReadyEncounterId(
+            null
+          );
+          setPreviewSettledEncounterId(
+            null
+          );
+        }
+      }, [
+        pricingPreviewInputKey
+      ]);
+
+      useEffect(() => {
+        if (
+          !encounterId ||
+          !patientId
+        ) {
+          return;
+        }
+
+        if (
+          loadingEncounterSummary
+        ) {
+          return;
+        }
+
+        if (
+          summaryIsCalculated
+        ) {
+          setDisplayReadyEncounterId(
+            encounterId
+          );
+          return;
+        }
+
+        if (
+          isInsurance &&
+          !formState.patientInsuranceId
+        ) {
+          setDisplayReadyEncounterId(
+            encounterId
+          );
+          return;
+        }
+
+        const rowsToPrice =
+          payableSelectedRows.length >
+          0
+            ? payableSelectedRows
+            : selectedRows;
+
+        if (
+          rowsToPrice.length ===
+          0
+        ) {
+          setDisplayReadyEncounterId(
+            encounterId
+          );
+          return;
+        }
+
+        const allRowsPriced =
+          rowsToPrice.every(
+            row =>
+              row.isExempted ||
+              row.previewNetAmount !=
+                null
+          );
+
+        if (
+          allRowsPriced
+        ) {
+          setDisplayReadyEncounterId(
+            encounterId
+          );
+          return;
+        }
+
+        if (
+          pricingPreviewLoading
+        ) {
+          return;
+        }
+
+        if (
+          previewSettledEncounterId ===
+          encounterId
+        ) {
+          setDisplayReadyEncounterId(
+            encounterId
+          );
+        }
+      }, [
+        encounterId,
+        patientId,
+        loadingEncounterSummary,
+        summaryIsCalculated,
+        isInsurance,
+        formState.patientInsuranceId,
+        payableSelectedRows,
+        selectedRows,
+        pricingPreviewLoading,
+        previewSettledEncounterId
+      ]);
+
       useEffect(() => {
         if (
           pricingPreviewTimerRef.current
@@ -1340,10 +1668,11 @@ const PatientPaymentInfo =
           !encounterId ||
           !patientId ||
           !facilityId ||
-          hasCalculatedSummary(
-            summary
-          )
+          summaryIsCalculated
         ) {
+          setPricingPreviewLoading(
+            false
+          );
           return;
         }
 
@@ -1351,6 +1680,9 @@ const PatientPaymentInfo =
           isInsurance &&
           !formState.patientInsuranceId
         ) {
+          setPricingPreviewLoading(
+            false
+          );
           setDefaultServiceRows(
             previous =>
               previous.map(
@@ -1376,43 +1708,57 @@ const PatientPaymentInfo =
           return;
         }
 
-        const rowsToPrice =
-          payableSelectedRows.length >
-          0
-            ? payableSelectedRows
-            : selectedRows;
+        const {
+          rowsToPrice
+        } =
+          pricingPreviewContextRef.current;
 
         if (
           rowsToPrice.length ===
           0
         ) {
+          setPricingPreviewLoading(
+            false
+          );
           return;
         }
+
+        setPricingPreviewLoading(
+          true
+        );
 
         pricingPreviewTimerRef.current =
           setTimeout(() => {
             void (async () => {
+              const previewContext =
+                pricingPreviewContextRef.current;
+
               try {
                 const result =
                   await previewDefaultServicesPricing(
                     {
-                      encounterId,
+                      encounterId:
+                        previewContext.encounterId,
                       body: {
-                        patientId,
-                        facilityId,
+                        patientId:
+                          previewContext.patientId,
+                        facilityId:
+                          previewContext.facilityId,
                         currency:
-                          (summary.currency ??
-                            facilityCurrency) as PrepareDefaultServicesRequest['currency'],
+                          (previewContext
+                            .summary
+                            .currency ??
+                            previewContext.facilityCurrency) as PrepareDefaultServicesRequest['currency'],
                         coverageType:
-                          formState.coverageType,
+                          previewContext.coverageType,
                         patientInsuranceId:
-                          isInsurance
+                          previewContext.isInsurance
                             ? toNumber(
-                                formState.patientInsuranceId
+                                previewContext.patientInsuranceId
                               )
                             : null,
                         items:
-                          rowsToPrice.map(
+                          previewContext.rowsToPrice.map(
                             (
                               row,
                               index
@@ -1498,6 +1844,13 @@ const PatientPaymentInfo =
                 );
               } catch {
                 // Keep setup prices when price-list preview is unavailable.
+              } finally {
+                setPricingPreviewLoading(
+                  false
+                );
+                setPreviewSettledEncounterId(
+                  previewContext.encounterId
+                );
               }
             })();
           }, 400);
@@ -1515,13 +1868,10 @@ const PatientPaymentInfo =
         encounterId,
         patientId,
         facilityId,
-        summary,
-        facilityCurrency,
-        formState.coverageType,
-        formState.patientInsuranceId,
+        summaryIsCalculated,
         isInsurance,
-        payableSelectedRows,
-        selectedRows,
+        formState.patientInsuranceId,
+        pricingPreviewInputKey,
         previewDefaultServicesPricing
       ]);
 
@@ -1546,6 +1896,26 @@ const PatientPaymentInfo =
             isInsurance
           ]
         );
+
+      const amountsLoading =
+        Boolean(encounterId) &&
+        displayReadyEncounterId !==
+          encounterId;
+
+      const walletAmountLoading =
+        loadingLedgerBalance &&
+        patientLedgerSummary == null &&
+        summary.wallet?.availableBalance == null;
+
+      const formatDisplayMoney = (
+        amount: number | null | undefined
+      ) =>
+        amountsLoading
+          ? '—'
+          : formatMoney(
+              Number(amount ?? 0),
+              activeCurrency
+            );
 
       const displayChargeLines =
         useMemo(
@@ -1640,6 +2010,7 @@ const PatientPaymentInfo =
           previewTotals.patientOutstandingAmount;
 
         if (
+          amountsLoading ||
           !paymentMethodSelected ||
           outstanding <= 0 ||
           lockAfterConfirm ||
@@ -1665,6 +2036,7 @@ const PatientPaymentInfo =
           }
         );
       }, [
+        amountsLoading,
         paymentMethodSelected,
         previewTotals.patientOutstandingAmount,
         lockAfterConfirm,
@@ -2660,70 +3032,62 @@ const PatientPaymentInfo =
               activeCurrency,
 
             grossAmount:
-              formatMoney(
-                previewTotals.grossAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.grossAmount
               ),
 
             discountAmount:
-              formatMoney(
-                previewTotals.discountAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.discountAmount
               ),
 
             exemptionAmount:
-              formatMoney(
-                previewTotals.exemptionAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.exemptionAmount
               ),
 
             taxAmount:
-              formatMoney(
-                previewTotals.taxAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.taxAmount
               ),
 
             netAmount:
-              formatMoney(
-                previewTotals.netAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.netAmount
               ),
 
             patientResponsibilityAmount:
-              formatMoney(
-                previewTotals.patientResponsibilityAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.patientResponsibilityAmount
               ),
 
             insuranceResponsibilityAmount:
-              formatMoney(
-                previewTotals.insuranceResponsibilityAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.insuranceResponsibilityAmount
               ),
 
             patientOutstandingAmount:
-              formatMoney(
-                previewTotals.patientOutstandingAmount,
-                activeCurrency
+              formatDisplayMoney(
+                previewTotals.patientOutstandingAmount
               ),
 
             walletAvailableBalance:
-              formatMoney(
-                lastPaymentResult?.walletAvailableBalance ??
-                  summary.wallet
-                    ?.availableBalance ??
-                  0,
-                activeCurrency
-              ),
+              walletAmountLoading
+                ? '—'
+                : formatMoney(
+                    lastPaymentResult?.walletAvailableBalance ??
+                      walletAvailableBalance,
+                    activeCurrency
+                  ),
 
             walletReservedBalance:
-              formatMoney(
-                lastPaymentResult?.walletReservedBalance ??
-                  summary.wallet
-                    ?.reservedBalance ??
-                  0,
-                activeCurrency
-              ),
+              walletAmountLoading
+                ? '—'
+                : formatMoney(
+                    lastPaymentResult?.walletReservedBalance ??
+                      walletReservedBalance,
+                    activeCurrency
+                  ),
 
             paymentNumber:
               lastPaymentResult?.paymentNumber ??
@@ -2734,13 +3098,18 @@ const PatientPaymentInfo =
               '-',
 
             isPreview:
-              previewTotals.isPreview
+              previewTotals.isPreview &&
+              amountsLoading
           }),
           [
             summary,
             previewTotals,
             activeCurrency,
-            lastPaymentResult
+            lastPaymentResult,
+            amountsLoading,
+            walletAmountLoading,
+            walletAvailableBalance,
+            walletReservedBalance
           ]
         );
 
@@ -2984,13 +3353,15 @@ const PatientPaymentInfo =
               row:
                 DefaultServiceRow
             ) =>
-              row.calculatedPrice ==
-              null
-                ? '-'
-                : formatMoney(
-                    row.calculatedPrice,
-                    activeCurrency
-                  )
+              amountsLoading
+                ? '—'
+                : row.calculatedPrice ==
+                    null
+                  ? '-'
+                  : formatMoney(
+                      row.calculatedPrice,
+                      activeCurrency
+                    )
         },
 
         ...(formState.coverageType ===
@@ -3801,8 +4172,10 @@ const PatientPaymentInfo =
               <SummaryMetric
                 label="Charge Number"
                 value={
-                  summary.chargeNumber ??
-                  '-'
+                  amountsLoading
+                    ? '—'
+                    : summary.chargeNumber ??
+                      '-'
                 }
                 mono
               />
@@ -3812,27 +4185,27 @@ const PatientPaymentInfo =
               />
               <SummaryMetric
                 label="Net Amount"
-                value={formatMoney(
-                  previewTotals.netAmount,
-                  activeCurrency
+                value={formatDisplayMoney(
+                  previewTotals.netAmount
                 )}
               />
               <SummaryMetric
                 label="Amount Due"
-                value={formatMoney(
-                  previewTotals.patientOutstandingAmount,
-                  activeCurrency
+                value={formatDisplayMoney(
+                  previewTotals.patientOutstandingAmount
                 )}
                 variant="highlight"
               />
               <SummaryMetric
                 label="Wallet Available"
-                value={formatMoney(
-                  summary.wallet
-                    ?.availableBalance ??
-                    0,
-                  activeCurrency
-                )}
+                value={
+                  walletAmountLoading
+                    ? '—'
+                    : formatMoney(
+                        walletAvailableBalance,
+                        activeCurrency
+                      )
+                }
                 variant="success"
               />
             </div>
@@ -4323,6 +4696,7 @@ const PatientPaymentInfo =
                   Charge Lines
                 </Translate>
                 {previewTotals.isPreview &&
+                !amountsLoading &&
                 displayChargeLines.length > 0 ? (
                   <Tag size="sm" color="orange">
                     Estimated
@@ -4340,7 +4714,7 @@ const PatientPaymentInfo =
                 billedItemColumns
               }
               loading={
-                loadingSummary &&
+                loadingEncounterSummary &&
                 displayChargeLines.length ===
                   0
               }
