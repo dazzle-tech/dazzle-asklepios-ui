@@ -1816,6 +1816,17 @@ export const newPatientInsurance: modelTypes.PatientInsurance = {
 
   isPrimary: false,
 
+  groupName: null,
+  planCode: null,
+  eligibilityStatus: null,
+  siteEligibility: null,
+  inforce: null,
+  gpVisitCopay: null,
+  specialistVisitsLimit: null,
+  eligibilityBenefitsJson: null,
+  lastEligibilityRequestId: null,
+  lastEligibilitySyncedAt: null,
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,

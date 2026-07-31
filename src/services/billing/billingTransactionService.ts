@@ -45,7 +45,8 @@ export const billingTransactionService =
       'BillingWallet',
       'BillingCheckout',
       'BillingRefund',
-      'PatientFinancialInvoices'
+      'PatientFinancialInvoices',
+      'WaseelCoverage'
     ],
 
     endpoints:
@@ -119,7 +120,14 @@ export const billingTransactionService =
                   : {
                       patientInsuranceId
                     }
-            })
+            }),
+
+            providesTags: (_result, _error, args) => [
+              {
+                type: 'WaseelCoverage',
+                id: `${args.patientId}:${args.patientInsuranceId ?? 'latest'}`
+              }
+            ]
           }),
 
         prepareDefaultServices:

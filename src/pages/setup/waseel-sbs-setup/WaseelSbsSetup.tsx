@@ -3,7 +3,7 @@ import './styles.less';
 
 import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete } from 'react-icons/md';
+import { MdCheckCircle, MdDelete, MdEdit } from 'react-icons/md';
 
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -27,7 +27,8 @@ import {
   useSearchSbsQuery,
   useCreateItemMappingMutation,
   useSearchItemMappingsQuery,
-  useDeactivateItemMappingMutation
+  useDeactivateItemMappingMutation,
+  useUpdateItemMappingMutation
 } from '@/services/waseel-integration/waseelSbsSetupService';
 
 import type { WaseelItemMapping, WaseelSbsCatalog } from '@/types/model-types-new';
@@ -111,6 +112,7 @@ const WaseelSbsSetup = () => {
   const [openMappingModal, setOpenMappingModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedMapping, setSelectedMapping] = useState<WaseelItemMapping | null>(null);
+  const [editingMapping, setEditingMapping] = useState<WaseelItemMapping | null>(null);
 
   const [mappingForm, setMappingForm] = useState<MappingForm>({
     itemType: '',
@@ -241,7 +243,9 @@ const WaseelSbsSetup = () => {
 
   const [importSbsExcel, { isLoading: importing }] = useImportSbsExcelMutation();
   const [createItemMapping, { isLoading: creatingMapping }] = useCreateItemMappingMutation();
+  const [updateItemMapping, { isLoading: updatingMapping }] = useUpdateItemMappingMutation();
   const [deactivateItemMapping] = useDeactivateItemMappingMutation();
+  const isSavingMapping = creatingMapping || updatingMapping;
 
   const itemSelectConfig = useMemo(() => {
     switch (mappingForm.itemType) {
@@ -494,7 +498,19 @@ const WaseelSbsSetup = () => {
     }
   };
 
+  const buildMappingRequestBody = () => ({
+    itemType: mappingForm.itemType,
+    sourceId: Number(mappingForm.sourceId),
+    itemCode: mappingForm.itemCode,
+    itemName: mappingForm.itemName,
+    sbsCatalogId: Number(mappingForm.sbsCatalogId),
+    requiresPreauth: mappingForm.requiresPreauth,
+    isActive: mappingForm.isActive,
+    notes: mappingForm.notes
+  });
+
   const handleOpenMappingModal = () => {
+    setEditingMapping(null);
     setMappingForm({
       itemType: '',
       sourceId: null,
@@ -505,6 +521,34 @@ const WaseelSbsSetup = () => {
       isActive: true,
       notes: ''
     });
+
+    setOpenMappingModal(true);
+  };
+
+  const handleOpenEditMapping = (row: WaseelItemMapping) => {
+    setEditingMapping(row);
+    setMappingForm({
+      itemType: row.itemType ?? '',
+      sourceId: row.sourceId ?? null,
+      itemCode: row.itemCode ?? '',
+      itemName: row.itemName ?? '',
+      sbsCatalogId: row.sbsCatalogId ?? null,
+      requiresPreauth: row.requiresPreauth ?? false,
+      isActive: row.isActive ?? true,
+      notes: row.notes ?? ''
+    });
+
+    if (row.sbsCatalogId) {
+      setSbsDropdownCache([
+        {
+          id: row.sbsCatalogId,
+          sbsCode: row.sbsCode,
+          shortDescription: row.sbsDescription,
+          waseelItemType: row.waseelItemType,
+          isActive: true
+        } as WaseelSbsCatalog
+      ]);
+    }
 
     setOpenMappingModal(true);
   };
@@ -523,23 +567,60 @@ const WaseelSbsSetup = () => {
     try {
       dispatch(showSystemLoader());
 
-      await createItemMapping({
-        itemType: mappingForm.itemType,
-        sourceId: Number(mappingForm.sourceId),
-        itemCode: mappingForm.itemCode,
-        itemName: mappingForm.itemName,
-        sbsCatalogId: Number(mappingForm.sbsCatalogId),
-        requiresPreauth: mappingForm.requiresPreauth,
-        isActive: mappingForm.isActive,
-        notes: mappingForm.notes
-      }).unwrap();
+      const body = buildMappingRequestBody();
 
-      dispatch(notify({ msg: 'Mapping saved successfully', sev: 'success' }));
+      if (editingMapping?.id) {
+        await updateItemMapping({
+          id: editingMapping.id,
+          body
+        }).unwrap();
+        dispatch(notify({ msg: 'Mapping updated successfully', sev: 'success' }));
+      } else {
+        await createItemMapping(body).unwrap();
+        dispatch(notify({ msg: 'Mapping saved successfully', sev: 'success' }));
+      }
+
+      setEditingMapping(null);
       setOpenMappingModal(false);
     } catch (error: any) {
       dispatch(
         notify({
           msg: error?.data?.message || error?.data?.detail || 'Failed to save mapping',
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleActivateMapping = async (row: WaseelItemMapping) => {
+    if (!row.id || !row.itemType || row.sourceId == null || !row.sbsCatalogId) {
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      await updateItemMapping({
+        id: row.id,
+        body: {
+          itemType: row.itemType,
+          sourceId: Number(row.sourceId),
+          itemCode: row.itemCode,
+          itemName: row.itemName,
+          sbsCatalogId: Number(row.sbsCatalogId),
+          requiresPreauth: row.requiresPreauth,
+          isActive: true,
+          notes: row.notes
+        }
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Mapping activated successfully', sev: 'success' }));
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || error?.data?.detail || 'Failed to activate mapping',
           sev: 'warning'
         })
       );
@@ -641,19 +722,41 @@ const WaseelSbsSetup = () => {
     },
     {
       key: 'actions',
-      title: <Translate></Translate>,
-      flexGrow: 1,
+      title: <Translate>Actions</Translate>,
+      flexGrow: 2,
       render: (rowData: WaseelItemMapping) => (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setSelectedMapping(rowData);
-            setOpenDeleteModal(true);
-          }}
-        />
+        <div className="container-of-icons">
+          <MdEdit
+            className="icons-style"
+            title="Edit"
+            size={23}
+            fill="var(--primary-gray)"
+            onClick={() => handleOpenEditMapping(rowData)}
+          />
+
+          {!rowData.isActive ? (
+            <MdCheckCircle
+              className="icons-style"
+              title="Activate"
+              size={23}
+              fill="var(--primary-green, #28a745)"
+              onClick={() => {
+                void handleActivateMapping(rowData);
+              }}
+            />
+          ) : (
+            <MdDelete
+              className="icons-style"
+              title="Deactivate"
+              size={23}
+              fill="var(--primary-pink)"
+              onClick={() => {
+                setSelectedMapping(rowData);
+                setOpenDeleteModal(true);
+              }}
+            />
+          )}
+        </div>
       )
     }
   ];
@@ -694,6 +797,8 @@ const WaseelSbsSetup = () => {
     </Form>
   );
 
+  const isEditMode = Boolean(editingMapping?.id);
+
   const mappingModalContent = (
     <Form fluid className="waseel-mapping-form">
       <MyInput
@@ -715,35 +820,59 @@ const WaseelSbsSetup = () => {
         }
         width="100%"
         searchable={false}
+        disabled={isEditMode}
       />
 
-      {itemSelectConfig && (
-        <MyInput
-          key={mappingForm.itemType}
-          required
-          fieldLabel={itemSelectConfig.fieldLabel}
-          fieldType="selectPagination"
-          fieldName="sourceId"
-          selectData={itemSelectConfig.selectData}
-          selectDataLabel="displayName"
-          selectDataValue="id"
-          record={mappingForm}
-          setRecord={setMappingForm}
-          width="100%"
-          searchable
-          loading={itemSelectConfig.loading}
-          hasMore={itemSelectConfig.hasMore}
-          onFetchMore={itemSelectConfig.onFetchMore}
-          onSelectItem={(selectedItem: ItemOption | null) => {
-            const original = selectedItem?.original ?? selectedItem;
-            setMappingForm(prev => ({
-              ...prev,
-              sourceId: selectedItem?.id ?? null,
-              itemCode: original?.code ?? original?.internalCode ?? '',
-              itemName: original?.name ?? original?.brandName ?? ''
-            }));
-          }}
-        />
+      {isEditMode ? (
+        <>
+          <MyInput
+            fieldLabel="Item Name"
+            fieldType="text"
+            fieldName="itemName"
+            record={mappingForm}
+            setRecord={setMappingForm}
+            width="100%"
+            disabled
+          />
+          <MyInput
+            fieldLabel="Item Code"
+            fieldType="text"
+            fieldName="itemCode"
+            record={mappingForm}
+            setRecord={setMappingForm}
+            width="100%"
+            disabled
+          />
+        </>
+      ) : (
+        itemSelectConfig && (
+          <MyInput
+            key={mappingForm.itemType}
+            required
+            fieldLabel={itemSelectConfig.fieldLabel}
+            fieldType="selectPagination"
+            fieldName="sourceId"
+            selectData={itemSelectConfig.selectData}
+            selectDataLabel="displayName"
+            selectDataValue="id"
+            record={mappingForm}
+            setRecord={setMappingForm}
+            width="100%"
+            searchable
+            loading={itemSelectConfig.loading}
+            hasMore={itemSelectConfig.hasMore}
+            onFetchMore={itemSelectConfig.onFetchMore}
+            onSelectItem={(selectedItem: ItemOption | null) => {
+              const original = selectedItem?.original ?? selectedItem;
+              setMappingForm(prev => ({
+                ...prev,
+                sourceId: selectedItem?.id ?? null,
+                itemCode: original?.code ?? original?.internalCode ?? '',
+                itemName: original?.name ?? original?.brandName ?? ''
+              }));
+            }}
+          />
+        )
       )}
 
 <MyInput
@@ -773,6 +902,15 @@ const WaseelSbsSetup = () => {
         fieldType="checkbox"
         fieldLabel="Requires PreAuthorization"
         fieldName="requiresPreauth"
+        record={mappingForm}
+        setRecord={setMappingForm}
+        width="100%"
+      />
+
+      <MyInput
+        fieldType="checkbox"
+        fieldLabel="Active"
+        fieldName="isActive"
         record={mappingForm}
         setRecord={setMappingForm}
         width="100%"
@@ -864,10 +1002,15 @@ const WaseelSbsSetup = () => {
 
       <MyModal
         open={openMappingModal}
-        setOpen={setOpenMappingModal}
-        title="Add Waseel Item Mapping"
-        actionButtonLabel="Save"
-        actionButtonLoading={creatingMapping}
+        setOpen={open => {
+          setOpenMappingModal(open);
+          if (!open) {
+            setEditingMapping(null);
+          }
+        }}
+        title={isEditMode ? 'Edit Waseel Item Mapping' : 'Add Waseel Item Mapping'}
+        actionButtonLabel={isEditMode ? 'Update' : 'Save'}
+        actionButtonLoading={isSavingMapping}
         actionButtonFunction={handleSaveMapping}
         position="right"
         size="32vw"

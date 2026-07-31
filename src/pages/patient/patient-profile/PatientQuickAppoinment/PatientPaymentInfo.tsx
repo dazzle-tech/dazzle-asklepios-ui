@@ -46,6 +46,8 @@ import {
   useGetInsurancesByPatientQuery
 } from '@/services/patients/patientInsurancesService';
 
+import { extractPatientInsurancesList } from '../cchiMappers';
+
 import {
   useCreateAdvancePaymentMutation,
   useGetEncounterBillingSummaryQuery,
@@ -829,7 +831,8 @@ const PatientPaymentInfo =
           },
           {
             skip:
-              !patientId
+              !patientId,
+            refetchOnMountOrArgChange: true
           }
         );
 
@@ -916,7 +919,7 @@ const PatientPaymentInfo =
       PatientInsurance[] =
         useMemo(
           () =>
-            extractResponseList(
+            extractPatientInsurancesList(
               insuranceResponse.data
             ),
           [
@@ -1815,6 +1818,10 @@ const PatientPaymentInfo =
                             previewTaxAmount:
                               null,
                             previewNetAmount:
+                              null,
+                            patientShare:
+                              null,
+                            insuranceShare:
                               null
                           };
                         }
@@ -1837,7 +1844,13 @@ const PatientPaymentInfo =
                           previewTaxAmount:
                             priced.taxAmount,
                           previewNetAmount:
-                            priced.netAmount
+                            priced.netAmount,
+                          patientShare:
+                            priced.patientShareAmount ??
+                            null,
+                          insuranceShare:
+                            priced.insuranceShareAmount ??
+                            null
                         };
                       }
                     )
@@ -4435,6 +4448,90 @@ const PatientPaymentInfo =
                 <MyInput
                   column
                   disabled
+                  fieldLabel="Insurance Group"
+                  fieldName="groupName"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Plan Code"
+                  fieldName="planCode"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Network"
+                  fieldName="networkId"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="GP Visit Copay"
+                  fieldName="gpVisitCopay"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Specialist Visits Limit"
+                  fieldName="specialistVisitsLimit"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Eligibility Status"
+                  fieldName="eligibilityStatus"
+                  record={
+                    patientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
                   fieldLabel="Expiration Date"
                   fieldType="date"
                   fieldName="expirationDate"
@@ -4573,9 +4670,10 @@ const PatientPaymentInfo =
                               row: WaseelBenefitDetail
                             ) => {
                               if (
-                                row.value == null
+                                row.value == null ||
+                                row.value === ''
                               ) {
-                                return '-';
+                                return row.unit ?? '-';
                               }
 
                               return row.unit

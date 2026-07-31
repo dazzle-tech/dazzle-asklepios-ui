@@ -1,5 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '../../newApi';
+import { billingTransactionService } from '@/services/billing/billingTransactionService';
+import { patientInsurancesService } from '@/services/patients/patientInsurancesService';
 import type {
   EligibilityCheckRequest,
   EligibilityCheckResult
@@ -17,6 +19,14 @@ export const eligibilityApi = createApi({
         body
       }),
       async onQueryStarted(arg, api) {
+        try {
+          await api.queryFulfilled;
+          api.dispatch(patientInsurancesService.util.invalidateTags(['PatientInsurance']));
+          api.dispatch(billingTransactionService.util.invalidateTags(['WaseelCoverage']));
+        } catch {
+          // handled below
+        }
+
         await onQueryStarted(arg, api);
       }
     })

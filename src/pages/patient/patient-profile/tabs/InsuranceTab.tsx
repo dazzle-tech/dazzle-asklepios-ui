@@ -1,4 +1,5 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -9,22 +10,33 @@ import {
   useGetInsurancesByPatientQuery,
   useLazyGetInsuranceCoveragesCountQuery
 } from '@/services/patients/patientInsurancesService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { newPatientInsurance } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
-import { faCheckDouble, faEllipsis, faLock, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faLayerGroup, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { PlusRound } from '@rsuite/icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Tooltip, Whisper } from 'rsuite';
+import { Badge, Message, Tooltip, Whisper } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
+import WaseelClassListModal from '../WaseelClassListModal';
 import {
   buildPatientInsuranceSavePayload,
   extractPatientInsurancesList,
+  extractWaseelClassList,
   getCchiInsuranceStorageKey,
   normalizeCchiPatientInsurance
 } from '../cchiMappers';
+import {
+  formatInsuranceCell,
+  formatInsuranceDate,
+  getInsuranceProviderName as resolveInsuranceProviderName,
+  getInsuranceStatus,
+  isDuplicateInsurance
+} from '../insuranceDisplayUtils';
 import './styles.less';
 
 interface InsuranceTabProps {
@@ -50,6 +62,8 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
+  const [classListModalOpen, setClassListModalOpen] = useState(false);
+  const [classListInsurance, setClassListInsurance] = useState<PatientInsurance | null>(null);
 
   const [hideSaveBtn, setHideSaveBtn] = useState(false);
   const [coveragesCount, setCoveragesCount] = useState<number>(0);
@@ -65,7 +79,11 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
   const patientId = Number(localPatient?.id);
 
-  const patientInsuranceResponse = useGetInsurancesByPatientQuery(
+  const {
+    data: patientInsuranceResponse,
+    isFetching: isFetchingInsurances,
+    refetch: refetchInsurances
+  } = useGetInsurancesByPatientQuery(
     {
       patientId,
       page: 0,
@@ -73,11 +91,15 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
       sort: 'id,desc'
     },
     {
-      skip: !Number.isFinite(patientId) || patientId <= 0
+      skip: !Number.isFinite(patientId) || patientId <= 0,
+      refetchOnMountOrArgChange: true
     }
   );
 
-  const savedInsurances = extractPatientInsurancesList(patientInsuranceResponse);
+  const savedInsurances = useMemo(
+    () => extractPatientInsurancesList(patientInsuranceResponse),
+    [patientInsuranceResponse]
+  );
 
   const normalizedCchiInsurance = useMemo(() => {
     if (!cchiInsurance) {
@@ -94,6 +116,49 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     () => getCchiInsuranceStorageKey(localPatient?.id, localPatient?.documentId),
     [localPatient?.id, localPatient?.documentId]
   );
+
+  const cchiMatchesSavedInsurance = useMemo(() => {
+    if (!normalizedCchiInsurance) {
+      return false;
+    }
+
+    return savedInsurances.some(saved =>
+      isDuplicateInsurance(normalizedCchiInsurance, saved)
+    );
+  }, [normalizedCchiInsurance, savedInsurances]);
+
+  const pendingCchiInsurance = useMemo(() => {
+    if (!normalizedCchiInsurance || cchiMatchesSavedInsurance) {
+      return null;
+    }
+
+    return normalizedCchiInsurance;
+  }, [normalizedCchiInsurance, cchiMatchesSavedInsurance]);
+
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !Number.isFinite(patientId) || patientId <= 0 }
+  );
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
+    { page: 0, size: 2000, sort: 'nameEn,asc' },
+    { skip: !Number.isFinite(patientId) || patientId <= 0 }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
+
+  useEffect(() => {
+    if (!cchiMatchesSavedInsurance || !setCchiInsurance) {
+      return;
+    }
+
+    setCchiInsurance(null);
+
+    if (cchiStorageKey) {
+      sessionStorage.removeItem(cchiStorageKey);
+    }
+  }, [cchiMatchesSavedInsurance, cchiStorageKey, setCchiInsurance]);
 
   useEffect(() => {
     if (!localPatient?.id || !cchiInsurance || cchiInsurance.patientId) {
@@ -133,12 +198,12 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
   const tableRows = useMemo(() => {
     const rows = [...savedInsurances];
 
-    if (normalizedCchiInsurance) {
-      return [{ ...normalizedCchiInsurance, _isCchiDraft: true }, ...rows];
+    if (pendingCchiInsurance) {
+      return [{ ...pendingCchiInsurance, _isCchiDraft: true }, ...rows];
     }
 
     return rows;
-  }, [savedInsurances, normalizedCchiInsurance]);
+  }, [savedInsurances, pendingCchiInsurance]);
 
   const paginatedData = tableRows.slice(
     pageIndex * rowsPerPage,
@@ -215,7 +280,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         deleteCoverages: false
       }).unwrap();
 
-      patientInsuranceResponse.refetch();
+      void refetchInsurances();
 
       dispatch(
         notify({
@@ -255,7 +320,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         deleteCoverages: true
       }).unwrap();
 
-      patientInsuranceResponse.refetch();
+      void refetchInsurances();
 
       dispatch(
         notify({
@@ -278,8 +343,25 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
   };
 
+  const handleDiscardCchiInsurance = () => {
+    setCchiInsurance?.(null);
+
+    if (cchiStorageKey) {
+      sessionStorage.removeItem(cchiStorageKey);
+    }
+  };
+
+  const handleOpenClassList = (
+    row: PatientInsurance,
+    event?: React.MouseEvent
+  ) => {
+    event?.stopPropagation();
+    setClassListInsurance(row);
+    setClassListModalOpen(true);
+  };
+
   const handleSaveCchiInsurance = async () => {
-    if (!cchiInsurance || !normalizedCchiInsurance) {
+    if (!cchiInsurance || !pendingCchiInsurance) {
       return;
     }
 
@@ -293,7 +375,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
       return;
     }
 
-    if (!normalizedCchiInsurance.policyNumber) {
+    if (!pendingCchiInsurance.policyNumber) {
       dispatch(
         notify({
           msg: 'CCHI insurance is missing a policy number',
@@ -306,10 +388,19 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     try {
       const payload = buildPatientInsuranceSavePayload(
         cchiInsurance as Record<string, any>,
-        Number(localPatient.id)
+        Number(localPatient.id),
+        payorsList
       );
 
-      console.log('[CCHI] Saving patient insurance payload:', payload);
+      if (!payload.payorId && !payload.payerNphiesId) {
+        dispatch(
+          notify({
+            msg: 'CCHI insurance is missing payer NPHIES ID. Cannot resolve payor.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
       await addPatientInsurance(payload).unwrap();
 
@@ -319,20 +410,36 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         sessionStorage.removeItem(cchiStorageKey);
       }
 
-      patientInsuranceResponse.refetch();
-
       dispatch(
         notify({
           msg: 'Insurance Saved Successfully',
           sev: 'success'
         })
       );
+
+      void refetchInsurances();
     } catch (err: any) {
-      const msg =
+      const fieldErrors = err?.data?.fieldErrors;
+      const fieldMessage = Array.isArray(fieldErrors)
+        ? fieldErrors.map((item: any) => `${item.field}: ${item.message}`).join(', ')
+        : null;
+
+      const errorKey =
+        typeof err?.data?.message === 'string' && err.data.message.startsWith('error.')
+          ? err.data.message.substring(6)
+          : null;
+
+      let msg =
+        fieldMessage ||
         err?.data?.detail ||
         err?.data?.message ||
         err?.data?.title ||
         'Failed to save insurance from CCHI';
+
+      if (errorKey === 'payor.unresolved') {
+        msg =
+          'Could not match the CCHI payer to a payor in Setup. Configure the payer NPHIES ID (e.g. INS-FHIR) under Payors.';
+      }
 
       dispatch(
         notify({
@@ -343,70 +450,194 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
   };
 
-  const getInsuranceProviderName = (row: any) => {
-    return row?.payerName || row?.payerNphiesId || '-';
+  const handleRowClick = (row: PatientInsurance & { _isCchiDraft?: boolean }) => {
+    setSelectedInsurance(row);
+
+    if (row._isCchiDraft) {
+      handleShowInsuranceDetails(row);
+      return;
+    }
+
+    handleShowInsuranceDetails(row);
   };
 
   const columns = [
     {
       key: 'payor',
       title: <Translate>Insurance Provider</Translate>,
-      flexGrow: 4,
-      render: (row: any) => {
-        const payorName = getInsuranceProviderName(row);
+      width: 170,
+      render: (row: PatientInsurance & { _isCchiDraft?: boolean }) => {
+        const payorName = resolveInsuranceProviderName(row, payorsList, nphiesPayersList);
 
-        return row.isPrimary ? (
-          <Badge color="blue" content="Primary">
-            <span className="insurance-badge-text" style={{ fontSize: '14px' }}>
-              {payorName}
-            </span>
-          </Badge>
-        ) : (
-          <p>{payorName}</p>
+        return (
+          <div className="insurance-tab__provider-cell">
+            {row.isPrimary ? (
+              <Badge color="blue" content="Primary">
+                <span className="insurance-badge-text" style={{ fontSize: '14px' }}>
+                  {payorName}
+                </span>
+              </Badge>
+            ) : (
+              <span>{payorName}</span>
+            )}
+            {row._isCchiDraft ? (
+              <Badge color="cyan" className="insurance-tab__draft-badge">
+                CCHI · Pending save
+              </Badge>
+            ) : null}
+          </div>
         );
       }
     },
     {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      render: (row: PatientInsurance) => {
+        if (row.eligibilityStatus) {
+          const normalized = String(row.eligibilityStatus).toLowerCase();
+          const color =
+            normalized === 'active'
+              ? '#45b887'
+              : normalized === 'inactive'
+                ? '#e11d48'
+                : '#969fb0';
+
+          return (
+            <MyBadgeStatus
+              contant={String(row.eligibilityStatus)}
+              color={color}
+            />
+          );
+        }
+
+        const { label, color } = getInsuranceStatus(row.expirationDate);
+
+        return <MyBadgeStatus contant={label} color={color} />;
+      }
+    },
+    {
       key: 'policyNumber',
-      title: <Translate>Insurance Policy Number</Translate>,
-      flexGrow: 4,
-      dataKey: 'policyNumber'
+      title: <Translate>Policy Number</Translate>,
+      width: 130,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.policyNumber)
+    },
+    {
+      key: 'memberCardId',
+      title: <Translate>Member ID</Translate>,
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.memberCardId)
     },
     {
       key: 'groupNumber',
       title: <Translate>Group Number</Translate>,
-      flexGrow: 4,
-      dataKey: 'groupNumber'
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.groupNumber)
+    },
+    {
+      key: 'groupName',
+      title: <Translate>Insurance Group</Translate>,
+      width: 140,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.groupName)
     },
     {
       key: 'policyClassName',
-      title: <Translate>Policy Class</Translate>,
-      flexGrow: 4,
-      dataKey: 'policyClassName'
+      title: <Translate>Insurance Plan</Translate>,
+      width: 140,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.policyClassName)
+    },
+    {
+      key: 'planCode',
+      title: <Translate>Plan Code</Translate>,
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.planCode)
+    },
+    {
+      key: 'networkId',
+      title: <Translate>Network</Translate>,
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.networkId)
+    },
+    {
+      key: 'gpVisitCopay',
+      title: <Translate>GP Copay</Translate>,
+      width: 100,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.gpVisitCopay)
+    },
+    {
+      key: 'specialistVisitsLimit',
+      title: <Translate>Specialist Visits</Translate>,
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceCell(row.specialistVisitsLimit)
     },
     {
       key: 'expirationDate',
       title: <Translate>Expiration Date</Translate>,
-      flexGrow: 4,
-      dataKey: 'expirationDate'
+      width: 120,
+      render: (row: PatientInsurance) => formatInsuranceDate(row.expirationDate)
     },
     {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
-      flexGrow: 4,
+      width: 140,
       render: (rowData: PatientInsurance & { _isCchiDraft?: boolean }) => {
+        const hasClassList = extractWaseelClassList(rowData).length > 0;
+
         if (rowData._isCchiDraft) {
           return (
-            <Badge color="cyan" content="CCHI">
-              <span className="insurance-badge-text" style={{ fontSize: '14px' }}>
-                Pending save
-              </span>
-            </Badge>
+            <div className="container-of-icons insurance-tooltip-wrapper insurance-tab__actions">
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>View Waseel Class List</Tooltip>}
+              >
+                <span className="insurance-tooltip-trigger">
+                  <MyButton
+                    className="icons-style"
+                    appearance="subtle"
+                    onClick={event => handleOpenClassList(rowData, event)}
+                  >
+                    <FontAwesomeIcon
+                      className="icons-style"
+                      color={hasClassList ? 'var(--primary-blue)' : 'var(--primary-gray)'}
+                      icon={faLayerGroup}
+                    />
+                  </MyButton>
+                </span>
+              </Whisper>
+
+              <MyButton
+                appearance="link"
+                onClick={() => handleShowInsuranceDetails(rowData)}
+              >
+                <Translate>Preview</Translate>
+              </MyButton>
+            </div>
           );
         }
 
         return (
-          <div className="container-of-icons insurance-tooltip-wrapper">
+          <div className="container-of-icons insurance-tooltip-wrapper insurance-tab__actions">
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>View Waseel Class List</Tooltip>}
+            >
+              <span className="insurance-tooltip-trigger">
+                <MyButton
+                  className="icons-style"
+                  appearance="subtle"
+                  onClick={event => handleOpenClassList(rowData, event)}
+                >
+                  <FontAwesomeIcon
+                    className="icons-style"
+                    color={hasClassList ? 'var(--primary-blue)' : 'var(--primary-gray)'}
+                    icon={faLayerGroup}
+                  />
+                </MyButton>
+              </span>
+            </Whisper>
+
             <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Insurance</Tooltip>}>
               <span className="insurance-tooltip-trigger">
                 <MyButton
@@ -418,26 +649,6 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
                     className="icons-style"
                     color="var(--primary-gray)"
                     icon={faUserPen}
-                  />
-                </MyButton>
-              </span>
-            </Whisper>
-
-            <Whisper
-              placement="top"
-              trigger="hover"
-              speaker={<Tooltip>Manage Specific Coverages</Tooltip>}
-            >
-              <span className="insurance-tooltip-trigger">
-                <MyButton
-                  className="icons-style"
-                  appearance="subtle"
-                  onClick={() => handleOpenSpecificCoverage(rowData)}
-                >
-                  <FontAwesomeIcon
-                    className="icons-style"
-                    color="var(--primary-gray)"
-                    icon={faLock}
                   />
                 </MyButton>
               </span>
@@ -458,26 +669,6 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
                 </MyButton>
               </span>
             </Whisper>
-
-            <Whisper
-              placement="top"
-              trigger="hover"
-              speaker={<Tooltip>View Insurance Details</Tooltip>}
-            >
-              <span className="insurance-tooltip-trigger">
-                <MyButton
-                  className="icons-style"
-                  appearance="subtle"
-                  onClick={() => handleShowInsuranceDetails(rowData)}
-                >
-                  <FontAwesomeIcon
-                    className="icons-style"
-                    color="var(--primary-gray)"
-                    icon={faEllipsis}
-                  />
-                </MyButton>
-              </span>
-            </Whisper>
           </div>
         );
       }
@@ -487,15 +678,20 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
   return (
     <div ref={tooltipContainerRef} className="tab-main-container">
       <div className="tab-content-btns">
-        {normalizedCchiInsurance ? (
-          <MyButton
-            onClick={handleSaveCchiInsurance}
-            disabled={!localPatient.id || isSavingCchiInsurance}
-            loading={isSavingCchiInsurance}
-            prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-          >
-            <Translate>Save</Translate>
-          </MyButton>
+        {pendingCchiInsurance ? (
+          <>
+            <MyButton
+              onClick={handleSaveCchiInsurance}
+              disabled={!localPatient.id || isSavingCchiInsurance}
+              loading={isSavingCchiInsurance}
+              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+            >
+              <Translate>Save CCHI Insurance</Translate>
+            </MyButton>
+            <MyButton appearance="ghost" onClick={handleDiscardCchiInsurance}>
+              <Translate>Discard</Translate>
+            </MyButton>
+          </>
         ) : (
           <MyButton
             onClick={() => {
@@ -512,10 +708,18 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         )}
       </div>
 
+      {pendingCchiInsurance ? (
+        <Message showIcon type="info" className="insurance-tab__info-banner">
+          <Translate>
+            New insurance fetched from CCHI is pending save. Review it, then click Save CCHI Insurance.
+          </Translate>
+        </Message>
+      ) : null}
+
       <InsuranceModal
         relations={[]}
         editing={selectedInsurance}
-        refetchInsurance={patientInsuranceResponse.refetch}
+        refetchInsurance={refetchInsurances}
         patientKey={Number.isFinite(patientId) && patientId > 0 ? patientId : undefined}
         open={InsuranceModalOpen}
         setOpen={setInsuranceModalOpen}
@@ -530,20 +734,28 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         setOpen={setSpecificCoverageModalOpen}
       />
 
-      <MyTable
-        data={paginatedData ?? []}
-        columns={columns}
-        onRowClick={setSelectedInsurance}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={tableRows.length}
-        onPageChange={(_, p) => setPageIndex(p)}
-        onRowsPerPageChange={e => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPageIndex(0);
-        }}
-        loading={patientInsuranceResponse.isFetching}
+      <WaseelClassListModal
+        open={classListModalOpen}
+        setOpen={setClassListModalOpen}
+        insurance={classListInsurance}
       />
+
+      <div className="insurance-tab__table">
+        <MyTable
+          data={paginatedData ?? []}
+          columns={columns}
+          onRowClick={handleRowClick}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={tableRows.length}
+          onPageChange={(_, p) => setPageIndex(p)}
+          onRowsPerPageChange={e => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPageIndex(0);
+          }}
+          loading={isFetchingInsurances}
+        />
+      </div>
 
       <DeletionConfirmationModal
         open={openDeleteModal}

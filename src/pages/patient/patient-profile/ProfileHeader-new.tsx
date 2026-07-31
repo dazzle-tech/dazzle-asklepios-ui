@@ -1,5 +1,6 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
@@ -11,13 +12,17 @@ import {
   useLazyGetPatientLabelPdfQuery,
   useSendPatientPasswordEmailMutation
 } from '@/services/patient/patientService';
-import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
+import {
+  useGetInsurancesByPatientQuery,
+  patientInsurancesService
+} from '@/services/patients/patientInsurancesService';
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
-import { calculateAgeFormat, conjureValueBasedOnIDFromList } from '@/utils';
+import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -30,7 +35,8 @@ import {
   faPrint,
   faShareNodes,
   faTriangleExclamation,
-  faUsersLine
+  faUsersLine,
+  faLayerGroup
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
@@ -43,6 +49,7 @@ import {
   Dropdown,
   Form,
   Input,
+  Message,
   Popover,
   SelectPicker,
   Stack,
@@ -52,12 +59,18 @@ import {
 import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
+import './styles.less';
 import {
+  buildWaseelClassListDisplay,
   extractCchiInsurance,
   extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
   pickPatientFields
 } from './cchiMappers';
+import {
+  formatInsurancePickerLabel,
+  resolveInsurancePayorDisplayName
+} from './insuranceDisplayUtils';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -123,7 +136,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     useLazyGetPatientFromCchiQuery();
   const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
 
-  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances } =
+  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances, refetch: refetchInsurances } =
     useGetInsurancesByPatientQuery(
       {
         patientId: patientId!,
@@ -142,7 +155,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !openEligibilityModal }
   );
 
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
+    { page: 0, size: 2000, sort: 'nameEn,asc' },
+    { skip: !openEligibilityModal }
+  );
+
   const payorsList = payorListResponse?.data ?? [];
+  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
 
   const patientInsurancesList = useMemo(
     () => extractPatientInsurancesList(patientInsuranceResponse),
@@ -153,19 +172,50 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     () =>
       patientInsurancesList
         .filter((insurance: any) => insurance?.id != null && !Number.isNaN(Number(insurance.id)))
-        .map((insurance: any) => {
-        const payorName =
-          conjureValueBasedOnIDFromList(payorsList, insurance?.payorId, 'name') ||
-          `Payor #${insurance?.payorId}`;
-        const policyNumber = insurance?.policyNumber ?? '';
-        const primarySuffix = insurance?.isPrimary ? ' (Primary)' : '';
-
-        return {
-          label: `${payorName} - ${policyNumber}${primarySuffix}`,
+        .map((insurance: any) => ({
+          label: formatInsurancePickerLabel(insurance, payorsList, nphiesPayersList),
           value: Number(insurance.id)
-        };
-      }),
-    [patientInsurancesList, payorsList]
+        })),
+    [patientInsurancesList, payorsList, nphiesPayersList]
+  );
+
+  const selectedEligibilityInsurance = useMemo(
+    () =>
+      patientInsurancesList.find(
+        insurance => Number(insurance.id) === Number(selectedPatientInsuranceId)
+      ) ?? null,
+    [patientInsurancesList, selectedPatientInsuranceId]
+  );
+
+  const selectedEligibilityPayorName = useMemo(
+    () => resolveInsurancePayorDisplayName(selectedEligibilityInsurance ?? {}, payorsList, nphiesPayersList),
+    [selectedEligibilityInsurance, payorsList, nphiesPayersList]
+  );
+
+  const eligibilityClassList = useMemo(
+    () => buildWaseelClassListDisplay(selectedEligibilityInsurance),
+    [selectedEligibilityInsurance]
+  );
+
+  const eligibilityClassListColumns = useMemo(
+    () => [
+      {
+        key: 'classType',
+        title: <Translate>Class Type</Translate>,
+        width: 120
+      },
+      {
+        key: 'className',
+        title: <Translate>Class Name</Translate>,
+        width: 180
+      },
+      {
+        key: 'classValue',
+        title: <Translate>Class Value</Translate>,
+        width: 140
+      }
+    ],
+    []
   );
 
   const {
@@ -275,6 +325,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           sev: 'success'
         })
       );
+
+      dispatch(patientInsurancesService.util.invalidateTags(['PatientInsurance']));
+      await refetchInsurances();
     } catch (error: any) {
       dispatch(
         notify({
@@ -921,8 +974,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           }
         }}
         title={<Translate>Eligibility Check</Translate>}
-        size="35vw"
-        bodyheight="200px"
+        size="42vw"
+        bodyheight="auto"
         pagesCount={1}
         hideBack
         actionButtonLabel={isCheckingEligibility ? 'Checking...' : 'Check Eligibility'}
@@ -941,7 +994,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           }
         }}
         content={
-          <Form fluid>
+          <Form fluid className="eligibility-check-modal">
             <Form.Group>
               <Form.ControlLabel>
                 <Translate>Insurance</Translate>
@@ -954,20 +1007,82 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   No insurance found for this patient. Please add insurance first.
                 </Translate>
               ) : (
-                <SelectPicker
-                  block
-                  searchable
-                  cleanable={false}
-                  data={insurancePickerOptions}
-                  value={selectedPatientInsuranceId}
-                  disabled={isCheckingEligibility}
-                  onChange={value =>
-                    setSelectedPatientInsuranceId(value != null ? Number(value) : null)
-                  }
-                  placeholder="Select insurance"
-                />
+                <>
+                  <SelectPicker
+                    block
+                    searchable
+                    cleanable={false}
+                    data={insurancePickerOptions}
+                    value={selectedPatientInsuranceId}
+                    disabled={isCheckingEligibility}
+                    onChange={value =>
+                      setSelectedPatientInsuranceId(value != null ? Number(value) : null)
+                    }
+                    placeholder="Select insurance"
+                  />
+
+                  {selectedEligibilityInsurance ? (
+                    <div className="eligibility-check-modal__payor-line">
+                      <span className="eligibility-check-modal__payor-label">
+                        <Translate>Payor</Translate>
+                      </span>
+                      <strong>{selectedEligibilityPayorName}</strong>
+                      <span className="eligibility-check-modal__payor-meta">
+                        <Translate>Policy</Translate>:{' '}
+                        {selectedEligibilityInsurance.policyNumber ?? '-'}
+                        {selectedEligibilityInsurance.memberCardId
+                          ? ` · ${selectedEligibilityInsurance.memberCardId}`
+                          : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
               )}
             </Form.Group>
+
+            {selectedEligibilityInsurance ? (
+              <div className="eligibility-check-modal__class-list">
+                <div className="eligibility-check-modal__class-list-header">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                  <span>
+                    <Translate>Waseel Plan Class List</Translate>
+                  </span>
+                </div>
+
+                {eligibilityClassList.length ? (
+                  <MyTable
+                    data={eligibilityClassList}
+                    columns={eligibilityClassListColumns}
+                    totalCount={eligibilityClassList.length}
+                    page={0}
+                    rowsPerPage={eligibilityClassList.length || 5}
+                    onPageChange={() => undefined}
+                    onRowsPerPageChange={() => undefined}
+                  />
+                ) : (
+                  <Message showIcon type="info">
+                    <Translate>
+                      Class list will appear here after you run Check Eligibility.
+                    </Translate>
+                  </Message>
+                )}
+
+                <div className="eligibility-check-modal__snapshot">
+                  <span>
+                    <Translate>Network</Translate>:{' '}
+                    {selectedEligibilityInsurance.networkId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Member ID</Translate>:{' '}
+                    {selectedEligibilityInsurance.memberCardId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Status</Translate>:{' '}
+                    {selectedEligibilityInsurance.eligibilityStatus ?? '-'}
+                  </span>
+                </div>
+              </div>
+            ) : null}
           </Form>
         }
       />

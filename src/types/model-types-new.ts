@@ -2098,6 +2098,17 @@ export interface PatientInsurance {
   policyClassName?: string | null;
   policyHolderName?: string | null;
 
+  groupName?: string | null;
+  planCode?: string | null;
+  eligibilityStatus?: string | null;
+  siteEligibility?: string | null;
+  inforce?: string | null;
+  gpVisitCopay?: number | string | null;
+  specialistVisitsLimit?: number | null;
+  eligibilityBenefitsJson?: string | null;
+  lastEligibilityRequestId?: number | null;
+  lastEligibilitySyncedAt?: Date | string | null;
+
   issueDate?: string | null;
 
   patientShare?: number | string | null;
@@ -6015,6 +6026,8 @@ export type PreviewDefaultServicePricingResult = {
   netAmount: number | null;
   priceSource: string | null;
   priceListItemCode: string | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
 };
 
 export type PreviewDefaultServicesPricingResult = {
