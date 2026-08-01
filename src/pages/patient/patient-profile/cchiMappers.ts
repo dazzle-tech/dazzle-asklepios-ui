@@ -1,4 +1,4 @@
-import { Patient, PatientInsurance } from '@/types/model-types-new';
+import { NphiesPayer, Patient, PatientInsurance } from '@/types/model-types-new';
 import { newPatient, newPatientInsurance } from '@/types/model-types-constructor-new';
 
 const PATIENT_SAVE_KEYS = Object.keys(newPatient) as (keyof Patient)[];
@@ -55,6 +55,117 @@ const pickFirstDefined = (source: Record<string, any>, keys: string[]) => {
     if (value !== null && value !== undefined && value !== '') return value;
   }
   return undefined;
+};
+
+const isInvalidLookupArtifact = (value: string): boolean =>
+  value === '[object Set]' ||
+  value === '[object Map]' ||
+  value === '[object Object]' ||
+  value === '[object Array]';
+
+const isScalarLookupValue = (value: unknown): value is string | number | boolean => {
+  if (value == null || value === '') {
+    return false;
+  }
+
+  if (value instanceof Set || value instanceof Map || Array.isArray(value)) {
+    return false;
+  }
+
+  const valueType = typeof value;
+  return valueType === 'string' || valueType === 'number' || valueType === 'boolean';
+};
+
+const PAYER_NPHIES_ID_KEYS = [
+  'payerNphiesId',
+  'payorNphiesId',
+  'payer_nphies_id',
+  'payor_nphies_id',
+  'nphiesPayerId',
+  'insuranceCompanyNphiesId',
+  'companyNphiesId',
+  'payerNphies',
+  'waseelPayerId',
+  'payorCode',
+  'payerId',
+  'nphiesId',
+  'naphiesId'
+] as const;
+
+const PAYER_NAME_KEYS = [
+  'payerName',
+  'payorName',
+  'payer_name',
+  'payor_name',
+  'insuranceCompanyName',
+  'insuranceProviderName',
+  'insuranceCompany',
+  'companyName'
+] as const;
+
+const isLikelyPayerNphiesId = (value: string): boolean => {
+  if (!value || value === '0') {
+    return false;
+  }
+
+  if (isInvalidLookupArtifact(value)) {
+    return false;
+  }
+
+  return /[A-Za-z-]/.test(value);
+};
+
+const extractPayerNphiesIdFromSource = (source: Record<string, any>): string | null => {
+  for (const key of PAYER_NPHIES_ID_KEYS) {
+    const value = source[key];
+    if (!isScalarLookupValue(value)) {
+      continue;
+    }
+
+    const normalized = String(value).trim();
+    if (isLikelyPayerNphiesId(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+};
+
+const extractPayerNameFromSource = (source: Record<string, any>): string | null => {
+  for (const key of PAYER_NAME_KEYS) {
+    const value = source[key];
+    if (!isScalarLookupValue(value)) {
+      continue;
+    }
+
+    const normalized = String(value).trim();
+    if (normalized && !isInvalidLookupArtifact(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+};
+
+const collectInsurancePlanCandidates = (mappedResponse: any): Record<string, any>[] => {
+  if (!mappedResponse || typeof mappedResponse !== 'object') {
+    return [];
+  }
+
+  const planSources = [
+    mappedResponse.insurancePlans,
+    mappedResponse.insurance_plans,
+    mappedResponse.beneficiary?.insurancePlans,
+    mappedResponse.beneficiary?.insurance_plans,
+    mappedResponse.data?.insurancePlans,
+    mappedResponse.data?.insurance_plans,
+    mappedResponse.patient?.insurancePlans,
+    mappedResponse.patient?.insurance_plans
+  ];
+
+  return planSources.flatMap(item => (Array.isArray(item) ? item : [])).filter(
+    plan => plan && typeof plan === 'object' && !Array.isArray(plan)
+  );
 };
 
 export const normalizePatientInsuranceFromApi = (
@@ -384,13 +495,18 @@ export const flattenCchiInsuranceSource = (raw: Record<string, any>): Record<str
 export const extractCchiInsurance = (mappedResponse: any): Record<string, any> | null => {
   if (!mappedResponse) return null;
 
+  const insurancePlans = collectInsurancePlanCandidates(mappedResponse);
+  const primaryInsurancePlan = insurancePlans[0] ?? null;
+
   const candidates = [
     mappedResponse.insurance,
     mappedResponse.patientInsurance,
+    primaryInsurancePlan,
     ...(Array.isArray(mappedResponse.insurances) ? mappedResponse.insurances : []),
     mappedResponse.patient?.insurance,
-    ...(Array.isArray(mappedResponse.patient?.insurances) ? mappedResponse.patient.insurances : [])
-  ].filter(item => item && typeof item === 'object');
+    ...(Array.isArray(mappedResponse.patient?.insurances) ? mappedResponse.patient.insurances : []),
+    ...insurancePlans
+  ].filter(item => item && typeof item === 'object' && !Array.isArray(item));
 
   if (!candidates.length) return null;
 
@@ -398,6 +514,17 @@ export const extractCchiInsurance = (mappedResponse: any): Record<string, any> |
     (acc, item) => flattenCchiInsuranceSource({ ...acc, ...flattenCchiInsuranceSource(item) }),
     {}
   );
+
+  const payerNphiesId = extractPayerNphiesIdFromSource(merged);
+  const payerName = extractPayerNameFromSource(merged);
+
+  if (payerNphiesId) {
+    merged.payerNphiesId = payerNphiesId;
+  }
+
+  if (payerName) {
+    merged.payerName = payerName;
+  }
 
   return Object.keys(merged).length ? merged : null;
 };
@@ -472,20 +599,8 @@ export const mapCchiInsuranceFieldAliases = (raw: Record<string, any>): Record<s
       pickFirstDefined(source, ['memberCardId', 'cardId', 'memberCard', 'cardNumber']) ??
       firstCoverage?.memberId ??
       null,
-    payerNphiesId:
-      pickFirstDefined(source, [
-        'payerNphiesId',
-        'payorNphiesId',
-        'nphiesId',
-        'naphiesId',
-        'nphiesPayerId',
-        'payerNphies',
-        'waseelPayerId',
-        'payorCode',
-        'insuranceCompanyNphiesId',
-        'companyNphiesId',
-        'payerId'
-      ]) ?? null,
+    payerNphiesId: extractPayerNphiesIdFromSource(source),
+    payerName: extractPayerNameFromSource(source),
     networkId:
       pickFirstDefined(source, [
         'networkId',
@@ -574,56 +689,288 @@ export const mapCchiInsuranceFieldAliases = (raw: Record<string, any>): Record<s
   };
 };
 
-export const resolvePayorIdFromCchiInsurance = (
+export type CchiPayorResolution = {
+  payorId?: number;
+  payerNphiesId?: string | null;
+  matchedPayor?: any | null;
+  matchedNphiesPayer?: NphiesPayer | null;
+  foundInNphiesPayers: boolean;
+  foundInPayorSetup: boolean;
+};
+
+const normalizePayorLookupValue = (value: unknown): string => {
+  if (!isScalarLookupValue(value)) {
+    return '';
+  }
+
+  const normalized = String(value).trim();
+  return isInvalidLookupArtifact(normalized) ? '' : normalized;
+};
+
+const normalizePayorLookupName = (value: unknown): string => {
+  if (value == null || value === '') {
+    return '';
+  }
+
+  if (value instanceof Set || value instanceof Map || Array.isArray(value)) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return isInvalidLookupArtifact(normalized) ? '' : normalized;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value).trim();
+  }
+
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+
+    for (const key of ['nameEn', 'nameAr', 'name', 'en', 'ar', 'label', 'value']) {
+      const nested = record[key];
+      if (nested == null || nested === '') {
+        continue;
+      }
+
+      const normalized = normalizePayorLookupName(nested);
+      if (normalized) {
+        return normalized;
+      }
+    }
+  }
+
+  return '';
+};
+
+const toLowerLookupName = (value: unknown): string =>
+  normalizePayorLookupName(value).toLowerCase();
+
+const getCchiPayorLookupIds = (insurance: Record<string, any>): string[] => {
+  const resolved = extractPayerNphiesIdFromSource(insurance);
+  return resolved ? [resolved] : [];
+};
+
+const getCchiPayorLookupNames = (insurance: Record<string, any>): string[] => {
+  const resolved = extractPayerNameFromSource(insurance);
+  return resolved ? [resolved.toLowerCase()] : [];
+};
+
+const findNphiesPayerByLookupId = (
+  lookupId: string,
+  nphiesPayersList: NphiesPayer[]
+): NphiesPayer | undefined =>
+  nphiesPayersList.find(
+    item => normalizePayorLookupValue(item?.nphiesId) === lookupId
+  );
+
+const findPayorByLookupId = (lookupId: string, payorsList: any[]): any | undefined =>
+  payorsList.find(
+    item =>
+      normalizePayorLookupValue(item?.nphiesId) === lookupId ||
+      normalizePayorLookupValue(item?.waseelPayerId) === lookupId ||
+      normalizePayorLookupValue(item?.code) === lookupId
+  );
+
+const findPayorByName = (name: unknown, payorsList: any[]): any | undefined => {
+  const normalized = toLowerLookupName(name);
+  if (!normalized) {
+    return undefined;
+  }
+
+  return payorsList.find(
+    item => toLowerLookupName(item?.name) === normalized
+  );
+};
+
+const findNphiesPayerByName = (
+  name: unknown,
+  nphiesPayersList: NphiesPayer[]
+): NphiesPayer | undefined => {
+  const normalized = toLowerLookupName(name);
+  if (!normalized) {
+    return undefined;
+  }
+
+  return nphiesPayersList.find(item => {
+    const nameEn = toLowerLookupName(item?.nameEn);
+    const nameAr = toLowerLookupName(item?.nameAr);
+    return nameEn === normalized || (nameAr !== '' && nameAr === normalized);
+  });
+};
+
+export const resolveCchiPayorFromInsurance = (
   insurance: Record<string, any>,
-  payorsList: any[]
-): number | undefined => {
+  payorsList: any[] = [],
+  nphiesPayersList: NphiesPayer[] = []
+): CchiPayorResolution => {
   const directPayorId = Number(insurance.payorId);
   if (Number.isFinite(directPayorId) && directPayorId > 0) {
-    return directPayorId;
+    const matchedPayor = payorsList.find(item => Number(item?.id) === directPayorId);
+
+    return {
+      payorId: directPayorId,
+      payerNphiesId:
+        normalizePayorLookupValue(insurance.payerNphiesId) ||
+        normalizePayorLookupValue(matchedPayor?.nphiesId) ||
+        null,
+      matchedPayor,
+      matchedNphiesPayer: null,
+      foundInNphiesPayers: false,
+      foundInPayorSetup: Boolean(matchedPayor)
+    };
   }
 
-  const lookupIds = [
-    insurance.payerNphiesId,
-    insurance.payorNphiesId,
-    insurance.nphiesId,
-    insurance.naphiesId,
-    insurance.waseelPayerId,
-    insurance.payorCode
-  ].filter(Boolean);
+  const lookupIds = getCchiPayorLookupIds(insurance);
+  const lookupNames = getCchiPayorLookupNames(insurance);
+
+  let foundInNphiesPayers = false;
+  let foundInPayorSetup = false;
+  let matchedNphiesPayer: NphiesPayer | null = null;
+  let matchedPayor: any | null = null;
+  let payerNphiesId: string | null = lookupIds[0] ?? null;
 
   for (const lookupId of lookupIds) {
-    const payor = payorsList.find(
-      item =>
-        String(item?.nphiesId) === String(lookupId) ||
-        String(item?.waseelPayerId) === String(lookupId) ||
-        String(item?.code) === String(lookupId)
-    );
+    const nphiesPayer = findNphiesPayerByLookupId(lookupId, nphiesPayersList);
 
+    if (nphiesPayer) {
+      foundInNphiesPayers = true;
+      matchedNphiesPayer = nphiesPayer;
+      payerNphiesId = normalizePayorLookupValue(nphiesPayer.nphiesId) || lookupId;
+
+      matchedPayor =
+        findPayorByLookupId(payerNphiesId, payorsList) ||
+        findPayorByName(nphiesPayer.nameEn, payorsList) ||
+        findPayorByName(nphiesPayer.nameAr, payorsList);
+
+      if (matchedPayor?.id != null) {
+        return {
+          payorId: Number(matchedPayor.id),
+          payerNphiesId,
+          matchedPayor,
+          matchedNphiesPayer,
+          foundInNphiesPayers: true,
+          foundInPayorSetup: true
+        };
+      }
+    }
+
+    const payor = findPayorByLookupId(lookupId, payorsList);
     if (payor?.id != null) {
-      return Number(payor.id);
+      return {
+        payorId: Number(payor.id),
+        payerNphiesId: normalizePayorLookupValue(payor.nphiesId) || lookupId,
+        matchedPayor: payor,
+        matchedNphiesPayer,
+        foundInNphiesPayers,
+        foundInPayorSetup: true
+      };
     }
   }
 
-  const payorName = pickFirstDefined(insurance, [
-    'payorName',
-    'payerName',
-    'insuranceCompanyName',
-    'insuranceProviderName'
-  ]);
+  for (const nameLower of lookupNames) {
+    const nphiesPayer = findNphiesPayerByName(nameLower, nphiesPayersList);
 
-  if (payorName) {
-    const payor = payorsList.find(
-      item => String(item?.name).toLowerCase() === String(payorName).toLowerCase()
-    );
+    if (nphiesPayer) {
+      foundInNphiesPayers = true;
+      matchedNphiesPayer = nphiesPayer;
+      payerNphiesId = normalizePayorLookupValue(nphiesPayer.nphiesId) || payerNphiesId;
 
+      matchedPayor =
+        (payerNphiesId ? findPayorByLookupId(payerNphiesId, payorsList) : undefined) ||
+        findPayorByName(nameLower, payorsList);
+
+      if (matchedPayor?.id != null) {
+        return {
+          payorId: Number(matchedPayor.id),
+          payerNphiesId,
+          matchedPayor,
+          matchedNphiesPayer,
+          foundInNphiesPayers: true,
+          foundInPayorSetup: true
+        };
+      }
+    }
+
+    const payor = findPayorByName(nameLower, payorsList);
     if (payor?.id != null) {
-      return Number(payor.id);
+      return {
+        payorId: Number(payor.id),
+        payerNphiesId: normalizePayorLookupValue(payor.nphiesId) || payerNphiesId,
+        matchedPayor: payor,
+        matchedNphiesPayer,
+        foundInNphiesPayers,
+        foundInPayorSetup: true
+      };
     }
   }
 
-  return undefined;
+  if (!foundInNphiesPayers) {
+    for (const lookupId of lookupIds) {
+      const nphiesPayer = findNphiesPayerByLookupId(lookupId, nphiesPayersList);
+      if (nphiesPayer) {
+        foundInNphiesPayers = true;
+        matchedNphiesPayer = nphiesPayer;
+        payerNphiesId = normalizePayorLookupValue(nphiesPayer.nphiesId) || lookupId;
+        break;
+      }
+    }
+  }
+
+  if (!foundInPayorSetup) {
+    for (const lookupId of lookupIds) {
+      if (findPayorByLookupId(lookupId, payorsList)) {
+        foundInPayorSetup = true;
+        break;
+      }
+    }
+  }
+
+  return {
+    payerNphiesId,
+    matchedPayor,
+    matchedNphiesPayer,
+    foundInNphiesPayers,
+    foundInPayorSetup
+  };
 };
+
+export const getCchiPayorResolutionErrorMessage = (
+  insurance: Record<string, any>,
+  resolution: CchiPayorResolution
+): string | null => {
+  if (resolution.payorId) {
+    return null;
+  }
+
+  const lookupIds = getCchiPayorLookupIds(insurance);
+  const lookupLabel =
+    lookupIds[0] ||
+    extractPayerNameFromSource(insurance) ||
+    'unknown payer';
+
+  if (!lookupIds.length && !getCchiPayorLookupNames(insurance).length) {
+    return 'CCHI insurance is missing payer NPHIES ID. Cannot resolve payor.';
+  }
+
+  if (!resolution.foundInNphiesPayers && !resolution.foundInPayorSetup) {
+    return `Could not find payer "${lookupLabel}" in NPHIES Payers or Payor Setup. Configure it under Setup.`;
+  }
+
+  if (resolution.foundInNphiesPayers && !resolution.foundInPayorSetup) {
+    return `Payer "${lookupLabel}" exists in NPHIES Payers but has no matching Payor in Setup. Add a Payor with NPHIES ID "${lookupLabel}".`;
+  }
+
+  return `Could not resolve a Payor for payer "${lookupLabel}". Configure it under Payor Setup.`;
+};
+
+export const resolvePayorIdFromCchiInsurance = (
+  insurance: Record<string, any>,
+  payorsList: any[] = [],
+  nphiesPayersList: NphiesPayer[] = []
+): number | undefined =>
+  resolveCchiPayorFromInsurance(insurance, payorsList, nphiesPayersList).payorId;
 
 export const resolvePlanIdFromCchiInsurance = (
   insurance: Record<string, any>,
@@ -673,22 +1020,27 @@ export const normalizeCchiPatientInsurance = (
   rawInsurance: Record<string, any>,
   patientId?: number | string | null,
   payorsList: any[] = [],
-  plans: any[] = []
+  plans: any[] = [],
+  nphiesPayersList: NphiesPayer[] = []
 ): PatientInsurance => {
   const mapped = mapCchiInsuranceFieldAliases(rawInsurance);
-  const payorId = resolvePayorIdFromCchiInsurance(mapped, payorsList);
+  const payorResolution = resolveCchiPayorFromInsurance(mapped, payorsList, nphiesPayersList);
   const planId = resolvePlanIdFromCchiInsurance(mapped, plans);
   const directPayorId = Number(mapped.payorId);
   const directPlanId = Number(mapped.planId);
   const resolvedPayorId =
-    payorId ?? (Number.isFinite(directPayorId) && directPayorId > 0 ? directPayorId : mapped.payorId);
+    payorResolution.payorId ??
+    (Number.isFinite(directPayorId) && directPayorId > 0 ? directPayorId : mapped.payorId);
   const resolvedPlanId =
     planId ?? (Number.isFinite(directPlanId) && directPlanId > 0 ? directPlanId : null);
 
-  const matchedPayor = payorsList.find(item => Number(item?.id) === Number(resolvedPayorId));
+  const matchedPayor =
+    payorResolution.matchedPayor ??
+    payorsList.find(item => Number(item?.id) === Number(resolvedPayorId));
   const matchedPlan = plans.find(item => Number(item?.id) === Number(resolvedPlanId));
 
   const payerNphiesId =
+    payorResolution.payerNphiesId ??
     mapped.payerNphiesId ??
     matchedPayor?.nphiesId ??
     matchedPayor?.waseelPayerId ??
@@ -745,9 +1097,16 @@ export const buildPatientInsuranceSavePayload = (
   rawInsurance: Record<string, any>,
   patientId: number,
   payorsList: any[] = [],
-  plans: any[] = []
+  plans: any[] = [],
+  nphiesPayersList: NphiesPayer[] = []
 ): Record<string, any> => {
-  const normalized = normalizeCchiPatientInsurance(rawInsurance, patientId, payorsList, plans);
+  const normalized = normalizeCchiPatientInsurance(
+    rawInsurance,
+    patientId,
+    payorsList,
+    plans,
+    nphiesPayersList
+  );
 
   const payload: Record<string, any> = {
     patientId,

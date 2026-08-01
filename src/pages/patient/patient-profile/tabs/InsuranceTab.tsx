@@ -28,7 +28,9 @@ import {
   extractPatientInsurancesList,
   extractWaseelClassList,
   getCchiInsuranceStorageKey,
-  normalizeCchiPatientInsurance
+  getCchiPayorResolutionErrorMessage,
+  normalizeCchiPatientInsurance,
+  resolveCchiPayorFromInsurance
 } from '../cchiMappers';
 import {
   formatInsuranceCell,
@@ -101,6 +103,19 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     [patientInsuranceResponse]
   );
 
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !Number.isFinite(patientId) || patientId <= 0 }
+  );
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
+    { page: 0, size: 2000, sort: 'nameEn,asc' },
+    { skip: !Number.isFinite(patientId) || patientId <= 0 }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
+
   const normalizedCchiInsurance = useMemo(() => {
     if (!cchiInsurance) {
       return null;
@@ -108,9 +123,12 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
     return normalizeCchiPatientInsurance(
       cchiInsurance as Record<string, any>,
-      localPatient?.id
+      localPatient?.id,
+      payorsList,
+      [],
+      nphiesPayersList
     );
-  }, [cchiInsurance, localPatient?.id]);
+  }, [cchiInsurance, localPatient?.id, payorsList, nphiesPayersList]);
 
   const cchiStorageKey = useMemo(
     () => getCchiInsuranceStorageKey(localPatient?.id, localPatient?.documentId),
@@ -134,19 +152,6 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
     return normalizedCchiInsurance;
   }, [normalizedCchiInsurance, cchiMatchesSavedInsurance]);
-
-  const { data: payorListResponse } = useGetAllPayorsQuery(
-    { page: 0, size: 1000, sort: 'name,asc' },
-    { skip: !Number.isFinite(patientId) || patientId <= 0 }
-  );
-
-  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
-    { page: 0, size: 2000, sort: 'nameEn,asc' },
-    { skip: !Number.isFinite(patientId) || patientId <= 0 }
-  );
-
-  const payorsList = payorListResponse?.data ?? [];
-  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
 
   useEffect(() => {
     if (!cchiMatchesSavedInsurance || !setCchiInsurance) {
@@ -386,17 +391,39 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
 
     try {
+      const payorResolution = resolveCchiPayorFromInsurance(
+        cchiInsurance as Record<string, any>,
+        payorsList,
+        nphiesPayersList
+      );
+      const payorError = getCchiPayorResolutionErrorMessage(
+        cchiInsurance as Record<string, any>,
+        payorResolution
+      );
+
+      if (payorError) {
+        dispatch(
+          notify({
+            msg: payorError,
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
       const payload = buildPatientInsuranceSavePayload(
         cchiInsurance as Record<string, any>,
         Number(localPatient.id),
-        payorsList
+        payorsList,
+        [],
+        nphiesPayersList
       );
 
-      if (!payload.payorId && !payload.payerNphiesId) {
+      if (!payload.payorId) {
         dispatch(
           notify({
-            msg: 'CCHI insurance is missing payer NPHIES ID. Cannot resolve payor.',
-            sev: 'warning'
+            msg: 'Could not resolve a Payor for this CCHI insurance. Configure the payer under Setup.',
+            sev: 'error'
           })
         );
         return;
@@ -438,7 +465,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
       if (errorKey === 'payor.unresolved') {
         msg =
-          'Could not match the CCHI payer to a payor in Setup. Configure the payer NPHIES ID (e.g. INS-FHIR) under Payors.';
+          'Could not match the CCHI payer to a Payor in Setup. Configure the payer NPHIES ID under NPHIES Payers or Payors.';
       }
 
       dispatch(
