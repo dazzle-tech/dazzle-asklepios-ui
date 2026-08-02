@@ -2,11 +2,17 @@ import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
+import PatientSearch from '@/components/PatientSearch';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import {
+  useLazyGetRadiologyReportPdfQuery
+} from '@/services/reports/radiologyReportService';
 import {
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByIdQuery
@@ -18,11 +24,14 @@ import {
 import {
   useApproveRadiologyReportMutation,
   useFilterRadiologyReportsQuery,
-  useSecondApproveRadiologyReportMutation
+  useSecondApproveRadiologyReportMutation,
+  useLazyGetRadiologyImageLinksQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { faImage } from '@fortawesome/free-solid-svg-icons';
+
 import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticOrderTestReportResponseVM } from '@/types/model-types-constructor-new';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faCheckCircle,
@@ -42,13 +51,6 @@ import { Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './AddReportModal';
 import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
-import UserDateCell from '@/components/UserDateCell/UserDateCell';
-import {
-  useLazyGetRadiologyReportPdfQuery
-} from '@/services/reports/radiologyReportService';
-import PatientSearch from '@/components/PatientSearch';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -143,6 +145,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
 
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [fetchStudyImageLinkByReportId] = useLazyGetRadiologyImageLinksQuery();
   const [testsMap, setTestsMap] = useState<Record<string, any>>({});
 
   const [departmentFilter, setDepartmentFilter] = useState<{
@@ -152,67 +155,67 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   });
 
 
-    const [triggerRadiologyReportPdf] =
-      useLazyGetRadiologyReportPdfQuery();
+  const [triggerRadiologyReportPdf] =
+    useLazyGetRadiologyReportPdfQuery();
 
-    const [openPrintModal, setOpenPrintModal] = useState(false);
+  const [openPrintModal, setOpenPrintModal] = useState(false);
 
-    const [selectedReportForPrint, setSelectedReportForPrint] =
-      useState<any>(null);
+  const [selectedReportForPrint, setSelectedReportForPrint] =
+    useState<any>(null);
 
-    const [loadingPrint, setLoadingPrint] = useState(false);
+  const [loadingPrint, setLoadingPrint] = useState(false);
 
-    const [selectedLang, setSelectedLang] = useState({
-      lang: 'en'
-    });
+  const [selectedLang, setSelectedLang] = useState({
+    lang: 'en'
+  });
 
-    const langOptions = [
-      { label: 'English', value: 'en' },
-      { label: 'Arabic', value: 'ar' }
-    ];
+  const langOptions = [
+    { label: 'English', value: 'en' },
+    { label: 'Arabic', value: 'ar' }
+  ];
 
 
-    const handleDownloadRadiologyReportPdf = async () => {
-      try {
-        setLoadingPrint(true);
+  const handleDownloadRadiologyReportPdf = async () => {
+    try {
+      setLoadingPrint(true);
 
-        const blob = await triggerRadiologyReportPdf({
-          reportId: selectedReportForPrint?.id,
-          lang: selectedLang.lang
-        }).unwrap();
+      const blob = await triggerRadiologyReportPdf({
+        reportId: selectedReportForPrint?.id,
+        lang: selectedLang.lang
+      }).unwrap();
 
-        const pdfBlob = new Blob([blob], {
-          type: 'application/pdf'
-        });
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
 
-        const fileURL =
-          window.URL.createObjectURL(pdfBlob);
+      const fileURL =
+        window.URL.createObjectURL(pdfBlob);
 
-        const win = window.open(fileURL, '_blank');
+      const win = window.open(fileURL, '_blank');
 
-        if (win) {
-          win.focus();
-        } else {
-          dispatch(
-            notify({
-              msg: 'Popup blocked. Please allow popups for this site.',
-              sev: 'warning'
-            })
-          );
-        }
-      } catch (error: any) {
+      if (win) {
+        win.focus();
+      } else {
         dispatch(
           notify({
-            msg:
-              error?.data?.message ||
-              'Failed to download report',
-            sev: 'error'
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
           })
         );
-      } finally {
-        setLoadingPrint(false);
       }
-    };
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ||
+            'Failed to download report',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setLoadingPrint(false);
+    }
+  };
 
 
 
@@ -240,28 +243,28 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     attachmentsLocked
       ? skipToken
       : {
-          page,
-          size: rowsPerPage,
-          sort: `${sortColumn},${sortType}`,
-          params: {
-            imageStatusIn: ['FINISHED'],
-            createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
-            createdDateTo: endOfDay(dateFilter.toDate).toISOString(),
+        page,
+        size: rowsPerPage,
+        sort: `${sortColumn},${sortType}`,
+        params: {
+          imageStatusIn: ['FINISHED'],
+          createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
+          createdDateTo: endOfDay(dateFilter.toDate).toISOString(),
 
-            ...(departmentFilter.departmentIds?.length
-              ? {
-                  fromDepartmentIn:
-                    departmentFilter.departmentIds
-                }
-              : {}),
+          ...(departmentFilter.departmentIds?.length
+            ? {
+              fromDepartmentIn:
+                departmentFilter.departmentIds
+            }
+            : {}),
 
-            ...(orderIdIn?.length
-              ? {
-                  orderIdIn
-                }
-              : {})
-          }
+          ...(orderIdIn?.length
+            ? {
+              orderIdIn
+            }
+            : {})
         }
+      }
   );
 
   const totalCount = data?.totalCount ?? 0;
@@ -342,7 +345,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             [id]: ot
           }));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [orderTestIds, fetchOrderTestById, orderTestsMap]);
 
@@ -362,7 +365,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             [id]: order
           }));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [orderIds, fetchOrderById, ordersMap]);
 
@@ -415,18 +418,18 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const FilterModel = (
     <Form fluid className="table-header-content">
       <div className="filter-radiologist-worklist-main-container">
-      <div className="patient-search-container">
-        <PatientSearch
-          value={selectedPatient}
-          onChange={patient => {
-            setPage(0);
-            setSelectedPatient(patient);
-          }}
-          showLabel={false}
-          width="22vw"
-          containerMinWidth={250}
-        />
-      </div>
+        <div className="patient-search-container">
+          <PatientSearch
+            value={selectedPatient}
+            onChange={patient => {
+              setPage(0);
+              setSelectedPatient(patient);
+            }}
+            showLabel={false}
+            width="22vw"
+            containerMinWidth={250}
+          />
+        </div>
         <MyInput
           width={160}
           fieldType="date"
@@ -782,19 +785,19 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
                   />
                 </span>
               </Whisper>
-                <Whisper speaker={<Tooltip>Print</Tooltip>}>
-                  <FontAwesomeIcon
-                    className="icon-radiologist-worklist-size"
-                    icon={faPrint}
-                    style={{
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => {
-                      setSelectedReportForPrint(row);
-                      setOpenPrintModal(true);
-                    }}
-                  />
-                </Whisper>
+              <Whisper speaker={<Tooltip>Print</Tooltip>}>
+                <FontAwesomeIcon
+                  className="icon-radiologist-worklist-size"
+                  icon={faPrint}
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    setSelectedReportForPrint(row);
+                    setOpenPrintModal(true);
+                  }}
+                />
+              </Whisper>
               <Whisper speaker={<Tooltip>Logs</Tooltip>}>
                 <span>
                   <FontAwesomeIcon
@@ -808,6 +811,66 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
                   />
                 </span>
               </Whisper>
+              <Whisper speaker={<Tooltip>View X-Ray Image</Tooltip>}>
+                <span>
+                  <FontAwesomeIcon
+                    icon={faImage}
+                    className="icon-radiologist-worklist-size"
+                    style={{
+                      cursor: row?.accessionNumber ? 'pointer' : 'not-allowed',
+                      opacity: row?.accessionNumber ? 1 : 0.4,
+                      color: '#1675e0'
+                    }}
+                    onClick={async () => {
+                      try {
+                        if (!row?.id) {
+                          dispatch(
+                            notify({
+                              msg: 'Report not found',
+                              sev: 'warning'
+                            })
+                          );
+                          return;
+                        }
+
+                        const studies = await fetchStudyImageLinkByReportId(row.id).unwrap();
+
+                        if (!studies || studies.length === 0) {
+                          dispatch(
+                            notify({
+                              msg: 'No image found for this report',
+                              sev: 'warning'
+                            })
+                          );
+                          return;
+                        }
+
+                        const imageLink = studies[0]?.link;
+
+                        if (!imageLink) {
+                          dispatch(
+                            notify({
+                              msg: 'Image link is missing',
+                              sev: 'warning'
+                            })
+                          );
+                          return;
+                        }
+
+                        window.open(imageLink, '_blank', 'noopener,noreferrer');
+                      } catch (e) {
+                        notifyFromApiError(
+                          dispatch,
+                          e,
+                          'Failed to load radiology image'
+                        );
+                      }
+                    }}
+
+                  />
+                </span>
+              </Whisper>
+
             </div>
           );
         }
@@ -838,7 +901,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             [id]: dep
           }));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [departmentIds, fetchDepartmentById, departmentsMap]);
 
@@ -875,7 +938,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             [ot.testId]: response.data
           }));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [orderTestsMap]);
 
@@ -964,7 +1027,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
                 source="RADIOLOGIST_WORKLIST_ATTACHMENT"
                 sourceId={Number(selectedReportForAttachments?.id)}
                 refetchAttachmentList={false}
-                setRefetchAttachmentList={() => {}}
+                setRefetchAttachmentList={() => { }}
               />
             </div>
           )
