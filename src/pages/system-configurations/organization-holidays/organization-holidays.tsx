@@ -335,6 +335,7 @@ const OrganizationHolidays = () => {
         record={filtersState}
         setRecord={setFiltersState}
         disabled={filtersState.allFacilities}
+        width={"15vw"}
         column
       />
 

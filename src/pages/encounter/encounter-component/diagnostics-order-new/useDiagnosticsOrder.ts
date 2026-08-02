@@ -51,11 +51,12 @@ import {
 } from '@/utils/billingRuleEvaluationUtils';
 
 type UseDiagnosticsOrderArgs = {
-  patient?: any;
-  encounter?: any;
-  edit?: boolean;
-};
+    patient?: any;
+    encounter?: any;
+    edit?: boolean;
 
+    patientPrevTestsRef?: React.RefObject<any>;
+};
 const extractErrorMessage = (error: any) => {
   const data = error?.data;
 
@@ -74,7 +75,7 @@ const extractErrorMessage = (error: any) => {
   return msg;
 };
 
-export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnosticsOrderArgs) => {
+export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -115,7 +116,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 100,
     sort: 'id,asc',
     // timestamp: Date.now()
 
@@ -447,6 +448,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       if (_orderId) {
         await orderTestRefetch();
+        patientPrevTestsRef?.current?.refetchPrevTests();
         setTableVersion(v => v + 1);
       }
 
@@ -482,6 +484,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       setSelectedRows([]);
       CloseConfirmDeleteModel();
       await orderTestRefetch();
+      
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error) {
       console.error('Cancel failed:', error);
       dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
@@ -730,7 +734,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       }
 
       await orderTestRefetch();
-
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
       console.error('Save tests failed:', error);
       dispatch(
@@ -812,7 +816,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       await ordersRefetch();
       await orderTestRefetch();
-
+      patientPrevTestsRef?.current?.refetchPrevTests();
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
     } catch (error) {
@@ -866,6 +870,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       dispatch(notify({ msg: 'Test recalled successfully', sev: 'success' }));
       await orderTestRefetch();
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
       const msg = extractErrorMessage(error);
 

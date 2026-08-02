@@ -15,8 +15,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/Logo_BLUE_New.png';
-import DLogo from '../../images/Logo_Dark.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
 import './styles.less';
@@ -24,6 +22,8 @@ import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 import Header from '../Header';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Sidebarlogo from '../../images/Logo_BLUE_New1.svg';
+import { useBranding } from '@/hooks/useBranding';
+
 // MUI imports
 import {
   Drawer,
@@ -82,8 +82,8 @@ const Frame = (props: FrameProps) => {
   const { navs, mode } = props;
   const direction = localStorage.getItem('direction');
   const authAlice = useAppSelector(state => state.auth);
-    const selectedDepartment = authAlice.selectedDepartment;
-
+  const selectedDepartment = authAlice.selectedDepartment;
+  const branding = useBranding();
   const [expand, setExpand] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
@@ -98,7 +98,6 @@ const Frame = (props: FrameProps) => {
   const [expandNotes, setExpandNotes] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
   const drawerOffset = expand ? drawerWidth : collapsedWidth;
 
   useEffect(() => {
@@ -122,7 +121,7 @@ const Frame = (props: FrameProps) => {
   const containerClasses = classNames('page-container', {
     'container-full': !expand
   });
- 
+
   const handleSubmenuToggle = (menu: string) => {
     setSubmenuOpen(submenuOpen === menu ? null : menu);
   };
@@ -215,9 +214,14 @@ const Frame = (props: FrameProps) => {
               src={
                 authSlice.tenant && authSlice.tenant.tenantLogoPath
                   ? authSlice.tenant.tenantLogoPath
+                  : branding.sidebarLogo || branding.logo || Sidebarlogo
+              }
+               src={
+                authSlice.tenant && authSlice.tenant.tenantLogoPath
+                  ? authSlice.tenant.tenantLogoPath
                   : mode === 'light'
-                    ? Sidebarlogo
-                    : Sidebarlogo
+                    ? branding.sidebarLogo || branding.logo || Sidebarlogo
+                    : branding.sidebarLogoDark
               }
             />
           )}
@@ -421,8 +425,13 @@ const Frame = (props: FrameProps) => {
                                   }
                                 }}
                                 onClick={() => {
-                                  dispatch(setScreenKey(child.eventKey));
-                                  navigate(child.to || '/');
+                                    dispatch(setScreenKey(child.eventKey));
+
+                                    setExpand(false);
+
+                                    setTimeout(() => {
+                                        navigate(child.to || '/');
+                                    }, 0);
                                 }}
                               >
                                 {child.icon ? (
@@ -505,9 +514,13 @@ const Frame = (props: FrameProps) => {
                           <MenuItem
                             key={child.eventKey}
                             onClick={() => {
-                              dispatch(setScreenKey(child.eventKey));
-                              navigate(child.to || '/');
-                              handleCloseMenu();
+                                dispatch(setScreenKey(child.eventKey));
+
+                                handleCloseMenu();
+
+                                setTimeout(() => {
+                                    navigate(child.to || '/');
+                                }, 0);
                             }}
                           >
                             {child.icon ? (

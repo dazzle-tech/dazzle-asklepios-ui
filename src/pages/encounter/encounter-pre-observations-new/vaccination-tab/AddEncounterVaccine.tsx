@@ -925,15 +925,37 @@ const AddEncounterVaccine = ({
                 marketingAuthorizationHolder: 'MAH',
                 isActive: 'isActive'
               }}
-              computedFields={{
-                manufacture: (item: any) =>
-                  manufacturerLovQueryResponse?.object?.find((i: any) => i.key === item.manufacture)
-                    ?.lovDisplayVale || ' ',
-                isActive: (item: any) => {
-                  const active = allBrands?.find((i: any) => i.id === item.id)?.isActive;
-                  return active ? 'Yes' : 'No';
-                }
-              }}
+                computedFields={{
+                  manufacture: (item: any) =>
+                    manufacturerLovQueryResponse?.object?.find(
+                      (i: any) => i.key === item.manufacture
+                    )?.lovDisplayVale || ' ',
+
+                  unit: (item: any) => {
+                    const foundUnit = unitEnumOptions?.find((unit: any) =>
+                      String(unit.value) === String(item.unit) ||
+                      String(unit.key) === String(item.unit) ||
+                      String(unit.name) === String(item.unit)
+                    );
+
+                    return (
+                      foundUnit?.label ||
+                      foundUnit?.name ||
+                      String(item.unit || '')
+                        .toLowerCase()
+                        .split('_')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ')
+                    );
+                  },
+                  isActive: (item: any) => {
+                    const active = allBrands?.find(
+                      (i: any) => i.id === item.id
+                    )?.isActive;
+
+                    return active ? 'Yes' : 'No';
+                  }
+                }}
               titleField="name"
             />
           </div>

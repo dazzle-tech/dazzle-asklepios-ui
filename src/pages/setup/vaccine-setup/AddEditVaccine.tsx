@@ -914,7 +914,8 @@ const vaccineType = useEnumOptions('VaccineType', {
         vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
       }
       childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      mainSize="45vw"
+      childSize='xs'
+      mainSize="sm"
     />
   );
 };

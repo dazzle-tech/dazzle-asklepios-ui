@@ -402,4 +402,24 @@
 .rs-picker-select-menu-item.rs-picker-select-menu-item-focus {
   background-color: var(--one-health-theme-hover) !important;
   color: var(--primary-blue) !important;
+
+
+
+.rs-picker-select-menu,
+.rs-picker-check-menu {
+  max-width: calc(100vw - 40px) !important;
+  overflow-x: hidden !important;
+}
+
+.rs-picker-select-menu-item,
+.rs-picker-check-menu-item,
+.rs-picker-menu-item {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+}
+
+.rs-picker-popup {
+  z-index: 9999 !important;
 }

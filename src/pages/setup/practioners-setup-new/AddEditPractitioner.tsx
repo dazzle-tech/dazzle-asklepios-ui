@@ -10,7 +10,7 @@ import {
   useGetAppointableDepartmentsQuery,
   useGetDepartmentByFacilityQuery
 } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
@@ -44,7 +44,7 @@ const AddEditPractitioner = ({
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   // Facilities
-  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
+  const { data: allFacilities = [] } = useGetActiveFacilitiesQuery(null);
   const [deptPage, setDeptPage] = useState(0);
 
   const {
@@ -321,7 +321,7 @@ const AddEditPractitioner = ({
                   <>
                     <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                       <MyInput
-                        width={'100%'}
+                        width= '15vw'
                         column
                         fieldLabel="Facility"
                         fieldType="select"
@@ -358,7 +358,7 @@ const AddEditPractitioner = ({
                       showLabel
                       placeholder="Search Users to link"
                       column
-                      width={245}
+                      width="100%"
                       rightAddon={
                         <FontAwesomeIcon
                           icon={faSearch}

@@ -240,7 +240,7 @@ const UrgentCareList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -274,7 +274,7 @@ const [dateFilter, setDateFilter] = useState({
   toDate: initialNow
 });
 
-  const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
+  const DEFAULT_STATUS = useMemo(() => [ 'ONGOING','ASSIGNED_TO_BED'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
@@ -710,7 +710,7 @@ useEffect(() => {
         fromPage: 'Urgent_Care_List',
         patient: fullPatient,
         encounter: encounterData,
-        edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+        edit: String(encounterData?.status ?? '').toUpperCase() === 'COMPLETED'
       }
     });
   };
@@ -875,8 +875,8 @@ useEffect(() => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
+        if (statusUpper === 'COMPLETED') {
+          return <span className="location-table-style">Completed</span>;
         }
 
         const assignments = row?.activeAssignmentsForEncounter ?? [];
@@ -995,9 +995,11 @@ useEffect(() => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
+          ,
+          ASSIGNED_TO_BED: '#76bac8'
         };
 
         return (
@@ -1008,6 +1010,7 @@ useEffect(() => {
         );
       }
     },
+       
     {
       key: 'actions',
       title: ' ',
@@ -1072,7 +1075,7 @@ useEffect(() => {
               </div>
             </Whisper>
 
-            {statusUpper !== 'CLOSED' &&
+            {statusUpper !== 'COMPLETED' &&
               statusUpper !== 'DISCHARGED' &&
               statusUpper !== 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
@@ -1175,9 +1178,9 @@ useEffect(() => {
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}

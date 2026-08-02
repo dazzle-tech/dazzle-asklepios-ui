@@ -8,6 +8,8 @@ import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import CancellationModal from '@/components/CancellationModal';
+import UserDateCell from '@/components/UserDateCell';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 
 const formatDateTime = (value?: number | string | null) => {
     if (value === null || value === undefined || value === '') return '';
@@ -189,6 +191,7 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
     const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
     const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+    const { data: departments = [] } = useGetAllDepartmentsWithoutPaginationQuery();
 
     const facilities = useMemo(() => {
         const raw = (facilityListResponse as any)?.object ?? facilityListResponse ?? [];
@@ -205,13 +208,27 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         return m;
     }, [facilities]);
 
-    // filters
-    const [filters, setFilters] = useState<any>({
-        fromDate: null,
-        toDate: null,
-        status: null,
-        showRejected: false
+    const departmentNameById = useMemo(() => {
+    const map = new Map<number, string>();
+
+    (departments ?? []).forEach((d: any) => {
+        map.set(Number(d.id), d.name);
     });
+
+    return map;
+}, [departments]);
+
+
+    const getDefaultFilters = () => ({
+    fromDate: dayjs().startOf('day').toDate(),
+    toDate: dayjs().add(1, 'month').endOf('day').toDate(),
+    status: null,
+    showRejected: false
+    });
+
+
+    // filters
+const [filters, setFilters] = useState<any>(getDefaultFilters);
 
     // Reject reason modal
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -272,12 +289,21 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         {
             key: 'resource',
             title: 'Resource',
-            render: (row: Row) => (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontWeight: 600 }}>{safeStr(row.resourceName) || '-'}</span>
-                    <span style={{ fontSize: 12, color: '#8F98AB' }}>{formatResourceTypeLabel(row.resourceType) || '-'}</span>
-                </div>
-            )
+            render: (row: Row) => {
+                const departmentName =
+                    row.resourceType === 'DEPARTMENT'
+                        ? departmentNameById.get(Number(row.resourceKey))
+                        : null;
+                return (
+                    <div>
+                        <span>
+                            {departmentName ||
+                                safeStr(row.resourceName) ||
+                                '-'}
+                        </span>
+                    </div>
+                );
+            }
         },
         {
             key: 'facilityKey',
@@ -310,11 +336,10 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             title: 'Created By\\At',
             expandable: true,
             render: (row: any) => (
-                <>
-                    {safeStr(row.createdBy).trim() || ''}
-                    <br />
-                    <span className="date-table-style">{formatDateTime(row.createdAt)}</span>
-                </>
+                <UserDateCell
+                    login={row.createdBy}
+                    date={row.createdAt}
+                />
             )
         },
         {

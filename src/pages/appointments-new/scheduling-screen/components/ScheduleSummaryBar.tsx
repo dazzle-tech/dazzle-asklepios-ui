@@ -1,11 +1,10 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
-import MyButton from '@/components/MyButton/MyButton';
 
 type Props = {
   slotSummaryBarStats: any;
-  selectedDepartment: { departmentId: number | string | null };
+  selectedDepartmentIds: { departmentIds: number[] };
   departmentOptions: any[];
   selectedResources: { resourceKey: string | null };
   resourceNameById: Map<string, string>;
@@ -15,13 +14,25 @@ type Props = {
 
 const ScheduleSummaryBar = ({
   slotSummaryBarStats,
-  selectedDepartment,
+  selectedDepartmentIds,
   departmentOptions,
   selectedResources,
   resourceNameById,
   selectedResourceTypeValue,
   onRescheduleClick
 }: Props) => {
+  const departmentScopeLabel = (() => {
+    const ids = selectedDepartmentIds?.departmentIds;
+    if (!Array.isArray(ids) || ids.length === 0) return 'All bookable departments';
+    const names = ids
+      .map(id =>
+        (departmentOptions as any[])?.find((d: any) => String(d?.id) === String(id))?.name ??
+        `Dept #${id}`
+      )
+      .filter(Boolean);
+    return names.length ? names.join(', ') : 'All bookable departments';
+  })();
+
   return (
     <div className="appointments-slot-summary-bar">
       <div className="appointments-slot-summary-bar-row">
@@ -29,11 +40,7 @@ const ScheduleSummaryBar = ({
           <div className="appointments-slot-summary-scope">
             <span className="appointments-slot-summary-scope-date">{slotSummaryBarStats.rangeLabel}</span>
             <span className="appointments-slot-summary-scope-meta">
-              {selectedDepartment?.departmentId
-                ? (departmentOptions as any[])?.find(
-                    (d: any) => String(d?.id) === String(selectedDepartment.departmentId)
-                  )?.name ?? `Dept #${selectedDepartment.departmentId}`
-                : 'All departments'}
+              {departmentScopeLabel}
               {selectedResources?.resourceKey != null && String(selectedResources.resourceKey).trim() !== ''
                 ? ` · ${resourceNameById.get(String(selectedResources.resourceKey))?.trim() || 'Resource'}`
                 : selectedResourceTypeValue?.value

@@ -10,79 +10,36 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   useAddPatientProblemMutation,
-  useUpdatePatientProblemMutation
+  useUpdatePatientProblemMutation,
+  useLazyGetPatientProblemsQuery
 } from '@/services/patients/patientProblemService';
+
+import {
+  useUpdatePatientMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
+
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
+import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
+
+const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Patient problem payload is required.',
+  'source.required': 'Source of information is required when problem is not reported by patient.',
+  'type.required': 'Type is required.',
+  'patient.invalid': 'Invalid patient reference.',
+  'patient.notfound': 'Patient not found.',
+  'db.constraint': 'Database constraint violation.',
+  'field.required': 'This field is required.',
+  'validation.failed': 'Please fix validation errors.',
+  'duplicate.entry': 'A patient problem with these values already exists.',
+  notfound: 'Patient problem not found.'
+};
 
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? {};
-  const traceId = data?.traceId || data?.requestId || data?.correlationId;
-  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
-
-  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const normalizeMsg = (msg: string) => {
-      const m = (msg || '').toLowerCase();
-      if (m.includes('must not be null')) return 'is required';
-      if (m.includes('must not be blank')) return 'must not be blank';
-      if (m.includes('size must be between')) return 'length is out of range';
-      if (m.includes('must be greater')) return 'value is too small';
-      if (m.includes('must be less')) return 'value is too large';
-      return msg || 'invalid value';
-    };
-
-    const lines = data.fieldErrors.map(
-      (fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`
-    );
-
-    dispatch(
-      notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
   const messageProp: string = data?.message || '';
-
-  if (
-    messageProp.includes('ConstraintViolationImpl') ||
-    messageProp.includes('Validation failed')
-  ) {
-    const violations: string[] = [];
-    const violationPattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
-    let match;
-
-    while ((match = violationPattern.exec(messageProp)) !== null) {
-      const field = match[1];
-      const message = match[2];
-
-      const normalizedMsg = message.includes('must not be null')
-        ? 'is required'
-        : message.includes('must not be blank')
-          ? 'must not be blank'
-          : message.includes('size must be between')
-            ? 'length is out of range'
-            : message.includes('must be greater')
-              ? 'value is too small'
-              : message.includes('must be less')
-                ? 'value is too large'
-                : message;
-
-      violations.push(`• ${field}: ${normalizedMsg}`);
-    }
-
-    if (violations.length > 0) {
-      dispatch(
-        notify({
-          msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-  }
 
   const errorKey = messageProp.startsWith('error.')
     ? messageProp.substring(6)
@@ -97,24 +54,10 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   dispatch(
     notify({
-      msg: humanMsg + suffix,
+      msg: humanMsg,
       sev: 'warning'
     })
   );
-};
-
-const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
-  'payload.required': 'Patient problem payload is required.',
-  'source.required':
-    'Source of information is required when problem is not reported by patient.',
-  'type.required': 'Type is required.',
-  'patient.invalid': 'Invalid patient reference.',
-  'patient.notfound': 'Patient not found.',
-  'db.constraint': 'Database constraint violation.',
-  'field.required': 'This field is required.',
-  'validation.failed': 'Please fix validation errors.',
-  'duplicate.entry': 'A patient problem with these values already exists.',
-  notfound: 'Patient problem not found.'
 };
 
 const emptyPatientProblem = {
@@ -129,10 +72,21 @@ const emptyPatientProblem = {
   sourceOfInformation: null
 };
 
+const normalizeConditions = (value = '') =>
+  Array.from(
+    new Set(
+      String(value)
+        .split(',')
+        .map(x => x.trim())
+        .filter(Boolean)
+    )
+  );
+
 const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
 
+  const patientConditions = useEnumOptions('Condition');
   const statusOptions = useEnumOptions('EncounterVaccinationStatus');
 
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
@@ -140,6 +94,9 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
+  const [updatePatient] = useUpdatePatientMutation();
+  const [getProblems] = useLazyGetPatientProblemsQuery();
+  const [getPatient] = useLazyGetPatientByIdQuery();
 
   useEffect(() => {
     if (initialData) {
@@ -161,58 +118,101 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       patientId: Number(patient.id),
       condition: formData.condition,
       dateOfDiagnosis: formData.dateOfDiagnosis,
-
       conditionStatus: formData.conditionStatus,
-
       type: formData.type,
       dateOfResolution: formData.dateOfResolution,
       byPatient: formData.byPatient,
-      sourceOfInformation: formData.byPatient
-        ? null
-        : formData.sourceOfInformation
+      sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation
     };
 
     const errors: string[] = [];
 
-    if (!payload.condition) {
-      errors.push('Condition is required');
+    if (!payload.condition?.trim()) errors.push('Condition is required');
+    if (!payload.dateOfDiagnosis) errors.push('Date of Diagnosis is required');
+    if (!payload.conditionStatus) errors.push('Condition Status is required');
+    if (!payload.type) errors.push('Type is required');
+
+    if (errors.length) {
+      dispatch(notify({ msg: errors.join(', '), sev: 'warning' }));
+      return;
     }
 
-    if (!payload.dateOfDiagnosis) {
-      errors.push('Date of Diagnosis is required');
-    }
-
-    if (!payload.conditionStatus) {
-      errors.push('Condition Status is required');
-    }
-
-    if (!payload.type) {
-      errors.push('Type is required');
-    }
-
-    const errorMsg = errors.join(', ');
-
-    if (!errorMsg) {
-      try {
-        if (formData.id) {
-          await updatePatientProblem(payload).unwrap();
-          dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
-          setOpen(false);
-        } else {
-          await addPatientProblem(payload).unwrap();
-          dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
-          setFormData({ ...emptyPatientProblem, patientId: Number(patient?.id) });
-        }
-      } catch (err: any) {
-        handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
+    try {
+      if (formData.id) {
+        await updatePatientProblem(payload).unwrap();
+        console.log('UPDATED PAYLOAD', payload.condition);
+      } else {
+        await addPatientProblem(payload).unwrap();
+        console.log('ADDED PAYLOAD', payload.condition);
       }
-    } else {
+
+      const response = await getProblems(
+        {
+          patientId: patient.id,
+          page: 0,
+          size: 1000,
+          showCancelled: false,
+          timestamp: Date.now()
+        } as any,
+        true
+      ).unwrap();
+
+      console.log('PROBLEMS RESPONSE', response.data);
+
+      const conditions = Array.from(
+        new Set(
+          [
+            ...normalizeConditions(patient?.patientConditions),
+            ...(response.data ?? []).flatMap((problem: any) =>
+              normalizeConditions(problem.condition)
+            ),
+            ...normalizeConditions(payload.condition)
+          ]
+        )
+      ).join(',');
+
+      console.log('FINAL CONDITIONS TO SAVE ON PATIENT', conditions);
+
+      await updatePatient({
+        id: patient.id,
+        data: {
+          ...patient,
+          patientConditions: conditions
+        }
+      }).unwrap();
+
+      const fresh = await getPatient(
+        {
+          id: patient.id,
+          timestamp: Date.now()
+        } as any,
+        true
+      ).unwrap();
+
+      console.log('PATIENT AFTER UPDATE', fresh?.patientConditions);
+
+      dispatch(setRefetchPatientSide(true));
+
       dispatch(
         notify({
-          msg: errorMsg,
-          sev: 'warning'
+          msg: formData.id
+            ? 'Patient problem updated successfully'
+            : 'Patient problem added successfully',
+          sev: 'success'
         })
       );
+
+      if (formData.id) {
+        setOpen(false);
+      } else {
+        setFormData({
+          ...emptyPatientProblem,
+          patientId: Number(patient?.id),
+          condition: ''
+        });
+      }
+    } catch (err: any) {
+      handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
   };
 
@@ -221,15 +221,21 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       <Row>
         <Row>
           <Col md={12}>
-            <MyInput
-              width="100%"
-              column
-              fieldLabel="Condition"
-              fieldName="condition"
-              record={formData}
-              setRecord={setFormData}
-              required
-            />
+            <div style={{ marginBottom: 12 }}>
+              <MultiSelectAppender
+                label="Condition"
+                options={patientConditions ?? []}
+                optionLabel="label"
+                optionValue="value"
+                object={formData.condition ?? ''}
+                setObject={(value: string) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    condition: value
+                  }))
+                }
+              />
+            </div>
           </Col>
 
           <Col md={12}>
@@ -274,9 +280,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
               fieldName="type"
               selectData={typeLov?.object ?? []}
               selectDataValue="key"
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+              selectDataLabel="lovDisplayVale"
+              disableByField="isValid"
               record={formData}
               setRecord={setFormData}
               searchable={false}
@@ -319,9 +324,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
               fieldName="sourceOfInformation"
               selectData={sourceLov?.object ?? []}
               selectDataValue="key"
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+              selectDataLabel="lovDisplayVale"
+              disableByField="isValid"
               record={formData}
               setRecord={setFormData}
               searchable={false}
@@ -334,8 +338,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   );
 
   const direction = localStorage.getItem('direction') || 'LTR';
-  const isRTL = direction === 'RTL';
-  const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   return (
     <MyModal

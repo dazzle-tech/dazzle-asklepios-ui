@@ -23,10 +23,22 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+    departmentFilter?: any;
+  selectedPatient?: any;
+  filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
+  ({
+    order,
+    setOrder,
+    dateFilter,
+    loading,
+    orderNumberFilter,
+    selectedPatient,
+    departmentFilter,
+    filters
+  }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -76,9 +88,13 @@ const diagnosisMap = useMemo(() => {
     const departmentId =
       selectedDepartment?.id ?? selectedDepartment?.departmentId ?? selectedDepartment?.key;
 
-    useEffect(() => {
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
-    }, [orderNumberFilter]);
+        useEffect(() => {
+          setPaginationParams(prev => ({ ...prev, page: 0 }));
+        }, [
+          orderNumberFilter,
+          selectedPatient?.id,
+          departmentFilter?.fromDepartmentIdIn
+        ]);
 
     const {
       data: ordersResponse,
@@ -87,15 +103,30 @@ const diagnosisMap = useMemo(() => {
     } = useFilterDiagnosticOrdersQuery(
       departmentId
         ? {
-            page: paginationParams.page,
-            size: paginationParams.size,
-            sort: paginationParams.sort,
-            status: 'SUBMITTED',
-            testType: 'LABORATORY',
-            departmentId: selectedDepartment?.departmentId,
-            submittedDateFrom: fromDateParam,
-            submittedDateTo: toDateParam,
-            ...(orderNumberFilter?.trim() ? { orderNumber: orderNumberFilter.trim() } : {})
+  page: paginationParams.page,
+  size: paginationParams.size,
+  sort: paginationParams.sort,
+  status: 'SUBMITTED',
+  testType: 'LABORATORY',
+  departmentId: selectedDepartment?.departmentId,
+  submittedDateFrom: fromDateParam,
+  submittedDateTo: toDateParam,
+
+  ...(selectedPatient?.id
+    ? { patientIdIn: [selectedPatient.id] }
+    : {}),
+
+    ...(departmentFilter?.fromDepartmentIdIn
+  ? {
+      fromDepartmentIdIn: [
+        Number(departmentFilter.fromDepartmentIdIn)
+      ]
+    }
+  : {}),
+
+  ...(orderNumberFilter?.trim()
+    ? { orderNumber: orderNumberFilter.trim() }
+    : {})
           }
         : skipToken
     );
@@ -219,18 +250,6 @@ const diagnosisMap = useMemo(() => {
         }
       },
       {
-        key: 'diagnosis',
-        title: <Translate>Diagnosis</Translate>,
-        flexGrow: 3,
-        render: (r: any) => {
-          const diagnosis = diagnosisMap[r.icdDiagnosisId];
-
-          return diagnosis
-            ? `${diagnosis.code ?? ''} - ${diagnosis.name ?? diagnosis.description ?? ''}`
-            : '—';
-        }
-      },
-      {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 2,
@@ -270,6 +289,7 @@ const diagnosisMap = useMemo(() => {
           onRowsPerPageChange={handleRowsPerPageChange}
           sortColumn={sortColumn}
           sortType={sortType}
+          filters={filters}
           onSortChange={handleSortChange}
         />
       </div>

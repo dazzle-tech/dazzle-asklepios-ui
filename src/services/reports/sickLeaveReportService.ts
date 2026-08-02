@@ -38,28 +38,30 @@ export const sickLeaveReportService = createApi({
       ],
     }),
 
-    postSickLeaveReportPdf: builder.mutation<
-  Blob,
-  {
-    encounterId: number;
-    timezone: string;
-    request: {
-      fromDate: string;
-      toDate: string;
-      notes?: string;
-    };
-  }
->({
-  query: ({ encounterId, timezone, request }) => ({
-    url: `/api/analytics/sick-leave-report/${encounterId}/pdf`,
-    method: 'POST',
-    params: {
-      timezone,
-    },
-    body: request,
-    responseHandler: response => response.blob(),
-  }),
-}),
+    postSickLeaveReportPdf: builder.mutation< Blob,
+      {
+        encounterId: number;
+        timezone: string;
+        language: string;
+        request: {
+          fromDate: string;
+          toDate: string;
+          notes?: string;
+        };
+      }
+    >({
+      query: ({ encounterId, timezone, language, request }) => ({
+        url: `/api/analytics/sick-leave-report/${encounterId}/pdf`,
+        method: 'POST',
+        params: {
+          timezone,
+          lang: language,
+
+        },
+        body: request,
+        responseHandler: response => response.blob(),
+      }),
+    }),
   }),
 });
 

@@ -56,7 +56,22 @@ export const patientEncounterService = createApi({
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
-
+     updateHistoryOfPresentIllness: builder.mutation<
+  PatientEncounter,
+  { id: Id; historyOfPresentIllness: string }
+>({
+  query: ({ id, historyOfPresentIllness }) => ({
+    url: `/api/patient/encounter/${id}/history-of-present-illness`,
+    method: 'PATCH',
+    body: {
+      historyOfPresentIllness
+    }
+  }),
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'PatientEncounter', id },
+    'PatientEncounter'
+  ]
+}),
     countTodayEncountersByFacility: builder.query<number, { facilityId: Id }>({
       query: ({ facilityId }) => ({
         url: `/api/patient/encounter/facility/${facilityId}/count/today`,
@@ -400,5 +415,6 @@ export const {
   useCountDepartmentTriageByDateRangeQuery,
   useCountDepartmentDischargedByDateRangeQuery,
   useGetEncountersByIdsQuery
-  ,useLazyGetEncountersByIdsQuery
+  ,useLazyGetEncountersByIdsQuery,
+  useUpdateHistoryOfPresentIllnessMutation
 } = patientEncounterService;

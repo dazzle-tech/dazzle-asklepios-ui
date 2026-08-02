@@ -89,11 +89,17 @@ export const roomService = createApi({
 
     getAvailableRoomsByDepartmentAndGender: builder.query<
       PagedResult<Room>,
-      { departmentId: Id; gender: string } & PagedParams
+      { departmentId: Id; gender?: string | null } & PagedParams
     >({
       query: ({ departmentId, gender, page, size, sort = 'id,asc', timestamp }) => ({
-        url: `/api/setup/room/available/by-department/${departmentId}/gender/${gender}`,
-        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+        url: `/api/setup/room/available/by-department/${departmentId}`,
+        params: {
+          page,
+          size,
+          sort,
+          ...(gender ? { gender } : {}),
+          ...(timestamp ? { timestamp } : {})
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Room']

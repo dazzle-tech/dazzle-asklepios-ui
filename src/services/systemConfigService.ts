@@ -9,7 +9,9 @@ export enum SystemConfigKey {
   SYSTEM_LOGO = 'SYSTEM_LOGO',
   FAVICON = 'FAVICON',
   LOGIN_BACKGROUND = 'LOGIN_BACKGROUND',
-  ENABLE_DARK_MODE = 'ENABLE_DARK_MODE'
+  ENABLE_DARK_MODE = 'ENABLE_DARK_MODE',
+  SIDEBAR_LOGO = 'SIDEBAR_LOGO',
+  SIDEBAR_LOGO_DARK='SIDEBAR_LOGO_DARK'
 }
 
 export type SystemConfigMap = Partial<Record<SystemConfigKey, string>>;
@@ -110,6 +112,30 @@ export const systemConfigService = createApi({
   },
   invalidatesTags: ['SystemConfig'],
   onQueryStarted
+}),
+uploadSidebarLogo: builder.mutation({
+  query: file => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return {
+      url: '/api/setup/system-config/sidebar-logo',
+      method: 'POST',
+      body: formData
+    };
+  }
+}),
+uploadSidebarLogoDark: builder.mutation({
+  query: file => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return {
+      url: '/api/setup/system-config/sidebar-logo-dark',
+      method: 'POST',
+      body: formData
+    };
+  }
 })
   })
 });
@@ -121,5 +147,8 @@ export const {
   useUpdateSystemConfigValueMutation,
   useUploadSystemLogoMutation,
   useUploadFaviconMutation,
-  useUploadLoginBackgroundMutation
+  useUploadLoginBackgroundMutation,
+  useUploadSidebarLogoMutation,
+  useUploadSidebarLogoDarkMutation,
+  useLazyGetSystemConfigQuery
 } = systemConfigService;

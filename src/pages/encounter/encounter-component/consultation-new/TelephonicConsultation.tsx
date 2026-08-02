@@ -220,8 +220,20 @@ const TelephonicConsultation = props => {
       key: 'dateOfCall',
       title: 'Date Of Call',
       flexGrow: 2,
-      render: (row: TelephonicConsultations) =>
-        row.dateOfCall ? new Date(row.dateOfCall).toLocaleString() : ''
+      render: (row: TelephonicConsultations) => {
+        if (!row.dateOfCall) return '';
+
+        const date = new Date(row.dateOfCall);
+
+        return (
+          <div>
+            <div>{date.toLocaleDateString()}</div>
+            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        );
+      }
     },
     {
       key: 'consultationContent',

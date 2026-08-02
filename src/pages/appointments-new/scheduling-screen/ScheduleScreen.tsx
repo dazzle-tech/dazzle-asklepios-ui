@@ -9,17 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import FollowupAppointmentModal from './components/FollowupAppointmentModal';
-import type { AppointmentFromTemplateSearchFilterDTO } from '@/types/model-types-new';
+import type { AppointmentSearchFilterMultiDepartmentDTO } from '@/types/model-types-new';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCalendarCheck, faCheckDouble, faCircleCheck, faCirclePlus, faStethoscope, faUserCheck, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
-import {
-  useFilterAppointmentsWithoutPaginationQuery,
-  useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery
-} from '@/services/appointment/appointmentService';
-import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useLazyFilterAppointmentsWithoutPaginationQuery } from '@/services/appointment/appointmentService';
+import { useGetBookableDepartmentsForLoggedInUserQuery } from '@/services/security/departmentService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
@@ -31,11 +28,12 @@ import MyModal from '@/components/MyModal/MyModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ViewAppointmentRequests from './components/ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
-import { calculateAgeFormat } from '@/utils';
+import { extractErrorMessage } from '@/utils';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
 import BulkRescheduleModal from './components/BulkRescheduleModal';
+import CancelledAppointmentsModal from './components/CancelledAppointmentsModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
@@ -133,19 +131,19 @@ const normalizeAppointmentStatusKey = (raw: unknown): string =>
     .toUpperCase()
     .replace(/[\s-]+/g, '_');
 
-const appointmentStatusFromRecord = (appointmentData: any): string =>
-  normalizeAppointmentStatusKey(
-    appointmentData?.status
-  );
-
 const isOpenSlotStatus = (rawStatus: unknown): boolean => {
   const status = normalizeAppointmentStatusKey(rawStatus);
   return status === 'NEW' || status === 'RESCHEDULE';
 };
 
+const isCanceledSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return status === 'CANCELLED' || status === 'CANCELED';
+};
+
 const shouldOpenBookPatientDirectly = (rawStatus: unknown): boolean => {
   const status = normalizeAppointmentStatusKey(rawStatus);
-  return isOpenSlotStatus(status) || status === 'RESCHEDULED';
+  return isOpenSlotStatus(status) || status === 'RESCHEDULED' || isCanceledSlotStatus(status);
 };
 
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
@@ -180,6 +178,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const [bulkRescheduleModalOpen, setBulkRescheduleModalOpen] = useState(false);
+  const [cancelledAppointmentsModalOpen, setCancelledAppointmentsModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
 
@@ -191,8 +190,8 @@ const ScheduleScreen = () => {
   const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
   const [selectedFacility, setSelectedFacility] = useState<any>({});
-  const [selectedDepartment, setSelectedDepartment] = useState<{ departmentId: number | string | null }>({
-    departmentId: null
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<{ departmentIds: number[] }>({
+    departmentIds: []
   });
   const [selectedResourceTypeValue, setSelectedResourceTypeValue] = useState<{ value: string | null }>({
     value: null
@@ -234,7 +233,7 @@ const ScheduleScreen = () => {
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [schedulePatientFilter]);
 
-  const appointmentSearchFilter = useMemo<AppointmentFromTemplateSearchFilterDTO>(() => {
+  const appointmentSearchFilter = useMemo<AppointmentSearchFilterMultiDepartmentDTO>(() => {
     const rk = selectedResources?.resourceKey;
     const firstResourceId =
       rk != null && String(rk).trim() !== '' && Number.isFinite(Number(rk)) && Number(rk) > 0
@@ -247,10 +246,17 @@ const ScheduleScreen = () => {
       : rawBookingMode
         ? [rawBookingMode]
         : ['QUICK', 'SLOT'];
+    const rawDeptIds = selectedDepartmentIds?.departmentIds;
+    const departmentIds =
+      Array.isArray(rawDeptIds) && rawDeptIds.length > 0
+        ? rawDeptIds
+            .map(id => Number(id))
+            .filter(id => Number.isFinite(id) && id > 0)
+        : null;
 
     return {
       facility: selectedFacility?.id ? Number(selectedFacility.id) : null,
-      department: selectedDepartment?.departmentId ? Number(selectedDepartment.departmentId) : null,
+      departmentIds,
       resourceType: selectedResourceTypeValue?.value ?? null,
       resourceId: firstResourceId,
       status: selectedAppointmentStatus?.status ?? null,
@@ -259,7 +265,7 @@ const ScheduleScreen = () => {
     };
   }, [
     selectedFacility?.id,
-    selectedDepartment?.departmentId,
+    selectedDepartmentIds?.departmentIds,
     selectedResourceTypeValue?.value,
     selectedResources?.resourceKey,
     selectedAppointmentStatus?.status,
@@ -271,38 +277,17 @@ const ScheduleScreen = () => {
     if (!appointmentSearchFilter) return false;
     return (
       appointmentSearchFilter.facility != null ||
-      appointmentSearchFilter.department != null ||
+      (Array.isArray(appointmentSearchFilter.departmentIds) &&
+        appointmentSearchFilter.departmentIds.length > 0) ||
       appointmentSearchFilter.resourceId != null ||
       appointmentSearchFilter.patientId != null
     );
   }, [appointmentSearchFilter]);
 
-  const {
-    data: searchedAppointments,
-    isFetching: isSearchingAppointments,
-    refetch: refetchSearchedAppointments
-  } = useFilterAppointmentsWithoutPaginationQuery(
-    shouldSearchAppointments ? { filter: appointmentSearchFilter } : skipToken
-  );
-
-  const todayAppointmentQueryArgs = useMemo(
-    () => {
-      const day = rightPanelDate ?? currentCalendarDate ?? new Date();
-      const start = new Date(day);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(day);
-      end.setHours(23, 59, 59, 999);
-      return {
-        status: [String(selectedAppointmentStatus?.status ?? 'CONFIRMED')],
-        startDatetime: start.toISOString(),
-        endDatetime: end.toISOString()
-      };
-    },
-    [rightPanelDate, currentCalendarDate, selectedAppointmentStatus?.status]
-  );
-
-  const { data: todayAppointments = [], isFetching: isFetchingTodayAppointments } =
-    useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery(todayAppointmentQueryArgs);
+  const [
+    triggerAppointmentSearch,
+    { data: searchedAppointments, isFetching: isSearchingAppointments }
+  ] = useLazyFilterAppointmentsWithoutPaginationQuery();
 
   const isFollowUpAppointment = (appt: any) => {
     const label = appt?.visitTypeLvalue?.lovDisplayVale ?? '';
@@ -314,9 +299,7 @@ const ScheduleScreen = () => {
   const authSlice = useAppSelector((state: any) => state.auth);
   const TemplateTypeEnum = useEnumOptions('TemplateType');
   const AppointmentStatusEnum = useEnumOptions('AppointmentStatus');
-  const BookingModeEnum = useEnumOptions('BookingMode', {
-    exclude: ['BUFFER']
-  });
+  const BookingModeEnum = useEnumOptions('BookingMode');
 
   useEffect(() => {
     if (selectedFacility?.id) return;
@@ -331,7 +314,7 @@ const ScheduleScreen = () => {
   }, [authSlice?.selectedDepartment, authSlice?.selectedFacility, selectedFacility?.id]);
 
   useEffect(() => {
-    setSelectedDepartment({ departmentId: null });
+    setSelectedDepartmentIds({ departmentIds: [] });
   }, [selectedFacility?.id]);
 
   const { data: appointmentRequestsResponse } = useGetAppointmentRequestsQuery(
@@ -343,15 +326,7 @@ const ScheduleScreen = () => {
   );
 
   const { data: activeFacilitiesResponse = [] } = useGetActiveFacilitiesQuery({});
-  const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
-    {
-      facilityId: selectedFacility?.id,
-      page: 0,
-      size: 200,
-      sort: 'id,asc'
-    },
-    { skip: !selectedFacility?.id }
-  );
+  const { data: bookableDepartmentsResponse = [] } = useGetBookableDepartmentsForLoggedInUserQuery();
   const { data: appointablePractitionersResponse } = useGetAppointablePractitionerByLoggedInFacilityQuery(
     { page: 0, size: 200, sort: 'id,asc' },
     { skip: String(selectedResourceTypeValue?.value ?? '').toUpperCase() !== 'PRACTITIONER' }
@@ -379,12 +354,20 @@ const ScheduleScreen = () => {
     }
   }, [activeFacilitiesResponse, selectedFacility]);
 
+  const bookableDepartmentOptions = useMemo(() => {
+    const all = bookableDepartmentsResponse ?? [];
+    if (!selectedFacility?.id) return all;
+    return all.filter(
+      (d: any) => String(d?.facilityId ?? d?.facility_id ?? '') === String(selectedFacility.id)
+    );
+  }, [bookableDepartmentsResponse, selectedFacility?.id]);
+
   const resourcesWithAvailabilityResponse = useMemo(() => {
     const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
     let rows: any[] = [];
 
     if (selectedType === 'DEPARTMENT') {
-      rows = (appointableDepartmentsResponse as any)?.data ?? [];
+      rows = bookableDepartmentOptions;
     } else if (selectedType === 'PRACTITIONER') {
       rows = (appointablePractitionersResponse as any)?.data ?? [];
     } else if (selectedType === 'CATALOG') {
@@ -416,7 +399,7 @@ const ScheduleScreen = () => {
     return { object };
   }, [
     selectedResourceTypeValue?.value,
-    appointableDepartmentsResponse,
+    bookableDepartmentOptions,
     appointablePractitionersResponse,
     appointableCatalogsResponse,
     appointableDiagnosticTestsResponse,
@@ -451,13 +434,12 @@ const ScheduleScreen = () => {
       });
     };
     collect(searchedAppointments ?? []);
-    collect((todayAppointments as any) ?? []);
     (appointmentRequestsResponse ?? []).forEach((req: any) => {
       const id = Number(req?.patientId ?? req?.patient_id);
       if (Number.isFinite(id) && id > 0) ids.add(id);
     });
     return Array.from(ids).sort((a, b) => a - b);
-  }, [searchedAppointments, todayAppointments, appointmentRequestsResponse]);
+  }, [searchedAppointments, appointmentRequestsResponse]);
 
   const { data: patientsByIdsData } = useGetPatientsByIdsQuery(
     { ids: appointmentPatientIdsForService },
@@ -484,7 +466,7 @@ const ScheduleScreen = () => {
   }, [patientsByIdsData]);
 
   useEffect(() => {
-    const sourceAppointments = searchedAppointments ?? (todayAppointments as any) ?? [];
+    const sourceAppointments = searchedAppointments ?? [];
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
       const today = new Date();
 
@@ -492,8 +474,9 @@ const ScheduleScreen = () => {
         const startRaw = appointment?.startDatetime;
         const endRaw = appointment?.endDatetime;
 
-        const startDate = convertDate(startRaw);
-        const endDate = convertDate(endRaw);
+        const startDate = parseAppointmentDate(startRaw);
+        const endDate = parseAppointmentDate(endRaw) ?? startDate;
+        if (!startDate) return null;
         const dob = new Date(appointment?.patient?.dob);
         const patientIdNum = getAppointmentPatientId(appointment);
         const fromPatientService =
@@ -568,7 +551,7 @@ const ScheduleScreen = () => {
           fromTo: `${extractTimeFromTimestamp(startRaw)} - ${extractTimeFromTimestamp(endRaw)}`
         };
       });
-      setAppointmentsData(formattedAppointments);
+      setAppointmentsData(formattedAppointments.filter(Boolean));
     }
   }, [
     searchedAppointments,
@@ -578,10 +561,7 @@ const ScheduleScreen = () => {
     resourceNameById
   ]);
 
-  const departmentOptions = useMemo(
-    () => (appointableDepartmentsResponse as any)?.data ?? [],
-    [appointableDepartmentsResponse]
-  );
+  const departmentOptions = useMemo(() => bookableDepartmentOptions, [bookableDepartmentOptions]);
 
   const resourceOptions = useMemo(() => {
     const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
@@ -693,7 +673,7 @@ const ScheduleScreen = () => {
 
   useEffect(() => {
     setSelectedResources({ resourceKey: null });
-  }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartment?.departmentId]);
+  }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartmentIds?.departmentIds]);
 
   const handleSelectEvent = event => {
     const freshEvent = finalAppointments?.find(e => e.id === event.id) || event;
@@ -705,13 +685,10 @@ const ScheduleScreen = () => {
       freshEvent?.appointmentData?.status ??
       ''
     ).toUpperCase();
-    const isCanceled = status === 'CANCELLED' || status === 'CANCELED';
     const isNoShow = status === 'NOSHOW' || status === 'NO_SHOW' || status === 'NO-SHOW';
-    if (isCanceled || isNoShow) {
-      setReasonModalType(isCanceled ? 'Cancel' : 'No-show');
-      const reason = isCanceled
-        ? freshEvent?.appointmentData?.cancelReason
-        : freshEvent?.appointmentData?.noShowReason;
+    if (isNoShow) {
+      setReasonModalType('No-show');
+      const reason = freshEvent?.appointmentData?.noShowReason;
       setReasonViewRecord({
         reason: reason || freshEvent?.appointmentData?.otherReason || ''
       });
@@ -734,6 +711,8 @@ const ScheduleScreen = () => {
         );
         return;
       }
+      setViewAppointmentData(null);
+      setBookPatientReadOnly(false);
       setActionsModalOpen(false);
       setBookPatientModalOpen(true);
       return;
@@ -742,16 +721,35 @@ const ScheduleScreen = () => {
     setActionsModalOpen(true);
   };
 
-  const convertDate = appointmentTime => {
-    return new Date(appointmentTime);
+  const parseAppointmentDate = (value: unknown): Date | null => {
+    if (value == null || value === '') return null;
+    const date = value instanceof Date ? new Date(value) : new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
   };
 
   const handleSearchAppointmentsByCriteria = useCallback(async () => {
-    if (!appointmentSearchFilter?.facility) return;
-    if (typeof refetchSearchedAppointments === 'function') {
-      await refetchSearchedAppointments();
+    if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
+    try {
+      await triggerAppointmentSearch({ filter: appointmentSearchFilter }).unwrap();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to load appointments',
+          sev: 'warning',
+        })
+      );
     }
-  }, [appointmentSearchFilter, refetchSearchedAppointments]);
+  }, [
+    appointmentSearchFilter,
+    dispatch,
+    shouldSearchAppointments,
+    triggerAppointmentSearch,
+  ]);
+
+  useEffect(() => {
+    if (!appointmentSearchFilter?.facility || !shouldSearchAppointments) return;
+    void handleSearchAppointmentsByCriteria();
+  }, [appointmentSearchFilter, shouldSearchAppointments, handleSearchAppointmentsByCriteria]);
 
   const openEditorForNewAppointment = useCallback(
     async ({
@@ -921,20 +919,6 @@ const ScheduleScreen = () => {
   );
 
   useEffect(() => {
-    if (!selectedFacility?.id) return;
-    void handleSearchAppointmentsByCriteria();
-  }, [
-    selectedFacility?.id,
-    selectedDepartment?.departmentId,
-    selectedResourceTypeValue?.value,
-    selectedResources?.resourceKey,
-    selectedAppointmentStatus?.status,
-    selectedBookingMode?.bookingMode,
-    schedulePatientIdForSearch,
-    handleSearchAppointmentsByCriteria
-  ]);
-
-  useEffect(() => {
     dispatch(setPageCode('Schedule_Screen'));
     dispatch(setDivContent('Scheduling'));
     return () => {
@@ -955,96 +939,24 @@ const ScheduleScreen = () => {
   );
 
   const finalResourceLit = useMemo(() => {
-    const selectedDeptId = selectedDepartment?.departmentId ? String(selectedDepartment.departmentId) : '';
     const deptColumns = (departmentOptions ?? []).map((d: any) => ({
       key: String(d?.id ?? ''),
       resourceName: d?.name ?? d?.departmentName ?? `Department #${d?.id ?? ''}`
     }));
 
-    if (selectedDeptId) {
-      return deptColumns.filter((d: any) => String(d?.key) === selectedDeptId);
+    const selectedIds = selectedDepartmentIds?.departmentIds;
+    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+      const idSet = new Set(selectedIds.map(id => String(id)));
+      return deptColumns.filter((d: any) => idSet.has(String(d?.key)));
     }
     return deptColumns;
-  }, [
-    selectedDepartment?.departmentId,
-    departmentOptions
-  ]);
+  }, [selectedDepartmentIds?.departmentIds, departmentOptions]);
 
-  const selectedResourceKeysForFilter = useMemo(() => {
-    const rk = selectedResources?.resourceKey;
-    if (rk != null && String(rk).trim() !== '') {
-      return new Set([String(rk)]);
-    }
-    if (selectedResourceType?.resourcesType?.length) {
-      const all = resourcesWithAvailabilityResponse?.object ?? [];
-      const normalizeType = (v: any) => String(v ?? '').trim().toUpperCase();
-      const selectedTypes = selectedResourceType.resourcesType.map(normalizeType).filter(Boolean);
-      const keys = all
-        .filter((r: any) => {
-          const resourceTypes = [r?.resourceTypeLkey, r?.resource_type, r?.resourceType]
-            .map(normalizeType)
-            .filter(Boolean);
-          return resourceTypes.some((t: string) => selectedTypes.includes(t));
-        })
-        .map((r: any) => String(r?.key));
-      return new Set(keys);
-    }
-    return null;
-  }, [selectedResources?.resourceKey, selectedResourceType?.resourcesType, resourcesWithAvailabilityResponse]);
-
-  const filteredAppointments = useMemo(() => {
-    let list = appointmentsData;
-
-    if (selectedDepartment?.departmentId != null && String(selectedDepartment.departmentId) !== '') {
-      const deptId = String(selectedDepartment.departmentId);
-      list = list.filter(event => String((event as any).resourceId ?? '') === deptId);
-    }
-
-    if (selectedResourceKeysForFilter) {
-      list = list.filter(event =>
-        selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
-      );
-    }
-
-    if (selectedAppointmentStatus?.status) {
-      const statusNeedle = normalizeAppointmentStatusKey(selectedAppointmentStatus.status);
-      list = list.filter(
-        event => appointmentStatusFromRecord((event as any)?.appointmentData) === statusNeedle
-      );
-    }
-
-    if (selectedBookingMode?.bookingMode) {
-      const selectedModes = Array.isArray(selectedBookingMode.bookingMode)
-        ? selectedBookingMode.bookingMode.map(v => String(v ?? '').trim().toUpperCase()).filter(Boolean)
-        : [String(selectedBookingMode.bookingMode ?? '').trim().toUpperCase()].filter(Boolean);
-      list = list.filter(event => {
-        const eventMode = String(event?.appointmentData?.bookingMode ?? '').trim().toUpperCase();
-        return selectedModes.includes(eventMode);
-      });
-    }
-
-    if (schedulePatientIdForSearch != null) {
-      const pid = schedulePatientIdForSearch;
-      list = list.filter(event => {
-        const evPid = getAppointmentPatientId((event as any)?.appointmentData ?? {});
-        return evPid != null && Number(evPid) === pid;
-      });
-    }
-
-    return list;
-  }, [
-    appointmentsData,
-    selectedDepartment?.departmentId,
-    selectedResourceKeysForFilter,
-    selectedAppointmentStatus?.status,
-    selectedBookingMode?.bookingMode,
-    schedulePatientIdForSearch
-  ]);
-
-  const visibleAppointments =
-    currentView === 'agenda' || showCanceled
-      ? filteredAppointments
-      : filteredAppointments.filter(event => !event.hidden);
+  const visibleAppointments = useMemo(() => {
+    const list = appointmentsData ?? [];
+    if (currentView === 'agenda' || showCanceled) return list;
+    return list.filter(event => !event.hidden);
+  }, [appointmentsData, currentView, showCanceled]);
 
   const calendarViewRange = useMemo(() => {
     const a = moment(currentCalendarDate);
@@ -1169,9 +1081,15 @@ const ScheduleScreen = () => {
     }
   }, [ActionsModalOpen, selectedEvent, finalAppointments]);
 
+  const waitingListDepartmentId = useMemo(() => {
+    const ids = selectedDepartmentIds?.departmentIds;
+    if (!Array.isArray(ids) || ids.length === 0) return null;
+    const first = Number(ids[0]);
+    return Number.isFinite(first) && first > 0 ? first : null;
+  }, [selectedDepartmentIds?.departmentIds]);
+
   const handleActionsStatusRefresh = useCallback(async () => {
     await handleSearchAppointmentsByCriteria();
-    setActionsModalOpen(true);
   }, [handleSearchAppointmentsByCriteria]);
 
   const appointmentResourceKeys = useMemo(() => {
@@ -1217,6 +1135,38 @@ const ScheduleScreen = () => {
     setSelectedEvent(null);
     void handleSearchAppointmentsByCriteria();
   };
+
+  const handleRebookCancelledAppointment = useCallback(
+    (appointmentRow: any) => {
+      const startRaw =
+        appointmentRow?.startDatetime ??
+        appointmentRow?.appointmentDateTime ??
+        appointmentRow?.appointmentStart;
+      const apptStart = startRaw ? new Date(startRaw) : null;
+      if (!apptStart || Number.isNaN(apptStart.getTime())) {
+        dispatch(
+          notify({ msg: 'Invalid appointment start time.', sev: 'warning' })
+        );
+        return;
+      }
+      if (moment(apptStart).startOf('day').isBefore(moment().startOf('day'))) {
+        dispatch(
+          notify({
+            msg: 'Previous days: available slots cannot be booked.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+      setViewAppointmentData(appointmentRow);
+      setSelectedEvent(null);
+      setBookPatientReadOnly(false);
+      setActionsModalOpen(false);
+      setCancelledAppointmentsModalOpen(false);
+      setBookPatientModalOpen(true);
+    },
+    [dispatch]
+  );
 
   const handleViewAppointment = (appointmentDataToView = null) => {
     const dataToView = appointmentDataToView || selectedEvent?.appointmentData;
@@ -1328,15 +1278,6 @@ const ScheduleScreen = () => {
     return out || head || res || templateName || 'Appointment';
   };
 
-  const [currentCalView, setCurrentCalView] = useState('month');
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
   const ResourceHeader = ({ resource }) => {
     return (
       <div
@@ -1392,40 +1333,6 @@ const ScheduleScreen = () => {
   }, [finalAppointments]);
 
   const todayAppointmentsList = useMemo(() => {
-    const rows = (todayAppointments as any) ?? [];
-    const mappedFromStatusQuery = rows.map((a: any) => {
-      const dt = new Date(
-        a?.appointmentDateTime ??
-        a?.appointmentStart ??
-        a?.appointment_start ??
-        a?.applyStartDateTime ??
-        Date.now()
-      );
-      const timeLabel = Number.isNaN(dt.getTime())
-        ? '--:--'
-        : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const patient = a?.patient ?? {};
-      const pid = getAppointmentPatientId(a);
-      const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
-      const patientName =
-        (fromSvc?.name && fromSvc.name.trim()) ||
-        patient?.full_name ||
-        patient?.fullName ||
-        [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
-        [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
-        'Unknown';
-      return {
-        id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
-        timeLabel,
-        patientName,
-        status: a?.status ?? a?.appointmentStatus ?? '-'
-      };
-    });
-
-    if (mappedFromStatusQuery.length > 0) {
-      return mappedFromStatusQuery;
-    }
-
     const day = new Date(rightPanelDate ?? currentCalendarDate ?? new Date());
     const y = day.getFullYear();
     const m = day.getMonth();
@@ -1446,13 +1353,7 @@ const ScheduleScreen = () => {
           status: e?.appointmentData?.appointmentStatus ?? '-'
         };
       });
-  }, [
-    todayAppointments,
-    finalAppointments,
-    rightPanelDate,
-    currentCalendarDate,
-    patientDisplayByPatientService
-  ]);
+  }, [finalAppointments, rightPanelDate, currentCalendarDate, patientDisplayByPatientService]);
 
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
@@ -1560,8 +1461,13 @@ const ScheduleScreen = () => {
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
-    if (isOpenSlotStatus(status) || statusKey === 'RESCHEDULED') {
-      const isRescheduledSlot = statusKey === 'RESCHEDULED';
+    if (
+      isOpenSlotStatus(status) ||
+      statusKey === 'RESCHEDULED' ||
+      isCanceledSlotStatus(status)
+    ) {
+      const isRebookableSlot =
+        statusKey === 'RESCHEDULED' || isCanceledSlotStatus(status);
       const startLabel =
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1573,10 +1479,10 @@ const ScheduleScreen = () => {
       const resourceText = getTooltipResourceDisplay(event) || 'Unknown Resource';
       return (
         <div
-          className={isRescheduledSlot ? '' : 'available-slot-card'}
+          className={isRebookableSlot ? '' : 'available-slot-card'}
           title={getTooltipContent(event)}
           style={
-            isRescheduledSlot
+            isRebookableSlot
               ? {
                 width: '100%',
                 height: '100%',
@@ -1594,7 +1500,13 @@ const ScheduleScreen = () => {
           <div className="available-slot-status-row">
             <span
               className="available-slot-dot"
-              style={isRescheduledSlot ? { background: '#7e22ce' } : undefined}
+              style={
+                isRebookableSlot
+                  ? {
+                    background: isCanceledSlotStatus(status) ? '#dc2626' : '#7e22ce'
+                  }
+                  : undefined
+              }
             />
             <span>{resourceText}</span>
           </div>
@@ -1634,8 +1546,13 @@ const ScheduleScreen = () => {
               color: '#8F98AB'
             }}
           >
-            {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ›{' '}
-            {event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {event.start instanceof Date && !Number.isNaN(event.start.getTime())
+              ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}{' '}
+            ›{' '}
+            {event.end instanceof Date && !Number.isNaN(event.end.getTime())
+              ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : '--:--'}
           </p>
         </div>
       </div>
@@ -1880,8 +1797,8 @@ const ScheduleScreen = () => {
           selectedFacility={selectedFacility}
           setSelectedFacility={setSelectedFacility}
           departmentOptions={departmentOptions as any[]}
-          selectedDepartment={selectedDepartment}
-          setSelectedDepartment={setSelectedDepartment}
+          selectedDepartmentIds={selectedDepartmentIds}
+          setSelectedDepartmentIds={setSelectedDepartmentIds}
           TemplateTypeEnum={TemplateTypeEnum as any[]}
           selectedResourceTypeValue={selectedResourceTypeValue}
           setSelectedResourceTypeValue={setSelectedResourceTypeValue}
@@ -1906,7 +1823,7 @@ const ScheduleScreen = () => {
         >
           <ScheduleSummaryBar
             slotSummaryBarStats={slotSummaryBarStats}
-            selectedDepartment={selectedDepartment}
+            selectedDepartmentIds={selectedDepartmentIds}
             departmentOptions={departmentOptions as any[]}
             selectedResources={selectedResources}
             resourceNameById={resourceNameById}
@@ -1937,12 +1854,16 @@ const ScheduleScreen = () => {
             slotPropGetter={slotPropGetter}
             rightPanelDate={rightPanelDate}
             todayAppointmentsList={todayAppointmentsList}
-            isFetchingTodayAppointments={isFetchingTodayAppointments}
+            isFetchingTodayAppointments={false}
             isSearchingAppointments={isSearchingAppointments}
             rightPanelAppointmentRows={rightPanelAppointmentRows}
             todayTimelineRows={todayTimelineRows}
             handleViewAppointment={handleViewAppointment}
             dispatch={dispatch}
+            facilityId={selectedFacility?.id}
+            waitingListDepartmentId={waitingListDepartmentId}
+            departmentOptions={departmentOptions as any[]}
+            onWaitingListBooked={handleSearchAppointmentsByCriteria}
           />
         </Panel>
       </div>
@@ -2079,9 +2000,23 @@ const ScheduleScreen = () => {
         setOpen={setBulkRescheduleModalOpen}
         onSuccess={() => void handleSearchAppointmentsByCriteria()}
       />
+      <CancelledAppointmentsModal
+        open={cancelledAppointmentsModalOpen}
+        setOpen={setCancelledAppointmentsModalOpen}
+        calendarViewRange={calendarViewRange}
+        departmentId={
+          Array.isArray(selectedDepartmentIds?.departmentIds) &&
+          selectedDepartmentIds.departmentIds.length === 1
+            ? selectedDepartmentIds.departmentIds[0]
+            : null
+        }
+        departmentOptions={departmentOptions as any[]}
+        onRebookAppointment={handleRebookCancelledAppointment}
+      />
       <ScheduleFloatingActions
         onViewAppointmentRequests={() => setAppRequestModalOpen(true)}
         onBulkReschedule={() => setBulkRescheduleModalOpen(true)}
+        onViewCancelledAppointments={() => setCancelledAppointmentsModalOpen(true)}
       />
     </div>
   );

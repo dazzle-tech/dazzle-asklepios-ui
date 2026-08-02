@@ -369,6 +369,18 @@ const handleSave = async () => {
       dataKey: 'emailAddress'
     },
     {
+      key: 'defaultLabDepartmentName',
+      title: <Translate>Default Lab Department</Translate>,
+      flexGrow: 3,
+      dataKey: 'defaultLabDepartmentName'
+    },
+    {
+      key: 'defaultRadDepartmentName',
+      title: <Translate>Default Radiology Department</Translate>,
+      flexGrow: 3,
+      dataKey: 'defaultRadDepartmentName'
+    },
+    {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,

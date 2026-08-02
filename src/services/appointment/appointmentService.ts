@@ -13,7 +13,7 @@ import type {
   BulkAppointmentRescheduleResponseVM,
   BulkReschedulePreviewVM,
   DiagnosticTestAppointmentRescheduleDTO,
-  AppointmentFromTemplateSearchFilterDTO,
+  AppointmentSearchFilterMultiDepartmentDTO,
   AvailabilityTemplateResponseVM
 } from '@/types/model-types-new';
 
@@ -77,6 +77,16 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+/** Backend sometimes returns malformed JSON with HTTP 200 on appointment mutations. */
+const parseJsonAppointmentResponse = (response: string): AppointmentFromTemplate => {
+  if (!response) return {} as AppointmentFromTemplate;
+  try {
+    return JSON.parse(response) as AppointmentFromTemplate;
+  } catch {
+    return {} as AppointmentFromTemplate;
+  }
+};
+
 export const appointmentFromTemplateService = createApi({
   reducerPath: 'appointmentFromTemplateApi',
   baseQuery: BaseQuery,
@@ -94,14 +104,7 @@ export const appointmentFromTemplateService = createApi({
         // Read as text first to avoid RTKQ PARSING_ERROR on successful booking.
         responseHandler: 'text'
       }),
-      transformResponse: (response: string) => {
-        if (!response) return {} as AppointmentFromTemplate;
-        try {
-          return JSON.parse(response) as AppointmentFromTemplate;
-        } catch {
-          return {} as AppointmentFromTemplate;
-        }
-      },
+      transformResponse: parseJsonAppointmentResponse,
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -211,6 +214,45 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getCancelledAppointments: builder.query<
+      PagedResult<AppointmentFromTemplate>,
+      {
+        startDatetime: string;
+        endDatetime: string;
+        departmentId?: Id | null;
+      } & PagedParams
+    >({
+      query: ({ startDatetime, endDatetime, departmentId, page, size, sort = 'id,asc' }) => {
+        const params: Record<string, string | number> = {
+          startDatetime,
+          endDatetime,
+          page,
+          size,
+          sort
+        };
+        if (departmentId != null && Number(departmentId) > 0) {
+          params.departmentId = Number(departmentId);
+        }
+        return {
+          url: `${APPOINTMENT_BASE_URL}/cancelled`,
+          method: 'GET',
+          params
+        };
+      },
+      transformResponse: (response: AppointmentFromTemplate[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     getAppointmentsByBatchId: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { batchId: Id } & PagedParams
@@ -275,7 +317,7 @@ export const appointmentFromTemplateService = createApi({
 
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
-      { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
+      { filter: AppointmentSearchFilterMultiDepartmentDTO } & PagedParams
     >({
       query: ({ filter, page, size, sort = 'id,asc' }) => ({
         url: `${APPOINTMENT_BASE_URL}/search`,
@@ -299,7 +341,7 @@ export const appointmentFromTemplateService = createApi({
 
     filterAppointmentsWithoutPagination: builder.query<
       AppointmentFromTemplate[],
-      { filter: AppointmentFromTemplateSearchFilterDTO }
+      { filter: AppointmentSearchFilterMultiDepartmentDTO }
     >({
       query: ({ filter }) => ({
         url: `${APPOINTMENT_BASE_URL}/search/without-pagination`,
@@ -317,8 +359,10 @@ export const appointmentFromTemplateService = createApi({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/cancel`,
         method: 'PUT',
-        body
+        body,
+        responseHandler: 'text'
       }),
+      transformResponse: parseJsonAppointmentResponse,
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -326,8 +370,10 @@ export const appointmentFromTemplateService = createApi({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/no-show`,
         method: 'PUT',
-        body
+        body,
+        responseHandler: 'text'
       }),
+      transformResponse: parseJsonAppointmentResponse,
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
@@ -349,13 +395,30 @@ export const appointmentFromTemplateService = createApi({
 
     getBulkReschedulePreview: builder.query<
       BulkReschedulePreviewVM,
-      { batchId: Id; includeFreeSlots: boolean }
+      {
+        batchId: Id;
+        includeFreeSlots: boolean;
+        departmentId?: number | null;
+        templateName?: string | null;
+        /** Client-only cache key; not sent to the API */
+        refreshKey?: number;
+      }
     >({
-      query: ({ batchId, includeFreeSlots }) => ({
-        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
-        method: 'GET',
-        params: { includeFreeSlots }
-      }),
+      query: ({ batchId, includeFreeSlots, departmentId, templateName }) => {
+        const params: Record<string, boolean | number | string> = { includeFreeSlots };
+        if (departmentId != null && Number(departmentId) > 0) {
+          params.departmentId = Number(departmentId);
+        }
+        const trimmedTemplateName = templateName?.trim();
+        if (trimmedTemplateName) {
+          params.templateName = trimmedTemplateName;
+        }
+        return {
+          url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/preview/${batchId}`,
+          method: 'GET',
+          params
+        };
+      },
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
@@ -404,6 +467,8 @@ export const {
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
   useLazyGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery,
+  useGetCancelledAppointmentsQuery,
+  useLazyGetCancelledAppointmentsQuery,
   useGetAppointmentsByBatchIdQuery,
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,

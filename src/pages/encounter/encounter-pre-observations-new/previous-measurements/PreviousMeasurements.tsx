@@ -4,7 +4,7 @@ import './styles.less';
 
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
-import { Form, Panel } from 'rsuite';
+import { Form, Panel, Whisper } from 'rsuite';
 
 import {
   Chart as ChartJS,
@@ -12,7 +12,6 @@ import {
   CategoryScale,
   LinearScale,
   PointElement,
-  Tooltip,
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -47,8 +46,11 @@ import {
 import Translate from '@/components/Translate';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
-
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import {Tooltip} from 'rsuite';
+import AllGraphsModal from './AllGraphsModal';
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Legend);
 
 interface PreviousMeasurementsProps {
   patient?: { id?: number };
@@ -477,6 +479,8 @@ useEffect(() => {
 }, [dispatch]);
 
 
+    const [openGraphsModal, setOpenGraphsModal] = useState(false);
+
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -513,7 +517,27 @@ useEffect(() => {
         </div>
 
         <div className="pm-col">
-          <h4 className="font-size-14"><Translate>Vital Signs</Translate></h4>
+
+          <div style={{display: 'flex', alignItems: 'center', gap: '10px',marginBottom: '10px'}}>
+              <h4 className="font-size-14" style={{ margin: 0 }}>
+                  <Translate>Vital Signs</Translate>
+              </h4>
+
+              <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Graph</Tooltip>}
+              >
+                  <FontAwesomeIcon
+                      icon={faChartLine}
+                      className="icons-style"
+                      style={{
+                          cursor: 'pointer'
+                      }}
+                      onClick={() => setOpenGraphsModal(true)}
+                  />
+              </Whisper>
+          </div>
+
           <MyTable
             height={280}
             data={vitalRows}
@@ -551,6 +575,13 @@ useEffect(() => {
           />
         </div>
       )}
+
+
+      <AllGraphsModal
+          open={openGraphsModal}
+          setOpen={setOpenGraphsModal}
+          patient={patient}
+      />
     </Panel>
   );
 };

@@ -33,8 +33,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
 import '@/pages/lab-module-new/ReviewResultsIcon.less';
-import UserDateCell from '@/components/userdetalesCell';
-
+import PatientSearch from '@/components/PatientSearch';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import UserDateCell from '@/components/UserDateCell';
+import './styles.less'
 const startOfDay = (d: Date) => {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
@@ -112,6 +114,15 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
     const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
     const [filtersKey, setFiltersKey] = useState(0);
+
+    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+    const [departmentFilter, setDepartmentFilter] = useState<any>({
+    fromDepartmentIdIn: null
+    });
+
+    const [orderIdFilter, setOrderIdFilter] = useState('');
+        
     const [
         createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
 
@@ -129,13 +140,24 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             : {})
     };
 
-    if (orderDate.fromDate || orderDate.toDate) {
-        if (orderIdIn && orderIdIn.length > 0) {
-            queryParams.orderIdIn = orderIdIn;
-        } else {
-            queryParams.orderIdIn = [-1];
-        }
-    }
+if (
+    selectedPatient?.id ||
+    departmentFilter?.fromDepartmentIdIn ||
+    orderDate.fromDate ||
+    orderDate.toDate
+) {
+    queryParams.orderIdIn =
+        orderIdIn && orderIdIn.length > 0 ? orderIdIn : [-1];
+}
+
+const orderIdNumber = Number(orderIdFilter);
+
+if (
+  orderIdFilter.trim() &&
+  Number.isFinite(orderIdNumber)
+) {
+  queryParams.orderNumber = orderIdNumber;
+}
 
     const { data, isFetching, refetch } =
         useFilterRadiologyReportsQuery({
@@ -147,6 +169,48 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
 
     const reports = data?.data ?? [];
     const totalCount = data?.totalCount ?? 0;
+
+        const normalizedReports = useMemo(() => {
+            return reports.map(report => {
+                const orderTest =
+                    orderTestsMap[String(report.orderTestId)];
+
+                const order =
+                    ordersMap[String(orderTest?.orderId)];
+
+                const patient =
+                    patientsMap[String(order?.patientId)];
+
+                console.log({
+                    reportId: report.id,
+                    orderTestId: report.orderTestId,
+                    orderId: order?.id,
+                    patientId: order?.patientId,
+                    patientName: patient?.fullName
+                });
+
+                return {
+                    ...report,
+                    _patientName: patient
+                        ? [
+                            patient.firstName,
+                            patient.secondName,
+                            patient.lastName
+                        ]
+                            .filter(Boolean)
+                            .join(' ')
+                        : '—',
+                    _order: order,
+                    _orderTest: orderTest
+                };
+            });
+        }, [
+            reports,
+            orderTestsMap,
+            ordersMap,
+            patientsMap
+        ]);
+
 
     const [reviewReport] = useReviewRadiologyReportMutation();
 
@@ -193,6 +257,9 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 .filter((id, i, arr) => arr.indexOf(id) === i),
         [ordersMap]
     );
+
+    const { data: departmentsList = [] } =
+    useGetAllDepartmentsWithoutPaginationQuery();
 
     const {
         data: comments,
@@ -246,9 +313,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             .then((res: any[]) => {
                 const map: Record<string, any> = {};
 
-                res.forEach((p: any, index: number) => {
-                    const originalId = numericIds[index];
-                    map[String(originalId)] = p;
+                res.forEach((patient: any) => {
+                    map[String(patient.id)] = patient;
                 });
 
                 setPatientsMap(map);
@@ -263,20 +329,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         () => [
             {
                 key: 'patient',
-                title: <Translate>Patient</Translate>,
-                render: row => {
-                    const ot = orderTestsMap[String(row.orderTestId)];
-                    if (!ot) return '—';
-
-                    const order = ordersMap[String(ot.orderId)];
-                    if (!order) return '—';
-
-                    const patient = patientsMap[String(order.patientId)];
-
-                    return patient
-                        ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
-                        : '—';
-                }
+                title: <Translate>PATIENT NAME</Translate>,
+                render: (row: any) => row._patientName
             },
             {
                 key: 'test',
@@ -394,7 +448,13 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         setShowReviewed(false);
         setOrderIdIn(null);
         setPage(0);
+        setSelectedPatient(null);
 
+        setDepartmentFilter({
+        fromDepartmentIdIn: null
+        });
+
+        setOrderIdFilter('');
         setFiltersKey(prev => prev + 1);
     };
 
@@ -432,6 +492,42 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     record={orderDate}
                     setRecord={setOrderDate}
                 />
+                <div className="reviewed-reports-filters" style={{ marginTop: '1.4vw' }}>
+
+                    <PatientSearch
+                    value={selectedPatient}
+                    onChange={setSelectedPatient}
+                    showLabel={false}
+                    width="22vw"
+                    containerMinWidth={250}
+                    />
+
+                    <MyInput
+                    width="12vw"
+                    placeholder="Department Name"
+                    fieldType="select"
+                    fieldName="fromDepartmentIdIn"
+                    record={departmentFilter}
+                    setRecord={setDepartmentFilter}
+                    selectData={departmentsList}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    showLabel={false}
+                    cleanable
+                    />
+
+                    <MyInput
+                    fieldType="text"
+                    fieldName="orderId"
+                    placeholder="Order ID"
+                    showLabel={false}
+                    record={{ orderId: orderIdFilter }}
+                    setRecord={(record: any) => {
+                        setOrderIdFilter(record.orderId ?? '');
+                        setPage(0);
+                    }}
+                    />
+                </div>
 
                 <div style={{ marginTop: '1.4vw' }}>
                     <Checkbox
@@ -499,34 +595,70 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         });
     }, [orderTestsMap]);
 
+        console.log('Radiology queryParams', queryParams);
+
+
     useEffect(() => {
         const { fromDate, toDate } = orderDate;
-        if (!fromDate && !toDate) {
+        if (
+            !fromDate &&
+            !toDate &&
+            !selectedPatient?.id &&
+            !departmentFilter?.fromDepartmentIdIn
+        ) {
             setOrderIdIn(null);
             return;
         }
 
-        fetchOrders({
+            fetchOrders({
             submittedDateFrom: fromDate
                 ? startOfDay(fromDate).toISOString()
                 : undefined,
+
             submittedDateTo: toDate
                 ? endOfDay(toDate).toISOString()
                 : undefined,
+
+            ...(selectedPatient?.id
+                ? { patientIdIn: [selectedPatient.id] }
+                : {}),
+
+            ...(departmentFilter?.fromDepartmentIdIn
+                ? {
+                    fromDepartmentIdIn: [
+                    Number(departmentFilter.fromDepartmentIdIn)
+                    ]
+                }
+                : {}),
+
             page: 0,
             size: 10000
-        })
+            })
             .unwrap()
             .then(res => {
-                const ids = (res?.data ?? []).map((o: any) => o.id);
+                const ids = (res?.data ?? [])
+                    .map((order: any) => Number(order.id))
+                    .filter((id: number) => Number.isFinite(id));
+
                 setOrderIdIn(ids);
             })
             .catch(() => setOrderIdIn([]));
-    }, [orderDate]);
+    }, [
+  orderDate,
+  selectedPatient?.id,
+  departmentFilter?.fromDepartmentIdIn
+]);
 
     useEffect(() => {
         setPage(0);
-    }, [approvalDate, orderDate, showReviewed]);
+    }, [
+        approvalDate,
+        orderDate,
+        showReviewed,
+        selectedPatient?.id,
+        departmentFilter?.fromDepartmentIdIn,
+        orderIdFilter
+        ]);
 
 
     // Direction handling for RTL/LTR
@@ -541,7 +673,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             <MyTable
                 filters={filters}
                 columns={columns}
-                data={reports}
+                data={normalizedReports}
                 loading={isFetching}
                 page={page}
                 rowsPerPage={rowsPerPage}
@@ -555,10 +687,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 onRowClick={async (row: any) => {
                     setSelectedReportId(row.id);
 
-                    const ot = orderTestsMap[String(row.orderTestId)];
-                    if (!ot) return;
-
-                    const order = ordersMap[String(ot.orderId)];
+                    const order = row._order;
                     if (!order) return;
 
                     const rawPatient = patientsMap[String(order.patientId)];

@@ -17,8 +17,11 @@ import { notify } from '@/utils/uiReducerActions';
 import { PlusRound } from '@rsuite/icons';
 import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
+
+import clsx from 'clsx';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
+import UserDateCell from '@/components/UserDateCell';
 
 interface IDTabProps {
   localPatient: any;
@@ -209,34 +212,24 @@ const IDTab: React.FC<IDTabProps> = ({
       title: <Translate>CREATED AT/BY</Translate>,
       flexGrow: 3,
       fullText: true,
-      render: (row: any) =>
-        row?.createdDate ? (
-          <>
-            {row?.createdBy || ''}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
-        ) : (
-          ''
-        )
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
+      )
     },
     {
       key: 'updatedAt',
       title: <Translate>UPDATED AT/BY</Translate>,
       flexGrow: 3,
       fullText: true,
-      render: (row: any) =>
-        row?.lastModifiedDate ? (
-          <>
-            {row?.lastModifiedBy || ''}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.lastModifiedDate)}
-            </span>
-          </>
-        ) : (
-          '-'
-        )
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
     },
     {
       key: 'actions',
@@ -247,6 +240,7 @@ const IDTab: React.FC<IDTabProps> = ({
           <FontAwesomeIcon
             icon={faFilePen}
             className="action-icon edit-icon"
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'} 
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -257,7 +251,11 @@ const IDTab: React.FC<IDTabProps> = ({
 
           <FontAwesomeIcon
             icon={faTrash}
-            className="action-icon delete-icon"
+            className={clsx('action-icon delete-icon', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+            disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
+            style={{ cursor: rowData.isPrimary ? 'not-allowed' : 'pointer' }}
+            // "action-icon delete-icon"
+
             onClick={e => {
               e.stopPropagation();
               setSelectedSecondaryDocument(rowData);
@@ -301,8 +299,9 @@ const IDTab: React.FC<IDTabProps> = ({
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewDocSecondary}
-          disabled={!localPatient?.id}
+          disabled={!localPatient?.id || localPatient?.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
+
         >
           <Translate>New Document</Translate>
         </MyButton>

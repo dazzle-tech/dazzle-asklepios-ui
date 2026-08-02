@@ -16,6 +16,7 @@ import { formatEnumString } from '@/utils';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
+import clsx from 'clsx';
 
 const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
 
@@ -167,7 +168,7 @@ const AddExtraDetails = ({
   }, [open, saudiCountryId]);
 
   const content = () => (
-    <Form layout="inline" fluid className="patient-doc-secondary-container">
+    <Form layout="inline" fluid    className={clsx('patient-doc-secondary-container', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
       <MyInput
         required
         column

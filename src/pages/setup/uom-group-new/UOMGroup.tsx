@@ -72,31 +72,39 @@ useEffect(() => {
     setUomGroup({ ...newUOMGroup });
   };
 
-  // handle delete uom group
-  const handleDeleteUomGroup = async () => {
-    setOpenConfirmDeleteUOMGroupModal(false);
-    try {
-      await deleteUomGroup(uomGroup?.id)
-        .unwrap()
-        .then(() => {
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group was deleted successfully ',
-              sev: 'success'
-            })
-          );
-        });
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to delete this UOM group',
-          sev: 'error'
-        })
-      );
-    }
-  };
+const handleDeleteUomGroup = async () => {
+  setOpenConfirmDeleteUOMGroupModal(false);
 
+  try {
+    await deleteUomGroup(uomGroup?.id).unwrap();
+
+    refetchUomGroups();
+
+    dispatch(
+      notify({
+        msg: 'The UOM group was deleted successfully',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    const detail = error?.data?.detail || '';
+    const message = error?.data?.message || '';
+
+    const isForeignKeyError =
+      detail.includes('foreign key constraint') ||
+      detail.includes('still referenced') ||
+      message.includes('db.constraint');
+
+    dispatch(
+      notify({
+        msg: isForeignKeyError
+          ? 'Cannot delete this UOM group because it is linked to other records.'
+          : 'Failed to delete this UOM group',
+        sev: 'error'
+      })
+    );
+  }
+};
   // ──────────────────────────── PAGINATION ────────────────────────────
   const handlePageChange = (event, newPage) => {
     setPaginationParams({ ...paginationParams, page: newPage });

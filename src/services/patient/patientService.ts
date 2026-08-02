@@ -297,24 +297,35 @@ export const newPatientService = createApi({
       })
     })
     ,
-    getPatientWristbandPdf: builder.query<Blob, { patientId: number }>({
-      query: ({ patientId }) => ({
+    getPatientWristbandPdf: builder.query<Blob, { patientId: number,lang:string,copies:number }>({
+      query: ({ patientId,lang,copies }) => ({
         url: `/api/analytics/${patientId}/wristband/pdf`,
         method: 'GET',
+        params:{
+          lang,
+          copies
+        },
         responseHandler: (response) => response.blob()
       })
     }),
-    getPatientLabelPdf: builder.query<Blob, { patientId: number }>({
-      query: ({ patientId }) => ({
+    getPatientLabelPdf: builder.query<Blob, { patientId: number,lang:string,copies:number }>({
+      query: ({ patientId ,lang,copies}) => ({
         url: `/api/analytics/${patientId}/label/pdf`,
         method: 'GET',
+        params:{
+          lang,
+          copies
+        },
         responseHandler: (response) => response.blob()
       })
     }),
-    getPatientInformationPdf: builder.query<Blob, { patientId: number }>({
-      query: ({ patientId }) => ({
+    getPatientInformationPdf: builder.query<Blob, { patientId: number ,lang:string }>({
+      query: ({ patientId ,lang}) => ({
         url: `/api/analytics/${patientId}/information/pdf`,
         method: 'GET',
+        params:{
+          lang
+        },
         responseHandler: (response) => response.blob()
       })
     }),

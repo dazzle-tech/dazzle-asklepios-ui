@@ -60,6 +60,8 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+import VisitReportPrintButton from './VisitReportPrintButton';
+import DoctorAppoitmentsView from './appointments';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -245,6 +247,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
+  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -261,7 +264,7 @@ const EncounterList = () => {
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
   const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -271,7 +274,8 @@ const EncounterList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -663,53 +667,7 @@ const EncounterList = () => {
     }
   };
 
-const handlePrintVisitReport = async (row: any) => {
-  const encounterId = row?.id ?? null;
-
-  if (!encounterId) {
-    dispatch(notify({ msg: 'Encounter id is missing', sev: 'error' }));
-    return;
-  }
-
-  try {
-    setPrintingVisitReportId(encounterId);
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    const blob = await triggerVisitReportPdf({
-      encounterId,
-      timezone,
-    }).unwrap();
-
-    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-    const fileURL = window.URL.createObjectURL(pdfBlob);
-
-    const win = window.open(fileURL, '_blank');
-
-    if (win) {
-      win.focus();
-    } else {
-      dispatch(
-        notify({
-          msg: 'Popup blocked. Please allow popups for this site.',
-          sev: 'warning',
-        })
-      );
-    }
-
-    // مهم: لا تعمل revokeObjectURL هون
-    // لأن زر التنزيل داخل PDF viewer يحتاج الرابط يظل شغال
-  } catch (error: any) {
-    dispatch(
-      notify({
-        msg: error?.data?.message || 'Error while opening visit report',
-        sev: 'error',
-      })
-    );
-  } finally {
-    setPrintingVisitReportId(null);
-  }
-};
+  
 
   const tableColumns = [
     {
@@ -870,7 +828,7 @@ const handlePrintVisitReport = async (row: any) => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -882,6 +840,7 @@ const handlePrintVisitReport = async (row: any) => {
         );
       }
     },
+      
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
@@ -984,19 +943,10 @@ const handlePrintVisitReport = async (row: any) => {
             {canSeePrint && (
               <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                 <div>
-                  <MyButton
-                    size="small"
-                    backgroundColor="light-blue"
-                    disabled={printingVisitReportId === row?.id}
-                    loading={printingVisitReportId === row?.id}
-                    onClick={() => {
-                      if (printingVisitReportId === row?.id) return;
-                      setLocalEncounter(row);
-                      handlePrintVisitReport(row);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPrint} />
-                  </MyButton>
+                 <VisitReportPrintButton
+                        row={row}
+                       
+                      />
                 </div>
               </Whisper>
             )}
@@ -1086,9 +1036,9 @@ const handlePrintVisitReport = async (row: any) => {
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}
@@ -1099,6 +1049,7 @@ const handlePrintVisitReport = async (row: any) => {
           />
         </Form>
       </div>
+      
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1286,6 +1237,9 @@ const handlePrintVisitReport = async (row: any) => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
+          <div style={{display: 'flex', justifyContent:'end'}}>
+          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          </div>
           <MyTable
             filters={filters()}
             height={600}
@@ -1373,6 +1327,12 @@ const handlePrintVisitReport = async (row: any) => {
           />
 
         </Panel>
+        <DoctorAppoitmentsView
+         open={openDoctorAppointments}
+         setOpen={setOpenDoctorAppointments}
+         facilityId={selectedDepartment?.facilityId}
+         departmentId={departmentId}
+        />
       </div>
     </>
   );

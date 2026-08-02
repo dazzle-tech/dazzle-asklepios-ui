@@ -120,7 +120,6 @@ const InsuranceModal = ({
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
   });
-
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 

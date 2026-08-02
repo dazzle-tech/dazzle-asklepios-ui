@@ -42,9 +42,11 @@ import {
   getEncounterTreatmentStatus
 } from '@/utils/encounterStatusHelpers';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const EMPTY_ENCOUNTERS: any[] = [];
 
@@ -78,12 +80,21 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
     {}
   );
-  const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+
+  const { data: departments = [] } = useGetAllDepartmentsWithoutPaginationQuery();
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
   const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
     useLazyGetDiagnosisFlagsByEncounterIdsQuery();
+
+
+  const departmentsMap = useMemo(
+    () =>
+      Object.fromEntries(
+        departments.map((d: Department) => [d.id, d])
+      ),
+    [departments]
+  );
 
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     {
@@ -161,12 +172,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     [encounters]
   );
 
-  const departmentIds = useMemo(
-    () =>
-      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
-    [encounters]
-  );
-
   const encounterIds = useMemo(
     () => encounters.map((e: any) => e.id).filter((id: any) => id != null),
     [encounters]
@@ -199,36 +204,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
     load();
   }, [practitionerIds, getPractitionersBulk]);
-
-  useEffect(() => {
-    if (!departmentIds.length) {
-      setDepartmentsMap(prev => (Object.keys(prev).length ? {} : prev));
-      return;
-    }
-
-    const loadDepartments = async () => {
-      try {
-        const departments = await getDepartmentsBulk(departmentIds).unwrap();
-        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
-
-        setDepartmentsMap(prev => {
-          const prevKeys = Object.keys(prev);
-          const nextKeys = Object.keys(nextMap);
-          if (
-            prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
-          ) {
-            return prev;
-          }
-          return nextMap;
-        });
-      } catch (err) {
-        console.error('getDepartmentsBulk error:', err);
-      }
-    };
-
-    loadDepartments();
-  }, [departmentIds, getDepartmentsBulk]);
 
   useEffect(() => {
     if (!encounterIds.length) return;
@@ -444,25 +419,176 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         title: <Translate>Priority</Translate>,
         render: (row: any) => formatEnumString(row.priorityLevel)
       },
-      {
-        key: 'encounterStatus',
-        title: <Translate>Encounter Status</Translate>,
-        render: (row: any) => formatEnumString(getEncounterLifecycleStatus(row) || '-')
-      },
-      {
-        key: 'treatmentStatus',
-        title: <Translate>Treatment Status</Translate>,
-        render: (row: any) => formatEnumString(getEncounterTreatmentStatus(row))
-      },
+        {
+      key: 'status',
+      title: 'STATUS',
+      render: (row: any) => {
+        const statusUpper = String(row?.status ?? '').toUpperCase();
+
+        const statusColorMap: Record<string, string> = {
+          NEW: '#0d6efd',
+          ONGOING: '#198754',
+          CANCELED: '#ffc107',
+          CANCELLED: '#ffc107',
+          COMPLETED: '#6c757d',
+          DISCHARGED: '#adb5bd',
+          PENDING_PAYMENT: '#fd7e14',
+          ASSIGNED_TO_BED: '#76bac8',
+        };
+
+        return (
+          <MyBadgeStatus
+            color={statusColorMap[statusUpper] ?? '#969fb0'}
+            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
+          />
+        );
+      }
+    },
+        {
+          key :'encounterStatus',
+          title: 'ENCOUNTER STATUS',
+          render: (row: any) => {
+            const statusUpper = String(row?.encounterStatus ?? '').toUpperCase();
+            const statusColorMap: Record<string, string> = {
+              OPEN: '#0d6efd',
+              IN_PROGRESS: '#198754',
+        
+              CANCELLED: '#ffc107',
+              CLOSED: '#6c757d'
+            };  
+    
+            return (
+              <MyBadgeStatus
+                color={statusColorMap[statusUpper] ?? '#969fb0'}
+                contant={formatEnumString(row?.encounterStatus) ?? row?.encounterStatus ?? ''}
+              />
+            );
+          }
+    
+    
+        },
       {
         key: 'actions',
-        title: <Translate>Actions</Translate>,
-        width: 90,
-        render: (row: any) => (
-          <div className="visit-history__actions-form">
-            {renderVisitActionsMenu(row)}
-          </div>
-        )
+        title: '',
+        render: (row: any) => {
+          const isOngoing = row.status === 'ONGOING';
+          const isNew = row.status === 'NEW';
+          const isPendingPayment = row.status === 'PENDING_PAYMENT';
+
+          const departmentType = departmentsMap[row.departmentId]?.type;
+          const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
+          const isEmergency =
+            departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
+          const Radiology = departmentType === 'RADIOLOGY';
+          const Laboratory = departmentType === 'LABORATORY';
+          const hasDiagnosis = diagnosisMap[row.id] ?? false;
+
+          return (
+            <div className="visit-history__actions-form">
+              {isNew && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Cancel</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      disabled={!row.id || localPatient?.patientStatus === 'MERGED'}
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenCancelModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {((isOngoing && isOutpatient && hasDiagnosis)||(Radiology||Laboratory)) && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Complete</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)} disabled={localPatient?.patientStatus === 'MERGED'}>
+                      <FontAwesomeIcon icon={faCheckDouble} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isOngoing && isEmergency && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Discharge</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenDischargeModal(true);
+                      }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
+                    >
+                      <FontAwesomeIcon icon={faPowerOff} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isPendingPayment && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Pay</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setQuickInitialStep(1);
+                        setQuickAppointmentModel(true);
+                      }}
+                      disabled={localPatient?.patientStatus === 'MERGED'}
+                    >
+                      <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isPendingPayment && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Cancel</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenCancelModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faCircleXmark} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+            </div>
+          );
+        }
       }
     ],
     [

@@ -6,7 +6,7 @@ import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
 type AddEditServiceProps = {
@@ -29,7 +29,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   const currencyOptions = useEnumCapitalized('Currency');
 
   const [facilityListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
 
   useEffect(() => {
     if (!open) return;

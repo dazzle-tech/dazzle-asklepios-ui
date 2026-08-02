@@ -4,7 +4,10 @@ import { useGetActiveIngredientsByBrandQuery } from "@/services/setup/brandmedic
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { conjureValueBasedOnKeyFromList } from "@/utils";
 
-const ActiveIngredient = ({ selectedGeneric }) => {
+const ActiveIngredient = ({ selectedGeneric, selectedActiveIngredient }) => {
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
+
   const brandId = selectedGeneric?.id;
  const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
  
@@ -32,7 +35,43 @@ const ActiveIngredient = ({ selectedGeneric }) => {
   });
 
   if (!brandId) {
-    return <div style={{ padding: 12 }}>Select a brand to see active ingredients</div>;
+    if (selectedActiveIngredient) {
+      const ai = selectedActiveIngredient;
+      const listForSelectedAi = [
+        {
+          activeIngredientName: ai.name ?? '',
+          activeIngredientATCCode: ai.atcCode ?? '',
+          strengthDisplay: '',
+          isControlledDisplay: ai.isControlled ? 'Yes' : 'No',
+          controlledDisplay: ai.controlled ?? ''
+        }
+      ];
+
+      return (
+        <div dir={dir}>
+          <InfoCardList
+            list={listForSelectedAi}
+            fields={[
+              'activeIngredientName',
+              'activeIngredientATCCode',
+              'strengthDisplay',
+              'isControlledDisplay',
+              'controlledDisplay'
+            ]}
+            titleField="activeIngredientName"
+            fieldLabels={{
+              activeIngredientName: 'Active Ingredient',
+              activeIngredientATCCode: 'ATC Code',
+              strengthDisplay: 'Strength',
+              isControlledDisplay: 'Is Controlled',
+              controlledDisplay: 'Controlled'
+            }}
+          />
+        </div>
+      );
+    }
+
+    return <div style={{ padding: 12 }}>Select an active ingredient</div>;
   }
 
   if (isFetching) {
@@ -42,12 +81,6 @@ const ActiveIngredient = ({ selectedGeneric }) => {
   if (isError) {
     return <div style={{ padding: 12 }}>Failed to load active ingredients</div>;
   }
-
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>

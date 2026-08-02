@@ -336,12 +336,6 @@ const MyInput = ({
   };
 
   const resolveContainer = () => {
-    if (props.container) {
-      return typeof props.container === 'function'
-        ? props.container()
-        : props.container;
-    }
-
     const pickerElement = pickerRef.current as HTMLElement | null;
 
     return (
@@ -568,7 +562,7 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={props.searchable ?? false}
+              searchable={false}
 
               data={filteredData}
 
@@ -749,7 +743,9 @@ const MyInput = ({
               )}
 
               menuStyle={{
-                width: popupWidth
+                minWidth: props?.width ?? 
+                "12vw",
+                width: 'auto',
               }}
 
               virtualized={
@@ -764,98 +760,160 @@ const MyInput = ({
 
       case 'selectPagination': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
+
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? 'name'];
 
-        const labelKey = labelKeys[0] ?? 'name';
+        const primaryLabelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
-        const pickerValue =
-          record?.[fieldName] !== undefined &&
-          record?.[fieldName] !== null &&
-          record?.[fieldName] !== ''
-            ? record[fieldName]
-            : null;
         const dataList = props.selectData ?? [];
+
+        const filteredData = !localSearch
+          ? dataList
+          : dataList.filter(item => {
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
+
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
+
+        const pickerData = [
+          ...filteredData,
+          ...(props.hasMore
+            ? [
+                {
+                  [valueKey]: '__load_more__',
+                  [primaryLabelKey]: 'Load more...',
+                  isLoadMore: true
+                }
+              ]
+            : [])
+        ];
 
         return (
           <div ref={pickerRef}>
             <Form.Control
               name={fieldName}
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
-              block
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30
+              }}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
+              block={props?.width === '100%'}
               disabled={props.disabled}
-
               accepter={SelectPicker}
-              searchable={true}
-              searchBy={(keyword, label, item) => {
-                if (!keyword) return true;
-
-                const text = isArrayLabel
-                  ? buildCombinedLabel(item, labelKeys, '')
-                  : String(item?.[labelKey] ?? '');
-
-                return text
-                  .toLowerCase()
-                  .includes(keyword.toLowerCase());
-              }}
-
-              data={[
-                ...dataList,
-                ...(props.hasMore
-                  ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
-                  : [])
-              ]}
-
-              labelKey={labelKey}
+              searchable={false}
+              data={pickerData}
+              labelKey={primaryLabelKey}
               valueKey={valueKey}
-              value={pickerValue}
-
-              onSearch={(searchText) => {
-                props.setSearchKeyWard?.(searchText);
-              }}
-
-              onChange={(value, event) => {
-                if (value === '__load_more__') {
+              value={
+                record?.[fieldName] !== undefined && record?.[fieldName] !== null
+                  ? record[fieldName]
+                  : null
+              }
+              onChange={(value, item, event) => {
+                if (item?.isLoadMore || value === '__load_more__') {
                   event?.preventDefault?.();
                   event?.stopPropagation?.();
+
                   loadMoreClickedRef.current = true;
                   props.onFetchMore?.();
+
+                  setTimeout(() => {
+                    setIsSelectOpen(true);
+                  }, 0);
+
                   return;
                 }
-
-                if (
-                  value === null ||
-                  value === undefined ||
-                  value === ''
-                ) {
-                  handleValueChange(null);
-                  props.onSelectItem?.(null);
-                  return;
-                }
-
-                const selectedItem =
-                  dataList.find(
-                    (item: any) =>
-                      String(item?.[valueKey]) ===
-                      String(value)
-                  ) ?? null;
 
                 handleValueChange(value);
-                props.onSelectItem?.(selectedItem);
+
+                if (props.onSelectItem) {
+                  const selectedItem =
+                    dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ??
+                    item ??
+                    null;
+
+                  props.onSelectItem(selectedItem);
+                }
               }}
+              onKeyDown={(event: any) => {
+                const key = event?.key;
+                if (!key) return;
 
-              placeholder={props.placeholder ?? 'Select...'}
-              cleanable
+                const ignoredKeys = [
+                  'Shift',
+                  'Tab',
+                  'Enter',
+                  'Escape',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'Control',
+                  'Alt',
+                  'Meta'
+                ];
+
+                if (ignoredKeys.includes(key)) return;
+
+                if (key === 'Backspace') {
+                  setLocalSearch(prev => prev.slice(0, -1));
+                  return;
+                }
+
+                if (key.length === 1) {
+                  setLocalSearch(prev => prev + key);
+                }
+              }}
+              renderMenuItem={
+                props.renderMenuItem ??
+                ((label: any, item: any) => {
+                  if (item?.isLoadMore) {
+                    return <span style={{ fontWeight: 600 }}>Load more...</span>;
+                  }
+
+                  if (isArrayLabel) {
+                    return buildCombinedLabel(item, labelKeys, label);
+                  }
+
+                  if (props.isEnum) {
+                    return formatEnumString(String(label));
+                  }
+
+                  return label;
+                })
+              }
+              renderValue={
+                isArrayLabel
+                  ? (value, item, selectedElement) => {
+                      if (!item) return selectedElement;
+
+                      return (
+                        <span>
+                          {buildCombinedLabel(item, labelKeys, selectedElement)}
+                        </span>
+                      );
+                    }
+                  : props.isEnum
+                    ? (value, item, selectedElement) => {
+                        const base =
+                          (item && item[primaryLabelKey]) ||
+                          selectedElement ||
+                          value ||
+                          '';
+
+                        return <span>{formatEnumString(String(base))}</span>;
+                      }
+                    : undefined
+              }
+              placeholder={localSearch ? `Search: ${localSearch}` : props.placeholder}
+              cleanable={props.cleanable !== undefined ? props.cleanable : true}
               loading={props.loading ?? false}
-
               open={isSelectOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
@@ -867,17 +925,63 @@ const MyInput = ({
                   setIsSelectOpen(true);
                   return;
                 }
-                setIsSelectOpen(false);
-              }}
 
+                setIsSelectOpen(false);
+                setLocalSearch('');
+              }}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               container={resolveContainer()}
-              disabledItemValues={getDisabledValues(dataList, valueKey)} />
+              menuMaxHeight={getDynamicMenuMaxHeight(pickerData)}
+              menuStyle={{
+                minWidth: props?.width ?? '12vw',
+                width: 'auto'
+              }}
+              virtualized={props?.virtualized ?? true}
+              disabledItemValues={getDisabledValues(dataList, valueKey)}
+            />
           </div>
         );
       }
-     case 'color':
+ 
+     case 'multyPicker': {
+  const dataList = props?.selectData ?? [];
+  const valueKey = props?.selectDataValue ?? '';
+
+  return (
+    <div ref={pickerRef}>
+      <Form.Control
+        style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+        block
+        disabled={props.disabled}
+        accepter={TagPicker}
+        container={resolveContainer()}
+        placement={placement}
+        preventOverflow={pickerPreventOverflow}
+        name={fieldName}
+        data={dataList}
+        labelKey={props?.selectDataLabel ?? ''}
+        valueKey={valueKey}
+        value={record ? record[fieldName] : []}
+        onChange={handleValueChange}
+        placeholder={props.placeholder ?? 'Select...'}
+        creatable={props.creatable ?? false}
+        groupBy={props.groupBy ?? null}
+        searchBy={props.searchBy}
+        menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
+        onKeyDown={focusNextField}
+        open={isMultyPickerOpen}
+        onOpen={() => {
+          setPlacement(calculatePlacement());
+          setIsMultyPickerOpen(true);
+        }}
+        onClose={() => setIsMultyPickerOpen(false)}
+        disabledItemValues={getDisabledValues(dataList, valueKey)}
+      />
+    </div>
+  );
+}
+        case 'color':
   return (
     <input
       type="color"
@@ -890,39 +994,6 @@ const MyInput = ({
       }
     />
   );
-      case 'multyPicker':
-        return (
-          <div ref={pickerRef}>
-            <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-              block
-              disabled={props.disabled}
-              accepter={TagPicker}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              name={fieldName}
-              data={props?.selectData ?? []}
-              labelKey={props?.selectDataLabel ?? ''}
-              valueKey={props?.selectDataValue ?? ''}
-              value={record ? record[fieldName] : []}
-              onChange={handleValueChange}
-              placeholder={props.placeholder ?? 'Select...'}
-              creatable={props.creatable ?? false}
-              groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
-              menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
-              onKeyDown={focusNextField}
-              open={isMultyPickerOpen}
-              onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsMultyPickerOpen(true);
-              }}
-              onClose={() => setIsMultyPickerOpen(false)}
-              disabledItemValues={getDisabledValues(dataList, valueKey)} />
-          </div>
-        );
-
       case 'checkPicker': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
 
@@ -937,25 +1008,12 @@ const MyInput = ({
         const filteredData = !localSearch
           ? dataList
           : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
 
-            return text.toLowerCase().includes(localSearch.toLowerCase());
-          });
-
-        const longestLabel = dataList.reduce((longest, item) => {
-          const text = isArrayLabel
-            ? buildCombinedLabel(item, labelKeys, '')
-            : String(item?.[primaryLabelKey] ?? '');
-
-          return text.length > longest.length ? text : longest;
-        }, '');
-
-        const popupWidth = Math.max(
-          typeof props?.width === 'number' ? props.width : 145,
-          longestLabel.length * 9 + 120
-        );
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
 
         return (
           <div ref={pickerRef}>
@@ -964,8 +1022,9 @@ const MyInput = ({
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
-                }`}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
@@ -977,15 +1036,21 @@ const MyInput = ({
               data={filteredData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              menuClassName={clsx('my-input-picker-popup', props?.menuClassName)}
-              value={record ? record[fieldName] : []}
+              menuClassName={clsx(
+                'my-input-picker-popup',
+                props?.menuClassName
+              )}
+              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
                   const selectedItems = (props?.selectData ?? []).filter(item =>
-                    (value ?? []).some(v => String(v) === String(item?.[valueKey]))
+                    (value ?? []).some(
+                      v => String(v) === String(item?.[valueKey])
+                    )
                   );
+
                   props.onSelectItem(selectedItems);
                 }
               }}
@@ -1037,10 +1102,12 @@ const MyInput = ({
                 setLocalSearch('');
               }}
               menuStyle={{
-                width: popupWidth
+                minWidth: props?.width ?? '12vw',
+                width: 'auto'
               }}
               virtualized={props?.virtualized ?? true}
-              disabledItemValues={getDisabledValues(dataList, valueKey)} />
+              disabledItemValues={getDisabledValues(dataList, valueKey)}
+            />
           </div>
         );
       }
@@ -1059,7 +1126,7 @@ const MyInput = ({
               disabled={props.disabled}
               name={fieldName}
               accepter={CustomDatePicker}
-              defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
+              value={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
                 const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
                 setRecord?.({ ...record, [fieldName]: dateStr });

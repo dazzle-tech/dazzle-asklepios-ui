@@ -26,6 +26,8 @@ import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncou
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import PatientSearch from '@/components/PatientSearch';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -46,6 +48,9 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
+
+
+
 type RadRef = {
   refetchAllRadData: () => Promise<void>;
 };
@@ -65,6 +70,11 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+  const [departmentFilter, setDepartmentFilter] = useState<any>({
+  fromDepartmentIdIn: null
+});
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
@@ -126,6 +136,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     };
   }, [dispatch]);
 
+  const { data: departmentsList = [] } =
+    useGetAllDepartmentsWithoutPaginationQuery();
+
   const { data: testsResponse, refetch: fetchAllTests } = useFilterDiagnosticOrderTestsQuery({
     page: 0,
     size: 1000,
@@ -134,11 +147,13 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     createdDateTo: endOfDay(dateFilter.toDate).toISOString()
   });
 
+
+
   const stepsData = [
     { key: DiagnosticOrderTestStatus.PATIENT_ARRIVED, value: 'Patient Arrived' },
     { key: DiagnosticOrderTestStatus.ACCEPTED, value: 'Accepted' },
     { key: DiagnosticOrderTestStatus.REJECTED, value: 'Rejected', isError: true },
-    { key: DiagnosticOrderTestStatus.RESULT_READY, value: 'Result Ready' },
+    { key: DiagnosticOrderTestStatus.EXAM_DONE, value: 'Exam Done' },
     { key: DiagnosticOrderTestStatus.RESULT_APPROVED, value: 'Result Approved' }
   ];
 
@@ -263,6 +278,71 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
   }, [order?.patientId]);
 
+const filters = (
+              <>
+                <Form fluid className="filter-form-radiology-filters">
+                  <MyInput
+                    width="8vw"
+                    placeholder="From Date"
+                    fieldType="date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width="8vw"
+                    placeholder="To Date"
+                    fieldType="date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+
+                  <PatientSearch
+                    value={selectedPatient}
+                    onChange={setSelectedPatient}
+                    showLabel={false}
+                    width="22vw"
+                    containerMinWidth={250}
+                  />
+
+                  <MyInput
+                    width="12vw"
+                    placeholder="Department Name"
+                    fieldType="select"
+                    fieldName="fromDepartmentIdIn"
+                    record={departmentFilter}
+                    setRecord={setDepartmentFilter}
+                    selectData={departmentsList}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    showLabel={false}
+                    cleanable
+                  />
+
+                  <MyInput
+                    width="8vw"
+                    placeholder="Order ID"
+                    fieldType="text"
+                    fieldName="orderNumber"
+                    record={{ orderNumber: orderNumberFilter }}
+                    setRecord={(val: any) =>
+                      setOrderNumberFilter(val.orderNumber ?? '')
+                    }
+                    showLabel={false}
+                  />
+                </Form>
+
+                {test?.id && (
+                      <MyStepper
+                        stepsList={stepsDataComputed}
+                        activeStep={activeStep}
+                      />                  
+                )}
+                </>);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -306,63 +386,19 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         <div className="container">
 
           <div className="left-boxs">
-            <Row>
-              <Col xs={14}>
-                <Orders
-                  ref={OrdersRef}
-                  order={order}
-                  setOrder={setOrder}
-                  dateFilter={dateFilter}
-                  loading={globalLoading}
-                  orderNumberFilter={orderNumberFilter}
-                />
-              </Col>
+            <Orders
+              ref={OrdersRef}
+              order={order}
+              setOrder={setOrder}
+              dateFilter={dateFilter}
+              loading={globalLoading}
+              orderNumberFilter={orderNumberFilter}
+              selectedPatient={selectedPatient}
+              departmentFilter={departmentFilter}
+              filters={filters}
+            />
 
-              <Col xs={10}>
-                <Form fluid className="filter-form-radiology-filters">
-                  <MyInput
-                    width="8vw"
-                    placeholder="From Date"
-                    fieldType="date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="To Date"
-                    fieldType="date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                  <MyInput
-                    width="8vw"
-                    placeholder="Order ID"
-                    fieldType="text"
-                    fieldName="orderNumber"
-                    record={{ orderNumber: orderNumberFilter }}
-                    setRecord={(val: any) =>
-                      setOrderNumberFilter(val.orderNumber ?? '')
-                    }
-                    showLabel={false}
-                  />
-                </Form>
 
-                {test?.id && (
-                  <Row>
-                    <Col md={24}>
-                      <MyStepper
-                        stepsList={stepsDataComputed}
-                        activeStep={activeStep}
-                      />
-                    </Col>
-                  </Row>
-                )}
-              </Col>
-            </Row>
 
             <Tabs
               activeKey={activeKey}

@@ -437,7 +437,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setPolicySettingsModalOpen(false);
             setPolicyAppliedDraft({});
             setPaymentModalOpen(false);
-            setCreatedEncounter(null);
+            // setCreatedEncounter(null);
             resetPaymentState();
         }
     }, [appointment]);
@@ -487,14 +487,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         // Debug: inspect appointment payload when opening actions modal
         // eslint-disable-next-line no-console
     }, [isActionsModalOpen, appointment]);
-
-    useEffect(() => {
-      if (!isActionsModalOpen) return;
-      const refreshInterval = setInterval(() => {
-        onStatusChange?.();
-      }, 5000);
-      return () => clearInterval(refreshInterval);
-    }, [isActionsModalOpen, onStatusChange]);
 
     // Set encounter when fetched for selected appointment
     useEffect(() => {
@@ -558,15 +550,14 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             }));
             
             dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
-            onStatusChange();
             onActionsModalClose();
+            await onStatusChange?.();
         } catch (error: any) {
             // Extract error message from API response
              const errorMsg = extractErrorMessage(error) || 'Save Failed';
              dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
-
     const normalizeEncounterStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     const isEncounterPendingPayment = normalizeEncounterStatus((createdEncounter as any)?.status) === 'PENDINGPAYMENT';
     const canOpenAddPayment = currentStatus === 'CHECKEDIN' && isEncounterPendingPayment;
@@ -650,11 +641,11 @@ const handleNonShow = async () => {
   try {
     await noShowAppointment({ id, noShowReason: reasonText }).unwrap();
     dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
-    onStatusChange();
-    onActionsModalClose();
     setResonType(null);
     setOtherReason(null);
     setResonKey(null);
+    onActionsModalClose();
+    await onStatusChange?.();
   } catch (error: any) {
     const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
@@ -678,11 +669,11 @@ const handleCancel = async () => {
   try {
     await cancelAppointment({ id, cancelReason: reasonText }).unwrap();
     dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
-    onStatusChange();
-    onActionsModalClose();
     setResonType(null);
     setOtherReason(null);
     setResonKey(null);
+    onActionsModalClose();
+    await onStatusChange?.();
   } catch (error: any) {
      const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
@@ -863,17 +854,27 @@ const handleCancel = async () => {
                                 {policy.name}
                             </div>
 
-                            <Switch
-                                checked={applied}
-                                onCheckedChange={(checked) => {
+                          <Form>
+                            <MyInput
+                                fieldName={`policy_${assignmentId}`}
+                                fieldType="checkbox"
+                                showLabel={false}
+                                width={60}
+                                record={{
+                                    [`policy_${assignmentId}`]: applied
+                                }}
+                                setRecord={(updatedRecord: any) => {
+                                    const checked = updatedRecord?.[`policy_${assignmentId}`];
+
                                     if (!Number.isFinite(assignmentId) || assignmentId <= 0) return;
+
                                     setPolicyAppliedDraft(prev => ({
                                         ...prev,
                                         [assignmentId]: checked
                                     }));
                                 }}
-                                className={applied ? 'data-[state=checked]:bg-emerald-500' : undefined}
                             />
+                          </Form>
 
                             <div
                                 style={{

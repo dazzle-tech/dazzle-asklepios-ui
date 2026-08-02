@@ -80,9 +80,9 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
   { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit', isDefaultMedicalSheet: true },
-  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true },
-  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true },
-  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true  },
   { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result', isDefaultMedicalSheet: true },
   // { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
   { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
@@ -101,14 +101,21 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
   // { name: 'Care Plan & Goals', code: 'CARE_PLAN_AND_GOALS', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/care-plan-and-goals' },
   // { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
-  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record' },
-  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
+  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record', isDefaultMedicalSheet: true  },
+  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record', isDefaultMedicalSheet: true  },
   // { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
   // { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   // { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   // { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
-  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
+  {
+    name: 'Progress Notes / Additional Notes',
+    code: 'PROGRESS_NOTES',
+    icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
+    path: '/progress-notes',
+    isDefaultMedicalSheet: true,
+    isDefaultNurseMedicalSheet: true
+  },
   // { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   // { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   // { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
@@ -126,7 +133,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   // { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
-  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
+  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
   // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   // { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
@@ -140,7 +147,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   // { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products', isDefaultNurseMedicalSheet: true },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use', isDefaultMedicalSheet: true  },
   {
     name: 'Nurse Assessment',
     code: 'NURSE_ASSESSMENT',
@@ -152,9 +159,10 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment'
+    , isDefaultMedicalSheet: true 
   },
 
-  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' },
 
 ];
 
@@ -168,6 +176,8 @@ export const MODULES: Module[] =
       viewOrder: 0.5,
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
+        { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
+        { name: "WhatsApp Settings", code: "WHATSAPP_SETTINGS", description: "", icon: "FaWhatsapp", viewOrder: 0.6, navPath: "whatsapp-settings" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
@@ -175,6 +185,7 @@ export const MODULES: Module[] =
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
       ],
     },
+   
     {
       name: "System Setup",
       description: "",
@@ -231,6 +242,14 @@ export const MODULES: Module[] =
           navPath: "price-list",
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
+        {
+          name: 'Patient Merge Config',
+          code: 'PATIENT_MERGE_CONFIG',
+          description: "Policy Definition",
+          icon: "faUserDoctor",
+          viewOrder: 24,
+          navPath: 'patient-merge-config'
+        },
         { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
         {
           name: "NPHIES Payers",
@@ -298,7 +317,19 @@ export const MODULES: Module[] =
         }
       ],
     },
-
+    {
+      name: "Notification Management",
+      description: "",
+      icon: "FaBell",
+      viewOrder: 0.6,
+      screens: [
+        { name: "Notification Rule", code: "NOTIFICATION_RULE", description: "", icon: "FaListCheck", viewOrder: 0, navPath: "notification-rule" },
+        { name: "Email Notification", code: "EMAIL_NOTIFICATION", description: "", icon: "FaEnvelope", viewOrder: 1, navPath: "email-notification" },
+        { name: "SMS Notification", code: "SMS_NOTIFICATION", description: "", icon: "FaCommentSms", viewOrder: 2, navPath: "sms-notification" },
+        { name: "In-App Notification", code: "IN_APP_NOTIFICATION", description: "", icon: "FaDesktop", viewOrder: 3, navPath: "in-app-notification" },
+        { name: "WhatsApp Notification", code: "WHATSAPP_NOTIFICATION", description: "", icon: "FaWhatsapp", viewOrder: 4, navPath: "whatsapp-notification" },
+      ],
+    },
     {
       name: "Coding Module",
       description: "Coding Module",

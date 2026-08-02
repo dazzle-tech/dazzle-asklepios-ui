@@ -14,9 +14,13 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import { Tooltip, Whisper } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 
 import './styles.less';
+import MyInput from '@/components/MyInput';
 
 type OrdersProps = {
   order: any;
@@ -27,10 +31,22 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
+  selectedPatient?: any;
+  departmentFilter?: any;
+  filters?: React.ReactNode;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
+  ({
+    order,
+    setOrder,
+    dateFilter,
+    loading,
+    orderNumberFilter,
+    selectedPatient,
+    departmentFilter,
+    filters
+  }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -39,13 +55,24 @@ const Orders = forwardRef<any, OrdersProps>(
 
     useEffect(() => {
       setPaginationParams(prev => ({ ...prev, page: 0 }));
-    }, [orderNumberFilter]);
+    }, [
+      orderNumberFilter,
+      selectedPatient?.id,
+      departmentFilter?.fromDepartmentIdIn
+    ]);
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
       sort: ['isUrgent,desc', 'submittedDate,desc']
     });
+
+
+const [showPatientEMR, setShowPatientEMR] = useState(false);
+const [selectedPatientForEMR, setSelectedPatientForEMR] = useState<any>(null);
+const [selectedEncounterForEMR, setSelectedEncounterForEMR] = useState<any>(null);
+
+const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
     const [fetchBulkPatients] = useGetBulkPatientBasicInfoMutation();
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -85,6 +112,19 @@ const Orders = forwardRef<any, OrdersProps>(
             status: 'SUBMITTED',
             submittedDateFrom: fromDateParam,
             submittedDateTo: toDateParam,
+
+            ...(selectedPatient?.id
+              ? { patientIdIn: [selectedPatient.id] }
+              : {}),
+
+            ...(departmentFilter?.fromDepartmentIdIn
+              ? {
+                  fromDepartmentIdIn: [
+                    Number(departmentFilter.fromDepartmentIdIn)
+                  ]
+                }
+              : {}),
+
             ...(orderNumberFilter?.trim()
               ? { orderNumber: orderNumberFilter.trim() }
               : {})
@@ -216,12 +256,46 @@ const Orders = forwardRef<any, OrdersProps>(
         render: (r: any) => {
           const patient = patientsMap[String(r.patientId)];
 
+          const fullName = patient
+            ? [patient.firstName, patient.secondName, patient.lastName]
+                .filter(Boolean)
+                .join(' ')
+            : ' ';
+
           return (
             <>
-              <span>
-                {patient ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ') : ' '}
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: 'var(--primary-blue)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+                onClick={async e => {
+                  e.stopPropagation();
+
+                  setSelectedPatientForEMR(patient);
+
+                  try {
+                    const encounter = await getEncounterById({
+                      id: r.encounterId
+                    }).unwrap();
+
+                    setSelectedEncounterForEMR(encounter);
+                  } catch {
+                    setSelectedEncounterForEMR({
+                      id: r.encounterId
+                    });
+                  }
+
+                  setShowPatientEMR(true);
+                }}
+              >
+                {fullName}
               </span>
+
               <br />
+
               <span className="date-table-style">
                 {patient?.medicalRecordNumber ?? ' '}
               </span>
@@ -272,7 +346,25 @@ const Orders = forwardRef<any, OrdersProps>(
         onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}
         sortType={sortType}
+        filters={filters}
         onSortChange={handleSortChange}
+      />
+
+      <MyModal
+        open={showPatientEMR}
+        setOpen={setShowPatientEMR}
+        title="Patient EMR"
+        size="70vw"
+        bodyheight="80vh"
+        hideActionBtn
+        content={
+          selectedPatientForEMR && (
+            <PatientEMRModal
+              patient={selectedPatientForEMR}
+              encounter={selectedEncounterForEMR}
+            />
+          )
+        }
       />
     </div>
     );

@@ -116,7 +116,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   const patientId = parseInt(patient.id, 10);
 
   useEffect(() => {
-    if (encounter?.encounterStatusLkey === 'CLOSED') setIsEncounterStatusClosed(true);
+    if (encounter?.encounterStatusLkey === 'COMPLETED') setIsEncounterStatusClosed(true);
   }, [encounter?.encounterStatusLkey]);
 
   const encounterScope = !showAllVaccines;

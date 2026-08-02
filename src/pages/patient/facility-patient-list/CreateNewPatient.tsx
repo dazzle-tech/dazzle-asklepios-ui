@@ -448,8 +448,7 @@ const PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
   { key: 'lastName', label: 'Last Name' },
   { key: 'dateOfBirth', label: 'DOB' },
   { key: 'sexAtBirth', label: 'Gender' },
-  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
-  { key: 'email', label: 'Email' }
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' }
 ];
 
 const validatePatientNameFields = (patient: Patient): string | null => {
@@ -582,60 +581,43 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  const fetchDepartments = async (page = 0) => {
-    if (!selectedFacilityId) return;
+    const fetchDepartments = async (page = 0) => {
+      if (!selectedFacilityId || !encounterType) return;
 
-    try {
-      const result = await triggerDepartments({
-        facilityId: selectedFacilityId,
-        encounterType: 'EMERGENCY',
-        page,
-        size: deptSize,
-        sort: 'id,asc'
-      }).unwrap();
+      try {
+        const result = await triggerDepartments({
+          facilityId: selectedFacilityId,
+          encounterType,
+          page,
+          size: deptSize,
+          sort: 'id,asc'
+        }).unwrap();
 
-      const rows = result?.data ?? [];
+        const rows = result?.data ?? [];
 
-      setAllDepartments(prev => {
-        if (page === 0) return rows;
-
-        const seenIds = new Set(prev.map((d: any) => Number(d.id)));
-        const merged = [...prev];
-
-        rows.forEach((d: any) => {
-          if (!seenIds.has(Number(d.id))) {
-            merged.push(d);
-          }
+        setAllDepartments(prev => {
+          if (page === 0) return rows;
+          const seenIds = new Set(prev.map((d: any) => Number(d.id)));
+          return [...prev, ...rows.filter((d: any) => !seenIds.has(Number(d.id)))];
         });
 
-        return merged;
-      });
-
-      if (page === 0) {
-        setSelectedDepartmentId(prevSelectedDepartmentId => {
-          if (prevSelectedDepartmentId !== null && prevSelectedDepartmentId !== undefined) {
-            return prevSelectedDepartmentId;
-          }
-
-          const firstDepartmentId = rows?.[0]?.id;
-          return firstDepartmentId !== undefined && firstDepartmentId !== null
-            ? Number(firstDepartmentId)
-            : null;
-        });
+        if (page === 0) {
+          setSelectedDepartmentId(null);
+        }
+      } catch (error) {
+        console.error('[TRACE] fetchDepartments:error', error);
+        if (page === 0) setAllDepartments([]);
       }
-    } catch (error) {
-      console.error('[TRACE] fetchDepartments:error', error);
-      if (page === 0) setAllDepartments([]);
-    }
-  };
+    };
 
   useEffect(() => {
-    const facilityId = selectedDepartment?.facilityId;
+    const facilityId = Number(selectedDepartment?.facilityId);
 
     setSelectedFacilityId(
-      typeof facilityId === 'number' && !Number.isNaN(facilityId) ? facilityId : null
+      Number.isNaN(facilityId) ? null : facilityId
     );
-  }, [selectedDepartment?.facilityId]);
+  }, [selectedDepartment]);
+
 
   useEffect(() => {
     if (!open) return;
@@ -644,8 +626,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
     setDeptPage(0);
     setSelectedDepartmentId(null);
+    setAllDepartments([]);
     fetchDepartments(0);
-  }, [open, pageCode, selectedFacilityId]);
+  }, [open, pageCode, selectedFacilityId, encounterType]);
 
   useEffect(() => {
     setPayorPage(0);
@@ -1333,7 +1316,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
               width={200}
             />
             <MyInput
-              required
               column
               fieldName="email"
               record={localPatient}

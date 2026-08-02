@@ -75,7 +75,6 @@ const QUICK_PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }
   { key: 'lastName', label: 'Last Name' },
   { key: 'sexAtBirth', label: 'Gender' },
   { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
-  { key: 'email', label: 'Email' },
   { key: 'dateOfBirth', label: 'DOB' }
 ];
 
@@ -495,151 +494,150 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       <Form
         fluid
       >
-        <div className="my-modal-responsive-form-handle">
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldName="firstName"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            disabled={isUnknown}
-            width={"100%"}
-          />
+       <div className="my-modal-responsive-form-handle">
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldName="firstName"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          width={"14vw"}
+        />
 
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldName="secondName"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            disabled={isUnknown}
-            width={"100%"}
-          />
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldName="secondName"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          width={"14vw"}
+        />
 
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldName="lastName"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            disabled={isUnknown}
-            width={"100%"}
-          />
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldName="lastName"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          width={"14vw"}
+        />
 
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldLabel="Gender"
-            fieldType="select"
-            fieldName="sexAtBirth"
-            selectData={genderEnum ?? []}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            disabled={isUnknown}
-            searchable={false}
-            width={"100%"}
-          />
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldLabel="Gender"
+          fieldType="select"
+          fieldName="sexAtBirth"
+          selectData={genderEnum ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          searchable={false}
+          width={"14vw"}
+        />
 
-          <PhoneNumberInput
-            required
-            column
-            fieldName="primaryMobileNumber"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            fieldLabel="Primary Mobile Number"
-            disabled={isUnknown}
-            width={"100%"}
-          />
+       <PhoneNumberInput
+          required
+          column
+          fieldName="primaryMobileNumber"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          fieldLabel="Primary Mobile Number" 
+          disabled={isUnknown}
+          width={"14vw"}
+        />
 
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldName="email"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            width={"100%"}
-          />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldName="email"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          width={"14vw"}
+        />
 
-          <MyInput
-            required
-            vr={validationResult}
-            column
-            fieldType="date"
-            fieldLabel="DOB"
-            fieldName="dateOfBirth"
-            record={localPatient}
-            setRecord={setLocalPatient}
-            disableFutureDates
-            showWarningIfBeforeYear1900
-            disabled={isUnknown}
-            width={"100%"}
-          />
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldType="date"
+          fieldLabel="DOB"
+          fieldName="dateOfBirth"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disableFutureDates
+          showWarningIfBeforeYear1900
+          disabled={isUnknown}
+          width={"14vw"}
+        />
 
           <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
             Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
           </div>
 
-          {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
-            <>
-              <MyInput
-                column
-                width={"100%"}
-                required
-                fieldLabel="Encounter Type"
-                fieldType="select"
-                fieldName="encounterType"
-                selectData={EncounterTypeEnum ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={{ encounterType }}
-                setRecord={(record: any) => {
-                  if (record.encounterType) {
-                    setEncounterType(record.encounterType);
-                    setDeptPage(0);
-                    setSelectedDepartmentId(null);
-                    setAllDepartments([]);
-                  }
-                }}
-                disabled={true}
-                searchable={false}
-              />
+        {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
+          <>
+            <MyInput
+              column
+              width={"14vw"}
+              required
+              fieldLabel="Encounter Type"
+              fieldType="select"
+              fieldName="encounterType"
+              selectData={EncounterTypeEnum ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ encounterType }}
+              setRecord={(record: any) => {
+                if (record.encounterType) {
+                  setEncounterType(record.encounterType);
+                  setDeptPage(0);
+                  setSelectedDepartmentId(null);
+                  setAllDepartments([]);
+                }
+              }}
+              disabled={true}
+              searchable={false}
+            />
 
-              <MyInput
-                width={"100%"}
-                required
-                column
-                fieldType="selectPagination"
-                fieldLabel="Department"
-                fieldName="departmentId"
-                selectData={allDepartments}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={{ departmentId: selectedDepartmentId }}
-                setRecord={(record: any) => {
-                  if (record.departmentId !== undefined) {
-                    setSelectedDepartmentId(record.departmentId);
-                  }
-                }}
-                searchable
-                disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
-                loading={isDepartmentsFetching}
-                hasMore={deptHasMore}
-                onFetchMore={() => {
-                  if (deptList?.links?.next) {
-                    const { page } = extractPaginationFromLink(deptList.links.next);
-                    setDeptPage(page);
-                  }
-                }}
-              />
-            </>
-          )}
+            <MyInput
+              width={"14vw"}
+              required
+              column
+              fieldType="selectPagination"
+              fieldLabel="Department"
+              fieldName="departmentId"
+              selectData={allDepartments}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={{ departmentId: selectedDepartmentId }}
+              setRecord={(record: any) => {
+                if (record.departmentId !== undefined) {
+                  setSelectedDepartmentId(record.departmentId);
+                }
+              }}
+              searchable
+              disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
+              loading={isDepartmentsFetching}
+              hasMore={deptHasMore}
+              onFetchMore={() => {
+                if (deptList?.links?.next) {
+                  const { page } = extractPaginationFromLink(deptList.links.next);
+                  setDeptPage(page);
+                }
+              }}
+            />
+          </>
+        )}
         </div>
       </Form>
     ),

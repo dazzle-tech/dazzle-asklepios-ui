@@ -26,6 +26,7 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/s
 
 import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
+import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -104,7 +105,12 @@ const SOAP = props => {
 
   const saveChanges = async () => {
     if (!localEncounter?.chiefComplaint?.trim()) {
-      dispatch(notify({ msg: 'Chief Complaint cannot be empty.', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Chief Complaint cannot be empty.',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
@@ -112,11 +118,20 @@ const SOAP = props => {
       const idToUpdate = localEncounter?.id ?? encounterId;
 
       if (!idToUpdate) {
-        dispatch(notify({ msg: 'No encounter id to update', sev: 'error' }));
+        dispatch(
+          notify({
+            msg: 'No encounter id to update',
+            sev: 'error'
+          })
+        );
         return;
       }
 
-      const payload = toEncounterPayload(localEncounter);
+      const payload = {
+        ...toEncounterPayload(localEncounter),
+        physicalExaminationSummery:
+          encounterFromServer?.physicalExaminationSummery ?? null
+      };
 
       if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
         dispatch(
@@ -128,7 +143,10 @@ const SOAP = props => {
         return;
       }
 
-      if (payload.encounterReason === 'FOLLOW_UP' && !payload.followUpEncounterId) {
+      if (
+        payload.encounterReason === 'FOLLOW_UP' &&
+        !payload.followUpEncounterId
+      ) {
         dispatch(
           notify({
             msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
@@ -144,9 +162,75 @@ const SOAP = props => {
       }).unwrap();
 
       setLocalEncounter(updatedEncounter);
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Saved Successfully',
+          sev: 'success'
+        })
+      );
     } catch {
-      dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: 'Save Failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const savePhysicalExamination = async () => {
+    try {
+      const idToUpdate = localEncounter?.id ?? encounterId;
+
+      if (!idToUpdate) {
+        dispatch(
+          notify({
+            msg: 'No encounter id to update',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const payload = {
+        ...toEncounterPayload(localEncounter),
+        chiefComplaint:
+          encounterFromServer?.chiefComplaint ??
+          nurseComplaints?.reasonOfVisit ??
+          null
+      };
+
+      if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
+        dispatch(
+          notify({
+            msg: 'Missing required fields: patientId / facilityId / departmentId',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const updatedEncounter = await updateEncounter({
+        id: idToUpdate,
+        body: payload
+      }).unwrap();
+
+      setLocalEncounter(updatedEncounter);
+
+      dispatch(
+        notify({
+          msg: 'Saved Successfully',
+          sev: 'success'
+        })
+      );
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Save Failed',
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -158,47 +242,100 @@ const SOAP = props => {
           className={clsx('column-container', { 'disabled-panel': edit })}
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
-          <div className="top-section">
-            <SectionContainer
-              title={<Translate>Chief Complaint </Translate>}
-              content={
-                <Form fluid>
-                  <MyInput
-                    width="100%"
-                    height="95px"
-                    showLabel={false}
-                    fieldType="textarea"
-                    fieldName="chiefComplaint"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
+             <div className="top-section">
+                <div style={{ marginBottom: '16px' }}>
+                  <SectionContainer
+                    title={<Translate>Chief Complaint </Translate>}
+                    content={
+                      <Form fluid>
+                        <MyInput
+                          width="100%"
+                          height="95px"
+                          showLabel={false}
+                          fieldType="textarea"
+                          fieldName="chiefComplaint"
+                          record={localEncounter}
+                          setRecord={setLocalEncounter}
+                        />
+
+                        {/* <MyInput
+                          width="100%"
+                          height="120px"
+                          fieldLabel="Physical Examination Summary"
+                          fieldType="textarea"
+                          fieldName="physicalExaminationSummery"
+                          record={{
+                            physicalExaminationSummery:
+                              localEncounter?.physicalExaminationSummery || ''
+                          }}
+                          setRecord={() => { }}
+                          disabled
+                        /> */}
+                      </Form>
+                    }
+                    action={
+                      <MyButton size="small" onClick={saveChanges}>
+                        Save
+                      </MyButton>
+                    }
                   />
-                </Form>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <HistoryOfPresentIllnessSection
+                    encounter={localEncounter}
+                    setEncounter={setLocalEncounter}
+                    disabled={edit}
+                  />
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <SectionContainer
+                    title={<Translate>Physical Examination Summary </Translate>}
+                    content={
+                      <Form fluid>
+                        <MyInput
+                          width="100%"
+                          height="120px"
+                          fieldLabel="Physical Examination Summary"
+                          showLabel={false}
+                          fieldType="textarea"
+                          fieldName="physicalExaminationSummery"
+                          record={localEncounter}
+                          setRecord={setLocalEncounter}
+                        />
+                      </Form>
+                    }
+                    action={
+                      <MyButton size="small" onClick={savePhysicalExamination}>
+                        Save
+                      </MyButton>
+                    }
+                  />
+                </div>
+             </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <SectionContainer
+              title={<Translate>Patient Diagnosis</Translate>}
+              content={
+                <div style={{ width: '100%' }}>
+                  <PatientDiagnosis
+                    patient={patient}
+                    encounter={localEncounter}
+                    onDiagnosisSaved={onDiagnosisSaved}
+                  />
+                </div>
               }
-              action={
-                <MyButton size="small" onClick={saveChanges}>
-                  Save
-                </MyButton>
-              }
-            />
+            /></div>
+
+          <div style={{ marginBottom: '16px' }}>
             <EncounterAssessmentSection patient={patient} encounterId={localEncounter?.id} />
           </div>
-
-          <SectionContainer
-            title={<Translate>Patient Diagnosis</Translate>}
-            content={
-              <div style={{ width: '100%' }}>
-              <PatientDiagnosis
-                patient={patient}
-                encounter={localEncounter}
-                onDiagnosisSaved={onDiagnosisSaved}
-              />
-              </div>
-            }
-          />
-
           <div className="last-section-clinical-visit">
             <div className="half-width-section">
-              <PatientPlan patient={patient} localEncounter={localEncounter} />
+              <div style={{ marginBottom: '16px' }}>
+                <PatientPlan patient={patient} localEncounter={localEncounter} />
+              </div>
             </div>
             <div className="half-width-section">
               <PatientHistorySummary

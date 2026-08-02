@@ -139,12 +139,11 @@ const BedAssignmentModal: React.FC<Props> = ({
       sort: 'id,asc'
     },
     {
-      skip: !open || !resolvedDepartmentId || !patientGender
+      skip: !open || !resolvedDepartmentId 
     }
   );
 
   const roomOptions = useMemo(() => roomsResponse?.data ?? [], [roomsResponse]);
-
   useEffect(() => {
     if (open) {
       setRecord({
@@ -234,11 +233,6 @@ const BedAssignmentModal: React.FC<Props> = ({
       return;
     }
 
-    if (!patientGender) {
-      dispatch(notify({ msg: 'Patient gender is required to load available rooms.', sev: 'error' }));
-      return;
-    }
-
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'error' }));
       return;
@@ -282,12 +276,7 @@ const BedAssignmentModal: React.FC<Props> = ({
         throw err;
       }
 
-      try {
-        await moveWaitingListToNew({ id: encounterId }).unwrap();
-      } catch (err) {
-        console.error('move encounter error', err);
-        throw err;
-      }
+     
 
       dispatch(
         notify({

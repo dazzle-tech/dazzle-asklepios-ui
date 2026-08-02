@@ -76,15 +76,6 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   const [selectedDiagnosisToDelete, setSelectedDiagnosisToDelete] =
     useState<PatientDiagnosisType | null>(null);
 
-  useEffect(() => {
-    setDiagnosis({
-      diagnosisId: latestDiagnosis?.diagnosisId ?? null,
-      type: latestDiagnosis?.type ?? null,
-      suspected: latestDiagnosis?.suspected ?? false,
-      major: latestDiagnosis?.major ?? false
-    });
-  }, [latestDiagnosis?.id, encounterIdNumber]);
-
   const clearForm = () => {
     setDiagnosis({
       diagnosisId: null,
@@ -339,21 +330,29 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         key: 'actions',
         title: <Translate>Actions</Translate>,
         flexGrow: 1,
-        render: (row: any) => (
-          <button
-            type="button"
-            className="pd-delete-btn"
-            onClick={() => handleOpenDeleteModal(row)}
-            disabled={disabled || isDeleting}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: disabled || isDeleting ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
-        )
+        render: (row: any) => {
+          const canDelete =
+            Number(row.encounterId) === encounterIdNumber;
+
+          return (
+            <button
+              type="button"
+              className="pd-delete-btn"
+              onClick={() => handleOpenDeleteModal(row)}
+              disabled={disabled || isDeleting || !canDelete}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor:
+                  disabled || isDeleting || !canDelete
+                    ? 'not-allowed'
+                    : 'pointer'
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          );
+        }
       }
     ],
     [icdMap, disabled, isDeleting]
@@ -369,6 +368,10 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   };
 
   const savingBusy = isFetchingLatest || isSaving;
+
+useEffect(() => {
+  console.log('DIAGNOSIS', diagnosis);
+}, [diagnosis]);
 
   const handleSave = async () => {
     if (!payload.patientId) {
@@ -392,19 +395,17 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     }
 
     try {
-      const createResponse = await createPatientDiagnosis(payload as any).unwrap();
+      await createPatientDiagnosis(payload as any).unwrap();
 
-      setDiagnosis(previousDiagnosis => ({
-        ...previousDiagnosis,
-        ...createResponse,
-        patientId: patientIdNumber,
-        encounterId: encounterIdNumber,
-        id: undefined
-      }));
+      dispatch(
+        notify({
+          msg: 'Diagnosis saved successfully',
+          sev: 'success'
+        })
+      );
 
-      dispatch(notify({ msg: 'Diagnosis saved successfully', sev: 'success' }));
-
-      await refetchLatest();
+      clearForm();
+      console.log('CLEARED');
       await refetchTable();
 
       onDiagnosisSaved?.();
@@ -436,8 +437,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
             />
 
             <div className="pd-fields-inline">
-              <div className="pd-field">
                 <MyInput
+                  width="15vw"
                   required
                   fieldType="select"
                   selectData={diagnosisTypeOptions ?? []}
@@ -449,10 +450,9 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   fieldLabel="Type"
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
+                  width="100%"
                   fieldLabel="Suspected"
                   fieldType="checkbox"
                   fieldName="suspected"
@@ -460,10 +460,9 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
+                  width="100%"
                   fieldLabel="Chronic"
                   fieldType="checkbox"
                   fieldName="major"
@@ -471,7 +470,6 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
             </div>
 
             <div className="pd-footer">

@@ -118,11 +118,11 @@
 }
 
 .pd-fields-inline {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
-  gap: 16px;
-  margin-top: 12px;
-  align-items: end;
+display: flex;
+flex-direction: row;
+gap: 1vw;
+flex-wrap: wrap;
+box-sizing: border-box;
 }
 
 .pd-field {
@@ -168,11 +168,6 @@
   }
 }
 
-@media (max-width: 700px) {
-  .pd-fields-inline {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* Dark Mode */
 

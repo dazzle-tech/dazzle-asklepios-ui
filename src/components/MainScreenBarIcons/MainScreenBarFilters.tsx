@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '../MyInput';
-import { Form } from 'rsuite';
+import { Form, SelectPicker } from 'rsuite';
 import './style.less';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/hooks';
@@ -64,6 +64,45 @@ useEffect(() => {
     }
   };
 
+
+useEffect(() => {
+  if (!record.eventKey) return;
+
+  dispatch(setScreenKey(record.eventKey));
+
+  const item = childrenNavs.find(
+    c => c.eventKey === record.eventKey
+  );
+
+  if (item?.to) {
+    navigate(item.to);
+  }
+}, [record.eventKey]);
+
+const [isSelectOpen, setIsSelectOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (event: any) => {
+      const path = event.composedPath?.() || [];
+
+      if (
+        path.some((el: any) =>
+          el?.classList?.contains?.('rs-picker-popup')
+        )
+      ) {
+        return;
+      }
+
+      setIsSelectOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () =>
+      window.removeEventListener('scroll', handleScroll, true);
+  }, []);
+
+
   return (
     <div
       className="main-screen-bar-filters-header-main-container"
@@ -82,19 +121,34 @@ useEffect(() => {
             style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
           >
             {/* 🔥 Search */}
+          <div className="main-screen-bar-icons-main-container-header">
             <div className={`search-container ${displaySearch ? 'open' : ''}`}>
-              <MyInput
-                fieldName="eventKey"
-                selectData={childrenNavs}
-                selectDataLabel="title"
-                selectDataValue="eventKey"
-                fieldType="select"
+              <SelectPicker
+                data={childrenNavs.map(item => ({
+                  label: item.title,
+                  value: item.eventKey
+                }))}
+                value={record.eventKey}
+                onChange={(value) =>
+                  setRecord({
+                    ...record,
+                    eventKey: value
+                  })
+                }
                 placeholder="Search"
-                width="100%"
-                record={record}
-                setRecord={setRecord}
-                showLabel={false}
                 searchable
+                cleanable
+                open={isSelectOpen}
+                onOpen={() => setIsSelectOpen(true)}
+                onClose={() => setIsSelectOpen(false)}
+                style={{
+                  width: '20vw',
+                  minWidth: 220
+                }}
+                menuStyle={{
+                  minWidth: '20vw'
+                }}
+                className="header-search-picker"
               />
 
               {/* <IoMdClose
@@ -109,7 +163,7 @@ useEffect(() => {
                 onClick={() => setDisplaySearch(false)}
               /> */}
             </div>
-
+          </div>
             {!displaySearch && (
               <SearchIcon
                 className="search-icon"

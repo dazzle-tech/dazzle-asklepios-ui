@@ -22,6 +22,7 @@ import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
+import { patientMergeService } from './services/patients/patientMergeService';
 
 import { setupService } from '@/services/setupService';
 import { dvmService } from '@/services/dvmService';
@@ -61,10 +62,13 @@ import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
+import { emailSettingsService } from './services/system-configurations/emailSettingsService';
+import { whatsappSettingsService } from './services/system-configurations/whatsappSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
+import { userBookableDepartmentService } from './services/security/userBookableDepartments';
 
 import { MedicalsheetsService } from './services/MedicalSheetsService';
 
@@ -199,6 +203,9 @@ import { patientAdministrativeWarningsService } from './services/patient/patient
 import { radiologyReportService } from './services/reports/radiologyReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
+import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
+import { notificationService } from './services/notification-management/notificationService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -211,6 +218,7 @@ import { departmentServicesService } from './services/departmentServicesService'
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
 import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
+import { appointmentWaitingListService } from '@/services/appointment/appointmentWaitingList/appointmentWaitingListService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
@@ -220,6 +228,7 @@ import { uccMedicationOrderService } from './services/medicalsheetsEncounter/ucc
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
+import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { cchiApi } from './services/waseel-integration/cchiService';
 import { eligibilityApi } from './services/waseel-integration/eligibilityService';
@@ -287,6 +296,7 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
     [setupService.reducerPath]: setupService.reducer,
@@ -361,10 +371,16 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+    [emailSettingsService.reducerPath]: emailSettingsService.reducer,
+    [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
+    [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
+    [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
+    [notificationService.reducerPath]: notificationService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
+    [userBookableDepartmentService.reducerPath]: userBookableDepartmentService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
 
     // medical sheets
@@ -466,6 +482,7 @@ export const store = configureStore({
     [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
     [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
     [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
+    [appointmentWaitingListService.reducerPath]: appointmentWaitingListService.reducer,
 
     // Templates
     // report templates
@@ -578,6 +595,7 @@ export const store = configureStore({
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
+    [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
     [cchiApi.reducerPath]: cchiApi.reducer,
@@ -621,6 +639,7 @@ export const store = configureStore({
         hipaaService.middleware,
         patientPreferredHealthProfessionalService.middleware,
         patientDocumentsService.middleware,
+        patientMergeService.middleware,
         inventoryService.middleware,
         inventoryProductsService.middleware,
         setupService.middleware,
@@ -652,10 +671,13 @@ export const store = configureStore({
         facilityService.middleware,
         departmentService.middleware,
         organizationDefinitionService.middleware,
+        emailSettingsService.middleware,
+        whatsappSettingsService.middleware,
         roleService.middleware,
         userRoleService.middleware,
         enumService.middleware,
         userDepartmentService.middleware,
+        userBookableDepartmentService.middleware,
         MedicalsheetsService.middleware,
         vitalSignsService.middleware,
         serviceService.middleware,
@@ -708,6 +730,7 @@ export const store = configureStore({
         patientBillingInvoiceService.middleware,
         patientBillingInvoiceItemService.middleware,
         appointmentRequestService.middleware,
+        appointmentWaitingListService.middleware,
         ReportTemplateService.middleware,
         DiagnosticTestTemplateService.middleware,
         userStickyNotesService.middleware,
@@ -772,6 +795,9 @@ export const store = configureStore({
         radiologyReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        notificationHeaderService.middleware,
+        notificationTemplateService.middleware,
+        notificationService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,
@@ -797,6 +823,7 @@ export const store = configureStore({
         PayorPlanCoverageClassService.middleware,
         waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,
+        patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
         NphiesPayerService.middleware,

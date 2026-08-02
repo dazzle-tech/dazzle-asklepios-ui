@@ -5,17 +5,21 @@ import draftToHtml from "draftjs-to-html";
 import htmlToDraft from "html-to-draftjs";
 import { Editor } from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+
 import MyModal from "@/components/MyModal/MyModal";
 import MyInput from "@/components/MyInput";
-import { Form } from "rsuite";
+import Translate from "@/components/Translate/Translate";
+
+import { Form, Row, Col } from "rsuite";
 import { useDispatch } from "react-redux";
+
 import {
   hideSystemLoader,
   notify,
   showSystemLoader,
 } from "@/utils/uiReducerActions";
+
 import "./style.less";
-import Translate from "@/components/Translate/Translate";
 
 interface ReportResultTemplateModalProps {
   open: boolean;
@@ -25,45 +29,65 @@ interface ReportResultTemplateModalProps {
     name: string;
     templateValue: string;
   };
-  onSave: (data: { id?: number | null; name: string; templateValue: string }) => Promise<void> | void;
+  onSave: (data: {
+    id?: number | null;
+    name: string;
+    templateValue: string;
+  }) => Promise<void> | void;
   readOnly?: boolean;
 }
 
-const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
+const ReportResultTemplateModal: React.FC<
+  ReportResultTemplateModalProps
+> = ({
   open,
   setOpen,
   initialData,
   onSave,
   readOnly = false,
 }) => {
+  const dispatch = useDispatch();
+
   const [formData, setFormData] = useState({
     name: "",
     templateValue: "",
   });
 
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
-  const dispatch = useDispatch();
+  const [editorState, setEditorState] =
+    useState(EditorState.createEmpty());
 
   useEffect(() => {
+    if (!open) return;
+
     if (initialData) {
       setFormData({
-        name: initialData.name,
-        templateValue: initialData.templateValue,
+        name: initialData.name ?? "",
+        templateValue: initialData.templateValue ?? "",
       });
 
       if (initialData.templateValue) {
-        const blocksFromHtml = htmlToDraft(initialData.templateValue || "");
-        const { contentBlocks, entityMap } = blocksFromHtml;
-        const contentState = ContentState.createFromBlockArray(
-          contentBlocks,
-          entityMap
+        const blocks = htmlToDraft(
+          initialData.templateValue
         );
-        setEditorState(EditorState.createWithContent(contentState));
+
+        const contentState =
+          ContentState.createFromBlockArray(
+            blocks.contentBlocks,
+            blocks.entityMap
+          );
+
+        setEditorState(
+          EditorState.createWithContent(contentState)
+        );
       } else {
         setEditorState(EditorState.createEmpty());
       }
     } else {
-      setFormData({ name: "", templateValue: "" });
+      setFormData({
+        name: "",
+        templateValue: "",
+      });
+
       setEditorState(EditorState.createEmpty());
     }
   }, [initialData, open]);
@@ -76,13 +100,26 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     );
 
     if (!formData?.name?.trim()) {
-      dispatch(notify({ msg: "Please Enter Report Name", sev: "warning" }));
+      dispatch(
+        notify({
+          msg: "Please Enter Report Name",
+          sev: "warning",
+        })
+      );
       return;
     }
 
-    if (!htmlContent || htmlContent === "<p></p>\n") {
+    const plainText = htmlContent
+      ?.replace(/<[^>]*>/g, "")
+      ?.replace(/&nbsp;/g, "")
+      ?.trim();
+
+    if (!plainText) {
       dispatch(
-        notify({ msg: "Please enter report template content", sev: "warning" })
+        notify({
+          msg: "Please enter report template content",
+          sev: "warning",
+        })
       );
       return;
     }
@@ -105,9 +142,8 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
         })
       );
 
-      setFormData((prev) => ({ ...prev, templateValue: htmlContent }));
       setOpen(false);
-    } catch (err) {
+    } catch {
       dispatch(
         notify({
           msg: "Failed to save Report Template",
@@ -119,80 +155,89 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     }
   };
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction =
+    localStorage.getItem("direction") || "LTR";
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const isRTL = direction === "RTL";
+  const dir = isRTL ? "rtl" : "ltr";
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={ <Translate>
-      {initialData
-        ? readOnly
-          ? "View Template"
-          : "Edit Template"
-        : "Add Template"}</Translate>}
-      actionButtonLabel={readOnly ? undefined : "Save"}
-      actionButtonFunction={readOnly ? undefined : handleSave}
-      size="50vw"
-      // bodyheight="37vw"
-      content={
-        <Form fluid>
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={
+          <Translate>
+            {initialData
+              ? readOnly
+                ? "View Template"
+                : "Edit Template"
+              : "Add Template"}
+          </Translate>
+        }
+        actionButtonLabel={
+          readOnly ? undefined : "Save"
+        }
+        actionButtonFunction={
+          readOnly ? undefined : handleSave
+        }
+        size="40vw"
+        bodyheight="65vh"
+        content={
           <div dir={dir}>
-          <div className="test-name-my-input-handle">
-            <MyInput
-              width="100%"
-              fieldLabel="Report Name"
-              fieldName="name"
-              record={formData}
-              setRecord={setFormData}
-              fieldType="text"
-              required
-              disabled={readOnly}
-            />
-          </div>
+            <Form fluid>
+              <MyInput
+                width="100%"
+                fieldLabel="Report Name"
+                fieldName="name"
+                record={formData}
+                setRecord={setFormData}
+                fieldType="text"
+                required
+                disabled={readOnly}
+              />
+            </Form>
 
-          <div className="report-template-label"><Translate>Report Template</Translate></div>
+            <div
+              style={{
+                marginTop: "15px",
+                marginBottom: "10px",
+                fontWeight: 600,
+              }}
+            >
+              <Translate>
+                Report Template
+              </Translate>
+            </div>
 
-          <div className="editor-template-label">
-            <Editor
-              toolbar={{
-                options: [
-                  "inline",
-                  "blockType",
-                  "fontSize",
-                  "fontFamily",
-                  "list",
-                  "textAlign",
-                  "link",
-                ],
-                inline: { inDropdown: true },
-                list: { inDropdown: true },
-                textAlign: { inDropdown: true },
-                link: { inDropdown: true },
-              }}
-              editorStyle={{
-                height: "40vh",
-                width: "100%",
-                border: "1px solid #ccc",
-                overflow: "auto",
-              }}
-              editorState={editorState}
-              onEditorStateChange={readOnly ? () => {} : setEditorState}
-              toolbarHidden={readOnly}
-              readOnly={readOnly}
-              editorClassName="custom-editor"
-              placeholder="Write your report here..."
-            />
+            <Row>
+              <Col md={24}>
+                <Editor
+                  editorState={editorState}
+                  onEditorStateChange={
+                    readOnly
+                      ? () => {}
+                      : setEditorState
+                  }
+                  readOnly={readOnly}
+                  toolbarHidden={readOnly}
+                  placeholder="Write your report here..."
+                  editorStyle={{
+                    minHeight: "60vh",
+                    overflow: "auto",
+                    width: "100%",
+                    border:
+                      "1px solid var(--rs-border-primary)",
+                    padding: "8px",
+                  }}
+                  editorClassName="custom-editor"
+                />
+              </Col>
+            </Row>
           </div>
-          </div>
-        </Form>
-      }
-    />
+        }
+      />
+    </div>
   );
 };
 

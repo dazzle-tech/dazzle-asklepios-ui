@@ -1,3 +1,4 @@
+import { PhoneNumberInput } from '@/components';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -174,7 +175,7 @@ const defaultNurseMedicalSheetsInfo = (
       />
 
       <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
-        <MyInput
+        <PhoneNumberInput
           column
           width={350}
           fieldLabel="Phone Number"
@@ -252,6 +253,7 @@ const defaultNurseMedicalSheetsInfo = (
           record={department}
           setRecord={setDepartment}
         />
+
         {department?.hasNurseMedicalSheets && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <MyInput
@@ -288,7 +290,7 @@ const defaultNurseMedicalSheetsInfo = (
       {department?.appointable && (
         <MyInput
           column
-          width={350}
+          width={"100%"}
           fieldLabel="Encounter Type"
           fieldName="encounterType"
           fieldType="select"
@@ -300,17 +302,6 @@ const defaultNurseMedicalSheetsInfo = (
           required
         />
       )}
-
-      <MyInput
-        column
-        fieldType="number"
-        fieldName="parallelCapacityValue"
-        record={department}
-        setRecord={setDepartment}
-        width="100%"
-        required
-        showZero
-      />
 
       {department?.appointable && (
         <>
@@ -346,16 +337,11 @@ const defaultNurseMedicalSheetsInfo = (
             required
             showZero
           />
+
+
+
         </>
       )}
-
-      <MyInput
-        column
-        fieldType="checkbox"
-        fieldName="parallelCapacityEnabled"
-        record={department}
-        setRecord={setDepartment}
-      />
 
       {department?.appointable && (
         <>
@@ -382,6 +368,26 @@ const defaultNurseMedicalSheetsInfo = (
             record={department}
             setRecord={setDepartment}
           />
+
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="parallelCapacityValue"
+            record={department}
+            setRecord={setDepartment}
+            width="100%"
+            required
+            showZero
+          />
+
+          <MyInput
+            column
+            fieldType="checkbox"
+            fieldName="parallelCapacityEnabled"
+            record={department}
+            setRecord={setDepartment}
+          />
+
         </>
       )}
 

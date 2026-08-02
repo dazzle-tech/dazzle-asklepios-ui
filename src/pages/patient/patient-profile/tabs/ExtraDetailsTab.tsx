@@ -1,6 +1,7 @@
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
+import clsx from 'clsx';
 import React from 'react';
 import { Form } from 'rsuite';
 interface ExtraDetailsTabProps {
@@ -30,7 +31,10 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   console.log('Responsible Party LOV Response:', responsiblePartyLovQueryResponse);
   console.log('Educational Level LOV Response:', educationalLevelLovQueryResponse);``
   return (
-    <Form layout="inline" fluid>
+     <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
+       <Form layout="inline" fluid
+       
+    >
       <MyInput
         vr={validationResult}
         column
@@ -161,6 +165,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         setRecord={setLocalPatient}
       />
     </Form>
+    </div>
+   
   );
 };
 

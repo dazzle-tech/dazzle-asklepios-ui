@@ -4,6 +4,10 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
+import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
@@ -22,7 +26,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -71,6 +75,11 @@ import {
   formatInsurancePickerLabel,
   resolveInsurancePayorDisplayName
 } from './insuranceDisplayUtils';
+import { useLocation, useNavigate } from 'react-router-dom';
+import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
+import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
+import { FaCodeMerge } from 'react-icons/fa6';
+import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -127,6 +136,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
   const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
@@ -237,6 +247,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setSelectedPatientInsuranceId(defaultId);
     }
   }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
+
 
   const extractErrorMessage = (response: any): string => {
     try {
@@ -565,7 +576,25 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faThumbsUp} />
+            <Translate>Approvals</Translate>
+          </div>
+        </Dropdown.Item> */}
+
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarDay} />
+            <Translate>Appointments</Translate>
+          </div>
+        </Dropdown.Item> */}
+
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
             <Translate>View Price List</Translate>
@@ -611,37 +640,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  const contentOfPrintIconMenu = (
-    <Popover>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          disabled={!localPatient?.id || printingType !== null}
-          onClick={async () => {
-            await handlePrintInformation();
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>
-              {printingType === 'information' ? 'Printing Information...' : 'Print Information'}
-            </Translate>
-          </div>
-        </Dropdown.Item>
 
-        <Dropdown.Item
-          disabled={!localPatient?.id || printingType !== null}
-          onClick={async () => {
-            await handlePrintPatientLabel(localPatient);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <Translate>
-              {printingType === 'label' ? 'Printing Patient Label...' : 'Print Patient Label'}
-            </Translate>
-          </div>
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Popover>
-  );
+ const contentOfPrintIconMenu = (
+  <Popover>
+    <Dropdown.Menu>
+      {patientInformationMenuItem}
+      {patientLabelMenuItem}
+  
+    </Dropdown.Menu>
+  </Popover>
+);
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -664,8 +672,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
-        console.error('Failed to upload profile picture:', error);
-        dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+        const errorMsg = extractErrorMessage(error);
+        dispatch(
+          notify({
+            msg: errorMsg || 'Failed to Upload Profile Picture',
+            sev: 'error'
+          })
+        );
       }
     }
   };
@@ -725,6 +738,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       whisperRef.current?.close?.();
     }
   }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
+
+ 
+  const whisperRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (quickPatientModalOpen || openScanDocumentModal) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal]);
 
   useEffect(() => {
     const handleClick = (e: any) => {
@@ -830,11 +852,32 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
-                      {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
+                      {localPatient.isCompletedPatient ? (
+                        <Icon color="green" as={VscVerified} />
+                      ) : (
+                        <Icon color="red" as={VscUnverified} />
+                      )}
                     </div>
                   </Whisper>
                 )}
+
+                {localPatient.patientStatus === 'MERGED' && (
+                  <Whisper
+                    placement="bottom"
+                    controlId="merged-patient-tooltip"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        Merged Patient
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon merged-status-icon">
+                      <Icon color="orange" as={FaCodeMerge} />
+                    </div>
+                  </Whisper>
+                )}
+
               </div>
             </AvatarGroup>
 
@@ -858,7 +901,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               }}
             >
               <MyButton
-                disabled={!localPatient?.id || isCheckingEligibility}
+                disabled={!localPatient?.id || isCheckingEligibility || localPatient?.patientStatus === 'MERGED'}
                 loading={isCheckingEligibility}
                 onClick={handleOpenEligibilityModal}
               >
@@ -872,6 +915,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
+                disabled={!!localPatient?.id && localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
@@ -879,6 +923,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
               >
                 <Translate>Clear</Translate>
               </MyButton>
@@ -901,10 +946,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <Translate>Quick Patient</Translate>
               </MyButton>
 
-              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                <Translate>Quick Appointment</Translate>
-              </MyButton>
 
+              <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
+                <Translate>Walk-in Patient</Translate>
+              </MyButton>
               <AdministrativeWarningsModal
                 localPatient={localPatient}
                 validationResult={validationResult}
@@ -951,6 +996,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         open={quickPatientModalOpen}
         setOpen={setQuickPatientModalOpen}
         setPatient={setLocalPatient}
+      />
+
+      <ViewPriceListModal
+        open={openPriceListModal}
+        setOpen={setOpenPriceListModal}
+        patient={localPatient}
       />
 
       <ScanDocumentModal
@@ -1127,6 +1178,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Form>
         }
       />
+      {patientInformationModal}
+      {patientLabelModal}
     </div>
   );
 };

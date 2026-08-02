@@ -13,8 +13,29 @@ import { notify } from '@/utils/uiReducerActions';
 import { CatalogCreateVM, CatalogUpdateVM } from '@/types/model-types-new';
 import { newCatalogCreateVM, newCatalogUpdateVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+
+
+const getApiErrorMessage = (err: any, fallback: string) => {
+  const data = err?.data;
+
+  if (typeof data === 'string') return data;
+
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+  if (data?.detail) return data.detail;
+
+  if (Array.isArray(data?.fieldErrors)) {
+    return data.fieldErrors
+      .map((x: any) => `${x.field ?? x.name}: ${x.message ?? x.defaultMessage}`)
+      .join(', ');
+  }
+
+  return fallback;
+};
+
+
 const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) => {
   const dispatch = useAppDispatch();
   const [catalogCreateVM, setCatalogCreateVM] = useState<CatalogCreateVM>({
@@ -23,13 +44,14 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
   const [catalogUpdateVM, setCatalogUpdateVM] = useState<CatalogUpdateVM>({
     ...newCatalogUpdateVM
   });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
-    {
-      facilityId: diagnosticsTestCatalogHeader?.id
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
+  const { data: departmentListResponse } =
+  useGetActiveDepartmentByFacilityListQuery(
+  {
+    facilityId: diagnosticsTestCatalogHeader?.id
         ? catalogUpdateVM.facilityId
         : catalogCreateVM.facilityId
-    },
+  },
     {
       skip: !(diagnosticsTestCatalogHeader?.id
         ? catalogUpdateVM.facilityId
@@ -57,79 +79,178 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
       });
   }, [diagnosticsTestCatalogHeader]);
 
-  // handle Save catalog
-  const handleSave = () => {
 
-    let messages = [];
-    const obj = !diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM;
-    const isEmpty = (val) => val === null || val === undefined || val === '';
-    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
-    if (
-      obj?.parallelCapacityValue === null ||
-      obj?.parallelCapacityValue === undefined ||
-      obj?.parallelCapacityValue < 1
-    ) {
-      messages.push(
-        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
-      );
-    }
-    if (obj?.appointable) {
-      if (isEmpty(obj?.defaultDurationMinutes) || obj?.defaultDurationMinutes <= 0) {
-        messages.push('Field Default Duration Minutes is required and should be greater than 0')
+    const handleSave = () => {
+      let messages: string[] = [];
+
+      const obj = !diagnosticsTestCatalogHeader?.id
+        ? catalogCreateVM
+        : catalogUpdateVM;
+
+      const isEmpty = (val: any) =>
+        val === null || val === undefined || val === '';
+
+      const isNotEmpty = (val: any) =>
+        val !== null && val !== undefined && val !== '';
+
+      // Required fields
+      const requiredFields: string[] = [];
+
+      if (isEmpty(obj?.type)) {
+        requiredFields.push('Type');
       }
-      if (isEmpty(obj?.defaultBufferBeforeMinutes) || obj?.defaultBufferBeforeMinutes < 0) {
-        messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+
+      if (isEmpty(obj?.facilityId)) {
+        requiredFields.push('Facility');
       }
-      if (isEmpty(obj?.defaultBufferAfterMinutes) || obj?.defaultBufferAfterMinutes < 0) {
-        messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+
+      if (isEmpty(obj?.departmentId)) {
+        requiredFields.push('Department');
       }
-    }
-    else {
-      if (isNotEmpty(obj?.defaultDurationMinutes) && obj?.defaultDurationMinutes <= 0) {
-        messages.push('Field Default Duration Minutes should be greater than 0')
+
+      if (isEmpty(obj?.name)) {
+        requiredFields.push('Catalog Name');
       }
-      if (isNotEmpty(obj?.defaultBufferBeforeMinutes) && obj?.defaultBufferBeforeMinutes < 0) {
-        messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+
+      if (isEmpty(obj?.description)) {
+        requiredFields.push('Description');
       }
-      if (isNotEmpty(obj?.defaultBufferAfterMinutes) && obj?.defaultBufferAfterMinutes < 0) {
-        messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+
+      if (requiredFields.length > 0) {
+        messages.push(
+          requiredFields.length === 1
+            ? `Field ${requiredFields[0]} is required`
+            : `Fields ${requiredFields.join(', ')} are required`
+        );
       }
-    }
-    if (messages.length > 0) {
-      dispatch(
-        notify({
-          msg: messages.join(', '),
-          sev: 'warning',
+
+      if (
+        obj?.parallelCapacityValue === null ||
+        obj?.parallelCapacityValue === undefined ||
+        obj?.parallelCapacityValue < 1
+      ) {
+        messages.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+
+      if (obj?.appointable) {
+        if (
+          isEmpty(obj?.defaultDurationMinutes) ||
+          obj?.defaultDurationMinutes <= 0
+        ) {
+          messages.push(
+            'Field Default Duration Minutes is required and should be greater than 0'
+          );
+        }
+
+        if (
+          isEmpty(obj?.defaultBufferBeforeMinutes) ||
+          obj?.defaultBufferBeforeMinutes < 0
+        ) {
+          messages.push(
+            'Field Default Buffer Before Minutes is required and should be greater than or equal to 0'
+          );
+        }
+
+        if (
+          isEmpty(obj?.defaultBufferAfterMinutes) ||
+          obj?.defaultBufferAfterMinutes < 0
+        ) {
+          messages.push(
+            'Field Default Buffer After Minutes is required and should be greater than or equal to 0'
+          );
+        }
+      } else {
+        if (
+          isNotEmpty(obj?.defaultDurationMinutes) &&
+          obj?.defaultDurationMinutes <= 0
+        ) {
+          messages.push(
+            'Field Default Duration Minutes should be greater than 0'
+          );
+        }
+
+        if (
+          isNotEmpty(obj?.defaultBufferBeforeMinutes) &&
+          obj?.defaultBufferBeforeMinutes < 0
+        ) {
+          messages.push(
+            'Field Default Buffer Before Minutes should be greater than or equal to 0'
+          );
+        }
+
+        if (
+          isNotEmpty(obj?.defaultBufferAfterMinutes) &&
+          obj?.defaultBufferAfterMinutes < 0
+        ) {
+          messages.push(
+            'Field Default Buffer After Minutes should be greater than or equal to 0'
+          );
+        }
+      }
+
+      if (messages.length > 0) {
+        dispatch(
+          notify({
+            msg: messages.join(', '),
+            sev: 'warning',
+          })
+        );
+        return;
+      }
+
+      if (!diagnosticsTestCatalogHeader?.id) {
+        addCatalog(catalogCreateVM)
+          .unwrap()
+          .then(() => {
+            setOpen(false);
+            setCatalogCreateVM({ ...newCatalogCreateVM });
+
+            dispatch(
+              notify({
+                msg: 'The Catalog has been added successfully',
+                sev: 'success',
+              })
+            );
+          })
+          .catch((err) => {
+            dispatch(
+              notify({
+                msg: getApiErrorMessage(err, 'Failed to add this Catalog'),
+                sev: 'warning',
+              })
+            );
+          });
+      } else {
+        updateCatalog({
+          id: diagnosticsTestCatalogHeader?.id,
+          body: catalogUpdateVM,
         })
-      );
+          .unwrap()
+          .then(() => {
+            setOpen(false);
 
-      return;
-    }
+            dispatch(
+              notify({
+                msg: 'The Catalog has been updated successfully',
+                sev: 'success',
+              })
+            );
+          })
+          .catch((err) => {
+            console.log(err);
 
+            dispatch(
+              notify({
+                msg: getApiErrorMessage(err, 'Failed to update this Catalog'),
+                sev: 'warning',
+              })
+            );
+          });
+      }
+    };
 
-    if (!diagnosticsTestCatalogHeader?.id) {
-      addCatalog(catalogCreateVM)
-        .unwrap()
-        .then(() => {
-          setOpen(false);
-          setCatalogCreateVM({ ...newCatalogCreateVM });
-          dispatch(notify({ msg: 'The Catalog has been added successfully', sev: 'success' }));
-        })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'warning' }));
-        });
-    } else {
-      updateCatalog({ id: diagnosticsTestCatalogHeader?.id, body: catalogUpdateVM })
-        .unwrap()
-        .then(() => {
-          setOpen(false);
-          dispatch(notify({ msg: 'The Catalog has been updated successfully', sev: 'success' }));
-        })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'warning' }));
-        });
-    }
-  };
 
   useEffect(() => {
     const appointable = !diagnosticsTestCatalogHeader?.id

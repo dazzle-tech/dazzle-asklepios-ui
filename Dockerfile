@@ -27,14 +27,17 @@ RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
 # Use Nginx to serve the application
 FROM nginx:alpine
 
-# Copy built assets from the previous stage
+RUN apk add --no-cache gettext
+
 COPY --from=build /app/assets /usr/share/nginx/html
 
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
+COPY config.template.js /usr/share/nginx/html/config.template.js
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

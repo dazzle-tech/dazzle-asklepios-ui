@@ -50,11 +50,13 @@
   font-family: 'Inter Regular';
   src: url('/src/fonts/Inter/static/Inter_18pt-Regular.ttf') format('truetype');
 }
+
 :root {
   --primary-color: #1976d2;
   --primary-blue: #1976d2;
   --font-family: 'Inter';
 }
+
 body {
   background: #ffffff;
   font-size: 0.9rem !important;
@@ -70,17 +72,21 @@ body {
 }
 
 
-.form-of-filters-set-up{display: flex;
-flex-direction: row;
-flex-wrap: wrap;
-box-sizing: border-box;
-gap: 1vw;}
+.form-of-filters-set-up {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  gap: 1vw;
+}
 
-.my-modal-responsive-form-handle{display: flex;
-flex-direction: row;
-flex-wrap: wrap;
-box-sizing: border-box;
-gap: 1vw;}
+.my-modal-responsive-form-handle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  gap: 1vw;
+}
 
 p,
 h1,
@@ -247,8 +253,8 @@ html.surveyjs-mode {
   border-radius: 5px;
 }
 
-.rs-form-inline > *,
-.rs-form-inline > .rs-btn {
+.rs-form-inline>*,
+.rs-form-inline>.rs-btn {
   margin-right: 10px;
   margin-bottom: 10px;
 }
@@ -261,7 +267,7 @@ html.surveyjs-mode {
   overflow: visible;
 }
 
-.rs-dropdown-item > .rs-icon {
+.rs-dropdown-item>.rs-icon {
   margin-right: 5px;
 }
 
@@ -296,13 +302,15 @@ aside {
   line-height: 20px;
 }
 
-.rs-tag-group > .rs-tag {
+.rs-tag-group>.rs-tag {
   margin-top: 0px !important;
 }
+
 //for tabs wrap
 .rs-nav-horizontal {
   white-space: wrap;
 }
+
 :root {
   --white: #e0e0e0;
   // for one health theme (don`t remove the commented color)
@@ -385,10 +393,11 @@ aside {
   --card-yellow: #ffc300;
   --card-gray: #adadad;
 
-  // for one health theme (we will remove it later)
---one-health-theme-hover: rgba(var(--primary-blue-rgb), 0.05);
---one-health-theme-header: rgba(var(--primary-blue-rgb), 0.18);
---one-health-theme-select: rgba(var(--primary-blue-rgb), 0.30);
+  --one-health-theme-hover: rgba(var(--primary-blue-rgb), 0.05);
+  --one-health-theme-header: rgba(var(--primary-blue-rgb), 0.18);
+  --one-health-theme-select: rgba(var(--primary-blue-rgb), 0.30);
+
+
 
 }
 
@@ -480,24 +489,30 @@ aside {
 .delete-icon {
   color: var(--primary-pink) !important;
 }
+
 input[disabled] {
   background: #f9fafb !important;
 }
+
 .page-title {
   display: flex;
 }
+
 .container-of-icons {
   display: flex;
   gap: 10px;
 }
+
 .icons-style {
   cursor: pointer;
 }
+
 .container-of-add-new-button {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
 }
+
 .rs-input-group-addon {
   width: 55px;
   text-align: center !important;
@@ -512,20 +527,21 @@ input[disabled] {
 .dark .rs-input-group.rs-input-group-inside .rs-input {
   background-color: var(--dark-black) !important;
 }
-.dark .rs-input-group.rs-input-group-inside input.rs-input ~ .rs-input-group-btn,
-.rs-input-group.rs-input-group-inside .rs-auto-complete ~ .rs-input-group-addon,
-.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-addon,
-.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn:not(.password-toggle-button) {
+
+.dark .rs-input-group.rs-input-group-inside input.rs-input~.rs-input-group-btn,
+.rs-input-group.rs-input-group-inside .rs-auto-complete~.rs-input-group-addon,
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper~.rs-input-group-addon,
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper~.rs-input-group-btn:not(.password-toggle-button) {
   background-color: var(--gray-dark) !important;
 }
 
 // Override for password toggle button to be transparent
-.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn.password-toggle-button,
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper~.rs-input-group-btn.password-toggle-button,
 .rs-input-group .rs-input-group-btn.password-toggle-button,
 .password-toggle-button {
   background-color: transparent !important;
   background: transparent !important;
-  
+
   &:hover,
   &:focus,
   &:active {
@@ -542,23 +558,29 @@ input[disabled] {
   textarea.rs-input {
     background-color: var(--dark-black) !important;
   }
+
   .react-tabs__tab {
     background-color: var(--black) !important;
   }
-  .rs-form-inline .rs-form-control-label{
+
+  .rs-form-inline .rs-form-control-label {
     color: var(--white) !important;
   }
 }
+
 // To style the Search Input inside the SelectPicker dropdown to match dark mode
 .rs-theme-dark {
   scrollbar-color: #606060 transparent !important; // for scroll backgroun on dark mode
+
   .rs-input-group.rs-input-group-inside .rs-input {
     background-color: var(--dark-black) !important;
   }
-  .rs-input-group input.rs-input ~ .rs-input-group-addon,
-  .rs-input-group .rs-form-control-wrapper ~ .rs-input-group-addon {
+
+  .rs-input-group input.rs-input~.rs-input-group-addon,
+  .rs-input-group .rs-form-control-wrapper~.rs-input-group-addon {
     background-color: var(--gray-dark) !important;
   }
+
   // .rs-nav-horizontal {
   //   background-color: var(--dark-black) !important;
   // }
@@ -572,7 +594,7 @@ input[disabled] {
   padding-left: 0 !important;
 }
 
- // for one health theme (we will remove it later)
+// for one health theme (we will remove it later)
 :root,
 .rs-theme-light,
 .rs-theme-dark {
@@ -586,17 +608,37 @@ input[disabled] {
 }
 
 // for one health theme (we will remove it later)
-.rs-dropdown-item:hover{
-  background-color: var(--one-health-theme-hover) !important;
-}
-// for one health theme (we will remove it later)
-.rs-dropdown-item.rs-dropdown-item-active
-// .light .rs-dropdown-item.rs-dropdown-item-active
-{
+.rs-dropdown-item:hover {
   background-color: var(--one-health-theme-hover) !important;
 }
 
 // for one health theme (we will remove it later)
-.rs-dropdown-item-active .rs-dropdown-item-content{
+.rs-dropdown-item.rs-dropdown-item-active // .light .rs-dropdown-item.rs-dropdown-item-active
+
+  {
+  background-color: var(--one-health-theme-hover) !important;
+}
+
+// for one health theme (we will remove it later)
+.rs-dropdown-item-active .rs-dropdown-item-content {
   color: var(--primary-blue) !important;
+}
+
+.rs-toggle-checked .rs-toggle-presentation {
+  background-color: var(--primary-blue) !important;
+}
+
+.rs-toggle-checked:hover .rs-toggle-presentation {
+  background-color: var(--primary-blue) !important;
+}
+
+.rs-toggle-presentation {
+  transition: background-color 0.2s ease;
+}
+.app-initial-loader {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

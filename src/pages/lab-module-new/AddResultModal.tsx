@@ -319,7 +319,7 @@ const AddResultModal = ({
       open={open}
       setOpen={setOpen}
       title="Add Results"
-      size="40vw"
+      size="50vw"
       hideActionBtn
       steps={[
         { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }

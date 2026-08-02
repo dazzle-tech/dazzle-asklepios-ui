@@ -4,7 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {Form, Row} from 'rsuite';
+import { Form, Row } from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
 import MyInput from '@/components/MyInput';
@@ -26,7 +26,9 @@ import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import ReviewResults from './ReviewResults';
+import PatientSearch from '@/components/PatientSearch';
 import './styles.less';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -49,11 +51,13 @@ const Lab = () => {
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
   const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
-
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
   const [activeKey2, setActiveKey2] = useState('1');
-
+  const [departmentFilter, setDepartmentFilter] = useState<any>({
+    fromDepartmentIdIn: null
+  });
   useEffect(() => {
     dispatch(setPageCode('Lab'));
     dispatch(setDivContent('Clinical Laboratory'));
@@ -65,6 +69,10 @@ const Lab = () => {
     fromDate: today,
     toDate: today
   });
+
+
+  const { data: departmentsList = [] } =
+    useGetAllDepartmentsWithoutPaginationQuery();
 
   const { data: samplesResponse, refetch: fecthSample } = useGetCollectedSamplesByOrderTestIdQuery(
     test?.id ? { orderTestId: test.id, page: 0, size: 20 } : skipToken
@@ -200,6 +208,69 @@ const Lab = () => {
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
+
+  const tablefilters = (<>
+              <Form fluid className="filter-form-lab-filters">
+                <MyInput
+                  width={"8vw"}
+                  placeholder="From Date"
+                  fieldType="date"
+                  fieldName="fromDate"
+                  record={dateFilter}
+                  setRecord={setDateFilter}
+                  showLabel={false}
+                />
+                <MyInput
+                  width={"8vw"}
+                  placeholder="To Date"
+                  fieldType="date"
+                  fieldName="toDate"
+                  record={dateFilter}
+                  setRecord={setDateFilter}
+                  showLabel={false}
+                />
+                <PatientSearch
+                  value={selectedPatient}
+                  onChange={setSelectedPatient}
+                  showLabel={false}
+                  width="22vw"
+                  containerMinWidth={250}
+                />
+                <MyInput
+                  width="12vw"
+                  placeholder="Department Name"
+                  fieldType="select"
+                  fieldName="fromDepartmentIdIn"
+                  record={departmentFilter}
+                  setRecord={setDepartmentFilter}
+                  selectData={departmentsList}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  showLabel={false}
+                  cleanable
+                />
+                <MyInput
+                  width={"8vw"}
+                  placeholder="Order ID"
+                  fieldType="text"
+                  fieldName="orderNumber"
+                  record={{ orderNumber: orderNumberFilter }}
+                  setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
+                  showLabel={false}
+                />
+
+              </Form>
+
+              {test.id && (
+                <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
+              )}
+              {test.id && (
+                <div>
+                  Number of Samples Collected: {samplesList.length}
+                </div>
+              )}
+    </>)
+    
   const innerTabsData = [
     {
       title: 'Tests',
@@ -214,24 +285,24 @@ const Lab = () => {
           loading={globalLoading}
           refetchAllLabData={refetchAllLabData}
           onTestsLoaded={(tests: any[]) => {
-  const selectedDate = new Date(dateFilter.fromDate);
+            const selectedDate = new Date(dateFilter.fromDate);
 
-  const selectedYear = selectedDate.getFullYear();
-  const selectedMonth = selectedDate.getMonth();
-  const selectedDay = selectedDate.getDate();
+            const selectedYear = selectedDate.getFullYear();
+            const selectedMonth = selectedDate.getMonth();
+            const selectedDay = selectedDate.getDate();
 
-  const filtered = (tests ?? []).filter(test => {
-    const createdDate = new Date(test.createdDate);
+            const filtered = (tests ?? []).filter(test => {
+              const createdDate = new Date(test.createdDate);
 
-    return (
-      createdDate.getFullYear() === selectedYear &&
-      createdDate.getMonth() === selectedMonth &&
-      createdDate.getDate() === selectedDay
-    );
-  });
+              return (
+                createdDate.getFullYear() === selectedYear &&
+                createdDate.getMonth() === selectedMonth &&
+                createdDate.getDate() === selectedDay
+              );
+            });
 
-  setVisibleTests(filtered);
-                                            }}
+            setVisibleTests(filtered);
+          }}
         />
       )
     },
@@ -291,48 +362,18 @@ const Lab = () => {
             <div dir={dir}>
               <div className="container">
                 <div className="left-boxs">
-                      <Orders
-                        ref={OrdersRef}
-                        order={order}
-                        setOrder={setOrder}
-                        dateFilter={dateFilter}
-                        loading={globalLoading}
-                        orderNumberFilter={orderNumberFilter}
-                      />
-                      <Form fluid className="filter-form-lab-filters">
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="From Date"
-                          fieldType="date"
-                          fieldName="fromDate"
-                          record={dateFilter}
-                          setRecord={setDateFilter}
-                          showLabel={false}
-                        />
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="To Date"
-                          fieldType="date"
-                          fieldName="toDate"
-                          record={dateFilter}
-                          setRecord={setDateFilter}
-                          showLabel={false}
-                        />
-                        <MyInput
-                          width={"8vw"}
-                          placeholder="Order ID"
-                          fieldType="text"
-                          fieldName="orderNumber"
-                          record={{ orderNumber: orderNumberFilter }}
-                          setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
-                          showLabel={false}
-                        />
-                      </Form>
+                    <Orders
+                      ref={OrdersRef}
+                      order={order}
+                      setOrder={setOrder}
+                      dateFilter={dateFilter}
+                      loading={globalLoading}
+                      orderNumberFilter={orderNumberFilter}
+                      selectedPatient={selectedPatient}
+                      departmentFilter={departmentFilter}
+                      filters={tablefilters}
+                    />
 
-                      {test.id && (
-                            <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
-                      )}
-                      {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
                   <MyTab
                     data={innerTabsData}
                     activeTab={activeKey2}
@@ -358,10 +399,10 @@ const Lab = () => {
         </>
       )
     },
-    {
-      title: 'Requested Tests',
-      content: <RequestedTest requestType="LABORATORY" />
-    },
+    // {
+    //   title: 'Requested Tests',
+    //   content: <RequestedTest requestType="LABORATORY" />
+    // },
     {
       title: 'Reviewed Results',
       content: (

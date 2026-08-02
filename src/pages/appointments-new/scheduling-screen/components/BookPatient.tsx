@@ -30,6 +30,7 @@ import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/enco
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { ShieldCheck, Check, X } from 'lucide-react';
 import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from '@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { useGetPrimaryDocumentByPatientQuery } from '@/services/patients/patientDocumentsService';
 
 type BookPatientProps = {
   open: boolean;
@@ -40,6 +41,23 @@ type BookPatientProps = {
   onBooked?: () => Promise<void> | void;
   /** When true, shows the same flow read-only (opened from View action on an existing appointment). */
   readOnly?: boolean;
+};
+
+const normalizeAppointmentStatusKey = (raw: unknown): string =>
+  String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+const isRebookableSlotStatus = (rawStatus: unknown): boolean => {
+  const status = normalizeAppointmentStatusKey(rawStatus);
+  return (
+    status === 'NEW' ||
+    status === 'RESCHEDULE' ||
+    status === 'RESCHEDULED' ||
+    status === 'CANCELLED' ||
+    status === 'CANCELED'
+  );
 };
 
 const BookPatient = ({
@@ -123,9 +141,10 @@ const BookPatient = ({
             appointmentData.encounterReason ??
             appointmentData.visitTypeLkey) === 'FOLLOW_UP'
             ? appointmentData.followUpEncounterId ??
-              appointmentData.previousEncounterId ??
-              prev.followUpEncounterId ??
-              null
+            appointmentData.followUpEncounter?.id ??
+            appointmentData.previousEncounterId ??
+            prev.followUpEncounterId ??
+            null
             : null
       }));
 
@@ -138,8 +157,13 @@ const BookPatient = ({
         ? appointmentData?.patient?.id ?? appointmentData?.patient?.key
         : appointmentData?.patient);
 
+    const slotStatus = normalizeAppointmentStatusKey(
+      appointmentData?.status ?? appointmentData?.appointmentStatus
+    );
     const hasPatientOnAppointment =
-      rawPatientOnAppointment != null && String(rawPatientOnAppointment) !== '';
+      !isRebookableSlotStatus(slotStatus) &&
+      rawPatientOnAppointment != null &&
+      String(rawPatientOnAppointment) !== '';
 
     const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
     const appointmentDefaultService = appointmentData?.defaultServiceId || null;
@@ -163,13 +187,18 @@ const BookPatient = ({
       followUpEncounterId:
         (appointmentService ?? prev.service) === 'FOLLOW_UP'
           ? appointmentData?.followUpEncounterId ??
-            appointmentData?.previousEncounterId ??
-            prev.followUpEncounterId ??
-            null
+          appointmentData?.previousEncounterId ??
+          prev.followUpEncounterId ??
+          null
           : null
     }));
 
     if (!hasPatientOnAppointment) {
+      setRecord(prev => ({
+        ...prev,
+        patientId: null
+      }));
+
       setSelectedPatient(null);
       setPatientAction('select');
       setQuickPatientModalOpen(false);
@@ -315,6 +344,7 @@ const BookPatient = ({
 
   const appointmentDetailsRecord = useMemo(
     () => ({
+
       facility: (facilityByIdResponse as any)?.name || '-',
       department:
         (departmentByIdResponse as any)?.name ||
@@ -330,16 +360,16 @@ const BookPatient = ({
           ? (resourceDepartmentById as any)?.name
           : isPractitionerResource
             ? (resourcePractitionerById as any)?.fullName ||
-              [
-                (resourcePractitionerById as any)?.firstName,
-                (resourcePractitionerById as any)?.lastName
-              ]
-                .filter(Boolean)
-                .join(' ')
+            [
+              (resourcePractitionerById as any)?.firstName,
+              (resourcePractitionerById as any)?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ')
             : isCatalogResource
               ? (resourceCatalogById as any)?.name
               : isDiagnosticTestResource
-                ? (resourceDiagnosticTestById as any)?.name
+                ? (resourceDiagnosticTestById as any)?.data?.name
                 : isRoomResource
                   ? (resourceRoomById as any)?.name || (resourceRoomById as any)?.roomName
                   : isServiceResource
@@ -485,6 +515,15 @@ const BookPatient = ({
   }, [open, readOnly, appointmentData, viewPatientById]);
 
   const bookingPatientId = Number(record?.patientId);
+
+
+  const {
+    data: primaryDocument
+  } = useGetPrimaryDocumentByPatientQuery(bookingPatientId, {
+    skip: !bookingPatientId
+  });
+
+
   const isFollowUpService = record?.service === 'FOLLOW_UP';
 
   useEffect(() => {
@@ -532,21 +571,26 @@ const BookPatient = ({
   }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
   useEffect(() => {
+    if (!open) return;
+
     const rows = prevList?.data ?? [];
 
-    if (!rows.length) return;
+    setAllPrevEncounters(previous => {
+      if (!rows.length) return previous;
 
-    setAllPrevEncounters(previousEncounters => {
-      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
-      const merged = [...previousEncounters];
+      const seen = new Set(previous.map((e: any) => e.id));
 
-      rows.forEach((encounter: any) => {
-        if (!seenIds.has(encounter.id)) merged.push(encounter);
+      const merged = [...previous];
+
+      rows.forEach((e: any) => {
+        if (!seen.has(e.id)) {
+          merged.push(e);
+        }
       });
 
       return merged;
     });
-  }, [prevList]);
+  }, [open, prevList?.data]);
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
@@ -637,7 +681,9 @@ const BookPatient = ({
     if (!open || !patientSidebarOpen) return;
 
     const compute = () => {
-      const dialog = document.querySelector('.book-patient-modal .rs-modal-dialog') as HTMLElement | null;
+      const dialog =
+        (document.querySelector('.rs-modal-dialog.book-patient-modal') as HTMLElement | null) ??
+        (document.querySelector('.book-patient-modal') as HTMLElement | null);
 
       if (!dialog) return;
 
@@ -1103,12 +1149,20 @@ const BookPatient = ({
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentTypeLkey || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {bookingPatientId
+                                ? formatEnumString(primaryDocument?.type || '-')
+                                : '-'}
+                            </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentNo || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {bookingPatientId
+                                ? primaryDocument?.number || '-'
+                                : '-'}
+                            </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
@@ -1312,46 +1366,6 @@ const BookPatient = ({
                             disabled={readOnly}
                           />
 
-                          <MyInput
-                            fieldType="select"
-                            fieldName="priority"
-                            fieldLabel="Priority"
-                            record={record}
-                            setRecord={setRecord}
-                            selectData={encounterPriorityEnum ?? []}
-                            selectDataLabel="label"
-                            selectDataValue="value"
-                            width="100%"
-                            searchable={false}
-                            required={!readOnly}
-                            disabled={readOnly}
-                          />
-
-                          <MyInput
-                            fieldType="select"
-                            fieldName="originType"
-                            fieldLabel="Origin Type"
-                            record={record}
-                            setRecord={setRecord}
-                            selectData={patOriginLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            width="100%"
-                            searchable={false}
-                            disabled={readOnly}
-                                    disableByField='isValid'
-
-                          />
-
-                          <MyInput
-                            fieldName="originName"
-                            fieldLabel="Origin Name"
-                            record={record}
-                            setRecord={setRecord}
-                            width="100%"
-                            disabled={readOnly}
-                          />
-
                           {record?.service === 'FOLLOW_UP' && (
                             <div style={{ gridColumn: '1 / -1' }}>
                               <MyInput
@@ -1379,6 +1393,48 @@ const BookPatient = ({
                               />
                             </div>
                           )}
+
+                          <MyInput
+                            fieldType="select"
+                            fieldName="priority"
+                            fieldLabel="Priority"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={encounterPriorityEnum ?? []}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            width="100%"
+                            searchable={false}
+                            required={!readOnly}
+                            disabled={readOnly}
+                          />
+
+                          <MyInput
+                            fieldType="select"
+                            fieldName="originType"
+                            fieldLabel="Origin Type"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={patOriginLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            width="100%"
+                            searchable={false}
+                            disabled={readOnly}
+                            disableByField='isValid'
+
+                          />
+
+                          <MyInput
+                            fieldName="originName"
+                            fieldLabel="Origin Name"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                            disabled={readOnly}
+                          />
+
+
                         </div>
                       </Panel>
                     }

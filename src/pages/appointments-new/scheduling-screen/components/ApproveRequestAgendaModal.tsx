@@ -75,7 +75,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
         const res = await searchAppointments({
           filter: {
             facility: Number(facilityId),
-            department: Number(departmentId),
+            departmentIds: departmentId != null ? [Number(departmentId)] : null,
             resourceType: null,
             resourceId: null,
             status: null,
@@ -164,7 +164,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
       title="Approve Appointment Request"
       size="65vw"
       bodyheight="75vh"
-      actionButtonLabel=""
+      actionButtonLabel="Save"
       content={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
