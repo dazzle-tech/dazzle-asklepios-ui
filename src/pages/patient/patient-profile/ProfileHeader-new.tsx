@@ -13,8 +13,6 @@ import {
 } from '@/services/patients/attachmentService';
 import {
   useLazyGetPatientInformationPdfQuery,
-  useLazyGetPatientLabelPdfQuery,
-  useSendPatientPasswordEmailMutation
 } from '@/services/patient/patientService';
 import {
   useGetInsurancesByPatientQuery,
@@ -117,6 +115,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setCchiInsurance,
   setOpenReferralRequestModal
 }) => {
+  const {
+    patientInformationMenuItem,
+    patientInformationModal
+  } = usePatientInformationReportPrint(localPatient?.id);
+  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+
+  const {  patientLabelMenuItem,
+    patientLabelModal}=usePatientLabelPrint(localPatient?.id); 
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const whisperRef = useRef<any>(null);
 
@@ -740,7 +746,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
 
  
-  const whisperRef = useRef<any>(null);
 
   useEffect(() => {
     if (quickPatientModalOpen || openScanDocumentModal) {
