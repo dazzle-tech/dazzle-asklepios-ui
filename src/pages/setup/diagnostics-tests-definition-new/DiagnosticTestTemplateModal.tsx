@@ -20,11 +20,11 @@ import {
 } from "@/services/setup/report-template/DiagnosticTestTemplate";
 import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
 import "./styles.less";
+import Translate from "@/components/Translate";
 
 interface DiagnosticTestTemplateModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-
   testId: number;
   initialData?: {
     id?: number;
@@ -181,11 +181,11 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
     }
   };
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -261,7 +261,7 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
                 overflow: "auto",
               }}
               editorState={editorState}
-              onEditorStateChange={readOnly ? () => {} : setEditorState}
+              onEditorStateChange={readOnly ? () => { } : setEditorState}
               toolbarHidden={readOnly}
               readOnly={readOnly}
               editorClassName="custom-editor"
