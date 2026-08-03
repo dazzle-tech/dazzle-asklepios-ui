@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-import { FaEye, FaPrint, FaRotate } from 'react-icons/fa6';
-import { MdCancel, MdOutlineMessage } from 'react-icons/md';
+import { FaRotate } from 'react-icons/fa6';
+import { MdCancel, MdOutlineMessage, MdOutlineForum } from 'react-icons/md';
 
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
 
@@ -14,13 +14,19 @@ type PreAuthorizationRowActionsProps = PreAuthorizationRowHandlers & {
 
 const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
   row,
-  onView,
   onRefreshFromWaseel,
   onCommunication,
+  onViewCommunications,
   onCancel
 }) => {
-  const canCancel = canCancelPreAuthorization(row);
+  const canCancel = row.canCancel ?? canCancelPreAuthorization(row);
   const hasApprovalRequest = !!row.approvalRequestId;
+  const canCommunicate =
+    row.canCommunicate === true ||
+    (!!row.searchCompleted && !row.isCancelled) ||
+    (!!row.approvalResponseId && !row.isCancelled);
+  const communicationCount = Number(row.communicationCount ?? 0);
+  const hasCommunications = communicationCount > 0;
 
   return (
     <div className="container-of-icons">
@@ -35,7 +41,9 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
             className="icons-style"
             size={20}
             fill="var(--primary-gray)"
-            onClick={() => onRefreshFromWaseel(row)}
+            onClick={() => {
+              if (hasApprovalRequest) onRefreshFromWaseel(row);
+            }}
             style={{
               cursor: hasApprovalRequest ? 'pointer' : 'not-allowed',
               opacity: hasApprovalRequest ? 1 : 0.35
@@ -48,19 +56,46 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
         placement="top"
         trigger="hover"
         container={() => document.body}
-        speaker={<Tooltip>Communication</Tooltip>}
+        speaker={<Tooltip>Send Communication</Tooltip>}
       >
         <span>
           <MdOutlineMessage
             className="icons-style"
             size={22}
             fill="var(--primary-gray)"
-            onClick={() => onCommunication(row)}
+            onClick={() => {
+              if (canCommunicate) onCommunication(row);
+            }}
             style={{
-              cursor: hasApprovalRequest ? 'pointer' : 'not-allowed',
-              opacity: hasApprovalRequest ? 1 : 0.35
+              cursor: canCommunicate ? 'pointer' : 'not-allowed',
+              opacity: canCommunicate ? 1 : 0.35
             }}
           />
+        </span>
+      </Whisper>
+
+      <Whisper
+        placement="top"
+        trigger="hover"
+        container={() => document.body}
+        speaker={<Tooltip>View Communications</Tooltip>}
+      >
+        <span className="action-icon-wrap">
+          <MdOutlineForum
+            className="icons-style"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={() => onViewCommunications(row)}
+            style={{
+              cursor: 'pointer',
+              opacity: hasCommunications ? 1 : 0.55
+            }}
+          />
+          {hasCommunications && (
+            <span className="action-icon-badge">
+              {communicationCount > 99 ? '99+' : communicationCount}
+            </span>
+          )}
         </span>
       </Whisper>
 

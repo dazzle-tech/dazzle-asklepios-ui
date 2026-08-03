@@ -34,6 +34,7 @@ import { buildInvoicePaymentReceipt } from '@/pages/billing-module/invoices/invo
 import PayInvoiceBalanceModal, {
   type InvoicePaymentCompletedContext
 } from './PayInvoiceBalanceModal';
+import InvoiceWaseelClaimSection from './InvoiceWaseelClaimSection';
 
 type InvoiceDetailPanelProps = {
   invoice: PatientFinancialInvoice | null;
@@ -122,6 +123,8 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   const outstandingBalance = Number(summary?.outstandingBalance ?? 0);
   const canPayOutstanding = outstandingBalance > 0 && invoice?.id != null;
   const isSettled = outstandingBalance <= 0;
+  const isInsuranceClaimInvoice =
+    String(invoice?.documentSubtype ?? '').toUpperCase() === 'INSURANCE_CLAIM';
 
   const serviceRows = useMemo(
     () => lineItems.map(item => ({ key: String(item.id), ...item })),
@@ -268,7 +271,9 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
             <FontAwesomeIcon icon={faFileInvoiceDollar} />
           </div>
           <div className="invoice-detail__hero-text">
-            <span className="invoice-detail__eyebrow">Patient invoice</span>
+            <span className="invoice-detail__eyebrow">
+              {isInsuranceClaimInvoice ? 'Insurance claim invoice' : 'Patient invoice'}
+            </span>
             <h2 className="invoice-detail__title">{invoice.documentNumber}</h2>
             <div className="invoice-detail__chips">
               <span className={`invoice-detail__chip invoice-detail__chip--status-${String(summary.status ?? '').toLowerCase()}`}>
@@ -291,6 +296,11 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                   </>
                 )}
               </span>
+              {invoice.claimReference ? (
+                <span className="invoice-detail__chip invoice-detail__chip--muted">
+                  Claim {invoice.claimReference}
+                </span>
+              ) : null}
               {invoice.encounterId != null ? (
                 <span className="invoice-detail__chip invoice-detail__chip--muted">
                   Visit #{invoice.encounterId}
@@ -392,6 +402,8 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
           </span>
         </div>
       </div>
+
+      {isInsuranceClaimInvoice ? <InvoiceWaseelClaimSection invoice={invoice} /> : null}
 
       <div className="invoice-detail__tabs" role="tablist">
         {tabs.map(tab => (

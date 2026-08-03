@@ -5110,6 +5110,34 @@ export interface EligibilityCheckResponse {
 
 // ------------------- Waseel Pre-Authorization -------------------
 
+export interface PreAuthorizationTrackingItemResponse {
+  id?: number | null;
+  sequence?: number | null;
+  itemType?: string | null;
+  itemCode?: string | null;
+  itemDescription?: string | null;
+  nonStandardCode?: string | null;
+  nonStandardDesc?: string | null;
+  isPackage?: boolean | null;
+  isMaternity?: boolean | null;
+  quantity?: number | string | null;
+  quantityCode?: string | null;
+  unitPrice?: number | string | null;
+  discount?: number | string | null;
+  factor?: number | string | null;
+  taxPercent?: number | string | null;
+  tax?: number | string | null;
+  patientSharePercent?: number | string | null;
+  patientShare?: number | string | null;
+  payerShare?: number | string | null;
+  net?: number | string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  waseelItemId?: number | null;
+  itemDecision?: string | null;
+  reasonCodes?: string | null;
+}
+
 export interface PreAuthorizationTrackingResponse {
   id?: number | null;
 
@@ -5170,13 +5198,47 @@ export interface PreAuthorizationTrackingResponse {
   cancelOutcome?: string | null;
   cancelMessage?: string | null;
 
+  searchCompleted?: boolean | null;
+  canCommunicate?: boolean | null;
+  canCancel?: boolean | null;
+  waseelClaimItemIds?: number[] | null;
+  items?: PreAuthorizationTrackingItemResponse[] | null;
+  communicationCount?: number | null;
+
   createdDate?: string | null; // Instant -> string (ISO)
   createdBy?: string | null;
   lastModifiedDate?: string | null; // Instant -> string (ISO)
   lastModifiedBy?: string | null;
 }
 
+export interface PreAuthorizationCommunicationPayloadHistory {
+  contentType?: 'TEXT' | 'ATTACHMENT' | 'TEXT_AND_ATTACHMENT' | string | null;
+  payloadValue?: string | null;
+  claimItemId?: number | null;
+  attachmentId?: number | null;
+  attachmentName?: string | null;
+  attachmentType?: string | null;
+  sizeBytes?: number | null;
+  isSentToWaseel?: boolean | null;
+  downloadUrl?: string | null;
+}
+
+export interface PreAuthorizationCommunicationHistoryResponse {
+  trackId?: number | null;
+  trackType?: string | null;
+  status?: string | null;
+  outcome?: string | null;
+  message?: string | null;
+  communicationId?: number | null;
+  transactionId?: number | null;
+  approvalResponseId?: number | null;
+  createdDate?: string | null;
+  createdBy?: string | null;
+  payloads?: PreAuthorizationCommunicationPayloadHistory[] | null;
+}
+
 export interface PreAuthorizationCommunicationRequest {
+  preAuthorizationId?: number;
   claimResponseId?: number;
   payloads?: {
     attachmentName?: string;
@@ -5185,6 +5247,7 @@ export interface PreAuthorizationCommunicationRequest {
     createdDate?: string;
     payloadAttachment?: string;
     payloadValue?: string;
+    attachmentId?: number;
   }[];
 }
 
@@ -6610,3 +6673,107 @@ export interface NotificationEventResponseVM {
   eventPayload?: Record<string, unknown> | null;
   createdDate?: string | Date | null;
 }
+
+export type ClaimStatus =
+  | 'DRAFT'
+  | 'SUBMITTING'
+  | 'SUBMITTED'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'FAILED';
+
+export interface ClaimTrackingItemResponse {
+  id?: number | null;
+  sequence?: number | null;
+  patientServiceProductId?: number | null;
+  financialDocumentItemId?: number | null;
+  billingChargeLineId?: number | null;
+  itemType?: string | null;
+  itemCode?: string | null;
+  itemDescription?: string | null;
+  invoiceNo?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  net?: number | null;
+  patientShare?: number | null;
+  payerShare?: number | null;
+}
+
+export interface ClaimTrackingResponse {
+  id?: number | null;
+  patientId?: number | null;
+  encounterId?: number | null;
+  financialDocumentId?: number | null;
+  preAuthorizationId?: number | null;
+  patientInsuranceId?: number | null;
+  uploadName?: string | null;
+  uploadId?: number | null;
+  provClaimNo?: string | null;
+  claimReference?: string | null;
+  preAuthRefNo?: string | null;
+  approvalResponseId?: number | null;
+  totalNet?: number | null;
+  status?: ClaimStatus | string | null;
+  outcome?: string | null;
+  message?: string | null;
+  submittedAt?: string | Date | null;
+  createdDate?: string | Date | null;
+  createdBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  canResubmit?: boolean | null;
+  canRefreshUpload?: boolean | null;
+  items?: ClaimTrackingItemResponse[] | null;
+}
+
+export interface ClaimSubmissionResponse {
+  id?: number | null;
+  encounterId?: number | null;
+  financialDocumentId?: number | null;
+  preAuthorizationId?: number | null;
+  uploadName?: string | null;
+  uploadId?: number | null;
+  provClaimNo?: string | null;
+  claimReference?: string | null;
+  preAuthRefNo?: string | null;
+  totalNet?: number | null;
+  status?: ClaimStatus | string | null;
+  outcome?: string | null;
+  message?: string | null;
+  submittedAt?: string | Date | null;
+}
+
+export interface WaseelClaimUploadResponse {
+  transcationLogId?: number | null;
+  message?: string | null;
+  uploadId?: number | null;
+  providerId?: number | null;
+  uploadName?: string | null;
+  uploadDate?: string | null;
+  noOfNotUploadedClaims?: number | null;
+  noOfUploadedClaims?: number | null;
+  totalAmtOfUploadedClaims?: number | null;
+  noOfAcceptedClaims?: number | null;
+  totalAmtOfAcceptedClaims?: number | null;
+  noOfNotAcceptedClaims?: number | null;
+  totalAmtOfNotAcceptedClaims?: number | null;
+  lastModifiedDate?: string | null;
+  ratioOfAccepted?: number | null;
+  ratioOfNotAccepted?: number | null;
+}
+
+export interface InsurancePayerReceivablesSummaryResponse {
+  payerId?: number | null;
+  payerName?: string | null;
+  currency?: string | null;
+  totalBilled?: number | null;
+  totalReceived?: number | null;
+  outstandingBalance?: number | null;
+  pendingClaims?: number | null;
+  paidClaims?: number | null;
+  partiallyPaidClaims?: number | null;
+  rejectedClaims?: number | null;
+  cancelledClaims?: number | null;
+  overallStatus?: string | null;
+}
+

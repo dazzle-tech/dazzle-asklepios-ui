@@ -779,10 +779,18 @@ export const MODULES: Module[] =
         {
           name: "Claims",
           code: "CLAIMS",
-          description: "",
-          icon: "FaMobileRetro",
+          description: "Insurance claims generated from finalized invoices",
+          icon: "FaFileInvoiceDollar",
           viewOrder: 2,
           navPath: "billing-claims",
+        },
+        {
+          name: "Insurance Receivables",
+          code: "INSURANCE_RECEIVABLES",
+          description: "Insurance payer receivables and claim payment progress",
+          icon: "FaMoneyBillTrendUp",
+          viewOrder: 3,
+          navPath: "insurance-receivables",
         },
         {
           name: "Price Lists",
@@ -819,7 +827,8 @@ export const MODULES: Module[] =
       viewOrder: 2,
       screens: [
         { name: "Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "waseel-pre-authorization-requests" },
-        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
+        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 2, navPath: "insurance-eligibility-requests" },
+        { name: "Claims", code: "CLAIMS", description: "Waseel insurance claim submissions", icon: "FaFileInvoiceDollar", viewOrder: 3, navPath: "billing-claims" },
       ],
     }
 

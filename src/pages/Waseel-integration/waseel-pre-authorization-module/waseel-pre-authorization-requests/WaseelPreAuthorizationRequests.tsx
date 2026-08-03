@@ -4,7 +4,8 @@ import {
   useGetPreAuthorizationTrackingQuery,
   useSearchPreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
-  useCommunicatePreAuthorizationMutation
+  useCommunicatePreAuthorizationMutation,
+  useUploadPreAuthorizationAttachmentMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 
 import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
@@ -21,7 +22,10 @@ import PreAuthorizationFilters from './PreAuthorizationFilters';
 import PreAuthorizationExportButtons from './PreAuthorizationExportButtons';
 import PreAuthorizationRequestsTable from './PreAuthorizationRequestsTable';
 import PreAuthorizationCancelModal from './PreAuthorizationCancelModal';
-import PreAuthorizationCommunicationModal from './PreAuthorizationCommunicationModal';
+import PreAuthorizationCommunicationModal, {
+  type CommunicationAttachmentFile
+} from './PreAuthorizationCommunicationModal';
+import PreAuthorizationCommunicationsDrawer from './PreAuthorizationCommunicationsDrawer';
 import { getPreAuthorizationColumns } from './preAuthorizationColumns';
 import { initialFilters, type Filters } from './types';
 import { filterPreAuthorizationRows } from './utils';
@@ -42,7 +46,10 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [cancelReason, setCancelReason] = useState('');
 
   const [openCommunicationModal, setOpenCommunicationModal] = useState(false);
+  const [openCommunicationsDrawer, setOpenCommunicationsDrawer] = useState(false);
   const [communicationMessage, setCommunicationMessage] = useState('');
+  const [communicationAttachment, setCommunicationAttachment] =
+    useState<CommunicationAttachmentFile | null>(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -65,6 +72,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
   const [searchFromWaseel] = useSearchPreAuthorizationMutation();
   const [cancelPreAuthorization, { isLoading: isCancelling }] = useCancelPreAuthorizationMutation();
+  const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
 
@@ -181,6 +189,41 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     setOpenPreview(true);
   }, []);
 
+  const openCommunication = useCallback((row: PreAuthorizationTrackingResponse) => {
+    setSelectedRow(row);
+    setCommunicationMessage('');
+    setCommunicationAttachment(null);
+    setOpenCommunicationModal(true);
+  }, []);
+
+  const openCommunicationsHistory = useCallback((row: PreAuthorizationTrackingResponse) => {
+    setSelectedRow(row);
+    setOpenCommunicationsDrawer(true);
+  }, []);
+
+  const openCancel = useCallback((row: PreAuthorizationTrackingResponse) => {
+    setSelectedRow(row);
+    setCancelReason('');
+    setOpenCancelModal(true);
+  }, []);
+
+  // Keep modal selection in sync after Search/refetch so waseelClaimItemIds are available.
+  useEffect(() => {
+    if (selectedRow?.id == null) return;
+    const fresh = preAuthorizationRows.find(row => row.id === selectedRow.id);
+    if (!fresh) return;
+
+    const sameClaimIds =
+      JSON.stringify(fresh.waseelClaimItemIds ?? []) ===
+      JSON.stringify(selectedRow.waseelClaimItemIds ?? []);
+    const sameResponseId = fresh.approvalResponseId === selectedRow.approvalResponseId;
+    const sameSearch = fresh.searchCompleted === selectedRow.searchCompleted;
+
+    if (!sameClaimIds || !sameResponseId || !sameSearch) {
+      setSelectedRow(fresh);
+    }
+  }, [preAuthorizationRows, selectedRow]);
+
   const handleRefreshFromWaseel = useCallback(
     async (row: PreAuthorizationTrackingResponse) => {
       if (!row.approvalRequestId) {
@@ -189,27 +232,18 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       }
 
       try {
-        await searchFromWaseel({ requestId: row.approvalRequestId }).unwrap();
+        await searchFromWaseel({
+          preAuthorizationId: row.id != null ? Number(row.id) : undefined,
+          requestId: row.approvalRequestId
+        }).unwrap();
         dispatch(notify({ msg: 'Pre-authorization refreshed successfully', sev: 'success' }));
-        refetch();
+        await refetch();
       } catch {
         dispatch(notify({ msg: 'Failed to refresh pre-authorization', sev: 'error' }));
       }
     },
     [dispatch, refetch, searchFromWaseel]
   );
-
-  const openCancel = useCallback((row: PreAuthorizationTrackingResponse) => {
-    setSelectedRow(row);
-    setCancelReason('');
-    setOpenCancelModal(true);
-  }, []);
-
-  const openCommunication = useCallback((row: PreAuthorizationTrackingResponse) => {
-    setSelectedRow(row);
-    setCommunicationMessage('');
-    setOpenCommunicationModal(true);
-  }, []);
 
   const submitCancel = async () => {
     if (!selectedRow) {
@@ -256,31 +290,69 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       return;
     }
 
+    if (!selectedRow.id) {
+      dispatch(notify({ msg: 'No preAuthorizationId found for this pre-authorization', sev: 'error' }));
+      return;
+    }
+
     if (!selectedRow.approvalResponseId) {
       dispatch(notify({ msg: 'No approvalResponseId found for this pre-authorization', sev: 'error' }));
       return;
     }
 
+    const message = communicationMessage.trim();
+    const hasAttachment = !!communicationAttachment?.file;
+
+    if (!message && !hasAttachment) {
+      dispatch(notify({ msg: 'Please enter a message or attach a file', sev: 'error' }));
+      return;
+    }
+
     try {
-      const body = {
+      // Prefer stored Waseel item ids from tracking; backend will Search/resolve if omitted.
+      const claimItemId =
+        Array.isArray(selectedRow.waseelClaimItemIds) && selectedRow.waseelClaimItemIds.length > 0
+          ? Number(selectedRow.waseelClaimItemIds[0])
+          : undefined;
+
+      let attachmentId: number | undefined;
+
+      // Same method as patient attachments: multipart upload -> Spaces + DB row.
+      if (hasAttachment && communicationAttachment) {
+        const uploaded = await uploadPreAuthorizationAttachment({
+          preAuthorizationId: Number(selectedRow.id),
+          file: communicationAttachment.file,
+          type: 'COMMUNICATION',
+          details: message || undefined,
+          source: 'COMMUNICATION',
+          sourceId: claimItemId
+        }).unwrap();
+
+        attachmentId = uploaded?.id != null ? Number(uploaded.id) : undefined;
+        if (!attachmentId) {
+          dispatch(notify({ msg: 'Attachment uploaded but no id returned', sev: 'error' }));
+          return;
+        }
+      }
+
+      const body: PreAuthorizationCommunicationRequest = {
+        preAuthorizationId: Number(selectedRow.id),
         claimResponseId: Number(selectedRow.approvalResponseId),
         payloads: [
           {
-            attachmentName: '',
-            attachmentType: '',
-            claimItemId: 1,
-            createdDate: '',
-            payloadAttachment: '',
-            payloadValue: communicationMessage
+            ...(claimItemId != null ? { claimItemId } : {}),
+            ...(message ? { payloadValue: message } : {}),
+            ...(attachmentId != null ? { attachmentId } : {})
           }
         ]
-      } as unknown as PreAuthorizationCommunicationRequest;
+      };
 
       await communicatePreAuthorization(body).unwrap();
 
       dispatch(notify({ msg: 'Communication sent successfully', sev: 'success' }));
       setOpenCommunicationModal(false);
       setCommunicationMessage('');
+      setCommunicationAttachment(null);
       refetch();
     } catch {
       dispatch(notify({ msg: 'Failed to send communication', sev: 'error' }));
@@ -294,12 +366,21 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
           onView: openView,
           onRefreshFromWaseel: handleRefreshFromWaseel,
           onCommunication: openCommunication,
+          onViewCommunications: openCommunicationsHistory,
           onCancel: openCancel
         },
         encounterMap,
         patientMap
       }),
-    [openView, handleRefreshFromWaseel, openCommunication, openCancel, encounterMap, patientMap]
+    [
+      openView,
+      handleRefreshFromWaseel,
+      openCommunication,
+      openCommunicationsHistory,
+      openCancel,
+      encounterMap,
+      patientMap
+    ]
   );
 
   const isSelected = (row: PreAuthorizationTrackingResponse) =>
@@ -353,10 +434,22 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       <PreAuthorizationCommunicationModal
         open={openCommunicationModal}
         communicationMessage={communicationMessage}
+        attachment={communicationAttachment}
         isSubmitting={isCommunicating}
-        onClose={() => setOpenCommunicationModal(false)}
+        onClose={() => {
+          setOpenCommunicationModal(false);
+          setCommunicationMessage('');
+          setCommunicationAttachment(null);
+        }}
         onMessageChange={setCommunicationMessage}
+        onAttachmentChange={setCommunicationAttachment}
         onSubmit={submitCommunication}
+      />
+
+      <PreAuthorizationCommunicationsDrawer
+        open={openCommunicationsDrawer}
+        row={selectedRow}
+        onClose={() => setOpenCommunicationsDrawer(false)}
       />
     </div>
   );

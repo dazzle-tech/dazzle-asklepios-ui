@@ -55,6 +55,19 @@ const PreAuthorizationExportButtons: React.FC<Props> = ({
           ? formatDateWithoutSeconds(encounter.createdDate)
           : '-',
 
+        'Item Code': (row.items ?? []).map(i => i.itemCode).filter(Boolean).join(', ') || '-',
+        'Item Name':
+          (row.items ?? [])
+            .map(i => i.itemDescription ?? i.nonStandardDesc)
+            .filter(Boolean)
+            .join(', ') || '-',
+        'Item Type': (row.items ?? []).map(i => i.itemType).filter(Boolean).join(', ') || '-',
+        'Item Decision':
+          (row.items ?? []).map(i => i.itemDecision).filter(Boolean).join(', ') || '-',
+        'Item Net': (row.items ?? []).map(i => i.net).filter(v => v != null).join(', ') || '-',
+        'Waseel Item ID':
+          (row.items ?? []).map(i => i.waseelItemId).filter(Boolean).join(', ') || '-',
+
         'Insurance ID': row.patientInsuranceId ?? '-',
         'Eligibility Response ID': row.eligibilityResponseId ?? '-',
         'Date Ordered': row.dateOrdered ?? '-',

@@ -60,5 +60,6 @@ export type PreAuthorizationRowHandlers = {
   onView: (row: PreAuthorizationTrackingResponse) => void;
   onRefreshFromWaseel: (row: PreAuthorizationTrackingResponse) => void;
   onCommunication: (row: PreAuthorizationTrackingResponse) => void;
+  onViewCommunications: (row: PreAuthorizationTrackingResponse) => void;
   onCancel: (row: PreAuthorizationTrackingResponse) => void;
 };

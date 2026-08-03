@@ -233,6 +233,8 @@ import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncou
 import { cchiApi } from './services/waseel-integration/cchiService';
 import { eligibilityApi } from './services/waseel-integration/eligibilityService';
 import { preAuthorizationApi } from './services/waseel-integration/preAuthorizationService';
+import { claimApi } from './services/waseel-integration/claimService';
+import { insuranceReceivablesApi } from './services/billing/insuranceReceivablesService';
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
@@ -601,6 +603,8 @@ export const store = configureStore({
     [cchiApi.reducerPath]: cchiApi.reducer,
     [eligibilityApi.reducerPath]: eligibilityApi.reducer,
     [preAuthorizationApi.reducerPath]: preAuthorizationApi.reducer,
+    [claimApi.reducerPath]: claimApi.reducer,
+    [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
     [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
@@ -820,6 +824,8 @@ export const store = configureStore({
         cchiApi.middleware,
         eligibilityApi.middleware,
         preAuthorizationApi.middleware,
+        claimApi.middleware,
+        insuranceReceivablesApi.middleware,
         PayorPlanCoverageClassService.middleware,
         waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,

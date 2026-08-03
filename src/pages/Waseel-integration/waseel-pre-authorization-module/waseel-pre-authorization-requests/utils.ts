@@ -1,5 +1,8 @@
 import type { Filters } from './types';
-import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
+import type {
+  PreAuthorizationTrackingItemResponse,
+  PreAuthorizationTrackingResponse
+} from '@/types/model-types-new';
 
 export const getStatusColor = (status?: string | null) => {
   const normalized = String(status ?? '').toUpperCase();
@@ -14,6 +17,30 @@ export const getStatusColor = (status?: string | null) => {
 
 const contains = (value: unknown, search: unknown) =>
   String(value ?? '').toLowerCase().includes(String(search ?? '').toLowerCase());
+
+export const getPreAuthItems = (
+  row: PreAuthorizationTrackingResponse
+): PreAuthorizationTrackingItemResponse[] =>
+  Array.isArray(row.items) ? row.items : [];
+
+export const joinItemField = (
+  row: PreAuthorizationTrackingResponse,
+  picker: (item: PreAuthorizationTrackingItemResponse) => unknown,
+  fallback = '-'
+) => {
+  const values = getPreAuthItems(row)
+    .map(picker)
+    .map(value => String(value ?? '').trim())
+    .filter(Boolean);
+
+  return values.length ? values.join(', ') : fallback;
+};
+
+export const formatMoney = (value: unknown) => {
+  if (value == null || value === '') return '-';
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toLocaleString() : String(value);
+};
 
 export const filterPreAuthorizationRows = (
   rows: PreAuthorizationTrackingResponse[],

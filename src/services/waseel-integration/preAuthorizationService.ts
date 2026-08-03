@@ -4,11 +4,12 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   EligibilityCheckResponse,
   PreAuthorizationCancelRequest,
+  PreAuthorizationCommunicationHistoryResponse,
   PreAuthorizationCommunicationRequest,
   PreAuthorizationTrackingResponse
 } from '@/types/model-types-new';
 
-export type { PreAuthorizationTrackingResponse };
+export type { PreAuthorizationTrackingResponse, PreAuthorizationCommunicationHistoryResponse };
 
 type PagedParams = {
   page: number;
@@ -77,19 +78,86 @@ export const preAuthorizationApi = createApi({
       ]
     }),
 
+    getPreAuthorizationCommunications: builder.query<
+      PreAuthorizationCommunicationHistoryResponse[],
+      number
+    >({
+      query: preAuthorizationId => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/communications`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, id) => [
+        { type: 'PreAuthorizationTracking', id: `communications-${id}` }
+      ]
+    }),
+
     searchPreAuthorization: builder.mutation<
       unknown,
-      { preAuthorizationId: number; requestId: number }
+      { preAuthorizationId?: number; requestId: number }
     >({
       query: ({ preAuthorizationId, requestId }) => ({
         url: '/api/patient/internal/waseel/pre-authorizations/search',
         method: 'GET',
-        params: { preAuthorizationId, requestId }
+        params: {
+          ...(preAuthorizationId != null ? { preAuthorizationId } : {}),
+          requestId
+        }
       }),
       invalidatesTags: ['PreAuthorizationTracking'],
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    uploadPreAuthorizationAttachment: builder.mutation<
+      {
+        id: number;
+        filename?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+        downloadUrl?: string;
+      },
+      {
+        preAuthorizationId: number;
+        file: File;
+        type?: string;
+        details?: string;
+        source?: string;
+        sourceId?: number;
+      }
+    >({
+      query: ({ preAuthorizationId, file, type, details, source, sourceId }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const params: Record<string, string | number> = {};
+        if (type?.trim()) params.type = type.trim();
+        if (details?.trim()) params.details = details.trim();
+        if (source?.trim()) params.source = source.trim();
+        if (sourceId != null) params.sourceId = sourceId;
+
+        return {
+          url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/attachments`,
+          method: 'POST',
+          params,
+          body: formData
+        };
+      },
+      invalidatesTags: ['PreAuthorizationTracking'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    downloadPreAuthorizationAttachment: builder.mutation<
+      Blob,
+      { id: number; mimeType?: string | null }
+    >({
+      query: ({ id }) => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/attachments/${id}/file`,
+        method: 'GET',
+        responseHandler: (response: Response) => response.blob()
+      })
     }),
 
     communicatePreAuthorization: builder.mutation<
@@ -140,7 +208,11 @@ export const preAuthorizationApi = createApi({
 export const {
   useGetPreAuthorizationTrackingQuery,
   useGetPreAuthorizationTrackingByIdQuery,
+  useGetPreAuthorizationCommunicationsQuery,
+  useLazyGetPreAuthorizationCommunicationsQuery,
   useSearchPreAuthorizationMutation,
+  useUploadPreAuthorizationAttachmentMutation,
+  useDownloadPreAuthorizationAttachmentMutation,
   useCommunicatePreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
   useCheckEncounterEligibilityMutation

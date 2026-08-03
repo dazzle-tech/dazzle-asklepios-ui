@@ -320,6 +320,101 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
             }
           />
         )}
+
+        {Array.isArray(preAuth?.items) && preAuth.items.length > 0 && (
+          <SectionContainer
+            title="Pre-Authorization Items"
+            content={
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {preAuth.items.map((item: any, index: number) => (
+                  <Form fluid key={item?.id ?? `${item?.sequence ?? index}-${item?.itemCode ?? index}`}>
+                    <Row gutter={16}>
+                      <Col md={4}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Sequence"
+                          record={{ sequence: item?.sequence ?? index + 1 }}
+                          fieldName="sequence"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Code"
+                          record={{ itemCode: item?.itemCode ?? '-' }}
+                          fieldName="itemCode"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={8}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Name"
+                          record={{
+                            itemDescription:
+                              item?.itemDescription ?? item?.nonStandardDesc ?? '-'
+                          }}
+                          fieldName="itemDescription"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Type"
+                          record={{ itemType: item?.itemType ?? '-' }}
+                          fieldName="itemType"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Decision"
+                          record={{ itemDecision: item?.itemDecision ?? '-' }}
+                          fieldName="itemDecision"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Quantity"
+                          record={{
+                            quantity: [item?.quantity, item?.quantityCode]
+                              .filter(v => v != null && v !== '')
+                              .join(' ') || '-'
+                          }}
+                          fieldName="quantity"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Net"
+                          record={{ net: item?.net ?? '-' }}
+                          fieldName="net"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Waseel Item ID"
+                          record={{ waseelItemId: item?.waseelItemId ?? '-' }}
+                          fieldName="waseelItemId"
+                          disabled
+                        />
+                      </Col>
+                    </Row>
+                  </Form>
+                ))}
+              </div>
+            }
+          />
+        )}
       </div>
     </Panel>
   );

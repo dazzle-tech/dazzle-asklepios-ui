@@ -192,6 +192,9 @@ const CallOverlay = lazy (() => import ( './components/Overlay/CallOverlay'));
 const AvailabilityTemplatePageNew = lazy (() => import ( './pages/appointments-new/availability-template-new'));
 const ErrorDepartmentTypePage = lazy (() => import ( './pages/authentication/error-department-type'));
 const Claimscreen = lazy (() => import ( './pages/billing-module/billingClaims/Claims'));
+const InsuranceReceivablesScreen = lazy(
+  () => import('./pages/billing-module/insuranceReceivables/InsuranceReceivables')
+);
 const PriceLists = lazy (() => import ( './pages/billing-module/priceList/PriceLists'));
 const Pediatric = lazy (() => import ( './pages/encounter/encounter-component/pediatric'));
 const UccMedicationOrder = lazy (() => import ( './pages/encounter/encounter-component/ucc-medication-order'));
@@ -279,14 +282,13 @@ function ParentPermissionGuard() {
   const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
     useLazyGetDepartmentByIdQuery();
 
-  const matchedModule = MODULES.find((m: any) =>
-    (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
-  );
-
-  const matchedScreen = matchedModule?.screens?.find((s: any) => norm(s.navPath) === cleanPath);
-
-  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
-  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
+  const matchedCandidates = useMemo(() => {
+    return MODULES.flatMap((module: any) =>
+      (module.screens ?? [])
+        .filter((screen: any) => norm(screen.navPath) === cleanPath)
+        .map((screen: any) => ({ module, screen }))
+    );
+  }, [cleanPath]);
 
   const allowedCodes = useMemo(
     () =>
@@ -295,6 +297,29 @@ function ParentPermissionGuard() {
       ),
     [authSlice.menu]
   );
+
+  const permittedCandidates = useMemo(() => {
+    return matchedCandidates.filter(({ screen }) => {
+      const code = screen?.code;
+      if (!code) return true;
+      return allowedCodes.has(String(code).toUpperCase());
+    });
+  }, [matchedCandidates, allowedCodes]);
+
+  // Prefer a permitted module that does not require a department type (e.g. Waseel Integration),
+  // otherwise fall back to the first permitted match.
+  const selectedMatch =
+    permittedCandidates.find(
+      ({ module }) => !(module?.departmentTypes && module.departmentTypes.length > 0)
+    ) ??
+    permittedCandidates[0] ??
+    matchedCandidates[0];
+
+  const matchedModule = selectedMatch?.module;
+  const matchedScreen = selectedMatch?.screen;
+
+  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
+  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
 
   useEffect(() => {
     if (!requiresDepartmentTypeValidation) return;
@@ -310,12 +335,8 @@ function ParentPermissionGuard() {
 
   const requiredCode = matchedScreen.code;
 
-  if (requiredCode) {
-    const hasPermission = allowedCodes.has(String(requiredCode).toUpperCase());
-
-    if (!hasPermission) {
-      return <Navigate to="/error-403" replace state={{ from: path }} />;
-    }
+  if (requiredCode && permittedCandidates.length === 0) {
+    return <Navigate to="/error-403" replace state={{ from: path }} />;
   }
 
   if (!requiresDepartmentTypeValidation) {
@@ -843,6 +864,10 @@ const App = () => {
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
               <Route path="billing-claims" element={<Claimscreen />} />
+              <Route
+                path="insurance-receivables"
+                element={<InsuranceReceivablesScreen />}
+              />
               <Route
                 path="insurance-eligibility-requests"
                 element={<InsuranceEligibilityRequests />}
