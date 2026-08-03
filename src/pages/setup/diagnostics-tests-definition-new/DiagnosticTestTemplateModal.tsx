@@ -20,6 +20,7 @@ import {
 } from "@/services/setup/report-template/DiagnosticTestTemplate";
 import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
 import "./styles.less";
+import Translate from "@/components/Translate";
 
 interface DiagnosticTestTemplateModalProps {
   open: boolean;
