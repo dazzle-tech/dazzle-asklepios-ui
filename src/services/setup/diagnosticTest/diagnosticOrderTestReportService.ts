@@ -20,7 +20,23 @@ type PagedResult<T> = {
   totalCount: number;
   links?: LinkMap;
 };
+export interface PacsPatientDTO {
+  id: string;
+  firstName: string;
+  secondName: string;
+  lastName: string;
+}
 
+export interface PacsStudyDTO {
+  study: string;
+  studyDescription: string;
+  studyDate: string;
+  modality: string;
+  accessionNumber: string;
+  link: string;
+  expiresAt: string;
+  patient: PacsPatientDTO;
+}
 export const diagnosticOrderTestReportService = createApi({
   reducerPath: "diagnosticOrderTestReportApi",
   baseQuery: BaseQuery,
@@ -161,6 +177,15 @@ export const diagnosticOrderTestReportService = createApi({
       }),
       invalidatesTags: ["RadiologyImage", "RadiologyReport"],
     }),
+    getStudyImageLinkByReportId: builder.query<PacsStudyDTO[], number>({
+  query: reportId => ({
+    url: `/api/patient/radiology/reports/${reportId}/image-links`,
+    method: 'GET'
+  }),
+  providesTags: (result, error, reportId) => [
+    { type: 'RadiologyImage', id: reportId }
+  ]
+}),
   }),
 });
 
@@ -181,4 +206,6 @@ export const {
   useSecondApproveRadiologyReportMutation,
   useGetRadiologyImageStatusLogQuery,
   useLazyGetRadiologyImageStatusLogQuery,
+  useGetStudyImageLinkByReportIdQuery,
+  useLazyGetStudyImageLinkByReportIdQuery,
 } = diagnosticOrderTestReportService;
