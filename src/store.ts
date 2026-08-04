@@ -159,6 +159,7 @@ import { clinicalSummaryService } from './services/ai-services/clinicalSummarySe
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
+import { qualityDischargeReportService } from './services/ai-services/qualityDischargeReportService';
 import { patientProblemService } from './services/patients/patientProblemService';
 import { familyHistoryService } from './services/patients/familyHistoryService';
 import { hospitalizationService } from './services/patients/hospitalizationsService';
@@ -514,6 +515,7 @@ export const store = configureStore({
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
     [dischargeReportService.reducerPath]: dischargeReportService.reducer,
+    [qualityDischargeReportService.reducerPath]: qualityDischargeReportService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
     [progressNoteService.reducerPath]: progressNoteService.reducer,
     [patientProcedureService.reducerPath]: patientProcedureService.reducer,
@@ -722,6 +724,7 @@ export const store = configureStore({
         clinicalRecommendationsService.middleware,
         medicationTestOrdersValidationService.middleware,
         dischargeReportService.middleware,
+        qualityDischargeReportService.middleware,
         patientProblemService.middleware,
         familyHistoryService.middleware,
         hospitalizationService.middleware,
