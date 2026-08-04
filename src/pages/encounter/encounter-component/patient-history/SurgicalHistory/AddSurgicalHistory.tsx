@@ -90,17 +90,18 @@ const SURGICAL_HISTORY_ERROR_MAP: Record<string, string> = {
 
 type SurgicalHistoryForm = Omit<
   SurgicalHistory,
-  'dateOfSurgery' | 'adverseReactionsToAnesthesia'
+  'dateOfSurgery' | 'adverseReactionsToAnesthesia' | 'complications'
 > & {
   dateOfSurgery: Date | string | number | null;
   adverseReactionsToAnesthesia: string[];
+  complications: string[];
 };
 
 const emptySurgicalHistoryForm: SurgicalHistoryForm = {
   surgery: '',
   facility: '',
   anesthesiaType: null,
-  complications: null,
+  complications: [],
   implantsOrDevicesDescription: '',
   hasImplantsOrDevices: false,
   patientId: null,
@@ -155,7 +156,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         ...stripUndefined(initialData),
         patientId: Number(patient?.id),
         dateOfSurgery: toDate(initialData.dateOfSurgery),
-        adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
+        adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia),
+        complications: toStringArray(initialData.complications)
       });
       setOpenImplants({ open: initialData.hasImplantsOrDevices ?? false });
     } else {
@@ -212,7 +214,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       facility: formData.facility?.trim() || '',
       anesthesiaType: formData.anesthesiaType || null,
       dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
-      complications: formData.complications || null,
+      complications: formData.complications?.length ? formData.complications.join(',') : null,
       adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia?.length
         ? formData.adverseReactionsToAnesthesia.join(',')
         : null,
@@ -293,10 +295,10 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'14vw'}
+        width={'28vw'}
         column
         fieldLabel="Complications"
-        fieldType="select"
+        fieldType="checkPicker"
         fieldName="complications"
         selectData={complicationsLov?.object ?? []}
          selectDataLabel="lovDisplayVale"
@@ -305,6 +307,29 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
+        renderValue={() => ''}
+      />
+
+      <MyInput
+        width={'28vw'}
+        column
+        fieldLabel="Complications Details"
+        fieldType="textarea"
+        fieldName="complicationsDetails"
+        record={{
+          ...formData,
+          complicationsDetails: (formData.complications || [])
+            .map(selectedKey => {
+              const item = (complicationsLov?.object ?? []).find(
+                lov => lov.key === selectedKey
+              );
+              return item?.lovDisplayVale || selectedKey;
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => {}}
+        disabled
       />
 
       <MyInput
