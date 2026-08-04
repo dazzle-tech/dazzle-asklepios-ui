@@ -50,7 +50,10 @@ type PatientBasicInformationResponseVM = {
   dateOfBirth: string;
   sexAtBirth: string;
 };
-
+type UpdatePatientConditionsRequest = {
+  id: number;
+  patientConditions: string;
+};
 export const newPatientService = createApi({
   reducerPath: 'patientsApi',
   baseQuery: BaseQuery,
@@ -367,6 +370,19 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+    updatePatientConditions: builder.mutation<
+  any,
+  UpdatePatientConditionsRequest
+>({
+  query: ({ id, patientConditions }) => ({
+    url: `/api/patient/${id}/conditions`,
+    method: 'PUT',
+    body: {
+      patientConditions
+    }
+  }),
+  invalidatesTags: ['Patient']
+}),
   })
 });
 
@@ -409,6 +425,7 @@ export const {
   useLazyGetPatientLabelPdfQuery,
   useGetFacilityPatientsQuery,
   useLazyGetFacilityPatientsQuery,
-  useLazyGetPatientInformationPdfQuery
+  useLazyGetPatientInformationPdfQuery,
+  useUpdatePatientConditionsMutation
 
 } = newPatientService;

@@ -15,7 +15,7 @@ import {
 } from '@/services/patients/patientProblemService';
 
 import {
-  useUpdatePatientMutation,
+  useUpdatePatientConditionsMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
 
@@ -94,7 +94,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-  const [updatePatient] = useUpdatePatientMutation();
+  const [updatePatientConditions] = useUpdatePatientConditionsMutation();
   const [getProblems] = useLazyGetPatientProblemsQuery();
   const [getPatient] = useLazyGetPatientByIdQuery();
 
@@ -172,15 +172,11 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       ).join(',');
 
       console.log('FINAL CONDITIONS TO SAVE ON PATIENT', conditions);
-
-      await updatePatient({
+        console.log("patient id", patient.id);
+      await updatePatientConditions({
         id: patient.id,
-        data: {
-          ...patient,
-          patientConditions: conditions
-        }
+        patientConditions: conditions
       }).unwrap();
-
       const fresh = await getPatient(
         {
           id: patient.id,
