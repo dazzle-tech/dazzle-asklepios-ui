@@ -6699,6 +6699,12 @@ export interface ClaimTrackingItemResponse {
   payerShare?: number | null;
 }
 
+export interface ClaimValidationError {
+  code?: string | null;
+  message?: string | null;
+  section?: string | null;
+}
+
 export interface ClaimTrackingResponse {
   id?: number | null;
   patientId?: number | null;
@@ -6724,6 +6730,8 @@ export interface ClaimTrackingResponse {
   canResubmit?: boolean | null;
   canRefreshUpload?: boolean | null;
   items?: ClaimTrackingItemResponse[] | null;
+  validationErrors?: ClaimValidationError[] | null;
+  statusDescription?: string | null;
 }
 
 export interface ClaimSubmissionResponse {

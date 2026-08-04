@@ -1,330 +1,166 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Form, Panel, Row, Table } from 'rsuite';
+import React, { useMemo } from 'react';
+import { Table } from 'rsuite';
 
-import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import SectionContainer from '@/components/SectionsoContainer';
 import type { ClaimTrackingResponse } from '@/types/model-types-new';
 import { formatDateWithoutSeconds } from '@/utils';
 
 import { formatMoney, getClaimItems, getStatusColor } from './utils';
+import ClaimErrorsPanel from './ClaimErrorsPanel';
 
 type ClaimPreviewProps = {
-  open: boolean;
-  claim: ClaimTrackingResponse | null;
+  claim: ClaimTrackingResponse;
   patient?: any;
   encounter?: any;
   onClose: () => void;
 };
 
-const ClaimPreview: React.FC<ClaimPreviewProps> = ({
-  open,
-  claim,
-  patient,
-  encounter,
-  onClose
-}) => {
-  const [previewData, setPreviewData] = useState<Record<string, any>>({});
+type FieldProps = {
+  label: string;
+  value: React.ReactNode;
+  wide?: boolean;
+  mono?: boolean;
+  msg?: boolean;
+};
 
-  useEffect(() => {
-    if (!claim) return;
+const Field: React.FC<FieldProps> = ({ label, value, wide, mono, msg }) => (
+  <div className={`bc-field${wide ? ' bc-field--wide' : ''}`}>
+    <span className="bc-field__label">{label}</span>
+    <span
+      className={`bc-field__value${mono ? ' bc-field__value--mono' : ''}${
+        msg ? ' bc-field__value--msg' : ''
+      }`}
+    >
+      {value ?? '-'}
+    </span>
+  </div>
+);
 
-    const firstName = String(patient?.firstName ?? '').trim();
-    const secondName = String(patient?.secondName ?? '').trim();
-    const thirdName = String(patient?.thirdName ?? '').trim();
-    const lastName = String(patient?.lastName ?? '').trim();
-    const patientName =
-      [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ') || '-';
+type BlockProps = {
+  title: string;
+  children: React.ReactNode;
+};
 
-    setPreviewData({
-      claimReference: claim.claimReference ?? '-',
-      provClaimNo: claim.provClaimNo ?? '-',
-      uploadName: claim.uploadName ?? '-',
-      uploadId: claim.uploadId ?? '-',
-      financialDocumentId: claim.financialDocumentId ?? '-',
-      preAuthorizationId: claim.preAuthorizationId ?? '-',
-      preAuthRefNo: claim.preAuthRefNo ?? '-',
-      approvalResponseId: claim.approvalResponseId ?? '-',
-      encounterNo: encounter?.encounterNumber ?? claim.encounterId ?? '-',
-      patientName,
-      mrn: patient?.medicalRecordNumber ?? '-',
-      totalNet: formatMoney(claim.totalNet),
-      outcome: claim.outcome ?? '-',
-      message: claim.message ?? '-',
-      status: claim.status ?? '-',
-      submittedAt: claim.submittedAt
-        ? formatDateWithoutSeconds(claim.submittedAt)
-        : '-',
-      createdDate: claim.createdDate
-        ? formatDateWithoutSeconds(claim.createdDate)
-        : '-'
-    });
-  }, [claim, patient, encounter]);
+const Block: React.FC<BlockProps> = ({ title, children }) => (
+  <section className="bc-block">
+    <h3 className="bc-block__title">{title}</h3>
+    <div className="bc-fields">{children}</div>
+  </section>
+);
 
-  const items = useMemo(() => (claim ? getClaimItems(claim) : []), [claim]);
+const ClaimPreview: React.FC<ClaimPreviewProps> = ({ claim, patient, encounter, onClose }) => {
+  const patientName = useMemo(() => {
+    if (!patient) return '-';
+    const parts = [
+      patient?.firstName,
+      patient?.secondName,
+      patient?.thirdName,
+      patient?.lastName
+    ]
+      .map((p: string) => String(p ?? '').trim())
+      .filter(Boolean);
+    return parts.join(' ') || '-';
+  }, [patient]);
 
-  if (!open || !claim) return null;
+  const items = useMemo(() => getClaimItems(claim), [claim]);
+  const encounterNo = encounter?.encounterNumber ?? claim.encounterId ?? '-';
+  const title = claim.claimReference || claim.provClaimNo || `Claim #${claim.id}`;
 
   return (
-    <Panel
-      bordered
-      className="claims-preview-panel"
-      header={
-        <div className="claims-preview-header">
-          <div>
-            <div className="claims-preview-eyebrow">Insurance Claim</div>
-            <div className="claims-preview-title">
-              {claim.claimReference || claim.provClaimNo || `Claim #${claim.id}`}
-            </div>
+    <aside className="bc-drawer" role="complementary" aria-label="Claim preview">
+      <div className="bc-drawer__head">
+        <div>
+          <div className="bc-drawer__eyebrow">Insurance Claim</div>
+          <div className="bc-drawer__title">{title}</div>
+          <div className="bc-drawer__status-inline">
+            <MyBadgeStatus contant={String(claim.status ?? '-')} color={getStatusColor(claim.status)} />
           </div>
-          <button className="claims-preview-close" onClick={onClose} type="button">
-            ✕
-          </button>
         </div>
-      }
-    >
-      <div className="claims-preview-body">
-        <div className="claims-status-banner">
-          <span className="claims-status-label">Status</span>
-          <MyBadgeStatus
-            contant={String(claim.status ?? '-')}
-            color={getStatusColor(claim.status)}
+        <button type="button" className="bc-drawer__close" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <ClaimErrorsPanel
+        errors={claim.validationErrors}
+        status={claim.status}
+        outcome={claim.outcome}
+        statusDescription={claim.statusDescription ?? claim.message}
+        compact
+      />
+
+      <div className="bc-drawer__body">
+        <Block title="Claim Information">
+          <Field label="Claim Reference" value={claim.claimReference} mono />
+          <Field label="Provider Claim No" value={claim.provClaimNo} mono />
+          <Field label="Total Net" value={formatMoney(claim.totalNet)} />
+          <Field label="Upload Name" value={claim.uploadName} />
+          <Field label="Upload ID" value={claim.uploadId} mono />
+          <Field label="Invoice Document ID" value={claim.financialDocumentId} mono />
+        </Block>
+
+        <Block title="Patient & Encounter">
+          <Field label="Patient" value={patientName} />
+          <Field label="MRN" value={patient?.medicalRecordNumber} mono />
+          <Field label="Encounter" value={encounterNo} />
+        </Block>
+
+        <Block title="Authorization Link">
+          <Field label="Pre-Auth ID" value={claim.preAuthorizationId} mono />
+          <Field label="Pre-Auth Ref No" value={claim.preAuthRefNo} mono />
+          <Field label="Approval Response ID" value={claim.approvalResponseId} mono />
+        </Block>
+
+        <Block title="Submission Details">
+          <Field label="Outcome" value={claim.outcome} />
+          <Field
+            label="Submitted At"
+            value={claim.submittedAt ? formatDateWithoutSeconds(claim.submittedAt) : '-'}
           />
-        </div>
+          <Field
+            label="Created"
+            value={claim.createdDate ? formatDateWithoutSeconds(claim.createdDate) : '-'}
+          />
+          <Field label="Message" value={claim.message} wide msg />
+        </Block>
 
-        <SectionContainer
-          title="Claim Information"
-          content={
-            <Form fluid>
-              <Row gutter={16}>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Claim Reference"
-                    record={previewData}
-                    fieldName="claimReference"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Provider Claim No"
-                    record={previewData}
-                    fieldName="provClaimNo"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Total Net"
-                    record={previewData}
-                    fieldName="totalNet"
-                    disabled
-                  />
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Upload Name"
-                    record={previewData}
-                    fieldName="uploadName"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Upload ID"
-                    record={previewData}
-                    fieldName="uploadId"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Invoice Document ID"
-                    record={previewData}
-                    fieldName="financialDocumentId"
-                    disabled
-                  />
-                </Col>
-              </Row>
-            </Form>
-          }
-        />
-
-        <SectionContainer
-          title="Patient & Encounter"
-          content={
-            <Form fluid>
-              <Row gutter={16}>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Patient"
-                    record={previewData}
-                    fieldName="patientName"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="MRN"
-                    record={previewData}
-                    fieldName="mrn"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Encounter"
-                    record={previewData}
-                    fieldName="encounterNo"
-                    disabled
-                  />
-                </Col>
-              </Row>
-            </Form>
-          }
-        />
-
-        <SectionContainer
-          title="Authorization Link"
-          content={
-            <Form fluid>
-              <Row gutter={16}>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Pre-Auth ID"
-                    record={previewData}
-                    fieldName="preAuthorizationId"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Pre-Auth Ref No"
-                    record={previewData}
-                    fieldName="preAuthRefNo"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Approval Response ID"
-                    record={previewData}
-                    fieldName="approvalResponseId"
-                    disabled
-                  />
-                </Col>
-              </Row>
-            </Form>
-          }
-        />
-
-        <SectionContainer
-          title="Submission Details"
-          content={
-            <Form fluid>
-              <Row gutter={16}>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Outcome"
-                    record={previewData}
-                    fieldName="outcome"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Submitted At"
-                    record={previewData}
-                    fieldName="submittedAt"
-                    disabled
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="Created"
-                    record={previewData}
-                    fieldName="createdDate"
-                    disabled
-                  />
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col md={24}>
-                  <MyInput
-                    fieldType="textarea"
-                    fieldLabel="Message"
-                    record={previewData}
-                    fieldName="message"
-                    disabled
-                  />
-                </Col>
-              </Row>
-            </Form>
-          }
-        />
-
-        <SectionContainer
-          title="Claim Items"
-          content={
-            items.length === 0 ? (
-              <div className="claims-empty-items">No claim items available.</div>
-            ) : (
-              <Table data={items} autoHeight rowHeight={46} headerHeight={42}>
-                <Table.Column width={70} align="center">
+        <section className="bc-block">
+          <h3 className="bc-block__title">Claim Items</h3>
+          {items.length === 0 ? (
+            <div className="bc-empty">No claim items available.</div>
+          ) : (
+            <div className="bc-items-table">
+              <Table data={items} autoHeight rowHeight={42} headerHeight={36}>
+                <Table.Column width={50} align="center">
                   <Table.HeaderCell>Seq</Table.HeaderCell>
                   <Table.Cell dataKey="sequence" />
                 </Table.Column>
-                <Table.Column width={110}>
+                <Table.Column width={90}>
                   <Table.HeaderCell>Type</Table.HeaderCell>
                   <Table.Cell dataKey="itemType" />
                 </Table.Column>
-                <Table.Column width={130}>
+                <Table.Column width={100}>
                   <Table.HeaderCell>Code</Table.HeaderCell>
                   <Table.Cell dataKey="itemCode" />
                 </Table.Column>
-                <Table.Column flexGrow={2}>
+                <Table.Column flexGrow={1} minWidth={100}>
                   <Table.HeaderCell>Description</Table.HeaderCell>
                   <Table.Cell dataKey="itemDescription" />
                 </Table.Column>
-                <Table.Column width={120}>
-                  <Table.HeaderCell>Invoice</Table.HeaderCell>
-                  <Table.Cell dataKey="invoiceNo" />
-                </Table.Column>
-                <Table.Column width={100} align="right">
+                <Table.Column width={80} align="right">
                   <Table.HeaderCell>Net</Table.HeaderCell>
-                  <Table.Cell>
-                    {(rowData: any) => formatMoney(rowData.net)}
-                  </Table.Cell>
+                  <Table.Cell>{(row: any) => formatMoney(row.net)}</Table.Cell>
                 </Table.Column>
-                <Table.Column width={110} align="right">
-                  <Table.HeaderCell>Payer Share</Table.HeaderCell>
-                  <Table.Cell>
-                    {(rowData: any) => formatMoney(rowData.payerShare)}
-                  </Table.Cell>
+                <Table.Column width={90} align="right">
+                  <Table.HeaderCell>Payer</Table.HeaderCell>
+                  <Table.Cell>{(row: any) => formatMoney(row.payerShare)}</Table.Cell>
                 </Table.Column>
               </Table>
-            )
-          }
-        />
+            </div>
+          )}
+        </section>
       </div>
-    </Panel>
+    </aside>
   );
 };
 

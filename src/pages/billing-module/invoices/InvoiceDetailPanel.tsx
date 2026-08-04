@@ -35,6 +35,13 @@ import PayInvoiceBalanceModal, {
   type InvoicePaymentCompletedContext
 } from './PayInvoiceBalanceModal';
 import InvoiceWaseelClaimSection from './InvoiceWaseelClaimSection';
+import {
+  canCollectPatientPaymentOnInvoice,
+  invoiceBalanceChipLabel,
+  invoiceLineStatusLabel,
+  invoiceOutstandingLabel,
+  isInsuranceClaimInvoice
+} from './invoiceDisplayUtils';
 
 type InvoiceDetailPanelProps = {
   invoice: PatientFinancialInvoice | null;
@@ -65,18 +72,8 @@ const formatShortDate = (value?: string | null) => {
   return String(value).substring(0, 10);
 };
 
-const lineStatusLabel = (status?: string) => {
-  switch (String(status ?? '').toUpperCase()) {
-    case 'PAID':
-      return 'Paid';
-    case 'PARTIALLY_PAID':
-      return 'Partial';
-    case 'PENDING':
-      return 'Unpaid';
-    default:
-      return status ?? '-';
-  }
-};
+const lineStatusLabel = (status?: string, documentSubtype?: string | null) =>
+  invoiceLineStatusLabel(status, documentSubtype);
 
 const formatAdjustmentLabel = (
   type?: string | null,
@@ -121,10 +118,13 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
 
   const resolvedCurrency = summary?.currency ?? invoice?.currency ?? currency;
   const outstandingBalance = Number(summary?.outstandingBalance ?? 0);
-  const canPayOutstanding = outstandingBalance > 0 && invoice?.id != null;
+  const isInsuranceClaimInvoiceFlag = isInsuranceClaimInvoice(invoice?.documentSubtype);
+  const canPayOutstanding = canCollectPatientPaymentOnInvoice(
+    outstandingBalance,
+    invoice?.id,
+    invoice?.documentSubtype
+  );
   const isSettled = outstandingBalance <= 0;
-  const isInsuranceClaimInvoice =
-    String(invoice?.documentSubtype ?? '').toUpperCase() === 'INSURANCE_CLAIM';
 
   const serviceRows = useMemo(
     () => lineItems.map(item => ({ key: String(item.id), ...item })),
@@ -292,7 +292,8 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                   </>
                 ) : (
                   <>
-                    <FontAwesomeIcon icon={faCircleExclamation} /> Balance due
+                    <FontAwesomeIcon icon={faCircleExclamation} />{' '}
+                    {invoiceBalanceChipLabel(false, invoice?.documentSubtype)}
                   </>
                 )}
               </span>
@@ -384,7 +385,9 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
             isSettled ? ' invoice-detail__metric--settled' : ' invoice-detail__metric--due'
           }`}
         >
-          <span className="invoice-detail__metric-label">Outstanding</span>
+          <span className="invoice-detail__metric-label">
+            {invoiceOutstandingLabel(invoice?.documentSubtype)}
+          </span>
           <span className="invoice-detail__metric-value">
             {formatMoney(summary.outstandingBalance, resolvedCurrency)}
           </span>
@@ -403,7 +406,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
         </div>
       </div>
 
-      {isInsuranceClaimInvoice ? <InvoiceWaseelClaimSection invoice={invoice} /> : null}
+      {isInsuranceClaimInvoiceFlag ? <InvoiceWaseelClaimSection invoice={invoice} /> : null}
 
       <div className="invoice-detail__tabs" role="tablist">
         {tabs.map(tab => (
@@ -510,7 +513,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                     <span
                       className={`invoice-detail__line-status invoice-detail__line-status--${String(row.status ?? '').toLowerCase()}`}
                     >
-                      {lineStatusLabel(row.status)}
+                      {lineStatusLabel(row.status, invoice?.documentSubtype)}
                     </span>
                   )
                 }

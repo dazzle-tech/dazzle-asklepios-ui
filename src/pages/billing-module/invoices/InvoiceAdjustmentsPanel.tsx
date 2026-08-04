@@ -14,6 +14,7 @@ import {
   useSyncInvoicePaymentsMutation
 } from '@/services/billing/financialDocumentAdjustmentService';
 import PayInvoiceBalanceModal from './PayInvoiceBalanceModal';
+import { canCollectPatientPaymentOnInvoice, invoiceOutstandingLabel } from './invoiceDisplayUtils';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
@@ -201,7 +202,11 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
   );
 
   const outstandingBalance = Number(summary?.outstandingBalance ?? 0);
-  const canPayOutstanding = outstandingBalance > 0 && invoiceId != null;
+  const canPayOutstanding = canCollectPatientPaymentOnInvoice(
+    outstandingBalance,
+    invoiceId,
+    summary?.documentSubtype
+  );
 
   const handleSyncPayments = async () => {
     if (invoiceId == null) return;
@@ -341,7 +346,7 @@ const InvoiceAdjustmentsPanel: React.FC<InvoiceAdjustmentsPanelProps> = ({
           <Text>{formatMoney(summary.totalPaid, resolvedCurrency)}</Text>
         </div>
         <div>
-          <Text muted>Outstanding</Text>
+          <Text muted>{invoiceOutstandingLabel(summary.documentSubtype)}</Text>
           <Text weight="bold">
             {formatMoney(summary.outstandingBalance, resolvedCurrency)}
           </Text>

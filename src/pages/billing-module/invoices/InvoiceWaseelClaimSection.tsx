@@ -12,6 +12,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import {
   useGetClaimByInvoiceQuery,
+  useRefreshClaimStatusMutation,
   useRefreshClaimUploadSummaryMutation,
   useSubmitClaimForInvoiceMutation
 } from '@/services/waseel-integration/claimService';
@@ -20,6 +21,7 @@ import type { WaseelClaimUploadResponse } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import ClaimUploadSummaryModal from '@/pages/billing-module/billingClaims/ClaimUploadSummaryModal';
+import ClaimErrorsPanel from '@/pages/billing-module/billingClaims/ClaimErrorsPanel';
 import { getStatusColor } from '@/pages/billing-module/billingClaims/utils';
 
 type InvoiceWaseelClaimSectionProps = {
@@ -42,6 +44,7 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
   const [submitClaim, { isLoading: submitting }] = useSubmitClaimForInvoiceMutation();
   const [refreshUploadSummary, { isLoading: refreshingSummary }] =
     useRefreshClaimUploadSummaryMutation();
+  const [refreshClaimStatus, { isLoading: refreshingStatus }] = useRefreshClaimStatusMutation();
 
   const claimStatus = String(claim?.status ?? '').toUpperCase();
   const canSubmit =
@@ -86,10 +89,35 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
       const summary = await refreshUploadSummary(claim.uploadId).unwrap();
       setUploadSummary(summary);
       setOpenUploadSummary(true);
+      if (claim.id) {
+        await refreshClaimStatus(claim.id).unwrap();
+      } else {
+        refetchClaim();
+      }
     } catch (error: any) {
       dispatch(
         notify({
           msg: error?.data?.detail || error?.data?.message || 'Failed to load upload summary',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleRefreshStatus = async () => {
+    if (!claim?.id) {
+      refetchClaim();
+      return;
+    }
+
+    try {
+      await refreshClaimStatus(claim.id).unwrap();
+      refetchClaim();
+      dispatch(notify({ msg: 'Claim status refreshed from Waseel', sev: 'success' }));
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.detail || error?.data?.message || 'Failed to refresh claim status',
           sev: 'error'
         })
       );
@@ -142,9 +170,18 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
             <strong>{claim?.outcome ?? '-'}</strong>
           </div>
           <div className="invoice-detail__waseel-claim-field invoice-detail__waseel-claim-field--wide">
-            <span>Message</span>
-            <strong>{claim?.message ?? 'No Waseel response yet.'}</strong>
+            <span>Status description</span>
+            <strong>{claim?.statusDescription ?? claim?.message ?? 'No Waseel response yet.'}</strong>
           </div>
+        </div>
+
+        <div className="invoice-detail__waseel-claim-errors">
+          <ClaimErrorsPanel
+            errors={claim?.validationErrors}
+            status={claim?.status}
+            outcome={claim?.outcome}
+            statusDescription={claim?.statusDescription ?? claim?.message}
+          />
         </div>
 
         <div className="invoice-detail__waseel-claim-actions">
@@ -167,7 +204,7 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
             <FontAwesomeIcon icon={faRotate} /> Upload summary
           </MyButton>
 
-          <MyButton appearance="subtle" onClick={() => refetchClaim()} disabled={loadingClaim}>
+          <MyButton appearance="subtle" onClick={handleRefreshStatus} disabled={loadingClaim || refreshingStatus}>
             <FontAwesomeIcon icon={faCloudArrowUp} /> Refresh status
           </MyButton>
         </div>

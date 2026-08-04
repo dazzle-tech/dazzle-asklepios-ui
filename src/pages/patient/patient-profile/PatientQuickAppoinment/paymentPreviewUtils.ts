@@ -252,7 +252,19 @@ export const computePreviewBillingTotals = (
   selectedRows: PreviewServiceRow[],
   isInsurance: boolean
 ): PreviewBillingTotals => {
-  if (hasCalculatedSummary(summary)) {
+  const hasInsurancePreviewPricing =
+    isInsurance &&
+    selectedRows.some(
+      row =>
+        !row.isExempted &&
+        row.previewNetAmount != null
+    );
+
+  if (
+    hasCalculatedSummary(summary) &&
+    !hasInsurancePreviewPricing &&
+    !isInsurance
+  ) {
     const outstandingAmount =
       resolvePatientOutstandingAmount(summary);
 
@@ -341,7 +353,15 @@ export const buildPreviewChargeLines = (
   currency: string,
   isInsurance: boolean
 ): EncounterBillingItemSummary[] => {
-  if ((summary.items ?? []).length > 0) {
+  const hasInsurancePreviewPricing =
+    isInsurance &&
+    selectedRows.some(
+      row =>
+        !row.isExempted &&
+        row.previewNetAmount != null
+    );
+
+  if ((summary.items ?? []).length > 0 && !hasInsurancePreviewPricing) {
     return summary.items;
   }
 

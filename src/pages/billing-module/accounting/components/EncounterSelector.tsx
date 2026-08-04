@@ -10,6 +10,7 @@ import {
   formatEncounterTreatmentLabel,
   formatMoney
 } from '../utils/billingAccountingUtils';
+import { shouldShowEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 
 type EncounterSelectorProps = {
   encounters: PatientEncounter[];
@@ -68,9 +69,11 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
               <span>{formatBillingEnum(encounter.encounterType)}</span>
               <span>{formatBillingTimestamp(encounter.encounterDate?.toString())}</span>
               <Tag size="sm">{formatEncounterLifecycleLabel(encounter)}</Tag>
-              <Tag size="sm" color="blue">
-                {formatEncounterTreatmentLabel(encounter)}
-              </Tag>
+              {shouldShowEncounterTreatmentStatus(encounter) && (
+                <Tag size="sm" color="blue">
+                  {formatEncounterTreatmentLabel(encounter)}
+                </Tag>
+              )}
               {isActive && (
                 <Tag
                   size="sm"

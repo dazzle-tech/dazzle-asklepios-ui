@@ -56,7 +56,7 @@ export const facilityService = createApi({
         if (Array.isArray(response)) {
           return response;
         }
-        return response?.data ?? response?.content ?? [];
+        return response?.value ?? response?.data ?? response?.content ?? [];
       },
       providesTags: ['Facilities']
     })

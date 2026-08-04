@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Panel } from 'rsuite';
+import { FaArrowsRotate } from 'react-icons/fa6';
 
 import MyTable from '@/components/MyTable';
 import {
   useGetClaimTrackingQuery,
+  useRefreshClaimStatusMutation,
   useRefreshClaimUploadSummaryMutation,
   useSubmitClaimForInvoiceMutation
 } from '@/services/waseel-integration/claimService';
@@ -43,12 +44,7 @@ const ClaimsScreen: React.FC = () => {
     dispatch(setDivContent('Claims'));
   }, [dispatch]);
 
-  const {
-    data,
-    refetch,
-    isLoading,
-    isFetching
-  } = useGetClaimTrackingQuery({
+  const { data, refetch, isLoading, isFetching } = useGetClaimTrackingQuery({
     page,
     size: rowsPerPage,
     sort: 'id,desc'
@@ -56,6 +52,7 @@ const ClaimsScreen: React.FC = () => {
 
   const [submitClaim] = useSubmitClaimForInvoiceMutation();
   const [refreshUploadSummary] = useRefreshClaimUploadSummaryMutation();
+  const [refreshClaimStatus] = useRefreshClaimStatusMutation();
 
   const [getEncountersByIds, { data: encountersData }] = useLazyGetEncountersByIdsQuery();
   const patientBulkIdsRef = useRef<string[]>([]);
@@ -131,12 +128,7 @@ const ClaimsScreen: React.FC = () => {
   }, [data, filteredRows.length]);
 
   const statusSummary = useMemo(() => {
-    const counts = {
-      submitted: 0,
-      accepted: 0,
-      failed: 0,
-      rejected: 0
-    };
+    const counts = { submitted: 0, accepted: 0, failed: 0, rejected: 0 };
     claimRows.forEach(row => {
       const status = String(row.status ?? '').toUpperCase();
       if (status === 'SUBMITTED') counts.submitted += 1;
@@ -152,23 +144,32 @@ const ClaimsScreen: React.FC = () => {
     setOpenPreview(true);
   }, []);
 
+  const closePreview = useCallback(() => {
+    setOpenPreview(false);
+    setSelectedRow(null);
+  }, []);
+
   const handleResubmit = useCallback(
     async (row: ClaimTrackingResponse) => {
       if (!row.financialDocumentId) {
         dispatch(notify({ msg: 'Invoice document is missing for this claim', sev: 'warning' }));
         return;
       }
-
       try {
         dispatch(showSystemLoader());
         const result = await submitClaim(row.financialDocumentId).unwrap();
         dispatch(
           notify({
             msg:
-              result.status === 'FAILED'
-                ? result.message || 'Claim resubmission failed'
+              String(result.status ?? '').toUpperCase() === 'FAILED' ||
+              String(result.status ?? '').toUpperCase() === 'REJECTED'
+                ? result.message || 'Claim submission was not accepted by Waseel'
                 : 'Claim submitted successfully',
-            sev: result.status === 'FAILED' ? 'error' : 'success'
+            sev:
+              String(result.status ?? '').toUpperCase() === 'FAILED' ||
+              String(result.status ?? '').toUpperCase() === 'REJECTED'
+                ? 'error'
+                : 'success'
           })
         );
         refetch();
@@ -192,12 +193,16 @@ const ClaimsScreen: React.FC = () => {
         dispatch(notify({ msg: 'Upload ID is not available yet', sev: 'warning' }));
         return;
       }
-
       try {
         dispatch(showSystemLoader());
         const summary = await refreshUploadSummary(row.uploadId).unwrap();
         setUploadSummary(summary);
         setOpenUploadSummary(true);
+        if (row.id) {
+          const refreshed = await refreshClaimStatus(row.id).unwrap();
+          setSelectedRow(refreshed);
+        }
+        refetch();
       } catch (error: any) {
         dispatch(
           notify({
@@ -209,17 +214,13 @@ const ClaimsScreen: React.FC = () => {
         dispatch(hideSystemLoader());
       }
     },
-    [dispatch, refreshUploadSummary]
+    [dispatch, refetch, refreshClaimStatus, refreshUploadSummary]
   );
 
   const columns = useMemo(
     () =>
       getClaimColumns({
-        handlers: {
-          onPreview: handlePreview,
-          onResubmit: handleResubmit,
-          onRefreshUpload: handleRefreshUpload
-        },
+        handlers: { onPreview: handlePreview, onResubmit: handleResubmit, onRefreshUpload: handleRefreshUpload },
         encounterMap,
         patientMap
       }),
@@ -239,91 +240,109 @@ const ClaimsScreen: React.FC = () => {
     setPage(0);
   };
 
+  const tableLoading = isLoading || isFetching;
+
   return (
-    <div className="claims-page">
-      <div className={`claims-layout ${openPreview ? 'claims-layout--preview-open' : ''}`}>
-        <div className="claims-main">
-          <Panel bordered className="claims-hero-panel">
-            <div className="claims-hero">
+    <div className="bc-page" data-page="billing-claims-v2">
+      <header className="bc-toolbar">
+        <div className="bc-toolbar__main">
+          <div className="bc-toolbar__title-wrap">
+            <span className="bc-toolbar__eyebrow">Waseel</span>
+            <h1 className="bc-toolbar__title">Insurance Claims</h1>
+          </div>
+
+          <div className="bc-toolbar__stats" aria-label="Claim status summary">
+            <div className="bc-chip">
+              <span className="bc-chip__dot bc-chip__dot--info" />
+              Submitted <strong>{statusSummary.submitted}</strong>
+            </div>
+            <div className="bc-chip">
+              <span className="bc-chip__dot bc-chip__dot--success" />
+              Accepted <strong>{statusSummary.accepted}</strong>
+            </div>
+            <div className="bc-chip">
+              <span className="bc-chip__dot bc-chip__dot--danger" />
+              Failed <strong>{statusSummary.failed}</strong>
+            </div>
+            <div className="bc-chip">
+              <span className="bc-chip__dot bc-chip__dot--warn" />
+              Rejected <strong>{statusSummary.rejected}</strong>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="bc-toolbar__refresh"
+            disabled={tableLoading}
+            onClick={() => refetch()}
+          >
+            <FaArrowsRotate size={13} />
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <div className={`bc-body${openPreview ? ' bc-body--split' : ''}`}>
+        <main className="bc-main">
+          <div className="bc-card">
+            <div className="bc-card__head">
               <div>
-                <div className="claims-hero-eyebrow">Waseel Integration</div>
-                <h1 className="claims-hero-title">Insurance Claims</h1>
-                <p className="claims-hero-subtitle">
-                  Track claims generated from finalized insurance invoices, linked to billing,
-                  payments, and approved pre-authorizations.
-                </p>
-              </div>
-              <div className="claims-kpi-grid">
-                <div className="claims-kpi">
-                  <span className="claims-kpi-label">Submitted</span>
-                  <strong>{statusSummary.submitted}</strong>
-                </div>
-                <div className="claims-kpi claims-kpi--success">
-                  <span className="claims-kpi-label">Accepted</span>
-                  <strong>{statusSummary.accepted}</strong>
-                </div>
-                <div className="claims-kpi claims-kpi--danger">
-                  <span className="claims-kpi-label">Failed</span>
-                  <strong>{statusSummary.failed}</strong>
-                </div>
-                <div className="claims-kpi claims-kpi--warn">
-                  <span className="claims-kpi-label">Rejected</span>
-                  <strong>{statusSummary.rejected}</strong>
+                <h2 className="bc-card__head-title">Claims registry</h2>
+                <div className="bc-card__head-meta">
+                  {tableLoading
+                    ? 'Loading…'
+                    : `${filteredRows.length} displayed · ${totalCount} total`}
                 </div>
               </div>
             </div>
-          </Panel>
 
-          <Panel bordered className="claims-table-panel">
-            <ClaimFilters
-              filtersKey={filtersKey}
-              filters={filters}
-              selectedFilter={selectedFilter}
-              onFiltersChange={setFilters}
-              onSelectedFilterChange={setSelectedFilter}
-              onSearch={onSearch}
-              onReset={onReset}
-            />
+            <div className="bc-filters">
+              <ClaimFilters
+                filtersKey={filtersKey}
+                filters={filters}
+                selectedFilter={selectedFilter}
+                onFiltersChange={setFilters}
+                onSelectedFilterChange={setSelectedFilter}
+                onSearch={onSearch}
+                onReset={onReset}
+              />
+            </div>
 
-            <MyTable
-              columns={columns}
-              data={filteredRows}
-              loading={isLoading || isFetching}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              totalCount={totalCount}
-              height={620}
-              onRowClick={(row: ClaimTrackingResponse) => handlePreview(row)}
-              onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
-              onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setRowsPerPage(parseInt(event.target.value, 10));
-                setPage(0);
-              }}
-            />
-          </Panel>
-        </div>
-
-        {openPreview && (
-          <div className="claims-preview-column">
-            <ClaimPreview
-              open={openPreview}
-              claim={selectedRow}
-              patient={
-                selectedRow?.patientId != null
-                  ? patientMap.get(String(selectedRow.patientId))
-                  : undefined
-              }
-              encounter={
-                selectedRow?.encounterId != null
-                  ? encounterMap.get(Number(selectedRow.encounterId))
-                  : undefined
-              }
-              onClose={() => {
-                setOpenPreview(false);
-                setSelectedRow(null);
-              }}
-            />
+            <div className="bc-table-wrap">
+              <MyTable
+                columns={columns}
+                data={filteredRows}
+                loading={tableLoading}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                height={openPreview ? 480 : 520}
+                onRowClick={(row: ClaimTrackingResponse) => handlePreview(row)}
+                onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+                onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setRowsPerPage(parseInt(event.target.value, 10));
+                  setPage(0);
+                }}
+              />
+            </div>
           </div>
+        </main>
+
+        {openPreview && selectedRow && (
+          <ClaimPreview
+            claim={selectedRow}
+            patient={
+              selectedRow.patientId != null
+                ? patientMap.get(String(selectedRow.patientId))
+                : undefined
+            }
+            encounter={
+              selectedRow.encounterId != null
+                ? encounterMap.get(Number(selectedRow.encounterId))
+                : undefined
+            }
+            onClose={closePreview}
+          />
         )}
       </div>
 

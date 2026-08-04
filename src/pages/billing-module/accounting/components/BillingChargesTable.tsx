@@ -526,7 +526,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
             <MyButton
 
               disabled={
-                disabled || selectedRowIds.length === 0 || chargeClosed
+                disabled ||
+                selectedRowIds.length === 0 ||
+                (chargeClosed && collectableRows.length === 0)
               }
 
               onClick={onCollectPayment}

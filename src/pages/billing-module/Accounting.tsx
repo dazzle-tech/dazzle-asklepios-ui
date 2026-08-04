@@ -254,8 +254,11 @@ const Accounting: React.FC = () => {
   );
 
   const encounterClosedForBilling = useMemo(
-    () => isEncounterClosedForBilling(selectedEncounter),
-    [selectedEncounter]
+    () =>
+      isEncounterClosedForBilling(selectedEncounter, {
+        chargeRows
+      }),
+    [selectedEncounter, chargeRows]
   );
 
   useEffect(() => {

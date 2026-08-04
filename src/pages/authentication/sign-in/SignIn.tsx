@@ -187,6 +187,15 @@ const background = branding.loginBackground || Background;
 
 
   useEffect(() => {
+    const languages = Array.isArray(langData) ? langData : [];
+    const defaultLangKey = languages[0]?.langKey;
+
+    if (defaultLangKey && !credentials.language) {
+      setCredentials(prev => ({ ...prev, language: defaultLangKey }));
+    }
+  }, [langData, credentials.language]);
+
+  useEffect(() => {
     const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
 
     if (selectedObject?.direction) {

@@ -27,7 +27,9 @@ export const getClaimColumns = ({
     title: <Translate>Claim Reference</Translate>,
     flexGrow: 3,
     fullText: true,
-    render: (row: ClaimTrackingResponse) => row.claimReference || row.provClaimNo || '-'
+    render: (row: ClaimTrackingResponse) => (
+      <span className="bc-cell-ref">{row.claimReference || row.provClaimNo || '-'}</span>
+    )
   },
   {
     key: 'uploadName',
@@ -71,7 +73,7 @@ export const getClaimColumns = ({
 
       return (
         <Whisper trigger="hover" placement="top" speaker={speaker}>
-          <div className="claims-patient-cell">
+          <div className="bc-cell-patient">
             {mrn !== '-' ? `${fullName} — ${mrn}` : fullName}
           </div>
         </Whisper>
@@ -84,7 +86,7 @@ export const getClaimColumns = ({
     flexGrow: 2,
     render: (row: ClaimTrackingResponse) => {
       const encounter = encounterMap.get(Number(row.encounterId));
-      return encounter?.encounterNumber || row.encounterId || '-';
+      return <span>{encounter?.encounterNumber || row.encounterId || '-'}</span>;
     }
   },
   {
@@ -104,7 +106,9 @@ export const getClaimColumns = ({
     key: 'totalNet',
     title: <Translate>Total Net</Translate>,
     flexGrow: 2,
-    render: (row: ClaimTrackingResponse) => formatMoney(row.totalNet)
+    render: (row: ClaimTrackingResponse) => (
+      <span className="bc-cell-money">{formatMoney(row.totalNet)}</span>
+    )
   },
   {
     key: 'status',

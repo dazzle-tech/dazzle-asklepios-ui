@@ -1580,7 +1580,11 @@ const PatientPaymentInfo =
         }
 
         if (
-          summaryIsCalculated
+          summaryIsCalculated &&
+          !(
+            isInsurance &&
+            formState.patientInsuranceId
+          )
         ) {
           setDisplayReadyEncounterId(
             encounterId
@@ -1670,8 +1674,7 @@ const PatientPaymentInfo =
         if (
           !encounterId ||
           !patientId ||
-          !facilityId ||
-          summaryIsCalculated
+          !facilityId
         ) {
           setPricingPreviewLoading(
             false
@@ -1881,7 +1884,6 @@ const PatientPaymentInfo =
         encounterId,
         patientId,
         facilityId,
-        summaryIsCalculated,
         isInsurance,
         formState.patientInsuranceId,
         pricingPreviewInputKey,

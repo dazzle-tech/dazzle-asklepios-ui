@@ -115,6 +115,20 @@ export const claimApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    refreshClaimStatus: builder.mutation<ClaimTrackingResponse, number>({
+      query: id => ({
+        url: `/api/patient/internal/waseel/claims/tracking/${id}/refresh`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, id) => [
+        'ClaimTracking',
+        { type: 'ClaimTracking', id }
+      ],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -127,5 +141,6 @@ export const {
   useGetClaimsByEncounterQuery,
   useSubmitClaimForInvoiceMutation,
   useLazyGetClaimUploadSummaryQuery,
-  useRefreshClaimUploadSummaryMutation
+  useRefreshClaimUploadSummaryMutation,
+  useRefreshClaimStatusMutation
 } = claimApi;

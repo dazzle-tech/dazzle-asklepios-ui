@@ -469,16 +469,11 @@ export const computeAmountToCollect = (
   return Math.max(0, patientDue - reservedOnEncounter);
 };
 
-/** Remaining amount to collect for one charge row after reservations/allocation. */
+/** Remaining patient amount to collect for one charge row after reservations/allocation. */
 export const computeRowRemainingAmount = (row: UnifiedBillingChargeRow): number => {
-  const outstanding = Number(row.outstandingAmount ?? 0);
   const patientAmount = Number(row.patientAmount ?? 0);
   const reservedAmount = Number(row.reservedAmount ?? 0);
   const allocatedAmount = Number(row.allocatedAmount ?? 0);
-
-  if (outstanding > 0) {
-    return Math.max(0, outstanding - reservedAmount);
-  }
 
   return Math.max(0, patientAmount - allocatedAmount - reservedAmount);
 };
@@ -953,10 +948,36 @@ export const resolveEncounterNumber = (
   return value || null;
 };
 
-/** User-facing encounter label such as #E00069 — never the internal database id. */
+/** Billing is locked only when nothing remains to collect — not when the clinical visit is completed. */
 export const isEncounterClosedForBilling = (
-  encounter: { encounterStatus?: string | null } | null | undefined
-): boolean => getEncounterLifecycleStatus(encounter) === 'CLOSED';
+  encounter:
+    | {
+        encounterStatus?: string | null;
+        billingStatus?: string | null;
+        financiallyClosedAt?: string | null;
+      }
+    | null
+    | undefined,
+  options?: {
+    chargeRows?: UnifiedBillingChargeRow[];
+  }
+): boolean => {
+  const chargeRows = options?.chargeRows ?? [];
+  if (chargeRows.some(row => isRowCollectable(row))) {
+    return false;
+  }
+
+  const billingStatus = String(encounter?.billingStatus ?? '').toUpperCase();
+  if (billingStatus === 'FINANCIALLY_CLOSED' || billingStatus === 'INVOICED') {
+    return true;
+  }
+
+  if (encounter?.financiallyClosedAt) {
+    return true;
+  }
+
+  return false;
+};
 
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,
@@ -1081,6 +1102,13 @@ export const mapSummaryItemToRow = (
   medicationNames: Record<number, string> = {}
 ): UnifiedBillingChargeRow => {
   const linkedPsp = pspRows.find(row => row.id === item.patientServiceProductId);
+  const patientAmount = Number(item.patientResponsibilityAmount ?? 0);
+  const allocatedAmount = Number(item.allocatedAmount ?? 0);
+  const reservedAmount = Number(item.reservedAmount ?? 0);
+  const patientOutstandingAmount = Math.max(
+    0,
+    patientAmount - allocatedAmount - reservedAmount
+  );
 
   return {
   id:
@@ -1103,12 +1131,9 @@ export const mapSummaryItemToRow = (
   setupUnitPrice: item.setupUnitPrice,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
   netAmount: item.netAmount,
-  patientAmount: Math.max(
-    Number(item.patientResponsibilityAmount ?? 0),
-    Number(item.outstandingAmount ?? 0)
-  ),
+  patientAmount,
   insuranceAmount: item.insuranceResponsibilityAmount,
-  outstandingAmount: item.outstandingAmount,
+  outstandingAmount: patientOutstandingAmount,
   reservedAmount: item.reservedAmount,
   allocatedAmount: item.allocatedAmount,
   currency: item.currency ?? 'SAR',
