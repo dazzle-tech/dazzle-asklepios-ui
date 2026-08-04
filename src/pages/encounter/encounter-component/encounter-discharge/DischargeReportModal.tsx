@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileMedical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faFileMedical, faTriangleExclamation, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
 import { useLazyGenerateDischargeReportQuery } from '@/services/ai-services/dischargeReportService';
+import QualityCheckModal from './QualityCheckModal';
 import './styles.less';
 
 const DischargeReportModal = ({ open, setOpen, encounterId }) => {
@@ -11,6 +13,8 @@ const DischargeReportModal = ({ open, setOpen, encounterId }) => {
     generateDischargeReport,
     { data: dischargeReport, isFetching: isGeneratingReport, error: dischargeReportError }
   ] = useLazyGenerateDischargeReportQuery();
+
+  const [openQualityCheckModal, setOpenQualityCheckModal] = useState(false);
 
   useEffect(() => {
     if (open && encounterId) {
@@ -70,24 +74,44 @@ const DischargeReportModal = ({ open, setOpen, encounterId }) => {
           ) : (
             <p className="discharge-report-fulltext">{dischargeReport.full_report_text}</p>
           )}
+
+          <div className="discharge-report-qa-section">
+            <MyButton
+              disabled={!dischargeReport.full_report_text}
+              prefixIcon={() => <FontAwesomeIcon icon={faShieldHalved} />}
+              onClick={() => setOpenQualityCheckModal(true)}
+              appearance="ghost"
+            >
+              Run Quality Check
+            </MyButton>
+          </div>
         </>
       )}
     </div>
   );
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="AI Discharge Report"
-      icon={faFileMedical}
-      position="center"
-      size="45vw"
-      bodyheight="65vh"
-      hideActionBtn
-      cancelButtonLabel="Close"
-      content={content}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="AI Discharge Report"
+        icon={faFileMedical}
+        position="center"
+        size="45vw"
+        bodyheight="65vh"
+        hideActionBtn
+        cancelButtonLabel="Close"
+        content={content}
+      />
+
+      <QualityCheckModal
+        open={openQualityCheckModal}
+        setOpen={setOpenQualityCheckModal}
+        encounterId={encounterId}
+        dischargeReportText={dischargeReport?.full_report_text}
+      />
+    </>
   );
 };
 
