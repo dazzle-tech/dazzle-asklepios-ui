@@ -33,6 +33,10 @@ type FacilityPatientsParams = PagedParams & {
   insuranceId?: number;
 };
 
+type UpdatePatientConditionsRequest = {
+  id: number;
+  patientConditions: string;
+};
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -367,6 +371,19 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+     updatePatientConditions: builder.mutation<
+  any,
+  UpdatePatientConditionsRequest
+>({
+  query: ({ id, patientConditions }) => ({
+    url: `/api/patient/${id}/conditions`,
+    method: 'PUT',
+    body: {
+      patientConditions
+    }
+  }),
+  invalidatesTags: ['Patient']
+}),
   })
 });
 
@@ -409,6 +426,7 @@ export const {
   useLazyGetPatientLabelPdfQuery,
   useGetFacilityPatientsQuery,
   useLazyGetFacilityPatientsQuery,
-  useLazyGetPatientInformationPdfQuery
+  useLazyGetPatientInformationPdfQuery,
+  useUpdatePatientConditionsMutation
 
 } = newPatientService;
