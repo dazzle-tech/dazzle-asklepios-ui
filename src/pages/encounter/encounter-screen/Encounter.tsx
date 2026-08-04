@@ -21,6 +21,7 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   faChartLine,
   faCheckDouble,
+  faClipboardCheck,
   faClockRotateLeft,
   faFileLines,
   faRobot,
@@ -35,6 +36,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
 import { Divider, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import DischargeReadinessModal from '../encounter-component/encounter-discharge/DischargeReadinessModal';
 import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
@@ -108,6 +110,7 @@ const Encounter = ({
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
+  const [openDischargeReadinessModal, setOpenDischargeReadinessModal] = useState(false);
   const [edit, setEdit] = useState(() => {
     return propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
   });
@@ -611,6 +614,16 @@ useEffect(() => {
                 </MyButton>
 
                 <MyButton
+                  disabled={edit || !encounterId}
+                  size="small"
+                  appearance="ghost"
+                  prefixIcon={() => <FontAwesomeIcon icon={faClipboardCheck} />}
+                  onClick={() => setOpenDischargeReadinessModal(true)}
+                >
+                  Discharge Readiness Check
+                </MyButton>
+
+                <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
@@ -841,6 +854,12 @@ useEffect(() => {
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
         encounter={propsData?.encounter}
+      />
+
+      <DischargeReadinessModal
+        open={openDischargeReadinessModal}
+        setOpen={setOpenDischargeReadinessModal}
+        encounterId={encounterId}
       />
 
       <ConsultationPopup
