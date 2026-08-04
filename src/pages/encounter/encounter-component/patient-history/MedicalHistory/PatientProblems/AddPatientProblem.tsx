@@ -94,7 +94,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-  const [updatePatientConditions] =   useUpdatePatientConditionsMutation,();
+  const [updatePatientConditions] =   useUpdatePatientConditionsMutation();
   const [getProblems] = useLazyGetPatientProblemsQuery();
   const [getPatient] = useLazyGetPatientByIdQuery();
 
