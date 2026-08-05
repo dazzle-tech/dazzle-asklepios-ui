@@ -851,6 +851,11 @@ useEffect(() => {
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
         encounter={propsData?.encounter}
+        onSuccess={() => {
+          if (localEncounter?.encounterType === 'EMERGENCY') {
+            handleGoBack();
+          }
+        }}
       />
 
       <ConsultationPopup
