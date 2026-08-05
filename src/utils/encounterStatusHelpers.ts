@@ -123,10 +123,7 @@ export const shouldSkipEncounterStart = (
   encounter: { treatmentStatus?: string | null; status?: string | null; encounterStatus?: string | null } | null | undefined
 ): boolean => {
   const treatmentStatus = getEncounterTreatmentStatus(encounter);
-  if (STARTED_TREATMENT_STATUSES.has(treatmentStatus)) {
-    return true;
-  }
-  return getEncounterLifecycleStatus(encounter) === 'IN_PROGRESS';
+  return STARTED_TREATMENT_STATUSES.has(treatmentStatus);
 };
 
 /** Backend may still return alreadyOngoing on older deployments — treat as success when re-opening. */

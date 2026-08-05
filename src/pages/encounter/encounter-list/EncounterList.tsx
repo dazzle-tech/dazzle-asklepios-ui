@@ -9,7 +9,8 @@ import {
   faUserDoctor,
   faPrint,
   faFileWaveform,
-  faRectangleXmark
+  faRectangleXmark,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -535,6 +536,31 @@ const handlePatientSearchClick = useCallback(() => {
     });
   };
 
+  const handleViewVisit = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    navigate('/encounter', {
+      state: {
+        info: 'viewEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: false,
+        viewMode: 'readOnly'
+      }
+    });
+  };
+
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -862,16 +888,18 @@ const handlePatientSearchClick = useCallback(() => {
       render: (row: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
         const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
+        const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            {canSeeNurseStation && (
+            {canSeeNurseStation && !isViewOnlyStatus && (
               <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
                 <div>
                   <MyButton
@@ -892,7 +920,24 @@ const handlePatientSearchClick = useCallback(() => {
               </Whisper>
             )}
 
-            {canSeeDoctorVisit && (
+            {canSeeDoctorVisit && isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipViewVisit}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleViewVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
+            {canSeeDoctorVisit && !isViewOnlyStatus && (
               <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
                 <div>
                   <MyButton
