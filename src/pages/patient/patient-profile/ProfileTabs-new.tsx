@@ -219,13 +219,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   return (
     <div dir={dir}>
-      <Panel
-        header={
-          <div className="title">
-            <Translate>Details</Translate>
-          </div>
-        }
-      >
+      <Panel>
         <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
       </Panel>
     </div>

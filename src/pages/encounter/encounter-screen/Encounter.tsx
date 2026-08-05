@@ -618,6 +618,7 @@ useEffect(() => {
                 
                 <VisitReportPrintButton
                   row={localEncounter}
+                  systemColor={true}
                 />
 
                 <MyButton
