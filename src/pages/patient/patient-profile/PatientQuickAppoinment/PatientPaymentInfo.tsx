@@ -1963,6 +1963,20 @@ const PatientPaymentInfo =
         previewTotals.patientOutstandingAmount >
           0;
 
+      const defaultServicesLoaded =
+        !servicesResponse.isFetching &&
+        departmentId != null;
+
+      const hasNoDefaultServices =
+        defaultServicesLoaded &&
+        defaultServiceRows.length === 0;
+
+      const hasNothingToBill =
+        hasNoDefaultServices &&
+        unpaidSummaryItemsEarly.length ===
+          0 &&
+        !hasPayableBalance;
+
       const paymentMethodSelected =
         Boolean(
           formState.paymentMethodCode
@@ -2288,68 +2302,72 @@ const PatientPaymentInfo =
           }
 
           if (
-            resolvedOutstanding <=
-              0 &&
-            previewTotals.patientOutstandingAmount <=
-              0
-          ) {
-            reject(
-              'services',
-              'All services are already paid for this encounter'
-            );
-          }
-
-          if (
-            !formState.payZeroNow
+            !hasNothingToBill
           ) {
             if (
-              !formState.paymentMethodCode
+              resolvedOutstanding <=
+                0 &&
+              previewTotals.patientOutstandingAmount <=
+                0
             ) {
               reject(
-                'paymentMethodCode',
-                'Payment method is required'
+                'services',
+                'All services are already paid for this encounter'
               );
             }
 
             if (
-              formState.paymentAmount <=
-              0
+              !formState.payZeroNow
+            ) {
+              if (
+                !formState.paymentMethodCode
+              ) {
+                reject(
+                  'paymentMethodCode',
+                  'Payment method is required'
+                );
+              }
+
+              if (
+                formState.paymentAmount <=
+                0
+              ) {
+                reject(
+                  'paymentAmount',
+                  'Enter a payment amount greater than zero'
+                );
+              }
+
+              if (
+                formState.paymentAmount >
+                previewTotals.patientOutstandingAmount
+              ) {
+                reject(
+                  'paymentAmount',
+                  'Payment amount cannot exceed the outstanding balance'
+                );
+              }
+            }
+
+            if (
+              !formState.payZeroNow &&
+              formState.paymentAmount < 0
             ) {
               reject(
                 'paymentAmount',
-                'Enter a payment amount greater than zero'
+                'Payment amount cannot be negative'
               );
             }
 
             if (
-              formState.paymentAmount >
-              previewTotals.patientOutstandingAmount
+              isInsurance &&
+              !formState.patientInsuranceId
             ) {
               reject(
-                'paymentAmount',
-                'Payment amount cannot exceed the outstanding balance'
+                'patientInsuranceId',
+                'Patient insurance is required'
               );
             }
-          }
-
-          if (
-            !formState.payZeroNow &&
-            formState.paymentAmount < 0
-          ) {
-            reject(
-              'paymentAmount',
-              'Payment amount cannot be negative'
-            );
-          }
-
-          if (
-            isInsurance &&
-            !formState.patientInsuranceId
-          ) {
-            reject(
-              'patientInsuranceId',
-              'Patient insurance is required'
-            );
           }
 
           if (
@@ -2417,6 +2435,58 @@ const PatientPaymentInfo =
                   unpaidExistingIds,
                 message:
                   'Using existing unpaid charge lines.'
+              };
+            }
+
+            if (
+              hasNothingToBill
+            ) {
+              const body:
+              PrepareDefaultServicesRequest = {
+                patientId,
+
+                facilityId,
+
+                currency:
+                  summary.currency ??
+                  facilityCurrency,
+
+                coverageType:
+                  formState.coverageType,
+
+                patientInsuranceId:
+                  isInsurance
+                    ? formState.patientInsuranceId
+                    : null,
+
+                items: [],
+
+                requestId:
+                  makeRequestId(
+                    'PREPARE-DEFAULT-SERVICES'
+                  )
+              };
+
+              const result =
+                await prepareDefaultServices(
+                  {
+                    encounterId,
+                    body
+                  }
+                ).unwrap();
+
+              setPrepareResultMessage(
+                result.message ??
+                  'Encounter billing completed. No default services to bill.'
+              );
+
+              await refetchSummary();
+
+              return {
+                ids: [],
+                message:
+                  result.message ??
+                  'Encounter billing completed. No default services to bill.'
               };
             }
 
@@ -2722,6 +2792,70 @@ const PatientPaymentInfo =
             !validate()
           ) {
             return false;
+          }
+
+          if (
+            hasNothingToBill
+          ) {
+            try {
+              const {
+                message:
+                  preparedMessage
+              } =
+                await prepareServices();
+
+              await refetchSummary();
+
+              setSummaryRefreshKey(
+                previous =>
+                  previous + 1
+              );
+
+              dispatch(
+                notify({
+                  msg:
+                    preparedMessage ??
+                    'Encounter billing completed. No default services to bill.',
+                  sev: 'success'
+                })
+              );
+
+              if (
+                onPaymentSaved
+              ) {
+                await onPaymentSaved();
+              }
+
+              if (
+                onPaymentDeferred
+              ) {
+                onPaymentDeferred();
+              } else if (
+                onNothingToPay
+              ) {
+                onNothingToPay();
+              } else if (
+                onReceiptClosed
+              ) {
+                onReceiptClosed();
+              }
+
+              return true;
+            } catch (
+              error: any
+            ) {
+              dispatch(
+                notify({
+                  msg:
+                    normalizeError(
+                      error
+                    ),
+                  sev: 'warning'
+                })
+              );
+
+              return false;
+            }
           }
 
           if (
@@ -4990,6 +5124,14 @@ const PatientPaymentInfo =
               >
                 This encounter is already paid. Payment details are shown in read-only mode.
               </Message>
+            ) : hasNothingToBill ? (
+              <Message
+                showIcon
+                type="info"
+                className="payment-info__message"
+              >
+                No default services are configured for this department. Confirm to complete billing and continue.
+              </Message>
             ) : null}
 
             <div className="payment-info__field-grid payment-info__field-grid--single">
@@ -4999,7 +5141,8 @@ const PatientPaymentInfo =
               }
               column
               required={
-                !formState.payZeroNow
+                !formState.payZeroNow &&
+                hasPayableBalance
               }
               fieldLabel="Payment Method"
               fieldType="select"
@@ -5038,7 +5181,8 @@ const PatientPaymentInfo =
               }
               column
               required={
-                !formState.payZeroNow
+                !formState.payZeroNow &&
+                hasPayableBalance
               }
               fieldLabel="Payment Amount"
               fieldType="number"
