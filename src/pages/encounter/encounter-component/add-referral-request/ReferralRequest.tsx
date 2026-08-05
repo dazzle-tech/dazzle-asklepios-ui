@@ -271,15 +271,14 @@ const ReferralRequest = () => {
               : null,
         toDepartmentId: referral?.toDepartmentId ? Number(referral.toDepartmentId) : null,
         referralReason: referral.referralReason,
-        priority: referral.priority,
-        status: referral.status ?? 'PENDING'
+        priority: referral.priority
       };
 
       if (referral?.id) {
         await updateReferral({ id: referral.id, data: payload }).unwrap();
         dispatch(notify({ msg: 'Referral updated successfully', sev: 'success' }));
       } else {
-        await createReferral(payload as any).unwrap();
+        await createReferral({ ...payload, status: 'REQUESTED' } as any).unwrap();
         dispatch(notify({ msg: 'Referral created successfully', sev: 'success' }));
       }
 
