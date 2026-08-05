@@ -293,7 +293,7 @@ useEffect(() => {
               <div className="custom-instruction-container">
 
                     <MyInput
-                      width="100%"
+                      width="12vw"
                       fieldType="number"
                       fieldName="dose"
                       fieldLabel="Dose"
@@ -303,7 +303,7 @@ useEffect(() => {
                     />
 
                     <MyInput
-                      width="100%"
+                      width="12vw"
                       fieldType="select"
                       fieldLabel="Unit"
                       selectData={unitLov?.object || []}
@@ -318,7 +318,7 @@ useEffect(() => {
                     />
 
                     <MyInput
-                      width="100%"
+                      width="12vw"
                       fieldType="select"
                       fieldLabel="Frequency"
                       selectData={frequencyLov?.object || []}
@@ -333,7 +333,7 @@ useEffect(() => {
                     />
 
                     <MyInput
-                      width="100%"
+                      width="12vw"
                       fieldType="select"
                       fieldLabel="ROA"
                       selectData={roaOptions}
