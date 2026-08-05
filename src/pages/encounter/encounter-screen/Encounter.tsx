@@ -49,6 +49,7 @@ import AiAssistantPopup from './AiAssistantPopup';
 import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
+import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 
 type EncounterModalProps = {
   patient?: any;
@@ -603,6 +604,8 @@ useEffect(() => {
                   Create Follow-up
                 </MyButton>
 
+
+
                 <MyButton
                   disabled={edit}
                   size="small"
@@ -612,6 +615,11 @@ useEffect(() => {
                 >
                   Sick Leave
                 </MyButton>
+                
+                <VisitReportPrintButton
+                  row={localEncounter}
+                  systemColor={true}
+                />
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -844,6 +852,11 @@ useEffect(() => {
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
         encounter={propsData?.encounter}
+        onSuccess={() => {
+          if (localEncounter?.encounterType === 'EMERGENCY') {
+            handleGoBack();
+          }
+        }}
       />
 
       <ConsultationPopup

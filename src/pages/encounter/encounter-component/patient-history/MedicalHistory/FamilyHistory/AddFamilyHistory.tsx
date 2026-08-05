@@ -123,7 +123,27 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
   /* ENUM OPTIONS */
 
-  const relations = useEnumOptions('Relations');
+const relations = useEnumOptions('Relations', {
+  exclude: [
+    'SPOUSE',
+    'FRIEND',
+    'SON',
+    'DAUGHTER',
+    'MOTHER_IN_LAW',
+    'FATHER_IN_LAW',
+    'SON_IN_LAW',
+    'DAUGHTER_IN_LAW',
+    'STEPFATHER',
+    'STEPMOTHER',
+    'STEPDAUGHTER',
+    'STEPBROTHER',
+    'STEPSON',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'STEPSISTER',
+    'COUSIN',
+  ],
+});
 
   /* MUTATIONS */
 

@@ -14,9 +14,10 @@ import MyInput from '@/components/MyInput';
 type Props = {
     row: any;
     lang?: 'en' | 'ar';
+    systemColor?: boolean;
 };
 
-const VisitReportPrintButton = ({ row }: Props) => {
+const VisitReportPrintButton = ({ row, systemColor }: Props) => {
     const dispatch = useDispatch();
     const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
     const [loading, setLoading] = useState(false);
@@ -80,16 +81,15 @@ const VisitReportPrintButton = ({ row }: Props) => {
                 speaker={<Tooltip>Print Visit Report</Tooltip>}
             >
                 <div>
-                    <MyButton
-                        size="small"
-                        backgroundColor="light-blue"
-                        disabled={loading}
-                        loading={loading}
-                        prefixIcon={() =>
-                            <FontAwesomeIcon icon={faPrint} />
-                        }
-                        onClick={() => setOpenLangModal(true)}>
-                    </MyButton>
+                <MyButton
+                    size="small"
+                    backgroundColor={systemColor ? undefined : 'light-blue'}
+                    disabled={loading}
+                    loading={loading}
+                    prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+                    onClick={() => setOpenLangModal(true)}
+                >
+                </MyButton>
                 </div>
             </Whisper>
             <MyModal

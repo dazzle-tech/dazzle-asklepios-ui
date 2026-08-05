@@ -632,6 +632,25 @@ const MedicationRecord = () => {
         )
       },
       {
+    key: 'highAlert',
+    title: <Translate>HIGH ALERT</Translate>,
+    width: 80,
+    align: 'center',
+    render: (row: MedicationOrderRow) => {
+        const isHighAlert =
+            row?.isHighAlert ??
+            activeIngredientMap[row?.activeIngredientId || 0]?.highAlert;
+
+        return isHighAlert ? (
+            <FontAwesomeIcon
+                icon={faTriangleExclamation}
+                className="medication-record-order-icons-size-high-alert"
+                color="red" 
+            />
+        ) : null;
+    }
+      },
+      {
         key: 'instructions',
         title: <Translate>INSTRUCTIONS</Translate>,
         minWidth: 260,
