@@ -151,14 +151,18 @@ const filteredData = data?.data ?? [];
       title: 'COMPLICATIONS',
       flexGrow: 3,
       render: (row: any) => {
-        console.log("rowwwwws:",row);
-        const value = conjureValueBasedOnKeyFromList(
-          complicationsLov?.object ?? [],
-          row?.complications,
-          'lovDisplayVale'
-        );
+        const keys = (row?.complications || '')
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter(Boolean);
 
-        return value ?? row?.complications ?? '';
+        if (!keys.length) return '';
+
+        return keys
+          .map((key: string) =>
+            conjureValueBasedOnKeyFromList(complicationsLov?.object ?? [], key, 'lovDisplayVale') ?? key
+          )
+          .join(', ');
       }
     },
     {

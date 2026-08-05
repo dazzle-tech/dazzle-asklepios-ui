@@ -27,6 +27,7 @@ import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import EncounterModalContent from './EncounterModalContent';
 import NurseStationModalContent from './NurseStationModalContent';
 import UrgentCareViewTriage from '@/pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
+import VisitReportPrintButton from '@/pages/encounter/encounter-list/VisitReportPrintButton';
 
 type Props = {
   localPatient: any;
@@ -234,6 +235,8 @@ const handleViewTriage = (row: any) => {
                   </MyButton>
                 </div>
               </Whisper>
+
+              <VisitReportPrintButton row={row} />
             </div>
           </Form>
         );

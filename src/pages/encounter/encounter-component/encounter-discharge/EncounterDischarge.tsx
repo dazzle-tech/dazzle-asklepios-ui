@@ -15,7 +15,19 @@ import { useLazyGetActiveAssignmentByEncounterIdQuery } from '@/services/patient
 import { useDischargeEncounterMutation } from '@/services/encounters/patientEncounterService';
 import dayjs from 'dayjs';
 
-const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
+const EncounterDischarge = ({
+  open,
+  setOpen,
+  encounter,
+  refetch = null,
+  onSuccess
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  encounter: any;
+  refetch?: (() => void) | null;
+  onSuccess?: () => void;
+}) => {
   const dispatch = useAppDispatch();
 
   const [localEncounter, setLocalEncounter] = useState<PatientEncounterDischarge>({
@@ -104,6 +116,8 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
       if (refetch) {
         refetch();
       }
+
+      onSuccess?.();
     } catch (error: any) {
       const errorMessage =
         error?.data?.message ||

@@ -861,7 +861,7 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
-              <Route path="skill-definition" element={<SkillDefinitions />} />
+              {/* <Route path="skill-definition" element={<SkillDefinitions />} /> */}
 
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />

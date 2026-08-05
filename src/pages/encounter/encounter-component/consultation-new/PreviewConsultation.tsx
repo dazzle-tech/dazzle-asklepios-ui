@@ -47,10 +47,15 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   const [triggerGetSpecialistPractitioners, practitionersResult] =
     useLazyGetSpecialistPractitionersQuery();
 
-  const [
-    getSpecialtyConsultation,
-    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
-  ] = useGetSpecialtyConsultationMutation();
+
+    const [
+      getSpecialtyConsultation,
+      {
+        isLoading: aiLoading,
+        error: aiError
+      }
+    ] = useGetSpecialtyConsultationMutation();
+
 
   const aiSummary = localAiSummary;
   const destinationType = formData?.destinationType ?? 'DEPARTMENT';

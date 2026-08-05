@@ -813,28 +813,6 @@ const Result = forwardRef<any, Props>(
               <Whisper
                 placement="top"
                 trigger="hover"
-                speaker={<Tooltip>Print Result</Tooltip>}
-              >
-                <span>
-                  <FontAwesomeIcon
-                    icon={faPrint}
-                    className="icon-laboratory-size"
-                    style={{
-                      cursor: canPrint ? 'pointer' : 'not-allowed',
-                      opacity: canPrint ? 1 : 0.4
-                    }}
-                    onClick={() => {
-                      if (!canPrint) return;
-
-                      // print logic here
-                    }}
-                  />
-                </span>
-              </Whisper>
-
-              <Whisper
-                placement="top"
-                trigger="hover"
                 speaker={<Tooltip>Logs</Tooltip>}
               >
                 <FontAwesomeIcon

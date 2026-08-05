@@ -195,7 +195,13 @@ const QuickVisit = ({ }) => {
                     <EncounterDischarge
                         open={openDischargeModal}
                         setOpen={setOpenDischargeModal}
-                        encounter={propsData.encounter} />
+                        encounter={propsData.encounter}
+                        onSuccess={() => {
+                            if (localEncounter?.encounterType === 'EMERGENCY') {
+                                navigate('/ER-department');
+                            }
+                        }}
+                    />
                 </div>
             )}
         </>
