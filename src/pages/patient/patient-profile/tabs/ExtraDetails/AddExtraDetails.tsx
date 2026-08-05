@@ -93,7 +93,7 @@ const AddExtraDetails = ({
   refetch
 }) => {
   const dispatch = useAppDispatch();
-
+  console.log('Secondary Document:', secondaryDocument);
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();

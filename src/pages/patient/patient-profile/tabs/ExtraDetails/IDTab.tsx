@@ -23,38 +23,69 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import UserDateCell from '@/components/UserDateCell';
 
-const IDTab = ({ localPatient }) => {
+interface IDTabProps {
+  localPatient: any;
+  cchiDocument?: any;
+  openCchiDocumentPopup?: boolean;
+  setOpenCchiDocumentPopup?: (value: boolean) => void;
+}
+
+const IDTab: React.FC<IDTabProps> = ({
+  localPatient,
+  cchiDocument,
+  openCchiDocumentPopup,
+  setOpenCchiDocumentPopup
+}) => {
   const dispatch = useAppDispatch();
 
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
-  const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
+  const [secondaryDocument, setSecondaryDocument] = useState<any>(newPatientDocument);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
     ...newPatientDocument
   });
+
   const enumLabels = useEnumOptions('CountryName');
+
   const enumLabelMap = useMemo(
     () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
     [enumLabels]
   );
-  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({
+    page: 0,
+    size: 1000
+  });
+
+  const countries = activeCountriesResp?.data ?? [];
+
   const countryEnum = useMemo(
     () =>
-      (activeCountriesResp?.data ?? []).map(c => ({
+      countries.map((c: any) => ({
         value: c.id,
-        label: enumLabelMap[c.name] || formatEnumString(c.name)
+        label: enumLabelMap[c.name] || formatEnumString(c.name),
+        raw: c
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeCountriesResp]
+    [countries, enumLabelMap]
   );
+
+  const getCountryLabel = (countryId: any) => {
+    if (!countryId) return '-';
+
+    const country = countries.find((c: any) => String(c.id) === String(countryId));
+
+    if (!country) {
+      return formatEnumString(String(countryId));
+    }
+
+    return enumLabelMap[country.name] || formatEnumString(country.name);
+  };
 
   const [deletePatientDocument] = useDeletePatientDocumentMutation();
 
-  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Fetch patient documents list
   const {
     data: patientSecondaryDocumentsResponse,
     refetch: patientSecondaryDocuments,
@@ -71,7 +102,6 @@ const IDTab = ({ localPatient }) => {
 
   const rows = patientSecondaryDocumentsResponse?.data ?? [];
   const totalCount = patientSecondaryDocumentsResponse?.totalCount ?? 0;
-
 
   const isSelectedDocument = (rowData: any) =>
     rowData?.id === secondaryDocument?.id ? 'selected-row' : '';
@@ -111,11 +141,39 @@ const IDTab = ({ localPatient }) => {
 
   const formatDocumentType = (type: string) => {
     if (!type) return '-';
+
     return type
       .split('_')
       .map(word => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ');
   };
+
+  const buildCchiPatientDocument = () => {
+    return {
+      ...newPatientDocument,
+      ...cchiDocument,
+      id: null,
+      patient: localPatient,
+      patientId: localPatient?.id,
+      countryId: cchiDocument?.countryId ?? null,
+      number: cchiDocument?.number ?? localPatient?.documentId,
+      type: cchiDocument?.type,
+      isPrimary: cchiDocument?.isPrimary ?? false
+    };
+  };
+
+  useEffect(() => {
+    if (!openCchiDocumentPopup) return;
+    if (!localPatient?.id) return;
+    if (!cchiDocument && !localPatient?.documentId) return;
+
+    const mappedDocument = buildCchiPatientDocument();
+
+    setSecondaryDocument(mappedDocument);
+    setSelectedSecondaryDocument(mappedDocument);
+    setSecondaryDocumentModalOpen(true);
+    setOpenCchiDocumentPopup?.(false);
+  }, [openCchiDocumentPopup, localPatient?.id, localPatient?.documentId, cchiDocument]);
 
   const columns = [
     {
@@ -123,9 +181,7 @@ const IDTab = ({ localPatient }) => {
       title: <Translate>Document Country</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
-        if (!rowData.countryId) return <span></span>;
-        const label = countryEnum.find(c => c.value === rowData.countryId)?.label;
-        return <span>{label ?? '-'}</span>;
+        return <span>{getCountryLabel(rowData.countryId)}</span>;
       }
     },
     {
@@ -192,6 +248,7 @@ const IDTab = ({ localPatient }) => {
               setSecondaryDocumentModalOpen(true);
             }}
           />
+
           <FontAwesomeIcon
             icon={faTrash}
             className={clsx('action-icon delete-icon', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}

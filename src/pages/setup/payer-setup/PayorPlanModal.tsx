@@ -7,13 +7,13 @@ import { Form } from "rsuite";
 import SectionContainer from "@/components/SectionsoContainer";
 import { FaTrash } from "react-icons/fa";
 import { MdModeEdit } from "react-icons/md";
-import { FaClipboardList } from "react-icons/fa6";
+import { FaClipboardList, FaLayerGroup } from "react-icons/fa6";
 import { useEnumOptions } from "@/services/enumsApi";
 import {
-    useGetPlansByPayorQuery,
-    useCreatePlanMutation,
-    useDeletePlanMutation,
-    useUpdatePlanMutation
+  useGetPlansByPayorQuery,
+  useCreatePlanMutation,
+  useDeletePlanMutation,
+  useUpdatePlanMutation
 } from "@/services/setup/payer/PayorPlanService";
 
 import { useAppDispatch } from "@/hooks";
@@ -21,275 +21,355 @@ import { notify, showSystemLoader, hideSystemLoader } from "@/utils/uiReducerAct
 import { newPayorPlan } from "@/types/model-types-constructor-new";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import PlanItemsModal from "./PlanItemsModal";
+import PayorPlanCoverageClassModal from "./PayorPlanCoverageClassModal";
 import "./styles.less";
 import { formatEnumString } from "@/utils";
 
 const PayorPlanModal = ({ open, setOpen, payor }) => {
-    const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
-    // LOVs
-    const planTypes = useEnumOptions("PayorPlanType");
+  const planTypes = useEnumOptions("PayorPlanType");
+const coverageTypes = useEnumOptions("CoverageType");
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState("asc");
 
-    // pagination
-    const [page, setPage] = useState(0);
-    const [size, setSize] = useState(10);
-    const [sortColumn, setSortColumn] = useState("id");
-    const [sortType, setSortType] = useState("asc");
+  const sortValue = `${sortColumn},${sortType}`;
 
-    const sortValue = `${sortColumn},${sortType}`;
+  const { data: plansResponse, refetch, isFetching } = useGetPlansByPayorQuery(
+    { payorId: payor?.id, page, size, sort: sortValue },
+    { skip: !payor?.id }
+  );
 
-    const { data: plansResponse, refetch, isFetching } = useGetPlansByPayorQuery(
-        { payorId: payor?.id, page, size, sort: sortValue },
-        { skip: !payor?.id }
-    );
+  const [createPlan] = useCreatePlanMutation();
+  const [deletePlan] = useDeletePlanMutation();
+  const [updatePlan] = useUpdatePlanMutation();
 
-    const [createPlan] = useCreatePlanMutation();
-    const [deletePlan] = useDeletePlanMutation();
-    const [updatePlan] = useUpdatePlanMutation();
+  const [plan, setPlan] = useState({ ...newPayorPlan, payorId: payor?.id });
 
-    const [plan, setPlan] = useState({ ...newPayorPlan, payorId: payor?.id });
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState(null);
 
-    const [selectedRow, setSelectedRow] = useState(null);
-    const [openDeleteModal, setOpenDeleteModal] = useState(false);
-    const [planToDelete, setPlanToDelete] = useState(null);
+  const [openItemsModal, setOpenItemsModal] = useState(false);
+  const [selectedPlanForItems, setSelectedPlanForItems] = useState(null);
 
-    // modal for items
-    const [openItemsModal, setOpenItemsModal] = useState(false);
-    const [selectedPlanForItems, setSelectedPlanForItems] = useState(null);
+  const [openCoverageClassModal, setOpenCoverageClassModal] = useState(false);
+  const [selectedPlanForCoverageClass, setSelectedPlanForCoverageClass] = useState(null);
 
-    useEffect(() => {
-        if (open) {
-            setPlan({
-                id: undefined,
-                payorId: payor?.id,
-                name: "",
-                planType: "",
-                isActive: true,
-            });
-            setPage(0);
-            refetch();
-        }
-    }, [open, payor?.id]);
+  useEffect(() => {
+    if (open) {
+      setPlan({
+        ...newPayorPlan,
+        payorId: payor?.id
+      });
+      setPage(0);
+      refetch();
+    }
+  }, [open, payor?.id]);
 
-    const savePlanHandler = async () => {
-        const missing: string[] = [];
-        if (!plan.name) missing.push("Plan Name");
-        if (!plan.planType) missing.push("Plan Type");
+  const savePlanHandler = async () => {
+    const missing: string[] = [];
+    if (!plan.name) missing.push("Plan Name");
+    if (!plan.planType) missing.push("Plan Type");
 
-        if (missing.length > 0) {
-            dispatch(
-                notify({
-                    msg: missing.map((m) => <div>• {m} is required</div>),
-                    sev: "warning",
-                })
-            );
-            return;
-        }
+    if (missing.length > 0) {
+      dispatch(
+        notify({
+          msg: missing.map((m) => <div key={m}>• {m} is required</div>),
+          sev: "warning"
+        })
+      );
+      return;
+    }
 
-        try {
-            dispatch(showSystemLoader());
+    try {
+      dispatch(showSystemLoader());
 
-            const payload = {
-                id: plan.id,
-                payorId: plan.payorId,
-                name: plan.name,
-                planType: plan.planType,
-                isActive: true,
-            };
+      const {
+        createdDate,
+        lastModifiedDate,
+        ...cleanPlan
+      } = plan;
 
-            if (plan.id) {
-                await updatePlan(payload).unwrap();
-                dispatch(notify({ msg: "Plan updated", sev: "success" }));
-            } else {
-                await createPlan(payload).unwrap();
-                dispatch(notify({ msg: "Plan created", sev: "success" }));
-            }
+      const payload = {
+        ...cleanPlan,
+        payorId: payor?.id
+      };
 
-            refetch();
-            setPlan({ ...newPayorPlan, payorId: payor?.id });
-            setSelectedRow(null);
-        } catch (err) {
-            dispatch(
-                notify({
-                    msg: err?.data?.message || "Save failed",
-                    sev: "error",
-                })
-            );
-        } finally {
-            dispatch(hideSystemLoader());
-        }
-    };
+      if (plan.id) {
+        await updatePlan(payload).unwrap();
+        dispatch(notify({ msg: "Plan updated", sev: "success" }));
+      } else {
+        await createPlan(payload).unwrap();
+        dispatch(notify({ msg: "Plan created", sev: "success" }));
+      }
 
-    const confirmDeleteHandler = async () => {
-        if (!planToDelete) return;
+      refetch();
+      setPlan({ ...newPayorPlan, payorId: payor?.id });
+      setSelectedRow(null);
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || "Save failed",
+          sev: "error"
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
 
-        try {
-            dispatch(showSystemLoader());
-            await deletePlan(planToDelete).unwrap();
-            dispatch(notify({ msg: "Plan deleted", sev: "success" }));
-            refetch();
-        } catch (err) {
-            dispatch(notify({ msg: "Delete failed", sev: "error" }));
-        } finally {
-            dispatch(hideSystemLoader());
-            setOpenDeleteModal(false);
-            setPlanToDelete(null);
-        }
-    };
+  const confirmDeleteHandler = async () => {
+    if (!planToDelete) return;
 
-    const columns = [
-        { key: "name", title: "Plan Name", sortable: true, flexGrow: 1 },
-        {
-            key: "planType",
-            title: "Plan Type",
-            sortable: true,
-            flexGrow: 1,
-            render: (rowData) => <p>{formatEnumString(rowData?.planType)}</p>,
-        },
-        {
-            key: "actions",
-            title: "",
-            flexGrow: 1,
-            render: (row) => (
-                <div style={{ display: "flex", gap: "12px" }}>
-                    <FaClipboardList size={20}
-                        color="var(--primary-gray)"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                            setSelectedPlanForItems(row);
-                            setOpenItemsModal(true);
-                        }}
-                    />
+    try {
+      dispatch(showSystemLoader());
+      await deletePlan(planToDelete).unwrap();
+      dispatch(notify({ msg: "Plan deleted", sev: "success" }));
+      refetch();
+    } catch (err) {
+      dispatch(notify({ msg: "Delete failed", sev: "error" }));
+    } finally {
+      dispatch(hideSystemLoader());
+      setOpenDeleteModal(false);
+      setPlanToDelete(null);
+    }
+  };
 
-                    <MdModeEdit
-                        size={20}
-                        color="var(--primary-gray)"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                            setSelectedRow(row);
-                            setPlan({
-                                id: row.id,
-                                payorId: row.payorId,
-                                name: row.name,
-                                planType: row.planType,
-                                isActive: row.isActive,
-                            });
-                        }}
-                    />
-                    <FaTrash
-                        size={18}
-                        color="var(--primary-pink)"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                            setPlanToDelete(row.id);
-                            setOpenDeleteModal(true);
-                        }}
-                    />
-                </div>
-            ),
-        },
-    ];
+  const columns = [
+    { key: "name", title: "Plan Name", sortable: true, flexGrow: 1 },
+    {
+      key: "planType",
+      title: "Plan Type",
+      sortable: true,
+      flexGrow: 1,
+      render: (rowData) => <p>{formatEnumString(rowData?.planType)}</p>
+    },
+    {
+      key: "networkId",
+      title: "Network ID",
+      sortable: true,
+      flexGrow: 1
+    },
+    {
+      key: "coverageType",
+      title: "Coverage Type",
+      sortable: true,
+      flexGrow: 1
+    },
+    {
+      key: "actions",
+      title: "",
+      flexGrow: 1,
+      render: (row) => (
+        <div style={{ display: "flex", gap: "12px" }}>
+          <FaLayerGroup
+            size={20}
+            color="var(--primary-gray)"
+            title="Coverage Classes"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setSelectedPlanForCoverageClass(row);
+              setOpenCoverageClassModal(true);
+            }}
+          />
 
-    return (
-        <>
-            <MyModal
-                open={open}
-                setOpen={setOpen}
-                title={`Payor Plans — ${payor?.name}`}
-                size="30vw"
-                position="right"
-                content={
-                    <>
-                        <SectionContainer
-                            title="Add / Edit Plan"
-                            content={
-                                <Form layout="inline">
-                                    <MyInput
-                                        fieldLabel="Plan Name"
-                                        fieldName="name"
-                                        fieldType="text"
-                                        record={plan}
-                                        setRecord={setPlan}
-                                        column
-                                        required
-                                    />
+          <FaClipboardList
+            size={20}
+            color="var(--primary-gray)"
+            title="Plan Items"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setSelectedPlanForItems(row);
+              setOpenItemsModal(true);
+            }}
+          />
 
-                                    <MyInput
-                                        fieldLabel="Plan Type"
-                                        fieldName="planType"
-                                        fieldType="select"
-                                        selectData={planTypes}
-                                        selectDataLabel="label"
-                                        selectDataValue="value"
-                                        record={plan}
-                                        setRecord={setPlan}
-                                        column
-                                        required
-                                    />
-                                </Form>
-                            }
-                        />
+          <MdModeEdit
+            size={20}
+            color="var(--primary-gray)"
+            title="Edit"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setSelectedRow(row);
+              setPlan({
+                id: row.id,
+                payorId: row.payorId,
+                name: row.name,
+                planType: row.planType,
+                networkId: row.networkId ?? "",
+                coverageType: row.coverageType ?? "",
+                payerNphiesId: row.payerNphiesId ?? "",
+                waseelPlanId: row.waseelPlanId ?? "",
+                isActive: row.isActive
+              });
+            }}
+          />
 
-                        <div className="payor-plan-buttons-handle">
-                            <MyButton onClick={savePlanHandler} color="var(--deep-blue)" width="110px">
-                                Save
-                            </MyButton>
+          <FaTrash
+            size={18}
+            color="var(--primary-pink)"
+            title="Delete"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setPlanToDelete(row.id);
+              setOpenDeleteModal(true);
+            }}
+          />
+        </div>
+      )
+    }
+  ];
 
-                            <MyButton
-                                color="var(--primary-gray)"
-                                width="110px"
-                                onClick={() => {
-                                    setPlan({ ...newPayorPlan, payorId: payor?.id });
-                                    setSelectedRow(null);
-                                }}
-                            >
-                                Clear
-                            </MyButton>
-                        </div>
+  return (
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={`Payor Plans — ${payor?.name}`}
+        size="40vw"
+        position="right"
+        content={
+          <>
+            <SectionContainer
+              title="Add / Edit Plan"
+              content={
+                <Form layout="inline">
+                  <MyInput
+                    fieldLabel="Plan Name"
+                    fieldName="name"
+                    fieldType="text"
+                    record={plan}
+                    setRecord={setPlan}
+                    column
+                    required
+                  />
 
-                        <SectionContainer
-                            title="Existing Plans"
-                            content={
-                                <MyTable
-                                    data={plansResponse?.data ?? []}
-                                    loading={isFetching}
-                                    columns={columns}
-                                    totalCount={plansResponse?.totalCount ?? 0}
-                                    page={page}
-                                    rowsPerPage={size}
-                                    onPageChange={(_, newPage) => setPage(newPage)}
-                                    onRowsPerPageChange={(e) => setSize(Number(e.target.value))}
-                                    sortColumn={sortColumn}
-                                    sortType={sortType}
-                                    onSortChange={(col, type) => {
-                                        setSortColumn(col);
-                                        setSortType(type);
-                                        setPage(0);
-                                    }}
-                                />
-                            }
-                        />
+                  <MyInput
+                    fieldLabel="Plan Type"
+                    fieldName="planType"
+                    fieldType="select"
+                    selectData={planTypes}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={plan}
+                    setRecord={setPlan}
+                    column
+                    required
+                  />
 
-                        <DeletionConfirmationModal
-                            open={openDeleteModal}
-                            setOpen={setOpenDeleteModal}
-                            actionButtonFunction={confirmDeleteHandler}
-                            itemToDelete="Payor Plan"
-                            actionType="delete"
-                        />
-                    </>
-                }
+                  <MyInput
+                    fieldLabel="Network ID"
+                    fieldName="networkId"
+                    fieldType="text"
+                    record={plan}
+                    setRecord={setPlan}
+                    column
+                  />
+
+               <MyInput
+  fieldLabel="Coverage Type"
+  fieldName="coverageType"
+  fieldType="select"
+  selectData={coverageTypes}
+  selectDataLabel="label"
+  selectDataValue="value"
+  record={plan}
+  setRecord={setPlan}
+  column
+/>
+
+                  <MyInput
+                    fieldLabel="Payer NPHIES ID"
+                    fieldName="payerNphiesId"
+                    fieldType="text"
+                    record={plan}
+                    setRecord={setPlan}
+                    column
+                  />
+
+                  <MyInput
+                    fieldLabel="Waseel Plan ID"
+                    fieldName="waseelPlanId"
+                    fieldType="text"
+                    record={plan}
+                    setRecord={setPlan}
+                    column
+                  />
+                </Form>
+              }
             />
 
-            {selectedPlanForItems && (
-                <PlanItemsModal
-                    open={openItemsModal}
-                    setOpen={setOpenItemsModal}
-                    plan={selectedPlanForItems}
+            <div className="payor-plan-buttons-handle">
+              <MyButton onClick={savePlanHandler} color="var(--deep-blue)" width="110px">
+                Save
+              </MyButton>
+
+              <MyButton
+                color="var(--primary-gray)"
+                width="110px"
+                onClick={() => {
+                  setPlan({ ...newPayorPlan, payorId: payor?.id });
+                  setSelectedRow(null);
+                }}
+              >
+                Clear
+              </MyButton>
+            </div>
+
+            <SectionContainer
+              title="Existing Plans"
+              content={
+                <MyTable
+                  data={plansResponse?.data ?? []}
+                  loading={isFetching}
+                  columns={columns}
+                  totalCount={plansResponse?.totalCount ?? 0}
+                  page={page}
+                  rowsPerPage={size}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(e) => setSize(Number(e.target.value))}
+                  sortColumn={sortColumn}
+                  sortType={sortType}
+                  onSortChange={(col, type) => {
+                    setSortColumn(col);
+                    setSortType(type);
+                    setPage(0);
+                  }}
                 />
-            )}
-        </>
-    );
+              }
+            />
+
+            <DeletionConfirmationModal
+              open={openDeleteModal}
+              setOpen={setOpenDeleteModal}
+              actionButtonFunction={confirmDeleteHandler}
+              itemToDelete="Payor Plan"
+              actionType="delete"
+            />
+          </>
+        }
+      />
+
+      {selectedPlanForItems && (
+        <PlanItemsModal
+          open={openItemsModal}
+          setOpen={setOpenItemsModal}
+          plan={selectedPlanForItems}
+        />
+      )}
+
+      {selectedPlanForCoverageClass && (
+        <PayorPlanCoverageClassModal
+          open={openCoverageClassModal}
+          setOpen={setOpenCoverageClassModal}
+          plan={selectedPlanForCoverageClass}
+        />
+      )}
+    </>
+  );
 };
 
 export default PayorPlanModal;

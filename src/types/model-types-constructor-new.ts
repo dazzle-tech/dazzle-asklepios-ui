@@ -208,6 +208,7 @@ export const newService: modelTypes.Service = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  billingRuleId: null,
 };
 
 // ------------------- Service Item -------------------
@@ -303,7 +304,8 @@ export const newProcedure: modelTypes.Procedure = {
   lastModifiedDate: null,
   facilityId: undefined,
   currency: null,
-  price: null
+  price: null,
+  billingRuleId: null,
 };
 
 // ------------------- Allergen -------------------
@@ -350,7 +352,8 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
-  modality:null
+  modality:null,
+  billingRuleId: null,
 };
 
 
@@ -636,7 +639,8 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   uomGroupUnitId: null,
   hasActiveIngredient: false,
   price: 0,
-  currency: ''
+  currency: '',
+  billingRuleId: null,
 };
 
 // ------------------- Substitute -------------------
@@ -1396,59 +1400,97 @@ export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
 // ------------------- Payor -------------------
 export const newPayor: modelTypes.Payor = {
   id: undefined,
+
   code: '',
   name: '',
   category: null,
+
   address: '',
   phone: '',
   email: '',
   contractManagerContact: '',
+
   startDate: null,
   expiryDate: null,
   renewable: false,
+
   allowPartialCoverage: false,
   acceptCopay: false,
   acceptDeductibles: false,
   allowPackagePricing: false,
   allowDrgBilling: false,
   forcePreApproval: false,
+
+  // Waseel / NPHIES
+  nphiesId: '',
+  waseelPayerId: '',
+  tpaNphiesId: '',
+  isWaseelEnabled: false,
+
   isActive: true
 };
 
 export const newPayorPlan: modelTypes.PayorPlan = {
   id: undefined,
-  code: '',
+
+  payorId: undefined,
   name: '',
-  category: null,
-  address: '',
-  phone: '',
-  email: '',
-  contractManagerContact: '',
-  startDate: null,
-  expiryDate: null,
-  renewable: false,
-  allowPartialCoverage: false,
-  acceptCopay: false,
-  acceptDeductibles: false,
-  allowPackagePricing: false,
-  allowDrgBilling: false,
-  forcePreApproval: false,
+  planType: null,
+
+  // Waseel / CCHI
+  networkId: '',
+  coverageType: '',
+  payerNphiesId: '',
+  waseelPlanId: '',
+
   isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newNphiesPayer: modelTypes.NphiesPayer = {
+  id: undefined,
+
+  nphiesId: '',
+  nameEn: '',
+  nameAr: null,
+
+  isActive: true,
+
   createdDate: null,
   lastModifiedDate: null
 };
 
 export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   id: undefined,
-  payorId: 0,
+  planId: 0,
   itemType: null,
   amount: null,
   coverageType: null,
   isActive: true,
+  preAuthorization: false,
+  brandMedicationId: null,
+  diagnosticTestId: null,
+  serviceId: null,
+  procedureId: null,
   createdDate: null,
   lastModifiedDate: null
 };
 
+export const newPayorPlanCoverageClass: modelTypes.PayorPlanCoverageClass = {
+  id: undefined,
+
+  planId: undefined,
+  coverageClassType: null,
+  coverageClassValue: '',
+  coverageClassName: '',
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
 // ------------------- Invoice Item -------------------
 export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   invoiceId: 0,
@@ -1678,7 +1720,7 @@ export const newPatient: modelTypes.Patient = {
   receiveEmail: false,
   preferredWayOfContact: null,
 
-  nativeLanguage: '',
+  preferredLanguage: '',
   emergencyContactName: '',
   emergencyContactRelation: '',
   emergencyContactPhone: '',
@@ -1698,6 +1740,9 @@ export const newPatient: modelTypes.Patient = {
   details: '',
   isUnknown: false,
 
+  isCchiPatient: false,
+  documentId: '',
+   
   isVerified: false,
   isCompletedPatient: false,
   securityAccessLevel: null,
@@ -1754,22 +1799,61 @@ export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredH
 
 export const newPatientInsurance: modelTypes.PatientInsurance = {
   id: undefined,
+
   patientId: undefined,
-  payorId: undefined,
+
+  payorId: null,
   planId: null,
+
+  payerName: null,
+  payerNphiesId: null,
+
   policyHolderId: null,
-  policyNumber: 0,
+
+  policyNumber: '',
   groupNumber: null,
+
   expirationDate: '',
+
   remainingBenefits: null,
   remainingDeductibles: null,
+
+  memberCardId: null,
+
+  networkId: null,
+  sponsorNumber: null,
+
+  coverageType: null,
+  relationWithSubscriber: null,
+
+  policyClassName: null,
+  policyHolderName: null,
+
+  issueDate: null,
+
+  patientShare: null,
+  maxLimit: null,
+
+  waseelNewPlan: null,
+
   isPrimary: false,
+
+  groupName: null,
+  planCode: null,
+  eligibilityStatus: null,
+  siteEligibility: null,
+  inforce: null,
+  gpVisitCopay: null,
+  specialistVisitsLimit: null,
+  eligibilityBenefitsJson: null,
+  lastEligibilityRequestId: null,
+  lastEligibilitySyncedAt: null,
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
 };
-
 export const newPatientInsuranceCoverage: modelTypes.PatientInsuranceCoverage = {
   id: undefined,
   insuranceId: 0,
@@ -1834,6 +1918,8 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   notes: null,
 
+  encounterStatus: 'OPEN',
+  treatmentStatus: 'NEW',
   status: 'NEW',
   encounterDate: null,
   chiefComplaint: null,
@@ -3145,6 +3231,116 @@ export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessmen
   totalScore: null,
   scoreInterpretation: null
 };
+
+export const newEligibilityCheckRequest: modelTypes.EligibilityCheckRequest = {
+  patientId: null,
+  patientInsuranceId: null,
+  serviceDate: null,
+  benefits: null,
+  discovery: null,
+  validation: null,
+  transfer: null,
+  emergency: null,
+  destinationId: null
+};
+
+export const newEligibilityCheckResult: modelTypes.EligibilityCheckResult = {
+  eligibilityRequestId: null,
+  apiStatus: null,
+  statusCode: null,
+  message: null,
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  requestStatus: null
+};
+
+export const newEligibilityCheckResponse: modelTypes.EligibilityCheckResponse = {
+  eligibilityRequestId: null,
+  apiStatus: null,
+  statusCode: null,
+  message: null,
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  requestStatus: null
+};
+
+export const newPreAuthorizationTrackingResponse: modelTypes.PreAuthorizationTrackingResponse = {
+  id: null,
+
+  patientId: null,
+  encounterId: null,
+  patientInsuranceId: null,
+  payorId: null,
+  payorPlanId: null,
+
+  providerId: null,
+  providerNphiesId: null,
+
+  transactionId: null,
+  outgoingTransactionId: null,
+  approvalRequestId: null,
+  approvalResponseId: null,
+  preAuthRefNo: null,
+
+  eligibilityResponseId: null,
+  eligibilityResponseUrl: null,
+  eligibilityOfflineId: null,
+  eligibilityOfflineDate: null,
+
+  dateOrdered: null,
+
+  payeeId: null,
+  payeeType: null,
+
+  preauthType: null,
+  preauthSubType: null,
+
+  episodeId: null,
+  prescription: null,
+
+  transfer: null,
+  isNewBorn: null,
+  destinationId: null,
+
+  encounterStatus: null,
+  encounterClass: null,
+  serviceType: null,
+  serviceEventType: null,
+  serviceProvider: null,
+  encounterStartDate: null,
+  encounterEndDate: null,
+
+  totalNet: null,
+
+  status: null,
+  outcome: null,
+  message: null,
+  disposition: null,
+  statusReason: null,
+
+  isCancelled: null,
+  cancelReason: null,
+  cancelStatus: null,
+  cancelOutcome: null,
+  cancelMessage: null,
+
+  createdDate: null,
+  createdBy: null,
+  lastModifiedDate: null,
+  lastModifiedBy: null
+};
+
+export const newPreAuthorizationCommunicationRequest: modelTypes.PreAuthorizationCommunicationRequest = {
+  claimResponseId: undefined,
+  payloads: []
+};
+
+export const newPreAuthorizationCancelRequest: modelTypes.PreAuthorizationCancelRequest = {
+  preAuthorizationId: undefined,
+  approvalRequestId: undefined,
+  cancelReason: undefined
+};
+
 export const newPatientProblem: modelTypes.PatientProblem = {
   id: undefined,
   patient: null,
@@ -3165,6 +3361,406 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedDate: null
 };
 
+export type WaseelItemMappingRequest = {
+  itemType: string;
+  sourceId: number;
+  itemCode?: string;
+  itemName?: string;
+  sbsCatalogId: number;
+  requiresPreauth: boolean;
+  isActive: boolean;
+  notes?: string;
+};
+
+export type WaseelSbsSearchParams = {
+  page: number;
+  size: number;
+  search?: string;
+  sort?: string;
+  activeOnly?: boolean;
+};
+
+export type WaseelItemMappingSearchParams = {
+  page: number;
+  size: number;
+  sort?: string;
+};
+
+export const newPriceListSetup: modelTypes.PriceListSetup = {
+  id: undefined,
+
+  facilityId: undefined,
+  facilityName: undefined,
+
+  type: undefined,
+
+  payerId: undefined,
+  payerName: undefined,
+
+  name: undefined,
+  description: undefined,
+
+  versionNumber: 1,
+
+  effectiveFrom: undefined,
+  effectiveTo: undefined,
+
+  status: 'DRAFT',
+
+  currency: undefined,
+
+  isActive: true
+};
+
+export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
+  id: undefined,
+
+  priceListSetupId: undefined,
+
+  waseelItemMappingId: undefined,
+  sbsCatalogId: undefined,
+
+  itemType: undefined,
+
+  sourceId: undefined,
+
+  itemCode: undefined,
+  itemName: undefined,
+
+
+  unitPrice: undefined,
+  discountPercentage: 0,
+
+  isActive: true
+};
+
+export const newBillingRule: modelTypes.BillingRule = {
+  id: undefined,
+  name: undefined,
+  billingItemType: 'SERVICE',
+  billingTrigger: modelTypes.BillingTrigger.ENCOUNTER_CREATED,
+  isDefault: false
+};
+
+export const newBillingConfiguration:
+modelTypes.BillingConfiguration = {
+  id: undefined,
+
+  facilityId: undefined,
+
+  configurationKey: undefined,
+
+  valueType: 'STRING',
+
+  configurationValue: '',
+
+  enumCode: null,
+
+  description: '',
+
+  active: true,
+
+  status: 'DRAFT'
+};
+
+export const newFinancialDocumentNumbering:
+modelTypes.FinancialDocumentNumbering = {
+  id: undefined,
+
+  facilityId: undefined,
+
+  documentType: undefined,
+
+  prefix: '',
+
+  sequenceLength: 6,
+
+  includeYear: true,
+
+  includeFacilityCode: false,
+
+  numberSeparator: '-',
+
+  resetFrequency: 'YEARLY',
+
+  startingNumber: 1,
+
+  active: true,
+
+  status: 'DRAFT'
+};
+
+export const newTax:
+modelTypes.Tax = {
+  id:
+    undefined,
+
+  facilityId:
+    undefined,
+
+  code:
+    '',
+
+  name:
+    '',
+
+  taxType:
+    'PERCENTAGE',
+
+  percentage:
+    null,
+
+  fixedAmount:
+    null,
+
+  currency:
+    null,
+
+  calculationType:
+    'EXCLUSIVE',
+
+  applicableOn:
+    'INVOICE',
+
+  validFrom:
+    '',
+
+  validTo:
+    null,
+
+  isDefault:
+    false,
+
+  active:
+    true,
+
+  description:
+    null
+};
+
+
+export const newDiscount:
+modelTypes.Discount= {
+  id:
+    undefined,
+
+  facilityId:
+    undefined,
+
+  code:
+    '',
+
+  name:
+    '',
+
+  discountType:
+    'PERCENTAGE',
+
+  percentage:
+    null,
+
+  fixedAmount:
+    null,
+
+  currency:
+    null,
+
+  applicableOn:
+    'INVOICE',
+
+  validFrom:
+    '',
+
+  validTo:
+    null,
+
+  maximumDiscountAmount:
+    null,
+
+  minimumInvoiceAmount:
+    null,
+
+  requiresReason:
+    false,
+
+  requiresApproval:
+    false,
+
+  combinable:
+    false,
+
+  isDefault:
+    false,
+
+  active:
+    true,
+
+  description:
+    null
+};
+
+
+
+export const newBillingWalletSummary: modelTypes.BillingWalletSummary = {
+  walletId: null,
+  creditedAmount: 0,
+  availableBalance: 0,
+  reservedBalance: 0,
+  consumedAmount: 0,
+  refundedAmount: 0,
+  currency: null,
+  status: null
+};
+
+export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
+  chargeId: null,
+  chargeNumber: null,
+  patientId: 0,
+  encounterId: 0,
+  chargeDate: null,
+  currency: null,
+  grossAmount: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  netAmount: 0,
+  allocatedAmount: 0,
+  outstandingAmount: 0,
+  lineCount: 0,
+  chargeStatus: null,
+  patientResponsibilityAmount: 0,
+  patientAllocatedAmount: 0,
+  patientOutstandingAmount: 0,
+  patientWalletSettledAmount: 0,
+  patientDebitSettledAmount: 0,
+  insuranceResponsibilityAmount: 0,
+  insuranceAllocatedAmount: 0,
+  insuranceOutstandingAmount: 0,
+  otherPayerResponsibilityAmount: 0,
+  otherPayerAllocatedAmount: 0,
+  otherPayerOutstandingAmount: 0,
+  wallet: newBillingWalletSummary,
+  invoiceId: null,
+  invoiceNumber: null,
+  invoiceTotalAmount: 0,
+  invoicePaidAmount: 0,
+  invoiceOutstandingAmount: 0,
+  items: []
+};
+
+export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
+  patientId: 0,
+  encounterId: null,
+  paymentCategory: 'CASH',
+  payerType: 'PATIENT',
+  payerId: null,
+  amount: 0,
+  currency: 'SAR',
+  paymentStatus: 'COMPLETED',
+  transactionType: 'PAYMENT',
+  paymentMethodId: 0,
+  paymentMethodCode: '',
+  transactionStatus: 'SUCCESS',
+  receiptNumber: null,
+  externalReference: null,
+  authorizationCode: null,
+  processorReference: null,
+  cardLastFour: null,
+  bankReference: null,
+  cashRegisterId: null,
+  notes: null,
+  patientServiceProductIds: [],
+  requestId: ''
+};
+
+export const newBillingCheckoutRequest: modelTypes.BillingCheckoutRequest = {
+  chargeId: 0,
+  allowDebit: true,
+  creditLimit: 0,
+  debitApprovalRequired: false,
+  approvedBy: null,
+  debitDueDate: null,
+  checkoutBy: '',
+  requestId: '',
+  sourceChannel: 'CASHIER'
+};
+
+export const newBillingCancellationRequest: modelTypes.BillingCancellationRequest = {
+  patientServiceProductId: 0,
+  cancellationReason: 'MANUAL_CANCELLATION',
+  reason: '',
+  cancelledBy: '',
+  requestId: '',
+  sourceChannel: 'MANUAL'
+};
+
+export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
+  patientId: 0,
+  encounterId: null,
+  originalPaymentId: null,
+  originalPaymentTransactionId: null,
+  refundSourceType: 'AVAILABLE_WALLET',
+  requestedAmount: 0,
+  refundMethodCode: '',
+  refundMethodId: 0,
+  requestedBy: '',
+  reason: '',
+  externalReference: null,
+  processorReference: null,
+  referenceDocumentType: null,
+  referenceDocumentId: null,
+  referenceDocumentNumber: null,
+  notes: null,
+  requestId: '',
+  sourceChannel: 'CASHIER'
+};
+
+export const newBillingRefundReversalRequest: modelTypes.BillingRefundReversalRequest = {
+  refundId: 0,
+  amount: 0,
+  reason: '',
+  reversedBy: '',
+  requestId: '',
+  sourceChannel: 'MANUAL'
+};
+export const newPrepareDefaultServiceItem:
+modelTypes.PrepareDefaultServiceItem = {
+  serviceId:
+    0,
+
+  quantity:
+    1,
+
+  sequence:
+    1,
+
+  isExempted:
+    false
+};
+
+export const newPrepareDefaultServicesRequest:
+modelTypes.PrepareDefaultServicesRequest = {
+  patientId:
+    0,
+
+  facilityId:
+    0,
+
+  currency:
+    'SAR',
+
+  coverageType:
+    'SELF_PAY',
+
+  patientInsuranceId:
+    null,
+
+  items:
+    [],
+
+  requestId:
+    ''
+};
 export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
   code: '',
   name: '',

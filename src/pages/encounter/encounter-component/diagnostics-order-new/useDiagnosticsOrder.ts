@@ -39,9 +39,16 @@ import type {
   DiagnosticOrderTestUpdateDTO
 } from '@/types/model-types-new';
 
-import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
+import { DiagnosticOrderTestStatus, DiagnosticStatus, BillingEventType } from '@/types/model-types-new';
 import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
 import { formatEnumString } from '@/utils';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage,
+  resolveDiagnosticBillingItemType
+} from '@/utils/billingRuleEvaluationUtils';
 
 type UseDiagnosticsOrderArgs = {
     patient?: any;
@@ -318,6 +325,42 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+
+  const validateDiagnosticBillingRule = async (
+    testId: number,
+    orderType?: string | null
+  ) => {
+    const billingItemType = resolveDiagnosticBillingItemType(orderType);
+
+    if (!billingItemType) {
+      dispatch(
+        notify({
+          msg: 'Unable to determine billing item type for this diagnostic test.',
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    const evaluation = await evaluateBillingRule(
+      buildBillingRuleEvaluationRequest(billingItemType, BillingEventType.ITEM_ORDERED, {
+        diagnosticTestId: testId
+      })
+    ).unwrap();
+
+    if (!evaluation.ruleFound) {
+      dispatch(
+        notify({
+          msg: formatBillingRuleEvaluationMessage(evaluation),
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
 
 
   // Modals state
@@ -369,6 +412,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       }
 
       if (!orderTestId) {
+        const billingRuleReady = await validateDiagnosticBillingRule(
+          testId,
+          resolveOrderType(test)
+        );
+        if (!billingRuleReady) {
+          return;
+        }
+
         const createPayload: DiagnosticOrderTestCreateDTO = {
           orderId: _orderId,
           testId,
@@ -405,7 +456,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (error: any) {
       console.error('Save test failed', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -638,6 +694,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           }
 
           try {
+            const billingRuleReady = await validateDiagnosticBillingRule(
+              testId,
+              item.type || 'LABORATORY'
+            );
+            if (!billingRuleReady) {
+              return;
+            }
+
             await createOrderTest({
               orderId: _orderId,
               testId,
@@ -673,7 +737,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
       console.error('Save tests failed:', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
     }
   };
 

@@ -211,6 +211,7 @@ export interface Service {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  billingRuleId?: number | null,
 }
 
 export interface ServiceItem {
@@ -387,7 +388,7 @@ export interface AvailabilityTemplateResponseVM {
   templateName: string;
   templateType: string;
   templateColor?: string | null;
-  status: string;
+  status?: string;
   versionNo?: number | null;
   copyFromTemplateId?: number | null;
   parentTemplateId?: number | null;
@@ -418,7 +419,7 @@ export interface AvailabilityTemplateCreateDTO {
   templateType: string;
   resourceId: number;
   templateColor?: string | null;
-  status: string;
+  status?: string;
   versionNo?: number | null;
   copyFromTemplateId?: number | null;
   parentTemplateId?: number | null;
@@ -918,6 +919,7 @@ export interface Procedure {
   facilityId?: number;
   currency?: string | null;
   price?: number | null;
+  billingRuleId?: number | null;
 }
 // DiagnosticTest matches the domain entity fields (incl. raw DB strings + transient lists)
 
@@ -948,7 +950,8 @@ export interface DiagnosticTest {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
-  modality: string
+  modality:string
+  billingRuleId?: number | null;
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -1273,6 +1276,7 @@ export interface BrandMedication {
   hasActiveIngredient?: boolean;
   price: number;
   currency: string;
+  billingRuleId?: number | null;
 }
 
 export interface MedicationCategoryClass {
@@ -1568,7 +1572,7 @@ export interface Patient {
   receiveEmail?: boolean | null;
   preferredWayOfContact?: string | null;
 
-  nativeLanguage?: string | null;
+  preferredLanguage?: string | null;
   emergencyContactName?: string | null;
   emergencyContactRelation?: string | null;
   emergencyContactPhone?: string | null;
@@ -1587,6 +1591,9 @@ export interface Patient {
 
   details?: string | null;
   isUnknown?: boolean | null;
+
+  isCchiPatient?: boolean | null;
+  documentId?: string | null;
 
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
@@ -1850,7 +1857,7 @@ export interface BillingInvoiceResponseVM {
   facilityId: number;
   patientKey?: string | null;
   encounterKey?: string | null;
-  status: string;
+  status?: string;
   totalAmount: number | string;
   paidAmount: number | string;
   balanceAmount: number | string;
@@ -1863,62 +1870,102 @@ export interface BillingInvoiceResponseVM {
 
 export interface Payor {
   id?: number;
+
   code: string;
   name: string;
   category: string | null;
+
   address?: string;
   phone?: string;
   email?: string;
   contractManagerContact?: string;
+
   startDate?: Date | string | null;
   expiryDate?: Date | string | null;
   renewable: boolean;
+
   allowPartialCoverage: boolean;
   acceptCopay: boolean;
   acceptDeductibles: boolean;
   allowPackagePricing: boolean;
   allowDrgBilling: boolean;
   forcePreApproval: boolean;
+
+  // Waseel / NPHIES
+  nphiesId?: string;
+  waseelPayerId?: string;
+  tpaNphiesId?: string;
+  isWaseelEnabled: boolean;
+
   isActive: boolean;
+
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
 
 export interface PayorPlan {
   id?: number;
-  code: string;
+
+  payorId?: number;
   name: string;
-  category: string | null;
-  address?: string;
-  phone?: string;
-  email?: string;
-  contractManagerContact?: string;
-  startDate?: Date | string | null;
-  expiryDate?: Date | string | null;
-  renewable: boolean;
-  allowPartialCoverage: boolean;
-  acceptCopay: boolean;
-  acceptDeductibles: boolean;
-  allowPackagePricing: boolean;
-  allowDrgBilling: boolean;
-  forcePreApproval: boolean;
+  planType: string | null;
+
+  // Waseel / CCHI
+  networkId?: string;
+  coverageType?: string;
+  payerNphiesId?: string;
+  waseelPlanId?: string;
+
   isActive: boolean;
+
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
 
+export interface NphiesPayer {
+  id?: number;
+
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 export interface PayorPlanItem {
   id?: number;
-  payorId: number;
+  planId: number;
   itemType: string;
   amount?: number | null;
   coverageType: string;
   isActive: boolean;
+  preAuthorization?: boolean;
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }
-/* Billing Items */
 
+export interface PayorPlanCoverageClass {
+  id?: number;
+
+  planId?: number;
+  coverageClassType: string | null;
+  coverageClassValue: string;
+  coverageClassName?: string;
+
+  isActive: boolean;
+
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* Billing Items */
 export interface BillingInvoiceItemCreateVM {
   invoiceId: number;
   nurseServiceProductKey?: string | null;
@@ -2164,16 +2211,52 @@ export interface PatientDocument {
 export interface PatientInsurance {
   id?: number;
   patientId: number;
-  payorId: number;
+
+  payorId?: number | null;
   planId?: number | null;
+
+  payerName?: string | null;
+  payerNphiesId?: string | null;
+
   policyHolderId?: number | null;
 
-  policyNumber: number | string; // BigDecimal on backend
-  groupNumber?: number | string | null; // BigDecimal on backend
+  policyNumber: number | string;
+  groupNumber?: number | string | null;
 
-  expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
-  remainingBenefits?: number | string | null; // BigDecimal
-  remainingDeductibles?: number | string | null; // BigDecimal
+  expirationDate: string;
+
+  remainingBenefits?: number | string | null;
+  remainingDeductibles?: number | string | null;
+
+  memberCardId?: string | null;
+
+  networkId?: string | null;
+  sponsorNumber?: string | null;
+
+  coverageType?: string | null;
+  relationWithSubscriber?: string | null;
+
+  policyClassName?: string | null;
+  policyHolderName?: string | null;
+
+  groupName?: string | null;
+  planCode?: string | null;
+  eligibilityStatus?: string | null;
+  siteEligibility?: string | null;
+  inforce?: string | null;
+  gpVisitCopay?: number | string | null;
+  specialistVisitsLimit?: number | null;
+  eligibilityBenefitsJson?: string | null;
+  lastEligibilityRequestId?: number | null;
+  lastEligibilitySyncedAt?: Date | string | null;
+
+  issueDate?: string | null;
+
+  patientShare?: number | string | null;
+  maxLimit?: number | string | null;
+
+  waseelNewPlan?: boolean | null;
+
   isPrimary?: boolean | null;
 
   createdBy?: string | null;
@@ -2210,7 +2293,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2251,8 +2334,13 @@ export interface PatientEncounter {
 
   notes?: string | null;
 
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
   encounterDate?: Date | null;
+  startedDate?: string | null;
+  startedBy?: string | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
 
@@ -2328,12 +2416,26 @@ export interface PatientInsurance {
   planId?: number | null;
   policyHolderId?: number | null;
 
-  policyNumber: number | string; // BigDecimal on backend
-  groupNumber?: number | string | null; // BigDecimal on backend
+  policyNumber: number | string;
+  groupNumber?: number | string | null;
 
   expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
-  remainingBenefits?: number | string | null; // BigDecimal
-  remainingDeductibles?: number | string | null; // BigDecimal
+  remainingBenefits?: number | string | null;
+  remainingDeductibles?: number | string | null;
+
+  memberCardId?: string | null;
+  payerNphiesId?: string | null;
+  networkId?: string | null;
+  sponsorNumber?: string | null;
+  coverageType?: string | null;
+  relationWithSubscriber?: string | null;
+  policyClassName?: string | null;
+  policyHolderName?: string | null;
+  issueDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+  patientShare?: number | string | null;
+  maxLimit?: number | string | null;
+  waseelNewPlan?: boolean | null;
+
   isPrimary?: boolean | null;
 
   createdBy?: string | null;
@@ -2370,7 +2472,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2416,7 +2518,10 @@ export interface PatientEncounter {
   encounterType: string;
   encounterReason: string;
   priorityLevel: string;
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
 
   followUpEncounter?: {
     id: number;
@@ -2509,12 +2614,26 @@ export interface PatientInsurance {
   planId?: number | null;
   policyHolderId?: number | null;
 
-  policyNumber: number | string; // BigDecimal on backend
-  groupNumber?: number | string | null; // BigDecimal on backend
+  policyNumber: number | string;
+  groupNumber?: number | string | null;
 
   expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
-  remainingBenefits?: number | string | null; // BigDecimal
-  remainingDeductibles?: number | string | null; // BigDecimal
+  remainingBenefits?: number | string | null;
+  remainingDeductibles?: number | string | null;
+
+  memberCardId?: string | null;
+  payerNphiesId?: string | null;
+  networkId?: string | null;
+  sponsorNumber?: string | null;
+  coverageType?: string | null;
+  relationWithSubscriber?: string | null;
+  policyClassName?: string | null;
+  policyHolderName?: string | null;
+  issueDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+  patientShare?: number | string | null;
+  maxLimit?: number | string | null;
+  waseelNewPlan?: boolean | null;
+
   isPrimary?: boolean | null;
 
   createdBy?: string | null;
@@ -2599,7 +2718,7 @@ export interface EncounterVaccination {
   vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string;
+  status?: string;
 
   cancellationReason?: string | null;
 
@@ -2641,7 +2760,7 @@ export interface BillingInvoiceCreateVM {
 
   notes?: string | null;
 
-  status: string;
+  status?: string;
   encounterDate?: Date | null;
 }
 
@@ -2707,7 +2826,10 @@ export interface PatientEncounter {
 
   encounterDate?: Date | null;
 
-  status: string;
+  encounterStatus?: string | null;
+  treatmentStatus?: string;
+  /** @deprecated use treatmentStatus */
+  status?: string;
 
   chiefComplaint?: string | null;
 
@@ -2840,6 +2962,8 @@ export interface PatientLedgerSummaryDTO {
   patientId: number;
   totalDebt: number;
   walletBalance: number;
+  reservedBalance?: number;
+  consumedAmount?: number;
 }
 
 export interface PatientChargeDTO {
@@ -3157,7 +3281,7 @@ export interface PatientAllergiesResponseVM {
   byPatient?: boolean;
   sourceOfInformation?: string;
   note?: string;
-  status: string;
+  status?: string;
   allergicReactions: string;
 
   resolvedBy?: string;
@@ -3197,7 +3321,7 @@ export interface PatientPrescription {
   prescriptionNum: number;
   prescriptionDate: string;
   urgencyLevel: string;
-  status: string;
+  status?: string;
   fromFacilityId: number;
   fromDepartmentId: number;
   toFacilityId?: number | null;
@@ -3311,7 +3435,7 @@ export interface PatientAllergiesCreateDTO {
   byPatient?: boolean;
   sourceOfInformation?: string;
   note?: string;
-  status: string;
+  status?: string;
   allergicReactions?: string;
 
   activeIngredients?: number[];
@@ -3915,6 +4039,12 @@ export type PatientServiceAndProduct = {
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
   SourceId?: number | null;
+  createdDate?: string | null;
+  preAuthorizationStatus?: string | null;
+  preAuthorizationReferenceNo?: string | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  priceSource?: string | null;
 };
 
 export enum ServiceSource {
@@ -4943,6 +5073,195 @@ export interface GlasgowComaScaleAssessment {
   totalScore?: number | null;
   scoreInterpretation?: string | null;
 }
+
+// ------------------- Waseel Eligibility -------------------
+
+export interface EligibilityCheckRequest {
+  patientId?: number | null;
+  patientInsuranceId?: number | null;
+  serviceDate?: string | null;
+  benefits?: boolean | null;
+  discovery?: boolean | null;
+  validation?: boolean | null;
+  transfer?: boolean | null;
+  emergency?: boolean | null;
+  destinationId?: string | null;
+}
+
+export interface EligibilityCheckResult {
+  eligibilityRequestId?: number | null;
+  apiStatus?: string | null;
+  statusCode?: string | null;
+  message?: string | null;
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  requestStatus?: string | null;
+}
+
+export interface EligibilityCheckResponse {
+  eligibilityRequestId?: number | null;
+  apiStatus?: string | null;
+  statusCode?: string | null;
+  message?: string | null;
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  requestStatus?: string | null;
+}
+
+// ------------------- Waseel Pre-Authorization -------------------
+
+export interface PreAuthorizationTrackingItemResponse {
+  id?: number | null;
+  sequence?: number | null;
+  itemType?: string | null;
+  itemCode?: string | null;
+  itemDescription?: string | null;
+  nonStandardCode?: string | null;
+  nonStandardDesc?: string | null;
+  isPackage?: boolean | null;
+  isMaternity?: boolean | null;
+  quantity?: number | string | null;
+  quantityCode?: string | null;
+  unitPrice?: number | string | null;
+  discount?: number | string | null;
+  factor?: number | string | null;
+  taxPercent?: number | string | null;
+  tax?: number | string | null;
+  patientSharePercent?: number | string | null;
+  patientShare?: number | string | null;
+  payerShare?: number | string | null;
+  net?: number | string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  waseelItemId?: number | null;
+  itemDecision?: string | null;
+  reasonCodes?: string | null;
+}
+
+export interface PreAuthorizationTrackingResponse {
+  id?: number | null;
+
+  patientId?: number | null;
+  encounterId?: number | null;
+  patientInsuranceId?: number | null;
+  payorId?: number | null;
+  payorPlanId?: number | null;
+
+  providerId?: string | null;
+  providerNphiesId?: string | null;
+
+  transactionId?: number | null;
+  outgoingTransactionId?: string | null;
+  approvalRequestId?: number | null;
+  approvalResponseId?: number | null;
+  preAuthRefNo?: string | null;
+
+  eligibilityResponseId?: string | null;
+  eligibilityResponseUrl?: string | null;
+  eligibilityOfflineId?: string | null;
+  eligibilityOfflineDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  dateOrdered?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  payeeId?: number | null;
+  payeeType?: string | null;
+
+  preauthType?: string | null;
+  preauthSubType?: string | null;
+
+  episodeId?: string | null;
+  prescription?: string | null;
+
+  transfer?: boolean | null;
+  isNewBorn?: boolean | null;
+  destinationId?: string | null;
+
+  encounterStatus?: string | null;
+  encounterClass?: string | null;
+  serviceType?: string | null;
+  serviceEventType?: string | null;
+  serviceProvider?: number | null;
+  encounterStartDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+  encounterEndDate?: string | null; // LocalDate -> string (YYYY-MM-DD)
+
+  totalNet?: number | string | null; // BigDecimal
+
+  status?: string | null;
+  outcome?: string | null;
+  message?: string | null;
+  disposition?: string | null;
+  statusReason?: string | null;
+
+  isCancelled?: boolean | null;
+  cancelReason?: string | null;
+  cancelStatus?: string | null;
+  cancelOutcome?: string | null;
+  cancelMessage?: string | null;
+
+  searchCompleted?: boolean | null;
+  canCommunicate?: boolean | null;
+  canCancel?: boolean | null;
+  waseelClaimItemIds?: number[] | null;
+  items?: PreAuthorizationTrackingItemResponse[] | null;
+  communicationCount?: number | null;
+
+  createdDate?: string | null; // Instant -> string (ISO)
+  createdBy?: string | null;
+  lastModifiedDate?: string | null; // Instant -> string (ISO)
+  lastModifiedBy?: string | null;
+}
+
+export interface PreAuthorizationCommunicationPayloadHistory {
+  contentType?: 'TEXT' | 'ATTACHMENT' | 'TEXT_AND_ATTACHMENT' | string | null;
+  payloadValue?: string | null;
+  claimItemId?: number | null;
+  attachmentId?: number | null;
+  attachmentName?: string | null;
+  attachmentType?: string | null;
+  sizeBytes?: number | null;
+  isSentToWaseel?: boolean | null;
+  downloadUrl?: string | null;
+}
+
+export interface PreAuthorizationCommunicationHistoryResponse {
+  trackId?: number | null;
+  trackType?: string | null;
+  status?: string | null;
+  outcome?: string | null;
+  message?: string | null;
+  communicationId?: number | null;
+  transactionId?: number | null;
+  approvalResponseId?: number | null;
+  createdDate?: string | null;
+  createdBy?: string | null;
+  payloads?: PreAuthorizationCommunicationPayloadHistory[] | null;
+}
+
+export interface PreAuthorizationCommunicationRequest {
+  preAuthorizationId?: number;
+  claimResponseId?: number;
+  payloads?: {
+    attachmentName?: string;
+    attachmentType?: string;
+    claimItemId?: number;
+    createdDate?: string;
+    payloadAttachment?: string;
+    payloadValue?: string;
+    attachmentId?: number;
+  }[];
+}
+
+export type CancelReason =
+  | 'SERVICE_NOT_PERFORMED'
+  | 'WRONG_INFORMATION'
+  | 'TRANSACTION_ALREADY_SUBMITTED';
+
+export type PreAuthorizationCancelRequest = {
+  preAuthorizationId?: number;
+  approvalRequestId?: number;
+  cancelReason?: CancelReason;
+};
+
 export interface PatientProblem {
   id?: number;
   patient?: any | null;
@@ -4964,6 +5283,1147 @@ export interface PatientProblem {
   lastModifiedDate?: string | Date | null;
 }
 
+
+export type WaseelSbsImportResult = {
+  totalRows: number;
+  successRows: number;
+  failedRows: number;
+  message: string;
+  errorDetails?: string;
+};
+
+export type WaseelSbsCatalog = {
+  id: number;
+  waseelItemType?: string;
+  sbsCode: string;
+  updateType?: string;
+  revisionDetails?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  isActive: boolean;
+};
+
+export type WaseelItemMapping = {
+  id: number;
+  itemType?: string;
+  sourceId?: number;
+  itemCode?: string;
+  itemName?: string;
+  sbsCatalogId: number;
+  waseelItemType?: string;
+  sbsCode: string;
+  sbsDescription?: string;
+  requiresPreauth: boolean;
+  isActive: boolean;
+  notes?: string;
+};
+
+export type PriceListSetupType =
+  | 'CASH'
+  | 'SELF_PAY'
+  | 'INSURANCE'
+  | 'CORPORATE'
+  | 'PACKAGE'
+  | 'EMPLOYEE';
+
+export type PriceListSetupStatus =
+  | 'DRAFT'
+  | 'APPROVED'
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export type PriceListItemType =
+  | 'MEDICATION'
+  | 'LABORATORY'
+  | 'RADIOLOGY'
+  | 'PATHOLOGY'
+  | 'SERVICE'
+  | 'PROCEDURE';
+
+export type PricingMethod =
+  | 'FIXED_PRICE'
+  | 'DISCOUNT'
+  | 'MARKUP'
+  | 'NO_CHARGE'
+  | 'MANUAL';
+
+  export type PriceListSetup = {
+  id?: number;
+
+  facilityId?: number;
+  facilityName?: string;
+
+  type?: PriceListSetupType;
+
+  payerId?: number;
+  payerName?: string;
+
+  name?: string;
+  description?: string;
+
+  versionNumber?: number;
+
+  effectiveFrom?: string;
+  effectiveTo?: string;
+
+  status?: PriceListSetupStatus;
+
+  currency?: string;
+
+  isActive?: boolean;
+};
+
+export type PriceListSetupItem = {
+  id?: number;
+
+  priceListSetupId?: number;
+
+  waseelItemMappingId?: number;
+  sbsCatalogId?: number;
+
+  itemType?: PriceListItemType;
+
+  sourceId?: number;
+
+  itemCode?: string;
+  itemName?: string;
+
+
+  unitPrice?: number;
+  discountPercentage?: number;
+
+  isActive?: boolean;
+};
+export type SavePriceListSetupItemRequest = {
+  waseelItemMappingId?: number | null;
+  sbsCatalogId?: number | null;
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode: string;
+  itemName: string;
+  pricingMethod: PricingMethod;
+  unitPrice: number;
+  discountPercentage: number;
+  isActive?: boolean;
+};
+export type SavePriceListSetupRequest = {
+  facilityId: number;
+  type: PriceListSetupType;
+  payerId?: number | null;
+  name: string;
+  description?: string | null;
+  versionNumber: number;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  currency: string;
+  status?: PriceListSetupStatus;
+};
+
+export enum BillingTrigger {
+  ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
+  TREATMENT_STARTED = 'TREATMENT_STARTED',
+  ORDERED = 'ORDERED',
+  DISPENSED = 'DISPENSED',
+  SERVICE_COMPLETED = 'SERVICE_COMPLETED',
+  CHECKOUT = 'CHECKOUT',
+  MANUAL = 'MANUAL',
+  DEBIT_NOTE = 'DEBIT_NOTE'
+}
+
+export enum BillingEventType {
+  ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
+  TREATMENT_STARTED = 'TREATMENT_STARTED',
+  ITEM_ORDERED = 'ITEM_ORDERED',
+  ITEM_DISPENSED = 'ITEM_DISPENSED',
+  SERVICE_COMPLETED = 'SERVICE_COMPLETED',
+  ITEM_UPDATED = 'ITEM_UPDATED',
+  ITEM_CANCELLED = 'ITEM_CANCELLED',
+  ENCOUNTER_CANCELLED = 'ENCOUNTER_CANCELLED',
+  CHECKOUT = 'CHECKOUT',
+  MANUAL = 'MANUAL',
+  DEBIT_NOTE = 'DEBIT_NOTE'
+}
+
+export enum BillingSettlementPath {
+  REMAINING_TO_PAY = 'REMAINING_TO_PAY',
+  LEDGER_DEBIT_AT_CHECKOUT = 'LEDGER_DEBIT_AT_CHECKOUT',
+  MANUAL = 'MANUAL'
+}
+
+export type BillingRuleEvaluationRequest = {
+  billingItemType: BillingItemType;
+  billingEvent: BillingEventType;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  diagnosticTestId?: number | null;
+  brandMedicationId?: number | null;
+};
+
+export type BillingRuleEvaluationResponse = {
+  ruleFound: boolean;
+  billingRuleId?: number | null;
+  billingRuleName?: string | null;
+  billingItemType?: BillingItemType | null;
+  billingTrigger?: BillingTrigger | null;
+  settlementPath?: BillingSettlementPath | null;
+  billingEvent?: BillingEventType | null;
+  eventMatches?: boolean;
+  billsOnCurrentEvent?: boolean;
+  message?: string | null;
+};
+
+export type BillingRule = {
+  id?: number;
+  name?: string;
+  billingItemType?: BillingItemType;
+  billingTrigger?: BillingTrigger;
+  isDefault?: boolean;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+};
+
+export type SaveBillingRuleRequest = {
+  id?: number | null;
+  name: string;
+  billingItemType: BillingItemType;
+  billingTrigger: BillingTrigger;
+  isDefault: boolean;
+};
+
+export type BillingConfigurationKey =
+  | 'DEFAULT_CURRENCY_ID'
+  | 'DEFAULT_PRICE_LIST_ID'
+  | 'DEFAULT_CASH_PAYER_ID'
+  | 'DEFAULT_PAYMENT_METHOD_ID'
+  | 'DEFAULT_TAX_ID'
+  | 'DECIMAL_PRECISION'
+  | 'ROUNDING_METHOD'
+  | 'PRICES_INCLUDE_TAX'
+  | 'APPLY_TAX_AUTOMATICALLY'
+  | 'ALLOW_TAX_OVERRIDE'
+  | 'ALLOW_INVOICE_WITHOUT_PAYER'
+  | 'ALLOW_MANUAL_PRICE_OVERRIDE'
+  | 'REQUIRE_PRICE_OVERRIDE_REASON'
+  | 'ALLOW_NEGATIVE_INVOICE_LINES'
+  | 'REQUIRE_ENCOUNTER_REFERENCE'
+  | 'REQUIRE_PATIENT_REFERENCE'
+  | 'ALLOW_DRAFT_INVOICE'
+  | 'AUTO_FINALIZE_INVOICE'
+  | 'ALLOW_DISCOUNT'
+  | 'ALLOW_MANUAL_DISCOUNT'
+  | 'MAXIMUM_MANUAL_DISCOUNT_PERCENTAGE'
+  | 'REQUIRE_DISCOUNT_REASON'
+  | 'ALLOW_PARTIAL_PAYMENT'
+  | 'ALLOW_MULTIPLE_PAYMENT_METHODS'
+  | 'ALLOW_OVERPAYMENT'
+  | 'ALLOW_PAYMENT_BEFORE_INVOICE_FINALIZATION'
+  | 'AUTO_CLOSE_FULLY_PAID_INVOICE'
+  | 'ALLOW_UNALLOCATED_PAYMENT'
+  | 'ALLOW_INVOICE_CANCELLATION'
+  | 'REQUIRE_CANCELLATION_REASON'
+  | 'ALLOW_CANCELLATION_AFTER_PAYMENT'
+  | 'ALLOW_CREDIT_NOTES'
+  | 'REQUIRE_CREDIT_NOTE_REASON'
+  | 'ALLOW_REOPEN_FINALIZED_INVOICE'
+  | 'REQUIRE_CANCELLATION_APPROVAL'
+  | 'INVOICE_PREFIX'
+  | 'CREDIT_NOTE_PREFIX'
+  | 'RECEIPT_PREFIX'
+  | 'PAYMENT_PREFIX'
+  | 'INCLUDE_YEAR'
+  | 'INCLUDE_FACILITY_CODE'
+  | 'SEQUENCE_LENGTH'
+  | 'RESET_FREQUENCY'
+  | 'NUMBER_SEPARATOR';
+
+export type BillingConfigurationValueType =
+  | 'STRING'
+  | 'BOOLEAN'
+  | 'INTEGER'
+  | 'LONG'
+  | 'DECIMAL'
+  | 'ENUM'
+  | 'DATE'
+  | 'DATETIME'
+  | 'JSON';
+
+export type BillingConfigurationStatus =
+  | 'DRAFT'
+  | 'ACTIVE'
+  | 'INACTIVE';
+
+export type BillingConfiguration = {
+  id?: number;
+
+  facilityId?: number;
+
+  configurationKey?:
+    BillingConfigurationKey;
+
+  valueType?:
+    BillingConfigurationValueType;
+
+  configurationValue?: string;
+
+  enumCode?: string | null;
+
+  description?: string | null;
+
+  active?: boolean;
+
+  status?:
+    BillingConfigurationStatus;
+
+  createdBy?: string;
+
+  createdDate?: string;
+
+  lastModifiedBy?: string;
+
+  lastModifiedDate?: string;
+};
+
+export type SaveBillingConfigurationRequest = {
+  facilityId: number;
+
+  configurationKey:
+    BillingConfigurationKey;
+
+  valueType:
+    BillingConfigurationValueType;
+
+  configurationValue: string;
+
+  enumCode?: string | null;
+
+  description?: string | null;
+
+  active: boolean;
+
+  status:
+    BillingConfigurationStatus;
+};
+
+export type FinancialDocumentNumbering = {
+  id?: number;
+
+  facilityId?: number;
+
+  documentType?: string;
+
+  prefix?: string;
+
+  sequenceLength?: number;
+
+  includeYear?: boolean;
+
+  includeFacilityCode?: boolean;
+
+  numberSeparator?: string;
+
+  resetFrequency?: string;
+
+  startingNumber?: number;
+
+  active?: boolean;
+
+  status?: BillingConfigurationStatus;
+};
+
+export type SaveFinancialDocumentNumberingRequest = {
+  id?: number | null;
+
+  facilityId: number;
+
+  documentType: string;
+
+  prefix: string;
+
+  sequenceLength: number;
+
+  includeYear: boolean;
+
+  includeFacilityCode: boolean;
+
+  numberSeparator: string;
+
+  resetFrequency: string;
+
+  startingNumber: number;
+
+  active: boolean;
+
+  status: BillingConfigurationStatus;
+};
+
+export type FinancialDocumentNumberingBulkRequest = {
+  facilityId: number;
+
+  configurations: SaveFinancialDocumentNumberingRequest[];
+};
+
+export type FinancialDocumentSequenceStatus = {
+  documentType?: string;
+
+  periodKey?: string;
+
+  lastNumber?: number;
+
+  nextNumber?: number;
+
+  sampleDocumentNumber?: string;
+};
+
+export type AllocateFinancialDocumentNumberRequest = {
+  documentType: string;
+  requestId: string;
+};
+
+export type AllocatedFinancialDocumentNumber = {
+  facilityId: number;
+  documentType: string;
+  documentNumber: string;
+  sequenceNumber: number;
+  periodKey?: string;
+  requestId: string;
+  configurationId?: number;
+};
+
+export type TaxType =
+  | 'PERCENTAGE'
+  | 'FIXED_AMOUNT';
+
+export type TaxCalculationType =
+  | 'EXCLUSIVE'
+  | 'INCLUSIVE';
+
+export type TaxApplicableOn =
+  | 'INVOICE'
+  | 'INVOICE_LINE'
+  | 'SERVICE'
+  | 'PRODUCT';
+
+/*
+ * إذا كان Currency موجودًا عندك مسبقًا،
+ * لا تعيدي تعريفه.
+ */
+export type Currency =
+  string;
+
+export type Tax = {
+  id?: number;
+
+  facilityId?: number;
+
+  code?: string;
+
+  name?: string;
+
+  taxType?: TaxType;
+
+  percentage?: number | null;
+
+  fixedAmount?: number | null;
+
+  currency?: Currency | null;
+
+  calculationType?:
+    TaxCalculationType;
+
+  applicableOn?:
+    TaxApplicableOn;
+
+  validFrom?: string;
+
+  validTo?: string | null;
+
+  isDefault?: boolean;
+
+  active?: boolean;
+
+  description?: string | null;
+};
+
+export type SaveTaxRequest = {
+  facilityId: number;
+
+  code: string;
+
+  name: string;
+
+  taxType: TaxType;
+
+  percentage?: number | null;
+
+  fixedAmount?: number | null;
+
+  currency?: Currency | null;
+
+  calculationType:
+    TaxCalculationType;
+
+  applicableOn:
+    TaxApplicableOn;
+
+  validFrom: string;
+
+  validTo?: string | null;
+
+  isDefault?: boolean;
+
+  active?: boolean;
+
+  description?: string | null;
+};
+
+export type DiscountType =
+  | 'PERCENTAGE'
+  | 'FIXED_AMOUNT';
+
+export type DiscountApplicableOn =
+  | 'INVOICE'
+  | 'INVOICE_LINE'
+  | 'SERVICE'
+  | 'PRODUCT';
+
+
+export type Discount = {
+  id?: number;
+
+  facilityId?: number;
+
+  code?: string;
+
+  name?: string;
+
+  discountType?:
+    DiscountType;
+
+  percentage?:
+    number | null;
+
+  fixedAmount?:
+    number | null;
+
+  currency?:
+    Currency | null;
+
+  applicableOn?:
+    DiscountApplicableOn;
+
+  validFrom?: string;
+
+  validTo?:
+    string | null;
+
+  maximumDiscountAmount?:
+    number | null;
+
+  minimumInvoiceAmount?:
+    number | null;
+
+  requiresReason?:
+    boolean;
+
+  requiresApproval?:
+    boolean;
+
+  combinable?:
+    boolean;
+
+  isDefault?:
+    boolean;
+
+  active?:
+    boolean;
+
+  description?:
+    string | null;
+};
+
+export type SaveDiscountRequest = {
+  facilityId: number;
+
+  code: string;
+
+  name: string;
+
+  discountType:
+    DiscountType;
+
+  percentage?:
+    number | null;
+
+  fixedAmount?:
+    number | null;
+
+  currency?:
+    Currency | null;
+
+  applicableOn:
+    DiscountApplicableOn;
+
+  validFrom: string;
+
+  validTo?:
+    string | null;
+
+  maximumDiscountAmount?:
+    number | null;
+
+  minimumInvoiceAmount?:
+    number | null;
+
+  requiresReason?:
+    boolean;
+
+  requiresApproval?:
+    boolean;
+
+  combinable?:
+    boolean;
+
+  isDefault?:
+    boolean;
+
+  active?:
+    boolean;
+
+  description?:
+    string | null;
+};
+export type BillingWalletStatus =
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'BLOCKED'
+  | 'CLOSED';
+
+export type BillingChargeStatus =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingChargeLineStatus =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingResponsibilityStatus =
+  | 'CALCULATED'
+  | 'PARTIALLY_ALLOCATED'
+  | 'FULLY_ALLOCATED'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'SUPERSEDED';
+
+export type ResponsiblePartyType =
+  | 'PATIENT'
+  | 'INSURANCE'
+  | 'OTHER_PAYER';
+
+export type ResponsibilityRole =
+  | 'PRIMARY'
+  | 'SECONDARY'
+  | 'TERTIARY'
+  | string;
+
+export type BillingLedgerSourceChannel =
+  | 'BILLING_ENGINE'
+  | 'CASHIER'
+  | 'PATIENT_PORTAL'
+  | 'INSURANCE'
+  | 'API'
+  | 'SYSTEM'
+  | 'MANUAL';
+
+export type BillingPaymentStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export type BillingPaymentTransactionStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REVERSED';
+
+export type BillingPaymentTransactionType =
+  | 'PAYMENT'
+  | 'AUTHORIZATION'
+  | 'CAPTURE'
+  | 'REFUND'
+  | 'VOID'
+  | 'REVERSAL';
+
+export type BillingRefundStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'PROCESSING'
+  | 'PARTIALLY_COMPLETED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'REVERSED'
+  | 'FAILED';
+
+export type BillingRefundSourceType =
+  | 'ORIGINAL_PAYMENT'
+  | 'AVAILABLE_WALLET'
+  | string;
+
+export type BillingCancellationReason =
+  | 'SERVICE_DELETED'
+  | 'QUANTITY_ZERO'
+  | 'ENCOUNTER_CANCELLED'
+  | 'SERVICE_CANCELLED'
+  | 'ORDER_CANCELLED'
+  | 'CLINICAL_DECISION'
+  | 'DUPLICATE_ENTRY'
+  | 'MANUAL_CANCELLATION';
+
+export type BillingWalletSummary = {
+  walletId: number | null;
+  creditedAmount: number;
+  availableBalance: number;
+  reservedBalance: number;
+  consumedAmount: number;
+  refundedAmount: number;
+  currency: Currency | null;
+  status: BillingWalletStatus | null;
+};
+
+export type BillingResponsibilitySummary = {
+  responsibilityId: number;
+  responsiblePartyType: ResponsiblePartyType;
+  responsibilityRole: ResponsibilityRole;
+  payerId: number | null;
+  patientInsuranceId: number | null;
+  responsibilityAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  coveragePercentage: number;
+  deductibleAmount: number;
+  copayAmount: number;
+  coinsuranceAmount: number;
+  nonCoveredAmount: number;
+  currency: Currency;
+  status: BillingResponsibilityStatus;
+};
+
+export type EncounterBillingItemSummary = {
+  patientServiceProductId: number | null;
+  chargeLineId: number;
+  billingItemType: string | null;
+  sourceId: number | null;
+  itemCode: string | null;
+  itemName: string | null;
+  quantity: number;
+  unitPrice: number;
+  setupUnitPrice?: number | null;
+  priceSource?: string | null;
+  priceListItemCode?: string | null;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  patientResponsibilityAmount: number;
+  insuranceResponsibilityAmount: number;
+  otherPayerResponsibilityAmount: number;
+  reservedAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  exempted: boolean;
+  currency: Currency;
+  status: BillingChargeLineStatus;
+  chargedAt?: string | null;
+  responsibilities: BillingResponsibilitySummary[];
+};
+
+export type WaseelBenefitDetail = {
+  categoryKey?: string | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  typeDisplay?: string | null;
+  typeCode?: string | null;
+  value?: string | null;
+  unit?: string | null;
+};
+
+export type WaseelCoverageDetails = {
+  eligibilityRequestId?: number | null;
+  eligibilityResponseId?: string | null;
+  patientInsuranceId?: number | null;
+  memberId?: string | null;
+  policyNumber?: string | null;
+  policyHolder?: string | null;
+  network?: string | null;
+  inforce?: string | null;
+  coverageStatus?: string | null;
+  copaymentPercent?: number | null;
+  copaymentCap?: number | null;
+  eligibilityCheckedAt?: string | null;
+  benefits?: WaseelBenefitDetail[];
+};
+
+export type EncounterBillingSummary = {
+  chargeId: number | null;
+  chargeNumber: string | null;
+  patientId: number;
+  encounterId: number;
+  chargeDate: string | null;
+  currency: Currency | null;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  allocatedAmount: number;
+  outstandingAmount: number;
+  lineCount: number;
+  chargeStatus: BillingChargeStatus | null;
+  patientResponsibilityAmount: number;
+  patientAllocatedAmount: number;
+  patientOutstandingAmount: number;
+  patientWalletSettledAmount?: number;
+  patientDebitSettledAmount?: number;
+  insuranceResponsibilityAmount: number;
+  insuranceAllocatedAmount: number;
+  insuranceOutstandingAmount: number;
+  otherPayerResponsibilityAmount: number;
+  otherPayerAllocatedAmount: number;
+  otherPayerOutstandingAmount: number;
+  wallet: BillingWalletSummary;
+  invoiceId?: number | null;
+  invoiceNumber?: string | null;
+  invoiceTotalAmount?: number;
+  invoicePaidAmount?: number;
+  invoiceOutstandingAmount?: number;
+  items: EncounterBillingItemSummary[];
+};
+
+export type CreateAdvancePaymentRequest = {
+  patientId: number;
+  encounterId?: number | null;
+  paymentCategory: string;
+  payerType: string;
+  payerId?: number | null;
+  amount: number;
+  currency: Currency;
+  paymentStatus: BillingPaymentStatus;
+  transactionType: BillingPaymentTransactionType;
+  paymentMethodId: number;
+  paymentMethodCode: string;
+  transactionStatus: BillingPaymentTransactionStatus;
+  receiptNumber?: string | null;
+  externalReference?: string | null;
+  authorizationCode?: string | null;
+  processorReference?: string | null;
+  cardLastFour?: string | null;
+  bankReference?: string | null;
+  cashRegisterId?: number | null;
+  notes?: string | null;
+  patientServiceProductIds?: number[];
+  requestId: string;
+};
+
+export type BillingPaymentReservationResult = {
+  patientServiceProductId: number;
+  reservationId: number | null;
+  reservationNumber: string | null;
+  itemDescription?: string | null;
+  billingItemType?: string | null;
+  patientResponsibilityAmount: number;
+  reservedAmount: number;
+  uncoveredAmount: number;
+  fullyCovered: boolean;
+};
+
+export type BillingPaymentResult = {
+  paymentId: number;
+  paymentNumber: string;
+  paymentTransactionId: number | null;
+  paymentTransactionNumber: string | null;
+  walletId: number;
+  paymentAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  walletRefundedAmount: number;
+  totalReservedAmount: number;
+  currency: Currency;
+  paymentStatus: BillingPaymentStatus;
+  transactionStatus: BillingPaymentTransactionStatus | null;
+  reservations: BillingPaymentReservationResult[];
+};
+
+export type BillingCheckoutRequest = {
+  chargeId: number;
+  allowDebit: boolean;
+  creditLimit: number;
+  debitApprovalRequired: boolean;
+  approvedBy?: string | null;
+  debitDueDate?: string | null;
+  checkoutBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingCheckoutLineResult = {
+  chargeLineId: number;
+  patientServiceProductId: number;
+  responsibilityId: number;
+  originalResponsibilityAmount: number;
+  reservedAllocationAmount: number;
+  availableWalletAllocationAmount: number;
+  debitAllocationAmount: number;
+  finalOutstandingAmount: number;
+  settled: boolean;
+};
+
+export type BillingCheckoutResult = {
+  chargeId: number;
+  chargeNumber: string;
+  patientId: number;
+  encounterId: number;
+  netAmount: number;
+  reservedAllocatedAmount: number;
+  availableWalletAllocatedAmount: number;
+  debitCreatedAmount: number;
+  patientOutstandingAmount: number;
+  insuranceOutstandingAmount: number;
+  otherPayerOutstandingAmount: number;
+  totalOutstandingAmount: number;
+  currency: Currency;
+  chargeStatus: BillingChargeStatus;
+  patientSettled: boolean;
+  financiallyClosed: boolean;
+  lines: BillingCheckoutLineResult[];
+};
+
+export type BillingCancellationRequest = {
+  patientServiceProductId: number;
+  cancellationReason: BillingCancellationReason;
+  reason: string;
+  cancelledBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingCancellationResult = {
+  patientServiceProductId: number;
+  chargeId: number | null;
+  chargeLineId: number | null;
+  walletAllocationReversedAmount: number;
+  debitAllocationReversedAmount: number;
+  totalReversedAllocationAmount: number;
+  releasedReservationAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  cancelled: boolean;
+};
+
+export type BillingRefundRequest = {
+  patientId: number;
+  encounterId?: number | null;
+  originalPaymentId?: number | null;
+  originalPaymentTransactionId?: number | null;
+  refundSourceType: BillingRefundSourceType;
+  requestedAmount: number;
+  refundMethodCode: string;
+  refundMethodId: number;
+  requestedBy: string;
+  reason: string;
+  externalReference?: string | null;
+  processorReference?: string | null;
+  referenceDocumentType?: string | null;
+  referenceDocumentId?: number | null;
+  referenceDocumentNumber?: string | null;
+  notes?: string | null;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingRefundResult = {
+  refundId: number;
+  refundNumber: string;
+  refundPaymentTransactionId: number | null;
+  refundPaymentTransactionNumber: string | null;
+  walletId: number;
+  originalPaymentId: number | null;
+  requestedAmount: number;
+  approvedAmount: number;
+  refundedAmount: number;
+  reversedAmount: number;
+  walletAvailableBalance: number;
+  walletReservedBalance: number;
+  walletConsumedAmount: number;
+  walletRefundedAmount: number;
+  currency: Currency;
+  refundSourceType: BillingRefundSourceType;
+  status: BillingRefundStatus;
+};
+
+export type BillingRefundReversalRequest = {
+  refundId: number;
+  amount: number;
+  reason: string;
+  reversedBy: string;
+  requestId: string;
+  sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type BillingRefundReversalResult = {
+  originalRefundId: number;
+  reversalRefundId: number;
+  reversalRefundNumber: string;
+  reversedAmount: number;
+  remainingReversibleAmount: number;
+  walletAvailableBalance: number;
+  walletRefundedAmount: number;
+  originalRefundStatus: BillingRefundStatus;
+  reversalStatus: BillingRefundStatus;
+};
+
+/*
+ * Add these types to:
+ * src/types/model-types-new.ts
+ */
+
+export type BillingCoverageType =
+  | 'SELF_PAY'
+  | 'INSURANCE';
+
+export type PrepareDefaultServiceItem = {
+  serviceId: number;
+  quantity: number;
+  sequence: number;
+  isExempted: boolean;
+};
+
+export type PrepareDefaultServicesRequest = {
+  patientId: number;
+  facilityId: number;
+  currency: Currency;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PrepareDefaultServiceItem[];
+  requestId: string;
+};
+
+export type PreparedDefaultServiceResult = {
+  patientServiceProductId: number;
+  serviceId: number;
+  sequence: number;
+  billingResult: BillingOperationResult;
+};
+
+export type PrepareDefaultServicesResult = {
+  patientId: number;
+  encounterId: number;
+  facilityId: number;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PreparedDefaultServiceResult[];
+  processed: boolean;
+  message: string;
+};
+
+export type PreviewDefaultServicesPricingRequest = {
+  patientId: number;
+  facilityId: number;
+  currency: Currency;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  items: PrepareDefaultServiceItem[];
+};
+
+export type PreviewDefaultServicePricingResult = {
+  serviceId: number;
+  sequence: number;
+  setupUnitPrice: number | null;
+  unitPrice: number | null;
+  grossAmount: number | null;
+  discountAmount: number | null;
+  taxAmount: number | null;
+  netAmount: number | null;
+  priceSource: string | null;
+  priceListItemCode: string | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
+};
+
+export type PreviewDefaultServicesPricingResult = {
+  patientId: number;
+  encounterId: number;
+  facilityId: number;
+  coverageType: BillingCoverageType;
+  patientInsuranceId: number | null;
+  currency: Currency;
+  grossAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  items: PreviewDefaultServicePricingResult[];
+};
+
+export type BillingOperationResult = {
+  patientServiceProductId: number;
+  chargeId: number | null;
+  chargeLineId: number | null;
+  pricingSnapshotId: number | null;
+  grossAmount: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  patientResponsibilityAmount: number;
+  insuranceResponsibilityAmount: number;
+  reservedAmount: number;
+  processed: boolean;
+  message: string | null;
+};
+
+/*
+ * Keep your existing billing types below these additions:
+ *
+ * BillingWalletStatus
+ * BillingChargeStatus
+ * BillingChargeLineStatus
+ * BillingResponsibilityStatus
+ * ResponsiblePartyType
+ * BillingWalletSummary
+ * EncounterBillingItemSummary
+ * EncounterBillingSummary
+ * CreateAdvancePaymentRequest
+ * BillingPaymentResult
+ * BillingCheckoutRequest
+ * BillingCheckoutResult
+ * BillingCancellationRequest
+ * BillingCancellationResult
+ * BillingRefundRequest
+ * BillingRefundResult
+ * BillingRefundReversalRequest
+ * BillingRefundReversalResult
+ */
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
 export type WhatsAppLanguageCode = string;
@@ -5215,3 +6675,115 @@ export interface NotificationEventResponseVM {
   eventPayload?: Record<string, unknown> | null;
   createdDate?: string | Date | null;
 }
+
+export type ClaimStatus =
+  | 'DRAFT'
+  | 'SUBMITTING'
+  | 'SUBMITTED'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'FAILED';
+
+export interface ClaimTrackingItemResponse {
+  id?: number | null;
+  sequence?: number | null;
+  patientServiceProductId?: number | null;
+  financialDocumentItemId?: number | null;
+  billingChargeLineId?: number | null;
+  itemType?: string | null;
+  itemCode?: string | null;
+  itemDescription?: string | null;
+  invoiceNo?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  net?: number | null;
+  patientShare?: number | null;
+  payerShare?: number | null;
+}
+
+export interface ClaimValidationError {
+  code?: string | null;
+  message?: string | null;
+  section?: string | null;
+}
+
+export interface ClaimTrackingResponse {
+  id?: number | null;
+  patientId?: number | null;
+  encounterId?: number | null;
+  financialDocumentId?: number | null;
+  preAuthorizationId?: number | null;
+  patientInsuranceId?: number | null;
+  uploadName?: string | null;
+  uploadId?: number | null;
+  provClaimNo?: string | null;
+  claimReference?: string | null;
+  preAuthRefNo?: string | null;
+  approvalResponseId?: number | null;
+  totalNet?: number | null;
+  status?: ClaimStatus | string | null;
+  outcome?: string | null;
+  message?: string | null;
+  submittedAt?: string | Date | null;
+  createdDate?: string | Date | null;
+  createdBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  canResubmit?: boolean | null;
+  canRefreshUpload?: boolean | null;
+  items?: ClaimTrackingItemResponse[] | null;
+  validationErrors?: ClaimValidationError[] | null;
+  statusDescription?: string | null;
+}
+
+export interface ClaimSubmissionResponse {
+  id?: number | null;
+  encounterId?: number | null;
+  financialDocumentId?: number | null;
+  preAuthorizationId?: number | null;
+  uploadName?: string | null;
+  uploadId?: number | null;
+  provClaimNo?: string | null;
+  claimReference?: string | null;
+  preAuthRefNo?: string | null;
+  totalNet?: number | null;
+  status?: ClaimStatus | string | null;
+  outcome?: string | null;
+  message?: string | null;
+  submittedAt?: string | Date | null;
+}
+
+export interface WaseelClaimUploadResponse {
+  transcationLogId?: number | null;
+  message?: string | null;
+  uploadId?: number | null;
+  providerId?: number | null;
+  uploadName?: string | null;
+  uploadDate?: string | null;
+  noOfNotUploadedClaims?: number | null;
+  noOfUploadedClaims?: number | null;
+  totalAmtOfUploadedClaims?: number | null;
+  noOfAcceptedClaims?: number | null;
+  totalAmtOfAcceptedClaims?: number | null;
+  noOfNotAcceptedClaims?: number | null;
+  totalAmtOfNotAcceptedClaims?: number | null;
+  lastModifiedDate?: string | null;
+  ratioOfAccepted?: number | null;
+  ratioOfNotAccepted?: number | null;
+}
+
+export interface InsurancePayerReceivablesSummaryResponse {
+  payerId?: number | null;
+  payerName?: string | null;
+  currency?: string | null;
+  totalBilled?: number | null;
+  totalReceived?: number | null;
+  outstandingBalance?: number | null;
+  pendingClaims?: number | null;
+  paidClaims?: number | null;
+  partiallyPaidClaims?: number | null;
+  rejectedClaims?: number | null;
+  cancelledClaims?: number | null;
+  overallStatus?: string | null;
+}
+

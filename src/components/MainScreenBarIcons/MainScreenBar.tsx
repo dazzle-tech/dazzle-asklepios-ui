@@ -229,7 +229,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
   return (
     <>
       <div

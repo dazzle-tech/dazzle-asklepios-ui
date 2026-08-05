@@ -251,7 +251,70 @@ export const MODULES: Module[] =
           navPath: 'patient-merge-config'
         },
         { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
-
+        {
+          name: "NPHIES Payers",
+          code: "NPHIES_PAYER",
+          description: "NPHIES Payers",
+          icon: "FaBuilding",
+          viewOrder: 24,
+          navPath: "nphies-payers"
+        },
+        {
+          name: "Waseel SBS Setup",
+          code: "WASEEL_SBS_SETUP",
+          description: "Waseel SBS Setup",
+          icon: "FaBuilding",
+          viewOrder: 25,
+          navPath: "waseel-sbs-setup"
+        },
+        {
+          name: "Price List Setup",
+          code: "PRICE_LIST_SETUP",
+          description: "Price List Setup",
+          icon: "FaListAlt",
+          viewOrder: 26,
+          navPath: "price-list-setup"
+        },
+        {
+          name: "Billing Rule Setup",
+          code: "BILLING_RULE_SETUP",
+          description: "Billing Rule Setup",
+          icon: "FaGavel",
+          viewOrder: 27,
+          navPath: "billing-rule-setup"
+        },
+        {
+          name: "Financial Document Numbering",
+          code: "FINANCIAL_DOCUMENT_NUMBERING",
+          description: "Financial Document Numbering Setup",
+          icon: "FaHashtag",
+          viewOrder: 28,
+          navPath: "financial-document-numbering"
+        },
+        {
+          name: "Billing Configuration",
+          code: "BILLING_CONFIGURATION",
+          description: "Billing Configuration",
+          icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
+          viewOrder: 29,
+          navPath: "billing-configuration"
+        },
+        {
+          name: "Tax Configuration",
+          code: "TAX_CONFIGURATION",
+          description: "Tax Configuration",
+          icon: "FaPercentage",
+          viewOrder: 30,
+          navPath: "tax-setup"
+        },
+        {
+          name: "Discount Configuration",
+          code: "DISCOUNT_CONFIGURATION",
+          description: "Discount Configuration",
+          icon: "FaTags",
+          viewOrder: 31,
+          navPath: "discount-setup"
+        }
       ],
     },
     {
@@ -718,10 +781,18 @@ export const MODULES: Module[] =
         {
           name: "Claims",
           code: "CLAIMS",
-          description: "",
-          icon: "FaMobileRetro",
+          description: "Insurance claims generated from finalized invoices",
+          icon: "FaFileInvoiceDollar",
           viewOrder: 2,
           navPath: "billing-claims",
+        },
+        {
+          name: "Insurance Receivables",
+          code: "INSURANCE_RECEIVABLES",
+          description: "Insurance payer receivables and claim payment progress",
+          icon: "FaMoneyBillTrendUp",
+          viewOrder: 3,
+          navPath: "insurance-receivables",
         },
         {
           name: "Price Lists",
@@ -757,9 +828,10 @@ export const MODULES: Module[] =
       icon: "FaRegIdBadge",
       viewOrder: 2,
       screens: [
-
-        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
-  ],
+        { name: "Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "waseel-pre-authorization-requests" },
+        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 2, navPath: "insurance-eligibility-requests" },
+        { name: "Claims", code: "CLAIMS", description: "Waseel insurance claim submissions", icon: "FaFileInvoiceDollar", viewOrder: 3, navPath: "billing-claims" },
+      ],
     }
 
 

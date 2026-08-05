@@ -193,6 +193,9 @@ const CallOverlay = lazy (() => import ( './components/Overlay/CallOverlay'));
 const AvailabilityTemplatePageNew = lazy (() => import ( './pages/appointments-new/availability-template-new'));
 const ErrorDepartmentTypePage = lazy (() => import ( './pages/authentication/error-department-type'));
 const Claimscreen = lazy (() => import ( './pages/billing-module/billingClaims/Claims'));
+const InsuranceReceivablesScreen = lazy(
+  () => import('./pages/billing-module/insuranceReceivables/InsuranceReceivables')
+);
 const PriceLists = lazy (() => import ( './pages/billing-module/priceList/PriceLists'));
 const Pediatric = lazy (() => import ( './pages/encounter/encounter-component/pediatric'));
 const UccMedicationOrder = lazy (() => import ( './pages/encounter/encounter-component/ucc-medication-order'));
@@ -239,8 +242,17 @@ const WhatsAppNotification = lazy (() => import ( './pages/notification-manageme
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
-const WaseelPreAuthorizationRequests = lazy (() => import ( './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests'));
-const SystemConfiguration = lazy (() => import ( './pages/system-configurations/system-configuration-theme-setup'));
+import WaseelPreAuthorizationRequests from './pages/Waseel-integration/waseel-pre-authorization-module/waseel-pre-authorization-requests/WaseelPreAuthorizationRequests';
+import SystemConfiguration from './pages/system-configurations/system-configuration-theme-setup';
+import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
+import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
+import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
+import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
+import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
+import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
+import DiscountSetup from './pages/setup/discount/DiscountSetup';
+
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -271,14 +283,13 @@ function ParentPermissionGuard() {
   const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
     useLazyGetDepartmentByIdQuery();
 
-  const matchedModule = MODULES.find((m: any) =>
-    (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
-  );
-
-  const matchedScreen = matchedModule?.screens?.find((s: any) => norm(s.navPath) === cleanPath);
-
-  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
-  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
+  const matchedCandidates = useMemo(() => {
+    return MODULES.flatMap((module: any) =>
+      (module.screens ?? [])
+        .filter((screen: any) => norm(screen.navPath) === cleanPath)
+        .map((screen: any) => ({ module, screen }))
+    );
+  }, [cleanPath]);
 
   const allowedCodes = useMemo(
     () =>
@@ -287,6 +298,29 @@ function ParentPermissionGuard() {
       ),
     [authSlice.menu]
   );
+
+  const permittedCandidates = useMemo(() => {
+    return matchedCandidates.filter(({ screen }) => {
+      const code = screen?.code;
+      if (!code) return true;
+      return allowedCodes.has(String(code).toUpperCase());
+    });
+  }, [matchedCandidates, allowedCodes]);
+
+  // Prefer a permitted module that does not require a department type (e.g. Waseel Integration),
+  // otherwise fall back to the first permitted match.
+  const selectedMatch =
+    permittedCandidates.find(
+      ({ module }) => !(module?.departmentTypes && module.departmentTypes.length > 0)
+    ) ??
+    permittedCandidates[0] ??
+    matchedCandidates[0];
+
+  const matchedModule = selectedMatch?.module;
+  const matchedScreen = selectedMatch?.screen;
+
+  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
+  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
 
   useEffect(() => {
     if (!requiresDepartmentTypeValidation) return;
@@ -302,12 +336,8 @@ function ParentPermissionGuard() {
 
   const requiredCode = matchedScreen.code;
 
-  if (requiredCode) {
-    const hasPermission = allowedCodes.has(String(requiredCode).toUpperCase());
-
-    if (!hasPermission) {
-      return <Navigate to="/error-403" replace state={{ from: path }} />;
-    }
+  if (requiredCode && permittedCandidates.length === 0) {
+    return <Navigate to="/error-403" replace state={{ from: path }} />;
   }
 
   if (!requiresDepartmentTypeValidation) {
@@ -379,28 +409,28 @@ const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
- useEffect(() => {
-  const handleStorageChange = (event: StorageEvent) => {
-    if (event.key === 'selectedDepartment') {
-      const newDepartment = event.newValue
-        ? JSON.parse(event.newValue)
-        : null;
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'selectedDepartment') {
+        const newDepartment = event.newValue
+          ? JSON.parse(event.newValue)
+          : null;
 
-      dispatch(setSelectedDepartment(newDepartment));
+        dispatch(setSelectedDepartment(newDepartment));
 
-      window.location.reload();
-    }
-  };
+        window.location.reload();
+      }
+    };
 
-  window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
 
-  return () => {
-    window.removeEventListener('storage', handleStorageChange);
-  };
-}, [dispatch]);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [dispatch]);
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
@@ -632,6 +662,7 @@ const dispatch = useAppDispatch();
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
+              <Route path="tax-setup" element={<TaxSetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="email-settings" element={<EmailSettings />} />
@@ -730,6 +761,7 @@ const dispatch = useAppDispatch();
               <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
+              <Route path="discount-setup" element={<DiscountSetup />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
@@ -838,6 +870,10 @@ const dispatch = useAppDispatch();
               <Route path="billing-accounting" element={<Accounting />} />
               <Route path="billing-claims" element={<Claimscreen />} />
               <Route
+                path="insurance-receivables"
+                element={<InsuranceReceivablesScreen />}
+              />
+              <Route
                 path="insurance-eligibility-requests"
                 element={<InsuranceEligibilityRequests />}
               />
@@ -872,6 +908,10 @@ const dispatch = useAppDispatch();
               <Route path="rad-module" element={<Rad />} />
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
+              <Route path="/price-list-setup" element={<PriceListSetup />} />
+              <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
+               <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
+               <Route path="/financial-document-numbering" element={<FinancialDocumentNumberingSetup />} />
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
@@ -885,11 +925,13 @@ const dispatch = useAppDispatch();
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
+              <Route path="waseel-sbs-setup" element={<WaseelSbsSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
               <Route path="payor-setup" element={<PayerSetup />} />
+              <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"
                 element={<InventoryManagementProductSetup />}

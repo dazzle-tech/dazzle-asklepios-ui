@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Col, Form, Panel, Row } from 'rsuite';
 
 import MyInput from '@/components/MyInput';
-import SectionContainer from '@/components/SectionsoContainer';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import SectionContainer from '@/components/SectionsoContainer';
 
 import './styles.less';
 
@@ -15,12 +15,7 @@ interface PreviewWaseelPreAuthorizationRequestsProps {
 
 const PreviewWaseelPreAuthorizationRequests: React.FC<
   PreviewWaseelPreAuthorizationRequestsProps
-> = ({
-  open,
-  preAuth,
-  onClose
-}) => {
-
+> = ({ open, preAuth, onClose }) => {
   const [previewData, setPreviewData] = useState<any>({
     preAuthRefNo: '',
     encounterNo: '',
@@ -47,23 +42,28 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
 
     setPreviewData({
       preAuthRefNo: preAuth?.preAuthRefNo ?? '-',
-      encounterNo: preAuth?.encounterNo ?? '-',
-      mrn: preAuth?.mrn ?? '-',
+      encounterNo: preAuth?.encounterId ?? '-',
+      mrn: preAuth?.patientId ?? '-',
       patientName: preAuth?.patientName ?? '-',
-      insuranceCompany: preAuth?.insuranceCompany ?? '-',
-      memberId: preAuth?.memberId ?? '-',
+      insuranceCompany: preAuth?.payorId ?? '-',
+      memberId: preAuth?.patientInsuranceId ?? '-',
       diagnosisCode: preAuth?.diagnosisCode ?? '-',
       procedureCode: preAuth?.procedureCode ?? '-',
-      requestedAmount: preAuth?.requestedAmount ?? '-',
+      requestedAmount: preAuth?.totalNet ?? '-',
       approvedAmount: preAuth?.approvedAmount ?? '-',
-      approvalNumber: preAuth?.approvalNumber ?? '-',
-      requestDate: preAuth?.requestDate ?? '-',
-      responseDate: preAuth?.responseDate ?? '-',
-      requestedBy: preAuth?.requestedBy ?? '-',
+      approvalNumber: preAuth?.approvalResponseId ?? preAuth?.approvalRequestId ?? '-',
+      requestDate: preAuth?.dateOrdered ?? preAuth?.createdDate ?? '-',
+      responseDate: preAuth?.lastModifiedDate ?? '-',
+      requestedBy: preAuth?.createdBy ?? '-',
       doctorName: preAuth?.doctorName ?? '-',
-      rejectionReason: preAuth?.rejectionReason ?? '-',
+      rejectionReason:
+        preAuth?.cancelReason ??
+        preAuth?.cancelMessage ??
+        preAuth?.message ??
+        preAuth?.disposition ??
+        '-',
       validUntil: preAuth?.validUntil ?? '-',
-      status: preAuth?.status ?? '-'
+      status: preAuth?.status ?? preAuth?.outcome ?? '-'
     });
   }, [preAuth]);
 
@@ -75,31 +75,20 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
       className="preview-request"
       header={
         <div className="preview-header">
+          <div className="preview-title">Pre-Authorization Preview</div>
 
-          <div className="preview-title">
-            Pre-Authorization Preview
-          </div>
-
-          <button
-            className="close-preview-btn"
-            onClick={onClose}
-            type="button"
-          >
+          <button className="close-preview-btn" onClick={onClose} type="button">
             ✕
           </button>
-
         </div>
       }
     >
       <div className="main-sections-preview-request-container">
-
-        {/* Basic Info */}
         <SectionContainer
           title="Basic Information"
           content={
             <Form fluid>
               <Row gutter={16}>
-
                 <Col md={8}>
                   <MyInput
                     fieldType="text"
@@ -159,19 +148,16 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                     disabled
                   />
                 </Col>
-
               </Row>
             </Form>
           }
         />
 
-        {/* Medical Details */}
         <SectionContainer
           title="Medical Details"
           content={
             <Form fluid>
               <Row gutter={16}>
-
                 <Col md={8}>
                   <MyInput
                     fieldType="text"
@@ -194,37 +180,33 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
 
                 <Col md={8}>
                   <div className="status-container">
-                    <label className="status-label">
-                      Pre-Auth Status
-                    </label>
+                    <label className="status-label">Pre-Auth Status</label>
 
                     <MyBadgeStatus
                       contant={previewData.status}
                       color={
-                        previewData.status === 'APPROVED'
+                        previewData.status === 'APPROVED' || previewData.status === 'OK'
                           ? '#28a745'
                           : previewData.status === 'REJECTED'
                             ? '#dc3545'
-                            : previewData.status === 'PENDING'
+                            : previewData.status === 'PENDING' ||
+                                previewData.status === 'Queued'
                               ? '#ffc107'
                               : '#007bff'
                       }
                     />
                   </div>
                 </Col>
-
               </Row>
             </Form>
           }
         />
 
-        {/* Financial Details */}
         <SectionContainer
           title="Financial Details"
           content={
             <Form fluid>
               <Row gutter={16}>
-
                 <Col md={8}>
                   <MyInput
                     fieldType="text"
@@ -254,19 +236,16 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                     disabled
                   />
                 </Col>
-
               </Row>
             </Form>
           }
         />
 
-        {/* Dates & Users */}
         <SectionContainer
           title="Dates & Users"
           content={
             <Form fluid>
               <Row gutter={16}>
-
                 <Col md={8}>
                   <MyInput
                     fieldType="text"
@@ -316,35 +295,126 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                     disabled
                   />
                 </Col>
-
               </Row>
             </Form>
           }
         />
 
-        {/* Rejection Reason */}
-        {!!previewData?.rejectionReason &&
-          previewData?.rejectionReason !== '-' && (
-            <SectionContainer
-              title="Rejection Reason"
-              content={
-                <Form fluid>
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
-                        fieldType="textarea"
-                        fieldLabel="Reason"
-                        record={previewData}
-                        fieldName="rejectionReason"
-                        disabled
-                      />
-                    </Col>
-                  </Row>
-                </Form>
-              }
-            />
-          )}
+        {!!previewData?.rejectionReason && previewData?.rejectionReason !== '-' && (
+          <SectionContainer
+            title="Rejection Reason"
+            content={
+              <Form fluid>
+                <Row>
+                  <Col md={24}>
+                    <MyInput
+                      fieldType="textarea"
+                      fieldLabel="Reason"
+                      record={previewData}
+                      fieldName="rejectionReason"
+                      disabled
+                    />
+                  </Col>
+                </Row>
+              </Form>
+            }
+          />
+        )}
 
+        {Array.isArray(preAuth?.items) && preAuth.items.length > 0 && (
+          <SectionContainer
+            title="Pre-Authorization Items"
+            content={
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {preAuth.items.map((item: any, index: number) => (
+                  <Form fluid key={item?.id ?? `${item?.sequence ?? index}-${item?.itemCode ?? index}`}>
+                    <Row gutter={16}>
+                      <Col md={4}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Sequence"
+                          record={{ sequence: item?.sequence ?? index + 1 }}
+                          fieldName="sequence"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Code"
+                          record={{ itemCode: item?.itemCode ?? '-' }}
+                          fieldName="itemCode"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={8}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Name"
+                          record={{
+                            itemDescription:
+                              item?.itemDescription ?? item?.nonStandardDesc ?? '-'
+                          }}
+                          fieldName="itemDescription"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Item Type"
+                          record={{ itemType: item?.itemType ?? '-' }}
+                          fieldName="itemType"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Decision"
+                          record={{ itemDecision: item?.itemDecision ?? '-' }}
+                          fieldName="itemDecision"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Quantity"
+                          record={{
+                            quantity: [item?.quantity, item?.quantityCode]
+                              .filter(v => v != null && v !== '')
+                              .join(' ') || '-'
+                          }}
+                          fieldName="quantity"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Net"
+                          record={{ net: item?.net ?? '-' }}
+                          fieldName="net"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Waseel Item ID"
+                          record={{ waseelItemId: item?.waseelItemId ?? '-' }}
+                          fieldName="waseelItemId"
+                          disabled
+                        />
+                      </Col>
+                    </Row>
+                  </Form>
+                ))}
+              </div>
+            }
+          />
+        )}
       </div>
     </Panel>
   );

@@ -12,6 +12,7 @@ import './styles.less';
 import PlanCoverageItemsSection from './PlanCoverageItemsSection';
 import { PatientInsurance } from '@/types/model-types-new';
 import { newPatientInsurance } from '@/types/model-types-constructor-new';
+import { normalizePatientInsuranceFromApi } from './cchiMappers';
 
 import {
   useAddPatientInsuranceMutation,
@@ -33,8 +34,20 @@ const INSURANCE_FIELD_LABELS: Record<string, string> = {
   planId: 'Plan',
   policyNumber: 'Policy Number',
   groupNumber: 'Group Number',
-  expirationDate: 'Expiration Date',
+  memberCardId: 'Member ID',
+  networkId: 'Network',
+  policyClassName: 'Policy Class',
   policyHolderId: 'Policy Holder',
+  policyHolderName: 'Policy Holder Name',
+  issueDate: 'Issue Date',
+  expirationDate: 'Expiration Date',
+  coverageType: 'Coverage Type',
+  relationWithSubscriber: 'Relation With Subscriber',
+  sponsorNumber: 'Sponsor Number',
+  patientShare: 'Patient Share',
+  maxLimit: 'Max Limit',
+  remainingBenefits: 'Remaining Benefits',
+  remainingDeductibles: 'Remaining Deductibles',
   isPrimary: 'Primary Insurance'
 };
 
@@ -264,11 +277,13 @@ const InsuranceModal = ({
   useEffect(() => {
     if (open) {
       if (editing && editing.id) {
-        setPatientInsurance({
-          ...editing,
-          payorId: Number(editing.payorId),
-          planId: editing.planId ? Number(editing.planId) : null
-        });
+        setPatientInsurance(
+          normalizePatientInsuranceFromApi({
+            ...editing,
+            payorId: Number(editing.payorId),
+            planId: editing.planId ? Number(editing.planId) : null
+          })
+        );
         setPrevPayorId(Number(editing.payorId));
       } else {
         setPatientInsurance({ ...newPatientInsurance });
@@ -304,125 +319,326 @@ const InsuranceModal = ({
       <InsuranceBenefitsCard
         data={{
           remainingBenefits: patientInsurance.remainingBenefits,
-          remailingDeductibles: patientInsurance.remailingDeductibles,
-          deductiblesValue: patientInsurance.deductiblesValue,
-          coInsuranceValue: patientInsurance.coInsuranceValue,
-          coPaymentValue: patientInsurance.coPaymentValue
+          remailingDeductibles:
+            patientInsurance.remainingDeductibles ??
+            (patientInsurance as Record<string, unknown>).remailingDeductibles,
+          deductiblesValue: (patientInsurance as Record<string, unknown>).deductiblesValue,
+          coInsuranceValue: (patientInsurance as Record<string, unknown>).coInsuranceValue,
+          coPaymentValue: (patientInsurance as Record<string, unknown>).coPaymentValue
         }}
       />
     </div>
   );
 
+  const renderPolicySection = () => (
+    <>
+      <div className="insurance-modal__section-title">Plan &amp; Policy</div>
+      <MyInput
+        column
+        required
+        fieldLabel="Payor"
+        fieldType="selectPagination"
+        fieldName="payorId"
+        selectData={payorResponse?.data ?? []}
+        selectDataLabel="name"
+        selectDataValue="id"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+        searchable={true}
+        loading={payorLoading || payorFetching}
+        hasMore={hasMorePayors}
+        onFetchMore={handleLoadMorePayors}
+        searchKeyWard={payorSearchKeyword}
+        setSearchKeyWard={setPayorSearchKeyword}
+        placeholder="Select Payor..."
+      />
+      <MyInput
+        column
+        required
+        fieldLabel="Plan"
+        fieldType="selectPagination"
+        fieldName="planId"
+        selectData={plansResponse?.data ?? []}
+        selectDataLabel="name"
+        selectDataValue="id"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing || !patientInsurance?.payorId}
+        searchable={true}
+        loading={plansLoading || plansFetching}
+        hasMore={hasMorePlans}
+        onFetchMore={handleLoadMorePlans}
+        placeholder={!patientInsurance?.payorId ? 'Select Payor first...' : 'Select Plan...'}
+        renderMenuItem={(label, item) => {
+          if (item?.isLoadMore) {
+            return <div className="insurance-modal__plan-load-more">Load more...</div>;
+          }
+          return (
+            <div>
+              <div className="insurance-modal__plan-name">{item.name}</div>
+              <div className="insurance-modal__plan-details">
+                {formatEnumString(item.planType)} • {formatEnumString(item.coverageType)} • $
+                {item.amount}
+              </div>
+            </div>
+          );
+        }}
+      />
+      <MyInput
+        column
+        required
+        fieldType="textnumber"
+        fieldLabel="Policy Number"
+        fieldName="policyNumber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="textnumber"
+        fieldLabel="Group Number"
+        fieldName="groupNumber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Policy Class"
+        fieldName="policyClassName"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="date"
+        fieldLabel="Issue Date"
+        fieldName="issueDate"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        required
+        fieldType="date"
+        fieldLabel="Expiration Date"
+        fieldName="expirationDate"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+    </>
+  );
+
+  const renderMemberSection = () => (
+    <>
+      <div className="insurance-modal__section-title">Member &amp; Coverage</div>
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Member ID"
+        fieldName="memberCardId"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Network"
+        fieldName="networkId"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Coverage Type"
+        fieldName="coverageType"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Relation With Subscriber"
+        fieldName="relationWithSubscriber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Sponsor Number"
+        fieldName="sponsorNumber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldLabel="Policy Holder"
+        fieldType="selectPagination"
+        fieldName="policyHolderId"
+        selectData={relativeOptions}
+        selectDataLabel={['firstName', 'lastName']}
+        selectDataValue="id"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+        loading={relativesLoading || relativesFetching}
+        searchable={true}
+        hasMore={hasMoreRelatives}
+        onFetchMore={handleLoadMoreRelatives}
+        placeholder="Select Policy Holder..."
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Policy Holder Name"
+        fieldName="policyHolderName"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+    </>
+  );
+
+  const renderFinancialSection = () => (
+    <>
+      <div className="insurance-modal__section-title">Financial</div>
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="Remaining Benefits"
+        fieldName="remainingBenefits"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="Remaining Deductibles"
+        fieldName="remainingDeductibles"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="Patient Share"
+        fieldName="patientShare"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="Max Limit"
+        fieldName="maxLimit"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldLabel="Primary Insurance"
+        fieldName="isPrimary"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        fieldType="checkbox"
+        disabled={insuranceBrowsing}
+      />
+    </>
+  );
+
+  const renderEligibilitySection = () => (
+    <>
+      <div className="insurance-modal__section-title">Eligibility Snapshot</div>
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Eligibility Status"
+        fieldName="eligibilityStatus"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Site Eligibility"
+        fieldName="siteEligibility"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="In Force"
+        fieldName="inforce"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="GP Visit Copay"
+        fieldName="gpVisitCopay"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldLabel="Specialist Visits Limit"
+        fieldName="specialistVisitsLimit"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Insurance Group"
+        fieldName="groupName"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Plan Code"
+        fieldName="planCode"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+    </>
+  );
+
   const renderRightContent = () => (
     <div className="insurance-modal__right-content">
       <Form layout="inline" fluid>
-        <MyInput
-          column
-          required
-          fieldLabel="Payor"
-          fieldType="selectPagination"
-          fieldName="payorId"
-          selectData={payorResponse?.data ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-          searchable={true}
-          loading={payorLoading || payorFetching}
-          hasMore={hasMorePayors}
-          onFetchMore={handleLoadMorePayors}
-          searchKeyWard={payorSearchKeyword}
-          setSearchKeyWard={setPayorSearchKeyword}
-          placeholder="Select Payor..."
-        />
-        <MyInput
-          column
-          required
-          fieldLabel="Plan"
-          fieldType="selectPagination"
-          fieldName="planId"
-          selectData={plansResponse?.data ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing || !patientInsurance?.payorId}
-          searchable={true}
-          loading={plansLoading || plansFetching}
-          hasMore={hasMorePlans}
-          onFetchMore={handleLoadMorePlans}
-          placeholder={!patientInsurance?.payorId ? 'Select Payor first...' : 'Select Plan...'}
-          renderMenuItem={(label, item) => {
-            if (item?.isLoadMore) {
-              return <div className="insurance-modal__plan-load-more">Load more...</div>;
-            }
-            return (
-              <div>
-                <div className="insurance-modal__plan-name">{item.name}</div>
-                <div className="insurance-modal__plan-details">
-                  {formatEnumString(item.planType)} • {formatEnumString(item.coverageType)} • $
-                  {item.amount}
-                </div>
-              </div>
-            );
-          }}
-        />
-        <MyInput
-          column
-          required
-          fieldType="textnumber"
-          fieldLabel="Policy Number"
-          fieldName="policyNumber"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-        <MyInput
-          column
-          fieldType="textnumber"
-          fieldLabel="Group Number"
-          fieldName="groupNumber"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-        <MyInput
-          column
-          required
-          fieldType="date"
-          fieldLabel="Expiration Date"
-          fieldName="expirationDate"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-        <MyInput
-          column
-          fieldLabel="Policy Holder"
-          fieldType="selectPagination"
-          fieldName="policyHolderId"
-          selectData={relativeOptions}
-          selectDataLabel={['firstName', 'lastName']}
-          selectDataValue="id"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-          loading={relativesLoading || relativesFetching}
-          searchable={true}
-          hasMore={hasMoreRelatives}
-          onFetchMore={handleLoadMoreRelatives}
-          placeholder="Select Policy Holder..."
-        />
-        <MyInput
-          column
-          fieldLabel="Primary Insurance"
-          fieldName="isPrimary"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          fieldType="checkbox"
-          disabled={insuranceBrowsing}
-        />
+        {renderPolicySection()}
+        {renderMemberSection()}
+        {renderFinancialSection()}
+        {renderEligibilitySection()}
       </Form>
       <div className="insurance-modal__coverage-section">
         {patientInsurance?.planId && <PlanCoverageItemsSection planId={patientInsurance.planId} />}

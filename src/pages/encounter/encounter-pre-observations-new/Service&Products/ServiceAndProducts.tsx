@@ -298,21 +298,6 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         <span>{getDisplayName(rowData)}</span>
       ),
     },
-    {
-      key: 'unitPrice',
-      title: 'Price',
-      render: (rowData: PatientServiceAndProduct) => (
-        <span>{rowData.unitPrice != null ? Number(rowData.unitPrice).toFixed(2) : '-'}</span>
-      ),
-    },
-
-    {
-      key: 'currency',
-      title: 'Currency',
-      render: (rowData: PatientServiceAndProduct) => (
-        <span>{rowData.currency ?? '-'}</span>
-      ),
-    },
     { key: 'quantity', title: 'Quantity' },
     {
       key: 'actions',

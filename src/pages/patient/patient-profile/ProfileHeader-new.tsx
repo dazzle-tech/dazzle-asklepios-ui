@@ -1,4 +1,6 @@
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
@@ -9,8 +11,19 @@ import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
+import {
+  useLazyGetPatientInformationPdfQuery,
+} from '@/services/patient/patientService';
+import {
+  useGetInsurancesByPatientQuery,
+  patientInsurancesService
+} from '@/services/patients/patientInsurancesService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { Patient } from '@/types/model-types-new';
+import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
 import { calculateAgeFormat, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -24,19 +37,44 @@ import {
   faPrint,
   faShareNodes,
   faTriangleExclamation,
-  faUsersLine
+  faUsersLine,
+  faLayerGroup
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
+import {
+  Avatar,
+  AvatarGroup,
+  Dropdown,
+  Form,
+  Input,
+  Message,
+  Popover,
+  SelectPicker,
+  Stack,
+  Tooltip,
+  Whisper
+} from 'rsuite';
 import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
-import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
 import ScanDocumentModal from './ScanDocumentModal';
+import './styles.less';
+import {
+  buildWaseelClassListDisplay,
+  extractCchiInsurance,
+  extractPatientInsurancesList,
+  getCchiInsuranceStorageKey,
+  pickPatientFields
+} from './cchiMappers';
+import {
+  formatInsurancePickerLabel,
+  resolveInsurancePayorDisplayName
+} from './insuranceDisplayUtils';
+import { useLocation, useNavigate } from 'react-router-dom';
+import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
 import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
 import { FaCodeMerge } from 'react-icons/fa6';
 import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
@@ -53,9 +91,11 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
+  setCchiAddress: (address: Address | null) => void;
+  setCchiDocument?: (document: PatientDocument | null) => void;
+  setCchiInsurance?: (insurance: PatientInsurance | null) => void;
+  setProfileActiveTab?: (tabKey: string) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
-  // eligibilityChecked: boolean;
-  // setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -70,30 +110,130 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
   setLocalPatient,
+  setCchiAddress,
+  setCchiDocument,
+  setCchiInsurance,
   setOpenReferralRequestModal
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const {
+    patientInformationMenuItem,
+    patientInformationModal
+  } = usePatientInformationReportPrint(localPatient?.id);
+  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+
+  const {  patientLabelMenuItem,
+    patientLabelModal}=usePatientLabelPrint(localPatient?.id); 
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
+  const whisperRef = useRef<any>(null);
+
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-  const [uploadAttachments] = useUploadAttachmentsMutation();
-  const dispatch = useAppDispatch();
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+  const [openCchiModal, setOpenCchiModal] = useState(false);
+  const [cchiDocumentId, setCchiDocumentId] = useState('');
+  const [openEligibilityModal, setOpenEligibilityModal] = useState(false);
+  const [selectedPatientInsuranceId, setSelectedPatientInsuranceId] = useState<number | null>(
+    null
+  );
+
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
-  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+  const dispatch = useAppDispatch();
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] = useSendPatientPasswordEmailMutation();
-  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
-const {
-  patientInformationMenuItem,
-  patientInformationModal
-} = usePatientInformationReportPrint(localPatient?.id);
-const {  patientLabelMenuItem,
-    patientLabelModal}=usePatientLabelPrint(localPatient?.id)
+  const [uploadAttachments] = useUploadAttachmentsMutation();
+  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] =
+    useSendPatientPasswordEmailMutation();
+  const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
+    useLazyGetPatientFromCchiQuery();
+  const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
+
+  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances, refetch: refetchInsurances } =
+    useGetInsurancesByPatientQuery(
+      {
+        patientId: patientId!,
+        page: 0,
+        size: 100,
+        sort: 'id,desc'
+      },
+      {
+        skip: !patientId || !openEligibilityModal,
+        refetchOnMountOrArgChange: true
+      }
+    );
+
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
+    { page: 0, size: 2000, sort: 'nameEn,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
+
+  const patientInsurancesList = useMemo(
+    () => extractPatientInsurancesList(patientInsuranceResponse),
+    [patientInsuranceResponse]
+  );
+
+  const insurancePickerOptions = useMemo(
+    () =>
+      patientInsurancesList
+        .filter((insurance: any) => insurance?.id != null && !Number.isNaN(Number(insurance.id)))
+        .map((insurance: any) => ({
+          label: formatInsurancePickerLabel(insurance, payorsList, nphiesPayersList),
+          value: Number(insurance.id)
+        })),
+    [patientInsurancesList, payorsList, nphiesPayersList]
+  );
+
+  const selectedEligibilityInsurance = useMemo(
+    () =>
+      patientInsurancesList.find(
+        insurance => Number(insurance.id) === Number(selectedPatientInsuranceId)
+      ) ?? null,
+    [patientInsurancesList, selectedPatientInsuranceId]
+  );
+
+  const selectedEligibilityPayorName = useMemo(
+    () => resolveInsurancePayorDisplayName(selectedEligibilityInsurance ?? {}, payorsList, nphiesPayersList),
+    [selectedEligibilityInsurance, payorsList, nphiesPayersList]
+  );
+
+  const eligibilityClassList = useMemo(
+    () => buildWaseelClassListDisplay(selectedEligibilityInsurance),
+    [selectedEligibilityInsurance]
+  );
+
+  const eligibilityClassListColumns = useMemo(
+    () => [
+      {
+        key: 'classType',
+        title: <Translate>Class Type</Translate>,
+        width: 120
+      },
+      {
+        key: 'className',
+        title: <Translate>Class Name</Translate>,
+        width: 180
+      },
+      {
+        key: 'classValue',
+        title: <Translate>Class Value</Translate>,
+        width: 140
+      }
+    ],
+    []
+  );
+
   const {
     data: profilePictureTicket,
     isError
@@ -102,6 +242,17 @@ const {  patientLabelMenuItem,
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+  useEffect(() => {
+    if (!openEligibilityModal || selectedPatientInsuranceId != null) return;
+
+    const primaryInsurance = patientInsurancesList.find((insurance: any) => insurance?.isPrimary);
+    const defaultInsurance = primaryInsurance ?? patientInsurancesList[0];
+    const defaultId = defaultInsurance?.id != null ? Number(defaultInsurance.id) : null;
+
+    if (defaultId != null && !Number.isNaN(defaultId)) {
+      setSelectedPatientInsuranceId(defaultId);
+    }
+  }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
 
 
   const extractErrorMessage = (response: any): string => {
@@ -128,6 +279,258 @@ const {  patientLabelMenuItem,
     return '';
   };
 
+  const handleOpenEligibilityModal = () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedPatientInsuranceId(null);
+    setOpenEligibilityModal(true);
+  };
+
+  const handleCheckEligibility = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!selectedPatientInsuranceId) {
+      dispatch(
+        notify({
+          msg: 'Please select an insurance',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const result = await checkEligibility({
+        patientId: Number(localPatient.id),
+        patientInsuranceId: selectedPatientInsuranceId,
+        serviceDate: new Date().toISOString().split('T')[0],
+        benefits: true,
+        validation: true,
+        discovery: false,
+        transfer: false,
+        emergency: false
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg:
+            result.message ||
+            `Eligibility check ${result.requestStatus ?? 'completed'} successfully`,
+          sev: result.requestStatus === 'SUCCESS' ? 'success' : 'info'
+        })
+      );
+
+      dispatch(
+        notify({
+          msg: result.message?.trim() || 'Eligibility check completed successfully',
+          sev: 'success'
+        })
+      );
+
+      dispatch(patientInsurancesService.util.invalidateTags(['PatientInsurance']));
+      await refetchInsurances();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to check eligibility',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleFetchPatientFromCchi = async () => {
+    if (!cchiDocumentId?.trim()) {
+      dispatch(
+        notify({
+          msg: 'Please enter document ID',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
+      const mappedDocument = mappedResponse.document;
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      console.log('[CCHI] Mapped patient insurance response:', {
+        insurance: mappedResponse.insurance ?? null,
+        insurances: mappedResponse.insurances ?? null,
+        patientInsurance: (mappedResponse as any).patientInsurance ?? null,
+        patientNestedInsurance: (mappedResponse as any).patient?.insurance ?? null,
+        patientNestedInsurances: (mappedResponse as any).patient?.insurances ?? null,
+        extractedInsurance: rawInsurance
+      });
+
+      if (rawInsurance) {
+        console.log('[CCHI] Extracted patient insurance object:', rawInsurance);
+      } else {
+        console.warn('[CCHI] No patient insurance object found in mapped response');
+      }
+
+      setLocalPatient({
+        ...localPatient,
+        ...pickPatientFields(mappedResponse.patient),
+        id: localPatient?.id,
+        isCchiPatient: true
+      });
+
+      setCchiAddress(mappedResponse.address ?? null);
+
+      if (mappedDocument) {
+        setCchiDocument?.({
+          ...mappedDocument,
+          id: null,
+          patient: null,
+          countryId: mappedDocument.countryId,
+          number: mappedDocument.number,
+          type: mappedDocument.type,
+          isPrimary: false
+        } as any);
+      } else {
+        setCchiDocument?.(null);
+      }
+
+      if (rawInsurance) {
+        setCchiInsurance?.({
+          ...rawInsurance,
+          id: undefined,
+          patientId: localPatient?.id != null ? Number(localPatient.id) : undefined,
+          isPrimary: rawInsurance.isPrimary ?? true
+        } as PatientInsurance);
+
+        const storageKey = getCchiInsuranceStorageKey(
+          localPatient?.id,
+          mappedResponse.patient?.documentId ?? cchiDocumentId.trim()
+        );
+        if (storageKey) {
+          sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+        }
+
+      } else {
+        setCchiInsurance?.(null);
+      }
+
+      setOpenCchiModal(false);
+      setCchiDocumentId('');
+
+      dispatch(
+        notify({
+          msg: rawInsurance
+            ? 'Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+            : 'Patient data loaded from CCHI successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      setCchiDocument?.(null);
+      setCchiInsurance?.(null);
+
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to fetch patient from CCHI',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      setPrintingType('information');
+
+      const blob = await triggerGetPatientInformationPdf({
+        patientId: localPatient.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
+  const handlePrintPatientLabel = async (rowData: any) => {
+    if (!rowData?.id) return;
+
+    try {
+      setPrintingType('label');
+
+      const blob = await triggerGetPatientLabelPdf({
+        patientId: rowData.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Failed to open label pdf',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
   const handleSendPasswordEmail = async () => {
     if (!localPatient?.id) return;
 
@@ -140,10 +543,9 @@ const {  patientLabelMenuItem,
         })
       );
     } catch (error: any) {
-      const errorMsg = extractErrorMessage(error);
       dispatch(
         notify({
-          msg: errorMsg || 'Failed to send password email',
+          msg: extractErrorMessage(error) || 'Failed to send password email',
           sev: 'error'
         })
       );
@@ -197,7 +599,6 @@ const {  patientLabelMenuItem,
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
-            setOpenPriceListModal(true);
           }}
         >
           <div className="container-of-icon-and-key1">
@@ -241,16 +642,10 @@ const {  patientLabelMenuItem,
             <Translate>Bulk Registration</Translate>
           </div>
         </Dropdown.Item>
-
-        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon icon={faBars} />
-            <Translate>Encounter Transactions</Translate>
-          </div>
-        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );
+
 
  const contentOfPrintIconMenu = (
   <Popover>
@@ -280,8 +675,6 @@ const {  patientLabelMenuItem,
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
-        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
@@ -341,14 +734,18 @@ const {  patientLabelMenuItem,
     setPatientImageUrl('');
   }, [localPatient, profilePictureTicket, isError]);
 
-  // useEffect(() => {
-  //   if (location.state?.eligibilityDone) {
-  //     setEligibilityChecked(true);
-  //   }
-  // }, [location.state]);
+  useEffect(() => {
+    if (
+      quickPatientModalOpen ||
+      openScanDocumentModal ||
+      openCchiModal ||
+      openEligibilityModal
+    ) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
 
-
-  const whisperRef = useRef<any>(null);
+ 
 
   useEffect(() => {
     if (quickPatientModalOpen || openScanDocumentModal) {
@@ -370,10 +767,8 @@ const {  patientLabelMenuItem,
     };
   }, []);
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -501,6 +896,7 @@ const {  patientLabelMenuItem,
             >
               <AvatarGroup spacing={6}></AvatarGroup>
             </div>
+
             <div
               style={{
                 display: 'flex',
@@ -509,18 +905,16 @@ const {  patientLabelMenuItem,
                 justifyContent: 'flex-end'
               }}
             >
-              {/* <MyButton onClick={handleScanDocumentClick}>
-                <Translate>Scan Document</Translate>
-              </MyButton> */}
-
               <MyButton
-                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
-                onClick={() => {
-                  // setEligibilityChecked(true);
-                  // navigate(/patient-profile/${localPatient?.id});
-                }}
+                disabled={!localPatient?.id || isCheckingEligibility || localPatient?.patientStatus === 'MERGED'}
+                loading={isCheckingEligibility}
+                onClick={handleOpenEligibilityModal}
               >
                 <Translate>Eligibility Check</Translate>
+              </MyButton>
+
+              <MyButton onClick={() => setOpenCchiModal(true)}>
+                <Translate>Fetch Patient from CCHI</Translate>
               </MyButton>
 
               <MyButton
@@ -578,10 +972,7 @@ const {  patientLabelMenuItem,
                 speaker={contentOfMoreIconMenu}
               >
                 <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    size="small"
-                    onClick={() => setOpenMoreMenu(prev => !prev)}
-                  >
+                  <MyButton size="small" onClick={() => setOpenMoreMenu(prev => !prev)}>
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </MyButton>
                 </span>
@@ -626,6 +1017,171 @@ const {  patientLabelMenuItem,
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+      />
+
+      <MyModal
+        open={openEligibilityModal}
+        setOpen={(open: boolean) => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(open);
+            if (!open) {
+              setSelectedPatientInsuranceId(null);
+            }
+          }
+        }}
+        title={<Translate>Eligibility Check</Translate>}
+        size="42vw"
+        bodyheight="auto"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isCheckingEligibility ? 'Checking...' : 'Check Eligibility'}
+        isDisabledActionBtn={
+          isCheckingEligibility ||
+          isFetchingInsurances ||
+          insurancePickerOptions.length === 0 ||
+          !selectedPatientInsuranceId
+        }
+        actionButtonFunction={handleCheckEligibility}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(false);
+            setSelectedPatientInsuranceId(null);
+          }
+        }}
+        content={
+          <Form fluid className="eligibility-check-modal">
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Insurance</Translate>
+              </Form.ControlLabel>
+
+              {isFetchingInsurances ? (
+                <Translate>Loading insurances...</Translate>
+              ) : insurancePickerOptions.length === 0 ? (
+                <Translate>
+                  No insurance found for this patient. Please add insurance first.
+                </Translate>
+              ) : (
+                <>
+                  <SelectPicker
+                    block
+                    searchable
+                    cleanable={false}
+                    data={insurancePickerOptions}
+                    value={selectedPatientInsuranceId}
+                    disabled={isCheckingEligibility}
+                    onChange={value =>
+                      setSelectedPatientInsuranceId(value != null ? Number(value) : null)
+                    }
+                    placeholder="Select insurance"
+                  />
+
+                  {selectedEligibilityInsurance ? (
+                    <div className="eligibility-check-modal__payor-line">
+                      <span className="eligibility-check-modal__payor-label">
+                        <Translate>Payor</Translate>
+                      </span>
+                      <strong>{selectedEligibilityPayorName}</strong>
+                      <span className="eligibility-check-modal__payor-meta">
+                        <Translate>Policy</Translate>:{' '}
+                        {selectedEligibilityInsurance.policyNumber ?? '-'}
+                        {selectedEligibilityInsurance.memberCardId
+                          ? ` · ${selectedEligibilityInsurance.memberCardId}`
+                          : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </Form.Group>
+
+            {selectedEligibilityInsurance ? (
+              <div className="eligibility-check-modal__class-list">
+                <div className="eligibility-check-modal__class-list-header">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                  <span>
+                    <Translate>Waseel Plan Class List</Translate>
+                  </span>
+                </div>
+
+                {eligibilityClassList.length ? (
+                  <MyTable
+                    data={eligibilityClassList}
+                    columns={eligibilityClassListColumns}
+                    totalCount={eligibilityClassList.length}
+                    page={0}
+                    rowsPerPage={eligibilityClassList.length || 5}
+                    onPageChange={() => undefined}
+                    onRowsPerPageChange={() => undefined}
+                  />
+                ) : (
+                  <Message showIcon type="info">
+                    <Translate>
+                      Class list will appear here after you run Check Eligibility.
+                    </Translate>
+                  </Message>
+                )}
+
+                <div className="eligibility-check-modal__snapshot">
+                  <span>
+                    <Translate>Network</Translate>:{' '}
+                    {selectedEligibilityInsurance.networkId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Member ID</Translate>:{' '}
+                    {selectedEligibilityInsurance.memberCardId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Status</Translate>:{' '}
+                    {selectedEligibilityInsurance.eligibilityStatus ?? '-'}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </Form>
+        }
+      />
+
+      <MyModal
+        open={openCchiModal}
+        setOpen={(open: boolean) => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(open);
+          }
+        }}
+        title={<Translate>Fetch Patient from CCHI</Translate>}
+        size="30vw"
+        bodyheight="160px"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isFetchingCchiPatient ? 'Loading...' : 'Load Patient'}
+        isDisabledActionBtn={isFetchingCchiPatient}
+        actionButtonFunction={handleFetchPatientFromCchi}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(false);
+            setCchiDocumentId('');
+          }
+        }}
+        content={
+          <Form fluid>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Document ID</Translate>
+              </Form.ControlLabel>
+
+              <Input
+                value={cchiDocumentId}
+                disabled={isFetchingCchiPatient}
+                onChange={value => setCchiDocumentId(value)}
+                placeholder="Enter document ID"
+                onPressEnter={handleFetchPatientFromCchi}
+              />
+            </Form.Group>
+          </Form>
+        }
       />
       {patientInformationModal}
       {patientLabelModal}

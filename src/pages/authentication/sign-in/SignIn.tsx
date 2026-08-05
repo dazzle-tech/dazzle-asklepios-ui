@@ -50,7 +50,16 @@ const SignIn = () => {
 
 const branding = useBranding();
 const background = branding.loginBackground || Background;
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
+  const {
+    data: facilityListResponse,
+    isLoading: isFacilitiesLoading,
+    isError: isFacilitiesError,
+    refetch: refetchFacilities
+  } = useGetActiveFacilitiesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true
+  });
 
   const [credentials, setCredentials] = useState({
     username: '',
@@ -69,8 +78,23 @@ const background = branding.loginBackground || Background;
   const [getDefaultUserDepartmentByUser] = useLazyGetDefaultUserDepartmentByUserQuery();
   const [getMenuTrigger] = useLazyGetMenuQuery();
 
-  const result = useGetActiveFacilitiesQuery({});;
-  const { data: langData } = useGetAllLanguagesQuery({});
+  const { data: langData, isLoading: isLanguagesLoading } = useGetAllLanguagesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true
+  });
+
+  useEffect(() => {
+    if (!isFacilitiesError) {
+      return;
+    }
+
+    const retryTimer = window.setInterval(() => {
+      refetchFacilities();
+    }, 5000);
+
+    return () => window.clearInterval(retryTimer);
+  }, [isFacilitiesError, refetchFacilities]);
 
   const handleLogin = async () => {
     if (
@@ -163,6 +187,15 @@ const background = branding.loginBackground || Background;
 
 
   useEffect(() => {
+    const languages = Array.isArray(langData) ? langData : [];
+    const defaultLangKey = languages[0]?.langKey;
+
+    if (defaultLangKey && !credentials.language) {
+      setCredentials(prev => ({ ...prev, language: defaultLangKey }));
+    }
+  }, [langData, credentials.language]);
+
+  useEffect(() => {
     const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
 
     if (selectedObject?.direction) {
@@ -195,7 +228,7 @@ const background = branding.loginBackground || Background;
                 width="100%"
                 fieldName="language"
                 fieldType="select"
-                selectData={langData}
+                selectData={langData ?? []}
                 selectDataLabel="langName"
                 selectDataValue="langKey"
                 defaultSelectValue={langData?.[0]?.langKey || ''}
@@ -204,6 +237,7 @@ const background = branding.loginBackground || Background;
                 placeholder="Select Language"
                 showLabel={false}
                 searchable={false}
+                loading={isLanguagesLoading}
               />
 
               <MyInput
@@ -219,6 +253,7 @@ const background = branding.loginBackground || Background;
                 setRecord={setCredentials}
                 showLabel={false}
                 searchable={false}
+                loading={isFacilitiesLoading}
               />
 
               <MyInput

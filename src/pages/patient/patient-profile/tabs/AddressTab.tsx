@@ -35,7 +35,29 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
 import { FaSave } from 'react-icons/fa';
-import clsx from 'clsx';
+
+const PAGE_SIZE = 5;
+
+const getCchiAddressStorageKey = (
+  patientId?: number | string | null,
+  documentId?: number | string | null
+) => {
+  if (patientId) return `cchi-address-patient-${patientId}`;
+  if (documentId) return `cchi-address-document-${documentId}`;
+  return '';
+};
+
+const mergeUniqueById = <T extends { id?: number | null }>(oldItems: T[], newItems: T[]) => {
+  const map = new Map<number, T>();
+
+  [...oldItems, ...newItems].forEach(item => {
+    if (item?.id != null) {
+      map.set(item.id, item);
+    }
+  });
+
+  return Array.from(map.values());
+};
 
 const toHumanAddressError = (
   err: any,
@@ -99,9 +121,7 @@ const toHumanAddressError = (
   }
 
   const rawKey = data?.errorKey ?? data?.properties?.message ?? '';
-  const errorKey = String(rawKey)
-    .replace(/^error\./, '')
-    .trim();
+  const errorKey = String(rawKey).replace(/^error\./, '').trim();
 
   if (errorKey === 'payload.required') return 'Address payload is required.' + traceId;
   if (errorKey === 'notfound') return (detail || 'Address not found.') + traceId;
@@ -143,33 +163,42 @@ const toHumanAddressError = (
   return detail || title || message || 'Unexpected server error occurred.' + traceId;
 };
 
-/* ========================================================= */
-/* ======================= Component ======================== */
-/* ========================================================= */
-
 interface AddressTabProps {
   localPatient: any;
+  cchiAddress?: Address | null;
+  setCchiAddress?: (address: Address | null) => void;
 }
 
 type ExtendedAddress = Address & {
+  patientId?: number | null;
   countryId?: number | null;
   districtId?: number | null;
   communityId?: number | null;
   areaId?: number | null;
 };
 
-const PAGE_SIZE = 5;
-
-const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
+const AddressTab: React.FC<AddressTabProps> = ({
+  localPatient,
+  cchiAddress,
+  setCchiAddress
+}) => {
   const dispatch = useAppDispatch();
-  const patientId = localPatient?.id;
+
+  const patientId = localPatient?.id ?? null;
+  const patientDocumentId = localPatient?.documentId ?? null;
+
+  const cchiStorageKey = useMemo(
+    () => getCchiAddressStorageKey(patientId, patientDocumentId),
+    [patientId, patientDocumentId]
+  );
 
   const [refreshToken, setRefreshToken] = useState(0);
-
   const [blockServerHydration, setBlockServerHydration] = useState(false);
+  const [hasHydratedFromCchi, setHasHydratedFromCchi] = useState(false);
 
   const [address, setAddress] = useState<ExtendedAddress>({
     ...newAddress,
+    patientId,
     locationJson: {
       country: null,
       district: null,
@@ -201,14 +230,95 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
   const countryEnum = useEnumOptions('CountryName');
 
-  const countryEnumKey = JSON.stringify(countryEnum);
+  const countryLabelMap = useMemo(
+    () => Object.fromEntries(countryEnum.map(o => [o.value, o.label])),
+    [countryEnum]
+  );
 
-  const countryLabelMap = useMemo(() => {
-    return Object.fromEntries(
-      countryEnum.map(o => [o.value, o.label])
+  const getCountryDisplayName = (country?: any) => {
+    if (!country) return '';
+
+    return (
+      countryLabelMap[country.code] ||
+      countryLabelMap[country.name] ||
+      String(country.name || country.code || '').replaceAll('_', ' ')
     );
-  }, [countryEnumKey]);
+  };
 
+  const hydrateAddressIntoState = (sourceAddress: Address) => {
+    const country = sourceAddress.locationJson?.country ?? null;
+    const district = sourceAddress.locationJson?.district ?? null;
+    const community = sourceAddress.locationJson?.community ?? null;
+    const area = sourceAddress.locationJson?.area ?? null;
+
+    const mappedAddress: ExtendedAddress = {
+      ...newAddress,
+      ...sourceAddress,
+      id: sourceAddress.id ?? undefined,
+      patientId,
+      locationJson: {
+        country,
+        district,
+        community,
+        area
+      },
+      countryId: country?.id ?? null,
+      districtId: district?.id ?? null,
+      communityId: community?.id ?? null,
+      areaId: area?.id ?? null
+    };
+
+    if (country) {
+      setCountryCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: country.id,
+            name: country.name,
+            code: country.code,
+            displayName: getCountryDisplayName(country)
+          } as any
+        ])
+      );
+    }
+
+    if (district) {
+      setDistrictCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: district.id,
+            name: district.name,
+            code: district.code
+          } as any
+        ])
+      );
+    }
+
+    if (community) {
+      setCommunityCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: community.id,
+            name: community.name
+          } as any
+        ])
+      );
+    }
+
+    if (area) {
+      setAreaCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: area.id,
+            name: area.name
+          } as any
+        ])
+      );
+    }
+
+    setAddress(mappedAddress);
+    setBlockServerHydration(true);
+    setHasHydratedFromCchi(true);
+  };
 
   const resetLocationState = () => {
     setAddress({
@@ -227,6 +337,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     });
 
     setBlockServerHydration(false);
+    setHasHydratedFromCchi(false);
 
     setCountrySearch('');
     setDistrictSearch('');
@@ -246,11 +357,31 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     setRefreshToken(prev => prev + 1);
   };
 
-  useEffect(() => {
-    if (patientId === undefined) return;
-
+  const clearAddressManually = () => {
     resetLocationState();
-  }, [patientId]);
+
+    if (cchiStorageKey) {
+      sessionStorage.removeItem(cchiStorageKey);
+    }
+
+    setCchiAddress?.(null);
+  };
+
+  useEffect(() => {
+    if (!cchiStorageKey) return;
+    if (cchiAddress) return;
+
+    const saved = sessionStorage.getItem(cchiStorageKey);
+
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved) as Address;
+      hydrateAddressIntoState(parsed);
+    } catch {
+      sessionStorage.removeItem(cchiStorageKey);
+    }
+  }, [cchiStorageKey, cchiAddress, countryLabelMap]);
 
   const { data: addressesResult, isFetching } = useGetPatientAddressesQuery(
     { patientId },
@@ -302,51 +433,127 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   );
 
   useEffect(() => {
+    if (!cchiAddress || !cchiStorageKey) return;
+
+    sessionStorage.setItem(cchiStorageKey, JSON.stringify(cchiAddress));
+    hydrateAddressIntoState(cchiAddress);
+  }, [cchiAddress, cchiStorageKey, countryLabelMap]);
+
+  useEffect(() => {
     if (!countriesResponse?.data) return;
 
     const mapped = countriesResponse.data.map((c: any) => ({
       ...c,
-      displayName: countryLabelMap[c.code] || countryLabelMap[c.name] || c.name || c.code
+      displayName: getCountryDisplayName(c)
     }));
 
-    setCountryCache(prev => (countryPage === 0 ? mapped : [...prev, ...mapped]));
-  }, [countriesResponse, countryPage, countryLabelMap]);
+    setCountryCache(prev => mergeUniqueById(prev, mapped));
+  }, [countriesResponse, countryLabelMap]);
 
   useEffect(() => {
     if (!districtsResponse?.data) return;
-    setDistrictCache(prev =>
-      districtPage === 0 ? districtsResponse.data : [...prev, ...districtsResponse.data]
-    );
-  }, [districtsResponse, districtPage]);
+
+    setDistrictCache(prev => mergeUniqueById(prev, districtsResponse.data));
+  }, [districtsResponse]);
 
   useEffect(() => {
     if (!communitiesResponse?.data) return;
-    setCommunityCache(prev =>
-      communityPage === 0 ? communitiesResponse.data : [...prev, ...communitiesResponse.data]
-    );
-  }, [communitiesResponse, communityPage]);
+
+    setCommunityCache(prev => mergeUniqueById(prev, communitiesResponse.data));
+  }, [communitiesResponse]);
 
   useEffect(() => {
     if (!areasResponse?.data) return;
-    setAreaCache(prev => (areaPage === 0 ? areasResponse.data : [...prev, ...areasResponse.data]));
-  }, [areasResponse, areaPage]);
 
-  // IMPORTANT FIX: don't hydrate from server if last save failed
+    setAreaCache(prev => mergeUniqueById(prev, areasResponse.data));
+  }, [areasResponse]);
+
   useEffect(() => {
     if (!patientId || isFetching) return;
+
+    if (hasHydratedFromCchi && !address?.id) {
+      return;
+    }
+
     if (blockServerHydration) return;
 
     const existing = addressesResult?.data?.[0];
     if (!existing) return;
 
-    setAddress({
+    const existingAddress: ExtendedAddress = {
       ...(existing as ExtendedAddress),
+      patientId,
       countryId: existing.locationJson?.country?.id ?? null,
       districtId: existing.locationJson?.district?.id ?? null,
       communityId: existing.locationJson?.community?.id ?? null,
       areaId: existing.locationJson?.area?.id ?? null
-    });
-  }, [addressesResult, isFetching, patientId, blockServerHydration]);
+    };
+
+    setAddress(existingAddress);
+
+    if (existing.locationJson?.country) {
+      const country = existing.locationJson.country;
+
+      setCountryCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: country.id,
+            name: country.name,
+            code: country.code,
+            displayName: getCountryDisplayName(country)
+          } as any
+        ])
+      );
+    }
+
+    if (existing.locationJson?.district) {
+      const district = existing.locationJson.district;
+
+      setDistrictCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: district.id,
+            name: district.name,
+            code: district.code
+          } as any
+        ])
+      );
+    }
+
+    if (existing.locationJson?.community) {
+      const community = existing.locationJson.community;
+
+      setCommunityCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: community.id,
+            name: community.name
+          } as any
+        ])
+      );
+    }
+
+    if (existing.locationJson?.area) {
+      const area = existing.locationJson.area;
+
+      setAreaCache(prev =>
+        mergeUniqueById(prev, [
+          {
+            id: area.id,
+            name: area.name
+          } as any
+        ])
+      );
+    }
+  }, [
+    addressesResult,
+    isFetching,
+    patientId,
+    blockServerHydration,
+    countryLabelMap,
+    hasHydratedFromCchi,
+    address?.id
+  ]);
 
   const [createAddress] = useCreateAddressMutation();
   const [updateAddress] = useUpdateAddressMutation();
@@ -359,7 +566,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     if (!isLocationValid) {
       dispatch(
         notify({
-          msg: 'Country, District, Community and Area are required',
+          msg: 'Country, District and Community are required',
           sev: 'error'
         })
       );
@@ -378,6 +585,12 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
         : await createAddress({ patientId, body: payload }).unwrap();
 
       setBlockServerHydration(false);
+      setHasHydratedFromCchi(false);
+
+      if (cchiStorageKey) {
+        sessionStorage.removeItem(cchiStorageKey);
+      }
+
       setRefreshToken(prev => prev + 1);
 
       dispatch(notify({ msg: 'Address Saved Successfully', sev: 'success' }));
@@ -406,7 +619,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
         title={<Translate>Address</Translate>}
         action={
           <div className="flex-row-22">
-            <MyButton color="var(--primary-gray)" onClick={resetLocationState} width="90px">
+            <MyButton color="var(--primary-gray)" onClick={clearAddressManually} width="90px">
               <FaBroom /> Clear
             </MyButton>
 
@@ -429,233 +642,248 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
             >
               <Translate>Address Change Log</Translate>
             </MyButton>
-            <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
 
-              <Form layout="inline" fluid>
-                <MyInput
-                  column
-                  required
-                  fieldLabel="Country"
-                  fieldType="selectPagination"
-                  fieldName="countryId"
-                  selectData={countryCache}
-                  selectDataLabel="displayName"
-                  selectDataValue="id"
-                  record={address}
-                  setRecord={setAddress}
-                  searchKeyWard={countrySearch}
-                  setSearchKeyWard={setCountrySearch}
-                  hasMore={!!countriesResponse?.links?.next}
-                  onFetchMore={() => {
-                    if (countriesResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(countriesResponse.links.next);
-                      setCountryPage(page);
+            <Form layout="inline" fluid>
+              <MyInput
+                column
+                required
+                fieldLabel="Country"
+                fieldType="selectPagination"
+                fieldName="countryId"
+                selectData={countryCache}
+                selectDataLabel="displayName"
+                selectDataValue="id"
+                record={address}
+                setRecord={setAddress}
+                searchKeyWard={countrySearch}
+                setSearchKeyWard={setCountrySearch}
+                hasMore={!!countriesResponse?.links?.next}
+                onFetchMore={() => {
+                  if (countriesResponse?.links?.next) {
+                    const { page } = extractPaginationFromLink(countriesResponse.links.next);
+                    setCountryPage(page);
+                  }
+                }}
+                onSelectItem={(item: SimpleCountry | null) => {
+                  if (!item) return clearAddressManually();
+
+                  setAddress(prev => ({
+                    ...prev,
+                    countryId: item.id,
+                    districtId: null,
+                    communityId: null,
+                    areaId: null,
+                    locationJson: {
+                      country: {
+                        id: item.id,
+                        name: item.name,
+                        code: item.code
+                      },
+                      district: null,
+                      community: null,
+                      area: null
                     }
-                  }}
-                  onSelectItem={(item: SimpleCountry | null) => {
-                    if (!item) return resetLocationState();
+                  }));
 
-                    setAddress(prev => ({
-                      ...prev,
-                      countryId: item.id,
-                      districtId: null,
-                      communityId: null,
-                      areaId: null,
-                      locationJson: {
-                        country: { id: item.id, name: item.name, code: item.code },
-                        district: null,
-                        community: null,
-                        area: null
-                      }
-                    }));
+                  setDistrictCache([]);
+                  setCommunityCache([]);
+                  setAreaCache([]);
 
-                    setDistrictCache([]);
-                    setCommunityCache([]);
-                    setAreaCache([]);
+                  setDistrictPage(0);
+                  setCommunityPage(0);
+                  setAreaPage(0);
 
-                    setDistrictPage(0);
-                    setCommunityPage(0);
-                    setAreaPage(0);
+                  setDistrictSearch('');
+                  setCommunitySearch('');
+                  setAreaSearch('');
 
-                    setDistrictSearch('');
-                    setCommunitySearch('');
-                    setAreaSearch('');
+                  setRefreshToken(prev => prev + 1);
+                }}
+                disabled={!patientId}
+              />
 
-                    setRefreshToken(prev => prev + 1);
-                  }}
-                  disabled={!localPatient?.id}
-                />
+              <MyInput
+                column
+                required
+                fieldLabel="District"
+                fieldType="selectPagination"
+                fieldName="districtId"
+                selectData={districtCache}
+                selectDataLabel="name"
+                selectDataValue="id"
+                record={{
+                  ...address,
+                  districtId: address.countryId ? address.districtId : null
+                }}
+                setRecord={setAddress}
+                searchKeyWard={districtSearch}
+                setSearchKeyWard={setDistrictSearch}
+                hasMore={!!districtsResponse?.links?.next}
+                disabled={!address.countryId}
+                onFetchMore={() => {
+                  if (districtsResponse?.links?.next) {
+                    const { page } = extractPaginationFromLink(districtsResponse.links.next);
+                    setDistrictPage(page);
+                  }
+                }}
+                onSelectItem={(item: SimpleDistrict | null) => {
+                  if (!item) return;
 
-                <MyInput
-                  column
-                  required
-                  fieldLabel="District"
-                  fieldType="selectPagination"
-                  fieldName="districtId"
-                  selectData={districtCache}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  record={{
-                    ...address,
-                    districtId: address.countryId ? address.districtId : null
-                  }}
-                  setRecord={setAddress}
-                  searchKeyWard={districtSearch}
-                  setSearchKeyWard={setDistrictSearch}
-                  hasMore={!!districtsResponse?.links?.next}
-                  disabled={!address.countryId}
-                  onFetchMore={() => {
-                    if (districtsResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(districtsResponse.links.next);
-                      setDistrictPage(page);
+                  setAddress(prev => ({
+                    ...prev,
+                    districtId: item.id,
+                    communityId: null,
+                    areaId: null,
+                    locationJson: {
+                      ...prev.locationJson,
+                      district: {
+                        id: item.id,
+                        name: item.name,
+                        code: item.code
+                      },
+                      community: null,
+                      area: null
                     }
-                  }}
-                  onSelectItem={(item: SimpleDistrict | null) => {
-                    if (!item) return;
+                  }));
 
-                    setAddress(prev => ({
-                      ...prev,
-                      districtId: item.id,
-                      communityId: null,
-                      areaId: null,
-                      locationJson: {
-                        ...prev.locationJson,
-                        district: { id: item.id, name: item.name, code: item.code },
-                        community: null,
-                        area: null
-                      }
-                    }));
+                  setCommunityCache([]);
+                  setAreaCache([]);
 
-                    setCommunityCache([]);
-                    setAreaCache([]);
-                    setCommunityPage(0);
-                    setAreaPage(0);
-                    setCommunitySearch('');
-                    setAreaSearch('');
-                    setRefreshToken(prev => prev + 1);
-                  }}
-                />
+                  setCommunityPage(0);
+                  setAreaPage(0);
 
-                <MyInput
-                  column
-                  required
-                  fieldLabel="Community"
-                  fieldType="selectPagination"
-                  fieldName="communityId"
-                  selectData={communityCache}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  record={{
-                    ...address,
-                    communityId: address.districtId ? address.communityId : null
-                  }}
-                  setRecord={setAddress}
-                  searchKeyWard={communitySearch}
-                  setSearchKeyWard={setCommunitySearch}
-                  hasMore={!!communitiesResponse?.links?.next}
-                  disabled={!address.districtId}
-                  onFetchMore={() => {
-                    if (communitiesResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(communitiesResponse.links.next);
-                      setCommunityPage(page);
+                  setCommunitySearch('');
+                  setAreaSearch('');
+
+                  setRefreshToken(prev => prev + 1);
+                }}
+              />
+
+              <MyInput
+                column
+                required
+                fieldLabel="Community"
+                fieldType="selectPagination"
+                fieldName="communityId"
+                selectData={communityCache}
+                selectDataLabel="name"
+                selectDataValue="id"
+                record={{
+                  ...address,
+                  communityId: address.districtId ? address.communityId : null
+                }}
+                setRecord={setAddress}
+                searchKeyWard={communitySearch}
+                setSearchKeyWard={setCommunitySearch}
+                hasMore={!!communitiesResponse?.links?.next}
+                disabled={!address.districtId}
+                onFetchMore={() => {
+                  if (communitiesResponse?.links?.next) {
+                    const { page } = extractPaginationFromLink(communitiesResponse.links.next);
+                    setCommunityPage(page);
+                  }
+                }}
+                onSelectItem={(item: SimpleCommunity | null) => {
+                  if (!item) return;
+
+                  setAddress(prev => ({
+                    ...prev,
+                    communityId: item.id,
+                    areaId: null,
+                    locationJson: {
+                      ...prev.locationJson,
+                      community: {
+                        id: item.id,
+                        name: item.name
+                      },
+                      area: null
                     }
-                  }}
-                  onSelectItem={(item: SimpleCommunity | null) => {
-                    if (!item) return;
+                  }));
 
-                    setAddress(prev => ({
-                      ...prev,
-                      communityId: item.id,
-                      areaId: null,
-                      locationJson: {
-                        ...prev.locationJson,
-                        community: { id: item.id, name: item.name },
-                        area: null
+                  setAreaCache([]);
+                  setAreaPage(0);
+                  setAreaSearch('');
+
+                  setRefreshToken(prev => prev + 1);
+                }}
+              />
+
+              <MyInput
+                column
+                fieldLabel="Area"
+                fieldType="selectPagination"
+                fieldName="areaId"
+                selectData={areaCache}
+                selectDataLabel="name"
+                selectDataValue="id"
+                record={{
+                  ...address,
+                  areaId: address.communityId ? address.areaId : null
+                }}
+                setRecord={setAddress}
+                searchKeyWard={areaSearch}
+                setSearchKeyWard={setAreaSearch}
+                hasMore={!!areasResponse?.links?.next}
+                disabled={!address.communityId}
+                onFetchMore={() => {
+                  if (areasResponse?.links?.next) {
+                    const { page } = extractPaginationFromLink(areasResponse.links.next);
+                    setAreaPage(page);
+                  }
+                }}
+                onSelectItem={(item: SimpleArea | null) => {
+                  if (!item) return;
+
+                  setAddress(prev => ({
+                    ...prev,
+                    areaId: item.id,
+                    locationJson: {
+                      ...prev.locationJson,
+                      area: {
+                        id: item.id,
+                        name: item.name
                       }
-                    }));
-
-                    setAreaCache([]);
-                    setAreaPage(0);
-                    setAreaSearch('');
-
-                    setRefreshToken(prev => prev + 1);
-                  }}
-                />
-
-                <MyInput
-                  column
-                  fieldLabel="Area"
-                  fieldType="selectPagination"
-                  fieldName="areaId"
-                  selectData={areaCache}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  record={{
-                    ...address,
-                    areaId: address.communityId ? address.areaId : null
-                  }}
-                  setRecord={setAddress}
-                  searchKeyWard={areaSearch}
-                  setSearchKeyWard={setAreaSearch}
-                  hasMore={!!areasResponse?.links?.next}
-                  disabled={!address.communityId}
-                  onFetchMore={() => {
-                    if (areasResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(areasResponse.links.next);
-                      setAreaPage(page);
                     }
-                  }}
-                  onSelectItem={(item: SimpleArea | null) => {
-                    if (!item) return;
+                  }));
+                }}
+              />
 
-                    setAddress(prev => ({
-                      ...prev,
-                      areaId: item.id,
-                      locationJson: {
-                        ...prev.locationJson,
-                        area: { id: item.id, name: item.name }
-                      }
-                    }));
-                  }}
-                />
+              <MyInput
+                column
+                fieldLabel="Street Name"
+                fieldName="streetName"
+                record={address}
+                setRecord={setAddress}
+                disabled={!patientId}
+              />
 
-                <MyInput
-                  column
-                  fieldLabel="Street Name"
-                  fieldName="streetName"
-                  record={address}
-                  setRecord={setAddress}
-                  disabled={!localPatient?.id}
-                />
+              <MyInput
+                column
+                fieldLabel="House/Apartment Number"
+                fieldName="houseApartmentNumber"
+                record={address}
+                setRecord={setAddress}
+                disabled={!patientId}
+              />
 
-                <MyInput
-                  column
-                  fieldLabel="House/Apartment Number"
-                  fieldName="houseApartmentNumber"
-                  record={address}
-                  setRecord={setAddress}
-                  disabled={!localPatient?.id}
-                />
+              <MyInput
+                column
+                fieldLabel="Postal/ZIP code"
+                fieldName="postalZipCode"
+                record={address}
+                setRecord={setAddress}
+                disabled={!patientId}
+              />
 
-                <MyInput
-                  column
-                  fieldLabel="Postal/ZIP code"
-                  fieldName="postalZipCode"
-                  record={address}
-                  setRecord={setAddress}
-                  disabled={!localPatient?.id}
-                />
-
-                <MyInput
-                  column
-                  fieldLabel="Additional Address Line"
-                  fieldName="additionalAddressLine"
-                  record={address}
-                  setRecord={setAddress}
-                  disabled={!localPatient?.id}
-                />
-              </Form>
-            </div>
+              <MyInput
+                column
+                fieldLabel="Additional Address Line"
+                fieldName="additionalAddressLine"
+                record={address}
+                setRecord={setAddress}
+                disabled={!patientId}
+              />
+            </Form>
           </div>
         }
       />

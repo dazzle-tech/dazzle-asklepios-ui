@@ -39,6 +39,12 @@ export const languageService = createApi({
         url: '/api/setup/languages',
         method: 'GET',
       }),
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response?.value ?? response?.data ?? response?.content ?? [];
+      },
     }),
 
     

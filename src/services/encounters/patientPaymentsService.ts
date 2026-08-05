@@ -53,6 +53,8 @@ export type PatientLedgerSummary = {
   patientId: number;
   totalDebt: number;
   walletBalance: number;
+  reservedBalance?: number;
+  consumedAmount?: number;
 };
 
 export const patientPaymentsService = createApi({
@@ -215,7 +217,21 @@ export const patientPaymentsService = createApi({
               'PatientPayment'
             ]
           : ['PatientPayment']
-    })
+    }),
+    calculateInsuranceAmount: builder.mutation<
+  {
+    dueAmount: number;
+    patientShare: number;
+    insuranceShare: number;
+  },
+  { body: modelTypes.PatientPaymentDTO }
+>({
+  query: ({ body }) => ({
+    url: '/api/patient/insurance/calculate',
+    method: 'POST',
+    body
+  })
+}),
   })
 });
 
@@ -233,5 +249,6 @@ export const {
   useGetPaymentServicesByPaymentIdQuery,
   useLazyGetPaymentServicesByPaymentIdQuery,
   useGetPaymentsByPatientQuery,
-  useLazyGetPaymentsByPatientQuery
+  useLazyGetPaymentsByPatientQuery,
+  useCalculateInsuranceAmountMutation,
 } = patientPaymentsService;

@@ -230,9 +230,27 @@ import { laboratoryReportsService } from './services/reports/laboratoryReportsSe
 import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
+import { cchiApi } from './services/waseel-integration/cchiService';
+import { eligibilityApi } from './services/waseel-integration/eligibilityService';
+import { preAuthorizationApi } from './services/waseel-integration/preAuthorizationService';
+import { claimApi } from './services/waseel-integration/claimService';
+import { insuranceReceivablesApi } from './services/billing/insuranceReceivablesService';
+import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
+import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
+import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
+import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
+import {billingConfigurationService} from './services/billing/billingConfigurationService';
+import {financialDocumentNumberingService} from './services/billing/financialDocumentNumberingService';
+import { discountService } from './services/billing/discountService';
+import { taxService } from './services/billing/taxService';
 
+
+  import { billingTransactionService } from './services/billing/billingTransactionService';
+  import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
+  import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -582,10 +600,27 @@ export const store = configureStore({
     [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
-  
+    [cchiApi.reducerPath]: cchiApi.reducer,
+    [eligibilityApi.reducerPath]: eligibilityApi.reducer,
+    [preAuthorizationApi.reducerPath]: preAuthorizationApi.reducer,
+    [claimApi.reducerPath]: claimApi.reducer,
+    [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
+    [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
+  [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
+    [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
 
+  [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+  [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
+  [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+  [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
+  [taxService.reducerPath]: taxService.reducer,
+  [discountService.reducerPath]: discountService.reducer,
+
+  [billingTransactionService.reducerPath]:billingTransactionService.reducer,
+  [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
+  [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -785,10 +820,28 @@ export const store = configureStore({
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
+        glasgowComaScaleAssessmentService.middleware,
+        cchiApi.middleware,
+        eligibilityApi.middleware,
+        preAuthorizationApi.middleware,
+        claimApi.middleware,
+        insuranceReceivablesApi.middleware,
+        PayorPlanCoverageClassService.middleware,
+        waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
-        systemConfigService.middleware
+        systemConfigService.middleware,
+        NphiesPayerService.middleware,
+        priceListSetupService.middleware,
+        billingRuleSetupService.middleware,
+        billingConfigurationService.middleware,
+        financialDocumentNumberingService.middleware,
+        taxService.middleware,
+        discountService.middleware,
+        billingTransactionService.middleware,
+        invoiceGenerationService.middleware,
+        financialDocumentAdjustmentService.middleware
       ) as any
 });
 

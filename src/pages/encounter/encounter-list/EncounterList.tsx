@@ -16,6 +16,11 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  getEncounterTreatmentStatus,
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import DetailsCard from '@/components/DetailsCard';
 import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
@@ -89,6 +94,11 @@ const derivePatientFilters = (appliedSearch: any) => {
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Encounter not found.',
   'patient.notfound': 'Patient not found.',
+  'startedBy.practitioner.notFound':
+    'Your user account is not linked to a practitioner profile. Ask an administrator to link your account before starting encounters.',
+  'startedBy.practitioner.validationFailed':
+    'Unable to validate practitioner profile for the current user.',
+  'startedBy.notDoctor': 'Only physician accounts can start clinical encounters.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
   'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
@@ -316,7 +326,7 @@ const handlePatientSearchClick = useCallback(() => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-
+  
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -441,9 +451,7 @@ const handlePatientSearchClick = useCallback(() => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -457,6 +465,9 @@ const handlePatientSearchClick = useCallback(() => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -816,7 +827,7 @@ const handlePatientSearchClick = useCallback(() => {
       key: 'status',
       title: 'STATUS',
       render: (row: any) => {
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const statusColorMap: Record<string, string> = {
           NEW: '#0d6efd',
           ONGOING: '#198754',
@@ -829,7 +840,7 @@ const handlePatientSearchClick = useCallback(() => {
         return (
           <MyBadgeStatus
             color={statusColorMap[statusUpper] ?? '#969fb0'}
-            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
+            contant={formatEnumString(statusUpper) || '-'}
           />
         );
       }
@@ -855,7 +866,7 @@ const handlePatientSearchClick = useCallback(() => {
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
 
         return (

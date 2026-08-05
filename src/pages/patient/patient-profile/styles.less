@@ -564,6 +564,27 @@
     gap: 8px;
     justify-content: center;
   }
+
+  &__actions-popover {
+    padding: 0;
+  }
+
+  &__dropdown-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 168px;
+    font-size: 13px;
+
+    svg {
+      width: 14px;
+      color: #0f766e;
+    }
+
+    &--danger svg {
+      color: #dc2626;
+    }
+  }
 }
 
 // Insurance Modal
@@ -575,6 +596,20 @@
 
   &__right-content {
     padding: 20px;
+  }
+
+  &__section-title {
+    width: 100%;
+    margin: 16px 0 8px;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-gray);
+    border-bottom: 1px solid var(--rs-border-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   &__plan-load-more {
@@ -733,6 +768,63 @@
   .custom-date-input.rs-picker.rs-picker-date.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-placement-bottom-start,
 .width-problem .rs-picker-input-group.rs-input-group.rs-input-group-inside {
   width: 220px !important;
+}
+
+.eligibility-check-modal {
+  &__payor-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--rs-border-primary);
+    border-radius: 8px;
+    background: var(--rs-bg-well);
+  }
+
+  &__payor-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-gray);
+    text-transform: uppercase;
+  }
+
+  &__payor-meta {
+    font-size: 13px;
+    color: var(--primary-gray);
+  }
+
+  &__class-list {
+    margin-top: 16px;
+  }
+
+  &__class-list-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-gray);
+  }
+
+  &__snapshot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--primary-gray);
+  }
+}
+
+.waseel-class-list-modal {
+  &__subtitle {
+    margin: 0 0 12px;
+    color: var(--primary-gray);
+    font-size: 14px;
+  }
 }
 
 

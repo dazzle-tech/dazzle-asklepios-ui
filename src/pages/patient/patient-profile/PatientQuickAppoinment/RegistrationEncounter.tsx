@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 
 import type { PatientEncounter } from '@/types/model-types-new';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 
 import { useEnumOptions } from '@/services/enumsApi';
 
@@ -405,7 +406,7 @@ useEffect(() => {
     return (allPrevEncounters ?? []).map((encounter: any) => ({
       ...encounter,
       combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${
-        encounter.status ?? ''
+        getEncounterTreatmentStatus(encounter)
       }`
     }));
   }, [allPrevEncounters]);

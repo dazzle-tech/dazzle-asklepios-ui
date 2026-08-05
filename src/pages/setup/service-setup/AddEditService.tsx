@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
+import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
@@ -160,6 +161,16 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                 record={service}
                 setRecord={setService}
               />
+              </div>
+            </div>
+            <br />
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <BillingRuleSelect
+                  billingItemType="SERVICE"
+                  record={service}
+                  setRecord={setService}
+                />
               </div>
             </div>
              <br />

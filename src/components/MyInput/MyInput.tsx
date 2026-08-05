@@ -336,6 +336,10 @@ const MyInput = ({
   };
 
   const resolveContainer = () => {
+    if (props.container) {
+      return typeof props.container === 'function' ? props.container() : props.container;
+    }
+
     const pickerElement = pickerRef.current as HTMLElement | null;
 
     return (
@@ -760,6 +764,7 @@ const MyInput = ({
 
       case 'selectPagination': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
+        const isServerSideSearch = Boolean(props.setSearchKeyWard);
 
         const labelKeys = isArrayLabel
           ? (props.selectDataLabel as string[])
@@ -768,16 +773,21 @@ const MyInput = ({
         const primaryLabelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
         const dataList = props.selectData ?? [];
+        const searchTerm = isServerSideSearch
+          ? String(props.searchKeyWard ?? '')
+          : localSearch;
 
-        const filteredData = !localSearch
+        const filteredData = isServerSideSearch
           ? dataList
-          : dataList.filter(item => {
-              const text = isArrayLabel
-                ? buildCombinedLabel(item, labelKeys, '')
-                : String(item?.[primaryLabelKey] ?? '');
+          : !localSearch
+            ? dataList
+            : dataList.filter(item => {
+                const text = isArrayLabel
+                  ? buildCombinedLabel(item, labelKeys, '')
+                  : String(item?.[primaryLabelKey] ?? '');
 
-              return text.toLowerCase().includes(localSearch.toLowerCase());
-            });
+                return text.toLowerCase().includes(localSearch.toLowerCase());
+              });
 
         const pickerData = [
           ...filteredData,
@@ -862,12 +872,20 @@ const MyInput = ({
                 if (ignoredKeys.includes(key)) return;
 
                 if (key === 'Backspace') {
-                  setLocalSearch(prev => prev.slice(0, -1));
+                  if (isServerSideSearch && props.setSearchKeyWard) {
+                    props.setSearchKeyWard(String(props.searchKeyWard ?? '').slice(0, -1));
+                  } else {
+                    setLocalSearch(prev => prev.slice(0, -1));
+                  }
                   return;
                 }
 
                 if (key.length === 1) {
-                  setLocalSearch(prev => prev + key);
+                  if (isServerSideSearch && props.setSearchKeyWard) {
+                    props.setSearchKeyWard(String(props.searchKeyWard ?? '') + key);
+                  } else {
+                    setLocalSearch(prev => prev + key);
+                  }
                 }
               }}
               renderMenuItem={
@@ -911,7 +929,7 @@ const MyInput = ({
                       }
                     : undefined
               }
-              placeholder={localSearch ? `Search: ${localSearch}` : props.placeholder}
+              placeholder={searchTerm ? `Search: ${searchTerm}` : props.placeholder}
               cleanable={props.cleanable !== undefined ? props.cleanable : true}
               loading={props.loading ?? false}
               open={isSelectOpen}
@@ -927,7 +945,11 @@ const MyInput = ({
                 }
 
                 setIsSelectOpen(false);
-                setLocalSearch('');
+                if (isServerSideSearch && props.setSearchKeyWard) {
+                  props.setSearchKeyWard('');
+                } else {
+                  setLocalSearch('');
+                }
               }}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
