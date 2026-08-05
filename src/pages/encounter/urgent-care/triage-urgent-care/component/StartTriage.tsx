@@ -5,10 +5,14 @@ import MyInput from "@/components/MyInput";
 import SectionContainer from "@/components/SectionsoContainer";
 import MyLabel from "@/components/MyLabel";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
+import BedAssignmentModal from "@/pages/encounter/day-case/DayCaseList/BedAssignmentModal";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Divider, Form, Row } from "rsuite";
+import { Divider, Form, Row, Tooltip, Whisper } from "rsuite";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBedPulse } from "@fortawesome/free-solid-svg-icons";
+import { useAppSelector } from "@/hooks";
 
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 
@@ -52,20 +56,25 @@ const StartTriage = ({
     useUpdateEmergencyTriageLevelAssessmentMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector((state) => state.auth);
+  const isReceptionist =
+    String(authSlice.user?.jobRole ?? "").toUpperCase() === "RECEPTIONIST";
 
   const encounterId = encounter?.id ?? encounter?.encounterId ?? encounter?.key;
 
   const [triage, setTriage] = useState<any>({});
   const [localEncounter, setLocalEncounter] = useState<any>(encounter ?? {});
+  const [openBedAssignmentModal, setOpenBedAssignmentModal] = useState(false);
 
-  const { data: encounterFromServer } = useGetEncounterByIdQuery(
-    { id: encounterId },
-    {
-      skip: !encounterId,
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
-    }
-  );
+  const { data: encounterFromServer, refetch: refetchEncounter } =
+    useGetEncounterByIdQuery(
+      { id: encounterId },
+      {
+        skip: !encounterId,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+      }
+    );
 
   const {
     data: latestTriageFromServer,
@@ -290,15 +299,68 @@ const StartTriage = ({
   const patientId = toNumberOrNaN(patient?.id ?? patient?.patientId ?? patient?.key);
   const safeEncounterId = toNumberOrNaN(encounter?.id ?? encounter?.encounterId ?? encounter?.key);
 
+  const encounterStatus = String(
+    localEncounter?.status ??
+      encounterFromServer?.status ??
+      encounter?.status ??
+      encounter?.encounterStatus ??
+      ""
+  ).toUpperCase();
+  const isTriageStarted = encounterStatus === "TRIAGE_STARTED";
+  const filledEmergencyLevel = triage?.emergencyLevel ?? null;
+  const savedEmergencyLevel = latestTriageFromServer?.emergencyLevel ?? null;
+  const hasEmergencyLevel = Boolean(savedEmergencyLevel || filledEmergencyLevel);
+  const canAssignBed =
+    !isReceptionist &&
+    (Boolean(savedEmergencyLevel) || (isTriageStarted && Boolean(filledEmergencyLevel)));
+  const isAssignBedDisabled = !canAssignBed;
+
+  const selectedDepartment = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("selectedDepartment") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const departmentId =
+    localEncounter?.departmentId ??
+    encounter?.departmentId ??
+    selectedDepartment?.departmentId ??
+    selectedDepartment?.id ??
+    null;
+
+  const assignBedTooltip = !isTriageStarted && !savedEmergencyLevel ? (
+    <Tooltip>Assign Bed is only available when triage is started</Tooltip>
+  ) : !hasEmergencyLevel ? (
+    <Tooltip>Please set Emergency Level first</Tooltip>
+  ) : (
+    <Tooltip>Assign Bed</Tooltip>
+  );
+
   return (
     <div>
       <div className="bt-field-div">
         {sourcePage === "UrgentCare" && (
-          <BackButton
-            onClick={() => {
-              navigate("/urgent-care-triage");
-            }}
-          />
+          <>
+            <BackButton
+              onClick={() => {
+                navigate("/urgent-care-triage");
+              }}
+            />
+            <Whisper trigger="hover" placement="top" speaker={assignBedTooltip}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="black"
+                  disabled={isAssignBedDisabled}
+                  onClick={() => setOpenBedAssignmentModal(true)}
+                >
+                  <FontAwesomeIcon icon={faBedPulse} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </>
         )}
 
         <div className="bt-right">
@@ -385,6 +447,14 @@ const StartTriage = ({
           }
         />
       </Row>
+
+      <BedAssignmentModal
+        refetchEncounter={refetchEncounter}
+        open={openBedAssignmentModal}
+        setOpen={setOpenBedAssignmentModal}
+        encounter={localEncounter}
+        departmentId={departmentId != null ? String(departmentId) : undefined}
+      />
     </div>
   );
 };
