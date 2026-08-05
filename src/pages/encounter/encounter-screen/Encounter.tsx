@@ -846,6 +846,20 @@ useEffect(() => {
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
         encounter={propsData?.encounter}
+        onSuccess={() => {
+          if (localEncounter?.encounterType === 'EMERGENCY') {
+            if (currentFromPage === 'PatientEMR') {
+              navigate('/patient-EMR', {
+                state: {
+                  localPatient: propsData?.patient,
+                  fromPage: 'clinicalVisit'
+                }
+              });
+            } else {
+              navigate('/ER-department');
+            }
+          }
+        }}
       />
 
       <ConsultationPopup
