@@ -76,24 +76,49 @@ export const formatBillingRuleEvaluationMessage = (
 
 export const extractBillingRuleErrorMessage = (error: any): string => {
   const data = error?.data ?? error ?? {};
-  const errorKey = String(data?.errorKey ?? data?.message ?? '');
+  const properties = data?.properties ?? {};
+  const readableMessage =
+    properties?.message ??
+    data?.detail ??
+    data?.title ??
+    data?.message;
+
+  const errorKey = String(
+    data?.errorKey ??
+      properties?.messageKey ??
+      properties?.message ??
+      data?.message ??
+      ''
+  );
+
+  if (
+    errorKey.includes('preAuthorization') ||
+    errorKey.includes('preauth') ||
+    errorKey.includes('waseel') ||
+    errorKey.includes('eligibility') ||
+    errorKey.includes('diagnosis.required')
+  ) {
+    if (typeof readableMessage === 'string' && readableMessage.trim()) {
+      return readableMessage.replace(/^error\./i, '');
+    }
+
+    return 'Pre-authorization could not be submitted. Review insurance, Waseel mapping, and required pre-auth details.';
+  }
 
   if (
     errorKey.includes('billingRule.notConfigured') ||
     errorKey.includes('defaultBillingRule.notfound') ||
     errorKey.includes('billingRule.notfound')
   ) {
-    return (
-      data?.detail ??
-      data?.title ??
-      data?.message ??
-      'No billing rule is configured for this item. Add one in Billing Rule Setup before continuing.'
-    );
+    if (typeof readableMessage === 'string' && readableMessage.trim()) {
+      return readableMessage.replace(/^error\./i, '');
+    }
+
+    return 'No billing rule is configured for this item. Add one in Billing Rule Setup before continuing.';
   }
 
-  const message = data?.detail ?? data?.title ?? data?.message;
-  if (typeof message === 'string' && message.trim()) {
-    return message.replace(/^error\./i, '');
+  if (typeof readableMessage === 'string' && readableMessage.trim()) {
+    return readableMessage.replace(/^error\./i, '');
   }
 
   return 'Unable to validate billing rule for this item.';
