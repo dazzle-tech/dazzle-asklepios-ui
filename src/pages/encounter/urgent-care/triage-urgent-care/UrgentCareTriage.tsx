@@ -22,7 +22,7 @@ import {
 import {
   useCancelEncounterMutation,
   useFilterEncountersQuery,
-  useUpdateEncounterMutation
+  useUpdateEncounterMutation, useStartTriageEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
@@ -421,6 +421,7 @@ const UrgentCareTriage = () => {
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
+  const [startTriageEncounter, { isLoading: isStartTriageEncounterLoading }] = useStartTriageEncounterMutation();
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openBedAssignmentModal, setOpenBedAssignmentModal] = useState(false);
@@ -914,10 +915,7 @@ const UrgentCareTriage = () => {
         typeof encounterId === 'number' &&
         !Number.isNaN(encounterId)
       ) {
-        await updateEncounter({
-          id: encounterId,
-          body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
-        }).unwrap();
+        await startTriageEncounter({ id: encounterId }).unwrap();
       }
 
       const emergencyTriageNew =
