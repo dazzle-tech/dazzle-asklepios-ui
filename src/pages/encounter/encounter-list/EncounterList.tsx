@@ -950,7 +950,6 @@ const handlePatientSearchClick = useCallback(() => {
                 <div>
                  <VisitReportPrintButton
                         row={row}
-                       
                       />
                 </div>
               </Whisper>
