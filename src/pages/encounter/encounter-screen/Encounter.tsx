@@ -46,6 +46,7 @@ import IncompletePrescriptionModal from './components/IncompletePrescriptionModa
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import WarningiesModal from './WarningiesModal';
+import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 
 type EncounterModalProps = {
   patient?: any;
@@ -609,7 +610,11 @@ useEffect(() => {
                 >
                   Sick Leave
                 </MyButton>
-
+                
+                <VisitReportPrintButton
+                  row={localEncounter}
+                />
+                
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
