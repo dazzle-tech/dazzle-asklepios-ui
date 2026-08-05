@@ -53,7 +53,6 @@ type BillingCheckoutPanelProps = {
   onCollectRemaining?: () => void;
   chargeRows?: UnifiedBillingChargeRow[];
   encounterClosedForBilling?: boolean;
-  ledgerTotalDebt?: number | null;
   loadingBillingMetrics?: boolean;
 };
 
@@ -76,8 +75,6 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
   chargeRows = [],
 
   encounterClosedForBilling = false,
-
-  ledgerTotalDebt,
 
   loadingBillingMetrics = false
 
@@ -129,7 +126,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   const remainingToPay = loadingBillingMetrics
     ? null
-    : computeEncounterRemainingToPay(summary, chargeRows, ledgerTotalDebt);
+    : computeEncounterRemainingToPay(summary, chargeRows);
 
   const checkoutAmountDue =
     remainingToPay == null ? 0 : remainingToPay > 0 ? remainingToPay : amountToCollect;

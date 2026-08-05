@@ -215,6 +215,13 @@ const AddEditBillingRuleSetup: React.FC<
         />
       </div>
 
+      {billingRule.billingTrigger === 'DEBIT_NOTE' ? (
+        <p className="billing-rule-debit-note-hint">
+          Use this trigger for catalog items that should be billable when added through a patient
+          invoice debit note. The charge posts to billing calculation on issue.
+        </p>
+      ) : null}
+
       <br />
 
       <MyInput

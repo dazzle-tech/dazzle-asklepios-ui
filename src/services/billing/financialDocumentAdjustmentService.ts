@@ -4,7 +4,7 @@ import { sanitizeAdjustmentRequest } from '@/pages/billing-module/invoices/adjus
 
 export type FinancialDocumentAdjustmentItem = {
   id: number;
-  adjustmentAction?: 'REMOVE' | 'PARTIAL_CREDIT' | 'REDUCE' | 'ADD' | 'INCREASE' | string;
+  adjustmentAction?: 'REMOVE' | 'PARTIAL_CREDIT' | 'LINE_DISCOUNT' | 'REDUCE' | 'ADD' | 'INCREASE' | string;
   parentDocumentItemId?: number | null;
   chargeLineId?: number | null;
   itemCode?: string | null;
@@ -162,6 +162,8 @@ export type InvoiceAdjustmentSummary = {
   totalPaid: number;
   outstandingBalance: number;
   creditNoteAllowed?: boolean;
+  discountCreditNoteAllowed?: boolean;
+  adjustmentsBlockedByClaim?: boolean;
   currency?: string;
   adjustments: FinancialDocumentAdjustment[];
 };
@@ -226,6 +228,41 @@ export type CreateAdjustmentRequest = {
 export type CreateFinancialDocumentAdjustmentRequest = {
   invoiceId: number;
   body: CreateAdjustmentRequest;
+};
+
+export type DiscountCreditScope = 'LINE' | 'INVOICE';
+
+export type CreateDiscountCreditNoteRequest = {
+  scope: DiscountCreditScope;
+  documentItemId?: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  reason?: string;
+};
+
+export type DiscountCreditNoteLinePreview = {
+  documentItemId: number;
+  itemCode?: string | null;
+  itemDescription?: string | null;
+  lineRemainingBefore: number;
+  discountAmount: number;
+  lineRemainingAfter: number;
+};
+
+export type DiscountCreditNotePreviewResponse = {
+  invoiceId: number;
+  invoiceSubtype?: string;
+  scope: DiscountCreditScope;
+  currency?: string;
+  outstandingBefore: number;
+  totalDiscount: number;
+  outstandingAfter: number;
+  lines: DiscountCreditNoteLinePreview[];
+};
+
+export type CreateDiscountCreditNoteMutationRequest = {
+  invoiceId: number;
+  body: CreateDiscountCreditNoteRequest;
 };
 
 export const financialDocumentAdjustmentService = createApi({
@@ -315,6 +352,38 @@ export const financialDocumentAdjustmentService = createApi({
       ]
     }),
 
+    previewDiscountCreditNote: builder.mutation<
+      DiscountCreditNotePreviewResponse,
+      CreateDiscountCreditNoteMutationRequest
+    >({
+      query: ({ invoiceId, body }) => ({
+        url: `/api/patient/financial-documents/${invoiceId}/discount-credit-note/preview`,
+        method: 'POST',
+        body
+      })
+    }),
+
+    createDiscountCreditNote: builder.mutation<
+      FinancialDocumentAdjustment,
+      CreateDiscountCreditNoteMutationRequest
+    >({
+      query: ({ invoiceId, body }) => ({
+        url: `/api/patient/financial-documents/${invoiceId}/discount-credit-note`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: (_result, _error, { invoiceId }) => [
+        { type: 'InvoiceAdjustments', id: invoiceId },
+        { type: 'InvoiceLineItems', id: invoiceId },
+        { type: 'AddableChargeLines', id: invoiceId },
+        'PatientFinancialInvoices',
+        'EncounterBillingSummary',
+        'BillingWallet',
+        'PatientLedgerSummary',
+        'PatientBalance'
+      ]
+    }),
+
     createDebitNote: builder.mutation<
       FinancialDocumentAdjustment,
       CreateFinancialDocumentAdjustmentRequest
@@ -386,6 +455,8 @@ export const {
   useLazyGetInvoiceAdjustmentsQuery,
   usePreviewCatalogItemPricingMutation,
   useCreateCreditNoteMutation,
+  usePreviewDiscountCreditNoteMutation,
+  useCreateDiscountCreditNoteMutation,
   useCreateDebitNoteMutation,
   useCollectInvoiceBalanceMutation,
   useSyncInvoicePaymentsMutation

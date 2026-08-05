@@ -195,7 +195,11 @@ export const invoiceGenerationService = createApi({
       invalidatesTags: (_result, _error, { encounterId }) => [
         'BillableVisits',
         'PatientFinancialInvoices',
-        { type: 'EncounterInvoiceDetails', id: encounterId }
+        { type: 'EncounterInvoiceDetails', id: encounterId },
+        { type: 'EncounterBillingSummary', id: String(encounterId) },
+        'EncounterBillingSummary',
+        'InvoiceAdjustments',
+        'InvoiceLineItems'
       ]
     }),
 

@@ -41,6 +41,7 @@ type PayInvoiceBalanceModalProps = {
   outstandingAmount: number;
   currency?: string;
   walletBalance?: number;
+  walletReserved?: number;
   onPaid?: (
     result: CollectInvoiceBalanceResult,
     context: InvoicePaymentCompletedContext
@@ -55,6 +56,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   outstandingAmount,
   currency = 'SAR',
   walletBalance = 0,
+  walletReserved = 0,
   onPaid
 }) => {
   const dispatch = useAppDispatch();
@@ -81,7 +83,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   const [collectInvoiceBalance, { isLoading }] = useCollectInvoiceBalanceMutation();
 
   const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
-  const walletAvailable = Math.max(0, Number(walletBalance));
+  const walletAvailable = Math.max(0, Number(walletBalance) + Number(walletReserved));
   const walletCollectPreview = computeWalletCollectAmounts(
     suggestedAmount,
     walletAvailable,

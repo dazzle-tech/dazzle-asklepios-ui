@@ -14,7 +14,6 @@ type EncounterSettlementBannerProps = {
   summary: EncounterBillingSummary;
   currency?: string;
   chargeRows?: UnifiedBillingChargeRow[];
-  ledgerTotalDebt?: number | null;
   loading?: boolean;
 };
 
@@ -22,7 +21,6 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   summary,
   currency = 'SAR',
   chargeRows = [],
-  ledgerTotalDebt,
   loading = false
 }) => {
   if (loading || !summary.chargeId) {
@@ -31,11 +29,7 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
 
   const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
   const patientShare = computeEncounterPatientShare(summary, chargeRows);
-  const remainingToPay = computeEncounterRemainingToPay(
-    summary,
-    chargeRows,
-    ledgerTotalDebt
-  );
+  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
   const walletSettled = Number(summary.patientWalletSettledAmount ?? 0);
   const debitSettled = Number(summary.patientDebitSettledAmount ?? 0);
   const chargeClosed = summary.chargeStatus === 'CLOSED';

@@ -705,8 +705,10 @@
   pointer-events: auto;
 
   .rs-modal-dialog,
-  .rs-modal-content {
+  .rs-modal-content,
+  .rs-modal-body {
     pointer-events: auto;
+    overflow: visible !important;
   }
 
   .rs-radio-group {
@@ -724,6 +726,7 @@
   .rs-picker-select-menu,
   .rs-picker-menu {
     z-index: 1070 !important;
+    pointer-events: auto !important;
   }
 }
 
@@ -764,7 +767,46 @@
 .invoice-adjustment-modal--child-open {
   pointer-events: none;
 
-  .rs-modal-dialog {
+  .rs-modal-dialog,
+  .rs-modal-backdrop {
     pointer-events: none;
+  }
+}
+
+.rs-picker-popup.billing-add-service-picker-popup,
+.rs-picker-popup[data-testid='picker-popup'] {
+  z-index: 2000 !important;
+  pointer-events: auto !important;
+}
+
+.discount-credit-note-modal {
+  &__intro {
+    display: block;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  &__form {
+    margin-bottom: 16px;
+  }
+
+  &__preview {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rs-border-primary, #e5e5ea);
+  }
+
+  &__preview-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &__preview-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--rs-text-secondary, #8e8e93);
   }
 }

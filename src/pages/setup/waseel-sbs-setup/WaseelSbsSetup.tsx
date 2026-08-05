@@ -171,7 +171,8 @@ const WaseelSbsSetup = () => {
       page: sbsDropdownPage,
       size: 50,
       search: appliedSbsDropdownSearch,
-      sort: 'sbsCode,asc'
+      sort: 'sbsCode,asc',
+      activeOnly: true
     }, {
       skip: !openMappingModal
     });
@@ -332,11 +333,15 @@ const WaseelSbsSetup = () => {
   ]);
 
   const sbsDropdownOptions = useMemo(() => {
-    return (sbsDropdownResponse?.content ?? []).map((item: WaseelSbsCatalog) => ({
+    return sbsDropdownCache.map((item: WaseelSbsCatalog) => ({
       ...item,
       sbsDisplay: `${item.waseelItemType ?? ''} - ${item.sbsCode ?? ''} - ${item.shortDescription ?? ''}`
     }));
-  }, [sbsDropdownResponse]);
+  }, [sbsDropdownCache]);
+
+  const hasMoreSbsDropdown =
+    ((sbsDropdownResponse?.number ?? 0) + 1) <
+    (sbsDropdownResponse?.totalPages ?? 0);
   useEffect(() => {
     dispatch(setPageCode('WASEEL_SBS_SETUP'));
     dispatch(setDivContent('Waseel SBS Setup'));
@@ -360,6 +365,7 @@ const WaseelSbsSetup = () => {
     const delay = setTimeout(() => {
       setAppliedSbsDropdownSearch(sbsDropdownSearch.trim());
       setSbsDropdownPage(0);
+      setSbsDropdownCache([]);
     }, 300);
 
     return () => clearTimeout(delay);
@@ -887,9 +893,16 @@ const WaseelSbsSetup = () => {
   setRecord={setMappingForm}
   width="100%"
   searchable
+  searchKeyWard={sbsDropdownSearch}
+  setSearchKeyWard={setSbsDropdownSearch}
   loading={isFetchingSbsDropdown}
-  hasMore={false}
-  onFetchMore={async () => {}}
+  hasMore={hasMoreSbsDropdown}
+  onFetchMore={() => {
+    if (!isFetchingSbsDropdown && hasMoreSbsDropdown) {
+      setSbsDropdownPage(prev => prev + 1);
+    }
+  }}
+  placeholder="Search SBS Code / Type / Description"
   onSelectItem={(selectedSbs: WaseelSbsCatalog) => {
     setMappingForm(prev => ({
       ...prev,

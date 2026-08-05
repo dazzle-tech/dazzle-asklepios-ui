@@ -3377,6 +3377,7 @@ export type WaseelSbsSearchParams = {
   size: number;
   search?: string;
   sort?: string;
+  activeOnly?: boolean;
 };
 
 export type WaseelItemMappingSearchParams = {

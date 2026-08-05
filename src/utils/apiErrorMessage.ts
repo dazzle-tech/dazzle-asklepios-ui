@@ -179,10 +179,23 @@ export const ADJUSTMENT_ERROR_MAP: Record<string, string> = {
   'adjustment.parentNotInvoice': 'Adjustments can only be applied to invoices.',
   'adjustment.invoiceDraft': 'Cannot adjust a draft invoice.',
   'adjustment.invoiceCancelled': 'Cannot adjust a cancelled invoice.',
+  'adjustment.claimLocked':
+    'Credit, discount, and debit notes are locked while a Waseel claim is active on this invoice.',
   'adjustment.invalidAmount': 'Adjustment amount must be greater than zero.',
   'adjustment.credit.noOutstanding': 'This invoice has no outstanding balance to credit.',
   'adjustment.credit.exceedsOutstanding':
     'Credit amount exceeds the invoice outstanding balance.',
+  'adjustment.discount.patientInvoiceOnly':
+    'Discount credit notes are only allowed on patient (customer) invoices.',
+  'adjustment.discount.scopeRequired': 'Select whether the discount applies to a line or the whole invoice.',
+  'adjustment.discount.amountOrPercentRequired':
+    'Enter either a discount amount or a discount percentage.',
+  'adjustment.discount.invalidAmount': 'Discount amount must be greater than zero.',
+  'adjustment.discount.exceedsOutstanding': 'Discount exceeds the invoice outstanding balance.',
+  'adjustment.discount.exceedsLineRemaining': 'Discount exceeds the remaining amount on this line.',
+  'adjustment.discount.lineRequired': 'Select an invoice line for the discount.',
+  'adjustment.discount.noRemainingLines':
+    'No invoice lines have remaining balance available for discount.',
   'adjustment.refund.invalidAmount': 'Invalid refund amount.',
   'adjustment.refund.noOverpayment': 'No overpayment — refund is not allowed.',
   'adjustment.refund.exceedsOverpayment': 'Refund exceeds the overpaid amount.',

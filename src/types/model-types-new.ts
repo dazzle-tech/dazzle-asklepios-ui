@@ -5428,7 +5428,8 @@ export enum BillingTrigger {
   DISPENSED = 'DISPENSED',
   SERVICE_COMPLETED = 'SERVICE_COMPLETED',
   CHECKOUT = 'CHECKOUT',
-  MANUAL = 'MANUAL'
+  MANUAL = 'MANUAL',
+  DEBIT_NOTE = 'DEBIT_NOTE'
 }
 
 export enum BillingEventType {
@@ -5441,7 +5442,8 @@ export enum BillingEventType {
   ITEM_CANCELLED = 'ITEM_CANCELLED',
   ENCOUNTER_CANCELLED = 'ENCOUNTER_CANCELLED',
   CHECKOUT = 'CHECKOUT',
-  MANUAL = 'MANUAL'
+  MANUAL = 'MANUAL',
+  DEBIT_NOTE = 'DEBIT_NOTE'
 }
 
 export enum BillingSettlementPath {

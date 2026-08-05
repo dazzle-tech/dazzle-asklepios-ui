@@ -52,13 +52,16 @@ type InvoiceDetailPanelProps = {
   currency?: string;
   patient?: any;
   walletBalance?: number;
+  walletReserved?: number;
   printDisabled?: boolean;
   canCreateCreditNote?: boolean;
   canCreateDebitNote?: boolean;
+  canCreateDiscountCreditNote?: boolean;
   onPrintInvoice?: () => void;
   onPrintAdjustment?: (adjustment: FinancialDocumentAdjustment) => void;
   onCreateCreditNote?: () => void;
   onCreateDebitNote?: () => void;
+  onCreateDiscountCreditNote?: () => void;
   onRefresh?: () => void;
 };
 
@@ -96,13 +99,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   currency = 'SAR',
   patient,
   walletBalance = 0,
+  walletReserved = 0,
   printDisabled = false,
   canCreateCreditNote = false,
   canCreateDebitNote = false,
+  canCreateDiscountCreditNote = false,
   onPrintInvoice,
   onPrintAdjustment,
   onCreateCreditNote,
   onCreateDebitNote,
+  onCreateDiscountCreditNote,
   onRefresh
 }) => {
   const dispatch = useAppDispatch();
@@ -351,6 +357,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                 onClick={onCreateCreditNote}
               >
                 <FontAwesomeIcon icon={faMinusCircle} /> Credit
+              </MyButton>
+            ) : null}
+            {onCreateDiscountCreditNote ? (
+              <MyButton
+                size="sm"
+                appearance="ghost"
+                disabled={!canCreateDiscountCreditNote}
+                onClick={onCreateDiscountCreditNote}
+              >
+                <FontAwesomeIcon icon={faTags} /> Discount
               </MyButton>
             ) : null}
             {onCreateDebitNote ? (
@@ -645,6 +661,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
         outstandingAmount={outstandingBalance}
         currency={resolvedCurrency}
         walletBalance={walletBalance}
+        walletReserved={walletReserved}
         onPaid={handlePaymentCompleted}
       />
 

@@ -20,14 +20,24 @@ import {
 } from '@/services/setup/serviceService';
 
 import {
+  useGetPatientFinancialDocumentsQuery,
+  type PatientFinancialInvoice
+} from '@/services/billing/invoiceGenerationService';
+import {
+  useGetInvoiceAdjustmentsQuery,
+  useGetInvoiceLineItemsQuery
+} from '@/services/billing/financialDocumentAdjustmentService';
+import {
   buildMedicationNameLookup,
   buildServiceCatalog,
   buildTimelineEvents,
   collectMedicationIdsForLookup,
   collectServiceIdsForLookup,
   findRejectedPreAuthItems,
-  mergeBillingChargeRows,
+  mergeEncounterSummaryWithInvoiceContext,
   mergeServiceCatalogs,
+  resolveDisplayChargeRows,
+  resolveEncounterPatientInvoiceId,
   resolvePatientWalletAvailable,
   resolvePatientWalletReserved,
   resolvePatientId,
@@ -140,6 +150,15 @@ export const useBillingAccountingData = ({
       { skip: patientId == null }
     );
 
+  const {
+    currentData: financialDocuments = [],
+    isFetching: fetchingFinancialDocuments,
+    refetch: refetchFinancialDocuments
+  } = useGetPatientFinancialDocumentsQuery(patientId as number, {
+    skip: patientId == null,
+    refetchOnMountOrArgChange: true
+  });
+
   const encounters = encountersResponse?.data ?? [];
   const selectedEncounter =
     encounters.find(encounter => encounter.id === selectedEncounterId) ?? null;
@@ -166,8 +185,53 @@ export const useBillingAccountingData = ({
     patientId == null ||
     !(loadingLedgerInitial && patientLedgerSummary == null);
 
+  const summary = summaryMatchesEncounter ? billingSummary : fallbackSummary;
+
+  const resolvedInvoiceId = useMemo(
+    () =>
+      resolveEncounterPatientInvoiceId(
+        selectedEncounterId,
+        summary,
+        financialDocuments as PatientFinancialInvoice[]
+      ),
+    [selectedEncounterId, summary, financialDocuments]
+  );
+
+  const {
+    currentData: invoiceAdjustments,
+    isFetching: fetchingInvoiceAdjustments,
+    refetch: refetchInvoiceAdjustments
+  } = useGetInvoiceAdjustmentsQuery(resolvedInvoiceId as number, {
+    skip: resolvedInvoiceId == null,
+    refetchOnMountOrArgChange: true
+  });
+
+  const {
+    currentData: invoiceLineItems,
+    isFetching: fetchingInvoiceLineItems,
+    refetch: refetchInvoiceLineItems
+  } = useGetInvoiceLineItemsQuery(resolvedInvoiceId as number, {
+    skip: resolvedInvoiceId == null,
+    refetchOnMountOrArgChange: true
+  });
+
+  const effectiveSummary = useMemo(
+    () =>
+      mergeEncounterSummaryWithInvoiceContext(
+        summary,
+        resolvedInvoiceId,
+        invoiceAdjustments ?? null
+      ),
+    [summary, resolvedInvoiceId, invoiceAdjustments]
+  );
+
   const loadingBillingMetrics =
-    selectedEncounterId != null && (!summaryReady || !ledgerReady);
+    selectedEncounterId != null &&
+    (!summaryReady ||
+      !ledgerReady ||
+      (resolvedInvoiceId != null &&
+        (fetchingInvoiceAdjustments || fetchingInvoiceLineItems) &&
+        invoiceAdjustments == null));
 
   const loadingSummary =
     selectedEncounterId != null &&
@@ -177,19 +241,17 @@ export const useBillingAccountingData = ({
   const loadingPsp =
     selectedEncounterId != null && (loadingPspInitial || fetchingPsp);
 
-  const summary = summaryMatchesEncounter ? billingSummary : fallbackSummary;
-
   const pspRows = pspResponse?.data ?? [];
   const departmentId = selectedEncounter?.departmentId ?? null;
 
   const serviceIds = useMemo(
-    () => collectServiceIdsForLookup(summary, pspRows),
-    [summary, pspRows]
+    () => collectServiceIdsForLookup(effectiveSummary, pspRows),
+    [effectiveSummary, pspRows]
   );
 
   const medicationIds = useMemo(
-    () => collectMedicationIdsForLookup(summary, pspRows),
-    [summary, pspRows]
+    () => collectMedicationIdsForLookup(effectiveSummary, pspRows),
+    [effectiveSummary, pspRows]
   );
 
   const serviceIdsKey = useMemo(
@@ -302,25 +364,34 @@ export const useBillingAccountingData = ({
 
   const chargeRows = useMemo(
     () =>
-      mergeBillingChargeRows(
-        summary,
+      resolveDisplayChargeRows(
+        effectiveSummary,
         pspRows,
         serviceCatalog,
-        medicationNames
+        medicationNames,
+        invoiceLineItems ?? [],
+        resolvedInvoiceId
       ),
-    [summary, pspRows, serviceCatalog, medicationNames]
+    [
+      effectiveSummary,
+      pspRows,
+      serviceCatalog,
+      medicationNames,
+      invoiceLineItems,
+      resolvedInvoiceId
+    ]
   );
 
   const timelineEvents = useMemo(
     () =>
       buildTimelineEvents(
         selectedEncounter,
-        summary,
+        effectiveSummary,
         pspRows,
         serviceCatalog,
         medicationNames
       ),
-    [selectedEncounter, summary, pspRows, serviceCatalog, medicationNames]
+    [selectedEncounter, effectiveSummary, pspRows, serviceCatalog, medicationNames]
   );
 
   const rejectedPreAuthItems = useMemo(
@@ -330,13 +401,13 @@ export const useBillingAccountingData = ({
 
   const walletBalance = resolvePatientWalletAvailable(
     patientLedgerSummary,
-    summary?.wallet?.availableBalance,
+    effectiveSummary?.wallet?.availableBalance,
     patientWalletBalance
   );
 
   const reservedBalance = resolvePatientWalletReserved(
     patientLedgerSummary,
-    summary?.wallet?.reservedBalance
+    effectiveSummary?.wallet?.reservedBalance
   );
 
   const refreshAll = async () => {
@@ -346,6 +417,9 @@ export const useBillingAccountingData = ({
       selectedEncounterId != null ? refetchPsp() : Promise.resolve(),
       refetchWalletBalance(),
       refetchLedgerSummary(),
+      patientId != null ? refetchFinancialDocuments() : Promise.resolve(),
+      resolvedInvoiceId != null ? refetchInvoiceAdjustments() : Promise.resolve(),
+      resolvedInvoiceId != null ? refetchInvoiceLineItems() : Promise.resolve(),
       coverageType === 'INSURANCE' && selectedInsuranceId != null
         ? refetchWaseelCoverage()
         : Promise.resolve()
@@ -359,13 +433,21 @@ export const useBillingAccountingData = ({
     encounters,
     loadingEncounters,
     selectedEncounter,
-    summary,
+    summary: effectiveSummary,
     summaryForDisplay: summaryMatchesEncounter ? billingSummary ?? null : null,
     loadingSummary,
     loadingBillingMetrics,
     pspRows,
     loadingPsp,
     chargeRows,
+    resolvedInvoiceId,
+    invoiceAdjustments:
+      resolvedInvoiceId != null ? invoiceAdjustments ?? null : null,
+    loadingInvoiceContext:
+      resolvedInvoiceId != null &&
+      (fetchingInvoiceAdjustments ||
+        fetchingInvoiceLineItems ||
+        fetchingFinancialDocuments),
     timelineEvents,
     rejectedPreAuthItems,
     waseelCoverage,

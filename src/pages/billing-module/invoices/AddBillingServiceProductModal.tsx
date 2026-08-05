@@ -413,15 +413,17 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
 
   const handleCatalogItemSelect = useCallback(
     async (selectedItem: any) => {
-      if (!itemSelectConfig) {
+      if (!itemSelectConfig || selectedItem == null) {
         return;
       }
 
+      const fieldName = itemSelectConfig.fieldName as keyof PatientServiceAndProduct;
+      const selectedId = selectedItem?.[itemSelectConfig.selectDataValue] ?? null;
       const setupFallbackPrice = Number(selectedItem?.price ?? 0);
+
       const nextRecord = {
         ...record,
-        [itemSelectConfig.fieldName]:
-          selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+        [fieldName]: selectedId,
         unitPrice: 0,
         currency
       };
@@ -429,10 +431,10 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       setRecord(nextRecord);
 
       const pricingPreview = await resolvePricingPreview(nextRecord, setupFallbackPrice);
+
       setRecord(current => ({
         ...current,
-        [itemSelectConfig.fieldName]:
-          selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+        [fieldName]: selectedId,
         unitPrice: pricingPreview.unitPrice,
         currency
       }));
@@ -542,9 +544,19 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           setRecord={setRecord}
           width="100%"
           searchable
+          cleanable={false}
+          virtualized={false}
           loading={itemSelectConfig.loading}
-          container={() => document.body}
-          onSelectItem={handleCatalogItemSelect}
+          hasMore={false}
+          onFetchMore={async () => {}}
+          placeholder={`Select ${itemSelectConfig.fieldLabel.toLowerCase()}`}
+          onSelectItem={selectedItem => {
+            if (selectedItem == null) {
+              return;
+            }
+
+            void handleCatalogItemSelect(selectedItem);
+          }}
         />
       )}
 

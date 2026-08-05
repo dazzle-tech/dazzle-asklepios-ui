@@ -1,11 +1,13 @@
 import React from 'react';
 
 import type { EncounterBillingSummary } from '@/types/model-types-new';
+import type { InvoiceAdjustmentSummary } from '@/services/billing/financialDocumentAdjustmentService';
 import {
   computeEncounterCoveredAmount,
   computeEncounterPatientShare,
   computeEncounterRemainingToPay,
   computeUnbilledEncounterNetAmount,
+  encounterHasInvoice,
   formatMoney,
   shouldShowInsuranceSummary,
   sumEncounterReservedAmount,
@@ -18,11 +20,11 @@ type BillingSummaryCardsProps = {
   walletBalance: number;
   reservedBalance: number;
   totalDebt?: number;
-  ledgerTotalDebt?: number | null;
   loading?: boolean;
   currency?: string;
   coverageType?: BillingCoverageType;
   chargeRows?: UnifiedBillingChargeRow[];
+  invoiceAdjustments?: InvoiceAdjustmentSummary | null;
 };
 
 const PLACEHOLDER = '—';
@@ -32,11 +34,11 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   walletBalance,
   reservedBalance,
   totalDebt = 0,
-  ledgerTotalDebt,
   loading = false,
   currency,
   coverageType = 'SELF_PAY',
-  chargeRows = []
+  chargeRows = [],
+  invoiceAdjustments = null
 }) => {
   if (loading) {
     const skeletonCards = [
@@ -61,25 +63,52 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
     );
   }
 
-  const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
+  const resolvedCurrency =
+    currency ??
+    invoiceAdjustments?.currency ??
+    summary.currency ??
+    'SAR';
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
   const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const coveredAmount = computeEncounterCoveredAmount(summary);
-  const remainingToPay = computeEncounterRemainingToPay(
-    summary,
-    chargeRows,
-    ledgerTotalDebt ?? totalDebt
-  );
+  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
   const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
+  const chargeNet = Number(summary.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows);
+  const hasInvoice =
+    encounterHasInvoice(summary) ||
+    invoiceAdjustments != null ||
+    Boolean(summary.invoiceNumber);
+
+  const invoiceTotal = Number(
+    invoiceAdjustments?.invoiceTotal ?? summary.invoiceTotalAmount ?? 0
+  );
+  const invoicePaid = Number(
+    invoiceAdjustments?.totalPaid ?? summary.invoicePaidAmount ?? 0
+  );
+  const invoiceOutstanding = Number(
+    invoiceAdjustments?.outstandingBalance ?? summary.invoiceOutstandingAmount ?? 0
+  );
+  const totalCreditNotes = Number(invoiceAdjustments?.totalCreditNotes ?? 0);
+  const totalDebitNotes = Number(invoiceAdjustments?.totalDebitNotes ?? 0);
+  const invoiceNumber =
+    invoiceAdjustments?.documentNumber ?? summary.invoiceNumber ?? null;
+
   const remainingHint = (() => {
+    if (hasInvoice) {
+      if (invoiceOutstanding <= 0 && invoiceNumber) {
+        return `Invoice ${invoiceNumber} settled · paid ${formatMoney(invoicePaid, resolvedCurrency)}`;
+      }
+
+      if (invoiceNumber) {
+        return `Invoice ${invoiceNumber} · outstanding ${formatMoney(invoiceOutstanding, resolvedCurrency)}`;
+      }
+    }
+
     if (patientShare <= 0) return undefined;
 
     if (remainingToPay > 0) {
       const parts = [
-        Number(summary.invoiceOutstandingAmount ?? 0) > 0 && summary.invoiceNumber
-          ? `Invoice ${summary.invoiceNumber}`
-          : null,
         `Patient share ${formatMoney(patientShare, resolvedCurrency)}`,
         coveredAmount > 0
           ? `${formatMoney(coveredAmount, resolvedCurrency)} covered`
@@ -91,54 +120,73 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
       return `${parts.join(' · ')} · per encounter`;
     }
 
-    if (Number(summary.invoiceOutstandingAmount ?? 0) <= 0 && summary.invoiceNumber) {
-      return `Invoice ${summary.invoiceNumber} settled · patient share ${formatMoney(patientShare, resolvedCurrency)} collected at billing`;
-    }
-
-    return `Patient share ${formatMoney(patientShare, resolvedCurrency)} settled for this encounter · account balance at invoice`;
+    return `Patient share ${formatMoney(patientShare, resolvedCurrency)} settled for this encounter`;
   })();
 
-  const invoiceTotal = Number(summary.invoiceTotalAmount ?? 0);
-  const chargeNet = Number(summary.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows);
-  const hasInvoice = invoiceTotal > 0 && Boolean(summary.invoiceNumber);
-
-  const cards = [
-    {
-      label: hasInvoice ? 'Invoice total' : 'Net charges',
-      value: formatMoney(hasInvoice ? invoiceTotal : chargeNet, resolvedCurrency),
-      hint: hasInvoice
-        ? `Invoice ${summary.invoiceNumber} · incl. tax & discount (charge net ${formatMoney(chargeNet, resolvedCurrency)})`
-        : 'This encounter'
-    },
-    {
-      label: 'Remaining to pay',
-      value: formatMoney(remainingToPay, resolvedCurrency),
-      tone: remainingToPay > 0 ? 'danger' : patientShare > 0 ? 'success' : undefined,
-      hint: remainingHint
-    },
-    ...(showInsurance
-      ? [
-          {
-            label: 'Insurance due',
-            value: formatMoney(summary.insuranceOutstandingAmount, resolvedCurrency)
-          }
-        ]
-      : []),
-    {
-      label: 'Wallet available',
-      value: formatMoney(walletBalance, resolvedCurrency),
-      tone: 'success'
-    },
-    {
-      label: 'Wallet reserved',
-      value: formatMoney(reservedBalance, resolvedCurrency)
-    },
-    {
-      label: 'Ledger debt',
-      value: formatMoney(totalDebt, resolvedCurrency),
-      tone: totalDebt > 0 ? 'danger' : undefined
-    }
-  ] as const;
+  const cards = hasInvoice
+    ? ([
+        {
+          label: 'Invoice total',
+          value: formatMoney(invoiceTotal, resolvedCurrency),
+          hint: invoiceNumber
+            ? `Invoice ${invoiceNumber} · charge net ${formatMoney(chargeNet, resolvedCurrency)}`
+            : undefined
+        },
+        {
+          label: 'Paid',
+          value: formatMoney(invoicePaid, resolvedCurrency),
+          tone: invoicePaid > 0 ? 'success' : undefined
+        },
+        {
+          label: 'Outstanding',
+          value: formatMoney(invoiceOutstanding, resolvedCurrency),
+          tone: invoiceOutstanding > 0 ? 'danger' : 'success',
+          hint: remainingHint
+        },
+        {
+          label: 'Credit notes',
+          value: formatMoney(totalCreditNotes, resolvedCurrency)
+        },
+        {
+          label: 'Debit notes',
+          value: formatMoney(totalDebitNotes, resolvedCurrency)
+        }
+      ] as const)
+    : ([
+        {
+          label: 'Net charges',
+          value: formatMoney(chargeNet, resolvedCurrency),
+          hint: 'This encounter'
+        },
+        {
+          label: 'Remaining to pay',
+          value: formatMoney(remainingToPay, resolvedCurrency),
+          tone: remainingToPay > 0 ? 'danger' : patientShare > 0 ? 'success' : undefined,
+          hint: remainingHint
+        },
+        ...(showInsurance
+          ? [
+              {
+                label: 'Insurance due',
+                value: formatMoney(summary.insuranceOutstandingAmount, resolvedCurrency)
+              }
+            ]
+          : []),
+        {
+          label: 'Wallet available',
+          value: formatMoney(walletBalance, resolvedCurrency),
+          tone: 'success'
+        },
+        {
+          label: 'Wallet reserved',
+          value: formatMoney(reservedBalance, resolvedCurrency)
+        },
+        {
+          label: 'Ledger debt',
+          value: formatMoney(totalDebt, resolvedCurrency),
+          tone: totalDebt > 0 ? 'danger' : undefined
+        }
+      ] as const);
 
   return (
     <div className="billing-accounting__cards">

@@ -25,7 +25,8 @@ import {
   normalizeBillingError,
   sumEncounterReservedAmount,
   toNumber,
-  type PrepareServiceRow
+  type PrepareServiceRow,
+  type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 
 type PrepareServicesPanelProps = {
@@ -41,7 +42,7 @@ type PrepareServicesPanelProps = {
   onCoverageTypeChange: (value: BillingCoverageType) => void;
   onInsuranceChange: (insuranceId: number | null) => void;
   onPrepared?: () => void;
-  ledgerTotalDebt?: number | null;
+  chargeRows?: UnifiedBillingChargeRow[];
   loadingBillingMetrics?: boolean;
 };
 
@@ -58,7 +59,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   onCoverageTypeChange,
   onInsuranceChange,
   onPrepared,
-  ledgerTotalDebt,
+  chargeRows = [],
   loadingBillingMetrics = false
 }) => {
   const dispatch = useAppDispatch();
@@ -70,10 +71,10 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
 
   const isInsurance = coverageType === 'INSURANCE';
   const servicesArePrepared = (summary.items ?? []).length > 0;
-  const patientShare = computeEncounterPatientShare(summary);
+  const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const remainingToPay = loadingBillingMetrics
     ? null
-    : computeEncounterRemainingToPay(summary, [], ledgerTotalDebt);
+    : computeEncounterRemainingToPay(summary, chargeRows);
   const reservedOnEncounter = sumEncounterReservedAmount(summary);
 
   const insuranceOptions = useMemo(

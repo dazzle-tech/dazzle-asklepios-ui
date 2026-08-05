@@ -78,6 +78,8 @@ const lineActionLabel = (action?: string) => {
       return 'Remove';
     case 'PARTIAL_CREDIT':
       return 'Partial credit';
+    case 'LINE_DISCOUNT':
+      return 'Line discount';
     case 'REDUCE':
       return 'Reduce';
     case 'ADD':

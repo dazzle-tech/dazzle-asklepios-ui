@@ -8,6 +8,7 @@ import MyButton from '@/components/MyButton/MyButton';
 
 import MyTable from '@/components/MyTable';
 
+import type { EncounterBillingSummary } from '@/types/model-types-new';
 import type { UnifiedBillingChargeRow } from '../utils/billingAccountingUtils';
 
 import {
@@ -44,6 +45,7 @@ import { formatBillingItemType } from '@/pages/patient/patient-profile/PatientQu
 
 type BillingChargesTableProps = {
   rows: UnifiedBillingChargeRow[];
+  billingSummary?: EncounterBillingSummary | null;
   loading?: boolean;
   currency?: string;
   chargeClosed?: boolean;
@@ -58,6 +60,8 @@ type BillingChargesTableProps = {
 const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   rows,
+
+  billingSummary = null,
 
   loading = false,
 
@@ -81,9 +85,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   const collectableRows = useMemo(
 
-    () => rows.filter(row => isRowCollectable(row)),
+    () => rows.filter(row => isRowCollectable(row, billingSummary)),
 
-    [rows]
+    [rows, billingSummary]
 
   );
 
@@ -99,9 +103,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   const settledCount = useMemo(
 
-    () => rows.filter(row => resolveRowPaymentStatus(row) === 'SETTLED').length,
+    () => rows.filter(row => resolveRowPaymentStatus(row, billingSummary) === 'SETTLED').length,
 
-    [rows]
+    [rows, billingSummary]
 
   );
 
@@ -112,7 +116,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     const row = rows.find(item => item.id === rowId);
 
-    if (row && !isRowCollectable(row)) return;
+    if (row && !isRowCollectable(row, billingSummary)) return;
 
 
 
@@ -189,7 +193,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
             render: (row: UnifiedBillingChargeRow) => {
 
-              const collectable = isRowCollectable(row);
+              const collectable = isRowCollectable(row, billingSummary);
 
               return (
 
@@ -223,7 +227,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       render: (row: UnifiedBillingChargeRow) => {
 
-        const status = resolveRowPaymentStatus(row);
+        const status = resolveRowPaymentStatus(row, billingSummary);
 
         return (
 
@@ -484,7 +488,11 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
           <span className="billing-accounting__table-summary-text">
 
-            {rows.some(row => resolveRowPaymentStatus(row) === 'RESERVED' || resolveRowPaymentStatus(row) === 'PARTIAL')
+            {rows.some(
+              row =>
+                resolveRowPaymentStatus(row, billingSummary) === 'RESERVED' ||
+                resolveRowPaymentStatus(row, billingSummary) === 'PARTIAL'
+            )
 
               ? 'Remaining balance is covered by advance reservations. Finalize checkout when ready.'
 

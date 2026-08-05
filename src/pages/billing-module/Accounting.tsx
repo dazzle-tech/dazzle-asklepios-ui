@@ -70,6 +70,8 @@ const Accounting: React.FC = () => {
     loadingBillingMetrics,
     loadingPsp,
     chargeRows,
+    invoiceAdjustments,
+    loadingInvoiceContext,
     timelineEvents,
     rejectedPreAuthItems,
     waseelCoverage,
@@ -236,17 +238,12 @@ const Accounting: React.FC = () => {
       return null;
     }
 
-    return computeEncounterRemainingToPay(
-      summary,
-      chargeRows,
-      patientLedgerSummary?.totalDebt
-    );
-  }, [
-    summary,
-    chargeRows,
-    patientLedgerSummary?.totalDebt,
-    loadingBillingMetrics
-  ]);
+    if (invoiceAdjustments != null) {
+      return Number(invoiceAdjustments.outstandingBalance ?? 0);
+    }
+
+    return computeEncounterRemainingToPay(summary, chargeRows);
+  }, [summary, chargeRows, invoiceAdjustments, loadingBillingMetrics]);
 
   const selectedEncounterLabel = useMemo(
     () => formatEncounterDisplayLabel(selectedEncounter),
@@ -310,18 +307,21 @@ const Accounting: React.FC = () => {
           walletBalance={walletBalance}
           reservedBalance={reservedBalance}
           totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
-          ledgerTotalDebt={patientLedgerSummary?.totalDebt}
-          loading={selectedEncounterId == null || loadingBillingMetrics}
+          loading={
+            selectedEncounterId == null ||
+            loadingBillingMetrics ||
+            loadingInvoiceContext
+          }
           currency={summary.currency ?? facilityCurrency}
           coverageType={coverageType}
           chargeRows={chargeRows}
+          invoiceAdjustments={invoiceAdjustments}
         />
 
         <EncounterSettlementBanner
           summary={summary}
           currency={summary.currency ?? facilityCurrency}
           chargeRows={chargeRows}
-          ledgerTotalDebt={patientLedgerSummary?.totalDebt}
           loading={selectedEncounterId == null || loadingBillingMetrics}
         />
 
@@ -364,7 +364,7 @@ const Accounting: React.FC = () => {
                 onCoverageTypeChange={setCoverageType}
                 onInsuranceChange={setSelectedInsuranceId}
                 onPrepared={refreshAll}
-                ledgerTotalDebt={patientLedgerSummary?.totalDebt}
+                chargeRows={chargeRows}
                 loadingBillingMetrics={loadingBillingMetrics}
               />
             </div>
@@ -391,6 +391,7 @@ const Accounting: React.FC = () => {
               </div>
               <BillingChargesTable
                 rows={chargeRows}
+                billingSummary={summary}
                 loading={loadingSummary || loadingPsp}
                 currency={summary.currency ?? facilityCurrency}
                 chargeClosed={summary.chargeStatus === 'CLOSED'}
@@ -413,7 +414,6 @@ const Accounting: React.FC = () => {
                 coverageType={coverageType}
                 chargeRows={chargeRows}
                 encounterClosedForBilling={encounterClosedForBilling}
-                ledgerTotalDebt={patientLedgerSummary?.totalDebt}
                 loadingBillingMetrics={loadingBillingMetrics}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
@@ -481,6 +481,9 @@ const Accounting: React.FC = () => {
           patient={patient}
           walletBalance={walletBalance}
           onSimulatedInvoicePayment={() => {
+            void refreshAll();
+          }}
+          onInvoiceGenerated={() => {
             void refreshAll();
           }}
         />

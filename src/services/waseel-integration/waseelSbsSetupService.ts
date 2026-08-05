@@ -42,10 +42,16 @@ export const waseelSbsSetupService = createApi({
     }),
 
     searchSbs: builder.query<PageResponse<WaseelSbsCatalog>, WaseelSbsSearchParams>({
-      query: ({ page, size, search = '', sort = 'id,desc' }) => ({
+      query: ({ page, size, search = '', sort = 'id,desc', activeOnly }) => ({
         url: '/api/setup/waseel/sbs',
         method: 'GET',
-        params: { page, size, search, sort }
+        params: {
+          page,
+          size,
+          search,
+          sort,
+          ...(activeOnly != null ? { activeOnly } : {})
+        }
       }),
       providesTags: ['WaseelSbs']
     }),

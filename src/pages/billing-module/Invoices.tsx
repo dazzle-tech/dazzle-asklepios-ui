@@ -56,6 +56,8 @@ import {
 
   useCreateDebitNoteMutation,
 
+  useCreateDiscountCreditNoteMutation,
+
   useGetAddableChargeLinesQuery,
 
   useGetInvoiceAdjustmentsQuery,
@@ -66,6 +68,7 @@ import {
   useLazyGetInvoicePricingSummaryQuery,
 
   type CreateAdjustmentRequest,
+  type CreateDiscountCreditNoteRequest,
   type FinancialDocumentAdjustment
 } from '@/services/billing/financialDocumentAdjustmentService';
 
@@ -74,6 +77,7 @@ import EligibilitySnapshotPanel from './invoices/EligibilitySnapshotPanel';
 import InvoiceDetailPanel from './invoices/InvoiceDetailPanel';
 
 import InvoiceAdjustmentModal from './invoices/InvoiceAdjustmentModal';
+import DiscountCreditNoteModal from './invoices/DiscountCreditNoteModal';
 
 import InvoicePrintModal from './invoices/InvoicePrintModal';
 import AdjustmentPrintModal from './invoices/AdjustmentPrintModal';
@@ -161,6 +165,8 @@ type InvoicesProps = {
   walletBalance?: number;
 
   onSimulatedInvoicePayment?: () => void | Promise<void>;
+
+  onInvoiceGenerated?: () => void | Promise<void>;
 
 };
 
@@ -272,14 +278,17 @@ const invoiceSubtypeLabel = (subtype?: string) => {
 
 
 
-const canAdjustInvoice = (invoice?: PatientFinancialInvoice | null) => {
-
+const canAdjustInvoice = (
+  invoice?: PatientFinancialInvoice | null,
+  summaryStatus?: string | null
+) => {
   if (invoice == null) return false;
 
-  const status = String(invoice.status ?? '').toUpperCase();
+  const status = String(invoice.status ?? summaryStatus ?? '').toUpperCase();
+
+  if (!status) return true;
 
   return status !== 'DRAFT' && status !== 'CANCELLED';
-
 };
 
 
@@ -287,7 +296,8 @@ const canAdjustInvoice = (invoice?: PatientFinancialInvoice | null) => {
 const Invoices: React.FC<InvoicesProps> = ({
   patient,
   walletBalance = 0,
-  onSimulatedInvoicePayment
+  onSimulatedInvoicePayment,
+  onInvoiceGenerated
 }) => {
 
   const dispatch = useAppDispatch();
@@ -332,6 +342,8 @@ const Invoices: React.FC<InvoicesProps> = ({
     kind: AdjustmentKind;
 
   }>({ open: false, kind: 'CREDIT_NOTE' });
+
+  const [discountCreditModalOpen, setDiscountCreditModalOpen] = useState(false);
 
   const [invoicePrintModal, setInvoicePrintModal] = useState<{
 
@@ -507,6 +519,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
 
 
+  const [createDiscountCreditNote, { isLoading: creatingDiscountCreditNote }] =
+
+    useCreateDiscountCreditNoteMutation();
+
+
+
   const {
 
     data: eligibilitySnapshot,
@@ -567,13 +585,11 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     () =>
 
-      Boolean(financialDocumentTypes.creditNote) &&
-
       isFinancialDocumentNumberingReady(
 
         numberingConfigurations,
 
-        financialDocumentTypes.creditNote
+        financialDocumentTypes.creditNote || 'CREDIT_NOTE'
 
       ),
 
@@ -587,13 +603,11 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     () =>
 
-      Boolean(financialDocumentTypes.debitNote) &&
-
       isFinancialDocumentNumberingReady(
 
         numberingConfigurations,
 
-        financialDocumentTypes.debitNote
+        financialDocumentTypes.debitNote || 'DEBIT_NOTE'
 
       ),
 
@@ -810,39 +824,25 @@ const Invoices: React.FC<InvoicesProps> = ({
 
 
 
+  const adjustmentsBlockedByClaim =
+    selectedInvoice?.documentSubtype === 'INSURANCE_CLAIM' &&
+    adjustmentSummary?.adjustmentsBlockedByClaim === true;
+
   const canCreateCreditNote =
-
-    facilityId != null &&
-
-    creditNoteNumberingReady &&
-
-    canAdjustInvoice(selectedInvoice) &&
-
-    (adjustmentSummary?.creditNoteAllowed === true ||
-
-      Number(adjustmentSummary?.outstandingBalance ?? 0) > 0 ||
-
-      invoiceLineItems.some(
-
-        line =>
-
-          Number(line.remainingAmount ?? 0) > 0.0001 ||
-
-          (Number(line.netAmount ?? 0) > 0.0001 &&
-
-            Number(line.paidAmount ?? 0) > 0.0001)
-
-      ));
-
-
+    selectedInvoice != null &&
+    canAdjustInvoice(selectedInvoice, adjustmentSummary?.status) &&
+    !adjustmentsBlockedByClaim;
 
   const canCreateDebitNote =
+    selectedInvoice != null &&
+    canAdjustInvoice(selectedInvoice, adjustmentSummary?.status) &&
+    !adjustmentsBlockedByClaim;
 
-    facilityId != null &&
-
-    debitNoteNumberingReady &&
-
-    canAdjustInvoice(selectedInvoice);
+  const canCreateDiscountCreditNote =
+    selectedInvoice != null &&
+    canAdjustInvoice(selectedInvoice, adjustmentSummary?.status) &&
+    selectedInvoice.documentSubtype !== 'INSURANCE_CLAIM' &&
+    !adjustmentsBlockedByClaim;
 
 
 
@@ -1175,6 +1175,8 @@ const Invoices: React.FC<InvoicesProps> = ({
 
       ]);
 
+      await onInvoiceGenerated?.();
+
 
 
       if (result.invoices?.length) {
@@ -1384,9 +1386,99 @@ const Invoices: React.FC<InvoicesProps> = ({
 
 
 
+  const handleCreateDiscountCreditNote = async (payload: CreateDiscountCreditNoteRequest) => {
+
+    if (selectedInvoiceId == null) return;
+
+
+
+    if (!creditNoteNumberingReady) {
+
+      dispatch(
+
+        notify({
+
+          msg: numberingSetupHint(financialDocumentTypes.creditNote || 'CREDIT_NOTE'),
+
+          sev: 'warning'
+
+        })
+
+      );
+
+      return;
+
+    }
+
+
+
+    try {
+
+      const result = await createDiscountCreditNote({
+
+        invoiceId: selectedInvoiceId,
+
+        body: payload
+
+      }).unwrap();
+
+
+
+      dispatch(
+
+        notify({
+
+          msg: `Discount credit note ${result.documentNumber} issued successfully.`,
+
+          sev: 'success'
+
+        })
+
+      );
+
+
+
+      setDiscountCreditModalOpen(false);
+
+
+
+      await Promise.all([
+
+        refetchAdjustments(),
+
+        refetchFinancialInvoices(),
+
+        refetchInvoiceLineItems(),
+
+        refetchAddableChargeLines(),
+
+        onSimulatedInvoicePayment?.()
+
+      ]);
+
+    } catch (error: any) {
+
+      dispatch(
+
+        notify({
+
+          msg: extractApiErrorMessage(error, INVOICE_FLOW_ERROR_MAP),
+
+          sev: 'error'
+
+        })
+
+      );
+
+    }
+
+  };
+
+
+
   const handleCreateAdjustment = async (payload: CreateAdjustmentRequest) => {
 
-    if (selectedInvoiceId == null || facilityId == null) return;
+    if (selectedInvoiceId == null) return;
 
 
 
@@ -2075,6 +2167,8 @@ const Invoices: React.FC<InvoicesProps> = ({
 
               canCreateDebitNote={canCreateDebitNote}
 
+              canCreateDiscountCreditNote={canCreateDiscountCreditNote}
+
               onPrintInvoice={handlePreviewSelectedInvoice}
 
               onPrintAdjustment={handlePreviewAdjustment}
@@ -2088,6 +2182,18 @@ const Invoices: React.FC<InvoicesProps> = ({
                 }
 
                 setAdjustmentModal({ open: true, kind: 'CREDIT_NOTE' });
+
+              }}
+
+              onCreateDiscountCreditNote={async () => {
+
+                if (selectedInvoiceId != null) {
+
+                  await refetchInvoiceLineItems();
+
+                }
+
+                setDiscountCreditModalOpen(true);
 
               }}
 
@@ -2154,6 +2260,26 @@ const Invoices: React.FC<InvoicesProps> = ({
         onClose={() => setAdjustmentModal(current => ({ ...current, open: false }))}
 
         onSubmit={handleCreateAdjustment}
+
+      />
+
+
+
+      <DiscountCreditNoteModal
+
+        open={discountCreditModalOpen}
+
+        invoice={selectedInvoice}
+
+        summary={adjustmentSummary}
+
+        invoiceLines={invoiceLineItems}
+
+        loading={creatingDiscountCreditNote}
+
+        onClose={() => setDiscountCreditModalOpen(false)}
+
+        onSubmit={handleCreateDiscountCreditNote}
 
       />
 
