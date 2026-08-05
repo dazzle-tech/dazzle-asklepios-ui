@@ -31,6 +31,24 @@ jobs:
       - name: Logout of DigitalOcean Container Registry
         run: docker logout ${{ secrets.DOCR_REGISTRY_URL }}
 
+      - name: Log in to Huawei SWR
+        env:
+          SWR_USERNAME: ${{ secrets.SWR_USERNAME }}
+          SWR_TOKEN: ${{ secrets.SWR_TOKEN }}
+        run: |
+          echo "$SWR_TOKEN" | docker login swr.me-east-1.myhuaweicloud.com -u "$SWR_USERNAME" --password-stdin
+
+      - name: Tag Docker Image for SWR
+        run: |
+          docker tag ${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:${{ github.sha }} swr.me-east-1.myhuaweicloud.com/cos/asklepios-ui:${{ github.sha }}
+
+      - name: Push Docker Image to SWR
+        run: |
+          docker push swr.me-east-1.myhuaweicloud.com/cos/asklepios-ui:${{ github.sha }}
+
+      - name: Logout of Huawei SWR
+        run: docker logout swr.me-east-1.myhuaweicloud.com
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
