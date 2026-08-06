@@ -25,9 +25,13 @@ type PagedResult<T> = {
 export type Conflict = {
   code: string;
   incomingDescription: string;
-  incomingCategory: string;
+  incomingCodeCategory: string;
+  incomingServiceCategory: string;
+  incomingMainCategory: string;
   existingDescription: string;
-  existingCategory: string;
+  existingCodeCategory: string;
+  existingServiceCategory: string;
+  existingMainCategory: string;
 };
 
 export type ImportResult = {
@@ -67,7 +71,21 @@ export const cptCodeService = createApi({
       providesTags: ["CPT"],
     }),
 
-    // ====================== BY CATEGORY ======================
+    // ====================== BY MAIN CATEGORY ======================
+
+    getCptByMainCategory: builder.query<
+      PagedResult<any>,
+      { mainCategory: string } & PagedParams
+    >({
+      query: ({ mainCategory, page, size, sort = "id,asc" }) => ({
+        url: `/api/setup/cpt/by-main-category/${encodeURIComponent(mainCategory)}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+
+      transformResponse: mapPaged,
+      providesTags: ["CPT"],
+    }),
 
     getCptByCategory: builder.query<
       PagedResult<any>,
@@ -166,6 +184,9 @@ export const cptCodeService = createApi({
 
 export const {
   useGetAllCptQuery,
+
+  useGetCptByMainCategoryQuery,
+  useLazyGetCptByMainCategoryQuery,
 
   useGetCptByCategoryQuery,
   useLazyGetCptByCategoryQuery,
