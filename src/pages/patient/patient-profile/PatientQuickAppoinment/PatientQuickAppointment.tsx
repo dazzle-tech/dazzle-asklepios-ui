@@ -248,36 +248,7 @@ const PatientQuickAppointment = ({
     );
   };
 
-  const checkDuplicateEncounter = async (
-    patientId: number,
-    departmentId: number,
-    encounterDate: any
-  ): Promise<boolean> => {
-    if (!patientId || !departmentId || !encounterDate) return false;
-    try {
-      const result: any = await fetchPatientEncounters(
-        { patientId, page: 0, size: 200, sort: 'createdDate,desc' },
-        true
-      ).unwrap();
 
-      const list: any[] = Array.isArray(result?.data)
-        ? result.data
-        : Array.isArray(result)
-          ? result
-          : [];
-
-      return list.some((e: any) => {
-        const sameDept =
-          Number(e?.departmentId ?? e?.department?.id ?? 0) === Number(departmentId);
-        const treatmentStatus = getEncounterTreatmentStatus(e);
-        const isCancelled = treatmentStatus === 'CANCELLED';
-        const dateValue = e?.encounterDate ?? e?.createdDate;
-        return sameDept && !isCancelled && isSameLocalDate(dateValue, encounterDate);
-      });
-    } catch {
-      return false;
-    }
-  };
   const extractErrorMessage = (response: any): string => {
     try {
       const msg = response?.data?.message ?? response?.message;
@@ -294,25 +265,11 @@ const PatientQuickAppointment = ({
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
 
-    const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+    const patientId = Number(localPatient?.id );
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
     const departmentId = Number(localEncounter?.departmentId ?? 0);
 
-    const hasDuplicate = await checkDuplicateEncounter(
-      patientId,
-      departmentId,
-      localEncounter?.encounterDate
-    );
-
-    if (hasDuplicate) {
-      dispatch(
-        notify({
-          msg: 'Patient already has same department encounter Today',
-          sev: 'error'
-        })
-      );
-      return;
-    }
+   
 
     try {
 
