@@ -6,9 +6,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import CancellationModal from '@/components/CancellationModal';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { Panel, Checkbox } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks';
@@ -529,16 +528,14 @@ const GlasgowComaScale = ({
             }}
           />
 
-          <CloseOutlineIcon
-            className="icons-style"
+          <MdDelete
+            size={22}
+            fill="var(--rs-red-500, #f44336)"
             title="Cancel"
             style={{
-              fontSize: 24,
-              color: 'var(--primary-pink)',
               cursor: rowData?.cancelledAt
                 ? 'not-allowed'
                 : 'pointer',
-
               opacity: rowData?.cancelledAt
                 ? 0.5
                 : 1
