@@ -10,7 +10,6 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 
-import UrgencyButton from '../drug-order/UrgencyButton';
 import PrescriptionReportButton from './PrescriptionReportButton';
 
 type Props = {
@@ -90,7 +89,6 @@ const PrescriptionToolbar = ({
       </div>
 
       <div className={clsx('bt-right', { 'disabled-panel': edit })}>
-        <UrgencyButton />
 
         <MyButton loading={isLoadingPrescriptions}>
           <Translate>Validate with Gallon Reasoner</Translate>
