@@ -21,6 +21,10 @@ import {
 } from '@/services/setup/room/bedService';
 import { useMoveWaitingListToNewMutation } from '@/services/encounters/patientEncounterService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import {
+  useLazyGetLatestEmergencyTriageByEncounterQuery,
+  useCompleteEmergencyTriageMutation
+} from '@/services/encounters/er-triage/emergencyTriageService';
 
 type Id = number | string;
 
@@ -123,6 +127,8 @@ const BedAssignmentModal: React.FC<Props> = ({
   const [occupyBed, { isLoading: isOccupyingBed }] = useOccupyBedMutation();
   const [moveWaitingListToNew, { isLoading: isMovingEncounterStatus }] =
     useMoveWaitingListToNewMutation();
+  const [getLatestEmergencyTriage] = useLazyGetLatestEmergencyTriageByEncounterQuery();
+  const [completeEmergencyTriage] = useCompleteEmergencyTriageMutation();
   const [loadBedsByRoom, { isFetching: isFetchingBeds }] = useLazyGetActiveBedsByRoomIdQuery();
   const [bedOptions, setBedOptions] = useState<any[]>([]);
   const [bedsNextLink, setBedsNextLink] = useState<string | null>(null);
@@ -276,6 +282,20 @@ const BedAssignmentModal: React.FC<Props> = ({
         throw err;
       }
 
+      try {
+        const latestTriage = await getLatestEmergencyTriage(encounterId, true).unwrap();
+        if (latestTriage?.id && !latestTriage.completedDate) {
+          await completeEmergencyTriage({ id: Number(latestTriage.id) }).unwrap();
+        }
+      } catch (err) {
+        console.error('complete emergency triage error', err);
+        dispatch(
+          notify({
+            msg: 'Bed assigned, but failed to mark emergency triage as completed.',
+            sev: 'warning'
+          })
+        );
+      }
 
       dispatch(
         notify({
