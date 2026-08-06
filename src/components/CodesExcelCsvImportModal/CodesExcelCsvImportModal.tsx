@@ -31,7 +31,7 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
 
   const handleDownloadExcelTemplate = () => {
     const link = document.createElement('a');
-    link.href = excelTemplateUrl;
+    link.href = `${excelTemplateUrl}?v=${Date.now()}`;
     link.download = excelTemplateFileName;
     link.click();
   };
@@ -82,17 +82,18 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
         </Form>
         <ol className="codes-import-steps">
           <li>
-            <Translate>Download the Excel template.</Translate>
+            <Translate>Download the Excel template or use the client CPT file format.</Translate>
           </li>
           <li>
-            <Translate>Fill in codes data according to the template.</Translate>
+            <Translate>Fill in codes data according to the template columns.</Translate>
           </li>
           <li>
-            <Translate>In Excel, save the file as</Translate>{' '}
-            <span className="codes-import-badge">CSV (Comma delimited) (*.csv)</span>.
+            <Translate>Upload the Excel (.xlsx) file directly, or save as</Translate>{' '}
+            <span className="codes-import-badge">CSV (Comma delimited) (*.csv)</span>{' '}
+            <Translate>and upload.</Translate>
           </li>
           <li>
-            <Translate>Upload the saved .csv file and click Import.</Translate>
+            <Translate>Click Import to load codes into the system.</Translate>
           </li>
         </ol>
       </Form>
@@ -106,25 +107,24 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
         </div>
       </div>
 
-      {/* Upload CSV */}
+      {/* Upload file */}
       <div className="codes-import-card codes-import-upload">
         <div className="codes-import-upload-header">
           <span className="codes-import-upload-label">
-            <Translate>Upload CSV file</Translate>
+            <Translate>Upload Excel / CSV file</Translate>
           </span>
         </div>
 
         <p className="codes-import-upload-subtext">
-          <Translate>Supports</Translate> <strong>.csv</strong>{' '}
-          <Translate>only. Make sure you saved the Excel as</Translate>{' '}
-          <strong>CSV (Comma delimited) (*.csv)</strong>.
+          <Translate>Supports</Translate> <strong>.xlsx</strong>, <strong>.xls</strong>,{' '}
+          <Translate>and</Translate> <strong>.csv</strong>.
         </p>
 
         <input
           type="file"
           ref={fileInputRef}
           style={{ display: 'none' }}
-          accept=".csv"
+          accept=".csv,.xlsx,.xls"
           onChange={handleFileChange}
         />
 
