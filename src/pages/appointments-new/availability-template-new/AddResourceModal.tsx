@@ -779,6 +779,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                   width="100%"
                   fieldType="selectPagination"
                   fieldName="defaultServiceId"
+                  fieldLabel="Default Service"
                   selectData={servicesDeptOptions}
                   selectDataLabel="label"
                   selectDataValue="value"
