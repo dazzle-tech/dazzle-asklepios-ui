@@ -257,14 +257,14 @@ const filteredData = data?.data ?? [];
                   <MdModeEdit
                     size={22}
                     fill="var(--primary-gray)"
-                    className="pointer"
+                    className="pointer view-only-action-edit-delete-encounter"
                     onClick={() => handleEdit(row)}
                   />
 
                   <MdDelete
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
-                    className="pointer"
+                    className="pointer view-only-action-edit-delete-encounter"
                     title="Cancel"
                     onClick={() => openCancelDialog(row)}
                   />

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 
 // BODY
@@ -16,6 +16,9 @@ import {
   useGetBloodPressureListByPatientBetweenDatesQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import { useLocation } from 'react-router-dom';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+
 
 const AllGraphsTab = (props: any) => {
   const location = useLocation();
@@ -24,19 +27,42 @@ const AllGraphsTab = (props: any) => {
 
   const patientId = Number(patient?.id);
 
-  const { fromIso, toIso } = useMemo(() => {
-    const now = new Date();
-    const from = new Date(now);
-    from.setMonth(now.getMonth() - 1);
 
-    from.setHours(0, 0, 0, 0);
-    now.setHours(23, 59, 59, 999);
+  const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
 
-    return {
-      fromIso: from.toISOString(),
-      toIso: now.toISOString()
-    };
-  }, []);
+const endOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+const toInstantIso = (date: Date) => date.toISOString();
+
+
+const [dateFilter, setDateFilter] = useState(() => {
+  const now = new Date();
+  const from = new Date(now);
+  from.setMonth(now.getMonth() - 1);
+
+  return {
+    fromDate: startOfDay(from),
+    toDate: endOfDay(now)
+  };
+});
+
+const fromIso = useMemo(
+  () => toInstantIso(startOfDay(dateFilter.fromDate)),
+  [dateFilter.fromDate]
+);
+
+const toIso = useMemo(
+  () => toInstantIso(endOfDay(dateFilter.toDate)),
+  [dateFilter.toDate]
+);
 
   // ================= API =================
   const weightQuery = useGetWeightListByPatientBetweenDatesQuery(
@@ -93,6 +119,8 @@ const AllGraphsTab = (props: any) => {
       );
     }
 
+
+
     return (
       <div className="graph-card">
         <h4 className='title-of-graph-previous-masurements'>{title}</h4>
@@ -112,7 +140,43 @@ const AllGraphsTab = (props: any) => {
     );
   };
 
-  return (
+    const filters = () => (
+      <Form layout="inline" fluid className="filter-form-disable-fix">
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="From"
+          fieldName="fromDate"
+          disableFutureDates={true}
+          record={dateFilter}
+          setRecord={setDateFilter}
+
+        />
+
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="To"
+          fieldName="toDate"
+          record={dateFilter}
+          setRecord={setDateFilter}
+        />
+      </Form>
+    );
+
+useEffect(() => {
+  console.log('dateFilter', dateFilter);
+}, [dateFilter]);
+
+useEffect(() => {
+  console.log('fromIso', fromIso);
+  console.log('toIso', toIso);
+}, [fromIso, toIso]);
+  return (<>
+  
+      {filters()}
     <div className="graphs-grid">
       {renderChart('Weight', weightData, 'weight', 'Weight')}
       {renderChart('Height', heightData, 'height', 'Height')}
@@ -147,6 +211,7 @@ const AllGraphsTab = (props: any) => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

@@ -63,7 +63,7 @@ import {
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
-
+import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;

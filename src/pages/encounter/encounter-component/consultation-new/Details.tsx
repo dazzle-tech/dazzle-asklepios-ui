@@ -648,7 +648,7 @@ useEffect(() => {
 
                     {destinationType === 'DEPARTMENT' && (
                       <MyInput
-                        width={'12vw'}
+                        width={'18vw'}
                         disabled={!formData?.toFacilityId}
                         fieldType="select"
                         fieldLabel="Department"

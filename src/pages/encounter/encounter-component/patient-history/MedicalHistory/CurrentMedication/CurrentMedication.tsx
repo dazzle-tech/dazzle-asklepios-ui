@@ -287,7 +287,7 @@ const columns = [
                 {status !== 'CANCELLED' && (
                   <>
                     <MdModeEdit
-                      className="icons-style"
+                      className="icons-style view-only-action-edit-delete-encounter"
                       size={22}
                       fill="var(--primary-gray)"
                       onClick={() =>
@@ -297,6 +297,7 @@ const columns = [
 
                     <MdDelete
                       size={22}
+                      className="view-only-action-edit-delete-encounter"
                       style={{
                         cursor: 'pointer',
                         color:

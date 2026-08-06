@@ -7,11 +7,11 @@
     opacity: 1 !important;
   }
 
-  button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle),
-  .rs-btn:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle) {
-    pointer-events: none !important;
-    opacity: 0.5 !important;
-  }
+button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab),
+.rs-btn:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab) {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+}
 
   input[type="text"],
   input[type="number"],
@@ -63,4 +63,42 @@
     pointer-events: all !important;
     opacity: 1 !important;
   }
+}
+
+
+.filter-form-disable-fix,
+.filter-form-disable-fix * {
+  pointer-events: all !important;
+  opacity: 1 !important;
+}
+
+.filter-form-disable-fix .rs-input,
+.filter-form-disable-fix .rs-picker,
+.filter-form-disable-fix .rs-picker-toggle,
+.filter-form-disable-fix input,
+.filter-form-disable-fix button,
+.filter-form-disable-fix .rs-btn {
+  pointer-events: all !important;
+  opacity: 1 !important;
+}
+
+
+.modal-view-only .edit-icon {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.modal-view-only .view-only-action-edit-delete-encounter {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+
+
+.view-only-action-edit-delete-encounter {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
 }

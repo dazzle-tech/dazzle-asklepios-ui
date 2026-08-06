@@ -232,13 +232,14 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
                   <>
                     <MdModeEdit
                       size={24}
-                      className="edit-icon"
+                      className="edit-icon view-only-action-edit-delete-encounter"
                       style={{ cursor: 'pointer' }}
                       onClick={() => handleEdit(row)}
                     />
 
                     <MdDelete
                       size={24}
+                      className="view-only-action-edit-delete-encounter"
                       style={{
                         cursor: 'pointer',
                         color: 'var(--rs-red-500, #f44336)'

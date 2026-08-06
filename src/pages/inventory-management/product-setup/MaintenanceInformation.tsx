@@ -4,7 +4,7 @@ import {Form} from 'rsuite';
 import { useEnumOptions } from '@/services/enumsApi';
 const MaintenanceInformation = ({ product, setProduct, disabled}) => {
 
-    const timeUnit  = useEnumOptions('TimeUnit');
+    const timeUnit  = useEnumOptions('Unit');
 
 
           // Direction handling for RTL/LTR

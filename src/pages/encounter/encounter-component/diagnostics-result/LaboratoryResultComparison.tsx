@@ -327,7 +327,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         <Form
             layout="inline"
             fluid
-            className="date-filter-form"
+            className="date-filter-form filter-form-disable-fix"
         >
             <MyInput
                 column
