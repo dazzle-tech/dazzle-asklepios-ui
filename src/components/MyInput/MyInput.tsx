@@ -566,7 +566,7 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={false}
+              searchable={props.searchable ?? false}
 
               data={filteredData}
 
@@ -751,6 +751,8 @@ const MyInput = ({
                 "12vw",
                 width: 'auto',
               }}
+
+              menuClassName={props.menuClassName}
 
               virtualized={
                 props?.virtualized ?? true
