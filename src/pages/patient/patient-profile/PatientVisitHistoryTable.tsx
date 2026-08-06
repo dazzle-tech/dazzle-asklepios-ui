@@ -324,12 +324,16 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const canPay =
       !isCancelled &&
       !isClosed &&
-      (isNew || isPendingPayment || lifecycleStatus === 'OPEN');
+      !isNew &&
+      (isPendingPayment || lifecycleStatus === 'OPEN');
 
     const canCancel = isNew || isPendingPayment;
     const canComplete =
       (isOngoing && isOutpatient && hasDiagnosis) || Radiology || Laboratory;
     const canDischarge = isOngoing && isEmergency;
+    const hasVisibleActions = canPay || canComplete || canDischarge || canCancel;
+
+    if (!hasVisibleActions) return null;
 
     const menu = (
       <Popover className="visit-history__actions-popover">
