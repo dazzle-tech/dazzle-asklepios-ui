@@ -82,9 +82,10 @@ const normalizeConditions = (value = '') =>
     )
   );
 
-const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
+const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
+  const [formKey, setFormKey] = useState(0);
 
   const patientConditions = useEnumOptions('Condition');
   const statusOptions = useEnumOptions('EncounterVaccinationStatus');
@@ -94,7 +95,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-  const [updatePatientConditions] =   useUpdatePatientConditionsMutation();
+  const [updatePatientConditions] = useUpdatePatientConditionsMutation();
   const [getProblems] = useLazyGetPatientProblemsQuery();
   const [getPatient] = useLazyGetPatientByIdQuery();
 
@@ -140,10 +141,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     try {
       if (formData.id) {
         await updatePatientProblem(payload).unwrap();
-        console.log('UPDATED PAYLOAD', payload.condition);
       } else {
         await addPatientProblem(payload).unwrap();
-        console.log('ADDED PAYLOAD', payload.condition);
       }
 
       const response = await getProblems(
@@ -157,8 +156,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         true
       ).unwrap();
 
-      console.log('PROBLEMS RESPONSE', response.data);
-
       const conditions = Array.from(
         new Set(
           [
@@ -171,13 +168,11 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         )
       ).join(',');
 
-      console.log('FINAL CONDITIONS TO SAVE ON PATIENT', conditions);
-await updatePatientConditions({
+      await updatePatientConditions({
         id: patient.id,
         patientConditions: conditions
       }).unwrap();
-
-      const fresh = await getPatient(
+      await getPatient(
         {
           id: patient.id,
           timestamp: Date.now()
@@ -185,9 +180,8 @@ await updatePatientConditions({
         true
       ).unwrap();
 
-      console.log('PATIENT AFTER UPDATE', fresh?.patientConditions);
-
       dispatch(setRefetchPatientSide(true));
+      onSaved?.();
 
       dispatch(
         notify({
@@ -203,9 +197,9 @@ await updatePatientConditions({
       } else {
         setFormData({
           ...emptyPatientProblem,
-          patientId: Number(patient?.id),
-          condition: ''
+          patientId: Number(patient?.id)
         });
+        setFormKey(prev => prev + 1);
       }
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
@@ -219,6 +213,7 @@ await updatePatientConditions({
           <Col md={12}>
             <div style={{ marginBottom: 12 }}>
               <MultiSelectAppender
+                key={formKey}
                 label="Condition"
                 options={patientConditions ?? []}
                 optionLabel="label"
