@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useAppSelector } from '@/hooks';
 import { newEncounterBillingSummary } from '@/types/model-types-constructor-new';
@@ -13,12 +13,6 @@ import {
   useGetPatientLedgerSummaryQuery
 } from '@/services/encounters/patientPaymentsService';
 import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
-import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
-import {
-  useLazyGetServiceByIdQuery,
-  useLazyGetServicesByDepartmentQuery
-} from '@/services/setup/serviceService';
-
 import {
   useGetPatientFinancialDocumentsQuery,
   type PatientFinancialInvoice
@@ -28,21 +22,16 @@ import {
   useGetInvoiceLineItemsQuery
 } from '@/services/billing/financialDocumentAdjustmentService';
 import {
-  buildMedicationNameLookup,
-  buildServiceCatalog,
   buildTimelineEvents,
-  collectMedicationIdsForLookup,
-  collectServiceIdsForLookup,
   findRejectedPreAuthItems,
   mergeEncounterSummaryWithInvoiceContext,
-  mergeServiceCatalogs,
-  resolveDisplayChargeRows,
+  mergeBillingChargeRows,
   resolveEncounterPatientInvoiceId,
   resolvePatientWalletAvailable,
   resolvePatientWalletReserved,
-  resolvePatientId,
-  type BillingServiceLookup
+  resolvePatientId
 } from '../utils/billingAccountingUtils';
+import { useBillingCatalogLookups } from './useBillingCatalogLookups';
 
 type UseBillingAccountingDataArgs = {
   patient: any;
@@ -62,17 +51,6 @@ export const useBillingAccountingData = ({
   const facilityId = authSlice?.tenant?.selectedFacility?.id ?? null;
   const facilityCurrency =
     authSlice?.tenant?.selectedFacility?.defaultCurrency ?? 'SAR';
-
-  const [serviceCatalog, setServiceCatalog] = useState<BillingServiceLookup[]>(
-    []
-  );
-  const [medicationNames, setMedicationNames] = useState<
-    Record<number, string>
-  >({});
-
-  const [fetchServiceById] = useLazyGetServiceByIdQuery();
-  const [fetchBrandMedicationsBulk] = useLazyGetBrandMedicationsByIdsQuery();
-  const [fetchDepartmentServices] = useLazyGetServicesByDepartmentQuery();
 
   const {
     data: encountersResponse,
@@ -244,142 +222,16 @@ export const useBillingAccountingData = ({
   const pspRows = pspResponse?.data ?? [];
   const departmentId = selectedEncounter?.departmentId ?? null;
 
-  const serviceIds = useMemo(
-    () => collectServiceIdsForLookup(effectiveSummary, pspRows),
-    [effectiveSummary, pspRows]
-  );
-
-  const medicationIds = useMemo(
-    () => collectMedicationIdsForLookup(effectiveSummary, pspRows),
-    [effectiveSummary, pspRows]
-  );
-
-  const serviceIdsKey = useMemo(
-    () => serviceIds.slice().sort((first, second) => first - second).join(','),
-    [serviceIds]
-  );
-
-  const medicationIdsKey = useMemo(
-    () =>
-      medicationIds.slice().sort((first, second) => first - second).join(','),
-    [medicationIds]
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const parsedServiceIds = serviceIdsKey
-      ? serviceIdsKey
-          .split(',')
-          .map(value => Number(value))
-          .filter(value => Number.isFinite(value) && value > 0)
-      : [];
-
-    const parsedMedicationIds = medicationIdsKey
-      ? medicationIdsKey
-          .split(',')
-          .map(value => Number(value))
-          .filter(value => Number.isFinite(value) && value > 0)
-      : [];
-
-    const loadLookups = async () => {
-      if (selectedEncounterId == null) {
-        setServiceCatalog([]);
-        setMedicationNames({});
-        return;
-      }
-
-      const [serviceResults, medicationsResult, departmentResult] =
-        await Promise.allSettled([
-          Promise.all(
-            parsedServiceIds.map(async serviceId => {
-              try {
-                const service = await fetchServiceById(
-                  serviceId,
-                  true
-                ).unwrap();
-                return buildServiceCatalog([service])[0] ?? null;
-              } catch {
-                return null;
-              }
-            })
-          ),
-          parsedMedicationIds.length > 0
-            ? fetchBrandMedicationsBulk(
-                { ids: parsedMedicationIds },
-                true
-              ).unwrap()
-            : Promise.resolve([]),
-          departmentId != null
-            ? fetchDepartmentServices(
-                {
-                  sourceId: departmentId,
-                  page: 0,
-                  size: 500,
-                  sort: 'id,asc'
-                },
-                true
-              ).unwrap()
-            : Promise.resolve(null)
-        ]);
-
-      if (cancelled) {
-        return;
-      }
-
-      const resolvedServices =
-        serviceResults.status === 'fulfilled' ? serviceResults.value : [];
-      const resolvedMedications =
-        medicationsResult.status === 'fulfilled'
-          ? medicationsResult.value
-          : [];
-      const resolvedDepartment =
-        departmentResult.status === 'fulfilled' ? departmentResult.value : null;
-
-      setServiceCatalog(
-        mergeServiceCatalogs(
-          buildServiceCatalog(resolvedDepartment),
-          resolvedServices.filter(
-            (service): service is BillingServiceLookup => service != null
-          )
-        )
-      );
-      setMedicationNames(buildMedicationNameLookup(resolvedMedications));
-    };
-
-    void loadLookups();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    selectedEncounterId,
-    departmentId,
-    serviceIdsKey,
-    medicationIdsKey,
-    fetchServiceById,
-    fetchBrandMedicationsBulk,
-    fetchDepartmentServices
-  ]);
+  const { lookups } = useBillingCatalogLookups({
+    encounterId: selectedEncounterId,
+    summary: effectiveSummary,
+    pspRows,
+    departmentId
+  });
 
   const chargeRows = useMemo(
-    () =>
-      resolveDisplayChargeRows(
-        effectiveSummary,
-        pspRows,
-        serviceCatalog,
-        medicationNames,
-        invoiceLineItems ?? [],
-        resolvedInvoiceId
-      ),
-    [
-      effectiveSummary,
-      pspRows,
-      serviceCatalog,
-      medicationNames,
-      invoiceLineItems,
-      resolvedInvoiceId
-    ]
+    () => mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
+    [effectiveSummary, pspRows, lookups]
   );
 
   const timelineEvents = useMemo(
@@ -388,10 +240,9 @@ export const useBillingAccountingData = ({
         selectedEncounter,
         effectiveSummary,
         pspRows,
-        serviceCatalog,
-        medicationNames
+        lookups
       ),
-    [selectedEncounter, effectiveSummary, pspRows, serviceCatalog, medicationNames]
+    [selectedEncounter, effectiveSummary, pspRows, lookups]
   );
 
   const rejectedPreAuthItems = useMemo(

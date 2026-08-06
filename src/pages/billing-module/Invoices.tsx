@@ -46,8 +46,8 @@ import {
 
   useGetEncounterInvoiceDetailsQuery,
 
-  useGetPatientFinancialInvoicesQuery
-
+  useGetPatientFinancialInvoicesQuery,
+  useLazyGetEncounterInvoiceDetailsQuery
 } from '@/services/billing/invoiceGenerationService';
 
 import {
@@ -103,6 +103,10 @@ import {
 } from './invoices/invoicePrintUtils';
 
 import { useInvoicePrintLookups } from './invoices/useInvoicePrintLookups';
+import {
+  resolveInvoiceDisplayNumber,
+  resolveInvoiceVisitNumber
+} from './invoices/invoiceDisplayUtils';
 import {
   buildAdjustmentPrintData,
   type AdjustmentPrintData
@@ -470,6 +474,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const [fetchInvoiceLineItemsForPrint] = useLazyGetInvoiceLineItemsQuery();
   const [fetchInvoicePricingSummaryForPrint] = useLazyGetInvoicePricingSummaryQuery();
+  const [fetchEncounterDetailsForPrint] = useLazyGetEncounterInvoiceDetailsQuery();
 
 
 
@@ -1295,24 +1300,32 @@ const Invoices: React.FC<InvoicesProps> = ({
     }
 
     try {
-      const [lineItems, pricingSummary] = await Promise.all([
+      const [lineItems, pricingSummary, matchingEncounterDetails] = await Promise.all([
         fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
-        fetchInvoicePricingSummaryForPrint(invoice.id).unwrap()
+        fetchInvoicePricingSummaryForPrint(invoice.id).unwrap(),
+        encounterDetails?.encounterId === invoice.encounterId
+          ? Promise.resolve(encounterDetails)
+          : fetchEncounterDetailsForPrint(invoice.encounterId).unwrap()
       ]);
-      const matchingEncounterDetails =
-        encounterDetails?.encounterId === invoice.encounterId ? encounterDetails : null;
 
       openInvoicePrintPreview(
         [
           buildInvoicePrintDataFromIssuedInvoice({
-            invoice,
+            invoice: {
+              ...invoice,
+              documentNumber: resolveInvoiceDisplayNumber(
+                invoice,
+                undefined,
+                pricingSummary
+              )
+            },
             lineItems,
             pricingSummary,
             encounterDetails: matchingEncounterDetails,
             eligibilitySnapshot:
-              matchingEncounterDetails != null
+              matchingEncounterDetails?.encounterId === selectedEncounterId
                 ? eligibilitySnapshot ?? encounterDetails?.eligibilitySnapshot ?? null
-                : null,
+                : matchingEncounterDetails?.eligibilitySnapshot ?? null,
             patient,
             facility: facilityPrintInfo,
             chargeContext: resolveChargeContextForInvoice(invoice)
@@ -1748,7 +1761,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const issuedInvoiceColumns = [
 
-    { key: 'documentNumber', title: 'Invoice Number' },
+    {
+      key: 'documentNumber',
+      title: 'Invoice Number',
+      render: (row: PatientFinancialInvoice) =>
+        resolveInvoiceDisplayNumber(row)
+    },
 
     {
 
@@ -1780,7 +1798,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     },
 
-    { key: 'encounterId', title: 'Visit ID' },
+    {
+      key: 'encounterNumber',
+      title: 'Visit Number',
+      render: (row: PatientFinancialInvoice) =>
+        resolveInvoiceVisitNumber(row, encounterDetails, billableVisits)
+    },
 
     {
 
@@ -2162,6 +2185,18 @@ const Invoices: React.FC<InvoicesProps> = ({
               walletBalance={walletBalance}
 
               printDisabled={!printLookupsReady}
+
+              encounterDepartmentId={printDepartmentId}
+
+              visitNumber={
+                selectedInvoice
+                  ? resolveInvoiceVisitNumber(
+                      selectedInvoice,
+                      encounterDetails,
+                      billableVisits
+                    )
+                  : undefined
+              }
 
               canCreateCreditNote={canCreateCreditNote}
 

@@ -40,8 +40,12 @@ import {
   invoiceBalanceChipLabel,
   invoiceLineStatusLabel,
   invoiceOutstandingLabel,
-  isInsuranceClaimInvoice
+  isInsuranceClaimInvoice,
+  resolveInvoiceDisplayNumber,
+  resolveInvoiceVisitNumber
 } from './invoiceDisplayUtils';
+import { useInvoicePrintLookups } from './useInvoicePrintLookups';
+import { resolveLineItemLabel } from './invoicePrintUtils';
 
 type InvoiceDetailPanelProps = {
   invoice: PatientFinancialInvoice | null;
@@ -63,6 +67,8 @@ type InvoiceDetailPanelProps = {
   onCreateDebitNote?: () => void;
   onCreateDiscountCreditNote?: () => void;
   onRefresh?: () => void;
+  encounterDepartmentId?: number | null;
+  visitNumber?: string;
 };
 
 const formatMoney = (value?: number, currency = 'SAR') => {
@@ -109,7 +115,9 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   onCreateCreditNote,
   onCreateDebitNote,
   onCreateDiscountCreditNote,
-  onRefresh
+  onRefresh,
+  encounterDepartmentId = null,
+  visitNumber
 }) => {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<DetailTab>('services');
@@ -119,10 +127,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
     receipt: PaymentReceiptData | null;
   }>({ open: false, receipt: null });
 
+  const { chargeRows: invoiceChargeRows } = useInvoicePrintLookups(
+    invoice?.encounterId ?? null,
+    encounterDepartmentId
+  );
+
   const [syncInvoicePayments, { isLoading: syncingPayments }] =
     useSyncInvoicePaymentsMutation();
 
   const resolvedCurrency = summary?.currency ?? invoice?.currency ?? currency;
+  const displayDocumentNumber = resolveInvoiceDisplayNumber(invoice, summary, pricingSummary);
   const outstandingBalance = Number(summary?.outstandingBalance ?? 0);
   const isInsuranceClaimInvoiceFlag = isInsuranceClaimInvoice(invoice?.documentSubtype);
   const canPayOutstanding = canCollectPatientPaymentOnInvoice(
@@ -133,20 +147,42 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   const isSettled = outstandingBalance <= 0;
 
   const serviceRows = useMemo(
-    () => lineItems.map(item => ({ key: String(item.id), ...item })),
-    [lineItems]
+    () =>
+      lineItems.map(item => {
+        const chargeRow =
+          invoiceChargeRows.find(
+            row =>
+              (item.chargeLineId != null &&
+                Number(row.chargeLineId) === Number(item.chargeLineId)) ||
+              (item.patientServiceProductId != null &&
+                Number(row.patientServiceProductId) === Number(item.patientServiceProductId))
+          ) ?? null;
+
+        return {
+          key: String(item.id),
+          ...item,
+          displayName: chargeRow?.itemName || resolveLineItemLabel(item),
+          displayCode: chargeRow?.itemCode || item.itemCode || '-'
+        };
+      }),
+    [invoiceChargeRows, lineItems]
   );
 
   const pricingDetailRows = useMemo(
-    () =>
-      lineItems.flatMap(item => {
+    () => {
+      const nameByLineId = new Map(
+        serviceRows.map(row => [String(row.id), row.displayName ?? row.itemDescription ?? '-'])
+      );
+
+      return lineItems.flatMap(item => {
+        const serviceName = nameByLineId.get(String(item.id)) ?? item.itemDescription ?? '-';
         const discounts = item.appliedDiscounts ?? [];
         const taxes = item.appliedTaxes ?? [];
 
         return [
           ...discounts.map((discount, index) => ({
             key: `${item.id}-discount-${index}`,
-            service: item.itemDescription ?? item.itemCode ?? '-',
+            service: serviceName,
             kind: 'Discount',
             kindTone: 'discount' as const,
             rule: discount.code ?? discount.name ?? discount.source ?? '-',
@@ -160,7 +196,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
           })),
           ...taxes.map((tax, index) => ({
             key: `${item.id}-tax-${index}`,
-            service: item.itemDescription ?? item.itemCode ?? '-',
+            service: serviceName,
             kind: 'Tax',
             kindTone: 'tax' as const,
             rule: tax.code ?? tax.name ?? tax.source ?? '-',
@@ -169,8 +205,9 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
             amount: tax.appliedAmount ?? 0
           }))
         ];
-      }),
-    [lineItems]
+      });
+    },
+    [lineItems, serviceRows]
   );
 
   const adjustmentRows = useMemo(
@@ -280,7 +317,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
             <span className="invoice-detail__eyebrow">
               {isInsuranceClaimInvoice ? 'Insurance claim invoice' : 'Patient invoice'}
             </span>
-            <h2 className="invoice-detail__title">{invoice.documentNumber}</h2>
+            <h2 className="invoice-detail__title">{displayDocumentNumber}</h2>
             <div className="invoice-detail__chips">
               <span className={`invoice-detail__chip invoice-detail__chip--status-${String(summary.status ?? '').toLowerCase()}`}>
                 {summary.status}
@@ -310,7 +347,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
               ) : null}
               {invoice.encounterId != null ? (
                 <span className="invoice-detail__chip invoice-detail__chip--muted">
-                  Visit #{invoice.encounterId}
+                  Visit {visitNumber ?? resolveInvoiceVisitNumber(invoice)}
                 </span>
               ) : null}
               <span className="invoice-detail__chip invoice-detail__chip--muted">
@@ -459,16 +496,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                 {
                   key: 'itemCode',
                   title: 'Code',
-                  render: (row: InvoiceLineItem) => (
-                    <span className="invoice-detail__code">{row.itemCode ?? '-'}</span>
+                  render: (row: InvoiceLineItem & { displayCode?: string }) => (
+                    <span className="invoice-detail__code">{row.displayCode ?? row.itemCode ?? '-'}</span>
                   )
                 },
                 {
                   key: 'itemDescription',
                   title: 'Service',
-                  render: (row: InvoiceLineItem) => (
+                  render: (row: InvoiceLineItem & { displayName?: string }) => (
                     <span className="invoice-detail__service-name">
-                      {row.itemDescription ?? '-'}
+                      {row.displayName ?? row.itemDescription ?? '-'}
                     </span>
                   )
                 },
@@ -657,7 +694,10 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
         open={payModalOpen}
         onClose={() => setPayModalOpen(false)}
         invoiceId={invoice.id}
-        documentNumber={invoice.documentNumber}
+        documentNumber={displayDocumentNumber}
+        summary={summary}
+        lineItems={lineItems}
+        pricingSummary={pricingSummary}
         outstandingAmount={outstandingBalance}
         currency={resolvedCurrency}
         walletBalance={walletBalance}

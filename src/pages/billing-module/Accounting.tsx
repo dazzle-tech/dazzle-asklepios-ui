@@ -113,18 +113,15 @@ const Accounting: React.FC = () => {
     setSelectedChargeRowIds([]);
   }, [selectedEncounterId]);
 
-  useEffect(() => {
-    if (selectedEncounterId != null) return;
-    if (!encounters.length) return;
-    setSelectedEncounterId(encounters[0].id);
-  }, [encounters, selectedEncounterId]);
-
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
     setSelectedEncounterId(null);
     setCoverageType('SELF_PAY');
     setSelectedInsuranceId(null);
     setSelectedChargeRowIds([]);
+    setDepositModalOpen(false);
+    setCollectPaymentModalOpen(false);
+    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
   };
 
   const handleCollectRemaining = () => {
@@ -371,21 +368,6 @@ const Accounting: React.FC = () => {
 
             <div className="billing-accounting__panel">
               <div className="billing-accounting__panel-title">
-                Billing timeline
-                {selectedEncounterLabel && (
-                  <span className="billing-accounting__badge">
-                    Encounter {selectedEncounterLabel}
-                  </span>
-                )}
-              </div>
-              <BillingTimeline
-                events={timelineEvents}
-                loading={loadingSummary || loadingPsp}
-              />
-            </div>
-
-            <div className="billing-accounting__panel">
-              <div className="billing-accounting__panel-title">
                 All services & products
                 <span className="billing-accounting__badge">Step 2 · {chargeRows.length} lines</span>
               </div>
@@ -462,7 +444,6 @@ const Accounting: React.FC = () => {
       encounterClosedForBilling,
       selectedEncounterLabel,
       summary,
-      timelineEvents,
       walletBalance,
       waseelCoverage,
       waseelCoverageError
@@ -480,12 +461,6 @@ const Accounting: React.FC = () => {
         <Invoices
           patient={patient}
           walletBalance={walletBalance}
-          onSimulatedInvoicePayment={() => {
-            void refreshAll();
-          }}
-          onInvoiceGenerated={() => {
-            void refreshAll();
-          }}
         />
       )
     },
@@ -512,16 +487,34 @@ const Accounting: React.FC = () => {
             }
           />
         )}
-        <MyTab key={patient?.id ?? 'no-patient'} data={tabData} lazy />
+        <MyTab key={patientId ?? 'no-patient'} data={tabData} lazy />
       </div>
 
       {patient?.id ? (
-        <div className="right-box">
+        <div className="right-box billing-accounting-page__sidebar">
           <PatientBillingSide
             patient={patient}
             onDeposit={() => setDepositModalOpen(true)}
             setPatient={handleClosePatient}
           />
+          <div className="billing-accounting billing-accounting__sidebar-timeline">
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                Billing timeline
+                {selectedEncounterLabel && (
+                  <span className="billing-accounting__badge">
+                    Encounter {selectedEncounterLabel}
+                  </span>
+                )}
+              </div>
+              <BillingTimeline
+                events={timelineEvents}
+                loading={
+                  selectedEncounterId != null && (loadingSummary || loadingPsp)
+                }
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="right-box">
