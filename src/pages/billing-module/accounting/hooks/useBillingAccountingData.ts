@@ -31,7 +31,6 @@ import {
   resolvePatientWalletReserved,
   resolvePatientId
 } from '../utils/billingAccountingUtils';
-import { useBillingCatalogLookups } from './useBillingCatalogLookups';
 
 type UseBillingAccountingDataArgs = {
   patient: any;
@@ -220,29 +219,16 @@ export const useBillingAccountingData = ({
     selectedEncounterId != null && (loadingPspInitial || fetchingPsp);
 
   const pspRows = pspResponse?.data ?? [];
-  const departmentId = selectedEncounter?.departmentId ?? null;
-
-  const { lookups } = useBillingCatalogLookups({
-    encounterId: selectedEncounterId,
-    summary: effectiveSummary,
-    pspRows,
-    departmentId
-  });
 
   const chargeRows = useMemo(
-    () => mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
-    [effectiveSummary, pspRows, lookups]
+    () => mergeBillingChargeRows(effectiveSummary, pspRows),
+    [effectiveSummary, pspRows]
   );
 
   const timelineEvents = useMemo(
     () =>
-      buildTimelineEvents(
-        selectedEncounter,
-        effectiveSummary,
-        pspRows,
-        lookups
-      ),
-    [selectedEncounter, effectiveSummary, pspRows, lookups]
+      buildTimelineEvents(selectedEncounter, effectiveSummary, pspRows),
+    [selectedEncounter, effectiveSummary, pspRows]
   );
 
   const rejectedPreAuthItems = useMemo(

@@ -7,12 +7,8 @@ import {
   mergeBillingChargeRows,
   type UnifiedBillingChargeRow
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
-import { useBillingCatalogLookups } from '@/pages/billing-module/accounting/hooks/useBillingCatalogLookups';
 
-export const useInvoicePrintLookups = (
-  encounterId: number | null,
-  departmentId?: number | null
-) => {
+export const useInvoicePrintLookups = (encounterId: number | null) => {
   const {
     data: billingSummary,
     isFetching: loadingBillingSummary
@@ -36,23 +32,13 @@ export const useInvoicePrintLookups = (
 
   const pspRows = (pspResponse?.data ?? []) as PatientServiceAndProduct[];
 
-  const { lookups, lookupsLoading } = useBillingCatalogLookups({
-    encounterId,
-    summary: billingSummary,
-    pspRows,
-    departmentId
-  });
-
   const chargeRows = useMemo(
-    () => mergeBillingChargeRows(billingSummary, pspRows, lookups),
-    [billingSummary, lookups, pspRows]
+    () => mergeBillingChargeRows(billingSummary, pspRows),
+    [billingSummary, pspRows]
   );
 
   const isReady =
-    encounterId != null &&
-    !loadingBillingSummary &&
-    !loadingPsp &&
-    !lookupsLoading;
+    encounterId != null && !loadingBillingSummary && !loadingPsp;
 
   return {
     billingSummary,

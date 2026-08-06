@@ -700,54 +700,31 @@ const Invoices: React.FC<InvoicesProps> = ({
     );
   }, [billableVisits, encounterDetails, printEncounterId, selectedVisit]);
 
-  const visitDepartmentId =
-    encounterDetails?.departmentId ?? selectedVisit?.departmentId ?? null;
-
   const {
     billingSummary: visitBillingSummary,
-    chargeRows: visitChargeRows,
-    isReady: visitDetailsLookupsReady
-  } = useInvoicePrintLookups(selectedEncounterId, visitDepartmentId);
+    isReady: visitDetailsReady
+  } = useInvoicePrintLookups(selectedEncounterId);
 
-  const visitDetailRows = useMemo(() => {
-    const summaryByPspId = new Map(
-      (visitBillingSummary?.items ?? [])
-        .filter(item => item.patientServiceProductId != null)
-        .map(item => [Number(item.patientServiceProductId), item])
-    );
-    const summaryByChargeLineId = new Map(
-      (visitBillingSummary?.items ?? [])
-        .filter(item => item.chargeLineId != null)
-        .map(item => [Number(item.chargeLineId), item])
-    );
-
-    return visitChargeRows.map(row => {
-      const summaryItem =
-        (row.patientServiceProductId != null
-          ? summaryByPspId.get(row.patientServiceProductId)
-          : undefined) ??
-        (row.chargeLineId != null
-          ? summaryByChargeLineId.get(row.chargeLineId)
-          : undefined);
-
-      return {
-        itemCode: row.itemCode ?? summaryItem?.itemCode ?? '-',
-        itemName: row.itemName,
-        quantity: row.quantity,
-        unitPrice: row.unitPrice,
-        netAmount: row.netAmount,
-        patientResponsibilityAmount: row.patientAmount,
-        insuranceResponsibilityAmount: row.insuranceAmount,
-        taxAmount: Number(summaryItem?.taxAmount ?? 0)
-      };
-    });
-  }, [visitBillingSummary?.items, visitChargeRows]);
+  const visitDetailRows = useMemo(
+    () =>
+      (visitBillingSummary?.items ?? []).map(item => ({
+        itemCode: item.itemCode ?? '-',
+        itemName: item.itemName ?? '-',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        netAmount: item.netAmount,
+        patientResponsibilityAmount: item.patientResponsibilityAmount,
+        insuranceResponsibilityAmount: item.insuranceResponsibilityAmount,
+        taxAmount: Number(item.taxAmount ?? 0)
+      })),
+    [visitBillingSummary?.items]
+  );
 
   const {
     billingSummary,
     chargeRows,
     isReady: printLookupsReady
-  } = useInvoicePrintLookups(printEncounterId, printDepartmentId);
+  } = useInvoicePrintLookups(printEncounterId);
 
   const chargeContext = useMemo(
     () => ({
@@ -2106,7 +2083,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
             columns={serviceColumns}
 
-            loading={loadingEncounterDetails || !visitDetailsLookupsReady}
+            loading={loadingEncounterDetails || !visitDetailsReady}
 
           />
 

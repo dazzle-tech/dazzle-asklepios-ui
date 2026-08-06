@@ -44,8 +44,6 @@ import {
   resolveInvoiceDisplayNumber,
   resolveInvoiceVisitNumber
 } from './invoiceDisplayUtils';
-import { useInvoicePrintLookups } from './useInvoicePrintLookups';
-import { resolveLineItemLabel } from './invoicePrintUtils';
 
 type InvoiceDetailPanelProps = {
   invoice: PatientFinancialInvoice | null;
@@ -127,11 +125,6 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
     receipt: PaymentReceiptData | null;
   }>({ open: false, receipt: null });
 
-  const { chargeRows: invoiceChargeRows } = useInvoicePrintLookups(
-    invoice?.encounterId ?? null,
-    encounterDepartmentId
-  );
-
   const [syncInvoicePayments, { isLoading: syncingPayments }] =
     useSyncInvoicePaymentsMutation();
 
@@ -148,30 +141,17 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
 
   const serviceRows = useMemo(
     () =>
-      lineItems.map(item => {
-        const chargeRow =
-          invoiceChargeRows.find(
-            row =>
-              (item.chargeLineId != null &&
-                Number(row.chargeLineId) === Number(item.chargeLineId)) ||
-              (item.patientServiceProductId != null &&
-                Number(row.patientServiceProductId) === Number(item.patientServiceProductId))
-          ) ?? null;
-
-        return {
-          key: String(item.id),
-          ...item,
-          displayName: chargeRow?.itemName || resolveLineItemLabel(item),
-          displayCode: chargeRow?.itemCode || item.itemCode || '-'
-        };
-      }),
-    [invoiceChargeRows, lineItems]
+      lineItems.map(item => ({
+        key: String(item.id),
+        ...item
+      })),
+    [lineItems]
   );
 
   const pricingDetailRows = useMemo(
     () => {
       const nameByLineId = new Map(
-        serviceRows.map(row => [String(row.id), row.displayName ?? row.itemDescription ?? '-'])
+        serviceRows.map(row => [String(row.id), row.itemDescription ?? row.itemCode ?? '-'])
       );
 
       return lineItems.flatMap(item => {
@@ -496,16 +476,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                 {
                   key: 'itemCode',
                   title: 'Code',
-                  render: (row: InvoiceLineItem & { displayCode?: string }) => (
-                    <span className="invoice-detail__code">{row.displayCode ?? row.itemCode ?? '-'}</span>
+                  render: (row: InvoiceLineItem) => (
+                    <span className="invoice-detail__code">{row.itemCode ?? '-'}</span>
                   )
                 },
                 {
                   key: 'itemDescription',
                   title: 'Service',
-                  render: (row: InvoiceLineItem & { displayName?: string }) => (
+                  render: (row: InvoiceLineItem) => (
                     <span className="invoice-detail__service-name">
-                      {row.displayName ?? row.itemDescription ?? '-'}
+                      {row.itemDescription ?? '-'}
                     </span>
                   )
                 },

@@ -179,7 +179,7 @@ const PatientIssuedDocumentsTab: React.FC<PatientIssuedDocumentsTabProps> = ({ p
     billingSummary,
     chargeRows,
     isReady: printLookupsReady
-  } = useInvoicePrintLookups(printEncounterId, printDepartmentId);
+  } = useInvoicePrintLookups(printEncounterId);
 
   const chargeContext = useMemo(
     () => ({
