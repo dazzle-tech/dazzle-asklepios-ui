@@ -389,6 +389,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
               open={open}
               initialData={selectedProblem}
               patient={patient}
+              onSaved={refetch}
               setOpen={() => {
                 setOpen(false);
                 setSelectedProblem(null);
