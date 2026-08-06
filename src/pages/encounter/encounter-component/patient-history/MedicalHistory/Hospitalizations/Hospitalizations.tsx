@@ -253,6 +253,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
               {row?.status !== 'CANCELLED' && (
                 <>
                   <MdModeEdit
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--primary-gray)"
                     style={{ cursor: 'pointer' }}
@@ -260,6 +261,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                   />
 
                   <MdDelete
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     style={{
                       cursor: 'pointer',

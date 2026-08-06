@@ -281,6 +281,7 @@ const filteredData = data?.data ?? [];
                 {row.status !== 'CANCELLED' && (
                   <>
                     <MdModeEdit
+                      className="view-only-action-edit-delete-encounter"
                       size={22}
                       fill="var(--primary-gray)"
                       className="pointer"
@@ -291,6 +292,7 @@ const filteredData = data?.data ?? [];
                     />
 
                   <MdDelete
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
                     className="pointer"

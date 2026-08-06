@@ -180,6 +180,7 @@ const edit = viewMode === 'readOnly'
           return (
             <div style={{ display: 'flex', gap: 6 }}>
               <MdModeEdit
+                className="view-only-action-edit-delete-encounter"
                 size={22}
                 onClick={() => {
                   if (row.cancelledDate) return;
@@ -201,6 +202,7 @@ const edit = viewMode === 'readOnly'
                   setLogNoteId(row.id);
                   setOpenLogsModal(true);
                 }}
+                // className="view-only-action-edit-delete-encounter"
                 style={{ cursor: 'pointer', color: '#4C6EF5' }}
               />
 

@@ -227,6 +227,7 @@ const vitalTotal =
         fieldType="date"
         fieldLabel="From"
         fieldName="fromDate"
+        disableFutureDates={true}
         record={dateFilter}
         setRecord={setDateFilter}
       />

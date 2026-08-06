@@ -109,6 +109,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
       <div className="enhanced-header">
         <div className="header-first-row">
           <SelectPicker
+            className="filter-form-disable-fix"
             data={ordersList ?? []}
             labelKey="orderNumber"
             valueKey="id"
@@ -163,7 +164,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         </div>
 
         {/* Row 2 - Filters */}
-        <div className="header-second-row">
+        <div className="header-second-row filter-form-disable-fix">
           <Form fluid layout="inline">
             <MyInput
               column

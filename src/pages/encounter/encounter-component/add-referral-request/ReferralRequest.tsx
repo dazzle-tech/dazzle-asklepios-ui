@@ -411,6 +411,7 @@ const ReferralRequest = () => {
       align: 'center',
       render: (rowData: any) => (
         <MdModeEdit
+        className="view-only-action-edit-delete-encounter"
           className="icons-style"
           title="Edit"
           size={24}

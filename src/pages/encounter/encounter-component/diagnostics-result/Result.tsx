@@ -448,7 +448,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   ];
 
   const filters = (
-    <Form fluid>
+    <Form fluid className="filter-form-disable-fix">
       <div className='diagnostics-result-filters-main-container'>
         <MyInput
           width={160}
