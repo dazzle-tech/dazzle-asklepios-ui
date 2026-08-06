@@ -10,7 +10,8 @@ import {
   faRectangleXmark,
   faUserDoctor,
   faCommentMedical,
-  faUserNurse
+  faUserNurse,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -691,6 +692,31 @@ useEffect(() => {
 
   };
 
+  const handleViewVisit = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    navigate('/encounter', {
+      state: {
+        info: 'viewEncounter',
+        fromPage: 'Urgent_Care_List',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: false,
+        viewMode: 'readOnly'
+      }
+    });
+  };
+
   const handleGoToNurseStation = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -1016,6 +1042,7 @@ useEffect(() => {
       title: ' ',
       render: (row: any) => {
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
@@ -1023,6 +1050,7 @@ useEffect(() => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
+        const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
@@ -1041,39 +1069,60 @@ useEffect(() => {
               </div>
             </Whisper>
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    handleGoToVisit(row);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipViewVisit}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleViewVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    setLocalPatient(row?.patientObject ?? { ...newPatient });
-                    if (row?.isObserved) {
-                      handleGoToNurseStation(row);
-                    } else {
-                      setOpenNurseAssessment(true);
-                    }
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {!isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleGoToVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
+            {!isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="black"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      setLocalPatient(row?.patientObject ?? { ...newPatient });
+                      if (row?.isObserved) {
+                        handleGoToNurseStation(row);
+                      } else {
+                        setOpenNurseAssessment(true);
+                      }
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserNurse} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
             {statusUpper !== 'COMPLETED' &&
               statusUpper !== 'DISCHARGED' &&

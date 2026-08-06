@@ -329,17 +329,21 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const validateDiagnosticBillingRule = async (
     testId: number,
-    orderType?: string | null
+    orderType?: string | null,
+    options?: { notify?: boolean }
   ) => {
+    const shouldNotify = options?.notify !== false;
     const billingItemType = resolveDiagnosticBillingItemType(orderType);
 
     if (!billingItemType) {
-      dispatch(
-        notify({
-          msg: 'Unable to determine billing item type for this diagnostic test.',
-          sev: 'warning'
-        })
-      );
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: 'Unable to determine billing item type for this diagnostic test.',
+            sev: 'warning'
+          })
+        );
+      }
       return false;
     }
 
@@ -350,12 +354,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     ).unwrap();
 
     if (!evaluation.ruleFound) {
-      dispatch(
-        notify({
-          msg: formatBillingRuleEvaluationMessage(evaluation),
-          sev: 'error'
-        })
-      );
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: formatBillingRuleEvaluationMessage(evaluation),
+            sev: 'error'
+          })
+        );
+      }
       return false;
     }
 
@@ -682,6 +688,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       let added: string[] = [];
       let duplicates: string[] = [];
+      let failed: string[] = [];
 
       await Promise.all(
         validTests.map(async item => {
@@ -696,9 +703,11 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           try {
             const billingRuleReady = await validateDiagnosticBillingRule(
               testId,
-              item.type || 'LABORATORY'
+              item.type || 'LABORATORY',
+              { notify: false }
             );
             if (!billingRuleReady) {
+              failed.push(`${testName}: billing rule is not configured`);
               return;
             }
 
@@ -709,8 +718,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
             }).unwrap();
 
             added.push(testName);
-          } catch (e) {
-            console.warn('❌ Failed test:', testId, e);
+          } catch (e: any) {
+            const message =
+              extractBillingRuleErrorMessage(e) || extractErrorMessage(e);
+            failed.push(`${testName}: ${message}`);
           }
         })
       );
@@ -729,6 +740,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           notify({
             msg: `⚠ ${duplicates.join(', ')} already added`,
             sev: 'warning'
+          })
+        );
+      }
+
+      if (failed.length) {
+        dispatch(
+          notify({
+            msg:
+              'Could not add the following test(s):\n\n' +
+              failed.join('\n'),
+            sev: 'error'
           })
         );
       }

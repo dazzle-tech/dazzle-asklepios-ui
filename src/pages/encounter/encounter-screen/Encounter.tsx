@@ -1,55 +1,52 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
+import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import {
   useCancelPatientPrescriptionMutation,
   useGetPatientPrescriptionQuery,
   useSubmitPatientPrescriptionMutation
 } from '@/services/patients/Prescription/patientPrescriptionService';
-import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
-  faDesktop,
   faFileLines,
   faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import MedicalSheetsNavigation from './MedicalSheetsNavigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
-import { Col, Divider, Drawer, Form, List, Panel, Row, Tooltip, Whisper } from 'rsuite';
+import { Divider, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
+import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
+import AiAssistantPopup from './AiAssistantPopup';
 import AllergiesModal from './AllergiesModal';
+import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import WarningiesModal from './WarningiesModal';
-import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
-import AiAssistantPopup from './AiAssistantPopup';
-import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
-import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
-import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
-import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 
 type EncounterModalProps = {
   patient?: any;
@@ -254,13 +251,19 @@ const Encounter = ({
     }
   }, [location.state]);
 
+// useEffect(() => {
+//   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
+// }, [propsData?.viewMode, propsData?.readOnly]);
 useEffect(() => {
-  setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
-}, [propsData?.viewMode, propsData?.readOnly]);
-useEffect(() => {
-  setEdit(patientToSend?.patientStatus === 'MERGED');
-}, [patientToSend]);
 
+  const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
+  const isReadOnly = propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
+  const isMerged = patientToSend?.patientStatus === 'MERGED';
+  const isCompleted = encounterStatus === 'COMPLETED';
+  const isCancelled = encounterStatus === 'CANCELLED';
+
+  setEdit(isReadOnly || isMerged || isCompleted || isCancelled);
+}, [propsData?.viewMode, propsData?.readOnly, propsData?.encounter?.status, localEncounter?.status, patientToSend?.patientStatus]);
 
   useEffect(() => {
     if (
