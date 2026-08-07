@@ -31,6 +31,11 @@ import {
 import { notify } from '@/utils/uiReducerActions';
 
 import {
+  extractApiErrorMessage,
+  PRICE_LIST_SETUP_ERROR_MAP
+} from '@/utils/apiErrorMessage';
+
+import {
   conjureValueBasedOnIDFromList,
   formatEnumString
 } from '@/utils';
@@ -243,9 +248,10 @@ const PriceListSetup: React.FC = () => {
       dispatch(
         notify({
           msg:
-            error?.data?.detail ||
-            error?.data?.message ||
-            'Failed to activate price list',
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) || 'Failed to activate price list',
           sev: 'error'
         })
       );
@@ -280,9 +286,10 @@ const PriceListSetup: React.FC = () => {
       dispatch(
         notify({
           msg:
-            error?.data?.detail ||
-            error?.data?.title ||
-            'Failed to delete price list',
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) || 'Failed to delete price list',
           sev: 'error'
         })
       );

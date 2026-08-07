@@ -538,6 +538,7 @@ const Accounting: React.FC = () => {
             patient={patient}
             encounter={selectedEncounter}
             encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
             currency={summary.currency ?? facilityCurrency}
             onDeposited={refreshAll}
             onReceiptReady={receipt =>
@@ -555,6 +556,7 @@ const Accounting: React.FC = () => {
             patient={patient}
             encounter={selectedEncounter}
             encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
             currency={summary.currency ?? facilityCurrency}
             walletBalance={walletBalance}
             reservedBalance={sumEncounterReservedAmount(summary)}

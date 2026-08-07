@@ -175,7 +175,10 @@ export const invoiceGenerationService = createApi({
       query: ({ encounterId, requestId, facilityId }) => ({
         url: `/api/patient/billing/invoice-generation/encounters/${encounterId}/financial-close`,
         method: 'POST',
-        body: { requestId, facilityId }
+        body: {
+          requestId,
+          facilityId: Number(facilityId)
+        }
       }),
       invalidatesTags: (_result, _error, { encounterId }) => [
         'BillableVisits',
@@ -192,7 +195,10 @@ export const invoiceGenerationService = createApi({
       query: ({ encounterId, requestId, facilityId }) => ({
         url: `/api/patient/billing/invoice-generation/encounters/${encounterId}/generate-invoices`,
         method: 'POST',
-        body: { requestId, facilityId }
+        body: {
+          requestId,
+          facilityId: Number(facilityId)
+        }
       }),
       invalidatesTags: (_result, _error, { encounterId }) => [
         'BillableVisits',

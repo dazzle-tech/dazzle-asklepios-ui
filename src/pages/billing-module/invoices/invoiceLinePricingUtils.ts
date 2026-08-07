@@ -131,6 +131,45 @@ export const resolvePricingBreakdown = (row: {
   };
 };
 
+export const projectLineNetAfterChange = (
+  line: {
+    grossAmount?: number | null;
+    unitPrice?: number | null;
+    quantity?: number | null;
+    netAmount?: number | null;
+    discountAmount?: number | null;
+    taxAmount?: number | null;
+    itemDiscountAmount?: number | null;
+    itemTaxAmount?: number | null;
+    invoiceDiscountAmount?: number | null;
+    invoiceTaxAmount?: number | null;
+    appliedDiscounts?: InvoiceLineItem['appliedDiscounts'];
+    appliedTaxes?: InvoiceLineItem['appliedTaxes'];
+  },
+  newQuantity: number,
+  newUnitPrice: number
+): number => {
+  const oldNet = lineNetAmount(line);
+  const oldQty = Number(line.quantity ?? 1);
+  const oldGross =
+    line.grossAmount != null && Number(line.grossAmount) > 0
+      ? Number(line.grossAmount)
+      : oldQty * Number(line.unitPrice ?? 0);
+  const newGross = newQuantity * newUnitPrice;
+
+  if (oldGross <= 0) {
+    if (newQuantity <= oldQty && newUnitPrice <= Number(line.unitPrice ?? 0)) {
+      return oldNet;
+    }
+    if (oldQty <= 0) {
+      return newGross;
+    }
+    return (oldNet * newQuantity) / oldQty;
+  }
+
+  return (oldNet * newGross) / oldGross;
+};
+
 export const inferInvoiceScopeAdjustments = (
   grossAmount: number,
   referenceLines: InvoiceLineItem[] | undefined | null

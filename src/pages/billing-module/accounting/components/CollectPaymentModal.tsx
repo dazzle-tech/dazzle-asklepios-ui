@@ -26,8 +26,14 @@ import {
   makeRequestId,
   normalizeBillingError,
   resolveBillingPaymentCategory,
+  resolvePaymentReceiptNumber,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
+
+const toOptionalFacilityId = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
 
 const FALLBACK_PAYMENT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
@@ -47,6 +53,7 @@ type CollectPaymentModalProps = {
   patient?: any;
   encounter?: PatientEncounter | null;
   encounterId: number | null;
+  facilityId?: number | null;
   currency?: string;
   walletBalance?: number;
   reservedBalance?: number;
@@ -62,6 +69,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   patient,
   encounter = null,
   encounterId,
+  facilityId = null,
   currency = 'SAR',
   walletBalance = 0,
   reservedBalance = 0,
@@ -229,7 +237,12 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     const request: CreateAdvancePaymentRequest = {
       ...newCreateAdvancePaymentRequest,
       patientId,
-      encounterId,
+      encounterId: encounterId ?? null,
+      facilityId:
+        facilityId ??
+        toOptionalFacilityId(encounter?.facilityId) ??
+        toOptionalFacilityId(encounter?.facility?.id) ??
+        toOptionalFacilityId(authSlice?.tenant?.selectedFacility?.id),
       paymentCategory: resolveBillingPaymentCategory(form.paymentMethodCode),
       payerType: 'PATIENT',
       amount: paymentAmount,
@@ -263,8 +276,8 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
           msg: isWalletMethod
             ? walletCollectPreview.remainingAfter > 0
               ? `Wallet applied ${formatMoney(paymentAmount, currency)}. Remaining to pay ${formatMoney(walletCollectPreview.remainingAfter, currency)}.`
-              : `Wallet payment applied. Payment #${result.paymentNumber ?? result.paymentId ?? ''}.`
-            : `Payment #${result.paymentNumber ?? result.paymentId ?? ''} collected and reserved.`,
+              : `Wallet payment applied. Receipt #${resolvePaymentReceiptNumber(result)}.`
+            : `Receipt #${resolvePaymentReceiptNumber(result)} collected and reserved.`,
           sev: 'success'
         })
       );

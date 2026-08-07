@@ -17,6 +17,7 @@ import AddBillingServiceProductModal, {
 } from './AddBillingServiceProductModal';
 import {
   lineNetAmount,
+  projectLineNetAfterChange,
   resolvePricingBreakdown
 } from './invoiceLinePricingUtils';
 import './styles.less';
@@ -174,6 +175,14 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
     [invoiceLines]
   );
 
+  const invoiceOnlyLines = useMemo(
+    () =>
+      invoiceLines.filter(
+        line => String(line.lineSource ?? 'INVOICE').toUpperCase() !== 'DEBIT_NOTE'
+      ),
+    [invoiceLines]
+  );
+
   useEffect(() => {
     if (!open) {
       setForm({ reason: '' });
@@ -203,7 +212,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         }))
       );
       setDebitIncreases(
-        invoiceLines.map(line => ({
+        invoiceOnlyLines.map(line => ({
           lineId: line.id,
           enabled: false,
           quantity: Number(line.quantity ?? 1),
@@ -211,7 +220,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         }))
       );
     }
-  }, [open, kind, creditableLines, addableChargeLines, invoiceLines, invoice?.id]);
+  }, [open, kind, creditableLines, addableChargeLines, invoiceOnlyLines, invoice?.id]);
 
   const selectedCreditTotal = useMemo(() => {
     return creditDrafts.reduce((sum, draft) => {
@@ -225,9 +234,13 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       if (draft.action === 'PARTIAL_CREDIT') {
         return sum + Number(draft.amount ?? 0);
       }
-      const oldNet = Number(line.netAmount ?? 0);
-      const newNet = Number(draft.quantity ?? 0) * Number(draft.unitPrice ?? 0);
-      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - newNet));
+      const oldNet = lineNetAmount(line);
+      const projectedNet = projectLineNetAfterChange(
+        line,
+        Number(draft.quantity ?? 0),
+        Number(draft.unitPrice ?? 0)
+      );
+      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - projectedNet));
       return sum + credit;
     }, 0);
   }, [creditDrafts, invoiceLines]);
@@ -244,9 +257,13 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       if (draft.action === 'PARTIAL_CREDIT') {
         return sum + Number(draft.amount ?? 0);
       }
-      const oldNet = Number(line.netAmount ?? 0);
-      const newNet = Number(draft.quantity ?? 0) * Number(draft.unitPrice ?? 0);
-      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - newNet));
+      const oldNet = lineNetAmount(line);
+      const projectedNet = projectLineNetAfterChange(
+        line,
+        Number(draft.quantity ?? 0),
+        Number(draft.unitPrice ?? 0)
+      );
+      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - projectedNet));
       return sum + credit;
     }, 0);
   }, [creditDrafts, invoiceLines]);
@@ -265,11 +282,15 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
     const increaseTotal = debitIncreases.reduce((sum, draft) => {
       if (!draft.enabled) return sum;
-      const line = invoiceLines.find(item => item.id === draft.lineId);
+      const line = invoiceOnlyLines.find(item => item.id === draft.lineId);
       if (!line) return sum;
-      const oldNet = Number(line.netAmount ?? 0);
-      const newNet = Number(draft.quantity ?? 0) * Number(draft.unitPrice ?? 0);
-      return sum + Math.max(0, newNet - oldNet);
+      const oldNet = lineNetAmount(line);
+      const projectedNet = projectLineNetAfterChange(
+        line,
+        Number(draft.quantity ?? 0),
+        Number(draft.unitPrice ?? 0)
+      );
+      return sum + Math.max(0, projectedNet - oldNet);
     }, 0);
 
     return addTotal + increaseTotal + pendingNewServices.reduce((sum, line) => {
@@ -280,7 +301,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       const unitPrice = Number(line.unitPrice ?? 0);
       return sum + qty * unitPrice;
     }, 0);
-  }, [debitAdds, debitIncreases, addableChargeLines, invoiceLines, invoice?.documentSubtype, pendingNewServices]);
+  }, [debitAdds, debitIncreases, addableChargeLines, invoiceOnlyLines, invoice?.documentSubtype, pendingNewServices]);
 
   const buildCreditLines = (): InvoiceLineAdjustmentRequest[] =>
     creditDrafts
@@ -764,7 +785,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
                 Update existing services
               </Text>
               <MyTable
-                data={invoiceLines}
+                data={invoiceOnlyLines}
                 columns={increaseColumns}
                 loading={loadingLines}
               />

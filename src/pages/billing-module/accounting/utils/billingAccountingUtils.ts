@@ -624,6 +624,15 @@ export const formatMoney = (
   })} ${currency}`;
 };
 
+export const resolvePaymentReceiptNumber = (paymentResult?: {
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentId?: number | null;
+} | null): string =>
+  paymentResult?.receiptNumber ??
+  paymentResult?.paymentNumber ??
+  String(paymentResult?.paymentId ?? '-');
+
 /** Sum of advance reserved against charge lines on this encounter. */
 export const sumEncounterReservedAmount = (
   summary: EncounterBillingSummary | null | undefined
@@ -957,7 +966,7 @@ export const buildWalletDepositReceipt = ({
     .join('\n');
 
   return {
-    receiptNumber: paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    receiptNumber: resolvePaymentReceiptNumber(paymentResult),
     transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
     paymentDate: new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),
@@ -1066,8 +1075,7 @@ export const buildBillingPaymentReceipt = ({
   const netAmount = items.reduce((sum, item) => sum + Number(item.netAmount ?? 0), 0);
 
   return {
-    receiptNumber:
-      paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    receiptNumber: resolvePaymentReceiptNumber(paymentResult),
     transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
     paymentDate: paymentDate ?? new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),

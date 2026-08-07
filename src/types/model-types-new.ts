@@ -6127,6 +6127,7 @@ export type EncounterBillingSummary = {
 export type CreateAdvancePaymentRequest = {
   patientId: number;
   encounterId?: number | null;
+  facilityId?: number | null;
   paymentCategory: string;
   payerType: string;
   payerId?: number | null;
@@ -6164,6 +6165,7 @@ export type BillingPaymentReservationResult = {
 export type BillingPaymentResult = {
   paymentId: number;
   paymentNumber: string;
+  receiptNumber?: string | null;
   paymentTransactionId: number | null;
   paymentTransactionNumber: string | null;
   walletId: number;

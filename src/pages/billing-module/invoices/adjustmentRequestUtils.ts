@@ -1,5 +1,6 @@
 import type {
   CreateAdjustmentRequest,
+  CreateDiscountCreditNoteRequest,
   InvoiceLineAdjustmentRequest
 } from '@/services/billing/financialDocumentAdjustmentService';
 
@@ -93,6 +94,35 @@ export const sanitizeAdjustmentRequest = (
     sanitized.facilityId = Number(body.facilityId);
   }
 
+  if (body.requestId?.trim()) {
+    sanitized.requestId = body.requestId.trim();
+  }
+
+  return sanitized;
+};
+
+export const sanitizeDiscountCreditNoteRequest = (
+  body: CreateDiscountCreditNoteRequest
+): Record<string, unknown> => {
+  const sanitized: Record<string, unknown> = {
+    scope: body.scope
+  };
+
+  if (body.documentItemId != null) {
+    sanitized.documentItemId = Number(body.documentItemId);
+  }
+  if (body.discountAmount != null) {
+    sanitized.discountAmount = Number(body.discountAmount);
+  }
+  if (body.discountPercent != null) {
+    sanitized.discountPercent = Number(body.discountPercent);
+  }
+  if (body.reason?.trim()) {
+    sanitized.reason = body.reason.trim();
+  }
+  if (body.facilityId != null) {
+    sanitized.facilityId = Number(body.facilityId);
+  }
   if (body.requestId?.trim()) {
     sanitized.requestId = body.requestId.trim();
   }

@@ -19,6 +19,7 @@ import { useFinancialDocumentTypeOptions } from '@/pages/billing-module/invoices
 
 import {
   useAddFinancialDocumentNumberingMutation,
+  useGetFinancialDocumentSequenceStatusQuery,
   useUpdateFinancialDocumentNumberingMutation
 } from '@/services/billing/financialDocumentNumberingService';
 
@@ -32,7 +33,8 @@ import {
 } from './financialDocumentNumberingErrorHandler';
 
 const buildPreviewNumber = (
-  config: FinancialDocumentNumbering
+  config: FinancialDocumentNumbering,
+  sequenceNumber?: number
 ) => {
   if (!config.prefix?.trim()) {
     return '';
@@ -56,9 +58,13 @@ const buildPreviewNumber = (
     1,
     Number(config.startingNumber) || 1
   );
+  const previewSequence =
+    sequenceNumber != null && sequenceNumber > 0
+      ? sequenceNumber
+      : startingNumber;
 
   parts.push(
-    String(startingNumber).padStart(sequenceLength, '0')
+    String(previewSequence).padStart(sequenceLength, '0')
   );
 
   return parts.join(config.numberSeparator ?? '-');
@@ -114,11 +120,31 @@ const AddEditFinancialDocumentNumbering: React.FC<Props> = ({
 
   const isLoading = isCreating || isUpdating;
 
+  const { data: sequenceStatus = [] } =
+    useGetFinancialDocumentSequenceStatusQuery(
+      {
+        facilityId: configuration.facilityId as number,
+        documentType: configuration.documentType as string
+      },
+      {
+        skip:
+          !open ||
+          !isEdit ||
+          !configuration.facilityId ||
+          !configuration.documentType
+      }
+    );
+
+  const liveNextNumber =
+    sequenceStatus[0]?.sampleDocumentNumber;
+
   const previewRecord = useMemo(
     () => ({
-      previewNumber: buildPreviewNumber(configuration)
+      previewNumber:
+        liveNextNumber ||
+        buildPreviewNumber(configuration)
     }),
-    [configuration]
+    [configuration, liveNextNumber]
   );
 
   const validate = (): string | null => {

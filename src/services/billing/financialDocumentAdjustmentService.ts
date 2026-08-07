@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
-import { sanitizeAdjustmentRequest } from '@/pages/billing-module/invoices/adjustmentRequestUtils';
+import { sanitizeAdjustmentRequest, sanitizeDiscountCreditNoteRequest } from '@/pages/billing-module/invoices/adjustmentRequestUtils';
 
 export type FinancialDocumentAdjustmentItem = {
   id: number;
@@ -131,6 +131,7 @@ export type CollectInvoiceBalanceResult = {
   status: string;
   paymentId?: number | null;
   paymentNumber?: string | null;
+  receiptNumber?: string | null;
   paymentTransactionNumber?: string | null;
   walletAvailableBalance?: number | null;
 };
@@ -363,7 +364,7 @@ export const financialDocumentAdjustmentService = createApi({
       query: ({ invoiceId, body }) => ({
         url: `/api/patient/financial-documents/${invoiceId}/discount-credit-note/preview`,
         method: 'POST',
-        body
+        body: sanitizeDiscountCreditNoteRequest(body)
       })
     }),
 
@@ -374,7 +375,7 @@ export const financialDocumentAdjustmentService = createApi({
       query: ({ invoiceId, body }) => ({
         url: `/api/patient/financial-documents/${invoiceId}/discount-credit-note`,
         method: 'POST',
-        body
+        body: sanitizeDiscountCreditNoteRequest(body)
       }),
       invalidatesTags: (_result, _error, { invoiceId }) => [
         { type: 'InvoiceAdjustments', id: invoiceId },

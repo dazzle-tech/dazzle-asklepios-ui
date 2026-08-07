@@ -19,14 +19,17 @@ import {
   buildWalletDepositReceipt,
   makeRequestId,
   normalizeBillingError,
-  resolveBillingPaymentCategory
+  resolveBillingPaymentCategory,
+  resolvePaymentReceiptNumber
 } from '../utils/billingAccountingUtils';
+
+const toOptionalFacilityId = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
 
 const FALLBACK_DEPOSIT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
-  { value: 'CREDIT_DEBIT_CARD', label: BILLING_PAYMENT_METHOD_LABELS.CREDIT_DEBIT_CARD },
-  { value: 'CHEQUE', label: BILLING_PAYMENT_METHOD_LABELS.CHEQUE },
-  { value: 'BANK_TRANSFER', label: BILLING_PAYMENT_METHOD_LABELS.BANK_TRANSFER }
 ];
 
 type WalletDepositModalProps = {
@@ -36,6 +39,7 @@ type WalletDepositModalProps = {
   patient?: any;
   encounter?: PatientEncounter | null;
   encounterId?: number | null;
+  facilityId?: number | null;
   currency?: string;
   onDeposited?: () => void;
   onReceiptReady?: (receipt: PaymentReceiptData) => void;
@@ -48,6 +52,7 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   patient,
   encounter = null,
   encounterId = null,
+  facilityId = null,
   currency = 'SAR',
   onDeposited,
   onReceiptReady
@@ -107,6 +112,11 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
       ...newCreateAdvancePaymentRequest,
       patientId,
       encounterId,
+      facilityId:
+        facilityId ??
+        toOptionalFacilityId(encounter?.facilityId) ??
+        toOptionalFacilityId(encounter?.facility?.id) ??
+        toOptionalFacilityId(authSlice?.tenant?.selectedFacility?.id),
       paymentCategory: resolveBillingPaymentCategory(form.paymentMethodCode),
       payerType: 'PATIENT',
       amount: Number(form.amount),
@@ -137,7 +147,7 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
 
       dispatch(
         notify({
-          msg: `Deposit recorded. Payment #${result.paymentNumber ?? result.paymentId ?? ''}`,
+          msg: `Deposit recorded. Receipt #${resolvePaymentReceiptNumber(result)}`,
           sev: 'success'
         })
       );
