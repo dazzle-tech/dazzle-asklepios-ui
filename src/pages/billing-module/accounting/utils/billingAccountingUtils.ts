@@ -1251,26 +1251,108 @@ export const buildTimelineEvents = (
     });
 };
 
+const readChargeLineText = (
+  item: EncounterBillingItemSummary | Record<string, unknown>,
+  ...keys: string[]
+): string | null => {
+  for (const key of keys) {
+    const value = String((item as Record<string, unknown>)?.[key] ?? '').trim();
+    if (value) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const readChargeLineNumber = (
+  item: EncounterBillingItemSummary | Record<string, unknown>,
+  ...keys: string[]
+): number | null => {
+  for (const key of keys) {
+    const raw = (item as Record<string, unknown>)?.[key];
+    if (raw == null || raw === '') {
+      continue;
+    }
+    const value = Number(raw);
+    if (Number.isFinite(value)) {
+      return value;
+    }
+  }
+  return null;
+};
+
 const resolveChargeLineDisplayCode = (
-  item: EncounterBillingItemSummary
-): string | null => item.itemCode?.trim() || null;
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string | null =>
+  readChargeLineText(item, 'itemCode', 'item_code') ??
+  readChargeLineText(linkedPsp ?? {}, 'itemCode', 'item_code');
 
 const resolveChargeLineDisplayName = (
-  item: EncounterBillingItemSummary
-): string => item.itemName?.trim() || item.itemCode?.trim() || '-';
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string =>
+  readChargeLineText(
+    item,
+    'itemName',
+    'item_name',
+    'itemDescription',
+    'item_description'
+  ) ??
+  readChargeLineText(linkedPsp ?? {}, 'itemName', 'item_name') ??
+  resolveChargeLineDisplayCode(item, linkedPsp) ??
+  '-';
+
+const resolveChargeLineServiceSource = (
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string =>
+  readChargeLineText(item, 'serviceSource', 'service_source') ??
+  linkedPsp?.serviceSource ??
+  'BILLING_ENGINE';
 
 const resolvePspDisplayCode = (
-  row: PatientServiceAndProduct
+  row: PatientServiceAndProduct,
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): string | null => {
   const rowAny = row as PatientServiceAndProduct & { itemCode?: string | null };
-  return rowAny.itemCode?.trim() || null;
+  if (rowAny.itemCode?.trim()) {
+    return rowAny.itemCode.trim();
+  }
+
+  const catalogCode = resolveCatalogItemCode(
+    row.billingItemType,
+    row,
+    getPspSourceId(row),
+    lookups
+  );
+  if (catalogCode) {
+    return catalogCode;
+  }
+
+  return null;
 };
 
 const resolvePspDisplayName = (
-  row: PatientServiceAndProduct
+  row: PatientServiceAndProduct,
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): string => {
   const rowAny = row as PatientServiceAndProduct & { itemName?: string | null };
-  return rowAny.itemName?.trim() || rowAny.itemCode?.trim() || '-';
+  if (rowAny.itemName?.trim()) {
+    return rowAny.itemName.trim();
+  }
+
+  const catalogName = resolveCatalogItemName(
+    row.billingItemType,
+    row,
+    getPspSourceId(row),
+    lookups
+  );
+  if (catalogName) {
+    return catalogName;
+  }
+
+  return '-';
 };
 
 export const formatBillingEnum = (
@@ -1370,8 +1452,17 @@ const resolveChargeRowPriceSource = (
   item: EncounterBillingItemSummary,
   linkedPsp?: PatientServiceAndProduct | null
 ): string | null => {
-  if (item.priceSource?.trim()) {
-    return item.priceSource.trim();
+  const fromChargeLine = readChargeLineText(
+    item,
+    'priceSource',
+    'price_source'
+  );
+  if (fromChargeLine) {
+    return fromChargeLine;
+  }
+
+  if (readChargeLineText(item, 'priceListItemCode', 'price_list_item_code')) {
+    return 'PRICE_LIST';
   }
 
   const pspPriceSource = (
@@ -1380,10 +1471,6 @@ const resolveChargeRowPriceSource = (
 
   if (pspPriceSource?.trim()) {
     return pspPriceSource.trim();
-  }
-
-  if (item.priceListItemCode?.trim()) {
-    return 'PRICE_LIST';
   }
 
   return null;
@@ -1410,15 +1497,18 @@ export const mapSummaryItemToRow = (
       : `psp-${item.patientServiceProductId}`,
   patientServiceProductId: item.patientServiceProductId,
   chargeLineId: item.chargeLineId,
-  source: linkedPsp?.serviceSource ?? 'BILLING_ENGINE',
+  source: resolveChargeLineServiceSource(item, linkedPsp),
   billingItemType: item.billingItemType ?? '-',
-  itemCode: resolveChargeLineDisplayCode(item),
-  itemName: resolveChargeLineDisplayName(item),
-  quantity: item.quantity,
-  unitPrice: item.unitPrice,
-  setupUnitPrice: item.setupUnitPrice,
+  itemCode: resolveChargeLineDisplayCode(item, linkedPsp),
+  itemName: resolveChargeLineDisplayName(item, linkedPsp),
+  quantity: readChargeLineNumber(item, 'quantity') ?? item.quantity ?? 1,
+  unitPrice: readChargeLineNumber(item, 'unitPrice', 'unit_price') ?? item.unitPrice ?? 0,
+  setupUnitPrice:
+    readChargeLineNumber(item, 'setupUnitPrice', 'setup_unit_price') ??
+    item.setupUnitPrice ??
+    null,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
-  netAmount: item.netAmount,
+  netAmount: readChargeLineNumber(item, 'netAmount', 'net_amount') ?? item.netAmount ?? 0,
   patientAmount,
   insuranceAmount: item.insuranceResponsibilityAmount,
   outstandingAmount: patientOutstandingAmount,
@@ -1432,7 +1522,8 @@ export const mapSummaryItemToRow = (
 };
 
 export const mapPspItemToRow = (
-  row: PatientServiceAndProduct
+  row: PatientServiceAndProduct,
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): UnifiedBillingChargeRow => {
   const rowAny = row as PatientServiceAndProduct & {
     createdDate?: string | null;
@@ -1454,8 +1545,8 @@ export const mapPspItemToRow = (
     chargeLineId: null,
     source: row.serviceSource ?? 'SERVICE_AND_PRODUCT',
     billingItemType: row.billingItemType,
-    itemCode: resolvePspDisplayCode(row),
-    itemName: resolvePspDisplayName(row),
+    itemCode: resolvePspDisplayCode(row, lookups),
+    itemName: resolvePspDisplayName(row, lookups),
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     priceSource: rowAny.priceSource?.trim() || null,
@@ -1518,22 +1609,28 @@ export const resolveDisplayChargeRows = (
     return invoiceLineItems.map(mapInvoiceLineItemToRow);
   }
 
-  return mergeBillingChargeRows(summary, pspRows);
+  return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());
 };
 
 export const mergeBillingChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
-  pspRows: PatientServiceAndProduct[]
+  pspRows: PatientServiceAndProduct[] = [],
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): UnifiedBillingChargeRow[] => {
+  const summaryItems = summary?.items ?? [];
+
+  if (summaryItems.length > 0) {
+    return summaryItems.map(item =>
+      mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+    );
+  }
+
   const summaryPspIds = new Set(
-    (summary?.items ?? [])
+    summaryItems
       .map(item => item.patientServiceProductId)
       .filter((id): id is number => id != null)
   );
 
-  const summaryRows = (summary?.items ?? []).map(item =>
-    mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
-  );
   const unbilledPspRows = pspRows
     .filter(row => {
       if (summaryPspIds.has(row.id)) {
@@ -1551,21 +1648,9 @@ export const mergeBillingChargeRows = (
 
       return true;
     })
-    .map(row => mapPspItemToRow(row));
+    .map(row => mapPspItemToRow(row, lookups));
 
-  const merged = [...summaryRows, ...unbilledPspRows];
-  const seenPspIds = new Set<number>();
-  return merged.filter(row => {
-    const pspId = row.patientServiceProductId;
-    if (pspId == null) {
-      return true;
-    }
-    if (seenPspIds.has(pspId)) {
-      return false;
-    }
-    seenPspIds.add(pspId);
-    return true;
-  });
+  return unbilledPspRows;
 };
 
 export const findRejectedPreAuthItems = (

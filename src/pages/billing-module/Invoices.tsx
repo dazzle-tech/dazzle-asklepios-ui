@@ -840,6 +840,8 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         encounterId: selectedEncounterId,
 
+        facilityId,
+
         requestId: makeRequestId('invoice-close')
 
       }).unwrap();
@@ -1115,6 +1117,8 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         encounterId: selectedEncounterId,
 
+        facilityId,
+
         requestId: makeRequestId('invoice-generate')
 
       }).unwrap();
@@ -1378,7 +1382,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const handleCreateDiscountCreditNote = async (payload: CreateDiscountCreditNoteRequest) => {
 
-    if (selectedInvoiceId == null) return;
+    if (selectedInvoiceId == null || facilityId == null) return;
 
 
 
@@ -1408,7 +1412,11 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         invoiceId: selectedInvoiceId,
 
-        body: payload
+        body: {
+          ...payload,
+          facilityId,
+          requestId: makeRequestId('discount-credit-note')
+        }
 
       }).unwrap();
 
@@ -1468,7 +1476,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const handleCreateAdjustment = async (payload: CreateAdjustmentRequest) => {
 
-    if (selectedInvoiceId == null) return;
+    if (selectedInvoiceId == null || facilityId == null) return;
 
 
 
@@ -1502,13 +1510,19 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     try {
 
+      const body: CreateAdjustmentRequest = {
+        ...payload,
+        facilityId,
+        requestId: makeRequestId(isCredit ? 'credit-note' : 'debit-note')
+      };
+
       const result = isCredit
 
         ? await createCreditNote({
 
             invoiceId: selectedInvoiceId,
 
-            body: payload
+            body
 
           }).unwrap()
 
@@ -1516,7 +1530,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
             invoiceId: selectedInvoiceId,
 
-            body: payload
+            body
 
           }).unwrap();
 

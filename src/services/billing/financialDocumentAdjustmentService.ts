@@ -223,6 +223,8 @@ export type PreviewCatalogItemPricingResult = {
 export type CreateAdjustmentRequest = {
   reason?: string;
   lines: InvoiceLineAdjustmentRequest[];
+  facilityId?: number;
+  requestId?: string;
 };
 
 export type CreateFinancialDocumentAdjustmentRequest = {
@@ -238,6 +240,8 @@ export type CreateDiscountCreditNoteRequest = {
   discountAmount?: number;
   discountPercent?: number;
   reason?: string;
+  facilityId?: number;
+  requestId?: string;
 };
 
 export type DiscountCreditNoteLinePreview = {

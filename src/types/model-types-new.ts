@@ -6037,6 +6037,8 @@ export type EncounterBillingItemSummary = {
   sourceId: number | null;
   itemCode: string | null;
   itemName: string | null;
+  itemDescription?: string | null;
+  serviceSource?: string | null;
   quantity: number;
   unitPrice: number;
   setupUnitPrice?: number | null;

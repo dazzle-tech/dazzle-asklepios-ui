@@ -31,6 +31,7 @@ import {
   resolvePatientWalletReserved,
   resolvePatientId
 } from '../utils/billingAccountingUtils';
+import { useBillingCatalogLookups } from './useBillingCatalogLookups';
 
 type UseBillingAccountingDataArgs = {
   patient: any;
@@ -220,9 +221,14 @@ export const useBillingAccountingData = ({
 
   const pspRows = pspResponse?.data ?? [];
 
+  const { lookups } = useBillingCatalogLookups({
+    encounterId: selectedEncounterId,
+    pspRows
+  });
+
   const chargeRows = useMemo(
-    () => mergeBillingChargeRows(effectiveSummary, pspRows),
-    [effectiveSummary, pspRows]
+    () => mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
+    [effectiveSummary, lookups, pspRows]
   );
 
   const timelineEvents = useMemo(

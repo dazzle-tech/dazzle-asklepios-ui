@@ -89,5 +89,13 @@ export const sanitizeAdjustmentRequest = (
     sanitized.reason = body.reason.trim();
   }
 
+  if (body.facilityId != null) {
+    sanitized.facilityId = Number(body.facilityId);
+  }
+
+  if (body.requestId?.trim()) {
+    sanitized.requestId = body.requestId.trim();
+  }
+
   return sanitized;
 };

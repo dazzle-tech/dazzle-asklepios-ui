@@ -298,6 +298,18 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
+      key: 'itemCode',
+
+      title: 'Code',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) => row.itemCode ?? '-'
+
+    },
+
+    {
+
       key: 'itemName',
 
       title: 'Item',
@@ -305,6 +317,34 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 220,
 
       render: (row: UnifiedBillingChargeRow) => row.itemName
+
+    },
+
+    {
+
+      key: 'unitPrice',
+
+      title: 'Unit price',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) =>
+        formatMoney(row.unitPrice, row.currency || currency)
+
+    },
+
+    {
+
+      key: 'setupUnitPrice',
+
+      title: 'Setup price',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) =>
+        row.setupUnitPrice != null
+          ? formatMoney(row.setupUnitPrice, row.currency || currency)
+          : '-'
 
     },
 
