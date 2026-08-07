@@ -12,6 +12,8 @@ import {
   useDeletePatientServiceOrProductMutation,
   useGetPatientServicesAndProductsByEncounterQuery,
 } from '@/services/encounters/patientServicesAndProductsService';
+import { useGetEncounterBillingSummaryQuery } from '@/services/billing/billingTransactionService';
+import { isBillingChargeFinalized } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { formatEnumString } from '@/utils';
 import { newPatientServiceAndProduct } from '@/types/model-types-constructor-new';
 
@@ -46,6 +48,14 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         skip: !encounter?.id,
       }
     );
+
+  const { data: billingSummary } = useGetEncounterBillingSummaryQuery(
+    { encounterId: encounter?.id as number },
+    { skip: !encounter?.id }
+  );
+
+  const billingFinalized = isBillingChargeFinalized(billingSummary ?? null);
+  const isReadOnly = Boolean(edit || billingFinalized);
 
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
@@ -304,23 +314,25 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       title: '',
       render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
+          {(!isReadOnly && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
             className="icons-style"
-            onClick={() => {
+            onClick={(event) => {
+              event.stopPropagation();
               setPatientServiceAndProduct(rowData);
               setPopupOpen(true);
             }}
           />}
 
-          {(!edit && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
+          {(!isReadOnly && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"
             className="icons-style"
-            onClick={() => {
+            onClick={(event) => {
+              event.stopPropagation();
               setPatientServiceAndProduct(rowData);
               setOpenModal(true);
             }}
@@ -329,6 +341,12 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (!billingFinalized) return;
+    setPopupOpen(false);
+    setOpenModal(false);
+  }, [billingFinalized]);
 
   useEffect(() => {
     dispatch(setPageCode('serviceandproducts'));
@@ -346,7 +364,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         <div className="bt-right">
           <MyButton
             prefixIcon={() => <PlusIcon />}
-            disabled={edit}
+            disabled={isReadOnly}
             onClick={() => {
               setPopupOpen(true);
               setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
@@ -357,13 +375,23 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         </div>
       </div>
 
+      {billingFinalized && (
+        <div className="billing-accounting__checkout-complete" style={{ marginBottom: 12 }}>
+          Billing checkout is finalized for this encounter. Service & product lines are view-only.
+        </div>
+      )}
+
       <MyTable
         data={lookupsLoading ? [] : rows}
         columns={columns}
-        rowClassName={isSelected}
-        onRowClick={(rowData) => {
-          setPatientServiceAndProduct(rowData);
-        }}
+        rowClassName={isReadOnly ? undefined : isSelected}
+        onRowClick={
+          isReadOnly
+            ? undefined
+            : rowData => {
+                setPatientServiceAndProduct(rowData);
+              }
+        }
         totalCount={totalCount}
         loading={isLoading || lookupsLoading}
         page={paginationParams.page}
@@ -384,7 +412,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       />
 
       <AddEditPatientServiceAndProduct
-        open={popupOpen}
+        open={popupOpen && !isReadOnly}
         setOpen={setPopupOpen}
         patientServiceAndProduct={patientServiceAndProduct}
         setPatientServiceAndProduct={setPatientServiceAndProduct}
