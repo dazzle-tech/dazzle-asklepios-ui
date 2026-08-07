@@ -114,11 +114,13 @@ export type FinancialCloseResult = {
 export type FinancialCloseRequest = {
   encounterId: number;
   requestId: string;
+  facilityId: number;
 };
 
 export type GenerateInvoicesRequest = {
   encounterId: number;
   requestId: string;
+  facilityId: number;
 };
 
 export const invoiceGenerationService = createApi({
@@ -170,10 +172,13 @@ export const invoiceGenerationService = createApi({
       FinancialCloseResult,
       FinancialCloseRequest
     >({
-      query: ({ encounterId, requestId }) => ({
+      query: ({ encounterId, requestId, facilityId }) => ({
         url: `/api/patient/billing/invoice-generation/encounters/${encounterId}/financial-close`,
         method: 'POST',
-        body: { requestId }
+        body: {
+          requestId,
+          facilityId: Number(facilityId)
+        }
       }),
       invalidatesTags: (_result, _error, { encounterId }) => [
         'BillableVisits',
@@ -187,10 +192,13 @@ export const invoiceGenerationService = createApi({
       GenerateInvoiceResult,
       GenerateInvoicesRequest
     >({
-      query: ({ encounterId, requestId }) => ({
+      query: ({ encounterId, requestId, facilityId }) => ({
         url: `/api/patient/billing/invoice-generation/encounters/${encounterId}/generate-invoices`,
         method: 'POST',
-        body: { requestId }
+        body: {
+          requestId,
+          facilityId: Number(facilityId)
+        }
       }),
       invalidatesTags: (_result, _error, { encounterId }) => [
         'BillableVisits',

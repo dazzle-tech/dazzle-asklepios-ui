@@ -46,8 +46,8 @@ import {
 
   useGetEncounterInvoiceDetailsQuery,
 
-  useGetPatientFinancialInvoicesQuery
-
+  useGetPatientFinancialInvoicesQuery,
+  useLazyGetEncounterInvoiceDetailsQuery
 } from '@/services/billing/invoiceGenerationService';
 
 import {
@@ -103,6 +103,10 @@ import {
 } from './invoices/invoicePrintUtils';
 
 import { useInvoicePrintLookups } from './invoices/useInvoicePrintLookups';
+import {
+  resolveInvoiceDisplayNumber,
+  resolveInvoiceVisitNumber
+} from './invoices/invoiceDisplayUtils';
 import {
   buildAdjustmentPrintData,
   type AdjustmentPrintData
@@ -470,6 +474,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const [fetchInvoiceLineItemsForPrint] = useLazyGetInvoiceLineItemsQuery();
   const [fetchInvoicePricingSummaryForPrint] = useLazyGetInvoicePricingSummaryQuery();
+  const [fetchEncounterDetailsForPrint] = useLazyGetEncounterInvoiceDetailsQuery();
 
 
 
@@ -695,54 +700,31 @@ const Invoices: React.FC<InvoicesProps> = ({
     );
   }, [billableVisits, encounterDetails, printEncounterId, selectedVisit]);
 
-  const visitDepartmentId =
-    encounterDetails?.departmentId ?? selectedVisit?.departmentId ?? null;
-
   const {
     billingSummary: visitBillingSummary,
-    chargeRows: visitChargeRows,
-    isReady: visitDetailsLookupsReady
-  } = useInvoicePrintLookups(selectedEncounterId, visitDepartmentId);
+    isReady: visitDetailsReady
+  } = useInvoicePrintLookups(selectedEncounterId);
 
-  const visitDetailRows = useMemo(() => {
-    const summaryByPspId = new Map(
-      (visitBillingSummary?.items ?? [])
-        .filter(item => item.patientServiceProductId != null)
-        .map(item => [Number(item.patientServiceProductId), item])
-    );
-    const summaryByChargeLineId = new Map(
-      (visitBillingSummary?.items ?? [])
-        .filter(item => item.chargeLineId != null)
-        .map(item => [Number(item.chargeLineId), item])
-    );
-
-    return visitChargeRows.map(row => {
-      const summaryItem =
-        (row.patientServiceProductId != null
-          ? summaryByPspId.get(row.patientServiceProductId)
-          : undefined) ??
-        (row.chargeLineId != null
-          ? summaryByChargeLineId.get(row.chargeLineId)
-          : undefined);
-
-      return {
-        itemCode: row.itemCode ?? summaryItem?.itemCode ?? '-',
-        itemName: row.itemName,
-        quantity: row.quantity,
-        unitPrice: row.unitPrice,
-        netAmount: row.netAmount,
-        patientResponsibilityAmount: row.patientAmount,
-        insuranceResponsibilityAmount: row.insuranceAmount,
-        taxAmount: Number(summaryItem?.taxAmount ?? 0)
-      };
-    });
-  }, [visitBillingSummary?.items, visitChargeRows]);
+  const visitDetailRows = useMemo(
+    () =>
+      (visitBillingSummary?.items ?? []).map(item => ({
+        itemCode: item.itemCode ?? '-',
+        itemName: item.itemName ?? '-',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        netAmount: item.netAmount,
+        patientResponsibilityAmount: item.patientResponsibilityAmount,
+        insuranceResponsibilityAmount: item.insuranceResponsibilityAmount,
+        taxAmount: Number(item.taxAmount ?? 0)
+      })),
+    [visitBillingSummary?.items]
+  );
 
   const {
     billingSummary,
     chargeRows,
     isReady: printLookupsReady
-  } = useInvoicePrintLookups(printEncounterId, printDepartmentId);
+  } = useInvoicePrintLookups(printEncounterId);
 
   const chargeContext = useMemo(
     () => ({
@@ -857,6 +839,8 @@ const Invoices: React.FC<InvoicesProps> = ({
       await financialClose({
 
         encounterId: selectedEncounterId,
+
+        facilityId,
 
         requestId: makeRequestId('invoice-close')
 
@@ -1133,6 +1117,8 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         encounterId: selectedEncounterId,
 
+        facilityId,
+
         requestId: makeRequestId('invoice-generate')
 
       }).unwrap();
@@ -1295,24 +1281,32 @@ const Invoices: React.FC<InvoicesProps> = ({
     }
 
     try {
-      const [lineItems, pricingSummary] = await Promise.all([
+      const [lineItems, pricingSummary, matchingEncounterDetails] = await Promise.all([
         fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
-        fetchInvoicePricingSummaryForPrint(invoice.id).unwrap()
+        fetchInvoicePricingSummaryForPrint(invoice.id).unwrap(),
+        encounterDetails?.encounterId === invoice.encounterId
+          ? Promise.resolve(encounterDetails)
+          : fetchEncounterDetailsForPrint(invoice.encounterId).unwrap()
       ]);
-      const matchingEncounterDetails =
-        encounterDetails?.encounterId === invoice.encounterId ? encounterDetails : null;
 
       openInvoicePrintPreview(
         [
           buildInvoicePrintDataFromIssuedInvoice({
-            invoice,
+            invoice: {
+              ...invoice,
+              documentNumber: resolveInvoiceDisplayNumber(
+                invoice,
+                undefined,
+                pricingSummary
+              )
+            },
             lineItems,
             pricingSummary,
             encounterDetails: matchingEncounterDetails,
             eligibilitySnapshot:
-              matchingEncounterDetails != null
+              matchingEncounterDetails?.encounterId === selectedEncounterId
                 ? eligibilitySnapshot ?? encounterDetails?.eligibilitySnapshot ?? null
-                : null,
+                : matchingEncounterDetails?.eligibilitySnapshot ?? null,
             patient,
             facility: facilityPrintInfo,
             chargeContext: resolveChargeContextForInvoice(invoice)
@@ -1388,7 +1382,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const handleCreateDiscountCreditNote = async (payload: CreateDiscountCreditNoteRequest) => {
 
-    if (selectedInvoiceId == null) return;
+    if (selectedInvoiceId == null || facilityId == null) return;
 
 
 
@@ -1418,7 +1412,11 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         invoiceId: selectedInvoiceId,
 
-        body: payload
+        body: {
+          ...payload,
+          facilityId,
+          requestId: makeRequestId('discount-credit-note')
+        }
 
       }).unwrap();
 
@@ -1478,7 +1476,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const handleCreateAdjustment = async (payload: CreateAdjustmentRequest) => {
 
-    if (selectedInvoiceId == null) return;
+    if (selectedInvoiceId == null || facilityId == null) return;
 
 
 
@@ -1512,13 +1510,19 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     try {
 
+      const body: CreateAdjustmentRequest = {
+        ...payload,
+        facilityId,
+        requestId: makeRequestId(isCredit ? 'credit-note' : 'debit-note')
+      };
+
       const result = isCredit
 
         ? await createCreditNote({
 
             invoiceId: selectedInvoiceId,
 
-            body: payload
+            body
 
           }).unwrap()
 
@@ -1526,7 +1530,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
             invoiceId: selectedInvoiceId,
 
-            body: payload
+            body
 
           }).unwrap();
 
@@ -1748,7 +1752,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const issuedInvoiceColumns = [
 
-    { key: 'documentNumber', title: 'Invoice Number' },
+    {
+      key: 'documentNumber',
+      title: 'Invoice Number',
+      render: (row: PatientFinancialInvoice) =>
+        resolveInvoiceDisplayNumber(row)
+    },
 
     {
 
@@ -1780,7 +1789,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
     },
 
-    { key: 'encounterId', title: 'Visit ID' },
+    {
+      key: 'encounterNumber',
+      title: 'Visit Number',
+      render: (row: PatientFinancialInvoice) =>
+        resolveInvoiceVisitNumber(row, encounterDetails, billableVisits)
+    },
 
     {
 
@@ -2083,7 +2097,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
             columns={serviceColumns}
 
-            loading={loadingEncounterDetails || !visitDetailsLookupsReady}
+            loading={loadingEncounterDetails || !visitDetailsReady}
 
           />
 
@@ -2162,6 +2176,18 @@ const Invoices: React.FC<InvoicesProps> = ({
               walletBalance={walletBalance}
 
               printDisabled={!printLookupsReady}
+
+              encounterDepartmentId={printDepartmentId}
+
+              visitNumber={
+                selectedInvoice
+                  ? resolveInvoiceVisitNumber(
+                      selectedInvoice,
+                      encounterDetails,
+                      billableVisits
+                    )
+                  : undefined
+              }
 
               canCreateCreditNote={canCreateCreditNote}
 

@@ -4,7 +4,12 @@ import { Form, Modal, Text } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
-import type { CollectInvoiceBalanceResult } from '@/services/billing/financialDocumentAdjustmentService';
+import type {
+  CollectInvoiceBalanceResult,
+  InvoiceAdjustmentSummary,
+  InvoiceLineItem,
+  InvoicePricingSummary
+} from '@/services/billing/financialDocumentAdjustmentService';
 import { useCollectInvoiceBalanceMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -16,6 +21,7 @@ import {
   isWalletPaymentMethod,
   makeRequestId
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
 
 const FALLBACK_PAYMENT_METHODS = [
   { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
@@ -38,6 +44,9 @@ type PayInvoiceBalanceModalProps = {
   onClose: () => void;
   invoiceId: number;
   documentNumber?: string | null;
+  summary?: InvoiceAdjustmentSummary | null;
+  lineItems?: InvoiceLineItem[];
+  pricingSummary?: InvoicePricingSummary | null;
   outstandingAmount: number;
   currency?: string;
   walletBalance?: number;
@@ -53,6 +62,9 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   onClose,
   invoiceId,
   documentNumber,
+  summary,
+  lineItems = [],
+  pricingSummary,
   outstandingAmount,
   currency = 'SAR',
   walletBalance = 0,
@@ -68,6 +80,12 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
 
   const paymentMethods =
     enumPaymentMethods.length > 0 ? enumPaymentMethods : FALLBACK_PAYMENT_METHODS;
+
+  const resolvedDocumentNumber = resolveInvoiceDisplayNumber(
+    { id: invoiceId, documentNumber },
+    summary,
+    pricingSummary
+  );
 
   const suggestedAmount = useMemo(
     () => Number(outstandingAmount.toFixed(2)),
@@ -88,6 +106,44 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
     suggestedAmount,
     walletAvailable,
     form.amount
+  );
+
+  const pricingDetailRows = useMemo(
+    () =>
+      lineItems.flatMap(item => {
+        const discounts = item.appliedDiscounts ?? [];
+        const taxes = item.appliedTaxes ?? [];
+
+        return [
+          ...discounts.map((discount, index) => ({
+            key: `${item.id}-discount-${index}`,
+            service: item.itemDescription ?? item.itemCode ?? '-',
+            kind: 'Discount',
+            rule: discount.code ?? discount.name ?? discount.source ?? '-',
+            amount: discount.appliedAmount ?? 0
+          })),
+          ...taxes.map((tax, index) => ({
+            key: `${item.id}-tax-${index}`,
+            service: item.itemDescription ?? item.itemCode ?? '-',
+            kind: 'Tax',
+            rule: tax.code ?? tax.name ?? tax.source ?? '-',
+            amount: tax.appliedAmount ?? 0
+          }))
+        ];
+      }),
+    [lineItems]
+  );
+
+  const adjustmentRows = useMemo(
+    () =>
+      (summary?.adjustments ?? []).map(adjustment => ({
+        key: String(adjustment.id),
+        documentNumber: adjustment.documentNumber,
+        documentType: adjustment.documentType,
+        amount: adjustment.totalAmount,
+        reason: adjustment.adjustmentReason ?? '-'
+      })),
+    [summary?.adjustments]
   );
 
   useEffect(() => {
@@ -172,7 +228,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
             selectedMethod?.id ?? selectedMethod?.key ?? selectedMethod?.valueId ?? 0
           ),
           requestId: makeRequestId('INVOICE-PAY'),
-          notes: form.notes.trim() || `Invoice balance payment ${documentNumber ?? invoiceId}`
+          notes: form.notes.trim() || `Invoice balance payment ${resolvedDocumentNumber}`
         }
       }).unwrap();
 
@@ -200,24 +256,122 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
+    <Modal open={open} onClose={onClose} size="md" overflow={false} enforceFocus={false}>
       <Modal.Header>
         <Modal.Title>Pay invoice balance</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <div className="billing-collect-payment-modal">
-          <Text muted size="sm" style={{ marginBottom: 12 }}>
-            {documentNumber ? `Invoice ${documentNumber}` : `Invoice #${invoiceId}`} · outstanding{' '}
-            {formatMoney(outstandingAmount, currency)}
-          </Text>
-          <Text muted size="sm" style={{ marginBottom: 12 }}>
-            Collect the invoice-level balance (tax/discount delta) after billing checkout.
-          </Text>
+        <div className="billing-collect-payment-modal pay-invoice-modal">
+          <div className="pay-invoice-modal__summary">
+            <Text weight="semibold">
+              Invoice {resolvedDocumentNumber}
+            </Text>
+            <Text muted size="sm">
+              Review invoice totals, tax/discount adjustments, and credit or debit notes before
+              collecting the remaining balance.
+            </Text>
+          </div>
+
+          {summary ? (
+            <div className="pay-invoice-modal__metrics">
+              <div className="pay-invoice-modal__metric">
+                <span>Invoice total</span>
+                <strong>{formatMoney(summary.invoiceTotal, currency)}</strong>
+              </div>
+              <div className="pay-invoice-modal__metric">
+                <span>Paid</span>
+                <strong>{formatMoney(summary.totalPaid, currency)}</strong>
+              </div>
+              <div className="pay-invoice-modal__metric">
+                <span>Credit notes</span>
+                <strong>{formatMoney(summary.totalCreditNotes, currency)}</strong>
+              </div>
+              <div className="pay-invoice-modal__metric">
+                <span>Debit notes</span>
+                <strong>{formatMoney(summary.totalDebitNotes, currency)}</strong>
+              </div>
+              <div className="pay-invoice-modal__metric pay-invoice-modal__metric--highlight">
+                <span>Outstanding</span>
+                <strong>{formatMoney(summary.outstandingBalance, currency)}</strong>
+              </div>
+            </div>
+          ) : (
+            <Text muted size="sm">
+              Outstanding {formatMoney(outstandingAmount, currency)}
+            </Text>
+          )}
+
+          {adjustmentRows.length > 0 ? (
+            <div className="pay-invoice-modal__section">
+              <Text weight="semibold" size="sm">
+                Credit / debit notes
+              </Text>
+              <div className="pay-invoice-modal__detail-list">
+                {adjustmentRows.map(row => (
+                  <div key={row.key} className="pay-invoice-modal__detail-row">
+                    <span>
+                      {row.documentNumber} ·{' '}
+                      {row.documentType === 'CREDIT_NOTE' ? 'Credit note' : 'Debit note'}
+                    </span>
+                    <strong>{formatMoney(row.amount, currency)}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {pricingDetailRows.length > 0 ? (
+            <div className="pay-invoice-modal__section">
+              <Text weight="semibold" size="sm">
+                Tax & discount applied
+              </Text>
+              <div className="pay-invoice-modal__detail-list">
+                {pricingDetailRows.map(row => (
+                  <div key={row.key} className="pay-invoice-modal__detail-row">
+                    <span>
+                      {row.service} · {row.kind}: {row.rule}
+                    </span>
+                    <strong>
+                      {row.kind === 'Discount'
+                        ? `-${formatMoney(row.amount, currency)}`
+                        : formatMoney(row.amount, currency)}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : pricingSummary ? (
+            <div className="pay-invoice-modal__section">
+              <Text weight="semibold" size="sm">
+                Pricing summary
+              </Text>
+              <div className="pay-invoice-modal__detail-list">
+                <div className="pay-invoice-modal__detail-row">
+                  <span>Gross</span>
+                  <strong>{formatMoney(pricingSummary.grossAmount, currency)}</strong>
+                </div>
+                <div className="pay-invoice-modal__detail-row">
+                  <span>Discount</span>
+                  <strong>-{formatMoney(pricingSummary.discountAmount, currency)}</strong>
+                </div>
+                <div className="pay-invoice-modal__detail-row">
+                  <span>Tax</span>
+                  <strong>{formatMoney(pricingSummary.taxAmount, currency)}</strong>
+                </div>
+                <div className="pay-invoice-modal__detail-row">
+                  <span>Net</span>
+                  <strong>{formatMoney(pricingSummary.netAmount, currency)}</strong>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {walletAvailable > 0 && (
-            <Text muted size="sm" style={{ marginBottom: 12 }}>
+            <Text muted size="sm">
               Wallet available {formatMoney(walletAvailable, currency)}
             </Text>
           )}
+
           <Form fluid>
             <PaymentMethodSelector
               value={form.paymentMethodCode}

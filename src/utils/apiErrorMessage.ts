@@ -282,3 +282,20 @@ export const ENCOUNTER_START_ERROR_MAP: Record<string, string> = {
     'Only physician accounts can start clinical encounters.'
 };
 
+export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
+  'interval.type.duplicate':
+    'An active price list already exists for this type in the selected date range. Change the dates or deactivate the existing list.',
+  'interval.payer.duplicate':
+    'An active insurance price list already exists for this payer in the selected date range. Change the dates or deactivate the existing list.',
+  'payer.required':
+    'Payer is required for insurance price lists.',
+  'effectiveDate.invalidRange':
+    'Effective To must be on or after Effective From.',
+  'item.duplicateInPriceList':
+    'This catalog item is already on the selected price list. Use a different price list header to price the same service separately.',
+  'itemCode.duplicate':
+    'This item code already exists on the selected price list.',
+  'item.idSequenceOutOfSync':
+    'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.'
+};
+

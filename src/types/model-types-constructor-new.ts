@@ -3654,6 +3654,7 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
   patientId: 0,
   encounterId: null,
+  facilityId: null,
   paymentCategory: 'CASH',
   payerType: 'PATIENT',
   payerId: null,

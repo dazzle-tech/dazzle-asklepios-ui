@@ -265,7 +265,7 @@ const mapChargeRowToPrintItem = (
   };
 };
 
-const resolveLineItemLabel = (lineItem: InvoiceLineItem): string => {
+export const resolveLineItemLabel = (lineItem: InvoiceLineItem): string => {
   const description = lineItem.itemDescription?.trim();
   if (description && !isTechnicalBillingLabel(description)) {
     return description;
@@ -406,10 +406,14 @@ const buildItemsFromChargeRows = (
     .filter((item): item is InvoicePrintLineItem => item != null);
 };
 
-const resolveVisitNumber = (
+export const resolveVisitNumber = (
   encounterDetails: EncounterInvoiceDetails | null | undefined,
-  encounterId: number
-) => encounterDetails?.encounterNumber ?? `Visit #${encounterId}`;
+  encounterId: number,
+  encounterNumber?: string | null
+) =>
+  encounterDetails?.encounterNumber?.trim() ||
+  encounterNumber?.trim() ||
+  `#${encounterId}`;
 
 const resolveInsuranceFields = (
   invoice: PatientFinancialInvoice,
@@ -518,7 +522,11 @@ export const buildInvoicePrintDataFromEncounter = ({
     invoiceDate,
     invoiceType,
     status: invoiceStatusLabel(invoice.status),
-    visitNumber: resolveVisitNumber(encounterDetails, invoice.encounterId),
+    visitNumber: resolveVisitNumber(
+      encounterDetails,
+      invoice.encounterId,
+      invoice.encounterNumber
+    ),
     visitDate: encounterDetails.encounterDate
       ? String(encounterDetails.encounterDate).substring(0, 10)
       : undefined,
@@ -612,7 +620,11 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
     invoiceDate,
     invoiceType,
     status: invoiceStatusLabel(invoice.status),
-    visitNumber: resolveVisitNumber(encounterDetails ?? null, invoice.encounterId),
+    visitNumber: resolveVisitNumber(
+      encounterDetails ?? null,
+      invoice.encounterId,
+      invoice.encounterNumber
+    ),
     visitDate: encounterDetails?.encounterDate
       ? String(encounterDetails.encounterDate).substring(0, 10)
       : undefined,

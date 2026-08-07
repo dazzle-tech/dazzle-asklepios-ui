@@ -32,6 +32,11 @@ import {
 } from '@/utils/uiReducerActions';
 
 import {
+  extractApiErrorMessage,
+  PRICE_LIST_SETUP_ERROR_MAP
+} from '@/utils/apiErrorMessage';
+
+import {
   formatEnumString
 } from '@/utils';
 
@@ -1534,10 +1539,10 @@ const PriceListSetupItems: React.FC<Props> = ({
       dispatch(
         notify({
           msg:
-            error?.data?.detail ||
-            error?.data?.title ||
-            error?.data?.message ||
-            'Failed to save price-list item',
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) || 'Failed to save price-list item',
 
           sev:
             'error'
@@ -1581,9 +1586,10 @@ const PriceListSetupItems: React.FC<Props> = ({
       dispatch(
         notify({
           msg:
-            error?.data?.detail ||
-            error?.data?.title ||
-            'Failed to delete price-list item',
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) || 'Failed to delete price-list item',
 
           sev:
             'error'

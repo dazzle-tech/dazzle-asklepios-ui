@@ -128,14 +128,39 @@ export type PrepareServiceRow = {
 export type BillingServiceLookup = {
   serviceId: number;
   serviceName: string;
+  serviceCode?: string;
 };
+
+export type BillingCatalogLookups = {
+  serviceCatalog: BillingServiceLookup[];
+  medicationNames: Record<number, string>;
+  medicationCodes: Record<number, string>;
+  diagnosticTestNames: Record<number, string>;
+  diagnosticTestCodes: Record<number, string>;
+  procedureNames: Record<number, string>;
+  procedureCodes: Record<number, string>;
+};
+
+export const emptyBillingCatalogLookups = (): BillingCatalogLookups => ({
+  serviceCatalog: [],
+  medicationNames: {},
+  medicationCodes: {},
+  diagnosticTestNames: {},
+  diagnosticTestCodes: {},
+  procedureNames: {},
+  procedureCodes: {}
+});
 
 export const buildServiceCatalog = (servicesResponse: unknown): BillingServiceLookup[] =>
   extractResponseList(servicesResponse)
-    .map((service: any) => ({
-      serviceId: toNumber(service?.id ?? service?.serviceId),
-      serviceName: String(service?.name ?? service?.serviceName ?? '').trim()
-    }))
+    .map((service: any) => {
+      const serviceCode = String(service?.code ?? service?.serviceCode ?? '').trim();
+      return {
+        serviceId: toNumber(service?.id ?? service?.serviceId),
+        serviceName: String(service?.name ?? service?.serviceName ?? '').trim(),
+        ...(serviceCode ? { serviceCode } : {})
+      };
+    })
     .filter(
       (service): service is BillingServiceLookup =>
         service.serviceId > 0 && service.serviceName.length > 0
@@ -144,14 +169,18 @@ export const buildServiceCatalog = (servicesResponse: unknown): BillingServiceLo
 export const mergeServiceCatalogs = (
   ...catalogs: BillingServiceLookup[][]
 ): BillingServiceLookup[] => {
-  const byId = new Map<number, string>();
+  const byId = new Map<number, BillingServiceLookup>();
   catalogs.flat().forEach(service => {
-    byId.set(service.serviceId, service.serviceName);
+    const existing = byId.get(service.serviceId);
+    byId.set(service.serviceId, {
+      serviceId: service.serviceId,
+      serviceName: service.serviceName || existing?.serviceName || '',
+      serviceCode: service.serviceCode || existing?.serviceCode
+    });
   });
-  return [...byId.entries()].map(([serviceId, serviceName]) => ({
-    serviceId,
-    serviceName
-  }));
+  return [...byId.values()].filter(
+    service => service.serviceId > 0 && service.serviceName.length > 0
+  );
 };
 
 const getPspSourceId = (
@@ -169,26 +198,33 @@ const getPspSourceId = (
   return rowAny.sourceId ?? rowAny.SourceId ?? null;
 };
 
+const DIAGNOSTIC_BILLING_TYPES = ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'];
+
+const collectCatalogCandidateIds = (
+  psp: PatientServiceAndProduct | null | undefined,
+  sourceId: number | null | undefined,
+  entityId?: number | null
+): number[] =>
+  [entityId, sourceId, getPspSourceId(psp)]
+    .filter((id): id is number => id != null)
+    .map(Number);
+
 export const resolveCatalogItemName = (
   billingItemType: string | null | undefined,
   psp: PatientServiceAndProduct | null | undefined,
   sourceId: number | null | undefined,
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): string | null => {
   const type = String(billingItemType ?? '').toUpperCase();
-  const pspSourceId = getPspSourceId(psp);
+  const {
+    serviceCatalog,
+    medicationNames,
+    diagnosticTestNames,
+    procedureNames
+  } = lookups;
 
   if (type === 'SERVICE' || type === 'CONSULTATION') {
-    const candidateIds = [
-      psp?.serviceId,
-      sourceId,
-      pspSourceId
-    ]
-      .filter((id): id is number => id != null)
-      .map(Number);
-
-    for (const id of candidateIds) {
+    for (const id of collectCatalogCandidateIds(psp, sourceId, psp?.serviceId)) {
       const serviceName = serviceCatalog
         .find(service => service.serviceId === id)
         ?.serviceName?.trim();
@@ -199,18 +235,99 @@ export const resolveCatalogItemName = (
   }
 
   if (type === 'MEDICATION') {
-    const candidateIds = [
-      psp?.brandMedicationId,
+    for (const id of collectCatalogCandidateIds(
+      psp,
       sourceId,
-      pspSourceId
-    ]
-      .filter((id): id is number => id != null)
-      .map(Number);
-
-    for (const id of candidateIds) {
+      psp?.brandMedicationId
+    )) {
       const medicationName = medicationNames[id]?.trim();
       if (medicationName) {
         return medicationName;
+      }
+    }
+  }
+
+  if (DIAGNOSTIC_BILLING_TYPES.includes(type)) {
+    for (const id of collectCatalogCandidateIds(
+      psp,
+      sourceId,
+      psp?.diagnosticTestId
+    )) {
+      const diagnosticTestName = diagnosticTestNames[id]?.trim();
+      if (diagnosticTestName) {
+        return diagnosticTestName;
+      }
+    }
+  }
+
+  if (type === 'PROCEDURE') {
+    for (const id of collectCatalogCandidateIds(psp, sourceId, psp?.procedureId)) {
+      const procedureName = procedureNames[id]?.trim();
+      if (procedureName) {
+        return procedureName;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const resolveCatalogItemCode = (
+  billingItemType: string | null | undefined,
+  psp: PatientServiceAndProduct | null | undefined,
+  sourceId: number | null | undefined,
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
+): string | null => {
+  const type = String(billingItemType ?? '').toUpperCase();
+  const {
+    serviceCatalog,
+    medicationCodes,
+    diagnosticTestCodes,
+    procedureCodes
+  } = lookups;
+
+  if (type === 'SERVICE' || type === 'CONSULTATION') {
+    for (const id of collectCatalogCandidateIds(psp, sourceId, psp?.serviceId)) {
+      const serviceCode = serviceCatalog
+        .find(service => service.serviceId === id)
+        ?.serviceCode?.trim();
+      if (serviceCode) {
+        return serviceCode;
+      }
+    }
+  }
+
+  if (type === 'MEDICATION') {
+    for (const id of collectCatalogCandidateIds(
+      psp,
+      sourceId,
+      psp?.brandMedicationId
+    )) {
+      const medicationCode = medicationCodes[id]?.trim();
+      if (medicationCode) {
+        return medicationCode;
+      }
+    }
+  }
+
+  if (DIAGNOSTIC_BILLING_TYPES.includes(type)) {
+    for (const id of collectCatalogCandidateIds(
+      psp,
+      sourceId,
+      psp?.diagnosticTestId
+    )) {
+      const diagnosticTestCode = diagnosticTestCodes[id]?.trim();
+      if (diagnosticTestCode) {
+        return diagnosticTestCode;
+      }
+    }
+  }
+
+  if (type === 'PROCEDURE') {
+    for (const id of collectCatalogCandidateIds(psp, sourceId, psp?.procedureId)) {
+      const procedureCode = procedureCodes[id]?.trim();
+      if (procedureCode) {
+        return procedureCode;
       }
     }
   }
@@ -296,6 +413,149 @@ export const buildMedicationNameLookup = (
   return lookup;
 };
 
+export const buildMedicationCodeLookup = (
+  medicationsResponse: unknown
+): Record<number, string> => {
+  const lookup: Record<number, string> = {};
+
+  extractResponseList(medicationsResponse).forEach((medication: any) => {
+    const id = toNumber(medication?.id);
+    const code = String(medication?.code ?? '').trim();
+    if (id > 0 && code) {
+      lookup[id] = code;
+    }
+  });
+
+  return lookup;
+};
+
+export const collectDiagnosticTestIdsForLookup = (
+  summary: EncounterBillingSummary | null | undefined,
+  pspRows: PatientServiceAndProduct[]
+): number[] => {
+  const ids = new Set<number>();
+
+  pspRows.forEach(row => {
+    const billingType = String(row.billingItemType ?? '').toUpperCase();
+    if (DIAGNOSTIC_BILLING_TYPES.includes(billingType)) {
+      if (row.diagnosticTestId != null) {
+        ids.add(Number(row.diagnosticTestId));
+      }
+      const pspSourceId = getPspSourceId(row);
+      if (pspSourceId != null) {
+        ids.add(Number(pspSourceId));
+      }
+    }
+  });
+
+  (summary?.items ?? []).forEach(item => {
+    const billingType = String(item.billingItemType ?? '').toUpperCase();
+    if (
+      DIAGNOSTIC_BILLING_TYPES.includes(billingType) &&
+      item.sourceId != null
+    ) {
+      ids.add(Number(item.sourceId));
+    }
+  });
+
+  return [...ids];
+};
+
+export const collectProcedureIdsForLookup = (
+  summary: EncounterBillingSummary | null | undefined,
+  pspRows: PatientServiceAndProduct[]
+): number[] => {
+  const ids = new Set<number>();
+
+  pspRows.forEach(row => {
+    const billingType = String(row.billingItemType ?? '').toUpperCase();
+    if (billingType === 'PROCEDURE') {
+      if (row.procedureId != null) {
+        ids.add(Number(row.procedureId));
+      }
+      const pspSourceId = getPspSourceId(row);
+      if (pspSourceId != null) {
+        ids.add(Number(pspSourceId));
+      }
+    }
+  });
+
+  (summary?.items ?? []).forEach(item => {
+    if (
+      String(item.billingItemType ?? '').toUpperCase() === 'PROCEDURE' &&
+      item.sourceId != null
+    ) {
+      ids.add(Number(item.sourceId));
+    }
+  });
+
+  return [...ids];
+};
+
+export const buildDiagnosticTestNameLookup = (
+  diagnosticTestsResponse: unknown
+): Record<number, string> => {
+  const lookup: Record<number, string> = {};
+
+  extractResponseList(diagnosticTestsResponse).forEach((test: any) => {
+    const id = toNumber(test?.id);
+    const name = String(test?.name ?? '').trim();
+    if (id > 0 && name) {
+      lookup[id] = name;
+    }
+  });
+
+  return lookup;
+};
+
+export const buildDiagnosticTestCodeLookup = (
+  diagnosticTestsResponse: unknown
+): Record<number, string> => {
+  const lookup: Record<number, string> = {};
+
+  extractResponseList(diagnosticTestsResponse).forEach((test: any) => {
+    const id = toNumber(test?.id);
+    const code = String(test?.internalCode ?? test?.code ?? '').trim();
+    if (id > 0 && code) {
+      lookup[id] = code;
+    }
+  });
+
+  return lookup;
+};
+
+export const buildProcedureNameLookup = (
+  proceduresResponse: unknown
+): Record<number, string> => {
+  const lookup: Record<number, string> = {};
+
+  extractResponseList(proceduresResponse).forEach((procedure: any) => {
+    const id = toNumber(procedure?.id);
+    const name = String(procedure?.name ?? '').trim();
+    if (id > 0 && name) {
+      lookup[id] = name;
+    }
+  });
+
+  return lookup;
+};
+
+export const buildProcedureCodeLookup = (
+  proceduresResponse: unknown
+): Record<number, string> => {
+  const lookup: Record<number, string> = {};
+
+  extractResponseList(proceduresResponse).forEach((procedure: any) => {
+    const id = toNumber(procedure?.id);
+    const code = String(procedure?.code ?? '').trim();
+    if (id > 0 && code) {
+      lookup[id] = code;
+    }
+  });
+
+  return lookup;
+};
+
 /** Total open patient obligation — ledger summary already includes invoice outstanding. */
 export const computePatientRemainingBalance = (
   ledgerSummary: { totalDebt?: number } | null | undefined,
@@ -363,6 +623,15 @@ export const formatMoney = (
     maximumFractionDigits: 2
   })} ${currency}`;
 };
+
+export const resolvePaymentReceiptNumber = (paymentResult?: {
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentId?: number | null;
+} | null): string =>
+  paymentResult?.receiptNumber ??
+  paymentResult?.paymentNumber ??
+  String(paymentResult?.paymentId ?? '-');
 
 /** Sum of advance reserved against charge lines on this encounter. */
 export const sumEncounterReservedAmount = (
@@ -697,7 +966,7 @@ export const buildWalletDepositReceipt = ({
     .join('\n');
 
   return {
-    receiptNumber: paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    receiptNumber: resolvePaymentReceiptNumber(paymentResult),
     transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
     paymentDate: new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),
@@ -806,8 +1075,7 @@ export const buildBillingPaymentReceipt = ({
   const netAmount = items.reduce((sum, item) => sum + Number(item.netAmount ?? 0), 0);
 
   return {
-    receiptNumber:
-      paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    receiptNumber: resolvePaymentReceiptNumber(paymentResult),
     transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
     paymentDate: paymentDate ?? new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),
@@ -881,9 +1149,7 @@ export const isPreAuthRejected = (status?: string | null): boolean =>
 export const buildTimelineEvents = (
   encounter: PatientEncounter | null | undefined,
   summary: EncounterBillingSummary | null | undefined,
-  pspRows: PatientServiceAndProduct[],
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  pspRows: PatientServiceAndProduct[]
 ): BillingTimelineEvent[] => {
   const events: BillingTimelineEvent[] = [];
 
@@ -946,17 +1212,9 @@ export const buildTimelineEvents = (
     };
 
     const itemLabel =
-      resolveCatalogItemName(
-        row.billingItemType,
-        row,
-        getPspSourceId(row),
-        serviceCatalog,
-        medicationNames
-      ) ??
-      (rowAny.itemName &&
-      !isTechnicalBillingLabel(rowAny.itemName, row.billingItemType)
-        ? rowAny.itemName.trim()
-        : null);
+      resolvePspDisplayName(row) !== '-'
+        ? resolvePspDisplayName(row)
+        : (rowAny.itemName?.trim() || null);
 
     events.push({
       id: `psp-${row.id}`,
@@ -1001,16 +1259,94 @@ export const buildTimelineEvents = (
     });
 };
 
-const resolvePspItemName = (
+const readChargeLineText = (
+  item: EncounterBillingItemSummary | Record<string, unknown>,
+  ...keys: string[]
+): string | null => {
+  for (const key of keys) {
+    const value = String((item as Record<string, unknown>)?.[key] ?? '').trim();
+    if (value) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const readChargeLineNumber = (
+  item: EncounterBillingItemSummary | Record<string, unknown>,
+  ...keys: string[]
+): number | null => {
+  for (const key of keys) {
+    const raw = (item as Record<string, unknown>)?.[key];
+    if (raw == null || raw === '') {
+      continue;
+    }
+    const value = Number(raw);
+    if (Number.isFinite(value)) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const resolveChargeLineDisplayCode = (
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string | null =>
+  readChargeLineText(item, 'itemCode', 'item_code') ??
+  readChargeLineText(linkedPsp ?? {}, 'itemCode', 'item_code');
+
+const resolveChargeLineDisplayName = (
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string =>
+  readChargeLineText(
+    item,
+    'itemName',
+    'item_name',
+    'itemDescription',
+    'item_description'
+  ) ??
+  readChargeLineText(linkedPsp ?? {}, 'itemName', 'item_name') ??
+  resolveChargeLineDisplayCode(item, linkedPsp) ??
+  '-';
+
+const resolveChargeLineServiceSource = (
+  item: EncounterBillingItemSummary,
+  linkedPsp?: PatientServiceAndProduct | null
+): string =>
+  readChargeLineText(item, 'serviceSource', 'service_source') ??
+  linkedPsp?.serviceSource ??
+  'BILLING_ENGINE';
+
+const resolvePspDisplayCode = (
   row: PatientServiceAndProduct,
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
+): string | null => {
+  const rowAny = row as PatientServiceAndProduct & { itemCode?: string | null };
+  if (rowAny.itemCode?.trim()) {
+    return rowAny.itemCode.trim();
+  }
+
+  const catalogCode = resolveCatalogItemCode(
+    row.billingItemType,
+    row,
+    getPspSourceId(row),
+    lookups
+  );
+  if (catalogCode) {
+    return catalogCode;
+  }
+
+  return null;
+};
+
+const resolvePspDisplayName = (
+  row: PatientServiceAndProduct,
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): string => {
   const rowAny = row as PatientServiceAndProduct & { itemName?: string | null };
-  if (
-    rowAny.itemName?.trim() &&
-    !isTechnicalBillingLabel(rowAny.itemName, row.billingItemType)
-  ) {
+  if (rowAny.itemName?.trim()) {
     return rowAny.itemName.trim();
   }
 
@@ -1018,8 +1354,7 @@ const resolvePspItemName = (
     row.billingItemType,
     row,
     getPspSourceId(row),
-    serviceCatalog,
-    medicationNames
+    lookups
   );
   if (catalogName) {
     return catalogName;
@@ -1097,6 +1432,25 @@ export const isEncounterClosedForBilling = (
   return false;
 };
 
+export const isBillingChargeFinalized = (
+  summary: EncounterBillingSummary | null | undefined
+): boolean => String(summary?.chargeStatus ?? '').toUpperCase() === 'CLOSED';
+
+/** Step 2 services table is view-only after checkout finalize or full billing close. */
+export const isBillingServicesLocked = (
+  summary: EncounterBillingSummary | null | undefined,
+  encounter:
+    | {
+        billingStatus?: string | null;
+        financiallyClosedAt?: string | null;
+      }
+    | null
+    | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+): boolean =>
+  isBillingChargeFinalized(summary) ||
+  isEncounterClosedForBilling(encounter, { chargeRows });
+
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,
   options?: { withHash?: boolean }
@@ -1125,8 +1479,17 @@ const resolveChargeRowPriceSource = (
   item: EncounterBillingItemSummary,
   linkedPsp?: PatientServiceAndProduct | null
 ): string | null => {
-  if (item.priceSource?.trim()) {
-    return item.priceSource.trim();
+  const fromChargeLine = readChargeLineText(
+    item,
+    'priceSource',
+    'price_source'
+  );
+  if (fromChargeLine) {
+    return fromChargeLine;
+  }
+
+  if (readChargeLineText(item, 'priceListItemCode', 'price_list_item_code')) {
+    return 'PRICE_LIST';
   }
 
   const pspPriceSource = (
@@ -1137,87 +1500,13 @@ const resolveChargeRowPriceSource = (
     return pspPriceSource.trim();
   }
 
-  if (item.priceListItemCode?.trim()) {
-    return 'PRICE_LIST';
-  }
-
   return null;
-};
-
-const resolveChargeRowItemName = (
-  item: EncounterBillingItemSummary,
-  pspRows: PatientServiceAndProduct[] = [],
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
-): string => {
-  if (
-    item.itemName?.trim() &&
-    !isTechnicalBillingLabel(item.itemName, item.billingItemType)
-  ) {
-    return item.itemName.trim();
-  }
-
-  const linkedPsp = pspRows.find(
-    row => row.id === item.patientServiceProductId
-  );
-  const linkedPspName = (
-    linkedPsp as PatientServiceAndProduct & { itemName?: string | null }
-  )?.itemName;
-
-  if (
-    linkedPspName?.trim() &&
-    !isTechnicalBillingLabel(linkedPspName, item.billingItemType)
-  ) {
-    return linkedPspName.trim();
-  }
-
-  const catalogName = resolveCatalogItemName(
-    item.billingItemType,
-    linkedPsp,
-    item.sourceId,
-    serviceCatalog,
-    medicationNames
-  );
-  if (catalogName) {
-    return catalogName;
-  }
-
-  if (linkedPsp) {
-    const pspName = resolvePspItemName(
-      linkedPsp,
-      serviceCatalog,
-      medicationNames
-    );
-    if (pspName !== '-') {
-      return pspName;
-    }
-  }
-
-  const serviceRows: PrepareServiceRow[] = serviceCatalog.map(service => ({
-    id: service.serviceId,
-    serviceId: service.serviceId,
-    serviceType: 'SERVICE',
-    serviceName: service.serviceName,
-    selected: true,
-    isExempted: false,
-    quantity: 1,
-    sequence: 1
-  }));
-
-  const resolvedName = resolveBillingItemName(item, serviceRows);
-  if (resolvedName !== '-') {
-    return resolvedName;
-  }
-
-  return '-';
 };
 
 export const mapSummaryItemToRow = (
   item: EncounterBillingItemSummary,
   pspRows: PatientServiceAndProduct[] = [],
-  chargeDate?: string | null,
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  chargeDate?: string | null
 ): UnifiedBillingChargeRow => {
   const linkedPsp = pspRows.find(row => row.id === item.patientServiceProductId);
   const patientAmount = Number(item.patientResponsibilityAmount ?? 0);
@@ -1235,20 +1524,18 @@ export const mapSummaryItemToRow = (
       : `psp-${item.patientServiceProductId}`,
   patientServiceProductId: item.patientServiceProductId,
   chargeLineId: item.chargeLineId,
-  source: linkedPsp?.serviceSource ?? 'BILLING_ENGINE',
+  source: resolveChargeLineServiceSource(item, linkedPsp),
   billingItemType: item.billingItemType ?? '-',
-  itemCode: item.itemCode,
-  itemName: resolveChargeRowItemName(
-    item,
-    pspRows,
-    serviceCatalog,
-    medicationNames
-  ),
-  quantity: item.quantity,
-  unitPrice: item.unitPrice,
-  setupUnitPrice: item.setupUnitPrice,
+  itemCode: resolveChargeLineDisplayCode(item, linkedPsp),
+  itemName: resolveChargeLineDisplayName(item, linkedPsp),
+  quantity: readChargeLineNumber(item, 'quantity') ?? item.quantity ?? 1,
+  unitPrice: readChargeLineNumber(item, 'unitPrice', 'unit_price') ?? item.unitPrice ?? 0,
+  setupUnitPrice:
+    readChargeLineNumber(item, 'setupUnitPrice', 'setup_unit_price') ??
+    item.setupUnitPrice ??
+    null,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
-  netAmount: item.netAmount,
+  netAmount: readChargeLineNumber(item, 'netAmount', 'net_amount') ?? item.netAmount ?? 0,
   patientAmount,
   insuranceAmount: item.insuranceResponsibilityAmount,
   outstandingAmount: patientOutstandingAmount,
@@ -1263,13 +1550,13 @@ export const mapSummaryItemToRow = (
 
 export const mapPspItemToRow = (
   row: PatientServiceAndProduct,
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): UnifiedBillingChargeRow => {
   const rowAny = row as PatientServiceAndProduct & {
     createdDate?: string | null;
     preAuthorizationStatus?: string | null;
     itemCode?: string | null;
+    itemName?: string | null;
     priceSource?: string | null;
   };
 
@@ -1279,16 +1566,14 @@ export const mapPspItemToRow = (
     Number(row.exemptionAmount ?? 0) +
     Number(row.taxAmount ?? 0);
 
-  const itemName = resolvePspItemName(row, serviceCatalog, medicationNames);
-
   return {
     id: `psp-${row.id}`,
     patientServiceProductId: row.id,
     chargeLineId: null,
     source: row.serviceSource ?? 'SERVICE_AND_PRODUCT',
     billingItemType: row.billingItemType,
-    itemCode: rowAny.itemCode ?? null,
-    itemName,
+    itemCode: resolvePspDisplayCode(row, lookups),
+    itemName: resolvePspDisplayName(row, lookups),
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     priceSource: rowAny.priceSource?.trim() || null,
@@ -1340,8 +1625,6 @@ export const mapInvoiceLineItemToRow = (item: InvoiceLineItem): UnifiedBillingCh
 export const resolveDisplayChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
   pspRows: PatientServiceAndProduct[],
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {},
   invoiceLineItems: InvoiceLineItem[] = [],
   resolvedInvoiceId?: number | null
 ): UnifiedBillingChargeRow[] => {
@@ -1353,30 +1636,28 @@ export const resolveDisplayChargeRows = (
     return invoiceLineItems.map(mapInvoiceLineItemToRow);
   }
 
-  return mergeBillingChargeRows(summary, pspRows, serviceCatalog, medicationNames);
+  return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());
 };
 
 export const mergeBillingChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
-  pspRows: PatientServiceAndProduct[],
-  serviceCatalog: BillingServiceLookup[] = [],
-  medicationNames: Record<number, string> = {}
+  pspRows: PatientServiceAndProduct[] = [],
+  lookups: BillingCatalogLookups = emptyBillingCatalogLookups()
 ): UnifiedBillingChargeRow[] => {
+  const summaryItems = summary?.items ?? [];
+
+  if (summaryItems.length > 0) {
+    return summaryItems.map(item =>
+      mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+    );
+  }
+
   const summaryPspIds = new Set(
-    (summary?.items ?? [])
+    summaryItems
       .map(item => item.patientServiceProductId)
       .filter((id): id is number => id != null)
   );
 
-  const summaryRows = (summary?.items ?? []).map(item =>
-    mapSummaryItemToRow(
-      item,
-      pspRows,
-      summary?.chargeDate ?? null,
-      serviceCatalog,
-      medicationNames
-    )
-  );
   const unbilledPspRows = pspRows
     .filter(row => {
       if (summaryPspIds.has(row.id)) {
@@ -1394,21 +1675,9 @@ export const mergeBillingChargeRows = (
 
       return true;
     })
-    .map(row => mapPspItemToRow(row, serviceCatalog, medicationNames));
+    .map(row => mapPspItemToRow(row, lookups));
 
-  const merged = [...summaryRows, ...unbilledPspRows];
-  const seenPspIds = new Set<number>();
-  return merged.filter(row => {
-    const pspId = row.patientServiceProductId;
-    if (pspId == null) {
-      return true;
-    }
-    if (seenPspIds.has(pspId)) {
-      return false;
-    }
-    seenPspIds.add(pspId);
-    return true;
-  });
+  return unbilledPspRows;
 };
 
 export const findRejectedPreAuthItems = (

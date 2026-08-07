@@ -33,7 +33,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isBillingChargeFinalized, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -113,18 +113,15 @@ const Accounting: React.FC = () => {
     setSelectedChargeRowIds([]);
   }, [selectedEncounterId]);
 
-  useEffect(() => {
-    if (selectedEncounterId != null) return;
-    if (!encounters.length) return;
-    setSelectedEncounterId(encounters[0].id);
-  }, [encounters, selectedEncounterId]);
-
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
     setSelectedEncounterId(null);
     setCoverageType('SELF_PAY');
     setSelectedInsuranceId(null);
     setSelectedChargeRowIds([]);
+    setDepositModalOpen(false);
+    setCollectPaymentModalOpen(false);
+    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
   };
 
   const handleCollectRemaining = () => {
@@ -258,11 +255,22 @@ const Accounting: React.FC = () => {
     [selectedEncounter, chargeRows]
   );
 
+  const billingServicesLocked = useMemo(
+    () => isBillingServicesLocked(summary, selectedEncounter, chargeRows),
+    [summary, selectedEncounter, chargeRows]
+  );
+
+  const billingChargeFinalized = useMemo(
+    () => isBillingChargeFinalized(summary),
+    [summary]
+  );
+
   useEffect(() => {
-    if (encounterClosedForBilling) {
+    if (billingServicesLocked) {
       setSelectedChargeRowIds([]);
+      setCollectPaymentModalOpen(false);
     }
-  }, [encounterClosedForBilling, selectedEncounterId]);
+  }, [billingServicesLocked, selectedEncounterId]);
 
   const billingWorkspace = useMemo(
     () => (
@@ -366,21 +374,7 @@ const Accounting: React.FC = () => {
                 onPrepared={refreshAll}
                 chargeRows={chargeRows}
                 loadingBillingMetrics={loadingBillingMetrics}
-              />
-            </div>
-
-            <div className="billing-accounting__panel">
-              <div className="billing-accounting__panel-title">
-                Billing timeline
-                {selectedEncounterLabel && (
-                  <span className="billing-accounting__badge">
-                    Encounter {selectedEncounterLabel}
-                  </span>
-                )}
-              </div>
-              <BillingTimeline
-                events={timelineEvents}
-                loading={loadingSummary || loadingPsp}
+                readOnly={billingChargeFinalized}
               />
             </div>
 
@@ -394,8 +388,8 @@ const Accounting: React.FC = () => {
                 billingSummary={summary}
                 loading={loadingSummary || loadingPsp}
                 currency={summary.currency ?? facilityCurrency}
-                chargeClosed={summary.chargeStatus === 'CLOSED'}
-                disabled={encounterClosedForBilling}
+                chargeClosed={billingChargeFinalized}
+                disabled={billingServicesLocked}
                 selectedRowIds={selectedChargeRowIds}
                 onSelectionChange={setSelectedChargeRowIds}
                 onCollectPayment={() => setCollectPaymentModalOpen(true)}
@@ -459,10 +453,11 @@ const Accounting: React.FC = () => {
       selectedInsuranceId,
       encounterRemainingToPay,
       loadingBillingMetrics,
+      billingServicesLocked,
+      billingChargeFinalized,
       encounterClosedForBilling,
       selectedEncounterLabel,
       summary,
-      timelineEvents,
       walletBalance,
       waseelCoverage,
       waseelCoverageError
@@ -480,12 +475,6 @@ const Accounting: React.FC = () => {
         <Invoices
           patient={patient}
           walletBalance={walletBalance}
-          onSimulatedInvoicePayment={() => {
-            void refreshAll();
-          }}
-          onInvoiceGenerated={() => {
-            void refreshAll();
-          }}
         />
       )
     },
@@ -512,16 +501,34 @@ const Accounting: React.FC = () => {
             }
           />
         )}
-        <MyTab key={patient?.id ?? 'no-patient'} data={tabData} lazy />
+        <MyTab key={patientId ?? 'no-patient'} data={tabData} lazy />
       </div>
 
       {patient?.id ? (
-        <div className="right-box">
+        <div className="right-box billing-accounting-page__sidebar">
           <PatientBillingSide
             patient={patient}
             onDeposit={() => setDepositModalOpen(true)}
             setPatient={handleClosePatient}
           />
+          <div className="billing-accounting billing-accounting__sidebar-timeline">
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                Billing timeline
+                {selectedEncounterLabel && (
+                  <span className="billing-accounting__badge">
+                    Encounter {selectedEncounterLabel}
+                  </span>
+                )}
+              </div>
+              <BillingTimeline
+                events={timelineEvents}
+                loading={
+                  selectedEncounterId != null && (loadingSummary || loadingPsp)
+                }
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="right-box">
@@ -545,6 +552,7 @@ const Accounting: React.FC = () => {
             patient={patient}
             encounter={selectedEncounter}
             encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
             currency={summary.currency ?? facilityCurrency}
             onDeposited={refreshAll}
             onReceiptReady={receipt =>
@@ -562,6 +570,7 @@ const Accounting: React.FC = () => {
             patient={patient}
             encounter={selectedEncounter}
             encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
             currency={summary.currency ?? facilityCurrency}
             walletBalance={walletBalance}
             reservedBalance={sumEncounterReservedAmount(summary)}

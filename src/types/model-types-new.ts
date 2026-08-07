@@ -6037,6 +6037,8 @@ export type EncounterBillingItemSummary = {
   sourceId: number | null;
   itemCode: string | null;
   itemName: string | null;
+  itemDescription?: string | null;
+  serviceSource?: string | null;
   quantity: number;
   unitPrice: number;
   setupUnitPrice?: number | null;
@@ -6125,6 +6127,7 @@ export type EncounterBillingSummary = {
 export type CreateAdvancePaymentRequest = {
   patientId: number;
   encounterId?: number | null;
+  facilityId?: number | null;
   paymentCategory: string;
   payerType: string;
   payerId?: number | null;
@@ -6162,6 +6165,7 @@ export type BillingPaymentReservationResult = {
 export type BillingPaymentResult = {
   paymentId: number;
   paymentNumber: string;
+  receiptNumber?: string | null;
   paymentTransactionId: number | null;
   paymentTransactionNumber: string | null;
   walletId: number;

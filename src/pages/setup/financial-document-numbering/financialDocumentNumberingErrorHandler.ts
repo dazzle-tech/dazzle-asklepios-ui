@@ -11,7 +11,8 @@ export const FINANCIAL_DOCUMENT_NUMBERING_ERROR_MAP: Record<string, string> = {
   'sequence.length.invalid': 'Sequence length must be between 1 and 12.',
   'starting.number.invalid': 'Starting number must be at least 1.',
   'document.type.duplicate': 'Duplicate document types are not allowed.',
-  'document.type.exists': 'Document numbering already exists for this document type.',
+  'document.type.exists':
+    'Document numbering already exists for this facility and document type. Edit the existing row instead of creating a new one.',
   'facility.mismatch': 'Facility mismatch. Please refresh and try again.',
   'configuration.inactive':
     'Document numbering must be active before generating numbers.',
@@ -44,7 +45,7 @@ export const extractFinancialDocumentNumberingErrorMessage = (
     case 'document.type.duplicate':
       return 'Duplicate document types are not allowed.';
     case 'document.type.exists':
-      return 'Document numbering already exists for this document type.';
+      return 'Document numbering already exists for this facility and document type. Edit the existing row instead of creating a new one.';
     case 'facility.mismatch':
       return 'Facility mismatch. Please refresh and try again.';
     case 'configuration.inactive':

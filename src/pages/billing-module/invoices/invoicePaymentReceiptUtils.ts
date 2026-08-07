@@ -7,7 +7,8 @@ import type {
 import type { PatientFinancialInvoice } from '@/services/billing/invoiceGenerationService';
 import {
   resolvePatientDisplayName,
-  resolvePatientMrn
+  resolvePatientMrn,
+  resolvePaymentReceiptNumber
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 export const buildInvoicePaymentReceipt = ({
@@ -58,8 +59,7 @@ export const buildInvoicePaymentReceipt = ({
   const netAmount = amount;
 
   return {
-    receiptNumber:
-      paymentResult.paymentNumber ?? String(paymentResult.paymentId ?? '-'),
+    receiptNumber: resolvePaymentReceiptNumber(paymentResult),
     transactionNumber: paymentResult.paymentTransactionNumber ?? '-',
     paymentDate: new Date().toLocaleString(),
     patientName: resolvePatientDisplayName(patient),

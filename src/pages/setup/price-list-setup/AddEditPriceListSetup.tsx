@@ -19,6 +19,11 @@ import {
 } from '@/utils/uiReducerActions';
 
 import {
+  extractApiErrorMessage,
+  PRICE_LIST_SETUP_ERROR_MAP
+} from '@/utils/apiErrorMessage';
+
+import {
   extractPaginationFromLink
 } from '@/utils/paginationHelper';
 
@@ -814,15 +819,13 @@ React.FC<Props> = ({
       } catch (
         error: any
       ) {
-        const detail =
-          error?.data?.detail ||
-          error?.data?.title ||
-          error?.data?.message;
-
         dispatch(
           notify({
             msg:
-              detail ||
+              extractApiErrorMessage(
+                error,
+                PRICE_LIST_SETUP_ERROR_MAP
+              ) ||
               (
                 isEdit
                   ? 'Failed to update price list'

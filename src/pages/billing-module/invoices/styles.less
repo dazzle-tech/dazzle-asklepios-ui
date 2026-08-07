@@ -704,11 +704,35 @@
   z-index: 1060 !important;
   pointer-events: auto;
 
-  .rs-modal-dialog,
-  .rs-modal-content,
+  &.rs-modal,
+  .rs-modal-dialog {
+    pointer-events: auto;
+    height: 100vh;
+    max-height: 100vh;
+    margin: 0;
+  }
+
+  .rs-modal-content {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  .rs-modal-header,
+  .rs-modal-footer {
+    flex-shrink: 0;
+  }
+
   .rs-modal-body {
     pointer-events: auto;
-    overflow: visible !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    overflow-x: hidden;
+    overflow-y: auto !important;
   }
 
   .rs-radio-group {
@@ -735,10 +759,15 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
+  margin-bottom: 4px;
   padding: 12px;
   border: 1px solid var(--rs-border-primary, #e5e5ea);
   border-radius: 8px;
   background: var(--rs-bg-well, #fafafa);
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   div {
     display: flex;
@@ -808,5 +837,66 @@
     margin-bottom: 4px;
     font-size: 12px;
     color: var(--rs-text-secondary, #8e8e93);
+  }
+}
+
+.pay-invoice-modal {
+  &__summary {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid var(--rs-border-primary, #e5e5ea);
+    border-radius: 8px;
+    background: var(--rs-bg-well, #f7f7fa);
+  }
+
+  &__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--rs-text-secondary, #8e8e93);
+
+    strong {
+      color: var(--rs-text-heading, #1c1c1e);
+      font-size: 14px;
+    }
+
+    &--highlight strong {
+      color: var(--primary-red, #e74c3c);
+    }
+  }
+
+  &__section {
+    margin-bottom: 14px;
+  }
+
+  &__detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--rs-border-primary, #e5e5ea);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  &__detail-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.45;
   }
 }

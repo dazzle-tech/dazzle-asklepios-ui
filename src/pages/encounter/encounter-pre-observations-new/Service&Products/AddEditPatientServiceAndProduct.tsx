@@ -10,6 +10,7 @@ import {
   useUpdatePatientServiceOrProductMutation
 } from '@/services/encounters/patientServicesAndProductsService';
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   buildBillingRuleEvaluationRequest,
@@ -143,6 +144,51 @@ const AddEditPatientServiceAndProduct = ({
     useUpdatePatientServiceOrProductMutation();
 
   const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+  const [previewCatalogItemPricing] = usePreviewCatalogItemPricingMutation();
+
+  const resolveUnitPrice = async (
+    nextRecord: PatientServiceAndProduct,
+    setupFallbackPrice: number
+  ) => {
+    if (!patient?.id || !encounter?.id || !selectedFacilityId) {
+      return setupFallbackPrice;
+    }
+
+    const billingItemType = String(nextRecord.billingItemType ?? '');
+
+    try {
+      const preview = await previewCatalogItemPricing({
+        patientId: patient.id,
+        encounterId: encounter.id,
+        facilityId: Number(selectedFacilityId),
+        currency:
+          nextRecord.currency ||
+          authSlice?.tenant?.selectedFacility?.defaultCurrency ||
+          'SAR',
+        billingItemType,
+        brandMedicationId:
+          billingItemType === 'MEDICATION'
+            ? nextRecord.brandMedicationId ?? undefined
+            : undefined,
+        diagnosticTestId: ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(
+          billingItemType
+        )
+          ? nextRecord.diagnosticTestId ?? undefined
+          : undefined,
+        serviceId:
+          billingItemType === 'SERVICE' ? nextRecord.serviceId ?? undefined : undefined,
+        procedureId:
+          billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
+        quantity: Number(nextRecord.quantity ?? 1),
+        coverageType: 'SELF_PAY',
+        patientInsuranceId: null
+      }).unwrap();
+
+      return Number(preview.unitPrice ?? preview.setupUnitPrice ?? setupFallbackPrice ?? 0);
+    } catch {
+      return setupFallbackPrice;
+    }
+  };
 
   const extractErrorMessage = (response: any) => {
     try {
@@ -490,13 +536,24 @@ const AddEditPatientServiceAndProduct = ({
           loading={itemSelectConfig.loading}
           hasMore={itemSelectConfig.hasMore}
           onFetchMore={async () => {}}
-          onSelectItem={selectedItem => {
-            setPatientServiceAndProduct({
+          onSelectItem={async selectedItem => {
+            const setupFallbackPrice = Number(selectedItem?.price ?? 0);
+            const nextRecord = {
               ...patientServiceAndProduct,
               [itemSelectConfig.fieldName]:
                 selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
-              unitPrice: selectedItem?.price ?? 0,
-              currency: selectedItem?.currency ?? ''
+              unitPrice: 0,
+              currency:
+                selectedItem?.currency ??
+                authSlice?.tenant?.selectedFacility?.defaultCurrency ??
+                'SAR'
+            };
+
+            const unitPrice = await resolveUnitPrice(nextRecord, setupFallbackPrice);
+
+            setPatientServiceAndProduct({
+              ...nextRecord,
+              unitPrice
             });
           }}
         />

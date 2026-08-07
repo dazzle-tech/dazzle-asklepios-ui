@@ -60,7 +60,8 @@ import { useGetPatientLedgerSummaryQuery } from '@/services/encounters/patientPa
 
 import {
   resolvePatientWalletAvailable,
-  resolvePatientWalletReserved
+  resolvePatientWalletReserved,
+  resolvePaymentReceiptNumber
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
@@ -2124,9 +2125,7 @@ const PatientPaymentInfo =
 
           return {
             receiptNumber:
-              paymentResult?.paymentNumber ??
-              billingSummary.chargeNumber ??
-              '-',
+              resolvePaymentReceiptNumber(paymentResult),
 
             transactionNumber:
               paymentResult?.paymentTransactionNumber ??
@@ -2667,7 +2666,15 @@ const PatientPaymentInfo =
 
             patientId,
 
-            encounterId,
+            encounterId:
+              encounterId > 0
+                ? encounterId
+                : null,
+
+            facilityId:
+              facilityId > 0
+                ? facilityId
+                : null,
 
             paymentCategory:
               resolvePaymentCategory(
