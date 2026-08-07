@@ -643,7 +643,6 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       customClassName="child-right-modal billing-add-service-modal"
       position="right"
       size="30vw"
-      bodyheight="70vh"
       content={modalContent}
     />
   );

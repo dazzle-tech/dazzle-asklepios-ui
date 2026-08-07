@@ -1432,6 +1432,25 @@ export const isEncounterClosedForBilling = (
   return false;
 };
 
+export const isBillingChargeFinalized = (
+  summary: EncounterBillingSummary | null | undefined
+): boolean => String(summary?.chargeStatus ?? '').toUpperCase() === 'CLOSED';
+
+/** Step 2 services table is view-only after checkout finalize or full billing close. */
+export const isBillingServicesLocked = (
+  summary: EncounterBillingSummary | null | undefined,
+  encounter:
+    | {
+        billingStatus?: string | null;
+        financiallyClosedAt?: string | null;
+      }
+    | null
+    | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+): boolean =>
+  isBillingChargeFinalized(summary) ||
+  isEncounterClosedForBilling(encounter, { chargeRows });
+
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,
   options?: { withHash?: boolean }

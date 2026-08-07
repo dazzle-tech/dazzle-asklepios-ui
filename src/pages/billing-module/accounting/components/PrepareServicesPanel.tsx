@@ -44,6 +44,7 @@ type PrepareServicesPanelProps = {
   onPrepared?: () => void;
   chargeRows?: UnifiedBillingChargeRow[];
   loadingBillingMetrics?: boolean;
+  readOnly?: boolean;
 };
 
 const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
@@ -60,7 +61,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   onInsuranceChange,
   onPrepared,
   chargeRows = [],
-  loadingBillingMetrics = false
+  loadingBillingMetrics = false,
+  readOnly = false
 }) => {
   const dispatch = useAppDispatch();
   const [serviceRows, setServiceRows] = useState<PrepareServiceRow[]>([]);
@@ -71,6 +73,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
 
   const isInsurance = coverageType === 'INSURANCE';
   const servicesArePrepared = (summary.items ?? []).length > 0;
+  const servicesLocked = readOnly || servicesArePrepared;
   const patientShare = computeEncounterPatientShare(summary, chargeRows);
   const remainingToPay = loadingBillingMetrics
     ? null
@@ -245,7 +248,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
           checked={allSelected}
           indeterminate={!allSelected && someSelected}
           onChange={(_, checked) => toggleAllSelected(checked)}
-          disabled={servicesArePrepared}
+          disabled={servicesLocked}
         />
       ),
       width: 48,
@@ -253,7 +256,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         <Checkbox
           checked={row.selected}
           onChange={(_, checked) => updateServiceRow(row.serviceId, { selected: checked })}
-          disabled={servicesArePrepared}
+          disabled={servicesLocked}
         />
       )
     },
@@ -331,6 +334,15 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         engine (price list first, then setup fallback) based on setup billing rules.
       </Text>
 
+      {readOnly && (
+        <Text size="sm" muted style={{ marginBottom: 12 }}>
+          <Tag color="green" size="sm">
+            Checkout finalized
+          </Tag>{' '}
+          Prepare & calculate is locked. Services are view-only until billing is reopened.
+        </Text>
+      )}
+
       <Form fluid>
         <div
           style={{
@@ -358,7 +370,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
             ]}
             selectDataLabel="label"
             selectDataValue="value"
-            disabled={servicesArePrepared}
+            disabled={servicesLocked}
           />
 
           <MyInput
@@ -373,7 +385,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
             selectData={insuranceOptions}
             selectDataLabel="label"
             selectDataValue="value"
-            disabled={!isInsurance || servicesArePrepared}
+            disabled={!isInsurance || servicesLocked}
           />
         </div>
       </Form>
@@ -399,7 +411,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
             <MyButton
               appearance="primary"
               loading={preparing}
-              disabled={servicesArePrepared}
+              disabled={servicesLocked}
               onClick={handlePrepare}
             >
               Prepare & calculate

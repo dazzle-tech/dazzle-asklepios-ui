@@ -704,11 +704,35 @@
   z-index: 1060 !important;
   pointer-events: auto;
 
-  .rs-modal-dialog,
-  .rs-modal-content,
+  &.rs-modal,
+  .rs-modal-dialog {
+    pointer-events: auto;
+    height: 100vh;
+    max-height: 100vh;
+    margin: 0;
+  }
+
+  .rs-modal-content {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  .rs-modal-header,
+  .rs-modal-footer {
+    flex-shrink: 0;
+  }
+
   .rs-modal-body {
     pointer-events: auto;
-    overflow: visible !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    overflow-x: hidden;
+    overflow-y: auto !important;
   }
 
   .rs-radio-group {
@@ -735,10 +759,15 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
+  margin-bottom: 4px;
   padding: 12px;
   border: 1px solid var(--rs-border-primary, #e5e5ea);
   border-radius: 8px;
   background: var(--rs-bg-well, #fafafa);
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   div {
     display: flex;
