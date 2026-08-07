@@ -88,8 +88,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
   const [formKey, setFormKey] = useState(0);
 
   const patientConditions = useEnumOptions('Condition');
-  const statusOptions = useEnumOptions('EncounterVaccinationStatus');
 
+  const { data: statusLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
@@ -252,9 +252,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               fieldLabel="Condition Status"
               fieldType="select"
               fieldName="conditionStatus"
-              selectData={statusOptions ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
+              selectData={statusLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              disableByField="isValid"
               record={formData}
               setRecord={setFormData}
               searchable={false}

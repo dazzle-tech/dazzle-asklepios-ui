@@ -763,20 +763,28 @@ const UrgentCareTriage = () => {
     });
   };
 
-  const handleCancelEncounter = async () => {
-    try {
-      const id = encounter?.id ?? encounter?.key;
-      if (id) {
-        await cancelEncounter({ id }).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+const handleCancelEncounter = async () => {
+  try {
+    const id = encounter?.id ?? encounter?.key;
+
+    if (id) {
+      await cancelEncounter({ id }).unwrap();
+
+      await refetchEncounter();
+
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      setOpen(false);
     }
-  };
+  } catch (error) {
+    console.error('Encounter completion error:', error);
+    dispatch(
+      notify({
+        msg: 'An error occurred while canceling the encounter',
+        sev: 'error'
+      })
+    );
+  }
+};
 
   const buildEncounterUpdateBody = (row: any, patch: Partial<any>) => {
     const body: any = {

@@ -47,6 +47,9 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
     cancellationReason: ''
   });
 
+  const { data: diagnosisStatusLov } =
+  useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
+
   const [pagination, setPagination] = useState({
     page: 0,
     size: 15,
@@ -217,9 +220,15 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
       key: 'conditionStatus',
       title: 'CONDITION STATUS',
       flexGrow: 3,
-      render: (row: any) => (
-        <p>{formatEnumString(row?.conditionStatus)}</p>
-      )
+      render: (row: any) => {
+        const value = conjureValueBasedOnKeyFromList(
+          diagnosisStatusLov?.object ?? [],
+          row?.conditionStatus,
+          'lovDisplayVale'
+        );
+
+        return value ?? row?.conditionStatus ?? '';
+      }
     },
     {
       key: 'status',

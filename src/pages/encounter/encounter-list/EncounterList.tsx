@@ -63,7 +63,7 @@ import {
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
-import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
+// import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -227,7 +227,6 @@ const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;

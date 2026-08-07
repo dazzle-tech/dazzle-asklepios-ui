@@ -667,7 +667,8 @@ const Tests = forwardRef<any, Props>(
             ![
               DiagnosticOrderTestStatus.RESULT_READY,
               DiagnosticOrderTestStatus.RESULT_APPROVED,
-              DiagnosticOrderTestStatus.REJECTED
+              DiagnosticOrderTestStatus.REJECTED,
+              DiagnosticOrderTestStatus.ACCEPTED
             ].includes(rowData.processingStatus);
 
           const canUndoAccept =
