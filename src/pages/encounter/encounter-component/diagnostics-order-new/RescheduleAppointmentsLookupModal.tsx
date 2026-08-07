@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -30,6 +30,7 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
   onSuccess
 }) => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
   const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
   const [rescheduleDiagnosticTestAppointment, { isLoading: isSubmitting }] =
     useRescheduleDiagnosticTestAppointmentMutation();
@@ -51,6 +52,9 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
     const n = Number(orderTest?.test?.id ?? orderTest?.testId ?? orderTest?.diagnosticTestId);
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [orderTest]);
+const selectedDepartment = authSlice.selectedDepartment;
+  const selectedDepartmentId = selectedDepartment?.departmentId;
+
 
   useEffect(() => {
     if (!open) return;
@@ -59,76 +63,134 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
     setRescheduleDto({ ...newDiagnosticTestAppointmentRescheduleDTO });
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !resolvedFacilityId || !resourceId) {
+
+useEffect(() => {
+  if (!open || !resolvedFacilityId || !resourceId) {
+    setSlots([]);
+    return;
+  }
+
+  const loadAvailableAppointments = async () => {
+
+
+    try {
+      const response = await searchAppointments({
+        filter: {
+          facility: resolvedFacilityId,
+          resourceType: 'DIAGNOSTIC_TEST' as any,
+          resourceId,
+          bookingMode: ['SLOT'] as any,
+          status: null,
+          patientId: null,
+          departmentIds: selectedDepartmentId ? [selectedDepartmentId] : []
+        },
+        page: 0,
+        size: 500,
+        sort: 'startDatetime,asc'
+      }).unwrap();
+
+  
+
+
+      const freeSlots = (response?.data ?? [])
+        .filter((row: any) => {
+          const status = String(
+            row?.status ??
+            row?.appointmentStatus ??
+            ''
+          )
+            .trim()
+            .toUpperCase();
+
+          const bookingMode = String(
+            row?.bookingMode ??
+            row?.booking_mode ??
+            ''
+          )
+            .trim()
+            .toUpperCase();
+
+          return (
+            status === 'NEW' ||
+            status === 'NEW_APPOINTMENT' ||
+            status === 'NEW-APPOINTMENT'
+          );
+        })
+        .sort((a: any, b: any) => {
+          const aDate = new Date(
+            a?.startDatetime ??
+            a?.startDateTime ??
+            a?.appointmentStart ??
+            0
+          ).getTime();
+
+          const bDate = new Date(
+            b?.startDatetime ??
+            b?.startDateTime ??
+            b?.appointmentStart ??
+            0
+          ).getTime();
+
+          return aDate - bDate;
+        });
+
+
+
+      setSlots(freeSlots);
+    } catch (error) {
+      console.error('SEARCH FAILED:', error);
       setSlots([]);
-      return;
     }
+  };
 
-    const loadAvailableAppointments = async () => {
-      try {
-        const response = await searchAppointments({
-          filter: {
-            facility: resolvedFacilityId,
-            resourceType: 'DIAGNOSTIC_TEST' as any,
-            resourceId,
-            bookingMode: ['SLOT'] as any,
-            status: null,
-            patientId: null,
-            departmentIds: null
-          },
-          page: 0,
-          size: 500,
-          sort: 'startDatetime,asc'
-        }).unwrap();
-
-        const freeSlots = (response?.data ?? [])
-          .filter((row: any) => {
-            const status = String(row?.status ?? row?.appointmentStatus ?? '')
-              .trim()
-              .toUpperCase();
-            return status === 'NEW' || status === 'NEW_APPOINTMENT' || status === 'NEW-APPOINTMENT';
-          })
-          .sort((a: any, b: any) => {
-            const aDate = new Date(a?.startDatetime ?? a?.appointmentStart ?? 0).getTime();
-            const bDate = new Date(b?.startDatetime ?? b?.appointmentStart ?? 0).getTime();
-            return aDate - bDate;
-          });
-
-        setSlots(freeSlots);
-      } catch {
-        setSlots([]);
-      }
-    };
-
-    void loadAvailableAppointments();
-  }, [open, searchAppointments, resolvedFacilityId, resourceId]);
-
+  void loadAvailableAppointments();
+}, [open, searchAppointments, resolvedFacilityId, resourceId]);
   const closeModal = (next: boolean) => {
     setOpen(next);
     if (!next) onClose?.();
   };
 
-  const daySlots = useMemo(() => {
-    const selectedDate = selectedDateRecord.selectedDate
-      ? new Date(selectedDateRecord.selectedDate)
-      : new Date();
-    const now = new Date();
-    const isSameDay = (d1: Date, d2: Date) =>
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate();
+const daySlots = useMemo(() => {
+  const selectedDate = selectedDateRecord.selectedDate
+    ? new Date(`${selectedDateRecord.selectedDate}T00:00:00`)
+    : new Date();
 
-    return (slots ?? []).filter((slot: any) => {
-      const startRaw = slot?.startDatetime ?? slot?.appointmentStart ?? slot?.appointment_start;
-      const start = startRaw ? new Date(startRaw) : null;
-      if (!start || Number.isNaN(start.getTime())) return false;
-      if (!isSameDay(start, selectedDate)) return false;
-      // Prevent showing already-passed slot hours for today.
-      if (isSameDay(selectedDate, now)) return start.getTime() >= now.getTime();
-      return true;
-    });
-  }, [slots, selectedDateRecord.selectedDate]);
+  const now = new Date();
+
+  const isSameDay = (d1: Date, d2: Date) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+
+  const result = (slots ?? []).filter((slot: any) => {
+    const startRaw =
+      slot?.startDatetime ??
+      slot?.startDateTime ??
+      slot?.appointmentStart ??
+      slot?.appointment_start;
+
+    const start = startRaw ? new Date(startRaw) : null;
+
+   
+    if (!start || Number.isNaN(start.getTime())) {
+      return false;
+    }
+
+    if (!isSameDay(start, selectedDate)) {
+      return false;
+    }
+
+    if (isSameDay(selectedDate, now)) {
+      const keep = start.getTime() >= now.getTime();
+      return keep;
+    }
+
+    return true;
+  });
+
+
+  return result;
+}, [slots, selectedDateRecord.selectedDate]);
 
   const tableColumns = useMemo(
     () => [
@@ -156,24 +218,50 @@ const RescheduleAppointmentsLookupModal: React.FC<Props> = ({
     [selectedSlotId]
   );
 
-  const tableRows = useMemo(
-    () =>
-      daySlots.map((slot: any) => {
-        const slotKey = String(slot?.id ?? slot?.key ?? '');
-        const start = new Date(slot?.startDatetime ?? slot?.appointmentStart ?? 0);
-        const end = new Date(slot?.endDatetime ?? slot?.appointmentEnd ?? 0);
-        return {
-          slotKey,
-          dateLabel: Number.isNaN(start.getTime()) ? '-' : start.toLocaleDateString(),
-          timeLabel:
-            Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())
-              ? '-'
-              : `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        };
-      }),
-    [daySlots]
-  );
+const tableRows = useMemo(
+  () =>
+    daySlots.map((slot: any) => {
+      const slotKey = String(
+        slot?.id ??
+        slot?.key ??
+        ''
+      );
 
+      const start = new Date(
+        slot?.startDatetime ??
+        slot?.startDateTime ??
+        slot?.appointmentStart ??
+        0
+      );
+
+      const end = new Date(
+        slot?.endDatetime ??
+        slot?.endDateTime ??
+        slot?.appointmentEnd ??
+        0
+      );
+
+      return {
+        slotKey,
+        dateLabel: Number.isNaN(start.getTime())
+          ? '-'
+          : start.toLocaleDateString(),
+
+        timeLabel:
+          Number.isNaN(start.getTime()) ||
+          Number.isNaN(end.getTime())
+            ? '-'
+            : `${start.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+              })} - ${end.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}`
+      };
+    }),
+  [daySlots]
+);
   const selectedSlot = useMemo(
     () => daySlots.find((slot: any) => String(slot?.id ?? slot?.key ?? '') === selectedSlotId),
     [daySlots, selectedSlotId]
