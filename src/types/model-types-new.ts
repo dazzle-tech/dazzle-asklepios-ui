@@ -6334,6 +6334,7 @@ export type PrepareDefaultServicesRequest = {
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
   requestId: string;
+  payZeroNow?: boolean | null;
 };
 
 export type PreparedDefaultServiceResult = {

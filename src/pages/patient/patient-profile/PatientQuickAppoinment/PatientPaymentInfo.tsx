@@ -146,6 +146,7 @@ export type PatientPaymentInfoHandle = {
   confirm: () => Promise<boolean>;
   clear: () => void;
   validate: () => boolean;
+  wasPayZeroNowConfirmed: () => boolean;
 };
 
 type PatientPaymentInfoProps = {
@@ -1517,6 +1518,8 @@ const PatientPaymentInfo =
           string | undefined
         >();
 
+      const lastConfirmPayZeroNowRef = useRef(false);
+
       useEffect(() => {
         lastPricingPreviewKeyRef.current =
           undefined;
@@ -2463,7 +2466,12 @@ const PatientPaymentInfo =
                 requestId:
                   makeRequestId(
                     'PREPARE-DEFAULT-SERVICES'
-                  )
+                  ),
+
+                payZeroNow:
+                  formState.payZeroNow
+                    ? true
+                    : null
               };
 
               const result =
@@ -2546,7 +2554,12 @@ const PatientPaymentInfo =
             requestId:
               makeRequestId(
                 'PREPARE-DEFAULT-SERVICES'
-              )
+              ),
+
+            payZeroNow:
+              formState.payZeroNow
+                ? true
+                : null
           };
 
           const result =
@@ -2788,6 +2801,8 @@ const PatientPaymentInfo =
 
       const handleConfirm =
         async () => {
+          lastConfirmPayZeroNowRef.current = false;
+
           if (
             isViewOnlyMode
           ) {
@@ -3001,11 +3016,13 @@ const PatientPaymentInfo =
                 onNothingToPay
               ) {
                 onNothingToPay();
-              } else if (
+              } else               if (
                 onReceiptClosed
               ) {
                 onReceiptClosed();
               }
+
+              lastConfirmPayZeroNowRef.current = true;
 
               return true;
             }
@@ -3171,7 +3188,9 @@ const PatientPaymentInfo =
           clear:
             handleClear,
 
-          validate
+          validate,
+
+          wasPayZeroNowConfirmed: () => lastConfirmPayZeroNowRef.current
         })
       );
 

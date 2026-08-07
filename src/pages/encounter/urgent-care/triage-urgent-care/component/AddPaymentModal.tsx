@@ -12,7 +12,7 @@ type AddPaymentModalProps = {
   setPayment: (value: any) => void;
   patientInsurance: any;
   setPatientInsurance: (value: any) => void;
-  onSave: () => Promise<void>;
+  onSave: (options?: { payZeroNow?: boolean }) => Promise<void>;
 };
 
 const AddPaymentModal = ({
@@ -30,7 +30,8 @@ const AddPaymentModal = ({
   const handleSave = async () => {
     const ok = await paymentInfoRef.current?.confirm?.();
     if (!ok) return;
-    await onSave();
+    const payZeroNow = paymentInfoRef.current?.wasPayZeroNowConfirmed?.() ?? false;
+    await onSave({ payZeroNow });
   };
 
   return (

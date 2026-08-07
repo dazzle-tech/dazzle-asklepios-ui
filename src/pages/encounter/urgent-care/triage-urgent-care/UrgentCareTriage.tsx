@@ -31,6 +31,11 @@ import {
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  buildPostPaymentEncounterStatusPatch,
+  getEncounterTreatmentStatus,
+  POST_PAYMENT_TREATMENT_STATUS
+} from '@/utils/encounterStatusHelpers';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -472,6 +477,7 @@ const UrgentCareTriage = () => {
   const [paymentRow, setPaymentRow] = useState<any>(null);
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
+  const [encounterStatusOverrides, setEncounterStatusOverrides] = useState<Record<number, string>>({});
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
@@ -614,7 +620,7 @@ const UrgentCareTriage = () => {
     const rows = (encountersPaged?.data ?? []) as any[];
 
     return rows.map((encounterRow: any) => {
-      const statusCode = String(encounterRow?.status ?? '').toUpperCase();
+      const statusCode = getEncounterTreatmentStatus(encounterRow);
       const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
 
       const patientId = encounterRow?.patient?.id ?? null;
@@ -626,6 +632,8 @@ const UrgentCareTriage = () => {
       const patientMrn = patientMerged?.medicalRecordNumber;
       const dateOfBirth = patientMerged?.dateOfBirth ?? patientMerged?.dob ?? null;
       const sexAtBirth = formatEnumString(patientMerged?.sexAtBirth) || '';
+
+      const statusOverride = encounterStatusOverrides[encounterRow?.id];
 
       return {
         ...encounterRow,
@@ -644,8 +652,9 @@ const UrgentCareTriage = () => {
         patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
         visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
         encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
-         status:encounterRow?.status ?? statusCode,
-        encounterStatus: encounterRow?.encounterStatus ,
+         status: statusOverride ?? statusCode,
+        treatmentStatus: statusOverride ?? encounterRow?.treatmentStatus ?? statusCode,
+        encounterStatus: statusOverride ?? encounterRow?.encounterStatus,
         plannedStartDate: encounterRow?.encounterDate ?? null,
         createdAt:
           encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
@@ -653,7 +662,28 @@ const UrgentCareTriage = () => {
           encounterRow?.updatedDate ?? encounterRow?.updatedAt ?? encounterRow?.updated_at ?? null
       };
     });
-  }, [encountersPaged, patientByIdMap]);
+  }, [encountersPaged, patientByIdMap, encounterStatusOverrides]);
+
+  useEffect(() => {
+    const rows = (encountersPaged?.data ?? []) as any[];
+    if (!rows.length) return;
+
+    setEncounterStatusOverrides(previous => {
+      const next = { ...previous };
+      let changed = false;
+
+      rows.forEach(row => {
+        const id = row?.id;
+        if (id == null || !next[id]) return;
+        if (String(getEncounterTreatmentStatus(row) ?? '').toUpperCase() === 'WAITING_TRIAGE') {
+          delete next[id];
+          changed = true;
+        }
+      });
+
+      return changed ? next : previous;
+    });
+  }, [encountersPaged]);
 
   const emergencyLevelLabelMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -788,22 +818,24 @@ const handleCancelEncounter = async () => {
 
   const buildEncounterUpdateBody = (row: any, patch: Partial<any>) => {
     const body: any = {
-      id: row?.id,
+      id: row?.id ?? row?.key,
       patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
       encounterNumber: row?.encounterNumber ?? null,
-      facilityId: row?.facilityId,
-      departmentId: row?.departmentId,
+      facilityId: row?.facilityId ?? selectedDepartment?.facilityId ?? null,
+      departmentId: row?.departmentId ?? departmentId ?? null,
       practitionerId: row?.practitionerId ?? null,
       encounterType: row?.encounterType,
       encounterReason: row?.encounterReason,
       followUpEncounterId: row?.followUpEncounterId ?? null,
-      priorityLevel: row?.priorityLevel,
+      priorityLevel: row?.priorityLevel ?? row?.encounterPriority ?? null,
       originType: row?.originType ?? null,
       originName: row?.originName ?? null,
       notes: row?.notes ?? null,
       departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
-      encounterDate: row?.encounterDate ?? null,
-      status: row?.status,
+      encounterDate: row?.encounterDate ?? row?.plannedStartDate ?? null,
+      status: getEncounterTreatmentStatus(row) || row?.status,
+      treatmentStatus: row?.treatmentStatus ?? getEncounterTreatmentStatus(row) ?? row?.status,
+      encounterStatus: row?.encounterStatus ?? null,
       chiefComplaint: row?.chiefComplaint ?? null,
       hasPrescription: row?.hasPrescription ?? false,
       hasOrder: row?.hasOrder ?? false,
@@ -811,6 +843,13 @@ const handleCancelEncounter = async () => {
     };
 
     Object.assign(body, patch ?? {});
+
+    if (patch?.status != null && patch?.treatmentStatus == null) {
+      body.treatmentStatus = patch.status;
+    }
+    if (patch?.treatmentStatus != null && patch?.status == null) {
+      body.status = patch.treatmentStatus;
+    }
 
     const missing: string[] = [];
     if (body.id == null) missing.push('id');
@@ -830,7 +869,14 @@ const handleCancelEncounter = async () => {
   };
 
   const isPendingPaymentStatus = (rowData: any) =>
-    String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === 'PENDING_PAYMENT';
+    getEncounterTreatmentStatus(rowData) === 'PENDING_PAYMENT';
+
+  const getEncounterRowId = (rowData: any): number | null => {
+    const id = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
+    if (id == null) return null;
+    const numericId = Number(id);
+    return Number.isNaN(numericId) ? null : numericId;
+  };
 
   const handleAddPayment = async (rowData: any): Promise<boolean> => {
     setPaymentRow(rowData);
@@ -847,18 +893,65 @@ const handleCancelEncounter = async () => {
     }
   };
 
-  const handleSavePayment = async () => {
+  const applyPostPaymentEncounterStatus = async (
+    encounterId: number,
+    row: any,
+    payZeroNow: boolean
+  ): Promise<boolean> => {
+    const statusPatch = buildPostPaymentEncounterStatusPatch();
+
+    const markWaitingTriageLocally = () => {
+      setEncounterStatusOverrides(previous => ({
+        ...previous,
+        [encounterId]: POST_PAYMENT_TREATMENT_STATUS
+      }));
+    };
+
     try {
-      const encounterId = paymentRow?.id ?? null;
-      if (encounterId) {
-        await updateEncounter({
-          id: encounterId,
-          body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
-        }).unwrap();
+      const updatedRaw = await updateEncounter({
+        id: encounterId,
+        body: buildEncounterUpdateBody(row, statusPatch)
+      }).unwrap();
+
+      const updated = unwrapApiObject<any>(updatedRaw) ?? updatedRaw;
+      const updatedStatus = getEncounterTreatmentStatus(updated);
+
+      if (updatedStatus === POST_PAYMENT_TREATMENT_STATUS) {
+        markWaitingTriageLocally();
+        return true;
       }
 
+      if (payZeroNow) {
+        markWaitingTriageLocally();
+        return true;
+      }
+
+      throw new Error(
+        `Encounter status was not updated to Waiting Triage (current: ${updatedStatus || 'unknown'})`
+      );
+    } catch (error) {
+      if (payZeroNow) {
+        markWaitingTriageLocally();
+        return true;
+      }
+      throw error;
+    }
+  };
+
+  const handleSavePayment = async (options?: { payZeroNow?: boolean }) => {
+    const encounterId = getEncounterRowId(paymentRow);
+    const payZeroNow = Boolean(options?.payZeroNow);
+
+    if (encounterId == null) {
+      dispatch(notify({ msg: 'Encounter not found', sev: 'error' }));
+      return;
+    }
+
+    try {
+      await applyPostPaymentEncounterStatus(encounterId, paymentRow, payZeroNow);
+
       dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
-      refetchEncounter();
+      await refetchEncounter();
       handleSetPaymentModalOpen(false);
     } catch (e: any) {
       dispatch(
@@ -914,9 +1007,7 @@ const handleCancelEncounter = async () => {
         patientData?.id ?? patientData?.patientId ?? patientData?.key
       );
 
-      const statusUpper = String(
-        encounterData?.status ?? encounterData?.encounterStatus ?? ''
-      ).toUpperCase();
+      const statusUpper = getEncounterTreatmentStatus(encounterData);
 
       if (
         statusUpper !== 'TRIAGE_STARTED' &&
@@ -1230,7 +1321,7 @@ const handleCancelEncounter = async () => {
       key: 'status',
       title: <Translate>STATUS</Translate>,
       render: (rowData: any) => {
-        const statusCode = String(rowData?.status ).toUpperCase();
+        const statusCode = getEncounterTreatmentStatus(rowData);
         const statusColorMap: Record<string, string> = {
           PENDING_PAYMENT: '#fd7e14',
           WAITING_TRIAGE: '#b8860b',
@@ -1241,9 +1332,7 @@ const handleCancelEncounter = async () => {
           <MyBadgeStatus
             color={color}
             contant={
-              encounterStatusLabelMap.get(
-                String(rowData?.status)
-              ) ?? String(rowData?.status )
+              encounterStatusLabelMap.get(statusCode) ?? statusCode
             }
           />
         );
@@ -1258,9 +1347,7 @@ const handleCancelEncounter = async () => {
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
 
-        const statusUpper = String(
-          rowData?.status ?? rowData?.encounterStatus ?? ''
-        ).toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(rowData);
 
         const tooltipStart = !rowData?.priorityLevel ? (
           <Tooltip>Please set Priority first</Tooltip>
