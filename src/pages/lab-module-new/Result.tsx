@@ -146,7 +146,7 @@ const Result = forwardRef<any, Props>(
 
     const [paginationParams, setPaginationParams] = useState<PaginationParams>({
       page: 0,
-      size: 5,
+      size: 20,
       sort: 'id,asc'
     });
     const [sortType, setSortType] = useState<SortType>('asc');

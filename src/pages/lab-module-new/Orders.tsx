@@ -210,7 +210,6 @@ const diagnosisMap = useMemo(() => {
         render: (r: any) => {
           const rawDate = r.submittedDate ?? r.submittedAt ?? r.createdAt;
           if (!rawDate) return ' ';
-
           const d = new Date(rawDate);
           if (isNaN(d.getTime())) return rawDate;
 
@@ -240,11 +239,21 @@ const diagnosisMap = useMemo(() => {
         flexGrow: 3,
         render: (r: any) => {
           const patient = patientsMap[Number(r.patientId)];
+          const fullName = [
+            patient?.firstName,
+            patient?.secondName,
+            patient?.lastName
+          ]
+            .filter(Boolean)
+            .join(' ');
+
           return (
             <>
-              <span>{patient ? `${patient.firstName} ${patient.lastName}` : '—'}</span>
+              <span>{fullName || '—'}</span>
               <br />
-              <span className="date-table-style">{patient?.medicalRecordNumber ?? '—'}</span>
+              <span className="date-table-style">
+                {patient?.medicalRecordNumber ?? '—'}
+              </span>
             </>
           );
         }
