@@ -6,6 +6,19 @@ export const getEncounterTreatmentStatus = (
   encounter: { treatmentStatus?: string | null; status?: string | null } | null | undefined
 ): string => String(encounter?.treatmentStatus ?? encounter?.status ?? '').toUpperCase();
 
+/** Treatment status after reception payment — enables Start Triage in urgent/ER triage. */
+export const POST_PAYMENT_TREATMENT_STATUS = 'WAITING_TRIAGE';
+
+/** Lifecycle status mapped from WAITING_TRIAGE (mirrors patient-service). */
+export const POST_PAYMENT_LIFECYCLE_STATUS = 'OPEN';
+
+/** Full encounter patch applied after payment step (normal or collect-zero). */
+export const buildPostPaymentEncounterStatusPatch = () => ({
+  status: POST_PAYMENT_TREATMENT_STATUS,
+  treatmentStatus: POST_PAYMENT_TREATMENT_STATUS,
+  encounterStatus: POST_PAYMENT_LIFECYCLE_STATUS
+});
+
 const LIFECYCLE_STATUSES = new Set([
   'OPEN',
   'IN_PROGRESS',
