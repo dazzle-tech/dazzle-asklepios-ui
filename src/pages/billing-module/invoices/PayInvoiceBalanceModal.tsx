@@ -19,20 +19,10 @@ import {
   computeWalletCollectAmounts,
   formatMoney,
   isWalletPaymentMethod,
-  makeRequestId
+  makeRequestId,
+  mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
-
-const FALLBACK_PAYMENT_METHODS = [
-  { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
-  { value: 'CREDIT_DEBIT_CARD', label: BILLING_PAYMENT_METHOD_LABELS.CREDIT_DEBIT_CARD },
-  { value: 'CHEQUE', label: BILLING_PAYMENT_METHOD_LABELS.CHEQUE },
-  { value: 'BANK_TRANSFER', label: BILLING_PAYMENT_METHOD_LABELS.BANK_TRANSFER },
-  {
-    value: 'DEDUCT_FROM_FREE_BALANCE',
-    label: BILLING_PAYMENT_METHOD_LABELS.DEDUCT_FROM_FREE_BALANCE
-  }
-];
 
 export type InvoicePaymentCompletedContext = {
   paymentMethodLabel: string;
@@ -79,7 +69,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
     }) ?? [];
 
   const paymentMethods =
-    enumPaymentMethods.length > 0 ? enumPaymentMethods : FALLBACK_PAYMENT_METHODS;
+    mergeBillingPaymentMethodOptions(enumPaymentMethods);
 
   const resolvedDocumentNumber = resolveInvoiceDisplayNumber(
     { id: invoiceId, documentNumber },
@@ -386,6 +376,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
             <MyInput
               column
               fieldType="number"
+              allowDecimal
               fieldLabel="Amount"
               fieldName="amount"
               record={form}

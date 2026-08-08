@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -6,6 +6,7 @@ import { Payor } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 type PayorModalProps = {
   open: boolean;
@@ -17,6 +18,17 @@ type PayorModalProps = {
 
 const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor, onSave }) => {
   const payorCategories = useEnumOptions('PayorCategory');
+
+  const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
+    useGetAllNphiesPayersQuery(
+      { page: 0, size: 2000, sort: 'nameEn,asc' },
+      { skip: !open }
+    );
+
+  const nphiesPayersList = useMemo(
+    () => (nphiesPayerListResponse?.data ?? []).filter(payer => payer.isActive),
+    [nphiesPayerListResponse]
+  );
 
   return (
     <MyModal
@@ -75,11 +87,23 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 <div className="flex-row-payor-modal-in-sections">
                   <MyInput
                     fieldName="nphiesId"
-                    fieldType="text"
+                    fieldType="select"
                     fieldLabel="NPHIES ID"
+                    selectData={nphiesPayersList}
+                    selectDataLabel="nameEn"
+                    selectDataValue="nphiesId"
                     record={payor}
                     setRecord={setPayor}
                     width="12vw"
+                    searchable
+                    loading={isNphiesPayersLoading}
+                    placeholder={
+                      isNphiesPayersLoading
+                        ? 'Loading NPHIES payers...'
+                        : nphiesPayersList.length === 0
+                          ? 'No NPHIES payers found'
+                          : 'Select NPHIES payer'
+                    }
                   />
 
                   <MyInput

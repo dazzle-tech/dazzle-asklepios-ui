@@ -8,6 +8,10 @@ import MyButton from '@/components/MyButton/MyButton';
 
 import MyInput from '@/components/MyInput';
 
+import type { InvoiceAdjustmentSummary } from '@/services/billing/financialDocumentAdjustmentService';
+
+import PayInvoiceBalanceModal from '@/pages/billing-module/invoices/PayInvoiceBalanceModal';
+
 import { useCheckoutBillingChargeMutation } from '@/services/billing/billingTransactionService';
 
 import { useCloseEncounterForBillingMutation } from '@/services/encounters/patientEncounterService';
@@ -51,8 +55,14 @@ type BillingCheckoutPanelProps = {
   coverageType?: BillingCoverageType;
   onCompleted?: () => void;
   onCollectRemaining?: () => void;
+  onInvoicePaid?: () => void;
   chargeRows?: UnifiedBillingChargeRow[];
   encounterClosedForBilling?: boolean;
+  chargeCollectionComplete?: boolean;
+  invoiceId?: number | null;
+  invoiceAdjustments?: InvoiceAdjustmentSummary | null;
+  walletBalance?: number;
+  walletReserved?: number;
   loadingBillingMetrics?: boolean;
   preAuthBlocksCheckout?: boolean;
 };
@@ -73,9 +83,21 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   onCollectRemaining,
 
+  onInvoicePaid,
+
   chargeRows = [],
 
   encounterClosedForBilling = false,
+
+  chargeCollectionComplete = false,
+
+  invoiceId = null,
+
+  invoiceAdjustments = null,
+
+  walletBalance = 0,
+
+  walletReserved = 0,
 
   loadingBillingMetrics = false,
 
@@ -111,6 +133,8 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
     useState<BillingCheckoutResult | null>(null);
 
+  const [payModalOpen, setPayModalOpen] = useState(false);
+
 
 
   const [checkoutBillingCharge, checkoutMutation] =
@@ -142,9 +166,16 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   );
 
-  const chargeClosed = summary.chargeStatus === 'CLOSED';
+  const chargeClosed = chargeCollectionComplete;
 
   const canCheckout = chargeId != null && !chargeClosed;
+
+  const invoiceOutstanding = Number(
+    invoiceAdjustments?.outstandingBalance ?? summary.invoiceOutstandingAmount ?? 0
+  );
+
+  const canPayInvoiceOutstanding =
+    chargeClosed && invoiceId != null && invoiceOutstanding > 0;
 
   const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
 
@@ -452,7 +483,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
 
 
-      {checkoutAmountDue > 0 && allowDebit && (
+      {checkoutAmountDue > 0 && allowDebit && !chargeClosed && (
 
         <Text muted size="sm" style={{ marginBottom: 12 }}>
 
@@ -466,7 +497,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
 
 
-      {checkoutAmountDue > 0 && !allowDebit && (
+      {checkoutAmountDue > 0 && !allowDebit && !chargeClosed && (
 
         <Text muted size="sm" style={{ marginBottom: 12 }}>
 
@@ -480,6 +511,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
 
 
+      {!chargeClosed && (
       <Form fluid style={{ marginBottom: 12 }}>
 
         <MyInput
@@ -499,6 +531,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
         />
 
       </Form>
+      )}
 
 
 
@@ -554,11 +587,21 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
       <div className="billing-accounting__actions">
 
-        {checkoutAmountDue > 0 && !allowDebit && onCollectRemaining && (
+        {checkoutAmountDue > 0 && !allowDebit && onCollectRemaining && !chargeClosed && (
 
           <MyButton appearance="primary" onClick={onCollectRemaining}>
 
             Collect remaining {formatMoney(checkoutAmountDue, currency)}
+
+          </MyButton>
+
+        )}
+
+        {canPayInvoiceOutstanding && (
+
+          <MyButton appearance="primary" onClick={() => setPayModalOpen(true)}>
+
+            Pay outstanding {formatMoney(invoiceOutstanding, currency)}
 
           </MyButton>
 
@@ -570,7 +613,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
           loading={isCheckoutBusy}
 
-          disabled={!canCheckout || isCheckoutBusy || preAuthBlocksCheckout}
+          disabled={!canCheckout || isCheckoutBusy || preAuthBlocksCheckout || chargeClosed}
 
           onClick={() => {
 
@@ -631,6 +674,24 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
         </div>
 
+      )}
+
+      {invoiceId != null && (
+        <PayInvoiceBalanceModal
+          open={payModalOpen}
+          onClose={() => setPayModalOpen(false)}
+          invoiceId={invoiceId}
+          documentNumber={invoiceAdjustments?.documentNumber ?? summary.invoiceNumber}
+          summary={invoiceAdjustments}
+          outstandingAmount={invoiceOutstanding}
+          currency={currency}
+          walletBalance={walletBalance}
+          walletReserved={walletReserved}
+          onPaid={() => {
+            setPayModalOpen(false);
+            onInvoicePaid?.();
+          }}
+        />
       )}
 
     </div>

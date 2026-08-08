@@ -617,7 +617,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
         {disabled ? (
           <span className="billing-accounting__table-summary-text">
             {chargeClosed
-              ? 'Checkout finalized. Services & products are view-only — selection and collection are locked.'
+              ? 'Checkout or invoice is complete. Services & products are view-only — selection and collection are locked.'
               : 'Encounter closed for billing. Service selection and payment collection are locked.'}
           </span>
         ) : collectableRows.length === 0 ? (

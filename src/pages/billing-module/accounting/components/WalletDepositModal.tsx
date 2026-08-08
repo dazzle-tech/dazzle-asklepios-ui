@@ -18,6 +18,7 @@ import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildWalletDepositReceipt,
   makeRequestId,
+  mergeBillingPaymentMethodOptions,
   normalizeBillingError,
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber
@@ -27,10 +28,6 @@ const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
-
-const FALLBACK_DEPOSIT_METHODS = [
-  { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
-];
 
 type WalletDepositModalProps = {
   open: boolean;
@@ -71,7 +68,9 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
     }) ?? [];
 
   const paymentMethods =
-    enumPaymentMethods.length > 0 ? enumPaymentMethods : FALLBACK_DEPOSIT_METHODS;
+    mergeBillingPaymentMethodOptions(enumPaymentMethods, {
+      exclude: ['DEDUCT_FROM_FREE_BALANCE']
+    });
 
   const [form, setForm] = useState({
     amount: 0,

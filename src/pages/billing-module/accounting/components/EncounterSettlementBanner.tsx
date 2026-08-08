@@ -7,6 +7,7 @@ import {
   computeEncounterRemainingToPay,
   formatBillingChargeStatus,
   formatMoney,
+  isEncounterChargeCollectionComplete,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 
@@ -32,7 +33,7 @@ const EncounterSettlementBanner: React.FC<EncounterSettlementBannerProps> = ({
   const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
   const walletSettled = Number(summary.patientWalletSettledAmount ?? 0);
   const debitSettled = Number(summary.patientDebitSettledAmount ?? 0);
-  const chargeClosed = summary.chargeStatus === 'CLOSED';
+  const chargeClosed = isEncounterChargeCollectionComplete(summary);
   const invoiceOutstanding = Number(summary.invoiceOutstandingAmount ?? 0);
   const invoiceNumber = summary.invoiceNumber;
   const isSettled = remainingToPay <= 0 && patientShare > 0;

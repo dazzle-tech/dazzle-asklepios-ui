@@ -46,6 +46,10 @@ export const buildPatientSavePayload = (patient: Partial<Patient>): Patient => {
     }
   }
 
+  if (!payload.documentId) {
+    delete (payload as any).documentId;
+  }
+
   return payload;
 };
 
@@ -1159,3 +1163,63 @@ export const buildPatientInsuranceSavePayload = (
 
   return payload;
 };
+
+export const getTodayServiceDate = (): string =>
+  new Date().toISOString().split('T')[0];
+
+const normalizeEligibilitySyncedDate = (
+  value?: Date | string | null
+): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString().split('T')[0];
+};
+
+export const isEligibilityValidForServiceDate = (
+  insurance?: PatientInsurance | Record<string, unknown> | null,
+  serviceDate: string = getTodayServiceDate()
+): boolean => {
+  if (!insurance) {
+    return false;
+  }
+
+  const syncedDate = normalizeEligibilitySyncedDate(
+    (insurance as PatientInsurance).lastEligibilitySyncedAt
+  );
+
+  return syncedDate === serviceDate;
+};
+
+export const resolveDisplayedEligibilityStatus = (
+  insurance?: PatientInsurance | Record<string, unknown> | null,
+  serviceDate: string = getTodayServiceDate()
+): string => {
+  if (!insurance) {
+    return '';
+  }
+
+  if (!isEligibilityValidForServiceDate(insurance, serviceDate)) {
+    return 'Not eligible';
+  }
+
+  const status = String(
+    (insurance as PatientInsurance).eligibilityStatus ?? ''
+  ).trim();
+
+  return status || '-';
+};
+
+export const shouldShowCheckEligibilityAction = (
+  insurance?: PatientInsurance | Record<string, unknown> | null,
+  serviceDate: string = getTodayServiceDate()
+): boolean =>
+  Boolean((insurance as PatientInsurance | undefined)?.id) &&
+  !isEligibilityValidForServiceDate(insurance, serviceDate);

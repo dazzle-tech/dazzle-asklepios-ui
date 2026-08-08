@@ -23,6 +23,7 @@ import MyTable, {
 } from '@/components/MyTable/MyTable';
 
 import Translate from '@/components/Translate';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -250,6 +251,16 @@ const PriceListSetupItems: React.FC<Props> = ({
     sort: 'id,asc'
   });
 
+  const [
+    searchFilters,
+    setSearchFilters
+  ] = useState({ search: '' });
+
+  const [
+    appliedSearch,
+    setAppliedSearch
+  ] = useState('');
+
   /*
    * Waseel mapping pagination.
    */
@@ -353,7 +364,8 @@ const PriceListSetupItems: React.FC<Props> = ({
       priceListSetupId,
       page: paginationParams.page,
       size: paginationParams.size,
-      sort: paginationParams.sort
+      sort: paginationParams.sort,
+      search: appliedSearch
     },
     {
       skip:
@@ -371,7 +383,7 @@ const PriceListSetupItems: React.FC<Props> = ({
   } = useSearchItemMappingsQuery(
     {
       page: mappingPage,
-      size: 20,
+      size: 50,
       sort: 'itemName,asc',
 
       search:
@@ -382,16 +394,17 @@ const PriceListSetupItems: React.FC<Props> = ({
         selectedItem.itemType ||
         undefined,
 
-      isActive: true,
+      activeOnly: true,
 
       refreshToken:
         mappingRefreshToken
-    } as any,
+    },
     {
       skip:
         !open ||
         !childModalOpen ||
-        !isInsurancePriceList
+        !isInsurancePriceList ||
+        !selectedItem.itemType
     }
   );
 
@@ -564,6 +577,40 @@ const PriceListSetupItems: React.FC<Props> = ({
     () => itemPage?.data ?? [],
     [itemPage?.data]
   );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setSearchFilters({ search: '' });
+    setAppliedSearch('');
+    setPaginationParams({
+      page: 0,
+      size: 15,
+      sort: 'id,asc'
+    });
+  }, [open, priceListSetupId]);
+
+  useEffect(() => {
+    const delay =
+      setTimeout(() => {
+        setAppliedSearch(
+          searchFilters.search.trim()
+        );
+
+        setPaginationParams(
+          previous => ({
+            ...previous,
+            page: 0
+          })
+        );
+      }, 300);
+
+    return () =>
+      clearTimeout(delay);
+  }, [searchFilters.search]);
+
   const typeOptions = useEnumOptions('PriceListItemType');
 
 
@@ -640,6 +687,14 @@ const PriceListSetupItems: React.FC<Props> = ({
     const rows =
       normalizeMappingRows(
         mappingResponse
+      ).filter(
+        mapping =>
+          mapping.isActive === true &&
+          (
+            !selectedItem.itemType ||
+            mapping.itemType ===
+              selectedItem.itemType
+          )
       );
 
     const options =
@@ -672,7 +727,8 @@ const PriceListSetupItems: React.FC<Props> = ({
     });
   }, [
     mappingResponse,
-    mappingPage
+    mappingPage,
+    selectedItem.itemType
   ]);
 
   /*
@@ -1779,69 +1835,72 @@ const PriceListSetupItems: React.FC<Props> = ({
         />
 
         {isInsurancePriceList ? (
-          <MyInput
-            key={
-              selectedItem.itemType ||
-              'no-item-type'
-            }
-            required
-            width="100%"
-            fieldLabel="Waseel Item Mapping"
-            fieldType="selectPagination"
-            fieldName="waseelItemMappingId"
-            selectData={mappingCache}
-            selectDataLabel="displayName"
-            selectDataValue="id"
-            record={selectedItem}
-            setRecord={updatedItem => {
-              setSelectedItem(
-                updatedItem
-              );
-
-              const mapping =
-                mappingCache.find(
-                  item =>
-                    Number(item.id) ===
-                    Number(
-                      updatedItem
-                        .waseelItemMappingId
-                    )
+          <div className="price-list-mapping-field">
+            <MyInput
+              key={
+                selectedItem.itemType ||
+                'no-item-type'
+              }
+              required
+              width="100%"
+              fieldLabel="Waseel Item Mapping"
+              fieldType="selectPagination"
+              fieldName="waseelItemMappingId"
+              selectData={mappingCache}
+              selectDataLabel="displayName"
+              selectDataValue="id"
+              record={selectedItem}
+              setRecord={updatedItem => {
+                setSelectedItem(
+                  updatedItem
                 );
 
-              handleMappingSelected(
-                mapping || null
-              );
-            }}
-            searchable
-            searchKeyWard={
-              mappingSearch
-            }
-            setSearchKeyWard={
-              setMappingSearch
-            }
-            loading={
-              loadingMappings
-            }
-            hasMore={
-              hasMoreMappings
-            }
-            onFetchMore={
-              handleFetchMoreMappings
-            }
-            onSelectItem={mapping =>
-              handleMappingSelected(
-                mapping
-              )
-            }
-            disabled={
-              !selectedItem.itemType
-            }
-            placeholder={
-              !selectedItem.itemType
-                ? 'Select item type first'
-                : 'Select Waseel mapping'
-            }
-          />
+                const mapping =
+                  mappingCache.find(
+                    item =>
+                      Number(item.id) ===
+                      Number(
+                        updatedItem
+                          .waseelItemMappingId
+                      )
+                  );
+
+                handleMappingSelected(
+                  mapping || null
+                );
+              }}
+              searchable
+              searchKeyWard={
+                mappingSearch
+              }
+              setSearchKeyWard={
+                setMappingSearch
+              }
+              loading={
+                loadingMappings
+              }
+              hasMore={
+                hasMoreMappings
+              }
+              onFetchMore={
+                handleFetchMoreMappings
+              }
+              onSelectItem={mapping =>
+                handleMappingSelected(
+                  mapping
+                )
+              }
+              disabled={
+                !selectedItem.itemType
+              }
+              menuMaxHeight={380}
+              placeholder={
+                !selectedItem.itemType
+                  ? 'Select item type first'
+                  : 'Select Waseel mapping'
+              }
+            />
+          </div>
         ) : (
           directItemSelectConfig && (
             <MyInput
@@ -1913,6 +1972,7 @@ const PriceListSetupItems: React.FC<Props> = ({
                   ? 'Select item type first'
                   : `Select ${directItemSelectConfig.fieldLabel}`
               }
+              menuMaxHeight={380}
             />
           )
         )}
@@ -2044,6 +2104,31 @@ const PriceListSetupItems: React.FC<Props> = ({
     </Form>
   );
 
+  const itemTableFilters = () => (
+    <Form
+      fluid
+      className="form-of-filters-set-up"
+    >
+      <MyInput
+        width="18vw"
+        fieldName="search"
+        fieldType="text"
+        record={searchFilters}
+        setRecord={setSearchFilters}
+        showLabel={false}
+        placeholder="Search Item Name"
+      />
+
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        clearOnClick={() => {
+          setSearchFilters({ search: '' });
+          setAppliedSearch('');
+        }}
+      />
+    </Form>
+  );
+
   const mainContent = () => (
     <div>
       <div className="price-list-items-header">
@@ -2075,6 +2160,7 @@ const PriceListSetupItems: React.FC<Props> = ({
           0
         }
         columns={columns}
+        filters={itemTableFilters()}
         page={
           paginationParams.page
         }
@@ -2130,6 +2216,8 @@ const PriceListSetupItems: React.FC<Props> = ({
 
           if (!value) {
             setChildModalOpen(false);
+            setSearchFilters({ search: '' });
+            setAppliedSearch('');
 
             setSelectedItem({
               ...newPriceListSetupItem
@@ -2165,6 +2253,7 @@ const PriceListSetupItems: React.FC<Props> = ({
           </div>
         }
         mainSize="lg"
+        childSize="md"
         actionButtonLabel={
           selectedItem.id
             ? 'Save'
