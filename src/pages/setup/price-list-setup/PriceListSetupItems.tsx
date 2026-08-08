@@ -1092,7 +1092,10 @@ const PriceListSetupItems: React.FC<Props> = ({
         0,
 
       isActive:
-        true
+        true,
+
+      requiresPreAuthorization:
+        false
     });
 
     resetAllDropdowns();
@@ -1137,9 +1140,6 @@ const PriceListSetupItems: React.FC<Props> = ({
 
         sbsCode:
           '',
-
-        requiresPreauth:
-          false,
 
         isActive:
           row.isActive ?? true
@@ -1485,7 +1485,15 @@ const PriceListSetupItems: React.FC<Props> = ({
 
       isActive:
         selectedItem.isActive ??
-        true
+        true,
+
+      requiresPreAuthorization:
+        isInsurancePriceList
+          ? Boolean(
+              selectedItem
+                .requiresPreAuthorization
+            )
+          : false
     };
 
     try {
@@ -1690,6 +1698,24 @@ const PriceListSetupItems: React.FC<Props> = ({
       ) =>
         calculateNetPrice(row)
     },
+
+    ...(isInsurancePriceList
+      ? [{
+          key: 'requiresPreAuthorization',
+          title:
+            <Translate>
+              PreAuth
+            </Translate>,
+          align: 'center' as const,
+          render: (
+            row:
+              PriceListSetupItem
+          ) =>
+            row.requiresPreAuthorization
+              ? 'Yes'
+              : 'No'
+        }]
+      : []),
 
     {
       key: 'actions',
@@ -1993,6 +2019,17 @@ const PriceListSetupItems: React.FC<Props> = ({
       </div>
 
       <br />
+
+      {isInsurancePriceList && (
+        <MyInput
+          width="100%"
+          fieldLabel="Requires PreAuthorization"
+          fieldType="checkbox"
+          fieldName="requiresPreAuthorization"
+          record={selectedItem}
+          setRecord={setSelectedItem}
+        />
+      )}
 
       <MyInput
         width="100%"

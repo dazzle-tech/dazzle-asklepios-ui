@@ -6,7 +6,7 @@
     "lib": "lib/"
   },
   "scripts": {
-    "dev": "webpack serve --history-api-fallback --mode development --port 3100 --host 0.0.0.0 --progress ",
+     "dev" : "node --max-old-space-size=8192 node_modules/webpack/bin/webpack.js serve --history-api-fallback --mode development --port 3100 --host 0.0.0.0 --progress",
     "clear": "rm -rf assets",
     "build:webpack": "NODE_ENV=production  webpack --mode production --progress && cp -R public/* ./assets/ ",
     "build": "npm run clear && npm run build:webpack",

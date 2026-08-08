@@ -5316,7 +5316,6 @@ export type WaseelItemMapping = {
   waseelItemType?: string;
   sbsCode: string;
   sbsDescription?: string;
-  requiresPreauth: boolean;
   isActive: boolean;
   notes?: string;
 };
@@ -5398,6 +5397,8 @@ export type PriceListSetupItem = {
   discountPercentage?: number;
 
   isActive?: boolean;
+
+  requiresPreAuthorization?: boolean;
 };
 export type SavePriceListSetupItemRequest = {
   waseelItemMappingId?: number | null;
@@ -5410,6 +5411,7 @@ export type SavePriceListSetupItemRequest = {
   unitPrice: number;
   discountPercentage: number;
   isActive?: boolean;
+  requiresPreAuthorization?: boolean;
 };
 export type SavePriceListSetupRequest = {
   facilityId: number;

@@ -1,15 +1,161 @@
+// /* eslint-disable @typescript-eslint/no-var-requires */
+// const path = require('path');
+
+// const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+// const HtmlwebpackPlugin = require('html-webpack-plugin');
+
+// module.exports = (_env, argv) => {
+//   const isProduction = argv.mode === 'production';
+
+//   // In Docker, we set this to 'false' to save memory.
+//   const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+//   const cssLoader = isProduction ? MiniCssExtractPlugin.loader : 'style-loader';
+//   return {
+//     entry: './src/index.tsx',
+//     cache: isProduction
+//       ? false
+//       : {
+//           type: 'filesystem',
+//           buildDependencies: {
+//             config: [__filename],
+//           },
+//         },
+//     devtool: !generateSourceMap
+//       ? false
+//       : isProduction
+//         ? 'source-map'
+//         : 'eval-cheap-module-source-map',
+//     resolve: {
+//       extensions: ['.ts', '.tsx', '.js', '.json'],
+//     },
+//     devServer: {
+//       host: '0.0.0.0',
+//       port: 3100,
+//       hot: true,
+//       liveReload: false,
+//       allowedHosts: 'all',
+//       historyApiFallback: { disableDotRule: true },
+//       static: {
+//         directory: path.resolve(__dirname, 'public'),
+//         publicPath: '/',
+//       },
+//       devMiddleware: {
+//         publicPath: '/',
+//       },
+//     },
+//     output: {
+//       path: path.resolve(__dirname, 'assets'),
+//       filename: 'bundle.js',
+//       publicPath: isProduction ? './' : '/',
+//       clean: isProduction,
+//     },
+//     optimization: isProduction
+//       ? undefined
+//       : {
+//           removeAvailableModules: false,
+//           removeEmptyChunks: false,
+//           splitChunks: false,
+//         },
+//     module: {
+//       rules: [
+//         {
+//           test: /\.tsx?$/,
+//           use: [
+//             {
+//               loader: 'babel-loader',
+//               options: {
+//                 cacheDirectory: true,
+//                 cacheCompression: false,
+//               },
+//             },
+//           ],
+//           exclude: /node_modules/,
+//         },
+//         {
+//           test: /\.(jpg|png|svg)$/i,
+//           type: 'asset',
+//           parser: { dataUrlCondition: { maxSize: 8 * 1024 } },
+//           generator: { publicPath: '/', filename: 'images/[name][ext]' },
+//         },
+//         {
+//           test: /tw\.build\.css$/i,
+//           use: [cssLoader, 'css-loader'],
+//         },
+//         {
+//           test: /\.css$/i,
+//           exclude: /tw\.build\.css$/i,
+//           use: [
+//             cssLoader,
+//             {
+//               loader: 'css-loader',
+//               options: { importLoaders: 1, url: true },
+//             },
+//             {
+//               loader: 'postcss-loader',
+//               options: {
+//                 postcssOptions: {
+//                   config: false,
+//                   plugins: [require('@tailwindcss/postcss')],
+//                 },
+//               },
+//             },
+//           ],
+//         },
+//         {
+//           test: /\.less$/i,
+//           use: [
+//             cssLoader,
+//             'css-loader',
+//             {
+//               loader: 'less-loader',
+//               options: {
+//                 sourceMap: isProduction && generateSourceMap,
+//                 lessOptions: { javascriptEnabled: true },
+//               },
+//             },
+//           ],
+//         },
+//         {
+//           test: /\.(woff2?|eot|ttf|otf)$/i,
+//           type: 'asset/resource',
+//           generator: { filename: 'fonts/[name][ext]' },
+//         },
+//       ],
+//     },
+//     plugins: [
+//       new HtmlwebpackPlugin({
+//         title: 'Title',
+//         filename: 'index.html',
+//         template: './src/index.html',
+//         inject: true,
+//         hash: true,
+//         publicPath: isProduction ? './' : '/',
+//         favicon: './public/default-favicon.png',
+//       }),
+//       ...(isProduction
+//         ? [
+//             new MiniCssExtractPlugin({
+//               filename: '[name].css',
+//               chunkFilename: '[id].css',
+//             }),
+//           ]
+//         : []),
+//     ],
+//   };
+// };
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path');
-
+ 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
-
+ 
 const isProduction = process.env.NODE_ENV === 'production';
-
+ 
 // Check environment variable to determine if source maps should be generated
 // In Docker, we set this to 'false' to save memory.
 const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
-
+ 
 module.exports = {
   entry: './src/index.tsx',
   // FIXED: Only generate source maps if the environment variable allows it
@@ -38,7 +184,7 @@ module.exports = {
     publicPath: isProduction ? './' : '/',
     clean: true,
   },
-
+ 
   module: {
     rules: [
       // TS/TSX
@@ -47,7 +193,7 @@ module.exports = {
         use: ['babel-loader'],
         exclude: /node_modules/,
       },
-
+ 
       // Images
       {
         test: /\.(jpg|png|svg)$/i,
@@ -55,7 +201,7 @@ module.exports = {
         parser: { dataUrlCondition: { maxSize: 8 * 1024 } },
         generator: { publicPath: '/', filename: 'images/[name][ext]' },
       },
-
+ 
       {
         test: /tw\.build\.css$/i,
         use: [
@@ -63,8 +209,8 @@ module.exports = {
           'css-loader',
         ],
       },
-
-
+ 
+ 
       {
         test: /\.css$/i,
         exclude: /tw\.build\.css$/i,
@@ -85,7 +231,7 @@ module.exports = {
           },
         ],
       },
-
+ 
       {
         test: /\.less$/i,
         use: [
@@ -101,7 +247,7 @@ module.exports = {
           },
         ],
       },
-
+ 
       {
         test: /\.(woff2?|eot|ttf|otf)$/i,
         type: 'asset/resource',
@@ -109,7 +255,7 @@ module.exports = {
       },
     ],
   },
-
+ 
   plugins: [
     new HtmlwebpackPlugin({
       title: 'Title',
@@ -123,7 +269,7 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',
-    }),
-  ],
+    }),
+  ],
 };
-
+ 

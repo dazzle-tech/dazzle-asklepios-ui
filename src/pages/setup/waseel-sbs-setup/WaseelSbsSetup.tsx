@@ -48,7 +48,6 @@ type MappingForm = {
   itemCode: string;
   itemName: string;
   sbsCatalogId: number | null;
-  requiresPreauth: boolean;
   isActive: boolean;
   notes: string;
 };
@@ -120,7 +119,6 @@ const WaseelSbsSetup = () => {
     itemCode: '',
     itemName: '',
     sbsCatalogId: null,
-    requiresPreauth: true,
     isActive: true,
     notes: ''
   });
@@ -510,7 +508,6 @@ const WaseelSbsSetup = () => {
     itemCode: mappingForm.itemCode,
     itemName: mappingForm.itemName,
     sbsCatalogId: Number(mappingForm.sbsCatalogId),
-    requiresPreauth: mappingForm.requiresPreauth,
     isActive: mappingForm.isActive,
     notes: mappingForm.notes
   });
@@ -523,7 +520,6 @@ const WaseelSbsSetup = () => {
       itemCode: '',
       itemName: '',
       sbsCatalogId: null,
-      requiresPreauth: true,
       isActive: true,
       notes: ''
     });
@@ -539,7 +535,6 @@ const WaseelSbsSetup = () => {
       itemCode: row.itemCode ?? '',
       itemName: row.itemName ?? '',
       sbsCatalogId: row.sbsCatalogId ?? null,
-      requiresPreauth: row.requiresPreauth ?? false,
       isActive: row.isActive ?? true,
       notes: row.notes ?? ''
     });
@@ -616,7 +611,6 @@ const WaseelSbsSetup = () => {
           itemCode: row.itemCode,
           itemName: row.itemName,
           sbsCatalogId: Number(row.sbsCatalogId),
-          requiresPreauth: row.requiresPreauth,
           isActive: true,
           notes: row.notes
         }
@@ -711,14 +705,6 @@ const WaseelSbsSetup = () => {
       key: 'sbsDescription',
       title: <Translate>SBS Description</Translate>,
       flexGrow: 4
-    },
-    {
-      key: 'requiresPreauth',
-      title: <Translate>PreAuth</Translate>,
-      flexGrow: 1,
-      render: (rowData: WaseelItemMapping) => (
-        <span>{rowData.requiresPreauth ? 'Yes' : 'No'}</span>
-      )
     },
     {
       key: 'isActive',
@@ -910,15 +896,6 @@ const WaseelSbsSetup = () => {
     }));
   }}
 />
-
-      <MyInput
-        fieldType="checkbox"
-        fieldLabel="Requires PreAuthorization"
-        fieldName="requiresPreauth"
-        record={mappingForm}
-        setRecord={setMappingForm}
-        width="100%"
-      />
 
       <MyInput
         fieldType="checkbox"
