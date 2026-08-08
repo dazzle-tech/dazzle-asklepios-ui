@@ -15,6 +15,13 @@ const PatientHistory = ({
 
   const state = location.state || {};
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   const patient = patientProp ?? state.patient;
   const encounter = encounterProp ?? state.encounter;
   const edit = editProp ?? state.edit;
@@ -57,11 +64,6 @@ const PatientHistory = ({
     }
   ];
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
 
 
 return (

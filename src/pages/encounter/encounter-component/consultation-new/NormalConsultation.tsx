@@ -208,7 +208,7 @@ const NormalConsultation = props => {
   const refetch = useCallback(() => {
     const safeRefetch = (query: any) => {
       if (!query) return;
-      
+
       const isInitialized =
         query.status !== 'uninitialized' &&
         query.isUninitialized !== true &&
@@ -579,8 +579,11 @@ const NormalConsultation = props => {
                 setOpenDetailsModal(true);
               }}
               className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
-              style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
-            />
+              style={{
+                opacity: edit ? 0.5 : 1,
+                pointerEvents: edit ? 'none' : 'auto',
+                cursor: edit ? 'not-allowed' : 'pointer',
+              }} />
           );
         }
       }

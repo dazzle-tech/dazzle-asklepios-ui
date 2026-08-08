@@ -51,22 +51,22 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
 
 
 
-const { data, isFetching } = useGetSurgicalHistoryQuery(
-  {
-    patientId,
-    page,
-    size,
-    sort: 'id,desc',
-    showCancelled
-  },
-  { skip: !isValidPatientId }
-);
+  const { data, isFetching } = useGetSurgicalHistoryQuery(
+    {
+      patientId,
+      page,
+      size,
+      sort: 'id,desc',
+      showCancelled
+    },
+    { skip: !isValidPatientId }
+  );
 
 
-const [cancelSurgicalHistory] = useCancelSurgicalHistoryMutation();
+  const [cancelSurgicalHistory] = useCancelSurgicalHistoryMutation();
 
 
-const filteredData = data?.data ?? [];
+  const filteredData = data?.data ?? [];
 
 
   const handleEdit = (row: any) => {
@@ -75,14 +75,14 @@ const filteredData = data?.data ?? [];
   };
 
   const openCancelDialog = (row: any) => {
-  setCancelObject({
-    id: row.id,
-    status: row.status || 'ACTIVE',
-    cancellationReason: ''
-  });
+    setCancelObject({
+      id: row.id,
+      status: row.status || 'ACTIVE',
+      cancellationReason: ''
+    });
 
-  setOpenCancelModal(true);
-};
+    setOpenCancelModal(true);
+  };
 
   const handleCancel = async () => {
     try {
@@ -209,18 +209,18 @@ const filteredData = data?.data ?? [];
       )
     },
     {
-  key: 'cancelledDate',
-  title: <Translate>CANCELLED AT / BY</Translate>,
-  expandable: true,
-  render: (row: any) =>
-    row?.status === 'CANCELLED' ? (
-      <UserDateCell
-        login={row?.cancelledBy}
-        date={row?.cancelledDate}
-      />
-    ) : (
-      <span>-</span>
-    )
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        ) : (
+          <span>-</span>
+        )
     },
     {
       key: 'cancellationReason',
@@ -258,6 +258,11 @@ const filteredData = data?.data ?? [];
                     size={22}
                     fill="var(--primary-gray)"
                     className="pointer view-only-action-edit-delete-encounter"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
@@ -266,6 +271,11 @@ const filteredData = data?.data ?? [];
                     fill="var(--rs-red-500, #f44336)"
                     className="pointer view-only-action-edit-delete-encounter"
                     title="Cancel"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => openCancelDialog(row)}
                   />
                 </>
@@ -273,7 +283,7 @@ const filteredData = data?.data ?? [];
             </div>
           )
         }
-        ]
+      ]
       : [])
   ];
 
@@ -311,20 +321,20 @@ const filteredData = data?.data ?? [];
           content={
             <>
 
-            {!toShowData && (
-              <div className="margin-bottom-10">
-                <MyInput
-                  fieldType="check"
-                  fieldLabel="Show Cancelled"
-                  showLabel={false}
-                  fieldName="showCancelled"
-                  record={{ showCancelled }}
-                  setRecord={(record: any) => {
-                    setShowCancelled(record.showCancelled);
-                  }}
-                />
-              </div>
-            )}
+              {!toShowData && (
+                <div className="margin-bottom-10">
+                  <MyInput
+                    fieldType="check"
+                    fieldLabel="Show Cancelled"
+                    showLabel={false}
+                    fieldName="showCancelled"
+                    record={{ showCancelled }}
+                    setRecord={(record: any) => {
+                      setShowCancelled(record.showCancelled);
+                    }}
+                  />
+                </div>
+              )}
               <MyTable
                 height={450}
                 data={filteredData}

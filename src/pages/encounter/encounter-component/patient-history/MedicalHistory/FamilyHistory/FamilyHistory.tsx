@@ -82,42 +82,42 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
     setOpenCancelModal(true);
   };
 
-    const handleCancel = async () => {
-      try {
-        await cancelFamilyHistory({
-          id: cancelObject.id,
-          cancellationReason: cancelObject.cancellationReason
-        }).unwrap();
+  const handleCancel = async () => {
+    try {
+      await cancelFamilyHistory({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Family History cancelled successfully.',
-            sev: 'success'
-          })
-        );
+      dispatch(
+        notify({
+          msg: 'Family History cancelled successfully.',
+          sev: 'success'
+        })
+      );
 
-        setOpenCancelModal(false);
+      setOpenCancelModal(false);
 
-        setCancelObject({
-          id: null,
-          status: '',
-          cancellationReason: ''
-        });
-      } catch (error: any) {
-        const errorMessage =
-          error?.data?.message ||
-          error?.data?.detail ||
-          error?.error ||
-          'Failed to cancel Family History.';
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Family History.';
 
-        dispatch(
-          notify({
-            msg: errorMessage,
-            sev: 'error'
-          })
-        );
-      }
-    };
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
+    }
+  };
 
 
   // TABLE COLUMNS
@@ -184,23 +184,23 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
         />
       )
     },
-        {
-          key: 'cancelledDate',
-          title: <Translate>CANCELLED AT / BY</Translate>,
-          expandable: true,
-          render: (row: any) => {
-            if (row?.status !== 'CANCELLED') {
-              return <span>-</span>;
-            }
-    
-            return (
-              <UserDateCell
-                login={row?.cancelledBy}
-                date={row?.cancelledDate}
-              />
-            );
-          }
-        },
+    {
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => {
+        if (row?.status !== 'CANCELLED') {
+          return <span>-</span>;
+        }
+
+        return (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        );
+      }
+    },
     {
       key: 'cancellationReason',
       title: <Translate>CANCELLATION REASON</Translate>,
@@ -219,40 +219,46 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
     },
     ...(!toShowData
       ? [
-          {
-            key: 'actions',
-            title: '',
-            flexGrow: 1,
-            render: (row: any) => (
-              <div
-                className="family-history-actions"
-                style={{ display: 'flex', gap: 12 }}
-              >
-                {row?.status !== 'CANCELLED' && (
-                  <>
-                    <MdModeEdit
-                      size={24}
-                      className="edit-icon view-only-action-edit-delete-encounter"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleEdit(row)}
-                    />
+        {
+          key: 'actions',
+          title: '',
+          flexGrow: 1,
+          render: (row: any) => (
+            <div
+              className="family-history-actions"
+              style={{ display: 'flex', gap: 12 }}
+            >
+              {row?.status !== 'CANCELLED' && (
+                <>
+                  <MdModeEdit
+                    size={24}
+                    className="edit-icon view-only-action-edit-delete-encounter"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={() => handleEdit(row)}
+                  />
 
-                    <MdDelete
-                      size={24}
-                      className="view-only-action-edit-delete-encounter"
-                      style={{
-                        cursor: 'pointer',
-                        color: 'var(--rs-red-500, #f44336)'
-                      }}
-                      title="Cancel"
-                      onClick={() => openCancelDialog(row)}
-                    />
-                  </>
-                )}
-              </div>
-            )
-          }
-        ]
+                  <MdDelete
+                    size={24}
+                    className="view-only-action-edit-delete-encounter"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                      color: 'var(--rs-red-500, #f44336)'
+                    }}
+                    title="Cancel"
+                    onClick={() => openCancelDialog(row)}
+                  />
+                </>
+              )}
+            </div>
+          )
+        }
+      ]
       : [])
   ];
 
@@ -352,7 +358,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
               withReason
               required
               size="33vw"
-             />
+            />
           </>
         }
       />

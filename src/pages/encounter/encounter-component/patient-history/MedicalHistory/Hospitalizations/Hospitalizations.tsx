@@ -256,7 +256,11 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                     className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--primary-gray)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
@@ -264,7 +268,9 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                     className="view-only-action-edit-delete-encounter"
                     size={22}
                     style={{
-                      cursor: 'pointer',
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
                       color: 'var(--rs-red-500, #f44336)'
                     }}
                     title="Cancel"
