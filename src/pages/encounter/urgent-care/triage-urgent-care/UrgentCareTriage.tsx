@@ -1679,7 +1679,7 @@ const handleCancelEncounter = async () => {
           cancelButtonLabel="Close"
         />
 
-        {/* <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} /> */}
+        <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
       </Panel>
 
