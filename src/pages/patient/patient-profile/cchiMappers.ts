@@ -46,6 +46,10 @@ export const buildPatientSavePayload = (patient: Partial<Patient>): Patient => {
     }
   }
 
+  if (!payload.documentId) {
+    delete (payload as any).documentId;
+  }
+
   return payload;
 };
 

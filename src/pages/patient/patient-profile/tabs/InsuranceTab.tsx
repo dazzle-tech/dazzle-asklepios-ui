@@ -1,6 +1,7 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
@@ -17,11 +18,16 @@ import { notify } from '@/utils/uiReducerActions';
 import { faCheckDouble, faLayerGroup, faTrash, faUserPen, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Message, Tooltip, Whisper } from 'rsuite';
+import { Badge, Form, Message, SelectPicker, Tooltip, Whisper } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
 import WaseelClassListModal from '../WaseelClassListModal';
-import { useFetchInsuranceFromCchiMutation } from '@/services/waseel-integration/cchiService';
+import {
+  CchiMappedPatientResponse,
+  CchiPatientDocumentOption,
+  useFetchInsuranceFromCchiMutation,
+  useLazyGetInsuranceDocumentOptionsQuery
+} from '@/services/waseel-integration/cchiService';
 import {
   buildPatientInsuranceSavePayload,
   extractCchiInsurance,
@@ -47,6 +53,30 @@ interface InsuranceTabProps {
   cchiInsurance?: PatientInsurance | null;
   setCchiInsurance?: (insurance: PatientInsurance | null) => void;
 }
+
+const MISSING_PATIENT_DOCUMENT_MSG =
+  'Please enter the patient document first before fetching insurance from CCHI';
+
+const resolveCchiInsuranceFetchError = (error: any, fallback: string): string => {
+  const errorKey = String(
+    error?.data?.errorKey ?? error?.data?.properties?.message ?? error?.data?.message ?? ''
+  ).replace(/^error\./, '');
+
+  if (errorKey === 'documentId.missing') {
+    return MISSING_PATIENT_DOCUMENT_MSG;
+  }
+
+  if (errorKey === 'unique.document_id') {
+    return (
+      error?.data?.detail ||
+      error?.data?.message ||
+      error?.data?.title ||
+      'This document ID is already assigned to another patient'
+    );
+  }
+
+  return error?.data?.detail || error?.data?.message || error?.data?.title || fallback;
+};
 
 const InsuranceTab: React.FC<InsuranceTabProps> = ({
   localPatient,
@@ -80,6 +110,12 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     useAddPatientInsuranceMutation();
   const [fetchInsuranceFromCchi, { isLoading: isFetchingInsuranceFromCchi }] =
     useFetchInsuranceFromCchiMutation();
+  const [getInsuranceDocumentOptions, { isFetching: isLoadingDocumentOptions }] =
+    useLazyGetInsuranceDocumentOptionsQuery();
+
+  const [openCchiDocumentSelectModal, setOpenCchiDocumentSelectModal] = useState(false);
+  const [cchiDocumentOptions, setCchiDocumentOptions] = useState<CchiPatientDocumentOption[]>([]);
+  const [selectedCchiDocumentId, setSelectedCchiDocumentId] = useState<string | null>(null);
 
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
@@ -360,6 +396,83 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
   };
 
+  const applyCchiInsuranceFetchResult = (mappedResponse: CchiMappedPatientResponse) => {
+    const rawInsurance = extractCchiInsurance(mappedResponse);
+
+    if (!rawInsurance) {
+      dispatch(
+        notify({
+          msg: 'No insurance data returned from CCHI for this patient',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setCchiInsurance?.({
+      ...rawInsurance,
+      id: undefined,
+      patientId: Number(localPatient.id),
+      isPrimary: rawInsurance.isPrimary ?? true
+    } as PatientInsurance);
+
+    const storageKey = getCchiInsuranceStorageKey(
+      localPatient.id,
+      mappedResponse.patient?.documentId ?? localPatient.documentId
+    );
+    if (storageKey) {
+      sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+    }
+
+    setLocalPatient?.({
+      ...localPatient,
+      isCchiPatient: true,
+      documentId: mappedResponse.patient?.documentId ?? localPatient.documentId
+    });
+
+    dispatch(
+      notify({
+        msg: 'Insurance data fetched from CCHI. Review and save when ready.',
+        sev: 'success'
+      })
+    );
+  };
+
+  const runFetchInsuranceFromCchi = async (documentId?: string | null) => {
+    const mappedResponse = await fetchInsuranceFromCchi({
+      patientId: Number(localPatient.id),
+      documentId: documentId ?? undefined
+    }).unwrap();
+
+    applyCchiInsuranceFetchResult(mappedResponse);
+  };
+
+  const handleConfirmCchiDocumentSelection = async () => {
+    if (!selectedCchiDocumentId) {
+      dispatch(
+        notify({
+          msg: 'Please select a document ID for CCHI insurance fetch',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      await runFetchInsuranceFromCchi(selectedCchiDocumentId);
+      setOpenCchiDocumentSelectModal(false);
+      setSelectedCchiDocumentId(null);
+      setCchiDocumentOptions([]);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: resolveCchiInsuranceFetchError(error, 'Failed to fetch insurance from CCHI'),
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const handleFetchInsuranceFromCchi = async () => {
     if (!localPatient?.id) {
       dispatch(
@@ -372,61 +485,55 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
 
     try {
-      const mappedResponse = await fetchInsuranceFromCchi(Number(localPatient.id)).unwrap();
-      const rawInsurance = extractCchiInsurance(mappedResponse);
+      const options = await getInsuranceDocumentOptions(Number(localPatient.id)).unwrap();
 
-      if (!rawInsurance) {
+      if (!options.length) {
         dispatch(
           notify({
-            msg: 'No insurance data returned from CCHI for this patient',
+            msg: MISSING_PATIENT_DOCUMENT_MSG,
             sev: 'warning'
           })
         );
         return;
       }
 
-      setCchiInsurance?.({
-        ...rawInsurance,
-        id: undefined,
-        patientId: Number(localPatient.id),
-        isPrimary: rawInsurance.isPrimary ?? true
-      } as PatientInsurance);
-
-      const storageKey = getCchiInsuranceStorageKey(
-        localPatient.id,
-        localPatient.documentId ?? mappedResponse.patient?.documentId
-      );
-      if (storageKey) {
-        sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+      if (options.length === 1) {
+        try {
+          await runFetchInsuranceFromCchi(options[0].documentId);
+        } catch (error: any) {
+          dispatch(
+            notify({
+              msg: resolveCchiInsuranceFetchError(error, 'Failed to fetch insurance from CCHI'),
+              sev: 'error'
+            })
+          );
+        }
+        return;
       }
 
-      setLocalPatient?.({
-        ...localPatient,
-        isCchiPatient: true,
-        documentId: localPatient.documentId ?? mappedResponse.patient?.documentId ?? localPatient.documentId
-      });
-
-      dispatch(
-        notify({
-          msg: 'Insurance data fetched from CCHI. Review and save when ready.',
-          sev: 'success'
-        })
-      );
+      setCchiDocumentOptions(options);
+      setSelectedCchiDocumentId(options.find(option => option.isPrimary)?.documentId ?? options[0].documentId);
+      setOpenCchiDocumentSelectModal(true);
     } catch (error: any) {
-      const msg =
-        error?.data?.detail ||
-        error?.data?.message ||
-        error?.data?.title ||
-        'Failed to fetch insurance from CCHI';
-
       dispatch(
         notify({
-          msg,
+          msg: resolveCchiInsuranceFetchError(error, 'Failed to prepare CCHI insurance fetch'),
           sev: 'error'
         })
       );
     }
   };
+
+  const cchiDocumentPickerOptions = useMemo(
+    () =>
+      cchiDocumentOptions.map(option => ({
+        label: `${option.documentId}${option.type ? ` · ${option.type}` : ''}${
+          option.isPrimary ? ' · Primary' : ''
+        }`,
+        value: option.documentId
+      })),
+    [cchiDocumentOptions]
+  );
 
   const handleOpenClassList = (
     row: PatientInsurance,
@@ -794,14 +901,72 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
         ) : savedInsurances.length === 0 ? (
           <MyButton
             onClick={handleFetchInsuranceFromCchi}
-            disabled={!localPatient.id || isFetchingInsuranceFromCchi}
-            loading={isFetchingInsuranceFromCchi}
+            disabled={
+              !localPatient.id || isFetchingInsuranceFromCchi || isLoadingDocumentOptions
+            }
+            loading={isFetchingInsuranceFromCchi || isLoadingDocumentOptions}
             prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
           >
             <Translate>Fetch Insurance from CCHI</Translate>
           </MyButton>
         ) : null}
       </div>
+
+      <MyModal
+        open={openCchiDocumentSelectModal}
+        setOpen={(open: boolean) => {
+          if (!isFetchingInsuranceFromCchi) {
+            setOpenCchiDocumentSelectModal(open);
+            if (!open) {
+              setSelectedCchiDocumentId(null);
+              setCchiDocumentOptions([]);
+            }
+          }
+        }}
+        title={<Translate>Select Document for CCHI Insurance Fetch</Translate>}
+        size="34vw"
+        bodyheight="auto"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isFetchingInsuranceFromCchi ? 'Loading...' : 'Fetch Insurance'}
+        isDisabledActionBtn={isFetchingInsuranceFromCchi || !selectedCchiDocumentId}
+        actionButtonFunction={handleConfirmCchiDocumentSelection}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isFetchingInsuranceFromCchi) {
+            setOpenCchiDocumentSelectModal(false);
+            setSelectedCchiDocumentId(null);
+            setCchiDocumentOptions([]);
+          }
+        }}
+        content={
+          <Form fluid>
+            <Message showIcon type="info" className="insurance-tab__info-banner">
+              <Translate>
+                This patient has more than one document. Choose which document ID should be used
+                for the CCHI insurance fetch. The selected document will also be saved on the
+                patient record.
+              </Translate>
+            </Message>
+
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Document ID</Translate>
+              </Form.ControlLabel>
+              <SelectPicker
+                block
+                searchable
+                cleanable={false}
+                data={cchiDocumentPickerOptions}
+                value={selectedCchiDocumentId}
+                disabled={isFetchingInsuranceFromCchi}
+                onChange={value => setSelectedCchiDocumentId(value != null ? String(value) : null)}
+                placeholder="Select document ID"
+              />
+            </Form.Group>
+          </Form>
+        }
+      />
 
       {pendingCchiInsurance ? (
         <Message showIcon type="info" className="insurance-tab__info-banner">

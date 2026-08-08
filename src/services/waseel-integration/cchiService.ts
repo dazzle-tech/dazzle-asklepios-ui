@@ -15,6 +15,18 @@ export type CchiFetchPatientResponse = CchiMappedPatientResponse & {
   message?: string | null;
 };
 
+export type CchiPatientDocumentOption = {
+  id?: number | null;
+  documentId: string;
+  type?: string | null;
+  isPrimary?: boolean | null;
+  countryId?: number | null;
+};
+
+export type CchiFetchInsuranceRequest = {
+  documentId?: string | null;
+};
+
 export const cchiApi = createApi({
   reducerPath: 'cchiApi',
   baseQuery: BaseQuery,
@@ -30,10 +42,24 @@ export const cchiApi = createApi({
       }
     }),
 
-    fetchInsuranceFromCchi: builder.mutation<CchiMappedPatientResponse, number>({
+    getInsuranceDocumentOptions: builder.query<CchiPatientDocumentOption[], number>({
       query: patientId => ({
+        url: `/api/patient/${patientId}/cchi/insurance-document-options`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    fetchInsuranceFromCchi: builder.mutation<
+      CchiMappedPatientResponse,
+      { patientId: number; documentId?: string | null }
+    >({
+      query: ({ patientId, documentId }) => ({
         url: `/api/patient/${patientId}/cchi/fetch-insurance`,
-        method: 'POST'
+        method: 'POST',
+        body: documentId ? { documentId } : {}
       }),
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
@@ -54,6 +80,7 @@ export const cchiApi = createApi({
 
 export const {
   useLazyGetPatientFromCchiQuery,
+  useLazyGetInsuranceDocumentOptionsQuery,
   useFetchInsuranceFromCchiMutation,
   useRefreshPatientFromCchiMutation
 } = cchiApi;

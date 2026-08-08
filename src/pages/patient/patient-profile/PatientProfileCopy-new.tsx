@@ -127,6 +127,14 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return 'A patient with the same document ID already exists.' + traceId;
   }
 
+  if (errorKey === 'cchi.documentId.required') {
+    return 'CCHI patients must have a document ID saved on the patient record. Save the patient document first, then try again.' + traceId;
+  }
+
+  if (errorKey === 'documentId.missing') {
+    return 'Please enter the patient document first before fetching insurance from CCHI.' + traceId;
+  }
+
   if (errorKey === 'required.fields.when.not.unknown' || errorKey === 'required.fields') {
     return (
       detail ||
