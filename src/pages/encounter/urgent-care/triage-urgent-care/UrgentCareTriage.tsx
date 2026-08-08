@@ -470,7 +470,7 @@ const UrgentCareTriage = () => {
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
-  // const [openCreatePatient, setOpenCreatePatient] = useState(false);
+  const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
