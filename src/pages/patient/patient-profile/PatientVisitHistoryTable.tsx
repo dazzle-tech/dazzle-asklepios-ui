@@ -314,12 +314,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const isClosed = lifecycleStatus === 'CLOSED';
 
     const departmentType = departmentsMap[row.departmentId]?.type;
-    const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
-    const isEmergency =
-      departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
+ 
     const Radiology = departmentType === 'RADIOLOGY';
     const Laboratory = departmentType === 'LABORATORY';
-    const hasDiagnosis = diagnosisMap[row.id] ?? false;
 
     const canPay =
       !isCancelled &&
@@ -328,9 +325,8 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       (isPendingPayment || lifecycleStatus === 'OPEN');
 
     const canCancel = isNew || isPendingPayment;
-    const canComplete =
-      (isOngoing && isOutpatient && hasDiagnosis) || Radiology || Laboratory;
-    const canDischarge = isOngoing && isEmergency;
+    const canComplete = Radiology || Laboratory;
+    const canDischarge = false;
     const hasVisibleActions = canPay || canComplete || canDischarge || canCancel;
 
     if (!hasVisibleActions) return null;

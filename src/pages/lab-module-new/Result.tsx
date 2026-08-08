@@ -231,7 +231,8 @@ const Result = forwardRef<any, Props>(
       [normalizedResults]
     );
 
-    const selectableResultIds = useMemo(
+    const 
+    selectableResultIds = useMemo(
       () => selectableResults.map(r => r.id),
       [selectableResults]
     );
@@ -320,13 +321,34 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
+ const handleApprove = (row: any) => {
 
-    const doBulkApprove = async () => {
-      if (!selectedResultIds.length) return;
+      if (isResultEmpty(row)) {
+        dispatch(
+          notify({
+            msg: 'Cannot approve. Result value is missing.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (isCriticalResult(row)) {
+        setPendingApproveRow(row);
+        setIsBulkCriticalApprove(false);
+        setOpenCriticalConfirmModal(true);
+      } else {
+        doApprove(row);
+      }
+    };
+    const doBulkApprove = async (idsToApprove?: number[]) => {
+      const resolvedIds = idsToApprove ?? selectedResultIds;
+      if (!resolvedIds?.length) return;
       try {
-        await bulkApproveResults({ ids: selectedResultIds }).unwrap();
+        await bulkApproveResults({ ids: resolvedIds }).unwrap();
         setSelectedResultIds([]);
-        refetch();
+        handleToggleSelectAll(false);
+        await refetch();
         await refetchAllLabData();
         dispatch(notify({ msg: 'Selected results approved successfully', sev: 'success' }));
       } catch (e: any) {
@@ -360,34 +382,15 @@ const Result = forwardRef<any, Props>(
       );
     };
 
-    const handleApprove = (row: any) => {
-
-      if (isResultEmpty(row)) {
-        dispatch(
-          notify({
-            msg: 'Cannot approve. Result value is missing.',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
-      if (isCriticalResult(row)) {
-        setPendingApproveRow(row);
-        setIsBulkCriticalApprove(false);
-        setOpenCriticalConfirmModal(true);
-      } else {
-        doApprove(row);
-      }
-    };
+   
 
     const handleBulkApprove = () => {
       const eligibleIds = normalizedResults
-        .filter(
-          row =>
-            selectedResultIds.includes(row.id) &&
-            row.processingStatus === 'RESULT_READY'
-        )
+        .filter(row => {
+          const isSelected = selectedResultIds.includes(row.id);
+          const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+          return (isSelected || isSelectAllChecked) && row.processingStatus === 'RESULT_READY';
+        })
         .map(row => row.id);
 
       if (!eligibleIds.length) {
@@ -429,14 +432,15 @@ const Result = forwardRef<any, Props>(
         setPendingApproveRow(null);
         setOpenCriticalConfirmModal(true);
       } else {
-        doBulkApprove();
+        void doBulkApprove(eligibleIds);
       }
     };
 
     const handleCriticalConfirmYes = () => {
       setOpenCriticalConfirmModal(false);
       if (isBulkCriticalApprove) {
-        doBulkApprove();
+        const idsToApprove = selectedResultIds.length ? selectedResultIds : [];
+        void doBulkApprove(idsToApprove);
       } else if (pendingApproveRow) {
         doApprove(pendingApproveRow);
       }
@@ -452,11 +456,23 @@ const Result = forwardRef<any, Props>(
 
     const handleReject = async () => {
       try {
-        if (isBulkRejectMode) {
-          if (!selectedResultIds.length) return;
+        const resolvedIds = (() => {
+          if (isBulkRejectMode) {
+            const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+            if (isSelectAllChecked) {
+              return selectableResultIds;
+            }
+            return selectedResultIds;
+          }
 
+          return selectedResult?.id ? [selectedResult.id] : [];
+        })();
+
+        if (!resolvedIds.length) return;
+
+        if (isBulkRejectMode) {
           await bulkRejectResults({
-            ids: selectedResultIds,
+            ids: resolvedIds,
             rejectedReason: resultRejectReason
           }).unwrap();
 
@@ -512,14 +528,16 @@ const Result = forwardRef<any, Props>(
       );
     };
 
+   
     const handleToggleSelectAll = (checked: boolean) => {
+      const allRowIds = normalizedResults.map(row => row.id);
+
       if (checked) {
-        setSelectedResultIds(selectableResultIds);
+        setSelectedResultIds(prev => Array.from(new Set([...prev, ...allRowIds])));
       } else {
-        setSelectedResultIds([]);
+        setSelectedResultIds(prev => prev.filter(id => !allRowIds.includes(id)));
       }
     };
-
     const columns: ColumnConfig[] = [
       {
         key: 'select',
@@ -528,6 +546,7 @@ const Result = forwardRef<any, Props>(
             checked={isAllSelected}
             indeterminate={isIndeterminate}
             onChange={(_, checked) => handleToggleSelectAll(checked)}
+              onClick={(e) => e.stopPropagation()}
           />
         ),
         align: 'center',
@@ -538,6 +557,7 @@ const Result = forwardRef<any, Props>(
               checked={selectedResultIds.includes(row.id)}
               onChange={(_, checked) => toggleSelectRow(row, checked)}
               onClick={(e) => e.stopPropagation()}
+
             />
           );
         }
