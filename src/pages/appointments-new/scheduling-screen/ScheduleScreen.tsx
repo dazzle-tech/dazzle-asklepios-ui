@@ -419,10 +419,7 @@ const ScheduleScreen = () => {
   const extractTimeFromTimestamp = timestamp => {
     const date = new Date(timestamp);
     if (Number.isNaN(date.getTime())) return '--:--';
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
-    const dateTime = `${hours}:${minutes} `;
-    return dateTime;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const appointmentPatientIdsForService = useMemo(() => {
