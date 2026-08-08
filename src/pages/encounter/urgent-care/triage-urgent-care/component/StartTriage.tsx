@@ -17,6 +17,8 @@ import { useAppSelector } from "@/hooks";
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 
 import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
+import BodyMeasurements from "@/pages/encounter/encounter-pre-observations-new/observations/BodyMeasurements";
+import Allergies from "@/pages/encounter/encounter-pre-observations-new/AllergiesNurse/Allergies";
 
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
@@ -398,11 +400,45 @@ const StartTriage = ({
 
       <Row gutter={30}>
         {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
-          <VitalSigns
-            patientId={patientId}
-            encounterId={safeEncounterId}
-            isTriage
-            title="Vital Signs"
+          <SectionContainer
+            title={<Translate>Vital Signs</Translate>}
+            content={
+              <Form fluid>
+                <VitalSigns
+                  patientId={patientId}
+                  encounterId={safeEncounterId}
+                  isTriage
+                  title="Vital Signs"
+                />
+              </Form>
+            }
+          />
+        )}
+      </Row>
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
+          <SectionContainer
+            title={<Translate>Body Measurements</Translate>}
+            content={
+              <Form fluid>
+                <BodyMeasurements
+                  patient={patient}
+                  patientId={patientId}
+                  encounterId={safeEncounterId}
+                  encounter={encounter}
+                  disabled={false}
+                  width="100%"
+                />
+              </Form>
+            }
+          />
+        )}
+      </Row>
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && (
+          <SectionContainer
+            title={<Translate>Allergies</Translate>}
+            content={<Allergies patient={patient} encounter={encounter} showTableActions={false} showTableButtons={false} />}
           />
         )}
       </Row>
@@ -427,7 +463,7 @@ const StartTriage = ({
               <MyInput
                 required
                 width="100%"
-                height="95px"
+                height={95}
                 showLabel={false}
                 fieldType="textarea"
                 fieldName="chiefComplaint"
