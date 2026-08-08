@@ -300,13 +300,15 @@ export const priceListSetupService = createApi({
       PagedResult<PriceListSetupItem>,
       {
         priceListSetupId: Id;
+        search?: string;
       } & PagedParams
     >({
       query: ({
         priceListSetupId,
         page,
         size,
-        sort = 'id,asc'
+        sort = 'id,asc',
+        search = ''
       }) => ({
         url: `/api/setup/price-list-setups/${encodeURIComponent(
           String(priceListSetupId)
@@ -314,7 +316,8 @@ export const priceListSetupService = createApi({
         params: {
           page,
           size,
-          sort
+          sort,
+          search
         }
       }),
 

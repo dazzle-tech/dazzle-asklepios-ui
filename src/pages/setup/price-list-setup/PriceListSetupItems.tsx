@@ -23,6 +23,7 @@ import MyTable, {
 } from '@/components/MyTable/MyTable';
 
 import Translate from '@/components/Translate';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -250,6 +251,16 @@ const PriceListSetupItems: React.FC<Props> = ({
     sort: 'id,asc'
   });
 
+  const [
+    searchFilters,
+    setSearchFilters
+  ] = useState({ search: '' });
+
+  const [
+    appliedSearch,
+    setAppliedSearch
+  ] = useState('');
+
   /*
    * Waseel mapping pagination.
    */
@@ -353,7 +364,8 @@ const PriceListSetupItems: React.FC<Props> = ({
       priceListSetupId,
       page: paginationParams.page,
       size: paginationParams.size,
-      sort: paginationParams.sort
+      sort: paginationParams.sort,
+      search: appliedSearch
     },
     {
       skip:
@@ -565,6 +577,40 @@ const PriceListSetupItems: React.FC<Props> = ({
     () => itemPage?.data ?? [],
     [itemPage?.data]
   );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setSearchFilters({ search: '' });
+    setAppliedSearch('');
+    setPaginationParams({
+      page: 0,
+      size: 15,
+      sort: 'id,asc'
+    });
+  }, [open, priceListSetupId]);
+
+  useEffect(() => {
+    const delay =
+      setTimeout(() => {
+        setAppliedSearch(
+          searchFilters.search.trim()
+        );
+
+        setPaginationParams(
+          previous => ({
+            ...previous,
+            page: 0
+          })
+        );
+      }, 300);
+
+    return () =>
+      clearTimeout(delay);
+  }, [searchFilters.search]);
+
   const typeOptions = useEnumOptions('PriceListItemType');
 
 
@@ -2058,6 +2104,31 @@ const PriceListSetupItems: React.FC<Props> = ({
     </Form>
   );
 
+  const itemTableFilters = () => (
+    <Form
+      fluid
+      className="form-of-filters-set-up"
+    >
+      <MyInput
+        width="18vw"
+        fieldName="search"
+        fieldType="text"
+        record={searchFilters}
+        setRecord={setSearchFilters}
+        showLabel={false}
+        placeholder="Search Item Name"
+      />
+
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        clearOnClick={() => {
+          setSearchFilters({ search: '' });
+          setAppliedSearch('');
+        }}
+      />
+    </Form>
+  );
+
   const mainContent = () => (
     <div>
       <div className="price-list-items-header">
@@ -2089,6 +2160,7 @@ const PriceListSetupItems: React.FC<Props> = ({
           0
         }
         columns={columns}
+        filters={itemTableFilters()}
         page={
           paginationParams.page
         }
@@ -2144,6 +2216,8 @@ const PriceListSetupItems: React.FC<Props> = ({
 
           if (!value) {
             setChildModalOpen(false);
+            setSearchFilters({ search: '' });
+            setAppliedSearch('');
 
             setSelectedItem({
               ...newPriceListSetupItem
