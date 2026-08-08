@@ -26,6 +26,7 @@ import {
   findRejectedPreAuthItems,
   mergeEncounterSummaryWithInvoiceContext,
   mergeBillingChargeRows,
+  resolveDisplayChargeRows,
   resolveEncounterPatientInvoiceId,
   resolvePatientWalletAvailable,
   resolvePatientWalletReserved,
@@ -227,8 +228,14 @@ export const useBillingAccountingData = ({
   });
 
   const chargeRows = useMemo(
-    () => mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
-    [effectiveSummary, lookups, pspRows]
+    () =>
+      resolveDisplayChargeRows(
+        effectiveSummary,
+        pspRows,
+        invoiceLineItems ?? [],
+        resolvedInvoiceId
+      ),
+    [effectiveSummary, invoiceLineItems, pspRows, resolvedInvoiceId]
   );
 
   const timelineEvents = useMemo(

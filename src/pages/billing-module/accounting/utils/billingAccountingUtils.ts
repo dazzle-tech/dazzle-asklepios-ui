@@ -860,10 +860,8 @@ export const resolveRowPaymentStatus = (
   }
 
   if (
-    encounterHasInvoice(summary) &&
-    Number(summary?.invoiceOutstandingAmount ?? 0) <= 0 &&
-    Number(row.patientAmount ?? 0) > 0 &&
-    (row.chargeLineId != null || row.source === 'INVOICE' || row.source === 'DEBIT_NOTE')
+    (row.source === 'INVOICE' || row.source === 'DEBIT_NOTE') &&
+    row.status === 'PAID'
   ) {
     return 'SETTLED';
   }
@@ -1432,25 +1430,6 @@ export const isEncounterClosedForBilling = (
   return false;
 };
 
-export const isBillingChargeFinalized = (
-  summary: EncounterBillingSummary | null | undefined
-): boolean => String(summary?.chargeStatus ?? '').toUpperCase() === 'CLOSED';
-
-/** Step 2 services table is view-only after checkout finalize or full billing close. */
-export const isBillingServicesLocked = (
-  summary: EncounterBillingSummary | null | undefined,
-  encounter:
-    | {
-        billingStatus?: string | null;
-        financiallyClosedAt?: string | null;
-      }
-    | null
-    | undefined,
-  chargeRows: UnifiedBillingChargeRow[] = []
-): boolean =>
-  isBillingChargeFinalized(summary) ||
-  isEncounterClosedForBilling(encounter, { chargeRows });
-
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,
   options?: { withHash?: boolean }
@@ -1593,6 +1572,8 @@ export const mapInvoiceLineItemToRow = (item: InvoiceLineItem): UnifiedBillingCh
   const paidAmount = Number(item.paidAmount ?? 0);
   const remainingAmount = Number(item.remainingAmount ?? 0);
   const netAmount = Number(item.netAmount ?? 0);
+  const patientAmount =
+    paidAmount + remainingAmount > 0 ? paidAmount + remainingAmount : netAmount;
 
   return {
     id: `invoice-item-${item.id}`,
@@ -1610,7 +1591,7 @@ export const mapInvoiceLineItemToRow = (item: InvoiceLineItem): UnifiedBillingCh
     quantity: Number(item.quantity ?? 1),
     unitPrice: Number(item.unitPrice ?? 0),
     netAmount,
-    patientAmount: netAmount,
+    patientAmount,
     insuranceAmount: 0,
     outstandingAmount: remainingAmount,
     reservedAmount: 0,
@@ -1633,7 +1614,24 @@ export const resolveDisplayChargeRows = (
     (resolvedInvoiceId != null && resolvedInvoiceId > 0);
 
   if (hasIssuedInvoice && invoiceLineItems.length > 0) {
-    return invoiceLineItems.map(mapInvoiceLineItemToRow);
+    const invoiceRows = invoiceLineItems.map(mapInvoiceLineItemToRow);
+    const invoicedPspIds = new Set(
+      invoiceLineItems
+        .map(item => item.patientServiceProductId)
+        .filter((id): id is number => id != null)
+    );
+
+    const unbilledRows = mergeBillingChargeRows(
+      summary,
+      pspRows,
+      emptyBillingCatalogLookups()
+    ).filter(
+      row =>
+        row.patientServiceProductId == null ||
+        !invoicedPspIds.has(row.patientServiceProductId)
+    );
+
+    return [...invoiceRows, ...unbilledRows];
   }
 
   return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());

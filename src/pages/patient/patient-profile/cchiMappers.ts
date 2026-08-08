@@ -112,6 +112,11 @@ const isLikelyPayerNphiesId = (value: string): boolean => {
     return false;
   }
 
+  // Saudi NPHIES payer IDs are commonly numeric (e.g. 10000000003170).
+  if (/^\d{5,}$/.test(value)) {
+    return true;
+  }
+
   return /[A-Za-z-]/.test(value);
 };
 
