@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -51,7 +52,13 @@ import {
   useGetInsurancesByPatientQuery
 } from '@/services/patients/patientInsurancesService';
 
-import { extractPatientInsurancesList } from '../cchiMappers';
+import { extractPatientInsurancesList,
+  getTodayServiceDate,
+  resolveDisplayedEligibilityStatus,
+  shouldShowCheckEligibilityAction
+} from '../cchiMappers';
+
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 
 import {
   useCreateAdvancePaymentMutation,
@@ -106,7 +113,7 @@ import {
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
-import { formatEnumString } from '@/utils';
+import { formatEnumString, extractErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
@@ -843,6 +850,15 @@ const PatientPaymentInfo =
           }
         );
 
+      const [
+        checkEligibility,
+        {
+          isLoading:
+            isCheckingEligibility
+        }
+      ] =
+        useCheckEligibilityMutation();
+
       const enumPaymentMethods =
         useEnumOptions(
           'PaymentMethods',
@@ -895,6 +911,124 @@ const PatientPaymentInfo =
             lockAfterConfirm ||
             isBusy
         );
+
+      const displayedEligibilityStatus =
+        useMemo(
+          () =>
+            resolveDisplayedEligibilityStatus(
+              patientInsurance ??
+                null
+            ),
+          [
+            patientInsurance
+          ]
+        );
+
+      const showCheckEligibilityButton =
+        useMemo(
+          () =>
+            shouldShowCheckEligibilityAction(
+              patientInsurance ??
+                null
+            ) &&
+            !isLocked &&
+            !isViewOnlyMode,
+          [
+            patientInsurance,
+            isLocked,
+            isViewOnlyMode
+          ]
+        );
+
+      const handleCheckEligibility =
+        useCallback(async () => {
+          if (!patientId) {
+            dispatch(
+              notify({
+                msg:
+                  'Please save the patient before checking eligibility',
+                sev:
+                  'warning'
+              })
+            );
+            return;
+          }
+
+          if (
+            !formState.patientInsuranceId
+          ) {
+            dispatch(
+              notify({
+                msg:
+                  'Please select an insurance',
+                sev:
+                  'warning'
+              })
+            );
+            return;
+          }
+
+          try {
+            const result =
+              await checkEligibility(
+                {
+                  patientId,
+                  patientInsuranceId:
+                    Number(
+                      formState.patientInsuranceId
+                    ),
+                  serviceDate:
+                    getTodayServiceDate(),
+                  benefits:
+                    true,
+                  validation:
+                    true,
+                  discovery:
+                    false,
+                  transfer:
+                    false,
+                  emergency:
+                    false
+                }
+              ).unwrap();
+
+            await insuranceResponse.refetch();
+
+            dispatch(
+              notify({
+                msg:
+                  result.message?.trim() ||
+                  `Eligibility check ${
+                    result.requestStatus ??
+                    'completed'
+                  } successfully`,
+                sev:
+                  result.requestStatus ===
+                  'SUCCESS'
+                    ? 'success'
+                    : 'info'
+              })
+            );
+          } catch (error: any) {
+            dispatch(
+              notify({
+                msg:
+                  extractErrorMessage(
+                    error
+                  ) ||
+                  'Eligibility check failed. Please verify insurance details or contact Waseel support.',
+                sev:
+                  'error'
+              })
+            );
+          }
+        }, [
+          patientId,
+          formState.patientInsuranceId,
+          checkEligibility,
+          insuranceResponse,
+          dispatch
+        ]);
 
       const areServicesLocked =
         Boolean(
@@ -4687,19 +4821,39 @@ const PatientPaymentInfo =
                   }
                 />
 
-                <MyInput
-                  column
-                  disabled
-                  fieldLabel="Eligibility Status"
-                  fieldName="eligibilityStatus"
-                  record={
-                    patientInsurance ??
-                    {}
-                  }
-                  setRecord={() =>
-                    undefined
-                  }
-                />
+                <div className="payment-info__eligibility-status">
+                  <MyInput
+                    column
+                    disabled
+                    fieldLabel="Eligibility Status"
+                    fieldName="eligibilityStatus"
+                    record={{
+                      eligibilityStatus:
+                        displayedEligibilityStatus
+                    }}
+                    setRecord={() =>
+                      undefined
+                    }
+                  />
+
+                  {showCheckEligibilityButton ? (
+                    <MyButton
+                      appearance="primary"
+                      loading={
+                        isCheckingEligibility
+                      }
+                      disabled={
+                        isCheckingEligibility ||
+                        !formState.patientInsuranceId
+                      }
+                      onClick={() => {
+                        void handleCheckEligibility();
+                      }}
+                    >
+                      Check Eligibility
+                    </MyButton>
+                  ) : null}
+                </div>
 
                 <MyInput
                   column
