@@ -376,6 +376,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
             <MyInput
               column
               fieldType="number"
+              allowDecimal
               fieldLabel="Amount"
               fieldName="amount"
               record={form}
