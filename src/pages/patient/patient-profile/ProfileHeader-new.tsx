@@ -254,31 +254,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
 
-
-  const extractErrorMessage = (response: any): string => {
-    try {
-      const msg =
-        response?.data?.message ??
-        response?.data?.error ??
-        response?.message ??
-        response?.error;
-
-      if (typeof msg === 'string' && msg.trim()) {
-        return msg.replace(/^error\./i, '').trim();
-      }
-
-      if (response?.data && typeof response?.data === 'object') {
-        const detail = response.data.detail ?? response.data.description;
-        if (typeof detail === 'string' && detail.trim()) {
-          return detail.trim();
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return '';
-  };
-
   const handleOpenEligibilityModal = () => {
     if (!localPatient?.id) {
       dispatch(
@@ -348,7 +323,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     } catch (error: any) {
       dispatch(
         notify({
-          msg: extractErrorMessage(error) || 'Failed to check eligibility',
+          msg:
+            extractErrorMessage(error) ||
+            'Eligibility check failed. Please verify insurance details or contact Waseel support.',
           sev: 'error'
         })
       );
