@@ -48,7 +48,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
   });
 
   const { data: diagnosisStatusLov } =
-  useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
+    useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -320,7 +320,11 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
                     className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--primary-gray)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
@@ -328,7 +332,11 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
                     className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     title="Cancel"
                     onClick={() => openCancelDialog(row)}
                   />

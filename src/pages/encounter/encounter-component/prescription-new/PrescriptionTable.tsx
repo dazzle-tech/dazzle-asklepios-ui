@@ -198,35 +198,39 @@ const PrescriptionTable = ({
       render: (rowData: any) => {
         const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
 
-        return (
-          <div className="flex-c8">
-            {!edit && (
-              <MdModeEdit
-                title={isSubmitted ? 'Prescription is submitted' : 'Edit'}
-                size={20}
-                className="font-aws"
-                style={{
-                  opacity: isSubmitted ? 0.5 : 1,
-                  cursor: isSubmitted ? 'not-allowed' : 'pointer'
-                }}
-                onClick={e => {
-                  e.stopPropagation();
+      return (
+        <div className="flex-c8">
+          <MdModeEdit
+            title={
+              !edit
+                ? 'View Only'
+                : isSubmitted
+                  ? 'Prescription is submitted'
+                  : 'Edit'
+            }
+            size={20}
+            className={edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
+            style={{
+              opacity: !edit || isSubmitted ? 0.5 : 1,
+              cursor: !edit || isSubmitted ? 'not-allowed' : 'pointer'
+            }}
+            onClick={e => {
+              e.stopPropagation();
 
-                  if (isSubmitted) return;
+              if (!edit || isSubmitted) return;
 
-                  setPatientPrescriptionMedicationObject({
-                    ...rowData,
-                    key: rowData.key ?? rowData.id,
-                    id: rowData.id ?? rowData.key
-                  });
+              setPatientPrescriptionMedicationObject({
+                ...rowData,
+                key: rowData.key ?? rowData.id,
+                id: rowData.id ?? rowData.key
+              });
 
-                  setOpenDetailsModal(true);
-                  setOpenToAdd(false);
-                }}
-              />
-            )}
-          </div>
-        );
+              setOpenDetailsModal(true);
+              setOpenToAdd(false);
+            }}
+          />
+        </div>
+      );
       }
     },
     {
