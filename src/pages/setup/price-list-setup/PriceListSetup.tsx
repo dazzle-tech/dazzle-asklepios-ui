@@ -41,6 +41,7 @@ import {
 } from '@/utils';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 import {
   useActivatePriceListSetupMutation,
@@ -126,6 +127,14 @@ const PriceListSetup: React.FC = () => {
   const {
     data: facilityListResponse
   } = useGetAllFacilitiesQuery({});
+
+  const {
+    data: payerListResponse
+  } = useGetAllNphiesPayersQuery({
+    page: 0,
+    size: 500,
+    sort: 'nameEn,asc'
+  });
 
   const [
     deletePriceListSetup
@@ -370,14 +379,34 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
-      key: 'payerId',
-      title: <Translate>Payer ID</Translate>,
-      flexGrow: 2,
+      key: 'payerName',
+      title: <Translate>Payer</Translate>,
+      flexGrow: 3,
 
       render: (
         row: PriceListSetupModel
-      ) =>
-        row.payerId ?? '-'
+      ) => {
+        if (row.payerName) {
+          return row.payerName;
+        }
+
+        if (!row.payerId) {
+          return '-';
+        }
+
+        const payer =
+          payerListResponse?.data?.find(
+            item =>
+              Number(item.id) ===
+              Number(row.payerId)
+          );
+
+        return (
+          payer?.nameEn ||
+          payer?.nameAr ||
+          '-'
+        );
+      }
     },
 
     {

@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './styles.less';
-import { Panel, Form } from 'rsuite';
+import { Panel, Form, Tooltip, Whisper } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
+import { FaUndo, FaRegListAlt } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -27,8 +26,8 @@ import { formatDateWithoutSeconds } from '@/utils';
 import PayorModal from './PayorModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useEnumOptions } from '@/services/enumsApi';
-import { FaRegListAlt } from 'react-icons/fa';
-import PayorPlanModal from './PayorPlanModal';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { resolveNphiesPayerNameById } from '@/pages/patient/patient-profile/insuranceDisplayUtils';
 
 const PayorSetup = () => {
   const dispatch = useAppDispatch();
@@ -49,10 +48,6 @@ const PayorSetup = () => {
 
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-
-  const [openPayorPlanModal, setOpenPayorPlanModal] = useState(false);
-  const [selectedPayorForPlans, setSelectedPayorForPlans] = useState<any>(null);
-  const [payorPlans, setPayorPlans] = useState([]);
 
   const payorCategories = useEnumOptions('PayorCategory');
 
@@ -85,6 +80,17 @@ const PayorSetup = () => {
   const [createPayor] = useCreatePayorMutation();
   const [updatePayor] = useUpdatePayorMutation();
   const [togglePayorActive] = useTogglePayorActiveMutation();
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery({
+    page: 0,
+    size: 2000,
+    sort: 'nameEn,asc'
+  });
+
+  const nphiesPayersList = useMemo(
+    () => nphiesPayerListResponse?.data ?? [],
+    [nphiesPayerListResponse]
+  );
 
   // Header / Page Code
   useEffect(() => {
@@ -225,22 +231,25 @@ const PayorSetup = () => {
     }
   };
 
+  const payorPlanTooltip = (
+    <Tooltip>
+      <Translate>Payor plans are managed at the patient level</Translate>
+    </Tooltip>
+  );
+
   // Icons column
   const iconsForActions = (rowData: Payor) => (
     <div className="container-of-icons">
-      <FaRegListAlt
-        className="icons-style"
-        title="Payor Plan"
-        size={22}
-        fill="var(--primary-gray)"
-        style={{ cursor: 'pointer', marginLeft: '8px' }}
-        onClick={() => {
-          setSelectedPayorForPlans(rowData);
-          setPayorPlans([]);
-
-          setOpenPayorPlanModal(true);
-        }}
-      />
+      <Whisper trigger="hover" placement="top" speaker={payorPlanTooltip}>
+        <span>
+          <FaRegListAlt
+            className="icons-style"
+            size={22}
+            fill="var(--primary-gray)"
+            style={{ cursor: 'not-allowed', marginLeft: '8px', opacity: 0.4 }}
+          />
+        </span>
+      </Whisper>
 
       <MdModeEdit
         className="icons-style"
@@ -314,8 +323,12 @@ const PayorSetup = () => {
     },
     {
       key: 'nphiesId',
-      title: <Translate>NPHIES ID</Translate>,
-      flexGrow: 2
+      title: <Translate>NPHIES Payer</Translate>,
+      flexGrow: 2,
+      render: (rowData: Payor) => {
+        const nphiesPayerName = resolveNphiesPayerNameById(rowData.nphiesId, nphiesPayersList);
+        return <span>{nphiesPayerName ?? rowData.nphiesId ?? ''}</span>;
+      }
     },
     {
       key: 'isWaseelEnabled',
@@ -466,12 +479,6 @@ const PayorSetup = () => {
         payor={payor}
         setPayor={setPayor}
         onSave={handleSave}
-      />
-
-      <PayorPlanModal
-        open={openPayorPlanModal}
-        setOpen={setOpenPayorPlanModal}
-        payor={selectedPayorForPlans}
       />
     </Panel>
   );

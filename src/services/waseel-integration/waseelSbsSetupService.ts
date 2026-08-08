@@ -89,10 +89,24 @@ export const waseelSbsSetupService = createApi({
       PageResponse<WaseelItemMapping>,
       WaseelItemMappingSearchParams
     >({
-      query: ({ page, size, sort = 'id,desc' }) => ({
+      query: ({
+        page,
+        size,
+        sort = 'id,desc',
+        search,
+        itemType,
+        activeOnly
+      }) => ({
         url: '/api/setup/waseel/item-mapping',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          ...(search ? { search } : {}),
+          ...(itemType ? { itemType } : {}),
+          ...(activeOnly != null ? { activeOnly } : {})
+        }
       }),
       providesTags: ['WaseelItemMapping']
     }),

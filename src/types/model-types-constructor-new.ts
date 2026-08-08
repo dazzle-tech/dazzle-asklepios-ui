@@ -3386,6 +3386,10 @@ export type WaseelItemMappingSearchParams = {
   page: number;
   size: number;
   sort?: string;
+  search?: string;
+  itemType?: string;
+  activeOnly?: boolean;
+  refreshToken?: number;
 };
 
 export const newPriceListSetup: modelTypes.PriceListSetup = {
