@@ -1146,6 +1146,21 @@ export const computeWalletCollectAmounts = (
 export const isPreAuthRejected = (status?: string | null): boolean =>
   String(status ?? '').toUpperCase() === 'REJECTED';
 
+export const isPreAuthPending = (status?: string | null): boolean => {
+  const normalized = String(status ?? '').toUpperCase();
+  return normalized === 'PENDING_APPROVAL' || normalized === 'PENDING';
+};
+
+export const findPendingPreAuthItems = (
+  pspRows: PatientServiceAndProduct[]
+): PatientServiceAndProduct[] =>
+  pspRows.filter(row =>
+    isPreAuthPending(
+      (row as PatientServiceAndProduct & { preAuthorizationStatus?: string })
+        .preAuthorizationStatus
+    )
+  );
+
 export const buildTimelineEvents = (
   encounter: PatientEncounter | null | undefined,
   summary: EncounterBillingSummary | null | undefined,

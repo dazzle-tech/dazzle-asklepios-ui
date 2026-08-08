@@ -25,12 +25,13 @@ const CashFallbackBanner: React.FC<CashFallbackBannerProps> = ({
         <Text weight="semibold">Waseel pre-authorization rejected</Text>
         <Text muted size="sm" style={{ marginTop: 4 }}>
           {rejectedItems.length} service
-          {rejectedItems.length > 1 ? 's were' : ' was'} rejected by Waseel. You can re-price and
-          bill the patient directly as cash instead of waiting for insurance approval.
+          {rejectedItems.length > 1 ? 's were' : ' was'} rejected by Waseel. Bill the patient in
+          full cash using the insurance price list, or submit a new pre-authorization from the table
+          below.
         </Text>
       </div>
       <MyButton appearance="primary" loading={converting} onClick={onConvertToCash}>
-        Bill patient directly (Cash)
+        Pay all rejected as cash
       </MyButton>
     </div>
   );

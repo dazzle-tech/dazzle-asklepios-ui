@@ -24,6 +24,7 @@ import {
 import {
   buildTimelineEvents,
   findRejectedPreAuthItems,
+  findPendingPreAuthItems,
   mergeEncounterSummaryWithInvoiceContext,
   mergeBillingChargeRows,
   resolveEncounterPatientInvoiceId,
@@ -242,6 +243,11 @@ export const useBillingAccountingData = ({
     [pspRows]
   );
 
+  const pendingPreAuthItems = useMemo(
+    () => findPendingPreAuthItems(pspRows),
+    [pspRows]
+  );
+
   const walletBalance = resolvePatientWalletAvailable(
     patientLedgerSummary,
     effectiveSummary?.wallet?.availableBalance,
@@ -293,6 +299,7 @@ export const useBillingAccountingData = ({
         fetchingFinancialDocuments),
     timelineEvents,
     rejectedPreAuthItems,
+    pendingPreAuthItems,
     waseelCoverage,
     loadingWaseelCoverage,
     waseelCoverageError,

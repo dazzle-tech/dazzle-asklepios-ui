@@ -53,6 +53,10 @@ type BillingChargesTableProps = {
   selectedRowIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   onCollectPayment?: () => void;
+  showPreAuthActions?: boolean;
+  preAuthActionLoadingId?: number | null;
+  onPayRejectedAsCash?: (patientServiceProductId: number) => void;
+  onClonePreAuthorization?: (patientServiceProductId: number) => void;
 };
 
 
@@ -75,7 +79,15 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   onSelectionChange,
 
-  onCollectPayment
+  onCollectPayment,
+
+  showPreAuthActions = false,
+
+  preAuthActionLoadingId = null,
+
+  onPayRejectedAsCash,
+
+  onClonePreAuthorization
 
 }) => {
 
@@ -470,7 +482,89 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       }
 
-    }
+    },
+
+    ...(showPreAuthActions
+
+      ? [
+
+          {
+
+            key: 'preAuthActions',
+
+            title: 'Pre-auth',
+
+            width: 220,
+
+            render: (row: UnifiedBillingChargeRow) => {
+
+              if (!isPreAuthRejected(row.preAuthorizationStatus)) {
+
+                return <span>-</span>;
+
+              }
+
+              const pspId = row.patientServiceProductId;
+
+              if (pspId == null) {
+
+                return <span>-</span>;
+
+              }
+
+              const loading = preAuthActionLoadingId === pspId;
+
+              return (
+
+                <div className="billing-accounting__preauth-row-actions">
+
+                  <MyButton
+
+                    size="xs"
+
+                    appearance="primary"
+
+                    loading={loading}
+
+                    disabled={disabled || loading}
+
+                    onClick={() => onPayRejectedAsCash?.(pspId)}
+
+                  >
+
+                    Pay cash
+
+                  </MyButton>
+
+                  <MyButton
+
+                    size="xs"
+
+                    appearance="default"
+
+                    loading={loading}
+
+                    disabled={disabled || loading}
+
+                    onClick={() => onClonePreAuthorization?.(pspId)}
+
+                  >
+
+                    Clone pre-auth
+
+                  </MyButton>
+
+                </div>
+
+              );
+
+            }
+
+          }
+
+        ]
+
+      : [])
 
   ];
 
