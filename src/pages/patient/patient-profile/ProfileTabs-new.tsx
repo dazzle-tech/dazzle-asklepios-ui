@@ -174,6 +174,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: (
         <InsuranceTab
           localPatient={localPatient}
+          setLocalPatient={setLocalPatient}
           cchiInsurance={cchiInsurance}
           setCchiInsurance={setCchiInsurance}
         />

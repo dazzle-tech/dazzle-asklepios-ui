@@ -5240,6 +5240,27 @@ export interface PreAuthorizationCommunicationHistoryResponse {
   payloads?: PreAuthorizationCommunicationPayloadHistory[] | null;
 }
 
+export interface EncounterPreAuthorizationRefreshItem {
+  patientServiceProductId?: number | null;
+  preAuthorizationRequestId?: number | null;
+  approvalRequestId?: number | null;
+  preAuthorizationStatus?: string | null;
+  waseelStatus?: string | null;
+  canPayAsCash?: boolean | null;
+  canClonePreAuthorization?: boolean | null;
+}
+
+export interface EncounterPreAuthorizationRefreshResponse {
+  encounterId?: number | null;
+  refreshedRequestCount?: number | null;
+  approvedItemCount?: number | null;
+  rejectedItemCount?: number | null;
+  pendingItemCount?: number | null;
+  canCloseCalculation?: boolean | null;
+  message?: string | null;
+  items?: EncounterPreAuthorizationRefreshItem[] | null;
+}
+
 export interface PreAuthorizationCommunicationRequest {
   preAuthorizationId?: number;
   claimResponseId?: number;
