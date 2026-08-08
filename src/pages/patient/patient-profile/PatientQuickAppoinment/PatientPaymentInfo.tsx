@@ -35,6 +35,11 @@ import {
 } from '@/services/enumsApi';
 
 import {
+  BILLING_PAYMENT_METHOD_LABELS,
+  mergeBillingPaymentMethodOptions
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+
+import {
   useGetFacilityByIdQuery
 } from '@/services/security/facilityService';
 
@@ -235,9 +240,9 @@ const resolvePaymentCategory =
       paymentMethodCode
     ) {
       case 'CASH':
-        return 'CASH';
+      case 'CREDIT_CARD':
       case 'CREDIT_DEBIT_CARD':
-        return 'CARD';
+        return 'CASH';
       case 'CHEQUE':
         return 'CHEQUE';
       case 'BANK_TRANSFER':
@@ -838,23 +843,28 @@ const PatientPaymentInfo =
           }
         );
 
-      const paymentMethods =
+      const enumPaymentMethods =
         useEnumOptions(
           'PaymentMethods',
           {
             exclude: [
               'INSURANCE_COVERAGE'
-            ]
+            ],
+            labelOverrides:
+              BILLING_PAYMENT_METHOD_LABELS
           }
         ) ?? [];
+
+      const paymentMethods =
+        mergeBillingPaymentMethodOptions(
+          enumPaymentMethods
+        );
 
       const isInsurance =
         formState.coverageType ===
         'INSURANCE';
 
-      const showCardFields =
-        formState.paymentMethodCode ===
-        'CREDIT_DEBIT_CARD';
+      const showCardFields = false;
 
       const showBankReference =
         formState.paymentMethodCode ===

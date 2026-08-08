@@ -24,6 +24,7 @@ import {
   formatMoney,
   isWalletPaymentMethod,
   makeRequestId,
+  mergeBillingPaymentMethodOptions,
   normalizeBillingError,
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber,
@@ -34,17 +35,6 @@ const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
-
-const FALLBACK_PAYMENT_METHODS = [
-  { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
-  { value: 'CREDIT_DEBIT_CARD', label: BILLING_PAYMENT_METHOD_LABELS.CREDIT_DEBIT_CARD },
-  { value: 'CHEQUE', label: BILLING_PAYMENT_METHOD_LABELS.CHEQUE },
-  { value: 'BANK_TRANSFER', label: BILLING_PAYMENT_METHOD_LABELS.BANK_TRANSFER },
-  {
-    value: 'DEDUCT_FROM_FREE_BALANCE',
-    label: BILLING_PAYMENT_METHOD_LABELS.DEDUCT_FROM_FREE_BALANCE
-  }
-];
 
 type CollectPaymentModalProps = {
   open: boolean;
@@ -90,7 +80,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     }) ?? [];
 
   const paymentMethods =
-    enumPaymentMethods.length > 0 ? enumPaymentMethods : FALLBACK_PAYMENT_METHODS;
+    mergeBillingPaymentMethodOptions(enumPaymentMethods);
 
   const dedupedSelectedRows = useMemo(() => {
     const seenPspIds = new Set<number>();

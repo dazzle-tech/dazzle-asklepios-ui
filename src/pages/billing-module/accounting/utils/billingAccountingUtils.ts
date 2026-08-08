@@ -1107,14 +1107,91 @@ export const WALLET_DEPOSIT_BUTTON_LABEL = 'Add to wallet';
 
 export const BILLING_PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Cash',
-  CREDIT_DEBIT_CARD: 'Credit / debit card',
+  CREDIT_CARD: 'Credit card',
+  CREDIT_DEBIT_CARD: 'Credit card',
   CHEQUE: 'Cheque',
   BANK_TRANSFER: 'Bank transfer',
-  DEDUCT_FROM_FREE_BALANCE: 'Wallet (use advance balance)'
+  DEDUCT_FROM_FREE_BALANCE: 'Deduct from free balance'
+};
+
+export type BillingPaymentMethodOption = {
+  value: string;
+  label: string;
+  id?: number | string;
+  key?: number | string;
+  valueId?: number | string;
+};
+
+const BILLING_PAYMENT_METHOD_ORDER = [
+  'CASH',
+  'CREDIT_CARD',
+  'CREDIT_DEBIT_CARD',
+  'CHEQUE',
+  'BANK_TRANSFER',
+  'DEDUCT_FROM_FREE_BALANCE'
+];
+
+export const STANDARD_BILLING_PAYMENT_METHODS: BillingPaymentMethodOption[] = [
+  { value: 'CASH', label: BILLING_PAYMENT_METHOD_LABELS.CASH },
+  { value: 'CREDIT_CARD', label: BILLING_PAYMENT_METHOD_LABELS.CREDIT_CARD },
+  {
+    value: 'DEDUCT_FROM_FREE_BALANCE',
+    label: BILLING_PAYMENT_METHOD_LABELS.DEDUCT_FROM_FREE_BALANCE
+  }
+];
+
+export const mergeBillingPaymentMethodOptions = (
+  enumOptions: BillingPaymentMethodOption[] = [],
+  options: {
+    exclude?: string[];
+  } = {}
+): BillingPaymentMethodOption[] => {
+  const exclude = new Set(options.exclude ?? []);
+  const merged = new Map<string, BillingPaymentMethodOption>();
+
+  enumOptions.forEach(option => {
+    if (!option?.value || exclude.has(option.value)) {
+      return;
+    }
+
+    merged.set(option.value, {
+      ...option,
+      label:
+        BILLING_PAYMENT_METHOD_LABELS[option.value] ??
+        option.label ??
+        option.value
+    });
+  });
+
+  STANDARD_BILLING_PAYMENT_METHODS.forEach(option => {
+    if (exclude.has(option.value) || merged.has(option.value)) {
+      return;
+    }
+
+    merged.set(option.value, option);
+  });
+
+  return Array.from(merged.values()).sort((left, right) => {
+    const leftIndex = BILLING_PAYMENT_METHOD_ORDER.indexOf(left.value);
+    const rightIndex = BILLING_PAYMENT_METHOD_ORDER.indexOf(right.value);
+
+    if (leftIndex === -1 && rightIndex === -1) {
+      return left.label.localeCompare(right.label);
+    }
+
+    if (leftIndex === -1) {
+      return 1;
+    }
+
+    if (rightIndex === -1) {
+      return -1;
+    }
+
+    return leftIndex - rightIndex;
+  });
 };
 
 export const resolveBillingPaymentCategory = (paymentMethodCode: string): string => {
-  if (paymentMethodCode === 'CREDIT_DEBIT_CARD') return 'CARD';
   if (paymentMethodCode === 'BANK_TRANSFER') return 'BANK_TRANSFER';
   if (paymentMethodCode === 'CHEQUE') return 'CHEQUE';
   if (paymentMethodCode === 'DEDUCT_FROM_FREE_BALANCE') return 'WALLET';
