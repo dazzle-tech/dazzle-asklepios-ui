@@ -38,7 +38,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isBillingChargeFinalized, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -77,6 +77,7 @@ const Accounting: React.FC = () => {
     loadingBillingMetrics,
     loadingPsp,
     chargeRows,
+    resolvedInvoiceId,
     invoiceAdjustments,
     loadingInvoiceContext,
     timelineEvents,
@@ -149,10 +150,10 @@ const Accounting: React.FC = () => {
       return;
     }
 
-    if (summary.chargeStatus === 'CLOSED') {
+    if (isEncounterChargeCollectionComplete(summary, selectedEncounter)) {
       dispatch(
         notify({
-          msg: 'Checkout is already complete for this encounter. Any debit balance is collected from Invoices.',
+          msg: 'Checkout is already complete for this encounter. Any invoice balance is collected from Invoices or Pay outstanding below.',
           sev: 'info'
         })
       );
@@ -358,15 +359,17 @@ const Accounting: React.FC = () => {
     [selectedEncounter, chargeRows]
   );
 
+  const chargeCollectionComplete = useMemo(
+    () => isEncounterChargeCollectionComplete(summary, selectedEncounter),
+    [summary, selectedEncounter]
+  );
+
   const billingServicesLocked = useMemo(
     () => isBillingServicesLocked(summary, selectedEncounter, chargeRows),
     [summary, selectedEncounter, chargeRows]
   );
 
-  const billingChargeFinalized = useMemo(
-    () => isBillingChargeFinalized(summary),
-    [summary]
-  );
+  const billingChargeFinalized = chargeCollectionComplete;
 
   const preAuthBlocksCheckout = useMemo(
     () =>
@@ -539,10 +542,16 @@ const Accounting: React.FC = () => {
                 coverageType={coverageType}
                 chargeRows={chargeRows}
                 encounterClosedForBilling={encounterClosedForBilling}
+                chargeCollectionComplete={chargeCollectionComplete}
+                invoiceId={resolvedInvoiceId}
+                invoiceAdjustments={invoiceAdjustments}
+                walletBalance={walletBalance}
+                walletReserved={reservedBalance}
                 loadingBillingMetrics={loadingBillingMetrics}
                 preAuthBlocksCheckout={preAuthBlocksCheckout}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
+                onInvoicePaid={refreshAll}
               />
             </div>
 
@@ -595,7 +604,10 @@ const Accounting: React.FC = () => {
       loadingBillingMetrics,
       billingServicesLocked,
       billingChargeFinalized,
+      chargeCollectionComplete,
       encounterClosedForBilling,
+      resolvedInvoiceId,
+      invoiceAdjustments,
       selectedEncounterLabel,
       summary,
       walletBalance,

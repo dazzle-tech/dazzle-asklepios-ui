@@ -885,10 +885,17 @@ export const resolveRowPaymentStatus = (
 export const isRowCollectable = (
   row: UnifiedBillingChargeRow,
   summary?: EncounterBillingSummary | null
-): boolean =>
-  row.patientServiceProductId != null &&
-  resolveRowPaymentStatus(row, summary) !== 'SETTLED' &&
-  computeRowRemainingAmount(row) > 0;
+): boolean => {
+  if (isEncounterChargeCollectionComplete(summary)) {
+    return false;
+  }
+
+  return (
+    row.patientServiceProductId != null &&
+    resolveRowPaymentStatus(row, summary) !== 'SETTLED' &&
+    computeRowRemainingAmount(row) > 0
+  );
+};
 
 /** Row has an amount due but billing has not created a charge line yet. */
 export const isRowAwaitingBilling = (row: UnifiedBillingChargeRow): boolean =>
@@ -1528,7 +1535,40 @@ export const isBillingChargeFinalized = (
   summary: EncounterBillingSummary | null | undefined
 ): boolean => String(summary?.chargeStatus ?? '').toUpperCase() === 'CLOSED';
 
-/** Step 2 services table is view-only after checkout finalize or full billing close. */
+/**
+ * Charge-level collection is finished — no more row selection, collect payment, or re-checkout.
+ * Stays true after debit/credit notes even when charge rows still show patient outstanding.
+ */
+export const isEncounterChargeCollectionComplete = (
+  summary: EncounterBillingSummary | null | undefined,
+  encounter?:
+    | {
+        billingStatus?: string | null;
+        financiallyClosedAt?: string | null;
+      }
+    | null
+): boolean => {
+  if (isBillingChargeFinalized(summary)) {
+    return true;
+  }
+
+  if (encounterHasInvoice(summary)) {
+    return true;
+  }
+
+  const billingStatus = String(encounter?.billingStatus ?? '').toUpperCase();
+  if (billingStatus === 'FINANCIALLY_CLOSED' || billingStatus === 'INVOICED') {
+    return true;
+  }
+
+  if (encounter?.financiallyClosedAt) {
+    return true;
+  }
+
+  return false;
+};
+
+/** Step 2 services table is view-only after checkout finalize or invoice issuance. */
 export const isBillingServicesLocked = (
   summary: EncounterBillingSummary | null | undefined,
   encounter:
@@ -1538,10 +1578,8 @@ export const isBillingServicesLocked = (
       }
     | null
     | undefined,
-  chargeRows: UnifiedBillingChargeRow[] = []
-): boolean =>
-  isBillingChargeFinalized(summary) ||
-  isEncounterClosedForBilling(encounter, { chargeRows });
+  _chargeRows: UnifiedBillingChargeRow[] = []
+): boolean => isEncounterChargeCollectionComplete(summary, encounter);
 
 export const formatEncounterDisplayLabel = (
   encounter: PatientEncounter | null | undefined,

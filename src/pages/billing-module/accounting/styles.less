@@ -199,8 +199,21 @@
 
   &__table--locked {
     opacity: 0.65;
-    pointer-events: none;
     user-select: none;
+
+    // Keep the table scrollable for audit review while blocking row actions.
+    .rs-table-body-wheel-area,
+    .rs-table-scrollbar {
+      pointer-events: auto;
+    }
+
+    .rs-checkbox,
+    .rs-btn,
+    button,
+    input,
+    a {
+      pointer-events: none;
+    }
   }
 
   &__checkout-complete {
