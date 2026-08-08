@@ -223,9 +223,9 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
         {/* Row 3 - Actions */}
         <div className="header-third-row">
-          <MyButton onClick={() => setOpenRequestTestModal(true)} appearance="ghost">
+          {/* <MyButton onClick={() => setOpenRequestTestModal(true)} appearance="ghost">
             <FontAwesomeIcon icon={faVial} /> Request New TestSetup
-          </MyButton>
+          </MyButton> */}
 
           <MyButton disabled={isSubmitDisabled} onClick={() => setRecallFavoriteModal(true)}>
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
