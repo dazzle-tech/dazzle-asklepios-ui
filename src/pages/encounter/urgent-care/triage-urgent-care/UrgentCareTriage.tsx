@@ -470,7 +470,7 @@ const UrgentCareTriage = () => {
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
-  const [openCreatePatient, setOpenCreatePatient] = useState(false);
+  // const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -1596,13 +1596,13 @@ const handleCancelEncounter = async () => {
           showAdvancedButton={false}
           extraActions={
             <>
-              <MyButton
+              {/* <MyButton
                 appearance="ghost"
                 onClick={() => setOpenCreatePatient(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
               >
                 Create New Patient
-              </MyButton>
+              </MyButton> */}
               <MyButton
                 appearance="ghost"
                 onClick={() => setOpenQuickPatient(true)}
@@ -1679,7 +1679,7 @@ const handleCancelEncounter = async () => {
           cancelButtonLabel="Close"
         />
 
-        <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
+        {/* <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} /> */}
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
       </Panel>
 
