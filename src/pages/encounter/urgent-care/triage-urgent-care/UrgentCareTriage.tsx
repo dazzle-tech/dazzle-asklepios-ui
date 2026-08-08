@@ -1596,13 +1596,13 @@ const handleCancelEncounter = async () => {
           showAdvancedButton={false}
           extraActions={
             <>
-              <MyButton
+              {/* <MyButton
                 appearance="ghost"
                 onClick={() => setOpenCreatePatient(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
               >
                 Create New Patient
-              </MyButton>
+              </MyButton> */}
               <MyButton
                 appearance="ghost"
                 onClick={() => setOpenQuickPatient(true)}
@@ -1679,7 +1679,7 @@ const handleCancelEncounter = async () => {
           cancelButtonLabel="Close"
         />
 
-        <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
+        {/* <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} /> */}
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
       </Panel>
 
