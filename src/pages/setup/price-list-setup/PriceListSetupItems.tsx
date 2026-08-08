@@ -2020,25 +2020,27 @@ const PriceListSetupItems: React.FC<Props> = ({
 
       <br />
 
-      {isInsurancePriceList && (
+      <div className="price-list-two-columns">
+        {isInsurancePriceList && (
+          <MyInput
+            width="100%"
+            fieldLabel="Requires PreAuthorization"
+            fieldType="checkbox"
+            fieldName="requiresPreAuthorization"
+            record={selectedItem}
+            setRecord={setSelectedItem}
+          />
+        )}
+
         <MyInput
           width="100%"
-          fieldLabel="Requires PreAuthorization"
+          fieldLabel="Active"
           fieldType="checkbox"
-          fieldName="requiresPreAuthorization"
+          fieldName="isActive"
           record={selectedItem}
           setRecord={setSelectedItem}
         />
-      )}
-
-      <MyInput
-        width="100%"
-        fieldLabel="Active"
-        fieldType="checkbox"
-        fieldName="isActive"
-        record={selectedItem}
-        setRecord={setSelectedItem}
-      />
+      </div>
     </Form>
   );
 
