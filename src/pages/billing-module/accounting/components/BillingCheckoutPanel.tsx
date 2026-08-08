@@ -54,6 +54,7 @@ type BillingCheckoutPanelProps = {
   chargeRows?: UnifiedBillingChargeRow[];
   encounterClosedForBilling?: boolean;
   loadingBillingMetrics?: boolean;
+  preAuthBlocksCheckout?: boolean;
 };
 
 
@@ -76,7 +77,9 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   encounterClosedForBilling = false,
 
-  loadingBillingMetrics = false
+  loadingBillingMetrics = false,
+
+  preAuthBlocksCheckout = false
 
 }) => {
 
@@ -535,6 +538,20 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
 
 
+      {preAuthBlocksCheckout && (
+
+        <Message type="warning" showIcon style={{ marginBottom: 12 }}>
+
+          Pre-authorization is still pending with Waseel. Refresh status from the services table
+
+          above and wait for the final payer response before checkout or closing the encounter.
+
+        </Message>
+
+      )}
+
+
+
       <div className="billing-accounting__actions">
 
         {checkoutAmountDue > 0 && !allowDebit && onCollectRemaining && (
@@ -553,7 +570,7 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
           loading={isCheckoutBusy}
 
-          disabled={!canCheckout || isCheckoutBusy}
+          disabled={!canCheckout || isCheckoutBusy || preAuthBlocksCheckout}
 
           onClick={() => {
 
@@ -574,7 +591,8 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
           disabled={
             encounterId == null ||
             isCheckoutBusy ||
-            encounterClosedForBilling
+            encounterClosedForBilling ||
+            preAuthBlocksCheckout
           }
 
           onClick={() => {

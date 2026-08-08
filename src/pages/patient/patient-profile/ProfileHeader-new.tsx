@@ -3,6 +3,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import { setPatient } from '@/reducers/patientSlice';
 import {
   useLazyGetPatientLabelPdfQuery,
   useSendPatientPasswordEmailMutation
@@ -21,7 +22,7 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useLazyGetPatientFromCchiQuery } from '@/services/waseel-integration/cchiService';
+import { useLazyGetPatientFromCchiQuery, useRefreshPatientFromCchiMutation } from '@/services/waseel-integration/cchiService';
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
 import { calculateAgeFormat, extractErrorMessage } from '@/utils';
@@ -38,7 +39,8 @@ import {
   faShareNodes,
   faTriangleExclamation,
   faUsersLine,
-  faLayerGroup
+  faLayerGroup,
+  faRotate
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
@@ -69,6 +71,7 @@ import {
   getCchiInsuranceStorageKey,
   pickPatientFields
 } from './cchiMappers';
+import type { CchiMappedPatientResponse } from '@/services/waseel-integration/cchiService';
 import {
   formatInsurancePickerLabel,
   resolveInsurancePayorDisplayName
@@ -150,7 +153,34 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     useSendPatientPasswordEmailMutation();
   const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
     useLazyGetPatientFromCchiQuery();
+  const [refreshPatientFromCchi, { isLoading: isRefreshingCchiPatient }] =
+    useRefreshPatientFromCchiMutation();
   const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
+
+  const { data: patientInsuranceResponseForHeader } = useGetInsurancesByPatientQuery(
+    {
+      patientId: patientId!,
+      page: 0,
+      size: 100,
+      sort: 'id,desc'
+    },
+    {
+      skip: !patientId,
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  const savedInsurancesForHeader = useMemo(
+    () => extractPatientInsurancesList(patientInsuranceResponseForHeader),
+    [patientInsuranceResponseForHeader]
+  );
+
+  const hasSavedInsurance = savedInsurancesForHeader.length > 0;
+  const showRefreshFromCchiButton =
+    Boolean(localPatient?.id) &&
+    Boolean(localPatient?.isCchiPatient) &&
+    !hasSavedInsurance;
+  const showUpdateFromCchiButton = Boolean(localPatient?.id) && hasSavedInsurance;
 
   const { data: patientInsuranceResponse, isFetching: isFetchingInsurances, refetch: refetchInsurances } =
     useGetInsurancesByPatientQuery(
@@ -332,6 +362,53 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
+  const applyCchiMappedResponse = (mappedResponse: CchiMappedPatientResponse) => {
+    const rawInsurance = extractCchiInsurance(mappedResponse);
+
+    setLocalPatient({
+      ...localPatient,
+      ...pickPatientFields(mappedResponse.patient),
+      id: localPatient?.id ?? mappedResponse.patient?.id,
+      isCchiPatient: true
+    });
+
+    setCchiAddress(mappedResponse.address ?? null);
+
+    const mappedDocument = mappedResponse.document;
+    if (mappedDocument) {
+      setCchiDocument?.({
+        ...mappedDocument,
+        id: null,
+        patient: null,
+        countryId: mappedDocument.countryId,
+        number: mappedDocument.number,
+        type: mappedDocument.type,
+        isPrimary: false
+      } as any);
+    } else {
+      setCchiDocument?.(null);
+    }
+
+    if (rawInsurance) {
+      setCchiInsurance?.({
+        ...rawInsurance,
+        id: undefined,
+        patientId: localPatient?.id != null ? Number(localPatient.id) : undefined,
+        isPrimary: rawInsurance.isPrimary ?? true
+      } as PatientInsurance);
+
+      const storageKey = getCchiInsuranceStorageKey(
+        localPatient?.id,
+        mappedResponse.patient?.documentId ?? localPatient?.documentId
+      );
+      if (storageKey) {
+        sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+      }
+    } else {
+      setCchiInsurance?.(null);
+    }
+  };
+
   const handleFetchPatientFromCchi = async () => {
     if (!cchiDocumentId?.trim()) {
       dispatch(
@@ -345,66 +422,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     try {
       const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
-      const mappedDocument = mappedResponse.document;
-      const rawInsurance = extractCchiInsurance(mappedResponse);
 
-      console.log('[CCHI] Mapped patient insurance response:', {
-        insurance: mappedResponse.insurance ?? null,
-        insurances: mappedResponse.insurances ?? null,
-        patientInsurance: (mappedResponse as any).patientInsurance ?? null,
-        patientNestedInsurance: (mappedResponse as any).patient?.insurance ?? null,
-        patientNestedInsurances: (mappedResponse as any).patient?.insurances ?? null,
-        extractedInsurance: rawInsurance
-      });
-
-      if (rawInsurance) {
-        console.log('[CCHI] Extracted patient insurance object:', rawInsurance);
-      } else {
-        console.warn('[CCHI] No patient insurance object found in mapped response');
-      }
-
-      setLocalPatient({
-        ...localPatient,
-        ...pickPatientFields(mappedResponse.patient),
-        id: localPatient?.id,
-        isCchiPatient: true
-      });
-
-      setCchiAddress(mappedResponse.address ?? null);
-
-      if (mappedDocument) {
-        setCchiDocument?.({
-          ...mappedDocument,
-          id: null,
-          patient: null,
-          countryId: mappedDocument.countryId,
-          number: mappedDocument.number,
-          type: mappedDocument.type,
-          isPrimary: false
-        } as any);
-      } else {
+      if (mappedResponse.alreadyExists && mappedResponse.patient) {
+        setLocalPatient(mappedResponse.patient);
+        dispatch(setPatient(mappedResponse.patient));
+        setCchiAddress(null);
         setCchiDocument?.(null);
-      }
-
-      if (rawInsurance) {
-        setCchiInsurance?.({
-          ...rawInsurance,
-          id: undefined,
-          patientId: localPatient?.id != null ? Number(localPatient.id) : undefined,
-          isPrimary: rawInsurance.isPrimary ?? true
-        } as PatientInsurance);
-
-        const storageKey = getCchiInsuranceStorageKey(
-          localPatient?.id,
-          mappedResponse.patient?.documentId ?? cchiDocumentId.trim()
-        );
-        if (storageKey) {
-          sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
-        }
-
-      } else {
         setCchiInsurance?.(null);
+        setOpenCchiModal(false);
+        setCchiDocumentId('');
+
+        dispatch(
+          notify({
+            msg:
+              mappedResponse.message ||
+              'Patient already exists in the system. Loaded from local records.',
+            sev: 'warning'
+          })
+        );
+        return;
       }
+
+      applyCchiMappedResponse(mappedResponse);
+
+      const rawInsurance = extractCchiInsurance(mappedResponse);
 
       setOpenCchiModal(false);
       setCchiDocumentId('');
@@ -424,6 +465,51 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       dispatch(
         notify({
           msg: extractErrorMessage(error) || 'Failed to fetch patient from CCHI',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleRefreshOrUpdateFromCchi = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before refreshing from CCHI',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await refreshPatientFromCchi(Number(localPatient.id)).unwrap();
+      applyCchiMappedResponse(mappedResponse);
+
+      const refreshedPatient = {
+        ...localPatient,
+        ...pickPatientFields(mappedResponse.patient),
+        id: localPatient.id,
+        isCchiPatient: true
+      };
+
+      setLocalPatient(refreshedPatient);
+      dispatch(setPatient(refreshedPatient));
+
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      dispatch(
+        notify({
+          msg: rawInsurance
+            ? 'Patient data refreshed from CCHI. Review insurance changes in the Insurance tab.'
+            : 'Patient data refreshed from CCHI successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to refresh patient data from CCHI',
           sev: 'error'
         })
       );
@@ -893,6 +979,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton onClick={() => setOpenCchiModal(true)}>
                 <Translate>Fetch Patient from CCHI</Translate>
               </MyButton>
+
+              {showRefreshFromCchiButton ? (
+                <MyButton
+                  appearance="ghost"
+                  loading={isRefreshingCchiPatient}
+                  disabled={isRefreshingCchiPatient || localPatient?.patientStatus === 'MERGED'}
+                  prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
+                  onClick={handleRefreshOrUpdateFromCchi}
+                >
+                  <Translate>Refresh from CCHI</Translate>
+                </MyButton>
+              ) : null}
+
+              {showUpdateFromCchiButton ? (
+                <MyButton
+                  appearance="ghost"
+                  loading={isRefreshingCchiPatient}
+                  disabled={isRefreshingCchiPatient || localPatient?.patientStatus === 'MERGED'}
+                  prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
+                  onClick={handleRefreshOrUpdateFromCchi}
+                >
+                  <Translate>Update Data from CCHI</Translate>
+                </MyButton>
+              ) : null}
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}

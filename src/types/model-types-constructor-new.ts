@@ -3370,7 +3370,6 @@ export type WaseelItemMappingRequest = {
   itemCode?: string;
   itemName?: string;
   sbsCatalogId: number;
-  requiresPreauth: boolean;
   isActive: boolean;
   notes?: string;
 };
@@ -3434,7 +3433,9 @@ export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
   unitPrice: undefined,
   discountPercentage: 0,
 
-  isActive: true
+  isActive: true,
+
+  requiresPreAuthorization: false
 };
 
 export const newBillingRule: modelTypes.BillingRule = {

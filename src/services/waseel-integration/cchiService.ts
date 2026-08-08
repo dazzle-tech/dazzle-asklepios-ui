@@ -10,15 +10,40 @@ export type CchiMappedPatientResponse = {
   insurances?: Partial<PatientInsurance>[] | null;
 };
 
+export type CchiFetchPatientResponse = CchiMappedPatientResponse & {
+  alreadyExists: boolean;
+  message?: string | null;
+};
+
 export const cchiApi = createApi({
   reducerPath: 'cchiApi',
   baseQuery: BaseQuery,
 
   endpoints: builder => ({
-    getPatientFromCchi: builder.query<CchiMappedPatientResponse, string>({
+    getPatientFromCchi: builder.query<CchiFetchPatientResponse, string>({
       query: documentId => ({
-        url: `/api/patient/internal/waseel/cchi/${documentId}/mapped`,
+        url: `/api/patient/cchi/${encodeURIComponent(documentId)}/fetch`,
         method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    fetchInsuranceFromCchi: builder.mutation<CchiMappedPatientResponse, number>({
+      query: patientId => ({
+        url: `/api/patient/${patientId}/cchi/fetch-insurance`,
+        method: 'POST'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    refreshPatientFromCchi: builder.mutation<CchiMappedPatientResponse, number>({
+      query: patientId => ({
+        url: `/api/patient/${patientId}/cchi/refresh`,
+        method: 'POST'
       }),
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
@@ -27,4 +52,8 @@ export const cchiApi = createApi({
   })
 });
 
-export const { useLazyGetPatientFromCchiQuery } = cchiApi;
+export const {
+  useLazyGetPatientFromCchiQuery,
+  useFetchInsuranceFromCchiMutation,
+  useRefreshPatientFromCchiMutation
+} = cchiApi;

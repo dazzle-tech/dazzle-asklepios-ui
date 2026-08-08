@@ -3,6 +3,7 @@ import { BaseQuery, onQueryStarted } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   EligibilityCheckResponse,
+  EncounterPreAuthorizationRefreshResponse,
   PreAuthorizationCancelRequest,
   PreAuthorizationCommunicationHistoryResponse,
   PreAuthorizationCommunicationRequest,
@@ -49,7 +50,7 @@ const mapPaged = (
 export const preAuthorizationApi = createApi({
   reducerPath: 'preAuthorizationApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PreAuthorizationTracking'],
+  tagTypes: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
 
   endpoints: builder => ({
     getPreAuthorizationTracking: builder.query<
@@ -201,6 +202,48 @@ export const preAuthorizationApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    refreshEncounterPreAuthorization: builder.mutation<
+      EncounterPreAuthorizationRefreshResponse,
+      { encounterId: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/refresh`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    payRejectedPreAuthorizationItemAsCash: builder.mutation<
+      unknown,
+      { encounterId: number; patientServiceProductId: number }
+    >({
+      query: ({ encounterId, patientServiceProductId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/items/${patientServiceProductId}/pay-as-cash`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
+    cloneRejectedPreAuthorizationItem: builder.mutation<
+      void,
+      { encounterId: number; patientServiceProductId: number }
+    >({
+      query: ({ encounterId, patientServiceProductId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/items/${patientServiceProductId}/clone`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -215,5 +258,8 @@ export const {
   useDownloadPreAuthorizationAttachmentMutation,
   useCommunicatePreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
-  useCheckEncounterEligibilityMutation
+  useCheckEncounterEligibilityMutation,
+  useRefreshEncounterPreAuthorizationMutation,
+  usePayRejectedPreAuthorizationItemAsCashMutation,
+  useCloneRejectedPreAuthorizationItemMutation
 } = preAuthorizationApi;

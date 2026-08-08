@@ -5240,6 +5240,27 @@ export interface PreAuthorizationCommunicationHistoryResponse {
   payloads?: PreAuthorizationCommunicationPayloadHistory[] | null;
 }
 
+export interface EncounterPreAuthorizationRefreshItem {
+  patientServiceProductId?: number | null;
+  preAuthorizationRequestId?: number | null;
+  approvalRequestId?: number | null;
+  preAuthorizationStatus?: string | null;
+  waseelStatus?: string | null;
+  canPayAsCash?: boolean | null;
+  canClonePreAuthorization?: boolean | null;
+}
+
+export interface EncounterPreAuthorizationRefreshResponse {
+  encounterId?: number | null;
+  refreshedRequestCount?: number | null;
+  approvedItemCount?: number | null;
+  rejectedItemCount?: number | null;
+  pendingItemCount?: number | null;
+  canCloseCalculation?: boolean | null;
+  message?: string | null;
+  items?: EncounterPreAuthorizationRefreshItem[] | null;
+}
+
 export interface PreAuthorizationCommunicationRequest {
   preAuthorizationId?: number;
   claimResponseId?: number;
@@ -5316,7 +5337,6 @@ export type WaseelItemMapping = {
   waseelItemType?: string;
   sbsCode: string;
   sbsDescription?: string;
-  requiresPreauth: boolean;
   isActive: boolean;
   notes?: string;
 };
@@ -5398,6 +5418,8 @@ export type PriceListSetupItem = {
   discountPercentage?: number;
 
   isActive?: boolean;
+
+  requiresPreAuthorization?: boolean;
 };
 export type SavePriceListSetupItemRequest = {
   waseelItemMappingId?: number | null;
@@ -5410,6 +5432,7 @@ export type SavePriceListSetupItemRequest = {
   unitPrice: number;
   discountPercentage: number;
   isActive?: boolean;
+  requiresPreAuthorization?: boolean;
 };
 export type SavePriceListSetupRequest = {
   facilityId: number;

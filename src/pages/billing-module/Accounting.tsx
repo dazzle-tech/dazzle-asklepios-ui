@@ -18,7 +18,11 @@ import PatientBillingSide from './PatientBillingSide';
 import Invoices from './Invoices';
 import Receipt from './Receipt';
 
-import { usePrepareDefaultServicesMutation } from '@/services/billing/billingTransactionService';
+import {
+  useCloneRejectedPreAuthorizationItemMutation,
+  usePayRejectedPreAuthorizationItemAsCashMutation,
+  useRefreshEncounterPreAuthorizationMutation
+} from '@/services/waseel-integration/preAuthorizationService';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
@@ -26,6 +30,7 @@ import BillingTimeline from './accounting/components/BillingTimeline';
 import BillingChargesTable from './accounting/components/BillingChargesTable';
 import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
+import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
 import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
@@ -33,7 +38,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { makeRequestId, resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isBillingChargeFinalized, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isBillingChargeFinalized, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -56,6 +61,8 @@ const Accounting: React.FC = () => {
     receipt: PaymentReceiptData | null;
     autoPrint?: boolean;
   }>({ open: false, receipt: null, autoPrint: false });
+  const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
+  const [canCloseCalculation, setCanCloseCalculation] = useState(true);
 
   const patientId = resolvePatientId(patient);
 
@@ -74,6 +81,7 @@ const Accounting: React.FC = () => {
     loadingInvoiceContext,
     timelineEvents,
     rejectedPreAuthItems,
+    pendingPreAuthItems,
     waseelCoverage,
     loadingWaseelCoverage,
     waseelCoverageError,
@@ -90,8 +98,12 @@ const Accounting: React.FC = () => {
     coverageType
   });
 
-  const [prepareDefaultServices, { isLoading: convertingToCash }] =
-    usePrepareDefaultServicesMutation();
+  const [refreshEncounterPreAuthorization, { isLoading: refreshingPreAuthorization }] =
+    useRefreshEncounterPreAuthorizationMutation();
+  const [payRejectedPreAuthorizationItemAsCash] =
+    usePayRejectedPreAuthorizationItemAsCashMutation();
+  const [cloneRejectedPreAuthorizationItem] =
+    useCloneRejectedPreAuthorizationItemMutation();
 
   useEffect(() => {
     dispatch(setPageCode('Operation_Module'));
@@ -152,53 +164,34 @@ const Accounting: React.FC = () => {
   };
 
   const handleConvertRejectedToCash = async () => {
-    if (selectedEncounterId == null || patientId == null || facilityId == null) {
-      dispatch(notify({ msg: 'Select a patient and encounter first.', sev: 'warning' }));
+    if (selectedEncounterId == null) {
+      dispatch(notify({ msg: 'Select an encounter first.', sev: 'warning' }));
       return;
     }
 
-    const serviceItems = rejectedPreAuthItems
-      .filter(item => item.serviceId != null)
-      .map((item, index) => ({
-        serviceId: Number(item.serviceId),
-        quantity: Number(item.quantity ?? 1),
-        sequence: index + 1,
-        isExempted: false
-      }));
-
-    if (!serviceItems.length) {
-      dispatch(
-        notify({
-          msg: 'Rejected items cannot be converted automatically. Switch coverage to self pay and re-prepare services manually.',
-          sev: 'warning'
-        })
-      );
-      setCoverageType('SELF_PAY');
-      setSelectedInsuranceId(null);
+    if (!rejectedPreAuthItems.length) {
       return;
     }
+
+    setPreAuthActionLoadingId(-1);
 
     try {
-      await prepareDefaultServices({
-        encounterId: selectedEncounterId,
-        body: {
-          patientId,
-          facilityId: Number(facilityId),
-          currency: summary.currency ?? facilityCurrency,
-          coverageType: 'SELF_PAY',
-          patientInsuranceId: null,
-          items: serviceItems,
-          requestId: makeRequestId('CASH-FALLBACK')
+      for (const item of rejectedPreAuthItems) {
+        if (item.id == null || item.isBilled) {
+          continue;
         }
-      }).unwrap();
 
-      setCoverageType('SELF_PAY');
-      setSelectedInsuranceId(null);
+        await payRejectedPreAuthorizationItemAsCash({
+          encounterId: selectedEncounterId,
+          patientServiceProductId: Number(item.id)
+        }).unwrap();
+      }
+
       await refreshAll();
 
       dispatch(
         notify({
-          msg: 'Rejected services re-priced as self pay. Patient can now be billed directly.',
+          msg: 'Rejected services billed as full cash using the insurance price list.',
           sev: 'success'
         })
       );
@@ -208,10 +201,120 @@ const Accounting: React.FC = () => {
           msg:
             error?.data?.message ??
             error?.message ??
-            'Unable to convert rejected services to cash billing.',
+            'Unable to bill rejected services as cash.',
           sev: 'error'
         })
       );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
+  const handleRefreshPreAuthorization = async () => {
+    if (selectedEncounterId == null) {
+      dispatch(notify({ msg: 'Select an encounter first.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      const result = await refreshEncounterPreAuthorization({
+        encounterId: selectedEncounterId
+      }).unwrap();
+
+      setCanCloseCalculation(result.canCloseCalculation !== false);
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg:
+            result.message ??
+            'Pre-authorization statuses refreshed from Waseel.',
+          sev: result.canCloseCalculation === false ? 'warning' : 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to refresh pre-authorization status from Waseel.',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handlePayRejectedAsCash = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await payRejectedPreAuthorizationItemAsCash({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
+
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Service billed as full cash using the insurance price list.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to bill this rejected service as cash.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
+  const handleClonePreAuthorization = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await cloneRejectedPreAuthorizationItem({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
+
+      setCanCloseCalculation(false);
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'A new pre-authorization request was submitted to Waseel.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to clone pre-authorization for this service.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
     }
   };
 
@@ -264,6 +367,22 @@ const Accounting: React.FC = () => {
     () => isBillingChargeFinalized(summary),
     [summary]
   );
+
+  const preAuthBlocksCheckout = useMemo(
+    () =>
+      coverageType === 'INSURANCE' &&
+      (pendingPreAuthItems.length > 0 || canCloseCalculation === false),
+    [canCloseCalculation, coverageType, pendingPreAuthItems.length]
+  );
+
+  useEffect(() => {
+    if (coverageType !== 'INSURANCE') {
+      setCanCloseCalculation(true);
+      return;
+    }
+
+    setCanCloseCalculation(pendingPreAuthItems.length === 0);
+  }, [coverageType, pendingPreAuthItems.length, selectedEncounterId]);
 
   useEffect(() => {
     if (billingServicesLocked) {
@@ -335,7 +454,7 @@ const Accounting: React.FC = () => {
 
         <CashFallbackBanner
           rejectedItems={rejectedPreAuthItems}
-          converting={convertingToCash}
+          converting={preAuthActionLoadingId === -1}
           onConvertToCash={handleConvertRejectedToCash}
         />
 
@@ -374,7 +493,7 @@ const Accounting: React.FC = () => {
                 onPrepared={refreshAll}
                 chargeRows={chargeRows}
                 loadingBillingMetrics={loadingBillingMetrics}
-                readOnly={billingChargeFinalized}
+                readOnly={billingChargeFinalized || preAuthBlocksCheckout}
               />
             </div>
 
@@ -383,6 +502,14 @@ const Accounting: React.FC = () => {
                 All services & products
                 <span className="billing-accounting__badge">Step 2 · {chargeRows.length} lines</span>
               </div>
+              <PreAuthorizationBillingControls
+                visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
+                pendingCount={pendingPreAuthItems.length}
+                canCloseCalculation={canCloseCalculation}
+                refreshing={refreshingPreAuthorization}
+                disabled={billingServicesLocked}
+                onRefresh={handleRefreshPreAuthorization}
+              />
               <BillingChargesTable
                 rows={chargeRows}
                 billingSummary={summary}
@@ -393,6 +520,10 @@ const Accounting: React.FC = () => {
                 selectedRowIds={selectedChargeRowIds}
                 onSelectionChange={setSelectedChargeRowIds}
                 onCollectPayment={() => setCollectPaymentModalOpen(true)}
+                showPreAuthActions={coverageType === 'INSURANCE'}
+                preAuthActionLoadingId={preAuthActionLoadingId}
+                onPayRejectedAsCash={handlePayRejectedAsCash}
+                onClonePreAuthorization={handleClonePreAuthorization}
               />
             </div>
 
@@ -409,6 +540,7 @@ const Accounting: React.FC = () => {
                 chargeRows={chargeRows}
                 encounterClosedForBilling={encounterClosedForBilling}
                 loadingBillingMetrics={loadingBillingMetrics}
+                preAuthBlocksCheckout={preAuthBlocksCheckout}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
               />
@@ -431,12 +563,16 @@ const Accounting: React.FC = () => {
     ),
     [
       chargeRows,
-      convertingToCash,
+      canCloseCalculation,
       coverageType,
       departmentId,
       encounters,
       facilityCurrency,
       facilityId,
+      handleClonePreAuthorization,
+      handleConvertRejectedToCash,
+      handlePayRejectedAsCash,
+      handleRefreshPreAuthorization,
       loadingEncounters,
       loadingPsp,
       loadingSummary,
@@ -444,7 +580,11 @@ const Accounting: React.FC = () => {
       patientId,
       patientInsurances,
       patientLedgerSummary?.totalDebt,
+      pendingPreAuthItems.length,
+      preAuthActionLoadingId,
+      preAuthBlocksCheckout,
       refreshAll,
+      refreshingPreAuthorization,
       rejectedPreAuthItems,
       reservedBalance,
       selectedChargeRowIds,

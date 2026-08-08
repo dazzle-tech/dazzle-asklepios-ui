@@ -13,18 +13,18 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { Patient, PatientInsurance } from '@/types/model-types-new';
-import { newPatientInsurance } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
-import { faCheckDouble, faLayerGroup, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faLayerGroup, faTrash, faUserPen, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { PlusRound } from '@rsuite/icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Message, Tooltip, Whisper } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
 import WaseelClassListModal from '../WaseelClassListModal';
+import { useFetchInsuranceFromCchiMutation } from '@/services/waseel-integration/cchiService';
 import {
   buildPatientInsuranceSavePayload,
+  extractCchiInsurance,
   extractPatientInsurancesList,
   extractWaseelClassList,
   getCchiInsuranceStorageKey,
@@ -43,12 +43,14 @@ import './styles.less';
 
 interface InsuranceTabProps {
   localPatient: Patient;
+  setLocalPatient?: (patient: Patient) => void;
   cchiInsurance?: PatientInsurance | null;
   setCchiInsurance?: (insurance: PatientInsurance | null) => void;
 }
 
 const InsuranceTab: React.FC<InsuranceTabProps> = ({
   localPatient,
+  setLocalPatient,
   cchiInsurance,
   setCchiInsurance
 }) => {
@@ -76,6 +78,8 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
   const [deleteInsurance] = useDeletePatientInsuranceMutation();
   const [addPatientInsurance, { isLoading: isSavingCchiInsurance }] =
     useAddPatientInsuranceMutation();
+  const [fetchInsuranceFromCchi, { isLoading: isFetchingInsuranceFromCchi }] =
+    useFetchInsuranceFromCchiMutation();
 
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
@@ -353,6 +357,74 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
     if (cchiStorageKey) {
       sessionStorage.removeItem(cchiStorageKey);
+    }
+  };
+
+  const handleFetchInsuranceFromCchi = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before fetching insurance from CCHI',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await fetchInsuranceFromCchi(Number(localPatient.id)).unwrap();
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      if (!rawInsurance) {
+        dispatch(
+          notify({
+            msg: 'No insurance data returned from CCHI for this patient',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      setCchiInsurance?.({
+        ...rawInsurance,
+        id: undefined,
+        patientId: Number(localPatient.id),
+        isPrimary: rawInsurance.isPrimary ?? true
+      } as PatientInsurance);
+
+      const storageKey = getCchiInsuranceStorageKey(
+        localPatient.id,
+        localPatient.documentId ?? mappedResponse.patient?.documentId
+      );
+      if (storageKey) {
+        sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+      }
+
+      setLocalPatient?.({
+        ...localPatient,
+        isCchiPatient: true,
+        documentId: localPatient.documentId ?? mappedResponse.patient?.documentId ?? localPatient.documentId
+      });
+
+      dispatch(
+        notify({
+          msg: 'Insurance data fetched from CCHI. Review and save when ready.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      const msg =
+        error?.data?.detail ||
+        error?.data?.message ||
+        error?.data?.title ||
+        'Failed to fetch insurance from CCHI';
+
+      dispatch(
+        notify({
+          msg,
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -719,20 +791,16 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
               <Translate>Discard</Translate>
             </MyButton>
           </>
-        ) : (
+        ) : savedInsurances.length === 0 ? (
           <MyButton
-            onClick={() => {
-              setInsuranceModalOpen(true);
-              setSelectedInsurance(newPatientInsurance);
-              setInsuranceBrowsing(false);
-              setHideSaveBtn(false);
-            }}
-            disabled={!localPatient.id}
-            prefixIcon={() => <PlusRound />}
+            onClick={handleFetchInsuranceFromCchi}
+            disabled={!localPatient.id || isFetchingInsuranceFromCchi}
+            loading={isFetchingInsuranceFromCchi}
+            prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
           >
-            <Translate>New Insurance</Translate>
+            <Translate>Fetch Insurance from CCHI</Translate>
           </MyButton>
-        )}
+        ) : null}
       </div>
 
       {pendingCchiInsurance ? (
