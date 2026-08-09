@@ -683,7 +683,6 @@ const Accounting: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="right-box">
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -692,7 +691,6 @@ const Accounting: React.FC = () => {
             refetchData={refetchData}
             setRefetchData={setRefetchData}
           />
-        </div>
       )}
 
       {patientId != null && (
