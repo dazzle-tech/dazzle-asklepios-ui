@@ -313,11 +313,6 @@ export const WASEEL_ELIGIBILITY_ERROR_MAP: Record<string, string> = {
   'insurance.expired': 'The selected insurance plan is expired. Update the expiration date or choose another plan.',
   'memberCardId.required': 'Member card ID is required before checking eligibility.',
   'policyNumber.required': 'Policy number is required before checking eligibility.',
-  'payerNphiesId.required':
-    'Payer NPHIES ID is missing. Configure the payor with a valid NPHIES ID in setup, then save the insurance again.',
-  'destinationId.invalid':
-    'Destination ID is invalid for eligibility. Configure the payor/TPA NPHIES ID in setup, then save the insurance again.',
-  'destinationId.required': 'Destination ID is required for eligibility.',
   'patient.documentId.required': 'Patient document ID is required before checking eligibility.',
   'patient.dateOfBirth.required': 'Patient date of birth is required before checking eligibility.',
   'patient.gender.required': 'Patient gender is required before checking eligibility.',

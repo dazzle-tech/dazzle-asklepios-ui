@@ -655,6 +655,12 @@ const PatientPaymentInfo =
         useState(0);
 
       const [
+        eligibilityRefreshKey,
+        setEligibilityRefreshKey
+      ] =
+        useState(0);
+
+      const [
         pricingPreviewLoading,
         setPricingPreviewLoading
       ] =
@@ -779,7 +785,9 @@ const PatientPaymentInfo =
         isFetching:
           loadingWaseelCoverage,
         isError:
-          waseelCoverageError
+          waseelCoverageError,
+        refetch:
+          refetchWaseelCoverage
       } =
         useGetWaseelCoverageQuery(
           {
@@ -994,6 +1002,26 @@ const PatientPaymentInfo =
 
             await insuranceResponse.refetch();
 
+            setPreviewSettledEncounterId(null);
+            setDisplayReadyEncounterId(null);
+            setDefaultServiceRows(previous =>
+              previous.map(row => ({
+                ...row,
+                calculatedPrice: null,
+                priceSource: null,
+                priceListItemCode: null,
+                previewGrossAmount: null,
+                previewDiscountAmount: null,
+                previewTaxAmount: null,
+                previewNetAmount: null,
+                patientShare: null,
+                insuranceShare: null
+              }))
+            );
+            setEligibilityRefreshKey(previous => previous + 1);
+            await refetchSummary();
+            await refetchWaseelCoverage();
+
             dispatch(
               notify({
                 msg:
@@ -1022,6 +1050,8 @@ const PatientPaymentInfo =
           formState.patientInsuranceId,
           checkEligibility,
           insuranceResponse,
+          refetchSummary,
+          refetchWaseelCoverage,
           dispatch
         ]);
 
@@ -1584,6 +1614,7 @@ const PatientPaymentInfo =
           return JSON.stringify(
             {
               encounterId,
+              eligibilityRefreshKey,
               coverageType:
                 formState.coverageType,
               patientInsuranceId:
@@ -1609,6 +1640,7 @@ const PatientPaymentInfo =
           );
         }, [
           encounterId,
+          eligibilityRefreshKey,
           formState.coverageType,
           formState.patientInsuranceId,
           summary.currency,
