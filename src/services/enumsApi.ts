@@ -108,12 +108,20 @@ export function useEnumByName(name: string): string[] {
   return allEnums[name] ?? [];
 }
 
+
+const EMPTY_EXCLUDE: string[] = [];
+const EMPTY_LABEL_OVERRIDES: Record<string, string> = {};
+
 export function useEnumOptions(
   name: string,
   params: EnumOptionsParams = {}
 ): { value: string; label: string }[] {
   const values = useEnumByName(name);
-  const { exclude = [], labelOverrides = {}, labelFormatter } = params;
+  const {
+    exclude = EMPTY_EXCLUDE,
+    labelOverrides = EMPTY_LABEL_OVERRIDES,
+    labelFormatter
+  } = params;
 
   return useMemo(() => {
     const filtered = values.filter(v => !exclude.includes(v));
