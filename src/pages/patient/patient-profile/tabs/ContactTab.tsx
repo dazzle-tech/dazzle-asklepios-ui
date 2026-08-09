@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
@@ -21,7 +21,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
   // Fetch LOV data for various fields
   useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
-  const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
@@ -70,6 +69,15 @@ const ContactTab: React.FC<ContactTabProps> = ({
 
 
   const { data: languages = [] } = useGetAllLanguagesQuery({});
+  const languageOptions = useMemo(
+    () =>
+      [...languages]
+        .filter(language => Boolean(language.langKey?.trim()))
+        .sort((left, right) =>
+          String(left.langName ?? '').localeCompare(String(right.langName ?? ''))
+        ),
+    [languages]
+  );
 
 
   return (
@@ -128,14 +136,13 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldLabel="Preferred Language"
         fieldType="select"
         fieldName="preferredLanguage"
-        selectData={primaryLangLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={languageOptions}
+        selectDataLabel="langName"
+        selectDataValue="langKey"
         record={localPatient}
         setRecord={setLocalPatient}
-        searchable={false}
+        searchable
         width={170}
-        disableByField="isValid"
       />
 
 
