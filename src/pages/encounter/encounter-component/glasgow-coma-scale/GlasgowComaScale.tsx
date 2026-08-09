@@ -134,8 +134,8 @@ const GlasgowComaScale = ({
   const encounter = encounterProp ?? state?.encounter;
   const viewMode = viewModeProp ?? state?.viewMode;
 
+  const isReadOnly = viewMode === 'readOnly' || viewMode === 'View';
   const edit = viewMode === 'readOnly';
-  const viewOnly = viewMode === 'View';
 
   const [openCancellationReasonModal, setOpenCancellationReasonModal] =
     useState(false);
@@ -493,7 +493,10 @@ const GlasgowComaScale = ({
       flexGrow: 1,
       align: 'center',
 
-      render: (rowData: any) => (
+      render: (rowData: any) => {
+        if (isReadOnly) return null;
+
+        return (
         <div
           style={{
             display: 'flex',
@@ -551,9 +554,10 @@ const GlasgowComaScale = ({
             }}
           />
         </div>
-      )
+        );
+      }
     }
-  ];
+  ].filter(column => !isReadOnly || column.key !== 'actions');
 
   const handlePageChange = (
     _event: any,
@@ -606,7 +610,7 @@ return (
                 timestamp: Date.now()
               }));
             }}
-            disabled={edit}
+            disabled={isReadOnly}
           >
             <Translate>Show Cancelled</Translate>
           </Checkbox>
@@ -622,7 +626,7 @@ return (
               setOpenPopup(true);
             }}
             width="109px"
-            disabled={edit || viewOnly}
+            disabled={isReadOnly}
           >
             Add New
           </MyButton>
@@ -672,6 +676,7 @@ return (
           gcsAssessment={gcsAssessment}
           setGcsAssessment={setGcsAssessment}
           handleSave={handleSave}
+          readOnly={isReadOnly}
         />
       </Panel>
     </div>

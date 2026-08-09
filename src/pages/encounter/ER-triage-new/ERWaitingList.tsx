@@ -388,7 +388,8 @@ const ERWaitingList = () => {
         from: 'ER_Waiting_List',
         info: 'toViewTriage',
         patient: patientData,
-        encounter: encounterData
+        encounter: encounterData,
+        viewMode: 'readOnly'
       }
     });
   };
