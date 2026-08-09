@@ -4,6 +4,16 @@ const DEFAULT_ERROR = 'Unexpected error';
 
 const parseErrorKey = (data: any): string | undefined => {
 
+  const messageKeyProp: string = data?.properties?.messageKey || '';
+
+  if (messageKeyProp.startsWith('error.')) {
+
+    return messageKeyProp.substring(6);
+
+  }
+
+
+
   const messageProp: string = data?.message || '';
 
   if (messageProp.startsWith('error.')) {
@@ -297,5 +307,54 @@ export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
     'This item code already exists on the selected price list.',
   'item.idSequenceOutOfSync':
     'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.'
+};
+
+export const WASEEL_ELIGIBILITY_ERROR_MAP: Record<string, string> = {
+  'insurance.expired': 'The selected insurance plan is expired. Update the expiration date or choose another plan.',
+  'memberCardId.required': 'Member card ID is required before checking eligibility.',
+  'policyNumber.required': 'Policy number is required before checking eligibility.',
+  'payerNphiesId.required':
+    'Payer NPHIES ID is missing. Configure the payor with a valid NPHIES ID in setup, then save the insurance again.',
+  'destinationId.invalid':
+    'Destination ID is invalid for eligibility. Configure the payor/TPA NPHIES ID in setup, then save the insurance again.',
+  'destinationId.required': 'Destination ID is required for eligibility.',
+  'patient.documentId.required': 'Patient document ID is required before checking eligibility.',
+  'patient.dateOfBirth.required': 'Patient date of birth is required before checking eligibility.',
+  'patient.gender.required': 'Patient gender is required before checking eligibility.',
+  'patient.name.required': 'Patient first and last name are required before checking eligibility.',
+  'payment.notFound': 'No payment record was found for this visit.',
+  'paymentType.insuranceRequired': 'Insurance payment type is required for eligibility on this visit.',
+  'insurance.required': 'Insurance is required before checking eligibility.',
+  'insurance.notFound': 'Patient insurance was not found.',
+  'insurance.patientMismatch': 'The selected insurance does not belong to this patient.',
+  'patient.notFound': 'Patient was not found.',
+  'request.required': 'Eligibility check request is invalid.',
+  'waseel.eligibility.invalidRequest':
+    'Waseel rejected the eligibility request because the payload was invalid. Verify patient and insurance details, then try again.',
+  'waseel.eligibility.badRequest': 'Waseel rejected the eligibility request. Verify insurance details and try again.',
+  'waseel.eligibility.connectionFailed': 'Unable to connect to Waseel. Check your network and try again.',
+  'waseel.eligibility.failed': 'Eligibility check failed. Please try again or contact support.'
+};
+
+export const extractEligibilityErrorMessage = (
+  error: any,
+  fallback = 'Eligibility check failed. Please verify insurance details and try again.'
+): string => {
+  const mappedMessage = extractApiErrorMessage(error, WASEEL_ELIGIBILITY_ERROR_MAP);
+
+  if (mappedMessage && mappedMessage !== DEFAULT_ERROR) {
+    return mappedMessage;
+  }
+
+  const detail = error?.data?.detail ?? error?.error?.data?.detail;
+
+  if (
+    typeof detail === 'string' &&
+    detail.toLowerCase().includes('failed to read request')
+  ) {
+    return WASEEL_ELIGIBILITY_ERROR_MAP['waseel.eligibility.invalidRequest'];
+  }
+
+  return fallback;
 };
 

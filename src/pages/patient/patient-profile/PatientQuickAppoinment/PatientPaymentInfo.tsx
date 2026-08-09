@@ -113,7 +113,7 @@ import {
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
-import { formatEnumString, extractErrorMessage } from '@/utils';
+import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
@@ -1012,13 +1012,8 @@ const PatientPaymentInfo =
           } catch (error: any) {
             dispatch(
               notify({
-                msg:
-                  extractErrorMessage(
-                    error
-                  ) ||
-                  'Eligibility check failed. Please verify insurance details or contact Waseel support.',
-                sev:
-                  'error'
+                msg: extractEligibilityErrorMessage(error),
+                sev: 'error'
               })
             );
           }

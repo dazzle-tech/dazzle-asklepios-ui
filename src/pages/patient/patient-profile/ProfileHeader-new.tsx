@@ -25,7 +25,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useLazyGetPatientFromCchiQuery, useRefreshPatientFromCchiMutation } from '@/services/waseel-integration/cchiService';
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
-import { calculateAgeFormat, extractErrorMessage } from '@/utils';
+import { calculateAgeFormat, extractEligibilityErrorMessage, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBolt,
@@ -353,9 +353,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     } catch (error: any) {
       dispatch(
         notify({
-          msg:
-            extractErrorMessage(error) ||
-            'Eligibility check failed. Please verify insurance details or contact Waseel support.',
+          msg: extractEligibilityErrorMessage(error),
           sev: 'error'
         })
       );
