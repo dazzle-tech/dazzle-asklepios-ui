@@ -94,7 +94,8 @@ const GlasgowComaScaleModal = ({
   width,
   gcsAssessment,
   setGcsAssessment,
-  handleSave
+  handleSave,
+  readOnly = false
 }) => {
   const eyeOpeningOptions = useEnumOptions('GCSEye');
   const verbalResponseOptions = useEnumOptions('GCSVerbal');
@@ -144,6 +145,7 @@ const GlasgowComaScaleModal = ({
         selectDataValue="value"
         record={gcsAssessment}
         setRecord={setGcsAssessment}
+        disabled={readOnly}
         required
       />
 
@@ -157,6 +159,7 @@ const GlasgowComaScaleModal = ({
         selectDataValue="value"
         record={gcsAssessment}
         setRecord={setGcsAssessment}
+        disabled={readOnly}
         required
       />
 
@@ -170,6 +173,7 @@ const GlasgowComaScaleModal = ({
         selectDataValue="value"
         record={gcsAssessment}
         setRecord={setGcsAssessment}
+        disabled={readOnly}
         required
       />
 
@@ -222,14 +226,17 @@ const GlasgowComaScaleModal = ({
       open={open}
       setOpen={setOpen}
       title={
-        gcsAssessment?.id
-          ? 'Edit Glasgow Coma Scale Assessment'
-          : 'New Glasgow Coma Scale Assessment'
+        readOnly
+          ? 'View Glasgow Coma Scale Assessment'
+          : gcsAssessment?.id
+            ? 'Edit Glasgow Coma Scale Assessment'
+            : 'New Glasgow Coma Scale Assessment'
       }
       position="right"
       content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={gcsAssessment?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
+      hideActionBtn={readOnly}
       steps={[{ title: 'Assessment Info', icon: <FontAwesomeIcon icon={faG} /> }]}
       size={width > 600 ? '36vw' : '70vw'}
     />
