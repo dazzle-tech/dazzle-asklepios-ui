@@ -17,6 +17,9 @@ import GeneralAssessmentTriage from './component/GeneralAssessmentTriage';
 import ChiefComplainTriage from './component/ChiefComplainTriage';
 import EyeAssessmentHPI from './component/EyeAssessmentHPI';
 import type { ApEncounter } from '@/types/model-types';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+import GlasgowComaScale from '@/pages/encounter/encounter-component/glasgow-coma-scale';
 
 const ViewTriage = () => {
   const location = useLocation();
@@ -178,6 +181,21 @@ const ViewTriage = () => {
             encounter={encounter}
             readOnly
           />
+        </Row>
+
+        <Row gutter={30}>
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <SectionContainer
+              title={<Translate>Glasgow Coma Scale Assessment</Translate>}
+              content={
+                <GlasgowComaScale
+                  patient={patient}
+                  encounter={encounter}
+                  viewMode="readOnly"
+                />
+              }
+            />
+          )}
         </Row>
       </div>
 
