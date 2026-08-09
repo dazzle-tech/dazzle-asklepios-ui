@@ -420,16 +420,18 @@ import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/
         });
       }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
 
-      const resolveUnitDisplay = (row: any) => {
-        const profile = row._profile;
-        if (!profile || isLovProfile(profile)) return null;
+       const resolveUnitDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile || isLovProfile(profile)) return null;
 
-        const unit = valueUnitLov?.object?.find(
-          (u) => String(u.key) === String(profile.resultUnit)
-        )?.lovDisplayVale;
+  if (!profile.resultUnit) return null;
 
-        return unit || null;
-      };
+  const unit = valueUnitLov?.object?.find(
+    (u: any) => String(u.key) === String(profile.resultUnit)
+  )?.lovDisplayVale;
+
+  return unit || null;
+};
 
       const resetFilters = () => {
         const now = new Date();

@@ -68,7 +68,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         ? new Date(dateFilter.toDate).toISOString()
         : lastDayOfMonth.toISOString();
 
-        const actualPatientId = useMemo(() => {
+    const actualPatientId = useMemo(() => {
         const id =
             patient?.id ??
             patient?.patient?.id ??
@@ -88,14 +88,14 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     } = useGetPatientResultsHistoryQuery(
         actualPatientId != null
             ? {
-                  patientId: actualPatientId,
-                  from: fromInstant,
-                  to: toInstant,
-                  profileTestId:
-                      profileTestId != null
-                          ? Number(profileTestId)
-                          : undefined
-              }
+                patientId: actualPatientId,
+                from: fromInstant,
+                to: toInstant,
+                profileTestId:
+                    profileTestId != null
+                        ? Number(profileTestId)
+                        : undefined
+            }
             : skipToken,
         {
             refetchOnMountOrArgChange: true
@@ -195,8 +195,12 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     const resolveUnitDisplay = (profile: any) => {
         if (!profile) return null;
 
+        const resultType =
+            profile?.resultType?.toUpperCase()?.trim();
+
         if (
-            profile?.resultType?.toUpperCase() === 'LOV'
+            resultType === 'LOV' ||
+            resultType === 'TEXT'
         ) {
             return null;
         }
@@ -254,43 +258,53 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     }, [pivotData, record]);
 
     const renderResultValue = (result: any) => {
-        if (!result) return '-';
+    if (!result) return '-';
 
-        const profile = profileMap.get(
-            result.profileTestId
+    const profile = profileMap.get(
+        result.profileTestId
+    );
+
+    const resultType =
+        profile?.resultType?.toUpperCase()?.trim();
+
+    let displayValue: any = '-';
+
+    if (resultType === 'LOV') {
+
+        displayValue = resolveLovDisplayValue(
+            profile?.listOfValueId,
+            result.resultValueText
         );
 
-        const isLovTest =
-            profile?.resultType?.toUpperCase() ===
-            'LOV';
+    } else if (resultType === 'TEXT') {
 
-        let displayValue: any = '-';
+        displayValue =
+            result.resultValueText ?? '-';
 
-        if (isLovTest) {
-            displayValue = resolveLovDisplayValue(
-                profile?.listOfValueId,
-                result.resultValueText
-            );
-        } else if (
-            result.resultValueNumber !== null &&
-            result.resultValueNumber !== undefined
-        ) {
-            displayValue = result.resultValueNumber;
-        }
+    } else if (
+        result.resultValueNumber !== null &&
+        result.resultValueNumber !== undefined
+    ) {
 
-        const unit = resolveUnitDisplay(profile);
+        displayValue =
+            result.resultValueNumber;
+    }
 
-        return (
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
-                <div>
-                    <span>{displayValue}</span>
+    const unit =
+        resolveUnitDisplay(profile);
 
-                    {unit && (
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column'
+            }}
+        >
+            <div>
+                <span>{displayValue}</span>
+
+                {resultType === 'NUMBER' &&
+                    unit && (
                         <span
                             style={{
                                 marginLeft: 6,
@@ -301,9 +315,10 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                             {unit}
                         </span>
                     )}
-                </div>
+            </div>
 
-                {result.normalRangeValue?.trim() && (
+            {resultType !== 'TEXT' &&
+                result.normalRangeValue?.trim() && (
                     <span
                         style={{
                             fontSize: '0.75rem',
@@ -311,7 +326,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                             marginTop: 2
                         }}
                     >
-                        {isLovTest
+                        {resultType === 'LOV'
                             ? resolveLovDisplayValue(
                                   profile?.listOfValueId,
                                   result.normalRangeValue
@@ -319,9 +334,9 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                             : result.normalRangeValue}
                     </span>
                 )}
-            </div>
-        );
-    };
+        </div>
+    );
+};
 
     const filters = () => (
         <Form
@@ -401,7 +416,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                                     render: () =>
                                         renderResultValue(
                                             group.results[
-                                                date
+                                            date
                                             ]
                                         )
                                 }))
