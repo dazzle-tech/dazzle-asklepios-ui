@@ -1304,7 +1304,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
-                            required={appointmentData?.requirePractitioner}
+                            required
                           />
 
                           <MyInput

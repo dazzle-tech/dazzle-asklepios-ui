@@ -57,7 +57,7 @@ export const newDepartment: modelTypes.Department = {
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
   parallelCapacityEnabled: false,
-  requirePractitioner: false,
+  requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
   workingDays: []
