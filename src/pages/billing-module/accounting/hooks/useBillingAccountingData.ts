@@ -14,6 +14,7 @@ import {
 } from '@/services/encounters/patientPaymentsService';
 import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
 import {
+  useGetEncounterInvoiceDetailsQuery,
   useGetPatientFinancialDocumentsQuery,
   type PatientFinancialInvoice
 } from '@/services/billing/invoiceGenerationService';
@@ -135,6 +136,14 @@ export const useBillingAccountingData = ({
     refetch: refetchFinancialDocuments
   } = useGetPatientFinancialDocumentsQuery(patientId as number, {
     skip: patientId == null,
+    refetchOnMountOrArgChange: true
+  });
+
+  const {
+    data: encounterInvoiceDetails,
+    refetch: refetchEncounterInvoiceDetails
+  } = useGetEncounterInvoiceDetailsQuery(selectedEncounterId as number, {
+    skip: selectedEncounterId == null,
     refetchOnMountOrArgChange: true
   });
 
@@ -263,6 +272,7 @@ export const useBillingAccountingData = ({
     await Promise.all([
       refetchEncounters(),
       selectedEncounterId != null ? refetchSummary() : Promise.resolve(),
+      selectedEncounterId != null ? refetchEncounterInvoiceDetails() : Promise.resolve(),
       selectedEncounterId != null ? refetchPsp() : Promise.resolve(),
       refetchWalletBalance(),
       refetchLedgerSummary(),
@@ -308,6 +318,8 @@ export const useBillingAccountingData = ({
     patientLedgerSummary,
     patientInsurances: insuranceResponse?.data ?? [],
     loadingInsurances,
+    encounterInvoiceDetails:
+      selectedEncounterId != null ? encounterInvoiceDetails ?? null : null,
     refreshAll
   };
 };
