@@ -283,20 +283,6 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
-      key: 'priceSource',
-
-      title: 'Price source',
-
-      width: 110,
-
-      render: (row: UnifiedBillingChargeRow) => (
-        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
-      )
-
-    },
-
-    {
-
       key: 'billingItemType',
 
       title: 'Type',
@@ -329,6 +315,20 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 220,
 
       render: (row: UnifiedBillingChargeRow) => row.itemName
+
+    },
+
+    {
+
+      key: 'priceSource',
+
+      title: 'Price source',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) => (
+        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
+      )
 
     },
 

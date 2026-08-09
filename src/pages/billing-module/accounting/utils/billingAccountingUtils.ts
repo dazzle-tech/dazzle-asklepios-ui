@@ -911,6 +911,24 @@ export const makeRequestId = (prefix: string): string =>
 
 export type BillingCoverageType = 'SELF_PAY' | 'INSURANCE';
 
+export const normalizeBillingCoverageType = (
+  value?: string | null
+): BillingCoverageType =>
+  String(value ?? '').toUpperCase() === 'INSURANCE' ? 'INSURANCE' : 'SELF_PAY';
+
+export const formatBillingCoverageType = (
+  value?: string | null
+): string => {
+  switch (normalizeBillingCoverageType(value)) {
+    case 'INSURANCE':
+      return 'Insurance';
+    case 'SELF_PAY':
+      return 'Self Pay';
+    default:
+      return '-';
+  }
+};
+
 /** True when the encounter summary already has insurance responsibility or balances. */
 export const hasEncounterInsuranceBilling = (
   summary: EncounterBillingSummary | null | undefined

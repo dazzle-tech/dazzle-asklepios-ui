@@ -38,7 +38,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -91,6 +91,7 @@ const Accounting: React.FC = () => {
     patientLedgerSummary,
     patientInsurances,
     loadingInsurances,
+    encounterInvoiceDetails,
     refreshAll
   } = useBillingAccountingData({
     patient,
@@ -125,6 +126,32 @@ const Accounting: React.FC = () => {
   useEffect(() => {
     setSelectedChargeRowIds([]);
   }, [selectedEncounterId]);
+
+  useEffect(() => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    if (encounterInvoiceDetails == null) {
+      setCoverageType('SELF_PAY');
+      setSelectedInsuranceId(null);
+      return;
+    }
+
+    const resolvedCoverage = normalizeBillingCoverageType(
+      encounterInvoiceDetails.coverageType
+    );
+    setCoverageType(resolvedCoverage);
+
+    const insuranceId =
+      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ?? null;
+
+    if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
+      setSelectedInsuranceId(Number(insuranceId));
+    } else if (resolvedCoverage === 'SELF_PAY') {
+      setSelectedInsuranceId(null);
+    }
+  }, [selectedEncounterId, encounterInvoiceDetails]);
 
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
