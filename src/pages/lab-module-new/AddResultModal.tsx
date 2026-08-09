@@ -196,8 +196,12 @@ const AddResultModal = ({
       title: 'Result',
       width: 270,
       render: (profile: any) => {
-        const isLov =
-          profile?.resultType?.toUpperCase() === 'LOV';
+        const resultType =
+          profile?.resultType?.toUpperCase()?.trim();
+
+        const isLov = resultType === 'LOV';
+        const isText = resultType === 'TEXT';
+        const isNumber = resultType === 'NUMBER';
 
         if (filledProfileTestIds.includes(profile.id)) {
           return (
@@ -223,7 +227,14 @@ const AddResultModal = ({
             <div>
               <MyInput
                 fieldName={String(profile.id)}
-                fieldType={isLov ? 'select' : 'number'}
+                fieldType={
+                  isLov
+                    ? 'select'
+                    : isText
+                      ? 'text'
+                      : 'number'
+                }
+
                 selectData={isLov ? resolveLovOptions(profile) : undefined}
                 selectDataLabel="lovDisplayVale"
                 disableByField='isValid'
@@ -240,10 +251,10 @@ const AddResultModal = ({
                     }
                   }));
                 }}
-                width={140}
+                width={isText ? 220 : 140}
               />
             </div>
-            {!isLov && (
+            {isNumber && (
               <div
                 style={{
                   display: 'flex',
@@ -263,6 +274,7 @@ const AddResultModal = ({
                 </span>
               </div>
             )}
+
           </div>
         );
       }

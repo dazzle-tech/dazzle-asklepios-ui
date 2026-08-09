@@ -231,11 +231,11 @@ const Result = forwardRef<any, Props>(
       [normalizedResults]
     );
 
-    const 
-    selectableResultIds = useMemo(
-      () => selectableResults.map(r => r.id),
-      [selectableResults]
-    );
+    const
+      selectableResultIds = useMemo(
+        () => selectableResults.map(r => r.id),
+        [selectableResults]
+      );
 
     const isAllSelected =
       selectableResultIds.length > 0 &&
@@ -272,34 +272,41 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
+const resolveResultDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile) return ' ';
 
-    const resolveResultDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile) return ' ';
+  const resultType =
+    profile?.resultType?.toUpperCase()?.trim();
 
-      if (isLovProfile(profile)) {
-        return resolveLovDisplayValue(
-          profile,
-          row.resultValueText,
-          lovDefinitions,
-          allLovValues
-        );
-      }
+  if (resultType === 'LOV') {
+    return resolveLovDisplayValue(
+      profile,
+      row.resultValueText,
+      lovDefinitions,
+      allLovValues
+    );
+  }
 
-      return row.resultValueNumber ?? ' ';
-    };
+  if (resultType === 'TEXT') {
+    return row.resultValueText ?? ' ';
+  }
 
-    const resolveUnitDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
-      if (!profile.resultUnit) return null;
+  return row.resultValueNumber ?? ' ';
+};
 
-      const unit = valueUnitLov?.object?.find(
-        (u: any) => String(u.key) === String(profile.resultUnit)
-      )?.lovDisplayVale;
+   const resolveUnitDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile || isLovProfile(profile)) return null;
 
-      return unit || null;
-    };
+  if (!profile.resultUnit) return null;
+
+  const unit = valueUnitLov?.object?.find(
+    (u: any) => String(u.key) === String(profile.resultUnit)
+  )?.lovDisplayVale;
+
+  return unit || null;
+};
 
     const isCriticalResult = (row: any) =>
       row?.viewMarker === 'CRITICAL_UPPER' || row?.viewMarker === 'CRITICAL_LOWER';
@@ -321,7 +328,7 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
- const handleApprove = (row: any) => {
+    const handleApprove = (row: any) => {
 
       if (isResultEmpty(row)) {
         dispatch(
@@ -363,26 +370,29 @@ const Result = forwardRef<any, Props>(
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    const isResultEmpty = (row: any) => {
-      const profile = row.profile;
+  const isResultEmpty = (row: any) => {
+  const profile = row.profile;
 
-      if (!profile) return true;
+  if (!profile) return true;
 
-      if (isLovProfile(profile)) {
-        return (
-          row.resultValueText === null ||
-          row.resultValueText === undefined ||
-          row.resultValueText === ''
-        );
-      }
+  const resultType =
+    profile?.resultType?.toUpperCase()?.trim();
 
-      return (
-        row.resultValueNumber === null ||
-        row.resultValueNumber === undefined
-      );
-    };
+  if (resultType === 'LOV' || resultType === 'TEXT') {
+    return (
+      row.resultValueText === null ||
+      row.resultValueText === undefined ||
+      row.resultValueText === ''
+    );
+  }
 
-   
+  return (
+    row.resultValueNumber === null ||
+    row.resultValueNumber === undefined
+  );
+};
+
+
 
     const handleBulkApprove = () => {
       const eligibleIds = normalizedResults
@@ -528,7 +538,7 @@ const Result = forwardRef<any, Props>(
       );
     };
 
-   
+
     const handleToggleSelectAll = (checked: boolean) => {
       const allRowIds = normalizedResults.map(row => row.id);
 
@@ -546,7 +556,7 @@ const Result = forwardRef<any, Props>(
             checked={isAllSelected}
             indeterminate={isIndeterminate}
             onChange={(_, checked) => handleToggleSelectAll(checked)}
-              onClick={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
         ),
         align: 'center',
@@ -599,33 +609,48 @@ const Result = forwardRef<any, Props>(
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
-        render: (row: any) => (
-          <Whisper
-            placement="top"
-            trigger="hover"
-            container={() => document.body}
-            speaker={<Tooltip>View Normal Ranges</Tooltip>}
-          >
-            <span style={{ display: 'inline-block' }}>
-              <FaChartLine
-                size={18}
-                color="var(--primary-gray)"
-                style={{ cursor: 'pointer', opacity: 0.8 }}
-                onClick={() => {
-                  setSelectedResult(row);
-                  setOpenNormalRangeModal(true);
-                }}
-              />
-            </span>
-          </Whisper>
-        )
+        render: (row: any) => {
+
+          const isText =
+            row?.profile?.resultType?.toUpperCase() === 'TEXT';
+
+          if (isText) {
+            return '-';
+          }
+
+          return (
+            <Whisper
+              placement="top"
+              trigger="hover"
+              container={() => document.body}
+              speaker={<Tooltip>View Normal Ranges</Tooltip>}
+            >
+              <span style={{ display: 'inline-block' }}>
+                <FaChartLine
+                  size={18}
+                  color="var(--primary-gray)"
+                  style={{ cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => {
+                    setSelectedResult(row);
+                    setOpenNormalRangeModal(true);
+                  }}
+                />
+              </span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
           const profile = row.profile;
+          const isText =
+            profile?.resultType?.toUpperCase() === 'TEXT';
 
+          if (isText) {
+            return '-';
+          }
           const hasViewRange =
             row.viewNormalRange && row.viewNormalRange.trim() !== '';
 
@@ -706,11 +731,11 @@ const Result = forwardRef<any, Props>(
                 icon={faDiagramPredecessor}
                 style={{ cursor: 'pointer', opacity: 0.8 }}
                 onClick={() => {
-                    console.log('🔍 Selected Row:', row);
-                    console.log('🆔 row.profileTestId:', row.profileTestId);
+                  console.log('🔍 Selected Row:', row);
+                  console.log('🆔 row.profileTestId:', row.profileTestId);
 
-                    setSelectedComparisonProfileId(row.profileTestId);
-                    setOpenComparisonModal(true);
+                  setSelectedComparisonProfileId(row.profileTestId);
+                  setOpenComparisonModal(true);
                 }}
               />
             </span>
@@ -979,41 +1004,41 @@ const Result = forwardRef<any, Props>(
                     </MyButton>
                   </span>
                 </Whisper>
-                  <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
-                <span style={{display:'inline-block'}}>
-                  <LaboratoryReportButton resultIds={selectedResultIds}/>
-                </span>
+                <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <LaboratoryReportButton resultIds={selectedResultIds} />
+                  </span>
                 </Whisper>
               </HStack>
             </div>
           }
         >
-        <div className='laboratory-table-size-container'>
-          <MyTable
-            columns={columns}
-            data={normalizedResults}
-            loading={loading || isFetching}
-            page={paginationParams.page}
-            rowsPerPage={paginationParams.size}
-            totalCount={resultsResponse?.totalCount ?? 0}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            sortColumn={sortColumn}
-            sortType={sortType}
-            onSortChange={handleSortChange}
-            rowClassName={isResultSelected}
-            onRowClick={rowData => {
-              setSelectedRow(rowData);
-              if (rowData?.orderTestId) {
-                setTest({
-                  id: rowData.orderTestId,
-                  processingStatus: rowData.processingStatus,
-                  status: rowData.status
-                });
-              }
-            }}
-          />
-        </div>
+          <div className='laboratory-table-size-container'>
+            <MyTable
+              columns={columns}
+              data={normalizedResults}
+              loading={loading || isFetching}
+              page={paginationParams.page}
+              rowsPerPage={paginationParams.size}
+              totalCount={resultsResponse?.totalCount ?? 0}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortColumn={sortColumn}
+              sortType={sortType}
+              onSortChange={handleSortChange}
+              rowClassName={isResultSelected}
+              onRowClick={rowData => {
+                setSelectedRow(rowData);
+                if (rowData?.orderTestId) {
+                  setTest({
+                    id: rowData.orderTestId,
+                    processingStatus: rowData.processingStatus,
+                    status: rowData.status
+                  });
+                }
+              }}
+            />
+          </div>
 
           <ChatModal
             open={openResultNoteModal}
@@ -1103,9 +1128,9 @@ const Result = forwardRef<any, Props>(
             hideActionBtn
             content={() => (
               <LaboratoryResultComparison
-                  patient={{ id: order?.patientId }}
-                  profileTestId={selectedComparisonProfileId}
-                  hideTestNameFilter={true}
+                patient={{ id: order?.patientId }}
+                profileTestId={selectedComparisonProfileId}
+                hideTestNameFilter={true}
               />
             )}
           />

@@ -283,60 +283,82 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
   const normalizedResults = useMemo(() => {
-    return results.map((r: any) => {
-      const orderTest = orderTestMap.get(r.orderTestId);
-      const order = orderTest
-        ? orderMap.get(String(orderTest.orderId))
-        : null;
-      const test = orderTest ? testMap.get(orderTest.testId) : null;
-      const profile = profilesMap.get(r.profileTestId);
-      const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
+  return results.map((r: any) => {
+    const orderTest = orderTestMap.get(r.orderTestId);
 
-      let value = '';
-      let unit = '';
-      let normalRangeValue = ' ';
+    const order = orderTest
+      ? orderMap.get(String(orderTest.orderId))
+      : null;
 
-      if (isLovTest) {
-        value = resolveLovDisplayValue(profile?.listOfValueId, r.resultValueText);
+    const test = orderTest
+      ? testMap.get(orderTest.testId)
+      : null;
 
-        normalRangeValue = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.viewNormalRange
-        );
-      } else {
-        value =
-          r.resultValueNumber !== null && r.resultValueNumber !== undefined
-            ? String(r.resultValueNumber)
-            : '';
+    const profile = profilesMap.get(r.profileTestId);
 
-        unit =
-          valueUnitLov?.object?.find(
-            (u: any) => String(u.key) === String(test?.defaultProfileResultUnit)
-          )?.lovDisplayVale ?? '';
+    const resultType =
+      profile?.resultType?.toUpperCase()?.trim();
 
-        normalRangeValue = r.viewNormalRange ?? ' ';
-      }
-      console.log("Order ", order)
-      return {
-        ...r,
-        orderId: orderTest?.orderId ?? '',
-        orderNumber: order?.orderNumber ?? '',
-        testName: profile?.name ?? ' ',
-        resultValue: value,
-        unit,
-        normalRange: normalRangeValue
-      };
-    });
-  }, [
-    results,
-    orderTestMap,
-    orderMap,
-    testMap,
-    profilesMap,
-    valueUnitLov,
-    lovDefinitions,
-    allLovValues
-  ]);
+    let value = '';
+    let unit = '';
+    let normalRangeValue = ' ';
+
+    if (resultType === 'LOV') {
+
+      value = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.resultValueText
+      );
+
+      normalRangeValue = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.viewNormalRange
+      );
+
+    } else if (resultType === 'TEXT') {
+
+      value = r.resultValueText ?? '';
+      normalRangeValue = ' ';
+
+    } else {
+
+      value =
+        r.resultValueNumber !== null &&
+        r.resultValueNumber !== undefined
+          ? String(r.resultValueNumber)
+          : '';
+
+      unit =
+        valueUnitLov?.object?.find(
+          (u: any) =>
+            String(u.key) ===
+            String(test?.defaultProfileResultUnit)
+        )?.lovDisplayVale ?? '';
+
+      normalRangeValue = r.viewNormalRange ?? ' ';
+    }
+
+    return {
+      ...r,
+      orderId: orderTest?.orderId ?? '',
+      orderNumber: order?.orderNumber ?? '',
+      testName: profile?.name ?? ' ',
+      profile,
+      resultValue: value,
+      unit,
+      normalRange: normalRangeValue
+    };
+  });
+}, [
+  results,
+  orderTestMap,
+  orderMap,
+  testMap,
+  profilesMap,
+  valueUnitLov,
+  lovDefinitions,
+  allLovValues
+]);
 
   const allSelected =
     normalizedResults.length > 0 &&
@@ -394,27 +416,35 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       title: <Translate>TEST NAME</Translate>,
       render: (row: any) => row.testName
     },
-    {
-      key: 'result',
-      title: <Translate>TEST RESULT, UNIT</Translate>,
-      render: (row: any) => {
-        const hasValue =
-          row.resultValue !== null &&
-          row.resultValue !== undefined &&
-          row.resultValue !== '';
+   {
+  key: 'result',
+  title: <Translate>TEST RESULT, UNIT</Translate>,
+  render: (row: any) => {
 
-        return (
-          <>
-            <span>{row.resultValue}</span>
-            {hasValue && row.unit && (
-              <span style={{ marginLeft: 6, color: '#666' }}>
-                {row.unit}
-              </span>
-            )}
-          </>
-        );
-      }
-    },
+    const resultType =
+      row?.profile?.resultType?.toUpperCase()?.trim();
+
+    const hasValue =
+      row.resultValue !== null &&
+      row.resultValue !== undefined &&
+      row.resultValue !== '';
+
+    const showUnit =
+      resultType === 'NUMBER';
+
+    return (
+      <>
+        <span>{row.resultValue}</span>
+
+        {hasValue && showUnit && row.unit && (
+          <span style={{ marginLeft: 6, color: '#666' }}>
+            {row.unit}
+          </span>
+        )}
+      </>
+    );
+  }
+},
     {
       key: 'normalRange',
       title: <Translate>NORMAL RANGE</Translate>,

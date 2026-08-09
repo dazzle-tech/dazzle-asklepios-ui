@@ -62,27 +62,47 @@ const FullViewTable = ({ open, setOpen, results, notesResponse, openNotesModal, 
         title: <Translate>TEST NAME</Translate>,
         render: (row: any) => row.testName
     },
-    {
-        key: 'result',
-        title: <Translate>TEST RESULT, UNIT</Translate>,
-        render: (row: any) => {
-            const hasValue =
-                row.resultValue !== null &&
-                row.resultValue !== undefined &&
-                row.resultValue !== '';
+   {
+  key: 'result',
+  title: <Translate>TEST RESULT, UNIT</Translate>,
+  render: (testResultRow: any) => {
 
-            return (
-                <>
-                    <span>{row.resultValue}</span>
-                    {hasValue && row.unit && (
-                        <span style={{ marginLeft: 6, color: '#666' }}>
-                            {row.unit}
-                        </span>
-                    )}
-                </>
-            );
-        }
-    },
+    const resultType =
+      testResultRow?.profile?.resultType
+        ?.toUpperCase()
+        ?.trim();
+
+    const displayValue =
+      testResultRow.resultValue ?? '';
+
+    const hasValue =
+      displayValue !== null &&
+      displayValue !== undefined &&
+      displayValue !== '';
+
+    const showUnit =
+      resultType === 'NUMBER';
+
+    return (
+      <>
+        <span>{displayValue}</span>
+
+        {hasValue &&
+          showUnit &&
+          testResultRow.unit && (
+            <span
+              style={{
+                marginLeft: 6,
+                color: '#666'
+              }}
+            >
+              {testResultRow.unit}
+            </span>
+          )}
+      </>
+    );
+  }
+},
     {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,

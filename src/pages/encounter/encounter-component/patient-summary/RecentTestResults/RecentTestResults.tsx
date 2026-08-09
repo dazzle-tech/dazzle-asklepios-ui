@@ -200,38 +200,59 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
 
       const diagnosticTest = testId ? diagnosticTestMap.get(testId) : null;
 
-      const profile = diagnosticTestProfileMap.get(testResult.profileTestId);
+     const profile =
+  diagnosticTestProfileMap.get(
+    testResult.profileTestId
+  );
 
-      const isLovTest =
-        profile?.resultType?.toUpperCase() === 'LOV';
+const resultType =
+  profile?.resultType?.toUpperCase()?.trim();
 
-      let value = '';
-      let unit = '';
-      let normalRangeValue = ' ';
+let value = '';
+let unit = '';
+let normalRangeValue = ' ';
 
-      if (isLovTest) {
-        value = resolveLovDisplayValue(profile?.listOfValueId, testResult.resultValueText);
+if (resultType === 'LOV') {
 
-        normalRangeValue = resolveLovDisplayValue(profile?.listOfValueId, testResult.viewNormalRange);
-      } else {
-        value =
-          testResult.resultValueNumber !== null && testResult.resultValueNumber !== undefined
-            ? String(testResult.resultValueNumber)
-            : '';
+  value = resolveLovDisplayValue(
+    profile?.listOfValueId,
+    testResult.resultValueText
+  );
 
-        unit =
-          valueUnitOptionsResponse?.object?.find(
-            (valueUnit: any) =>
-              String(valueUnit.key) ===
-              String(
-                profile?.resultUnit ??
-                profile?.defaultResultUnit ??
-                diagnosticTest?.defaultProfileResultUnit
-              )
-          )?.lovDisplayVale ?? '';
+  normalRangeValue = resolveLovDisplayValue(
+    profile?.listOfValueId,
+    testResult.viewNormalRange
+  );
 
-        normalRangeValue = testResult.viewNormalRange ?? ' ';
-      }
+} else if (resultType === 'TEXT') {
+
+  value =
+    testResult.resultValueText ?? '';
+
+  normalRangeValue = ' ';
+
+} else {
+
+  value =
+    testResult.resultValueNumber !== null &&
+    testResult.resultValueNumber !== undefined
+      ? String(testResult.resultValueNumber)
+      : '';
+
+  unit =
+    valueUnitOptionsResponse?.object?.find(
+      (valueUnit: any) =>
+        String(valueUnit.key) ===
+        String(
+          profile?.resultUnit ??
+          profile?.defaultResultUnit ??
+          diagnosticTest?.defaultProfileResultUnit
+        )
+    )?.lovDisplayVale ?? '';
+
+  normalRangeValue =
+    testResult.viewNormalRange ?? ' ';
+}
 
       const testName =
         profile?.name ??
@@ -272,23 +293,46 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
       render: (testResultRow: any) => testResultRow.testName
     },
     {
-      key: 'result',
-      title: <Translate>TEST RESULT, UNIT</Translate>,
-      render: (testResultRow: any) => {
-        const hasValue =
-          testResultRow.resultValue !== null &&
-          testResultRow.resultValue !== undefined &&
-          testResultRow.resultValue !== '';
-        return (
-          <>
-            <span>{testResultRow.resultValue}</span>
-            {hasValue && testResultRow.unit && (
-              <span style={{ marginLeft: 6, color: '#666' }}>{testResultRow.unit}</span>
-            )}
-          </>
-        );
-      }
-    },
+  key: 'result',
+  title: <Translate>TEST RESULT, UNIT</Translate>,
+  render: (testResultRow: any) => {
+
+    const resultType =
+      testResultRow?.profile?.resultType
+        ?.toUpperCase()
+        ?.trim();
+
+    const displayValue =
+      testResultRow.resultValue ?? '';
+
+    const hasValue =
+      displayValue !== null &&
+      displayValue !== undefined &&
+      displayValue !== '';
+
+    const showUnit =
+      resultType === 'NUMBER';
+
+    return (
+      <>
+        <span>{displayValue}</span>
+
+        {hasValue &&
+          showUnit &&
+          testResultRow.unit && (
+            <span
+              style={{
+                marginLeft: 6,
+                color: '#666'
+              }}
+            >
+              {testResultRow.unit}
+            </span>
+          )}
+      </>
+    );
+  }
+},
     {
       key: 'marker',
       title: <Translate>MARKER</Translate>,
