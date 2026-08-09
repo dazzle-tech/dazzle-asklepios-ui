@@ -291,7 +291,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
     defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
     parallelCapacityEnabled: department?.parallelCapacityEnabled,
-    requirePractitioner: department?.requirePractitioner,
+    requirePractitioner: true,
     requireBilling: department?.requireBilling,
     requirePreAssessment: department?.requirePreAssessment,
     workingDays: buildWorkingDaysPayload(department?.workingDays),

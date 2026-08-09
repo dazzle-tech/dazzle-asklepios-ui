@@ -796,10 +796,10 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                 />
                 <MyInput width="100%" fieldType="number" fieldLabel="Number Of Resources" fieldName="numberOfResourcesExpected" record={record} setRecord={setRecord} disabled={readOnly} />
                 <Row>
-                  <Col md={12}>
+                  {/* <Col md={12}>
                     <MyInput width="100%" fieldType="check" fieldName="requirePractitioner" record={record} setRecord={setRecord} showLabel={false} disabled={readOnly || record?.templateType === 'PRACTITIONER'} />
-                  </Col>
-                  {record['requirePractitioner'] && (
+                  </Col> */}
+                
                     <Col md={12}>
                       <MyInput
                         key={`practitioner-dept-${record?.departmentId}`}
@@ -823,7 +823,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                         required
                       />
                     </Col>
-                  )}
+                  
                 </Row>
                 <MyInput width="100%" fieldType="check" fieldName="requirePreAssessment" record={record} setRecord={setRecord} showLabel={false} disabled={readOnly} />
               </Form>
