@@ -544,7 +544,8 @@ const ERTriage = () => {
         from: 'ER_Triage',
         info: 'toViewTriage',
         patient: patientData,
-        encounter: encounterData
+        encounter: encounterData,
+        viewMode: 'readOnly'
       }
     });
   };
