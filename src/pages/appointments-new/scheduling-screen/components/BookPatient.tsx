@@ -781,11 +781,6 @@ const BookPatient = ({
         return;
       }
 
-      if (!record.defaultPractitioner) {
-        dispatch(notify({ msg: 'Please select default practitioner', sev: 'warning' }));
-        return;
-      }
-
       if (record.service === 'FOLLOW_UP') {
         if (!appointmentDepartmentId) {
           dispatch(
@@ -1304,7 +1299,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
-                            required={!readOnly}
+                            required
                           />
 
                           <MyInput
