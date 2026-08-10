@@ -89,6 +89,18 @@ const RegistrationEncounter = ({
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
+  const mergeDepartments = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllDepartments(previousDepartments => {
+      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
+      const merged = [...previousDepartments];
+      rows.forEach((department: any) => {
+        if (!seenIds.has(Number(department.id))) merged.push(department);
+      });
+      return merged;
+    });
+  };
+
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
@@ -201,7 +213,10 @@ useEffect(() => {
       page: 0,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedFacilityId,
@@ -222,23 +237,12 @@ useEffect(() => {
       page: deptPage,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptPage, selectedFacilityId, localReferral?.toFacilityId, localEncounter?.encounterType]);
-
-  useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
-
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
-      });
-      return merged;
-    });
-  }, [deptList]);
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
@@ -250,10 +254,25 @@ useEffect(() => {
     { data: practitionersList, isFetching: isPractitionersFetching }
   ] = useLazyGetPractitionersByDepartmentQuery();
 
-  const practitionersData = practitionersList?.data ?? [];
   const practHasMore = Boolean(practitionersList?.links?.next);
 
   const prevDeptRef = useRef<number | null>(null);
+
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+
+  const mergePractitioners = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllPractitioners(previousPractitioners => {
+      const seenIds = new Set(
+        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
+      );
+      const merged = [...previousPractitioners];
+      rows.forEach((practitioner: any) => {
+        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
+      });
+      return merged;
+    });
+  };
 
   useEffect(() => {
     const departmentId = Number(localEncounter?.departmentId ?? 0);
@@ -271,6 +290,7 @@ useEffect(() => {
         practitionerId: null,
         followUpEncounterId: null
       }));
+      setAllPractitioners([]);
     }
 
     triggerPractitionersByDept({
@@ -278,7 +298,10 @@ useEffect(() => {
       page: 0,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localEncounter?.departmentId]);
 
@@ -292,27 +315,62 @@ useEffect(() => {
       page: practPage,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [practPage, localEncounter?.departmentId]);
 
-  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+  useEffect(() => {
+    if (localEncounter?.departmentId) return;
+
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+    prevDeptRef.current = null;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (!prevEncounter?.practitionerId && !prevEncounter?.followUpEncounterId) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.departmentId]);
 
   useEffect(() => {
-    const rows = practitionersData ?? [];
-    if (!rows.length) return;
+    if (localEncounter?.encounterType) return;
 
-    setAllPractitioners(previousPractitioners => {
-      const seenIds = new Set(
-        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
-      );
-      const merged = [...previousPractitioners];
-      rows.forEach((practitioner: any) => {
-        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
-      });
-      return merged;
+    setDeptPage(0);
+    setAllDepartments([]);
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (
+        !prevEncounter?.departmentId &&
+        !prevEncounter?.practitionerId &&
+        !prevEncounter?.followUpEncounterId
+      ) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        departmentId: 0,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
     });
-  }, [practitionersData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.encounterType]);
 
   useEffect(() => {
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
