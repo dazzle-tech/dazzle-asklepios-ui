@@ -222,6 +222,30 @@
   background-color: var(--one-health-theme-header);
 }
 
+.patient-satisfaction-survey-page.rtl {
+  .patient-satisfaction-survey-checkbox-field {
+    .rs-checkbox {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      align-items: flex-start;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .rs-checkbox-checker {
+      margin-right: 0;
+      margin-left: 0;
+      padding-top: 2px;
+    }
+
+    .rs-checkbox-label {
+      text-align: right;
+      line-height: 1.6;
+      flex: 1;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .patient-satisfaction-survey-title {
     font-size: 28px;

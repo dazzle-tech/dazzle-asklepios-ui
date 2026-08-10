@@ -446,15 +446,20 @@ const PatientSatisfactionSurveyPage = () => {
     if (currentQuestion.type === 'checkbox') {
       return (
         <Form fluid>
-          <MyInput
-            fieldType="check"
-            fieldName={currentQuestion.code}
-            showLabel={false}
-            label={<span>{getQuestionText(currentQuestion)}</span>}
-            record={questionRecord}
-            setRecord={setQuestionRecord}
-            width="100%"
-          />
+          <div
+            className="patient-satisfaction-survey-checkbox-field"
+            dir={isRtl ? 'rtl' : 'ltr'}
+          >
+            <MyInput
+              fieldType="check"
+              fieldName={currentQuestion.code}
+              showLabel={false}
+              label={<span>{getQuestionText(currentQuestion)}</span>}
+              record={questionRecord}
+              setRecord={setQuestionRecord}
+              width="100%"
+            />
+          </div>
         </Form>
       );
     }
