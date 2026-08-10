@@ -347,6 +347,7 @@ const defaultNurseMedicalSheetsInfo = (
         <>
           <MyInput
             column
+            disabled
             fieldType="checkbox"
             fieldName="requirePractitioner"
             record={department}

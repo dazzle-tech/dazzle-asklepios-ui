@@ -34,7 +34,6 @@ import { buildInvoicePaymentReceipt } from '@/pages/billing-module/invoices/invo
 import PayInvoiceBalanceModal, {
   type InvoicePaymentCompletedContext
 } from './PayInvoiceBalanceModal';
-import InvoiceWaseelClaimSection from './InvoiceWaseelClaimSection';
 import {
   canCollectPatientPaymentOnInvoice,
   invoiceBalanceChipLabel,
@@ -295,7 +294,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
           </div>
           <div className="invoice-detail__hero-text">
             <span className="invoice-detail__eyebrow">
-              {isInsuranceClaimInvoice ? 'Insurance claim invoice' : 'Patient invoice'}
+              {isInsuranceClaimInvoiceFlag ? 'Insurance claim invoice' : 'Patient invoice'}
             </span>
             <h2 className="invoice-detail__title">{displayDocumentNumber}</h2>
             <div className="invoice-detail__chips">
@@ -438,8 +437,6 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
           </span>
         </div>
       </div>
-
-      {isInsuranceClaimInvoiceFlag ? <InvoiceWaseelClaimSection invoice={invoice} /> : null}
 
       <div className="invoice-detail__tabs" role="tablist">
         {tabs.map(tab => (

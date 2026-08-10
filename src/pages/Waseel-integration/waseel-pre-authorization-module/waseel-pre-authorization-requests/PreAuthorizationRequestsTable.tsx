@@ -16,7 +16,7 @@ type PreAuthorizationRequestsTableProps = {
   onRowClick: (row: PreAuthorizationTrackingResponse) => void;
   onPageChange: (_: unknown, newPage: number) => void;
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  tableButtons: React.ReactNode;
+  tableButtons?: React.ReactNode;
 };
 
 const PreAuthorizationRequestsTable: React.FC<PreAuthorizationRequestsTableProps> = ({
@@ -46,7 +46,7 @@ const PreAuthorizationRequestsTable: React.FC<PreAuthorizationRequestsTableProps
     onPageChange={onPageChange}
     onRowsPerPageChange={onRowsPerPageChange}
     tableButtons={tableButtons}
-    height={650}
+    height={680}
   />
 );
 

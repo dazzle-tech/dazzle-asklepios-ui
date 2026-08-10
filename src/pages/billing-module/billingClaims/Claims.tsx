@@ -17,6 +17,7 @@ import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerAct
 
 import ClaimFilters from './ClaimFilters';
 import ClaimPreview from './ClaimPreview';
+import ClaimBatchPanel from './ClaimBatchPanel';
 import ClaimUploadSummaryModal from './ClaimUploadSummaryModal';
 import { getClaimColumns } from './claimColumns';
 import { filterClaimRows } from './utils';
@@ -284,6 +285,8 @@ const ClaimsScreen: React.FC = () => {
 
       <div className={`bc-body${openPreview ? ' bc-body--split' : ''}`}>
         <main className="bc-main">
+          <ClaimBatchPanel onSubmitted={() => refetch()} />
+
           <div className="bc-card">
             <div className="bc-card__head">
               <div>

@@ -280,7 +280,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
     },
     {
       key: 'setupPrice',
-      title: 'Setup price',
+      title: 'Price',
       width: 110,
       render: (row: PrepareServiceRow) =>
         row.setupPrice != null ? formatMoney(row.setupPrice, currency) : '-'
@@ -365,8 +365,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
               }
             }}
             selectData={[
-              { label: 'Self pay (Cash)', value: 'SELF_PAY' },
-              { label: 'Insurance (Waseel)', value: 'INSURANCE' }
+              { label: 'Self Pay', value: 'SELF_PAY' },
+              { label: 'Insurance', value: 'INSURANCE' }
             ]}
             selectDataLabel="label"
             selectDataValue="value"

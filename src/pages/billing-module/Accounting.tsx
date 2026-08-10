@@ -38,7 +38,7 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
-import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 
@@ -63,6 +63,7 @@ const Accounting: React.FC = () => {
   }>({ open: false, receipt: null, autoPrint: false });
   const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
   const [canCloseCalculation, setCanCloseCalculation] = useState(true);
+  const [billingRefreshPending, setBillingRefreshPending] = useState(false);
 
   const patientId = resolvePatientId(patient);
 
@@ -91,7 +92,9 @@ const Accounting: React.FC = () => {
     patientLedgerSummary,
     patientInsurances,
     loadingInsurances,
-    refreshAll
+    encounterInvoiceDetails,
+    refreshAll,
+    loadingBillingWorkspace
   } = useBillingAccountingData({
     patient,
     selectedEncounterId,
@@ -125,6 +128,32 @@ const Accounting: React.FC = () => {
   useEffect(() => {
     setSelectedChargeRowIds([]);
   }, [selectedEncounterId]);
+
+  useEffect(() => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    if (encounterInvoiceDetails == null) {
+      setCoverageType('SELF_PAY');
+      setSelectedInsuranceId(null);
+      return;
+    }
+
+    const resolvedCoverage = normalizeBillingCoverageType(
+      encounterInvoiceDetails.coverageType
+    );
+    setCoverageType(resolvedCoverage);
+
+    const insuranceId =
+      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ?? null;
+
+    if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
+      setSelectedInsuranceId(Number(insuranceId));
+    } else if (resolvedCoverage === 'SELF_PAY') {
+      setSelectedInsuranceId(null);
+    }
+  }, [selectedEncounterId, encounterInvoiceDetails]);
 
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
@@ -217,6 +246,8 @@ const Accounting: React.FC = () => {
       return;
     }
 
+    setBillingRefreshPending(true);
+
     try {
       const result = await refreshEncounterPreAuthorization({
         encounterId: selectedEncounterId
@@ -243,6 +274,8 @@ const Accounting: React.FC = () => {
           sev: 'error'
         })
       );
+    } finally {
+      setBillingRefreshPending(false);
     }
   };
 
@@ -335,7 +368,7 @@ const Accounting: React.FC = () => {
   );
 
   const encounterRemainingToPay = useMemo(() => {
-    if (loadingBillingMetrics) {
+    if (loadingBillingWorkspace) {
       return null;
     }
 
@@ -344,7 +377,7 @@ const Accounting: React.FC = () => {
     }
 
     return computeEncounterRemainingToPay(summary, chargeRows);
-  }, [summary, chargeRows, invoiceAdjustments, loadingBillingMetrics]);
+  }, [summary, chargeRows, invoiceAdjustments, loadingBillingWorkspace]);
 
   const selectedEncounterLabel = useMemo(
     () => formatEncounterDisplayLabel(selectedEncounter),
@@ -368,6 +401,9 @@ const Accounting: React.FC = () => {
     () => isBillingServicesLocked(summary, selectedEncounter, chargeRows),
     [summary, selectedEncounter, chargeRows]
   );
+
+  const billingWorkspaceLoading =
+    loadingBillingWorkspace || billingRefreshPending || refreshingPreAuthorization;
 
   const billingChargeFinalized = chargeCollectionComplete;
 
@@ -408,7 +444,7 @@ const Accounting: React.FC = () => {
                 <>
                   {' '}
                   · Encounter {selectedEncounterLabel}: remaining to pay{' '}
-                  {loadingBillingMetrics || selectedEncounterId == null || encounterRemainingToPay == null
+                  {billingWorkspaceLoading || selectedEncounterId == null || encounterRemainingToPay == null
                     ? '—'
                     : formatMoney(
                         encounterRemainingToPay,
@@ -439,7 +475,7 @@ const Accounting: React.FC = () => {
           totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
           loading={
             selectedEncounterId == null ||
-            loadingBillingMetrics ||
+            billingWorkspaceLoading ||
             loadingInvoiceContext
           }
           currency={summary.currency ?? facilityCurrency}
@@ -452,7 +488,7 @@ const Accounting: React.FC = () => {
           summary={summary}
           currency={summary.currency ?? facilityCurrency}
           chargeRows={chargeRows}
-          loading={selectedEncounterId == null || loadingBillingMetrics}
+          loading={selectedEncounterId == null || billingWorkspaceLoading}
         />
 
         <CashFallbackBanner
@@ -470,7 +506,7 @@ const Accounting: React.FC = () => {
               loading={loadingEncounters}
               onSelect={setSelectedEncounterId}
               remainingToPay={encounterRemainingToPay ?? 0}
-              remainingLoading={selectedEncounterId == null || loadingBillingMetrics}
+              remainingLoading={selectedEncounterId == null || billingWorkspaceLoading}
               currency={summary.currency ?? facilityCurrency}
             />
           </div>
@@ -495,7 +531,7 @@ const Accounting: React.FC = () => {
                 onInsuranceChange={setSelectedInsuranceId}
                 onPrepared={refreshAll}
                 chargeRows={chargeRows}
-                loadingBillingMetrics={loadingBillingMetrics}
+                loadingBillingMetrics={billingWorkspaceLoading}
                 readOnly={billingChargeFinalized || preAuthBlocksCheckout}
               />
             </div>
@@ -503,7 +539,9 @@ const Accounting: React.FC = () => {
             <div className="billing-accounting__panel">
               <div className="billing-accounting__panel-title">
                 All services & products
-                <span className="billing-accounting__badge">Step 2 · {chargeRows.length} lines</span>
+                <span className="billing-accounting__badge">
+                  Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
+                </span>
               </div>
               <PreAuthorizationBillingControls
                 visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
@@ -516,7 +554,7 @@ const Accounting: React.FC = () => {
               <BillingChargesTable
                 rows={chargeRows}
                 billingSummary={summary}
-                loading={loadingSummary || loadingPsp}
+                loading={billingWorkspaceLoading}
                 currency={summary.currency ?? facilityCurrency}
                 chargeClosed={billingChargeFinalized}
                 disabled={billingServicesLocked}
@@ -547,7 +585,7 @@ const Accounting: React.FC = () => {
                 invoiceAdjustments={invoiceAdjustments}
                 walletBalance={walletBalance}
                 walletReserved={reservedBalance}
-                loadingBillingMetrics={loadingBillingMetrics}
+                loadingBillingMetrics={billingWorkspaceLoading}
                 preAuthBlocksCheckout={preAuthBlocksCheckout}
                 onCompleted={refreshAll}
                 onCollectRemaining={handleCollectRemaining}
@@ -561,7 +599,7 @@ const Accounting: React.FC = () => {
                 coverageType={coverageType}
                 selectedInsuranceId={selectedInsuranceId}
                 waseelCoverage={waseelCoverage}
-                loading={loadingWaseelCoverage}
+                loading={billingWorkspaceLoading && waseelCoverage == null}
                 hasError={waseelCoverageError}
                 currency={summary.currency ?? facilityCurrency}
               />
@@ -601,7 +639,8 @@ const Accounting: React.FC = () => {
       selectedEncounterId,
       selectedInsuranceId,
       encounterRemainingToPay,
-      loadingBillingMetrics,
+      loadingBillingWorkspace,
+      billingWorkspaceLoading,
       billingServicesLocked,
       billingChargeFinalized,
       chargeCollectionComplete,
@@ -683,7 +722,6 @@ const Accounting: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="right-box">
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -692,7 +730,6 @@ const Accounting: React.FC = () => {
             refetchData={refetchData}
             setRefetchData={setRefetchData}
           />
-        </div>
       )}
 
       {patientId != null && (

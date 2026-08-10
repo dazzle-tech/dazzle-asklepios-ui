@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAppSelector } from '@/hooks';
 import { newEncounterBillingSummary } from '@/types/model-types-constructor-new';
@@ -14,6 +14,7 @@ import {
 } from '@/services/encounters/patientPaymentsService';
 import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
 import {
+  useGetEncounterInvoiceDetailsQuery,
   useGetPatientFinancialDocumentsQuery,
   type PatientFinancialInvoice
 } from '@/services/billing/invoiceGenerationService';
@@ -138,6 +139,14 @@ export const useBillingAccountingData = ({
     refetchOnMountOrArgChange: true
   });
 
+  const {
+    data: encounterInvoiceDetails,
+    refetch: refetchEncounterInvoiceDetails
+  } = useGetEncounterInvoiceDetailsQuery(selectedEncounterId as number, {
+    skip: selectedEncounterId == null,
+    refetchOnMountOrArgChange: true
+  });
+
   const encounters = encountersResponse?.data ?? [];
   const selectedEncounter =
     encounters.find(encounter => encounter.id === selectedEncounterId) ?? null;
@@ -222,7 +231,7 @@ export const useBillingAccountingData = ({
 
   const pspRows = pspResponse?.data ?? [];
 
-  const { lookups } = useBillingCatalogLookups({
+  const { lookups, lookupsLoading } = useBillingCatalogLookups({
     encounterId: selectedEncounterId,
     pspRows
   });
@@ -259,10 +268,25 @@ export const useBillingAccountingData = ({
     effectiveSummary?.wallet?.reservedBalance
   );
 
-  const refreshAll = async () => {
+  const loadingInsuranceContext =
+    coverageType === 'INSURANCE' &&
+    selectedInsuranceId != null &&
+    loadingWaseelCoverage &&
+    waseelCoverage == null;
+
+  const loadingBillingWorkspace =
+    selectedEncounterId != null &&
+    (loadingBillingMetrics ||
+      loadingSummary ||
+      loadingPsp ||
+      lookupsLoading ||
+      loadingInsuranceContext);
+
+  const refreshAll = useCallback(async () => {
     await Promise.all([
       refetchEncounters(),
       selectedEncounterId != null ? refetchSummary() : Promise.resolve(),
+      selectedEncounterId != null ? refetchEncounterInvoiceDetails() : Promise.resolve(),
       selectedEncounterId != null ? refetchPsp() : Promise.resolve(),
       refetchWalletBalance(),
       refetchLedgerSummary(),
@@ -273,7 +297,23 @@ export const useBillingAccountingData = ({
         ? refetchWaseelCoverage()
         : Promise.resolve()
     ]);
-  };
+  }, [
+    coverageType,
+    patientId,
+    refetchEncounterInvoiceDetails,
+    refetchEncounters,
+    refetchFinancialDocuments,
+    refetchInvoiceAdjustments,
+    refetchInvoiceLineItems,
+    refetchLedgerSummary,
+    refetchPsp,
+    refetchSummary,
+    refetchWalletBalance,
+    refetchWaseelCoverage,
+    resolvedInvoiceId,
+    selectedEncounterId,
+    selectedInsuranceId
+  ]);
 
   return {
     patientId,
@@ -308,6 +348,9 @@ export const useBillingAccountingData = ({
     patientLedgerSummary,
     patientInsurances: insuranceResponse?.data ?? [],
     loadingInsurances,
-    refreshAll
+    encounterInvoiceDetails:
+      selectedEncounterId != null ? encounterInvoiceDetails ?? null : null,
+    refreshAll,
+    loadingBillingWorkspace
   };
 };

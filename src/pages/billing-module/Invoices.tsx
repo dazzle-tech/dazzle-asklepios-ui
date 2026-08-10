@@ -104,6 +104,10 @@ import {
 
 import { useInvoicePrintLookups } from './invoices/useInvoicePrintLookups';
 import {
+  computeEncounterRemainingToPay,
+  formatBillingCoverageType
+} from './accounting/utils/billingAccountingUtils';
+import {
   resolveInvoiceDisplayNumber,
   resolveInvoiceVisitNumber
 } from './invoices/invoiceDisplayUtils';
@@ -702,8 +706,22 @@ const Invoices: React.FC<InvoicesProps> = ({
 
   const {
     billingSummary: visitBillingSummary,
+    chargeRows: visitChargeRows,
     isReady: visitDetailsReady
   } = useInvoicePrintLookups(selectedEncounterId);
+
+  const encounterRemainingToPay = useMemo(() => {
+    if (visitBillingSummary == null) {
+      return null;
+    }
+
+    return computeEncounterRemainingToPay(visitBillingSummary, visitChargeRows);
+  }, [visitBillingSummary, visitChargeRows]);
+
+  const visitHasInvoice =
+    selectedVisit?.hasFinalInvoice === true ||
+    String(encounterDetails?.billingStatus ?? selectedVisit?.billingStatus ?? '')
+      .toUpperCase() === 'INVOICED';
 
   const visitDetailRows = useMemo(
     () =>
@@ -1956,7 +1974,23 @@ const Invoices: React.FC<InvoicesProps> = ({
 
                 </Tag>
 
-                <Tag>{encounterDetails?.coverageType ?? selectedVisit?.coverageType}</Tag>
+                <Tag>
+                  {formatBillingCoverageType(
+                    encounterDetails?.coverageType ?? selectedVisit?.coverageType
+                  )}
+                </Tag>
+
+                {visitHasInvoice && (
+                  <Tag color={encounterRemainingToPay != null && encounterRemainingToPay > 0 ? 'orange' : 'green'}>
+                    Remaining to pay:{' '}
+                    {!visitDetailsReady || encounterRemainingToPay == null
+                      ? '—'
+                      : formatMoney(
+                          encounterRemainingToPay,
+                          selectedVisit?.currency ?? visitBillingSummary?.currency ?? 'SAR'
+                        )}
+                  </Tag>
+                )}
 
                 {encounterDetails?.eligibilityReference && (
 

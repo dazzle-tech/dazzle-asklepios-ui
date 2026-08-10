@@ -443,7 +443,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         placeholder="Selected LOV"
                       />
                     </div>
-
                   )}
 
                   {diagnosticsTest.defaultProfileResultType === 'NUMBER' && (
@@ -460,7 +459,21 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         record={diagnosticsTest}
                         setRecord={setDiagnosticsTest}
                       />
-                    </div>)}
+                    </div>
+                  )}
+
+                  {diagnosticsTest.defaultProfileResultType === 'TEXT' && (
+                    <div className="container-of-field-diagnostic">
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Text Result"
+                        fieldName="defaultProfileResultType"
+                        disabled
+                        record={diagnosticsTest}
+                        setRecord={setDiagnosticsTest}
+                      />
+                    </div>
+                  )}
                 </div>
               </>
             )}

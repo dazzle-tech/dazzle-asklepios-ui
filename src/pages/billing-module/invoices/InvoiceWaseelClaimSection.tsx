@@ -135,8 +135,9 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
             <span className="invoice-detail__waseel-claim-eyebrow">Waseel integration</span>
             <h3 className="invoice-detail__waseel-claim-title">Insurance claim submission</h3>
             <p className="invoice-detail__waseel-claim-text">
-              Submit this finalized insurance invoice to Waseel using billing, pre-authorization,
-              and eligibility data already captured for the visit.
+              Insurance claims are submitted manually from the Claims screen after invoice generation.
+              Select one or more finalized insurance invoices for the same payor and period, then
+              submit them as one Waseel upload.
             </p>
           </div>
           <div className="invoice-detail__waseel-claim-status">

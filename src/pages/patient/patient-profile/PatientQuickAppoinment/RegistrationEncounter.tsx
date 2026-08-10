@@ -477,6 +477,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
+        required
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"

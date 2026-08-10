@@ -238,7 +238,7 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
                   <Col md={12}>
                     <MyInput width="100%" fieldType="check" fieldName="requirePractitioner" record={record} setRecord={setRecord} showLabel={false} disabled />
                   </Col>
-                  {record['requirePractitioner'] && (
+                  
                     <Col md={12}>
                       <MyInput
                         key={`practitioner-${record?.departmentId}`}
@@ -261,7 +261,7 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
                         disabled
                       />
                     </Col>
-                  )}
+                  
                 </Row>
                 <MyInput width="100%" fieldType="check" fieldName="requirePreAssessment" record={record} setRecord={setRecord} showLabel={false} disabled />
               </Form>

@@ -27,6 +27,14 @@ import {
 
   isPreAuthRejected,
 
+  isPreAuthPartial,
+
+  isPreAuthApproved,
+
+  isPreAuthRequiredRow,
+
+  shouldShowPreAuthRowActions,
+
   isRowAwaitingBilling,
 
   isRowCollectable,
@@ -283,20 +291,6 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
-      key: 'priceSource',
-
-      title: 'Price source',
-
-      width: 110,
-
-      render: (row: UnifiedBillingChargeRow) => (
-        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
-      )
-
-    },
-
-    {
-
       key: 'billingItemType',
 
       title: 'Type',
@@ -329,6 +323,20 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 220,
 
       render: (row: UnifiedBillingChargeRow) => row.itemName
+
+    },
+
+    {
+
+      key: 'priceSource',
+
+      title: 'Price source',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) => (
+        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
+      )
 
     },
 
@@ -463,23 +471,35 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 120,
 
       render: (row: UnifiedBillingChargeRow) => {
+        if (!isPreAuthRequiredRow(row)) {
+          return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
+        }
+
+        if (isPreAuthPartial(row.preAuthorizationStatus)) {
+          return (
+            <Tag color="yellow" size="sm">
+              Partial — communication required
+            </Tag>
+          );
+        }
 
         if (isPreAuthRejected(row.preAuthorizationStatus)) {
-
           return (
-
             <Tag color="orange" size="sm">
-
               Pre-auth rejected
-
             </Tag>
-
           );
+        }
 
+        if (isPreAuthApproved(row.preAuthorizationStatus)) {
+          return (
+            <Tag color="green" size="sm">
+              Pre-auth approved
+            </Tag>
+          );
         }
 
         return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
-
       }
 
     },
@@ -497,67 +517,53 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
             width: 220,
 
             render: (row: UnifiedBillingChargeRow) => {
+              if (!shouldShowPreAuthRowActions(row, billingSummary)) {
+                return null;
+              }
+
+              if (isPreAuthPartial(row.preAuthorizationStatus)) {
+                return (
+                  <Tag color="yellow" size="sm">
+                    Communication required
+                  </Tag>
+                );
+              }
 
               if (!isPreAuthRejected(row.preAuthorizationStatus)) {
-
-                return <span>-</span>;
-
+                return null;
               }
 
               const pspId = row.patientServiceProductId;
 
               if (pspId == null) {
-
-                return <span>-</span>;
-
+                return null;
               }
 
               const loading = preAuthActionLoadingId === pspId;
 
               return (
-
                 <div className="billing-accounting__preauth-row-actions">
-
                   <MyButton
-
                     size="xs"
-
                     appearance="primary"
-
                     loading={loading}
-
                     disabled={disabled || loading}
-
                     onClick={() => onPayRejectedAsCash?.(pspId)}
-
                   >
-
                     Pay cash
-
                   </MyButton>
 
                   <MyButton
-
                     size="xs"
-
                     appearance="default"
-
                     loading={loading}
-
                     disabled={disabled || loading}
-
                     onClick={() => onClonePreAuthorization?.(pspId)}
-
                   >
-
                     Clone pre-auth
-
                   </MyButton>
-
                 </div>
-
               );
-
             }
 
           }
