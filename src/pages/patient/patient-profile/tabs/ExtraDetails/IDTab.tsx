@@ -12,7 +12,7 @@ import 'react-tabs/style/react-tabs.css';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { extractErrorMessage, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { PlusRound } from '@rsuite/icons';
 import { Badge } from 'rsuite';
@@ -118,8 +118,10 @@ const IDTab: React.FC<IDTabProps> = ({
         handleClearDocument();
       })
       .catch(error => {
-        dispatch(notify({ msg: 'Failed to delete document', sev: 'error' }));
-        console.error('Error deleting document:', error);
+        dispatch( notify({
+            msg: extractErrorMessage(error) || 'Failed to delete document',
+            sev: 'warning',
+          }));
       });
   };
 
@@ -258,8 +260,10 @@ const IDTab: React.FC<IDTabProps> = ({
 
             onClick={e => {
               e.stopPropagation();
+              if (!rowData.isPrimary) {
               setSelectedSecondaryDocument(rowData);
               setDeleteDocModalOpen(true);
+              }
             }}
           />
         </div>

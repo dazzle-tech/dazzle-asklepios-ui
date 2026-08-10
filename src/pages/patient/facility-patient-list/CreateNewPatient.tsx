@@ -1159,7 +1159,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      isPrimary: secondaryDocument.type === 'NATIONAL_ID',
       number: String(secondaryDocument.number ?? '').trim()
     };
 
