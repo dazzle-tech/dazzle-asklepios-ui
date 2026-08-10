@@ -216,6 +216,7 @@ export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',
   sourceId: 0,
+  practitionerId: undefined,
   serviceId: undefined,
   createdBy: '',
   createdDate: null,

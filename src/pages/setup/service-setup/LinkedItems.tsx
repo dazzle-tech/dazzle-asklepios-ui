@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import './styles.less';
 import { MdDelete, MdMedicalServices, MdModeEdit } from 'react-icons/md';
@@ -24,7 +24,13 @@ import {
 import type { ServiceItem, ServiceItemCreate, ServiceItemUpdate } from '@/types/model-types-new';
 import { newServiceItem } from '@/types/model-types-constructor-new';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import {
+  useGetSpecialistPractitionersByDepartmentQuery,
+  useGetPractitionersBulkMutation,
+  useGetPractitionerByIdQuery,
+} from '@/services/setup/practitioner/PractitionerService';
 import { formatEnumString } from '@/utils';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 
 type Props = {
   open: boolean;
@@ -45,20 +51,34 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [rowToToggle, setRowToToggle] = useState<any | null>(null);
   const [departmentsMap, setDepartmentsMap] = useState<Record<number, string>>({});
+  const [practitionersMap, setPractitionersMap] = useState<Record<number, string>>({});
+  const [selectedPractitioner, setSelectedPractitioner] = useState<any | null>(null);
+  const [practitionerPagination, setPractitionerPagination] = useState({
+    page: 0,
+    size: 10,
+    sort: 'id,asc',
+    timestamp: Date.now(),
+  });
   const [formItem, setFormItem] = useState<ServiceItem>({
     ...newServiceItem,
     serviceId: Number(serviceId) || undefined,
   });
 
-  // -------- Mutations --------
+  const isDepartmentsType = String(formItem.type) === 'DEPARTMENTS';
+  const departmentId = useMemo(() => {
+    if (!isDepartmentsType) return undefined;
+    const id = Number(formItem.sourceId);
+    return Number.isFinite(id) && id > 0 ? id : undefined;
+  }, [isDepartmentsType, formItem.sourceId]);
+
+  // -------- Mutations / Queries --------
   const [addServiceItem, { isLoading: isAdding }] = useAddServiceItemMutation();
   const [updateServiceItem, { isLoading: isUpdating }] = useUpdateServiceItemMutation();
   const [toggleServiceItemIsActive, { isLoading: isToggling }] = useToggleServiceItemIsActiveMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
-  // get enum options for ServiceItemsType
+  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const serviceItemsTypeOptions = useEnumOptions('ServiceItemsType');
 
-  // get linked items for the service 
   const {
     data: itemsPage,
     isFetching: isLoadingItems,
@@ -73,25 +93,46 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     { skip: !open || !serviceId || !facilityId }
   );
 
+  const {
+    data: specialistsPage,
+    isFetching: isLoadingSpecialists,
+  } = useGetSpecialistPractitionersByDepartmentQuery(
+    {
+      departmentId: departmentId!,
+      page: practitionerPagination.page,
+      size: practitionerPagination.size,
+      sort: practitionerPagination.sort,
+      timestamp: practitionerPagination.timestamp,
+    },
+    { skip: !openChildModal || !departmentId }
+  );
+
+  const { data: practitionerDetail } = useGetPractitionerByIdQuery(
+    Number(formItem.practitionerId),
+    { skip: !openChildModal || !formItem.practitionerId }
+  );
+
   const departmentIds = useMemo(() => {
-
     const rows = itemsPage?.data ?? [];
-
     const ids = rows
       .filter((r: any) => r.type === 'DEPARTMENTS')
       .map((r: any) => r.sourceId)
       .filter(Boolean);
-
     return Array.from(new Set(ids));
-
   }, [itemsPage]);
 
+  const practitionerIds = useMemo(() => {
+    const rows = itemsPage?.data ?? [];
+    const ids = rows
+      .filter((r: any) => r.type === 'DEPARTMENTS' && r.practitionerId)
+      .map((r: any) => r.practitionerId)
+      .filter(Boolean);
+    return Array.from(new Set(ids)) as number[];
+  }, [itemsPage]);
 
-  // get sources based on type and facility
   const [triggerFetchSources, { isFetching: isLoadingSources }] =
     useLazyGetServiceItemSourcesByFacilityQuery();
 
-  // map of sourceId to sourceName for table display
   const sourceNameById = useMemo(() => {
     const map = new Map<number, string>();
     (sourcesLocal ?? []).forEach((d: any) => {
@@ -100,35 +141,71 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     return map;
   }, [sourcesLocal]);
 
-  // get table data
   const tableData = useMemo(() => {
-
     const rows = itemsPage?.data ?? [];
-
     return rows.map((row: any) => {
-
       let name = row.sourceId;
-
-      if (row.type === "DEPARTMENTS") {
-        name = departmentsMap[row.sourceId] ?? row.sourceId;
+      if (row.type === 'DEPARTMENTS') {
+        const deptName = departmentsMap[row.sourceId] ?? row.sourceId;
+        const practName = row.practitionerId
+          ? practitionersMap[row.practitionerId] ?? row.practitionerId
+          : null;
+        name = practName ? `${deptName} - ${practName}` : deptName;
       } else {
         name = sourceNameById.get(Number(row.sourceId)) ?? row.sourceId;
       }
-
-      return {
-        ...row,
-        name
-      };
-
+      return { ...row, name };
     });
+  }, [itemsPage, sourceNameById, departmentsMap, practitionersMap]);
 
-  }, [itemsPage, sourceNameById, departmentsMap]);
+  const specialistTableData = useMemo(() => {
+    return (specialistsPage?.data ?? []).map((p: any) => ({
+      ...p,
+      fullName: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim(),
+    }));
+  }, [specialistsPage]);
 
-  // Table columns
+  const practitionerColumns: ColumnConfig[] = [
+    {
+      key: 'fullName',
+      title: 'Name',
+      render: (row: any) => row.fullName || '-',
+    },
+    {
+      key: 'specialty',
+      title: 'Specialty',
+      align: 'center',
+      render: (row: any) => formatEnumString(row.specialty) || '-',
+    },
+    {
+      key: 'subSpecialty',
+      title: 'Sub Specialty',
+      align: 'center',
+      render: (row: any) => row.subSpecialty || '-',
+    },
+    {
+      key: 'select',
+      title: 'Select',
+      width: 90,
+      align: 'center',
+      render: (row: any) => (
+        <MyButton
+          width="70px"
+          color={formItem.practitionerId === row.id ? 'var(--deep-blue)' : 'var(--primary-gray)'}
+          onClick={() => handleSelectPractitioner(row)}
+        >
+          {formItem.practitionerId === row.id ? 'Selected' : 'Select'}
+        </MyButton>
+      ),
+    },
+  ];
+
   const tableColumns: ColumnConfig[] = [
-    { key: 'type', title: 'Type', render: (row: any) => {
-      return formatEnumString(row.type) }},
-
+    {
+      key: 'type',
+      title: 'Type',
+      render: (row: any) => formatEnumString(row.type),
+    },
     { key: 'name', title: 'Name', align: 'center' },
     {
       key: 'isActive',
@@ -188,11 +265,17 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       align: 'right',
     },
   ];
-  // Handlers
-  // open create or edit modals
+
+  const handleSelectPractitioner = (practitioner: any) => {
+    setFormItem(prev => ({ ...prev, practitionerId: practitioner.id }));
+    setSelectedPractitioner(practitioner);
+  };
+
   const openCreate = () => {
     setMode('create');
     setEditingId(null);
+    setSelectedPractitioner(null);
+    setPractitionerPagination({ page: 0, size: 10, sort: 'id,asc', timestamp: Date.now() });
     setFormItem({ ...newServiceItem, serviceId: Number(serviceId) || undefined });
     setOpenChildModal(true);
   };
@@ -200,10 +283,12 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
   const openEdit = (row: any) => {
     setMode('edit');
     setEditingId(Number(row.id));
+    setPractitionerPagination({ page: 0, size: 10, sort: 'id,asc', timestamp: Date.now() });
     setFormItem({
       id: Number(row.id),
       type: String(row.type),
       sourceId: Number(row.sourceId),
+      practitionerId: row.practitionerId ? Number(row.practitionerId) : undefined,
       serviceId: Number(serviceId) || undefined,
       createdBy: row.createdBy ?? '',
       createdDate: row.createdDate ?? null,
@@ -211,9 +296,10 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       lastModifiedDate: row.lastModifiedDate ?? null,
       isActive: !!row.isActive,
     });
+    setSelectedPractitioner(null);
     setOpenChildModal(true);
   };
-  // handle deactivate and reactivate
+
   const handleDeactivate = async () => {
     if (!rowToToggle?.id || !serviceId) return;
     try {
@@ -241,13 +327,20 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       setRowToToggle(null);
     }
   };
-  // reset child form
-  const resetChildForm = () =>
+
+  const resetChildForm = () => {
+    setSelectedPractitioner(null);
+    setPractitionerPagination({ page: 0, size: 10, sort: 'id,asc', timestamp: Date.now() });
     setFormItem({ ...newServiceItem, serviceId: Number(serviceId) || undefined });
-  // handle save for create and edit
+  };
+
   const handleSave = async () => {
     if (!formItem.type || !formItem.sourceId || !serviceId) {
       dispatch(notify({ msg: 'Please select type and item first', sev: 'warning' }));
+      return;
+    }
+    if (isDepartmentsType && !formItem.practitionerId) {
+      dispatch(notify({ msg: 'Please select a specialist practitioner', sev: 'warning' }));
       return;
     }
 
@@ -255,20 +348,22 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
 
     const payload = isCreate
       ? ({
-        type: String(formItem.type),
-        sourceId: Number(formItem.sourceId),
-        serviceId: Number(serviceId),
-        isActive: true,
-        createdBy: formItem.createdBy ?? '',
-      } as ServiceItemCreate)
+          type: String(formItem.type),
+          sourceId: Number(formItem.sourceId),
+          practitionerId: isDepartmentsType ? Number(formItem.practitionerId) : undefined,
+          serviceId: Number(serviceId),
+          isActive: true,
+          createdBy: formItem.createdBy ?? '',
+        } as ServiceItemCreate)
       : ({
-        id: Number(editingId),
-        serviceId: Number(serviceId),
-        type: String(formItem.type),
-        sourceId: Number(formItem.sourceId),
-        isActive: formItem.isActive ?? undefined,
-        lastModifiedBy: formItem.lastModifiedBy ?? undefined,
-      } as ServiceItemUpdate);
+          id: Number(editingId),
+          serviceId: Number(serviceId),
+          type: String(formItem.type),
+          sourceId: Number(formItem.sourceId),
+          practitionerId: isDepartmentsType ? Number(formItem.practitionerId) : undefined,
+          isActive: formItem.isActive ?? undefined,
+          lastModifiedBy: formItem.lastModifiedBy ?? undefined,
+        } as ServiceItemUpdate);
 
     try {
       if (isCreate) {
@@ -279,7 +374,6 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
         dispatch(notify({ msg: 'Item updated successfully', sev: 'success' }));
       }
 
-      // Reset UI after success
       resetChildForm();
       setOpenChildModal(false);
       setEditingId(null);
@@ -288,14 +382,12 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       console.error('Error saving service item:', err);
 
       const status = err?.status;
-      const backendMsg =
-        err?.data?.message || err?.data?.detail || err?.data?.title || '';
+      const backendMsg = err?.data?.message || err?.data?.detail || err?.data?.title || '';
 
       if (status === 409) {
-        // Duplicate detected (like existing ServiceItem with same type + source)
         dispatch(
           notify({
-            msg: 'An item with the same type and source already exists in this service.',
+            msg: 'An item with the same type, source and practitioner already exists in this service.',
             sev: 'warning',
           })
         );
@@ -324,8 +416,44 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     }
   };
 
+  const handlePractitionerPageChange = (_: unknown, newPage: number) => {
+    PaginationPerPage.handlePageChange(
+      _,
+      newPage,
+      practitionerPagination,
+      specialistsPage?.links ?? {},
+      setPractitionerPagination
+    );
+  };
 
-  // Child and Main content for ChildModal
+  const handlePractitionerRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = Number(e.target.value);
+    setPractitionerPagination(prev => ({
+      ...prev,
+      page: 0,
+      size: newSize,
+      timestamp: Date.now(),
+    }));
+  };
+
+  const renderPractitionerDetails = () => {
+    if (!selectedPractitioner) return null;
+    const p = selectedPractitioner;
+    return (
+      <Panel bordered header="Practitioner Details" style={{ marginTop: 12 }}>
+        <div className="linked-item-practitioner-details">
+          <div><strong>Name:</strong> {p.fullName || `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim()}</div>
+          <div><strong>Email:</strong> {p.email || '-'}</div>
+          <div><strong>Phone:</strong> {p.phoneNumber || '-'}</div>
+          <div><strong>Specialty:</strong> {formatEnumString(p.specialty) || '-'}</div>
+          <div><strong>Sub Specialty:</strong> {p.subSpecialty || '-'}</div>
+          <div><strong>Medical License:</strong> {p.defaultMedicalLicense || '-'}</div>
+          <div><strong>Job Role:</strong> {formatEnumString(p.jobRole) || '-'}</div>
+        </div>
+      </Panel>
+    );
+  };
+
   const conjureFormMainContent = () => (
     <div>
       <div className="container-of-add-new-button">
@@ -339,14 +467,13 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
           <Translate>Link Item</Translate>
         </MyButton>
       </div>
-
       <MyTable height={450} loading={isLoadingItems} data={tableData} columns={tableColumns} />
     </div>
   );
-  // Child content
+
   const conjureFormChildContent = () => (
     <Form fluid>
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div className="linked-items-child-form">
         <MyInput
           required
           width="100%"
@@ -358,16 +485,19 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
           selectData={serviceItemsTypeOptions ?? []}
           record={formItem}
           setRecord={(r: any) => {
-            setFormItem({ ...r, sourceId: undefined });
+            setFormItem({ ...r, sourceId: undefined, practitionerId: undefined });
+            setSelectedPractitioner(null);
+            setPractitionerPagination(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
           }}
           placeholder="Choose type"
         />
+
         <MyInput
           required
           key={String(formItem.type) || 'no-type'}
           width="100%"
           fieldName="sourceId"
-          fieldLabel="Select Item"
+          fieldLabel={isDepartmentsType ? 'Select Department' : 'Select Item'}
           fieldType="select"
           selectDataValue="value"
           selectDataLabel="label"
@@ -376,7 +506,11 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
             value: d?.id,
           }))}
           record={formItem}
-          setRecord={setFormItem}
+          setRecord={(r: any) => {
+            setFormItem({ ...r, practitionerId: undefined });
+            setSelectedPractitioner(null);
+            setPractitionerPagination(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+          }}
           placeholder={
             !formItem.type
               ? 'Choose type first'
@@ -384,15 +518,48 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
                 ? 'Loading...'
                 : (sourcesLocal?.length ?? 0) === 0
                   ? 'No items found'
-                  : 'Choose item'
+                  : isDepartmentsType
+                    ? 'Choose department'
+                    : 'Choose item'
           }
           disabled={!formItem.type || isLoadingSources || (sourcesLocal?.length ?? 0) === 0}
         />
+
+        {isDepartmentsType && departmentId && (
+          <div className="linked-items-practitioner-section">
+            <div className="linked-items-section-title">
+              <Translate>Select Specialist Practitioner</Translate>
+              <span className="linked-items-section-required">*</span>
+            </div>
+            <MyTable
+              height={240}
+              loading={isLoadingSpecialists}
+              data={specialistTableData}
+              columns={practitionerColumns}
+              page={practitionerPagination.page}
+              rowsPerPage={practitionerPagination.size}
+              totalCount={specialistsPage?.totalCount ?? 0}
+              onPageChange={handlePractitionerPageChange}
+              onRowsPerPageChange={handlePractitionerRowsPerPageChange}
+            />
+            {!isLoadingSpecialists && (specialistsPage?.totalCount ?? 0) === 0 && (
+              <div className="linked-items-empty-practitioners">
+                <Translate>No specialist practitioners found for this department</Translate>
+              </div>
+            )}
+            {renderPractitionerDetails()}
+          </div>
+        )}
+
+        {isDepartmentsType && !departmentId && (
+          <div className="linked-items-practitioner-hint">
+            <Translate>Select a department to load specialist practitioners</Translate>
+          </div>
+        )}
       </div>
     </Form>
   );
 
-  // Effects 
   useEffect(() => {
     let ignore = false;
     const run = async () => {
@@ -424,37 +591,62 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     setFormItem(prev => ({
       ...prev,
       sourceId: undefined,
+      practitionerId: undefined,
     }));
+    setSelectedPractitioner(null);
   }, [formItem.type]);
 
   useEffect(() => {
-
     if (!departmentIds.length) return;
 
     getDepartmentsBulk(departmentIds)
       .unwrap()
       .then(res => {
-
         const map: Record<number, string> = {};
-
         res.forEach((d: any) => {
           map[d.id] = d.name;
         });
-
         setDepartmentsMap(map);
-
       })
       .catch(() => {
         setDepartmentsMap({});
       });
-
   }, [departmentIds, getDepartmentsBulk]);
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  useEffect(() => {
+    if (!practitionerIds.length) return;
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+    getPractitionersBulk(practitionerIds)
+      .unwrap()
+      .then(res => {
+        const map: Record<number, string> = {};
+        (Array.isArray(res) ? res : []).forEach((p: any) => {
+          map[p.id] = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+        });
+        setPractitionersMap(map);
+      })
+      .catch(() => {
+        setPractitionersMap({});
+      });
+  }, [practitionerIds, getPractitionersBulk]);
+
+  useEffect(() => {
+    if (!openChildModal || !formItem.practitionerId) return;
+
+    const fromPage = specialistsPage?.data?.find((p: any) => p.id === formItem.practitionerId);
+    const source = fromPage ?? practitionerDetail;
+
+    if (source && source.id === formItem.practitionerId) {
+      setSelectedPractitioner({
+        ...source,
+        fullName: `${source.firstName ?? ''} ${source.lastName ?? ''}`.trim(),
+      });
+    }
+  }, [openChildModal, formItem.practitionerId, specialistsPage?.data, practitionerDetail]);
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <>
@@ -470,7 +662,9 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
         childTitle={mode === 'create' ? 'Link New Item to Service' : 'Edit Linked Item'}
         childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
         mainSize="sm"
-        actionButtonLabel='Link'
+        childSize="lg"
+        childBodyHeight="80vh"
+        actionChildButtonLabel="Save"
         mainStep={[{ title: 'Linked Items', icon: <MdMedicalServices /> }]}
         childStep={[{ title: mode === 'create' ? 'Item' : 'Edit', icon: <MdMedicalServices /> }]}
       />
