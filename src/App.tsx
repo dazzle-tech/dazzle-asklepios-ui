@@ -209,6 +209,7 @@ const UrgentCareViewTriage = lazy (() => import ( './pages/encounter/urgent-care
 const UrgentCareListMain = lazy (() => import ( './pages/encounter/urgent-care/UrgentCateListMain'));
 const FormTemplates = lazy (() => import ( './pages/form-template/FormTemplate'));
 const FormTemplateBuilderPage = lazy (() => import ( './pages/form-template/FormTemplateBuilderPage'));
+const PatientSatisfactionSurveyPage = lazy(() => import('./pages/patient-satisfaction-survey/PatientSatisfactionSurveyPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -252,16 +253,9 @@ import BillingConfigurationSetup from './pages/setup/billing-configuration/Billi
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
+import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 
-const PUBLIC_PATHS = new Set([
-  '/login',
-  '/reset-password',
-  '/error-403',
-  '/error-404',
-  '/error-500',
-  '/error-503',
-  '/error-department-type'
-]);
+const PUBLIC_PATHS = PUBLIC_PERMISSION_BYPASS_PATHS;
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
@@ -980,6 +974,7 @@ const App = () => {
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
+          <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

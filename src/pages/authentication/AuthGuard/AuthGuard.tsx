@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 import { logout, setToken } from '@/reducers/authSlice';
+import { isPublicAuthFreePath } from '@/config/publicRoutes';
 
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
@@ -17,11 +18,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const isLoginPage = location.pathname === '/login';
 
-  const isPublicPage = [
-    '/login',
-    '/reset-password',
-    '/create-password',
-  ].includes(location.pathname);
+  const isPublicPage = isPublicAuthFreePath(location.pathname);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('id_token');

@@ -206,6 +206,7 @@ import { organizationHolidaysService } from './services/system-configurations/or
 import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
 import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
 import { notificationService } from './services/notification-management/notificationService';
+import { patientSatisfactionSurveyService } from './services/patient-satisfaction/patientSatisfactionSurveyService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -379,6 +380,7 @@ export const store = configureStore({
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
     [notificationService.reducerPath]: notificationService.reducer,
+    [patientSatisfactionSurveyService.reducerPath]: patientSatisfactionSurveyService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -802,6 +804,7 @@ export const store = configureStore({
         notificationHeaderService.middleware,
         notificationTemplateService.middleware,
         notificationService.middleware,
+        patientSatisfactionSurveyService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,

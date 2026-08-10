@@ -23,6 +23,11 @@ const baseFetchBaseQuery = fetchBaseQuery({
 // Export BaseQuery
 export const BaseQuery = baseFetchBaseQuery;
 
+/** Public endpoints (e.g. patient survey) — no Authorization header */
+export const PublicBaseQuery = fetchBaseQuery({
+  baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080'
+});
+
 /**
  * Generic `onQueryStarted` handler for error handling & notifications
  */
