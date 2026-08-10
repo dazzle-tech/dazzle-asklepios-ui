@@ -29,7 +29,8 @@ import {
   useGetPractitionersBulkMutation,
   useGetPractitionerByIdQuery,
 } from '@/services/setup/practitioner/PractitionerService';
-import { formatEnumString } from '@/utils';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 
 type Props = {
@@ -78,6 +79,7 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const serviceItemsTypeOptions = useEnumOptions('ServiceItemsType');
+  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
 
   const {
     data: itemsPage,
@@ -181,7 +183,15 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       key: 'subSpecialty',
       title: 'Sub Specialty',
       align: 'center',
-      render: (row: any) => row.subSpecialty || '-',
+      render: (row: any) => {
+        if (!row.subSpecialty) return '-';
+        const value = conjureValueBasedOnKeyFromList(
+          subSpecialityLovQueryResponse?.object ?? [],
+          row.subSpecialty,
+          'lovDisplayVale'
+        );
+        return value ?? row.subSpecialty ?? '-';
+      },
     },
     {
       key: 'select',
@@ -446,7 +456,16 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
           <div><strong>Email:</strong> {p.email || '-'}</div>
           <div><strong>Phone:</strong> {p.phoneNumber || '-'}</div>
           <div><strong>Specialty:</strong> {formatEnumString(p.specialty) || '-'}</div>
-          <div><strong>Sub Specialty:</strong> {p.subSpecialty || '-'}</div>
+          <div>
+            <strong>Sub Specialty:</strong>{' '}
+            {p.subSpecialty
+              ? conjureValueBasedOnKeyFromList(
+                  subSpecialityLovQueryResponse?.object ?? [],
+                  p.subSpecialty,
+                  'lovDisplayVale'
+                ) ?? p.subSpecialty
+              : '-'}
+          </div>
           <div><strong>Medical License:</strong> {p.defaultMedicalLicense || '-'}</div>
           <div><strong>Job Role:</strong> {formatEnumString(p.jobRole) || '-'}</div>
         </div>
