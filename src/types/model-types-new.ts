@@ -6095,6 +6095,24 @@ export type WaseelBenefitDetail = {
   unit?: string | null;
 };
 
+export type InsuranceBenefitRule = {
+  id?: number | null;
+  benefitCategory?: string | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  networkType?: string | null;
+  providerType?: string | null;
+  term?: string | null;
+  unit?: string | null;
+  currency?: string | null;
+  maximumBenefit?: number | null;
+  approvalLimit?: number | null;
+  patientCopaymentPercentage?: number | null;
+  patientMaximumCopayment?: number | null;
+  globalDefault?: boolean | null;
+  exceptionsJson?: string | null;
+};
+
 export type WaseelCoverageDetails = {
   eligibilityRequestId?: number | null;
   eligibilityResponseId?: string | null;
@@ -6109,6 +6127,7 @@ export type WaseelCoverageDetails = {
   copaymentCap?: number | null;
   eligibilityCheckedAt?: string | null;
   benefits?: WaseelBenefitDetail[];
+  benefitRules?: InsuranceBenefitRule[];
 };
 
 export type EncounterBillingSummary = {
