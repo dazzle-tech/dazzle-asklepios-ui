@@ -17,10 +17,6 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 
 import {
-  useGetBulkPatientBasicInfoMutation
-} from '@/services/patient/patientService';
-
-import {
   useGetAllDiagnosticTestProfilesQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
@@ -85,11 +81,9 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
-  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
-  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
   const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
     page: 0,
@@ -227,34 +221,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     });
   }, [orderTestsMap, ordersMap, fetchOrderById]);
 
-  const patientIds = useMemo(() => {
-    return Object.values(ordersMap)
-      .map((o: any) => o?.patientId)
-      .filter(Boolean)
-      .map(String)
-      .filter((id, i, arr) => arr.indexOf(id) === i);
-  }, [ordersMap]);
-
-  useEffect(() => {
-    if (!patientIds.length) return;
-
-    const numericIds = patientIds.map((id) => Number(id));
-
-    getBulkPatientBasicInfo(numericIds)
-      .unwrap()
-      .then((res: any[]) => {
-        const map: Record<string, any> = {};
-
-        res.forEach((p: any, index: number) => {
-          const originalId = numericIds[index];
-          map[String(originalId)] = p;
-        });
-
-        setPatientsMap(map);
-      })
-      .catch(() => {});
-  }, [patientIds, getBulkPatientBasicInfo]);
-
   const renderMarker = (marker?: string) => {
     const isCritical =
       marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
@@ -298,7 +264,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     return results.map((r: any) => {
       const orderTest = orderTestsMap[String(r.orderTestId)];
       const order = ordersMap[String(orderTest?.orderId)];
-      const patientInfo = patientsMap[String(order?.patientId)];
       const profile = profilesMap.get(r.profileTestId);
 
       const test = testsMap.get(Number(orderTest?.testId));
@@ -306,9 +271,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
       return {
         ...r,
-        _patientName: patientInfo
-            ? [patientInfo.firstName, patientInfo.secondName, patientInfo.lastName].filter(Boolean).join(' ')
-            : '—',
         _profile: profile,
         _test: test,
         _lab: lab,
@@ -319,7 +281,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     results,
     orderTestsMap,
     ordersMap,
-    patientsMap,
     profilesMap,
     testsMap,
     labByTestIdMap
