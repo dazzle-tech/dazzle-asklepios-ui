@@ -120,21 +120,6 @@ const PatientSatisfactionSurveyResponses: React.FC = () => {
       )
     },
     {
-      key: 'overallScore',
-      title: <Translate>Overall Score</Translate>,
-      width: 130,
-      align: 'center' as const,
-      render: (row: PatientSatisfactionSurveyResponseVM) => row.overallScore ?? '-'
-    },
-    {
-      key: 'overallPercentage',
-      title: <Translate>Overall %</Translate>,
-      width: 120,
-      align: 'center' as const,
-      render: (row: PatientSatisfactionSurveyResponseVM) =>
-        row.overallPercentage ?? '-'
-    },
-    {
       key: 'startedAt',
       title: <Translate>Started At</Translate>,
       flexGrow: 3,

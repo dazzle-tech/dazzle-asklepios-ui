@@ -47,14 +47,6 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
       key: 'answer',
       title: <Translate>Answer</Translate>,
       flexGrow: 4
-    },
-    {
-      key: 'score',
-      title: <Translate>Score</Translate>,
-      width: 100,
-      align: 'center' as const,
-      render: (row: { score?: number | null }) =>
-        row.score === null || row.score === undefined ? '-' : row.score
     }
   ];
 
@@ -86,18 +78,6 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
                 <Translate>Status</Translate>:
               </strong>{' '}
               {formatEnumString(response.status)}
-            </div>
-            <div>
-              <strong>
-                <Translate>Overall Score</Translate>:
-              </strong>{' '}
-              {response.overallScore ?? '-'}
-            </div>
-            <div>
-              <strong>
-                <Translate>Overall Percentage</Translate>:
-              </strong>{' '}
-              {response.overallPercentage ?? '-'}
             </div>
             <div>
               <strong>
