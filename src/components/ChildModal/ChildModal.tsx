@@ -31,6 +31,7 @@ const ChildModal = ({
   childContent,
   mainSize = "xs",
   childSize = "xs",
+  childBodyHeight = "73vh",
 
   // Sub-child
   showSubChild = false,
@@ -125,6 +126,7 @@ useEffect(() => {
         steps={childStep}
         title={childTitle}
         size={childSize}
+        bodyheight={childBodyHeight}
         content={childContent}
         hideActionBtn={hideActionChildBtn}
         customClassName="child-right-modal"

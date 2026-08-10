@@ -545,6 +545,11 @@ const PatientPaymentInfo =
             localEncounter?.clinicDepartmentId
         );
 
+      const practitionerId = toNumber(
+        localEncounter?.practitionerId ??
+          localEncounter?.practitioner?.id
+      );
+
       const {
         data:
           facilityResponse
@@ -1274,7 +1279,8 @@ const PatientPaymentInfo =
 
       useEffect(() => {
         if (
-          !departmentId
+          !departmentId ||
+          !practitionerId
         ) {
           setDefaultServiceRows(
             []
@@ -1286,6 +1292,7 @@ const PatientPaymentInfo =
           {
             sourceId:
               departmentId,
+            practitionerId,
             page:
               0,
             size:
@@ -1297,6 +1304,7 @@ const PatientPaymentInfo =
         );
       }, [
         departmentId,
+        practitionerId,
         triggerGetServices
       ]);
 

@@ -16,6 +16,8 @@ import {
 
 import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
 
+import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+
 import {
   useLazyCountTodayEncountersByFacilityQuery,
   useLazyGetPreviousEncountersSameDepartmentQuery
@@ -49,6 +51,7 @@ const RegistrationEncounter = ({
   const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
   const [validationResult] = useState({});
+  const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT']
@@ -254,6 +257,9 @@ useEffect(() => {
     { data: practitionersList, isFetching: isPractitionersFetching }
   ] = useLazyGetPractitionersByDepartmentQuery();
 
+  const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
+    useLazyGetServicesByDepartmentQuery();
+
   const practHasMore = Boolean(practitionersList?.links?.next);
 
   const prevDeptRef = useRef<number | null>(null);
@@ -285,10 +291,12 @@ useEffect(() => {
     setPractPage(0);
 
     if (hasDepartmentChanged) {
-      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => ({
         ...prevEncounter,
         practitionerId: null,
-        followUpEncounterId: null
+        followUpEncounterId: null,
+        defaultServiceId: null
       }));
       setAllPractitioners([]);
     }
@@ -321,6 +329,51 @@ useEffect(() => {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [practPage, localEncounter?.departmentId]);
+
+  useEffect(() => {
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+
+    if (!departmentId || !practitionerId) {
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => {
+        if (!prevEncounter?.defaultServiceId) return prevEncounter;
+        return { ...prevEncounter, defaultServiceId: null };
+      });
+      return;
+    }
+
+    triggerGetDefaultService({
+      sourceId: departmentId,
+      practitionerId,
+      page: 0,
+      size: 5,
+      sort: 'id,asc'
+    })
+      .unwrap()
+      .then((res: any) => {
+        const service = (res?.data ?? [])[0];
+        const serviceId = service?.id != null ? Number(service.id) : null;
+        const label = String(service?.name ?? service?.serviceName ?? '').trim();
+        setDefaultServiceLabel(label);
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: serviceId
+        }));
+      })
+      .catch(() => {
+        setDefaultServiceLabel('');
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: null
+        }));
+      });
+  }, [
+    localEncounter?.departmentId,
+    localEncounter?.practitionerId,
+    triggerGetDefaultService,
+    setLocalEncounter
+  ]);
 
   useEffect(() => {
     if (localEncounter?.departmentId) return;
@@ -555,6 +608,22 @@ useEffect(() => {
             setPractPage(page);
           }
         }}
+      />
+
+      <MyInput
+        column
+        fieldLabel="Default Service"
+        fieldName="defaultServiceLabel"
+        record={{ defaultServiceLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.practitionerId
+            ? 'Select practitioner first'
+            : isDefaultServiceFetching
+              ? 'Loading...'
+              : defaultServiceLabel || 'No linked service found'
+        }
       />
 
       <MyInput

@@ -218,6 +218,7 @@ export interface ServiceItem {
   id?: number;
   type: string; // @Enumerated(EnumType.STRING)
   sourceId: number; // FK to the source entity (e.g., Department id)
+  practitionerId?: number | null; // FK to practitioner (required for DEPARTMENTS)
   serviceId?: number | null; // ManyToOne -> Service (nullable on the wire)
   createdBy: string;
   createdDate?: Date | null;
@@ -230,6 +231,7 @@ export interface ServiceItem {
 export interface ServiceItemCreate {
   type: string;
   sourceId: number;
+  practitionerId?: number | null;
   serviceId: number; // required by backend create
   createdBy?: string;
   createdDate?: Date | null;
@@ -243,6 +245,7 @@ export interface ServiceItemUpdate {
   id: number;
   type?: string | null;
   sourceId?: number | null;
+  practitionerId?: number | null;
   serviceId: number; // required by backend update
   isActive?: boolean | null;
   lastModifiedBy?: string | null;
