@@ -258,12 +258,21 @@ const PriceListSetupItems: React.FC<Props> = ({
   const [
     searchFilters,
     setSearchFilters
-  ] = useState({ search: '' });
+  ] = useState<{
+    search: string;
+    itemType: string | null;
+  }>({
+    search: '',
+    itemType: null
+  });
 
   const [
-    appliedSearch,
-    setAppliedSearch
-  ] = useState('');
+    appliedFilters,
+    setAppliedFilters
+  ] = useState<{
+    search?: string;
+    itemType?: PriceListItemType;
+  }>({});
 
   /*
    * Waseel mapping pagination.
@@ -296,20 +305,20 @@ const PriceListSetupItems: React.FC<Props> = ({
   /*
    * Non-insurance Service & Product pagination.
    */
-const [selectPage, setSelectPage] = useState(0);
-const [selectSearch, setSelectSearch] = useState('');
-const [debouncedSelectSearch, setDebouncedSelectSearch] = useState('');
-const [selectedDirectItem, setSelectedDirectItem] =
-  useState<ServiceProductOption | null>(null);
-const [selectData, setSelectData] = useState<ServiceProductOption[]>([]);
+  const [selectPage, setSelectPage] = useState(0);
+  const [selectSearch, setSelectSearch] = useState('');
+  const [debouncedSelectSearch, setDebouncedSelectSearch] = useState('');
+  const [selectedDirectItem, setSelectedDirectItem] =
+    useState<ServiceProductOption | null>(null);
+  const [selectData, setSelectData] = useState<ServiceProductOption[]>([]);
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedSelectSearch(selectSearch.trim());
-  }, 300);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSelectSearch(selectSearch.trim());
+    }, 300);
 
-  return () => clearTimeout(timer);
-}, [selectSearch]);
+    return () => clearTimeout(timer);
+  }, [selectSearch]);
 
   /*
    * Existing price-list items.
@@ -324,7 +333,12 @@ useEffect(() => {
       page: paginationParams.page,
       size: paginationParams.size,
       sort: paginationParams.sort,
-      search: appliedSearch
+      ...(appliedFilters.search
+        ? { search: appliedFilters.search }
+        : {}),
+      ...(appliedFilters.itemType
+        ? { itemType: appliedFilters.itemType }
+        : {})
     },
     {
       skip:
@@ -353,8 +367,6 @@ useEffect(() => {
         selectedItem.itemType ||
         undefined,
 
-      activeOnly: true,
-
       refreshToken:
         mappingRefreshToken
     },
@@ -367,339 +379,339 @@ useEffect(() => {
     }
   );
 
-const {
-  data: activeServicesResponse,
-  isFetching: isFetchingServices
-} = useGetActiveServicesByFacilityQuery(
-  {
-    facilityId: Number(facilityId),
-    page: selectPage,
-    size: 5,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      !facilityId ||
-      selectedItem.itemType !== 'SERVICE' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: activeServicesResponse,
+    isFetching: isFetchingServices
+  } = useGetActiveServicesByFacilityQuery(
+    {
+      facilityId: Number(facilityId),
+      page: selectPage,
+      size: 5,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        !facilityId ||
+        selectedItem.itemType !== 'SERVICE' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: servicesSearchResponse,
-  isFetching: isFetchingServicesSearch
-} = useGetServicesByNameQuery(
-  {
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'SERVICE' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: servicesSearchResponse,
+    isFetching: isFetchingServicesSearch
+  } = useGetServicesByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'SERVICE' ||
+        !debouncedSelectSearch
+    }
+  );
 
-const {
-  data: medicationsResponse,
-  isFetching: isFetchingMedications
-} = useGetBrandMedicationsByIsActiveQuery(
-  {
-    isActive: true,
-    page: selectPage,
-    size: 5,
-    sort: 'id,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'MEDICATION' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: medicationsResponse,
+    isFetching: isFetchingMedications
+  } = useGetBrandMedicationsByIsActiveQuery(
+    {
+      isActive: true,
+      page: selectPage,
+      size: 5,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'MEDICATION' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: medicationsSearchResponse,
-  isFetching: isFetchingMedicationsSearch
-} = useGetBrandMedicationsByNameQuery(
-  {
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'id,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'MEDICATION' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: medicationsSearchResponse,
+    isFetching: isFetchingMedicationsSearch
+  } = useGetBrandMedicationsByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'MEDICATION' ||
+        !debouncedSelectSearch
+    }
+  );
 
-const {
-  data: laboratoryResponse,
-  isFetching: isFetchingLaboratory
-} = useGetActiveDiagnosticTestsByTypeQuery(
-  {
-    type: 'LABORATORY',
-    page: selectPage,
-    size: 5,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'LABORATORY' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: laboratoryResponse,
+    isFetching: isFetchingLaboratory
+  } = useGetActiveDiagnosticTestsByTypeQuery(
+    {
+      type: 'LABORATORY',
+      page: selectPage,
+      size: 5,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'LABORATORY' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: laboratorySearchResponse,
-  isFetching: isFetchingLaboratorySearch
-} = useGetAllDiagnosticTestsByNameAndTypeQuery(
-  {
-    type: 'LABORATORY',
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'LABORATORY' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: laboratorySearchResponse,
+    isFetching: isFetchingLaboratorySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'LABORATORY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'LABORATORY' ||
+        !debouncedSelectSearch
+    }
+  );
 
-const {
-  data: radiologyResponse,
-  isFetching: isFetchingRadiology
-} = useGetActiveDiagnosticTestsByTypeQuery(
-  {
-    type: 'RADIOLOGY',
-    page: selectPage,
-    size: 5,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'RADIOLOGY' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: radiologyResponse,
+    isFetching: isFetchingRadiology
+  } = useGetActiveDiagnosticTestsByTypeQuery(
+    {
+      type: 'RADIOLOGY',
+      page: selectPage,
+      size: 5,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'RADIOLOGY' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: radiologySearchResponse,
-  isFetching: isFetchingRadiologySearch
-} = useGetAllDiagnosticTestsByNameAndTypeQuery(
-  {
-    type: 'RADIOLOGY',
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'RADIOLOGY' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: radiologySearchResponse,
+    isFetching: isFetchingRadiologySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'RADIOLOGY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'RADIOLOGY' ||
+        !debouncedSelectSearch
+    }
+  );
 
-const {
-  data: pathologyResponse,
-  isFetching: isFetchingPathology
-} = useGetActiveDiagnosticTestsByTypeQuery(
-  {
-    type: 'PATHOLOGY',
-    page: selectPage,
-    size: 5,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'PATHOLOGY' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: pathologyResponse,
+    isFetching: isFetchingPathology
+  } = useGetActiveDiagnosticTestsByTypeQuery(
+    {
+      type: 'PATHOLOGY',
+      page: selectPage,
+      size: 5,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'PATHOLOGY' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: pathologySearchResponse,
-  isFetching: isFetchingPathologySearch
-} = useGetAllDiagnosticTestsByNameAndTypeQuery(
-  {
-    type: 'PATHOLOGY',
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'PATHOLOGY' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: pathologySearchResponse,
+    isFetching: isFetchingPathologySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'PATHOLOGY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'PATHOLOGY' ||
+        !debouncedSelectSearch
+    }
+  );
 
-const {
-  data: proceduresResponse,
-  isFetching: isFetchingProcedures
-} = useGetActiveProceduresByFacilityQuery(
-  {
-    facilityId: Number(facilityId),
-    page: selectPage,
-    size: 5,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      !facilityId ||
-      selectedItem.itemType !== 'PROCEDURE' ||
-      Boolean(debouncedSelectSearch)
-  }
-);
+  const {
+    data: proceduresResponse,
+    isFetching: isFetchingProcedures
+  } = useGetActiveProceduresByFacilityQuery(
+    {
+      facilityId: Number(facilityId),
+      page: selectPage,
+      size: 5,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        !facilityId ||
+        selectedItem.itemType !== 'PROCEDURE' ||
+        Boolean(debouncedSelectSearch)
+    }
+  );
 
-const {
-  data: proceduresSearchResponse,
-  isFetching: isFetchingProceduresSearch
-} = useGetProceduresByNameQuery(
-  {
-    name: debouncedSelectSearch,
-    page: selectPage,
-    size: 20,
-    sort: 'name,asc'
-  },
-  {
-    skip:
-      !open ||
-      !childModalOpen ||
-      isInsurancePriceList ||
-      selectedItem.itemType !== 'PROCEDURE' ||
-      !debouncedSelectSearch
-  }
-);
+  const {
+    data: proceduresSearchResponse,
+    isFetching: isFetchingProceduresSearch
+  } = useGetProceduresByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'PROCEDURE' ||
+        !debouncedSelectSearch
+    }
+  );
 
-    const currentSelectResponse = useMemo(() => {
-      switch (selectedItem.itemType) {
-        case 'MEDICATION':
-          return debouncedSelectSearch
-            ? medicationsSearchResponse
-            : medicationsResponse;
+  const currentSelectResponse = useMemo(() => {
+    switch (selectedItem.itemType) {
+      case 'MEDICATION':
+        return debouncedSelectSearch
+          ? medicationsSearchResponse
+          : medicationsResponse;
 
-        case 'LABORATORY':
-          return debouncedSelectSearch
-            ? laboratorySearchResponse
-            : laboratoryResponse;
+      case 'LABORATORY':
+        return debouncedSelectSearch
+          ? laboratorySearchResponse
+          : laboratoryResponse;
 
-        case 'RADIOLOGY':
-          return debouncedSelectSearch
-            ? radiologySearchResponse
-            : radiologyResponse;
+      case 'RADIOLOGY':
+        return debouncedSelectSearch
+          ? radiologySearchResponse
+          : radiologyResponse;
 
-        case 'PATHOLOGY':
-          return debouncedSelectSearch
-            ? pathologySearchResponse
-            : pathologyResponse;
+      case 'PATHOLOGY':
+        return debouncedSelectSearch
+          ? pathologySearchResponse
+          : pathologyResponse;
 
-        case 'SERVICE':
-          return debouncedSelectSearch
-            ? servicesSearchResponse
-            : activeServicesResponse;
+      case 'SERVICE':
+        return debouncedSelectSearch
+          ? servicesSearchResponse
+          : activeServicesResponse;
 
-        case 'PROCEDURE':
-          return debouncedSelectSearch
-            ? proceduresSearchResponse
-            : proceduresResponse;
+      case 'PROCEDURE':
+        return debouncedSelectSearch
+          ? proceduresSearchResponse
+          : proceduresResponse;
 
-        default:
-          return null;
+      default:
+        return null;
+    }
+  }, [
+    selectedItem.itemType,
+    debouncedSelectSearch,
+
+    medicationsResponse,
+    medicationsSearchResponse,
+
+    laboratoryResponse,
+    laboratorySearchResponse,
+
+    radiologyResponse,
+    radiologySearchResponse,
+
+    pathologyResponse,
+    pathologySearchResponse,
+
+    activeServicesResponse,
+    servicesSearchResponse,
+
+    proceduresResponse,
+    proceduresSearchResponse
+  ]);
+
+
+  useEffect(() => {
+    if (!currentSelectResponse?.data) {
+      return;
+    }
+
+    const incomingRows = normalizeServiceProductOptions(
+      normalizePageData(currentSelectResponse)
+    );
+
+    setSelectData(previous => {
+      if (selectPage === 0) {
+        return incomingRows;
       }
-    }, [
-      selectedItem.itemType,
-      debouncedSelectSearch,
 
-      medicationsResponse,
-      medicationsSearchResponse,
-
-      laboratoryResponse,
-      laboratorySearchResponse,
-
-      radiologyResponse,
-      radiologySearchResponse,
-
-      pathologyResponse,
-      pathologySearchResponse,
-
-      activeServicesResponse,
-      servicesSearchResponse,
-
-      proceduresResponse,
-      proceduresSearchResponse
-    ]);
-
-
-    useEffect(() => {
-      if (!currentSelectResponse?.data) {
-        return;
-      }
-
-      const incomingRows = normalizeServiceProductOptions(
-        normalizePageData(currentSelectResponse)
+      const existingIds = new Set(
+        previous.map(item => Number(item.id))
       );
 
-      setSelectData(previous => {
-        if (selectPage === 0) {
-          return incomingRows;
-        }
-
-        const existingIds = new Set(
-          previous.map(item => Number(item.id))
-        );
-
-        return [
-          ...previous,
-          ...incomingRows.filter(
-            item => !existingIds.has(Number(item.id))
-          )
-        ];
-      });
-    }, [
-      currentSelectResponse,
-      selectPage
-    ]);
+      return [
+        ...previous,
+        ...incomingRows.filter(
+          item => !existingIds.has(Number(item.id))
+        )
+      ];
+    });
+  }, [
+    currentSelectResponse,
+    selectPage
+  ]);
 
 
 
@@ -739,8 +751,11 @@ const {
       return;
     }
 
-    setSearchFilters({ search: '' });
-    setAppliedSearch('');
+    setSearchFilters({
+      search: '',
+      itemType: null
+    });
+    setAppliedFilters({});
     setPaginationParams({
       page: 0,
       size: 15,
@@ -751,9 +766,15 @@ const {
   useEffect(() => {
     const delay =
       setTimeout(() => {
-        setAppliedSearch(
-          searchFilters.search.trim()
-        );
+        setAppliedFilters({
+          search:
+            searchFilters.search.trim() ||
+            undefined,
+          itemType:
+            (searchFilters.itemType as
+              PriceListItemType) ||
+            undefined
+        });
 
         setPaginationParams(
           previous => ({
@@ -765,7 +786,10 @@ const {
 
     return () =>
       clearTimeout(delay);
-  }, [searchFilters.search]);
+  }, [
+    searchFilters.search,
+    searchFilters.itemType
+  ]);
 
   const typeOptions = useEnumOptions('PriceListItemType');
 
@@ -808,13 +832,23 @@ const {
     };
   };
 
-const mappingTotalPages = Number(
-  mappingResponse?.totalPages ?? 0
-);
+  const mappingTotalPages = Number(
+    mappingResponse?.totalPages ?? 0
+  );
 
-const hasMoreMappings =
-  mappingTotalPages > 0 &&
-  mappingPage + 1 < mappingTotalPages;
+  const mappingNextLink =
+    mappingResponse?.links?.next ??
+    null;
+
+  const mappingTotalCount =
+    Number(
+      mappingResponse?.totalCount ??
+      0
+    );
+
+  const hasMoreMappings =
+    mappingTotalPages > 0 &&
+    mappingPage + 1 < mappingTotalPages;
   useEffect(() => {
     const timeout =
       setTimeout(() => {
@@ -830,156 +864,157 @@ const hasMoreMappings =
       clearTimeout(timeout);
   }, [mappingSearch]);
 
-useEffect(() => {
-  const rows = normalizeMappingRows(
-    mappingResponse
-  );
+  useEffect(() => {
+    const rows =
+      normalizeMappingRows(
+        mappingResponse
+      );
 
-  const filteredRows = rows.filter(
-    mapping =>
-      mapping.itemType ===
-      selectedItem.itemType
-  );
-
-  const options = filteredRows.map(
-    createMappingOption
-  );
-
-  setMappingCache(previous => {
-    if (mappingPage === 0) {
-      return options;
-    }
-
-    const existingIds = new Set(
-      previous.map(
-        item => Number(item.id)
-      )
-    );
-
-    return [
-      ...previous,
-      ...options.filter(
-        item =>
-          !existingIds.has(
-            Number(item.id)
-          )
-      )
-    ];
-  });
-}, [
-  mappingResponse,
-  mappingPage,
-  selectedItem.itemType
-]);
-
-const mappingSelectData = useMemo(() => {
-  const filteredCache =
-    mappingCache.filter(
-      item =>
-        item.itemType ===
+    const filteredRows = rows.filter(
+      mapping =>
+        mapping.itemType ===
         selectedItem.itemType
     );
 
-  if (
-    !selectedMapping?.id ||
-    selectedMapping.itemType !==
+    const options = filteredRows.map(
+      createMappingOption
+    );
+
+    setMappingCache(previous => {
+      if (mappingPage === 0) {
+        return options;
+      }
+
+      const existingIds = new Set(
+        previous.map(
+          item => Number(item.id)
+        )
+      );
+
+      return [
+        ...previous,
+        ...options.filter(
+          item =>
+            !existingIds.has(
+              Number(item.id)
+            )
+        )
+      ];
+    });
+  }, [
+    mappingResponse,
+    mappingPage,
+    selectedItem.itemType
+  ]);
+
+  const mappingSelectData = useMemo(() => {
+    const filteredCache =
+      mappingCache.filter(
+        item =>
+          item.itemType ===
+          selectedItem.itemType
+      );
+
+    if (
+      !selectedMapping?.id ||
+      selectedMapping.itemType !==
       selectedItem.itemType
-  ) {
-    return filteredCache;
-  }
+    ) {
+      return filteredCache;
+    }
 
-  const exists = filteredCache.some(
-    item =>
-      Number(item.id) ===
-      Number(selectedMapping.id)
+    const exists = filteredCache.some(
+      item =>
+        Number(item.id) ===
+        Number(selectedMapping.id)
+    );
+
+    if (exists) {
+      return filteredCache;
+    }
+
+    return [
+      selectedMapping as MappingOption,
+      ...filteredCache
+    ];
+  }, [
+    mappingCache,
+    selectedMapping,
+    selectedItem.itemType
+  ]);
+
+
+  const directSelectData = useMemo(() => {
+    if (!selectedDirectItem?.id) {
+      return selectData;
+    }
+
+    const exists = selectData.some(
+      item =>
+        Number(item.id) === Number(selectedDirectItem.id)
+    );
+
+    if (exists) {
+      return selectData;
+    }
+
+    return [
+      selectedDirectItem,
+      ...selectData
+    ];
+  }, [
+    selectData,
+    selectedDirectItem
+  ]);
+
+
+  const currentSelectTotal = Number(
+    currentSelectResponse?.totalCount ?? 0
   );
 
-  if (exists) {
-    return filteredCache;
-  }
+  const hasMoreDirectItems =
+    currentSelectTotal > 0 &&
+    selectData.length < currentSelectTotal;
 
-  return [
-    selectedMapping as MappingOption,
-    ...filteredCache
-  ];
-}, [
-  mappingCache,
-  selectedMapping,
-  selectedItem.itemType
-]);
+  const handleFetchMore = () => {
+    if (
+      isFetchingMedications ||
+      isFetchingMedicationsSearch ||
+      isFetchingLaboratory ||
+      isFetchingLaboratorySearch ||
+      isFetchingRadiology ||
+      isFetchingRadiologySearch ||
+      isFetchingPathology ||
+      isFetchingPathologySearch ||
+      isFetchingServices ||
+      isFetchingServicesSearch ||
+      isFetchingProcedures ||
+      isFetchingProceduresSearch
+    ) {
+      return;
+    }
 
+    if (!hasMoreDirectItems) {
+      return;
+    }
 
-const directSelectData = useMemo(() => {
-  if (!selectedDirectItem?.id) {
-    return selectData;
-  }
-
-  const exists = selectData.some(
-    item =>
-      Number(item.id) === Number(selectedDirectItem.id)
-  );
-
-  if (exists) {
-    return selectData;
-  }
-
-  return [
-    selectedDirectItem,
-    ...selectData
-  ];
-}, [
-  selectData,
-  selectedDirectItem
-]);
-
-
-const currentSelectTotal = Number(
-  currentSelectResponse?.totalCount ?? 0
-);
-
-const hasMoreDirectItems =
-  currentSelectTotal > 0 &&
-  selectData.length < currentSelectTotal;
-
-const handleFetchMore = () => {
-  if (
-    isFetchingMedications ||
-    isFetchingMedicationsSearch ||
-    isFetchingLaboratory ||
-    isFetchingLaboratorySearch ||
-    isFetchingRadiology ||
-    isFetchingRadiologySearch ||
-    isFetchingPathology ||
-    isFetchingPathologySearch ||
-    isFetchingServices ||
-    isFetchingServicesSearch ||
-    isFetchingProcedures ||
-    isFetchingProceduresSearch
-  ) {
-    return;
-  }
-
-  if (!hasMoreDirectItems) {
-    return;
-  }
-
-  setSelectPage(previous => previous + 1);
-};
+    setSelectPage(previous => previous + 1);
+  };
 
 
 
   const directItemSelectConfig = useMemo(() => {
     switch (selectedItem.itemType) {
-case 'MEDICATION':
-  return {
-    fieldLabel: 'Medication',
-    selectData: directSelectData,
-    loading:
-      isFetchingMedications ||
-      isFetchingMedicationsSearch,
-      hasMore: hasMoreDirectItems,
-      onFetchMore: handleFetchMore
-  };
+      case 'MEDICATION':
+        return {
+          fieldLabel: 'Medication',
+          selectData: directSelectData,
+          loading:
+            isFetchingMedications ||
+            isFetchingMedicationsSearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
 
       case 'LABORATORY':
         return {
@@ -988,8 +1023,8 @@ case 'MEDICATION':
           loading:
             isFetchingLaboratory ||
             isFetchingLaboratorySearch,
-            hasMore: hasMoreDirectItems,
-            onFetchMore: handleFetchMore
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
 
         };
 
@@ -1000,8 +1035,8 @@ case 'MEDICATION':
           loading:
             isFetchingRadiology ||
             isFetchingRadiologySearch,
-            hasMore: hasMoreDirectItems,
-            onFetchMore: handleFetchMore
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
         };
 
       case 'PATHOLOGY':
@@ -1011,8 +1046,8 @@ case 'MEDICATION':
           loading:
             isFetchingPathology ||
             isFetchingPathologySearch,
-            hasMore: hasMoreDirectItems,
-            onFetchMore: handleFetchMore
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
         };
 
       case 'SERVICE':
@@ -1022,8 +1057,8 @@ case 'MEDICATION':
           loading:
             isFetchingServices ||
             isFetchingServicesSearch,
-            hasMore: hasMoreDirectItems,
-            onFetchMore: handleFetchMore
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
         };
 
       case 'PROCEDURE':
@@ -1033,8 +1068,8 @@ case 'MEDICATION':
           loading:
             isFetchingProcedures ||
             isFetchingProceduresSearch,
-            hasMore: hasMoreDirectItems,
-            onFetchMore: handleFetchMore
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
         };
 
       default:
@@ -1066,11 +1101,11 @@ case 'MEDICATION':
 
 
 
-    const handleSelectSearch = (value: string) => {
-      setSelectSearch(value);
-      setSelectPage(0);
-      setSelectData([]);
-    };
+  const handleSelectSearch = (value: string) => {
+    setSelectSearch(value);
+    setSelectPage(0);
+    setSelectData([]);
+  };
 
 
   const resetMappingDropdown =
@@ -1088,12 +1123,12 @@ case 'MEDICATION':
       );
     };
 
-    const resetDirectItemDropdowns = () => {
-      setSelectPage(0);
-      setSelectSearch('');
-      setDebouncedSelectSearch('');
-      setSelectData([]);
-    };
+  const resetDirectItemDropdowns = () => {
+    setSelectPage(0);
+    setSelectSearch('');
+    setDebouncedSelectSearch('');
+    setSelectData([]);
+  };
 
   const resetAllDropdowns = () => {
     resetMappingDropdown();
@@ -1126,77 +1161,77 @@ case 'MEDICATION':
     resetAllDropdowns();
   };
 
-const openCreate = () => {
-  setSelectedItem({
-    ...newPriceListSetupItem,
+  const openCreate = () => {
+    setSelectedItem({
+      ...newPriceListSetupItem,
 
-    priceListSetupId:
-      Number(priceListSetupId),
+      priceListSetupId:
+        Number(priceListSetupId),
 
-    itemType:
-      undefined,
+      itemType:
+        undefined,
 
-    sourceId:
-      undefined,
+      sourceId:
+        undefined,
 
-    itemCode:
-      undefined,
+      itemCode:
+        undefined,
 
-    itemName:
-      undefined,
+      itemName:
+        undefined,
 
-    waseelItemMappingId:
-      undefined,
+      waseelItemMappingId:
+        undefined,
 
-    sbsCatalogId:
-      undefined,
+      sbsCatalogId:
+        undefined,
 
-    discountPercentage:
-      0,
+      discountPercentage:
+        0,
 
-    isActive:
-      true,
+      isActive:
+        true,
 
-    requiresPreAuthorization:
-      false
-  });
-
-  resetAllDropdowns();
-
-  setChildModalOpen(true);
-};
-
-const openEdit = (
-  row: PriceListSetupItem
-) => {
-  resetAllDropdowns();
-
-  setSelectedItem({
-    ...row
-  });
-
-  if (
-    isInsurancePriceList &&
-    row.waseelItemMappingId
-  ) {
-    setSelectedMapping({
-      id: Number(row.waseelItemMappingId),
-      itemType: row.itemType,
-      sourceId: row.sourceId,
-      itemCode: row.itemCode,
-      itemName: row.itemName,
-      sbsCatalogId: Number(
-        row.sbsCatalogId ?? 0
-      ),
-      sbsCode: '',
-      isActive: row.isActive ?? true
+      requiresPreAuthorization:
+        false
     });
-  } else {
-    setSelectedMapping(null);
-  }
 
-  setChildModalOpen(true);
-};
+    resetAllDropdowns();
+
+    setChildModalOpen(true);
+  };
+
+  const openEdit = (
+    row: PriceListSetupItem
+  ) => {
+    resetAllDropdowns();
+
+    setSelectedItem({
+      ...row
+    });
+
+    if (
+      isInsurancePriceList &&
+      row.waseelItemMappingId
+    ) {
+      setSelectedMapping({
+        id: Number(row.waseelItemMappingId),
+        itemType: row.itemType,
+        sourceId: row.sourceId,
+        itemCode: row.itemCode,
+        itemName: row.itemName,
+        sbsCatalogId: Number(
+          row.sbsCatalogId ?? 0
+        ),
+        sbsCode: '',
+        isActive: row.isActive ?? true
+      });
+    } else {
+      setSelectedMapping(null);
+    }
+
+    setChildModalOpen(true);
+  };
 
   useEffect(() => {
     if (
@@ -1343,13 +1378,13 @@ const openEdit = (
     }));
   };
 
-const handleFetchMoreMappings = () => {
-  if (loadingMappings || !hasMoreMappings) {
-    return;
-  }
+  const handleFetchMoreMappings = () => {
+    if (loadingMappings || !hasMoreMappings) {
+      return;
+    }
 
-  setMappingPage(previous => previous + 1);
-};
+    setMappingPage(previous => previous + 1);
+  };
 
   const validate = ():
     string | null => {
@@ -1798,103 +1833,103 @@ const handleFetchMoreMappings = () => {
           searchable={false}
         />
 
-          {isInsurancePriceList ? (
-            <div className="price-list-mapping-field">
-              <MyInput
-                key={
-                  selectedItem.itemType ||
-                  'no-item-type'
-                }
-                required
-                width="100%"
-                fieldLabel="Waseel Item Mapping"
-                fieldType="selectPagination"
-                fieldName="waseelItemMappingId"
-                selectData={mappingSelectData}
-                selectDataLabel="displayName"
-                selectDataValue="id"
-                record={selectedItem}
-                setRecord={updatedItem => {
-                  setSelectedItem(updatedItem);
-                }}
-                searchable
-                searchKeyWard={mappingSearch}
-                setSearchKeyWard={setMappingSearch}
-                loading={loadingMappings}
-                hasMore={hasMoreMappings}
-                onFetchMore={handleFetchMoreMappings}
-                onSelectItem={handleMappingSelected}
-                disabled={!selectedItem.itemType}
-                placeholder={
-                  !selectedItem.itemType
-                    ? 'Select item type first'
-                    : 'Select Waseel mapping'
-                }
-                menuMaxHeight={380}
-              />
-            </div>
-          ) : (
+        {isInsurancePriceList ? (
+          <div className="price-list-mapping-field">
+            <MyInput
+              key={
+                selectedItem.itemType ||
+                'no-item-type'
+              }
+              required
+              width="100%"
+              fieldLabel="Waseel Item Mapping"
+              fieldType="selectPagination"
+              fieldName="waseelItemMappingId"
+              selectData={mappingSelectData}
+              selectDataLabel="displayName"
+              selectDataValue="id"
+              record={selectedItem}
+              setRecord={updatedItem => {
+                setSelectedItem(updatedItem);
+              }}
+              searchable
+              searchKeyWard={mappingSearch}
+              setSearchKeyWard={setMappingSearch}
+              loading={loadingMappings}
+              hasMore={hasMoreMappings}
+              onFetchMore={handleFetchMoreMappings}
+              onSelectItem={handleMappingSelected}
+              disabled={!selectedItem.itemType}
+              placeholder={
+                !selectedItem.itemType
+                  ? 'Select item type first'
+                  : 'Select Waseel mapping'
+              }
+              menuMaxHeight={380}
+            />
+          </div>
+        ) : (
           directItemSelectConfig && (
-        <MyInput
-          key={
-            selectedItem.itemType ||
-            'no-item-type'
-          }
-          required
-          width="100%"
-          fieldLabel={
-            directItemSelectConfig.fieldLabel
-          }
-          fieldType="selectPagination"
-          fieldName="sourceId"
-          selectData={directSelectData}
-          selectDataLabel="displayName"
-          selectDataValue="id"
-          record={selectedItem}
-          setRecord={updatedItem => {
-            setSelectedItem(updatedItem);
+            <MyInput
+              key={
+                selectedItem.itemType ||
+                'no-item-type'
+              }
+              required
+              width="100%"
+              fieldLabel={
+                directItemSelectConfig.fieldLabel
+              }
+              fieldType="selectPagination"
+              fieldName="sourceId"
+              selectData={directSelectData}
+              selectDataLabel="displayName"
+              selectDataValue="id"
+              record={selectedItem}
+              setRecord={updatedItem => {
+                setSelectedItem(updatedItem);
 
-            const selected =
-              directItemSelectConfig.selectData.find(
-                item =>
-                  Number(item.id) ===
-                  Number(updatedItem.sourceId)
-              );
+                const selected =
+                  directItemSelectConfig.selectData.find(
+                    item =>
+                      Number(item.id) ===
+                      Number(updatedItem.sourceId)
+                  );
 
-            handleDirectItemSelected(
-              selected || null
-            );
-          }}
-          searchable
+                handleDirectItemSelected(
+                  selected || null
+                );
+              }}
+              searchable
 
-          searchKeyWard={selectSearch}
-          setSearchKeyWard={handleSelectSearch}
+              searchKeyWard={selectSearch}
+              setSearchKeyWard={handleSelectSearch}
 
-          loading={
-            directItemSelectConfig.loading
-          }
-          hasMore={
-            directItemSelectConfig.hasMore
-          }
-          onFetchMore={
-            directItemSelectConfig.onFetchMore
-          }
+              loading={
+                directItemSelectConfig.loading
+              }
+              hasMore={
+                directItemSelectConfig.hasMore
+              }
+              onFetchMore={
+                directItemSelectConfig.onFetchMore
+              }
 
-          onSelectItem={selected => {
-            setSelectedDirectItem(selected);
-            handleDirectItemSelected(selected);
-          }}
+              onSelectItem={selected => {
+                setSelectedDirectItem(selected);
+                handleDirectItemSelected(selected);
+              }}
 
-          disabled={!selectedItem.itemType}
+              disabled={!selectedItem.itemType}
 
-          placeholder={
-            !selectedItem.itemType
-              ? 'Select item type first'
-              : `Select ${directItemSelectConfig.fieldLabel}`
-          }
+              placeholder={
+                !selectedItem.itemType
+                  ? 'Select item type first'
+                  : `Select ${directItemSelectConfig.fieldLabel}`
+              }
 
-          menuMaxHeight={380}
-        />
+              menuMaxHeight={380}
+            />
           )
         )}
       </div>
@@ -2037,14 +2072,36 @@ const handleFetchMoreMappings = () => {
         record={searchFilters}
         setRecord={setSearchFilters}
         showLabel={false}
-        placeholder="Search Item Name"
+        placeholder="Search Item Name / Code"
+      />
+
+      <MyInput
+        width="12vw"
+        fieldName="itemType"
+        fieldType="select"
+        record={searchFilters}
+        setRecord={setSearchFilters}
+        showLabel={false}
+        placeholder="Item Type"
+        selectData={typeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
       />
 
       <AdvancedSearchFilters
         showAdvancedButton={false}
         clearOnClick={() => {
-          setSearchFilters({ search: '' });
-          setAppliedSearch('');
+          setSearchFilters({
+            search: '',
+            itemType: null
+          });
+          setAppliedFilters({});
+          setPaginationParams(
+            previous => ({
+              ...previous,
+              page: 0
+            })
+          );
         }}
       />
     </Form>
@@ -2137,8 +2194,11 @@ const handleFetchMoreMappings = () => {
 
           if (!value) {
             setChildModalOpen(false);
-            setSearchFilters({ search: '' });
-            setAppliedSearch('');
+            setSearchFilters({
+              search: '',
+              itemType: null
+            });
+            setAppliedFilters({});
 
             setSelectedItem({
               ...newPriceListSetupItem
