@@ -310,6 +310,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const isOngoing = treatmentStatus === 'ONGOING';
     const isNew = treatmentStatus === 'NEW';
     const isPendingPayment = treatmentStatus === 'PENDING_PAYMENT';
+    const isWaitingTriage = treatmentStatus === 'WAITING_TRIAGE';
     const isCancelled = lifecycleStatus === 'CANCELLED';
     const isClosed = lifecycleStatus === 'CLOSED';
 
@@ -322,9 +323,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       !isCancelled &&
       !isClosed &&
       !isNew &&
-      (isPendingPayment || lifecycleStatus === 'OPEN');
+      (isPendingPayment || (lifecycleStatus === 'OPEN' && treatmentStatus !== 'WAITING_TRIAGE'));
 
-    const canCancel = isNew || isPendingPayment;
+    const canCancel = isNew || isPendingPayment || isWaitingTriage;
     const canComplete = Radiology || Laboratory;
     const canDischarge = false;
     const hasVisibleActions = canPay || canComplete || canDischarge || canCancel;
