@@ -22,6 +22,7 @@ import Allergies from "@/pages/encounter/encounter-pre-observations-new/Allergie
 
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
+import { setRefetchEncounter } from "@/reducers/refetchEncounterState";
 
 import {
   useGetEncounterByIdQuery,
@@ -340,16 +341,22 @@ const StartTriage = ({
     <Tooltip>Assign Bed</Tooltip>
   );
 
+  const handleGoBackToTriageList = () => {
+    dispatch(setRefetchEncounter(true));
+    navigate("/urgent-care-triage");
+  };
+
+  const handleBedAssignmentRefetch = async () => {
+    await refetchEncounter();
+    dispatch(setRefetchEncounter(true));
+  };
+
   return (
     <div>
       <div className="bt-field-div">
         {sourcePage === "UrgentCare" && (
           <>
-            <BackButton
-              onClick={() => {
-                navigate("/urgent-care-triage");
-              }}
-            />
+            <BackButton onClick={handleGoBackToTriageList} />
             <Whisper trigger="hover" placement="top" speaker={assignBedTooltip}>
               <div>
                 <MyButton
@@ -485,7 +492,7 @@ const StartTriage = ({
       </Row>
 
       <BedAssignmentModal
-        refetchEncounter={refetchEncounter}
+        refetchEncounter={handleBedAssignmentRefetch}
         open={openBedAssignmentModal}
         setOpen={setOpenBedAssignmentModal}
         encounter={localEncounter}
