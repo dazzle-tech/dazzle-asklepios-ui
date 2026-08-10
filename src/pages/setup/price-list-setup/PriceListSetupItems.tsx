@@ -386,7 +386,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       facilityId: Number(facilityId),
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -427,7 +427,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       isActive: true,
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'id,asc'
     },
     {
@@ -467,7 +467,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       type: 'LABORATORY',
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -508,7 +508,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       type: 'RADIOLOGY',
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -549,7 +549,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       type: 'PATHOLOGY',
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -590,7 +590,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     {
       facilityId: Number(facilityId),
       page: selectPage,
-      size: 5,
+      size: 20,
       sort: 'name,asc'
     },
     {

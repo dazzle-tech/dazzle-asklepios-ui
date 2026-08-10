@@ -47,7 +47,7 @@ const AddActiveIngredient = ({ open, setOpen, brandMedication, onSaved }) => {
   } = useGetActiveIngredientsQuery(
     {
       page,
-      size: 5,
+      size: 15,
       sort: "name,asc",
     },
     {
