@@ -324,6 +324,7 @@ const ERList = () => {
       hasOrder,
       isObserved,
       page,
+      practitionerId: undefined,
       size: pageSize,
       sort: DEFAULT_SORT,
       timestamp: searchTick
