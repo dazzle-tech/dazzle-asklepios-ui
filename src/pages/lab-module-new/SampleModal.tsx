@@ -322,10 +322,12 @@ useEffect(() => {
                   
                   />
 
-                  <MyInput
-                    fieldName="unitLkey"
+                   <MyInput
+                    column
+                    fieldLabel="Source of Sample"
                     fieldType="select"
-                    selectData={valueUnitLov?.object ?? []}
+                    fieldName="sourceOfSample"
+                    selectData={sampleSourceLov?.object ?? []}
                      selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
@@ -333,7 +335,7 @@ useEffect(() => {
                     record={sample}
                     setRecord={setSample}
                     width={'14vw'}
-                   
+                    required
                   />
 
                   <MyInput
@@ -357,21 +359,7 @@ useEffect(() => {
                   />
 
 
-                  <MyInput
-                    column
-                    fieldLabel="Source of Sample"
-                    fieldType="select"
-                    fieldName="sourceOfSample"
-                    selectData={sampleSourceLov?.object ?? []}
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                    selectDataValue="key"
-                    record={sample}
-                    setRecord={setSample}
-                    width={'14vw'}
-                    required
-                  />
+                
                 </div>
               </Form>
 
