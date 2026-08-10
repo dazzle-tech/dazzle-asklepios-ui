@@ -781,8 +781,8 @@ const BookPatient = ({
         return;
       }
 
-      if (appointmentData.requirePractitioner && !record.defaultPractitioner) {
-        dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+      if (!record.defaultPractitioner) {
+        dispatch(notify({ msg: 'Please select default practitioner', sev: 'warning' }));
         return;
       }
 
@@ -1304,7 +1304,7 @@ const BookPatient = ({
                             selectDataValue="id"
                             width="100%"
                             disabled={readOnly}
-                            required
+                            required={!readOnly}
                           />
 
                           <MyInput
