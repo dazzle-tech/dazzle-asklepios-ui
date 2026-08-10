@@ -109,6 +109,15 @@ export const notificationService = createApi({
       invalidatesTags: (_result, _error, id) => [{ type: 'Notification', id }, 'Notification'],
     }),
 
+    markAllNotificationsRead: builder.mutation<NotificationResponseVM[], void>({
+      query: () => ({
+        url: '/api/notification/notifications/read-all',
+        method: 'PATCH',
+      }),
+      transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
+      invalidatesTags: ['Notification'],
+    }),
+
     retryNotification: builder.mutation<NotificationResponseVM, number>({
       query: id => ({
         url: `/api/notification/notifications/${id}/retry`,
@@ -133,5 +142,6 @@ export const {
   useCountUnreadInAppNotificationsQuery,
   useLazyCountUnreadInAppNotificationsQuery,
   useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
   useRetryNotificationMutation,
 } = notificationService;
