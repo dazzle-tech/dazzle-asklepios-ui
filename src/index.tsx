@@ -11,6 +11,7 @@ import { Loader, CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { useLazyGetSystemConfigQuery } from './services/systemConfigService';
 import { lightenColor } from './utils';
+import { isPublicHashRoute } from './config/publicRoutes';
 
 const DEFAULT_SYSTEM_CONFIG = {
   SYSTEM_TITLE: 'Asklepios',
@@ -146,7 +147,9 @@ const RootWrapper = () => {
   const hasRequestedConfig = useRef(false);
 
   const [activeConfig, setActiveConfig] = useState(() => initialSystemConfig);
-  const [isInitialLoading, setIsInitialLoading] = useState(!isValidSystemConfig(initialCachedConfig));
+  const [isInitialLoading, setIsInitialLoading] = useState(
+    !isValidSystemConfig(initialCachedConfig) && !isPublicHashRoute()
+  );
 
   useEffect(() => {
     if (hasRequestedConfig.current) return;
