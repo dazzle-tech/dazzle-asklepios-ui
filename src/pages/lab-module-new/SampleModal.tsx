@@ -97,101 +97,138 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
     { skip: !orderTest?.id }
   );
 
-  const handleSaveSample = async () => {
-    const status = orderTest?.processingStatus;
+ const handleSaveSample = async () => {
+  const status = orderTest?.processingStatus;
 
-    // 🚫 Status validation
-    switch (status) {
-      case DiagnosticOrderTestStatus.RESULT_READY:
-        dispatch(notify({ msg: 'Cannot collect sample. The result is already marked as Ready.', sev: 'warning' }));
-        return;
-
-      case DiagnosticOrderTestStatus.RESULT_APPROVED:
-        dispatch(notify({ msg: 'Cannot collect sample. The result has already been Approved.', sev: 'warning' }));
-        return;
-
-      case DiagnosticOrderTestStatus.ACCEPTED:
-        dispatch(notify({ msg: 'Cannot collect sample. This test is already Accepted.', sev: 'warning' }));
-        return;
-
-      case DiagnosticOrderTestStatus.REJECTED:
-        dispatch(notify({ msg: 'Cannot collect sample. This test has been Rejected.', sev: 'warning' }));
-        return;
-
-      default:
-        break;
-    }
-
-    if (
-      selectedExpiryDate?.dateTime &&
-      selectedSampleDate?.dateTime &&
-      selectedExpiryDate.dateTime < selectedSampleDate.dateTime
-    ) {
+  switch (status) {
+    case DiagnosticOrderTestStatus.RESULT_READY:
       dispatch(
         notify({
-          msg: 'Expiry Date cannot be before Sample Collected',
+          msg: 'Cannot collect sample. The result is already marked as Ready.',
           sev: 'warning'
         })
       );
       return;
-    }
 
-    if (!sample.quantity || sample.quantity <= 0) {
-      dispatch(notify({ msg: 'Actual Sample Quantity is required', sev: 'warning' }));
+    case DiagnosticOrderTestStatus.RESULT_APPROVED:
+      dispatch(
+        notify({
+          msg: 'Cannot collect sample. The result has already been Approved.',
+          sev: 'warning'
+        })
+      );
       return;
-    }
 
-    if (!sample.unitLkey) {
-      dispatch(notify({ msg: 'Unit is required', sev: 'warning' }));
+    case DiagnosticOrderTestStatus.ACCEPTED:
+      dispatch(
+        notify({
+          msg: 'Cannot collect sample. This test is already Accepted.',
+          sev: 'warning'
+        })
+      );
       return;
-    }
 
-    if (!selectedSampleDate?.dateTime) {
-      dispatch(notify({ msg: 'Sample Collected is required', sev: 'warning' }));
+    case DiagnosticOrderTestStatus.REJECTED:
+      dispatch(
+        notify({
+          msg: 'Cannot collect sample. This test has been Rejected.',
+          sev: 'warning'
+        })
+      );
       return;
-    }
 
-    if (!selectedExpiryDate?.dateTime) {
-      dispatch(notify({ msg: 'Expiry Date is required', sev: 'warning' }));
-      return;
-    }
+    default:
+      break;
+  }
 
-    if (!sample.sourceOfSample) {
-      dispatch(notify({ msg: 'Source of Sample is required', sev: 'warning' }));
-      return;
-    }
+  if (
+    selectedExpiryDate?.dateTime &&
+    selectedSampleDate?.dateTime &&
+    selectedExpiryDate.dateTime < selectedSampleDate.dateTime
+  ) {
+    dispatch(
+      notify({
+        msg: 'Expiry Date cannot be before Sample Collected',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
 
+  if (!selectedSampleDate?.dateTime) {
+    dispatch(
+      notify({
+        msg: 'Sample Collected is required',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
 
-    try {
-      const unitText = valueUnitLov?.object?.find(
+  if (!selectedExpiryDate?.dateTime) {
+    dispatch(
+      notify({
+        msg: 'Expiry Date is required',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (!sample.sourceOfSample) {
+    dispatch(
+      notify({
+        msg: 'Source of Sample is required',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  try {
+    const finalQuantity =
+      sample.quantity ?? lab?.sampleVolume ?? null;
+
+    const finalUnit =
+      valueUnitLov?.object?.find(
         u => String(u.key) === String(sample.unitLkey)
-      )?.lovDisplayVale;
+      )?.lovDisplayVale ??
+      valueUnitLov?.object?.find(
+        u => String(u.key) === String(lab?.sampleVolumeUnit)
+      )?.lovDisplayVale ??
+      null;
 
-      await createCollectedSample({
-        orderId: orderTest.orderId,
-        orderTestId: orderTest.id,
-        quantity: sample.quantity,
-        unit: unitText,
-        collectedAt: selectedSampleDate.dateTime.toISOString(),
-        expiryDate: selectedExpiryDate.dateTime.toISOString(),
-        sourceOfSample: sample.sourceOfSample
-      }).unwrap();
+    await createCollectedSample({
+      orderId: orderTest.orderId,
+      orderTestId: orderTest.id,
+      quantity: finalQuantity,
+      unit: finalUnit,
+      collectedAt: selectedSampleDate.dateTime.toISOString(),
+      expiryDate: selectedExpiryDate.dateTime.toISOString(),
+      sourceOfSample: sample.sourceOfSample
+    }).unwrap();
 
-      dispatch(notify({ msg: 'Sample collected successfully', sev: 'success' }));
+    dispatch(
+      notify({
+        msg: 'Sample collected successfully',
+        sev: 'success'
+      })
+    );
 
-      await refetchSamples();
-      onSuccess?.();
-      setOpen(false);
+    await refetchSamples();
 
-    } catch (e: any) {
-      dispatch(
-        notify({
-          msg: getApiErrorMessage(e, 'Unable to collect sample.'),
-          sev: 'warning'
-        })
-      );
-    }
-  };
+    onSuccess?.();
+
+    setOpen(false);
+  } catch (e: any) {
+    dispatch(
+      notify({
+        msg: getApiErrorMessage(e, 'Unable to collect sample.'),
+        sev: 'warning'
+      })
+    );
+  }
+};
 
   const tableColumns = [
     {
@@ -223,14 +260,24 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
     }
   ];
 
-  useEffect(() => {
-    if (open) {
-      setSample({ ...newApDiagnosticOrderTestsSamples });
-      setSelectedSampleDate({ dateTime: new Date() });
-      setSelectedExpiryDate({ dateTime: oneWeekFromNow() });
-    }
-  }, [open]);
 
+useEffect(() => {
+  if (open) {
+    setSample({
+      ...newApDiagnosticOrderTestsSamples,
+      quantity: lab?.sampleVolume ?? null,
+      unitLkey: lab?.sampleVolumeUnit ?? null
+    });
+
+    setSelectedSampleDate({
+      dateTime: new Date()
+    });
+
+    setSelectedExpiryDate({
+      dateTime: oneWeekFromNow()
+    });
+  }
+}, [open, lab]);
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -272,7 +319,7 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
                     record={sample}
                     setRecord={setSample}
                     width={'14vw'}
-                    required
+                  
                   />
 
                   <MyInput
@@ -286,7 +333,7 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
                     record={sample}
                     setRecord={setSample}
                     width={'14vw'}
-                    required
+                   
                   />
 
                   <MyInput
