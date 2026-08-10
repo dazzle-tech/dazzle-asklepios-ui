@@ -335,6 +335,7 @@ useEffect(() => {
       fromDate,
       toDate,
       statusIn: DEFAULT_STATUS,
+      practitionerId: undefined,
       page: 0,
       size: pageSize,
       sort: DEFAULT_SORT

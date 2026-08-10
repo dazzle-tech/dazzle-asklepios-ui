@@ -331,6 +331,7 @@ const ERTriage = () => {
       statuses: statusesCsv,
       patientName,
       mrn,
+      practitionerId: undefined,
       page,
       size: pageSize,
       sort: DEFAULT_SORT,
