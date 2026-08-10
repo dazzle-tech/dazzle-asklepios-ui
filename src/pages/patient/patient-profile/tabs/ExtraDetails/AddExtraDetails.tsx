@@ -235,25 +235,17 @@ const AddExtraDetails = ({
       return;
     }
 
+     if (!isNoDoc) {
     try {
-      if (isNoDoc) {
-        await addNoDocument({
-          patientId: localPatient.id,
-          type: 'NO_DOCUMENT',
-          isPrimary: true
-        }).unwrap();
-      } else {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
           number: String(secondaryDocument.number ?? '').trim(),
-          isPrimary: secondaryDocument.type === 'NATIONAL_ID'
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
-      }
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       refetch();
@@ -261,6 +253,7 @@ const AddExtraDetails = ({
     } catch (err) {
       dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
     }
+  }
   };
 
   return (
