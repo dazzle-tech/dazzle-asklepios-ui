@@ -959,8 +959,8 @@ const WaseelSbsSetup = () => {
 
       {activeTab === 'MAPPING' && (
         <MyTable
-          data={mappingResponse?.content ?? []}
-          totalCount={mappingResponse?.totalElements ?? 0}
+          data={mappingResponse?.data ?? []}
+          totalCount={mappingResponse?.totalCount ?? 0}
           loading={isMappingFetching}
           columns={mappingColumns}
           page={mappingPaginationParams.page}

@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
   WaseelSbsCatalog,
@@ -19,6 +20,41 @@ export type PageResponse<T> = {
   totalPages: number;
   size: number;
   number: number;
+};
+
+export type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: {
+    next?: string | null;
+    prev?: string | null;
+    first?: string | null;
+    last?: string | null;
+  };
+};
+
+const mapPagedResponse = <T>(
+  response: T[] | PageResponse<T>,
+  meta?: any
+): PagedResult<T> => {
+  if (
+    response !== null &&
+    !Array.isArray(response) &&
+    Array.isArray(response.content)
+  ) {
+    return {
+      data: response.content,
+      totalCount: Number(response.totalElements ?? 0)
+    };
+  }
+
+  const headers = meta?.response?.headers;
+
+  return {
+    data: Array.isArray(response) ? response : [],
+    totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+    links: parseLinkHeader(headers?.get('Link'))
+  };
 };
 
 export const waseelSbsSetupService = createApi({
@@ -86,16 +122,15 @@ export const waseelSbsSetupService = createApi({
     }),
 
     searchItemMappings: builder.query<
-      PageResponse<WaseelItemMapping>,
+      PagedResult<WaseelItemMapping>,
       WaseelItemMappingSearchParams
     >({
       query: ({
         page,
         size,
-        sort = 'id,desc',
+        sort = 'itemName,asc',
         search,
-        itemType,
-        activeOnly
+        itemType
       }) => ({
         url: '/api/setup/waseel/item-mapping',
         method: 'GET',
@@ -104,10 +139,19 @@ export const waseelSbsSetupService = createApi({
           size,
           sort,
           ...(search ? { search } : {}),
-          ...(itemType ? { itemType } : {}),
-          ...(activeOnly != null ? { activeOnly } : {})
+          ...(itemType ? { itemType } : {})
         }
       }),
+      transformResponse: (
+        response:
+          | WaseelItemMapping[]
+          | PageResponse<WaseelItemMapping>,
+        meta
+      ) =>
+        mapPagedResponse<WaseelItemMapping>(
+          response,
+          meta
+        ),
       providesTags: ['WaseelItemMapping']
     }),
 
