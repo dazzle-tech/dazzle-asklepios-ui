@@ -333,11 +333,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       render: (row: any) => row._visitId ?? '-'
     },
     {
-      key: 'patient',
-      title: <Translate>PATIENT</Translate>,
-      render: (row: any) => row._patientName
-    },
-    {
       key: 'created',
       title: <Translate>CREATED BY / AT</Translate>,
       render: (row: any) => (
