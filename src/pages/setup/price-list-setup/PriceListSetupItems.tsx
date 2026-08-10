@@ -254,12 +254,21 @@ const PriceListSetupItems: React.FC<Props> = ({
   const [
     searchFilters,
     setSearchFilters
-  ] = useState({ search: '' });
+  ] = useState<{
+    search: string;
+    itemType: string | null;
+  }>({
+    search: '',
+    itemType: null
+  });
 
   const [
-    appliedSearch,
-    setAppliedSearch
-  ] = useState('');
+    appliedFilters,
+    setAppliedFilters
+  ] = useState<{
+    search?: string;
+    itemType?: PriceListItemType;
+  }>({});
 
   /*
    * Waseel mapping pagination.
@@ -365,7 +374,12 @@ const PriceListSetupItems: React.FC<Props> = ({
       page: paginationParams.page,
       size: paginationParams.size,
       sort: paginationParams.sort,
-      search: appliedSearch
+      ...(appliedFilters.search
+        ? { search: appliedFilters.search }
+        : {}),
+      ...(appliedFilters.itemType
+        ? { itemType: appliedFilters.itemType }
+        : {})
     },
     {
       skip:
@@ -393,8 +407,6 @@ const PriceListSetupItems: React.FC<Props> = ({
       itemType:
         selectedItem.itemType ||
         undefined,
-
-      activeOnly: true,
 
       refreshToken:
         mappingRefreshToken
@@ -583,8 +595,11 @@ const PriceListSetupItems: React.FC<Props> = ({
       return;
     }
 
-    setSearchFilters({ search: '' });
-    setAppliedSearch('');
+    setSearchFilters({
+      search: '',
+      itemType: null
+    });
+    setAppliedFilters({});
     setPaginationParams({
       page: 0,
       size: 15,
@@ -595,9 +610,15 @@ const PriceListSetupItems: React.FC<Props> = ({
   useEffect(() => {
     const delay =
       setTimeout(() => {
-        setAppliedSearch(
-          searchFilters.search.trim()
-        );
+        setAppliedFilters({
+          search:
+            searchFilters.search.trim() ||
+            undefined,
+          itemType:
+            (searchFilters.itemType as
+              PriceListItemType) ||
+            undefined
+        });
 
         setPaginationParams(
           previous => ({
@@ -609,7 +630,10 @@ const PriceListSetupItems: React.FC<Props> = ({
 
     return () =>
       clearTimeout(delay);
-  }, [searchFilters.search]);
+  }, [
+    searchFilters.search,
+    searchFilters.itemType
+  ]);
 
   const typeOptions = useEnumOptions('PriceListItemType');
 
@@ -659,7 +683,6 @@ const PriceListSetupItems: React.FC<Props> = ({
   const mappingTotalCount =
     Number(
       mappingResponse?.totalCount ??
-      mappingResponse?.totalElements ??
       0
     );
 
@@ -687,14 +710,6 @@ const PriceListSetupItems: React.FC<Props> = ({
     const rows =
       normalizeMappingRows(
         mappingResponse
-      ).filter(
-        mapping =>
-          mapping.isActive === true &&
-          (
-            !selectedItem.itemType ||
-            mapping.itemType ===
-              selectedItem.itemType
-          )
       );
 
     const options =
@@ -727,8 +742,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     });
   }, [
     mappingResponse,
-    mappingPage,
-    selectedItem.itemType
+    mappingPage
   ]);
 
   /*
@@ -2116,14 +2130,36 @@ const PriceListSetupItems: React.FC<Props> = ({
         record={searchFilters}
         setRecord={setSearchFilters}
         showLabel={false}
-        placeholder="Search Item Name"
+        placeholder="Search Item Name / Code"
+      />
+
+      <MyInput
+        width="12vw"
+        fieldName="itemType"
+        fieldType="select"
+        record={searchFilters}
+        setRecord={setSearchFilters}
+        showLabel={false}
+        placeholder="Item Type"
+        selectData={typeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
       />
 
       <AdvancedSearchFilters
         showAdvancedButton={false}
         clearOnClick={() => {
-          setSearchFilters({ search: '' });
-          setAppliedSearch('');
+          setSearchFilters({
+            search: '',
+            itemType: null
+          });
+          setAppliedFilters({});
+          setPaginationParams(
+            previous => ({
+              ...previous,
+              page: 0
+            })
+          );
         }}
       />
     </Form>
@@ -2216,8 +2252,11 @@ const PriceListSetupItems: React.FC<Props> = ({
 
           if (!value) {
             setChildModalOpen(false);
-            setSearchFilters({ search: '' });
-            setAppliedSearch('');
+            setSearchFilters({
+              search: '',
+              itemType: null
+            });
+            setAppliedFilters({});
 
             setSelectedItem({
               ...newPriceListSetupItem

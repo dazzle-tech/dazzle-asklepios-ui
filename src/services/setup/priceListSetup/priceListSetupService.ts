@@ -4,6 +4,7 @@ import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
+  PriceListItemType,
   PriceListSetup,
   PriceListSetupItem
 } from '@/types/model-types-new';
@@ -301,6 +302,7 @@ export const priceListSetupService = createApi({
       {
         priceListSetupId: Id;
         search?: string;
+        itemType?: PriceListItemType;
       } & PagedParams
     >({
       query: ({
@@ -308,7 +310,8 @@ export const priceListSetupService = createApi({
         page,
         size,
         sort = 'id,asc',
-        search = ''
+        search,
+        itemType
       }) => ({
         url: `/api/setup/price-list-setups/${encodeURIComponent(
           String(priceListSetupId)
@@ -317,7 +320,8 @@ export const priceListSetupService = createApi({
           page,
           size,
           sort,
-          search
+          ...(search ? { search } : {}),
+          ...(itemType ? { itemType } : {})
         }
       }),
 
