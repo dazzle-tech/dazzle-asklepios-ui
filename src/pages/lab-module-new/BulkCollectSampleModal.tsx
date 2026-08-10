@@ -192,21 +192,7 @@ const BulkCollectSampleModal = ({
                 width={'14vw'}
               
               />
-              <MyInput
-                fieldLabel="Unit"
-                fieldName="unit"
-                fieldType="select"
-                selectData={valueUnitLov?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                selectDataValue="key"
-                record={record}
-                setRecord={setRecord}
-                column
-                width={'14vw'}
-               
-              />
+             
 
               <MyInput
                 fieldLabel="Sample Collected"
