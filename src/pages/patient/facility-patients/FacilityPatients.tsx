@@ -9,6 +9,10 @@ import './styles.less';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import {
+    useLazyGetDocumentsByPatientQuery
+} from '@/services/patients/patientDocumentsService';
+
 const today = new Date().toISOString().split('T')[0];
 
 const FacilityPatients = () => {
@@ -48,6 +52,20 @@ const FacilityPatients = () => {
         insuranceId: filterRecord.insuranceId || undefined
     });
 
+
+    const [getDocumentsByPatient] =
+    useLazyGetDocumentsByPatientQuery();
+
+    const [primaryDocuments, setPrimaryDocuments] = useState<
+        Record<
+            number,
+            {
+                type?: string;
+                number?: string;
+            }
+        >
+    >({});
+
     const { data: payors } = useGetAllPayorsQuery({
         page: 0,
         size: 1000,
@@ -55,85 +73,230 @@ const FacilityPatients = () => {
     });
 
 
-    const columns = useMemo(
-        () => [
-            {
-                key: 'patientName',
-                title: 'Patient Name',
-                render: row =>
-                    [
-                        row.firstName,
-                        row.secondName,
-                        row.thirdName,
-                        row.lastName
-                    ]
-                        .filter(Boolean)
-                        .join(' ') || '-'
-            },
-            {
-                key: 'genderAge',
-                title: 'Gender, Age',
-                render: row => {
-                    let age = '-';
+    useEffect(() => {
+    const patients = data?.data ?? [];
 
-                    if (row.dateOfBirth) {
-                        const birthDate = new Date(row.dateOfBirth);
-                        const today = new Date();
+    if (!patients.length) {
+        setPrimaryDocuments({});
+        return;
+    }
 
-                        age = today.getFullYear() - birthDate.getFullYear();
+    let cancelled = false;
 
-                        const monthDiff = today.getMonth() - birthDate.getMonth();
-                        if (
-                            monthDiff < 0 ||
-                            (monthDiff === 0 && today.getDate() < birthDate.getDate())
-                        ) {
-                            age--;
-                        }
+    const loadPrimaryDocuments = async () => {
+        try {
+            const results = await Promise.all(
+                patients.map(async patient => {
+                    if (!patient?.id) {
+                        return null;
                     }
 
-                    return `${row.sexAtBirth ?? '-'}, ${age}`;
-                }
-            },
-            {
-                key: 'primaryMobileNumber',
-                title: 'Primary Mobile Number',
-                render: row => row.primaryMobileNumber ?? '-'
-            },
-            {
-                key: 'email',
-                title: 'Email',
-                render: row => row.email ?? '-'
-            },
-            {
-                key: 'primaryDocumentType',
-                title: 'Primary Document Type',
-                render: () => '-'
-            },
-            {
-                key: 'primaryDocumentNumber',
-                title: 'Primary Document Number',
-                render: () => '-'
-            },
-            {
-                key: 'registrationDate',
-                title: 'Registration Date',
-                render: row => {
-                    if (!row.createdDate) return '-';
+                    try {
+                        const response = await getDocumentsByPatient({
+                            patientId: patient.id,
+                            page: 0,
+                            size: 100,
+                            sort: 'createdDate,desc'
+                        }).unwrap();
 
-                    const date = new Date(row.createdDate);
-                    return `${date.getFullYear()}-${String(
-                        date.getMonth() + 1
-                    ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                        const primaryDocument = (
+                            response?.data ?? []
+                        ).find(
+                            document => document?.isPrimary === true
+                        );
+
+                        if (!primaryDocument) {
+                            return {
+                                patientId: patient.id,
+                                document: null
+                            };
+                        }
+
+                        return {
+                            patientId: patient.id,
+                            document: {
+                                type: primaryDocument.type,
+                                number: primaryDocument.number
+                            }
+                        };
+                    } catch (error) {
+                        console.error(
+                            `Failed to load documents for patient ${patient.id}`,
+                            error
+                        );
+
+                        return {
+                            patientId: patient.id,
+                            document: null
+                        };
+                    }
+                })
+            );
+
+            if (cancelled) return;
+
+            const documentMap: Record<
+                number,
+                {
+                    type?: string;
+                    number?: string;
                 }
-            },
-            {
-                key: 'primaryInsurance',
-                title: 'Primary Insurance',
-                render: () => '-'
+            > = {};
+
+            results.forEach(result => {
+                if (!result) return;
+
+                documentMap[result.patientId] =
+                    result.document ?? {};
+            });
+
+            setPrimaryDocuments(documentMap);
+        } catch (error) {
+            if (!cancelled) {
+                console.error(
+                    'Failed to load primary patient documents',
+                    error
+                );
+                setPrimaryDocuments({});
             }
-        ],
-        []
-    );
+        }
+    };
+
+    loadPrimaryDocuments();
+
+    return () => {
+        cancelled = true;
+    };
+}, [data?.data, getDocumentsByPatient]);
+
+        const columns = useMemo(
+            () => [
+                {
+                    key: 'patientName',
+                    title: 'Patient Name',
+                    render: row =>
+                        [
+                            row.firstName,
+                            row.secondName,
+                            row.thirdName,
+                            row.lastName
+                        ]
+                            .filter(Boolean)
+                            .join(' ') || '-'
+                },
+
+                {
+                    key: 'mrn',
+                    title: 'MRN',
+                    render: row =>
+                        row.medicalRecordNumber ?? '-'
+                },
+
+                {
+                    key: 'genderAge',
+                    title: 'Gender, Age',
+                    render: row => {
+                        let age = '-';
+
+                        if (row.dateOfBirth) {
+                            const birthDate =
+                                new Date(row.dateOfBirth);
+
+                            const today = new Date();
+
+                            age =
+                                today.getFullYear() -
+                                birthDate.getFullYear();
+
+                            const monthDiff =
+                                today.getMonth() -
+                                birthDate.getMonth();
+
+                            if (
+                                monthDiff < 0 ||
+                                (
+                                    monthDiff === 0 &&
+                                    today.getDate() <
+                                        birthDate.getDate()
+                                )
+                            ) {
+                                age--;
+                            }
+                        }
+
+                        return `${row.sexAtBirth ?? '-'}, ${age}`;
+                    }
+                },
+
+                {
+                    key: 'primaryMobileNumber',
+                    title: 'Primary Mobile Number',
+                    render: row =>
+                        row.primaryMobileNumber ?? '-'
+                },
+
+                {
+                    key: 'email',
+                    title: 'Email',
+                    render: row =>
+                        row.email ?? '-'
+                },
+
+                {
+                    key: 'primaryDocumentType',
+                    title: 'Primary Document Type',
+                    render: row => {
+                        const document =
+                            primaryDocuments[row.id];
+
+                        if (!document?.type) {
+                            return '-';
+                        }
+
+                        return document.type
+                            .split('_')
+                            .map(word =>
+                                word.charAt(0) +
+                                word.slice(1).toLowerCase()
+                            )
+                            .join(' ');
+                    }
+                },
+
+                {
+                    key: 'primaryDocumentNumber',
+                    title: 'Primary Document Number',
+                    render: row =>
+                        primaryDocuments[row.id]?.number ?? '-'
+                },
+
+                {
+                    key: 'registrationDate',
+                    title: 'Registration Date',
+                    render: row => {
+                        if (!row.createdDate) {
+                            return '-';
+                        }
+
+                        const date =
+                            new Date(row.createdDate);
+
+                        return `${date.getFullYear()}-${String(
+                            date.getMonth() + 1
+                        ).padStart(2, '0')}-${String(
+                            date.getDate()
+                        ).padStart(2, '0')}`;
+                    }
+                },
+
+                {
+                    key: 'primaryInsurance',
+                    title: 'Primary Insurance',
+                    render: () => '-'
+                }
+            ],
+            [primaryDocuments]
+        );
 
     useEffect(() => {
         setPage(0);
@@ -159,21 +322,21 @@ const FacilityPatients = () => {
                                 record={filterRecord}
                                 setRecord={setFilterRecord}
                             />
-                            
-                          <div style={{marginTop:'0.5vw'}}>
-                            <SearchPatientCriteria
-                                record={patientSearch}
-                                setRecord={setPatientSearch}
-                                liveSearchMinLength={3}
-                                onSearchClick={() => {
-                                    setFilterRecord(prev => ({
-                                        ...prev,
-                                        patientName: patientSearch.patientName
-                                    }));
-                                    setPage(0);
-                                }}
-                            />
-                          </div>
+
+                            <div style={{ marginTop: '0.5vw' }}>
+                                <SearchPatientCriteria
+                                    record={patientSearch}
+                                    setRecord={setPatientSearch}
+                                    liveSearchMinLength={3}
+                                    onSearchClick={() => {
+                                        setFilterRecord(prev => ({
+                                            ...prev,
+                                            patientName: patientSearch.patientName
+                                        }));
+                                        setPage(0);
+                                    }}
+                                />
+                            </div>
 
                             <MyInput
                                 fieldName="insuranceId"
