@@ -222,28 +222,36 @@
   background-color: var(--one-health-theme-header);
 }
 
-.patient-satisfaction-survey-page.rtl {
-  .patient-satisfaction-survey-checkbox-field {
-    .rs-checkbox {
-      flex-direction: row-reverse;
-      justify-content: flex-end;
-      align-items: flex-start;
-      width: 100%;
-      gap: 12px;
-    }
+.patient-satisfaction-survey-checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
 
-    .rs-checkbox-checker {
-      margin-right: 0;
-      margin-left: 0;
-      padding-top: 2px;
-    }
+.patient-satisfaction-survey-checkbox-field .rs-checkbox {
+  margin: 0;
+  flex-shrink: 0;
+}
 
-    .rs-checkbox-label {
-      text-align: right;
-      line-height: 1.6;
-      flex: 1;
-    }
-  }
+.patient-satisfaction-survey-checkbox-text {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--black);
+}
+
+.patient-satisfaction-survey-checkbox-field.is-ltr {
+  flex-direction: row;
+  direction: ltr;
+  text-align: left;
+}
+
+.patient-satisfaction-survey-checkbox-field.is-rtl {
+  flex-direction: row;
+  direction: rtl;
+  text-align: right;
 }
 
 @media (max-width: 768px) {
