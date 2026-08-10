@@ -52,6 +52,7 @@ const normalizePaymentDetails = (raw: any): modelTypes.PatientPaymentDetails => 
 export type PatientLedgerSummary = {
   patientId: number;
   totalDebt: number;
+  insuranceOutstandingAmount?: number;
   walletBalance: number;
   reservedBalance?: number;
   consumedAmount?: number;

@@ -19,7 +19,6 @@ import type {
 
 import PreviewWaseelPreAuthorizationRequests from './PreviewWaseelPreAuthorizationRequests';
 import PreAuthorizationFilters from './PreAuthorizationFilters';
-import PreAuthorizationExportButtons from './PreAuthorizationExportButtons';
 import PreAuthorizationRequestsTable from './PreAuthorizationRequestsTable';
 import PreAuthorizationCancelModal from './PreAuthorizationCancelModal';
 import PreAuthorizationCommunicationModal, {
@@ -411,13 +410,6 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
             onSelectedFilterChange={setSelectedFilter}
             onSearch={handleSearch}
             onReset={handleReset}
-          />
-        }
-        tableButtons={
-          <PreAuthorizationExportButtons
-            data={tableData}
-            patientMap={patientMap}
-            encounterMap={encounterMap}
           />
         }
       />

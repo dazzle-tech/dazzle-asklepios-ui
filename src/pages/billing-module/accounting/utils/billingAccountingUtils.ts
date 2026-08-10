@@ -55,6 +55,7 @@ export type UnifiedBillingChargeRow = {
   status: string;
   chargedAt: string | null;
   preAuthorizationStatus?: string | null;
+  preAuthorizationRequired?: boolean | null;
   isBilled: boolean;
 };
 
@@ -890,6 +891,21 @@ export const isRowCollectable = (
     return false;
   }
 
+  if (resolveRowPaymentStatus(row, summary) === 'RESERVED') {
+    return false;
+  }
+
+  if (isPreAuthRequiredRow(row)) {
+    const status = row.preAuthorizationStatus;
+    if (
+      !status ||
+      isPreAuthPending(status) ||
+      isPreAuthPartial(status)
+    ) {
+      return false;
+    }
+  }
+
   return (
     row.patientServiceProductId != null &&
     resolveRowPaymentStatus(row, summary) !== 'SETTLED' &&
@@ -1248,20 +1264,55 @@ export const computeWalletCollectAmounts = (
 export const isPreAuthRejected = (status?: string | null): boolean =>
   String(status ?? '').toUpperCase() === 'REJECTED';
 
+export const isPreAuthPartial = (status?: string | null): boolean => {
+  const normalized = String(status ?? '').toUpperCase();
+  return normalized === 'PARTIAL' || normalized === 'PARTIAL_APPROVAL';
+};
+
+export const isPreAuthApproved = (status?: string | null): boolean =>
+  String(status ?? '').toUpperCase() === 'APPROVED';
+
 export const isPreAuthPending = (status?: string | null): boolean => {
   const normalized = String(status ?? '').toUpperCase();
   return normalized === 'PENDING_APPROVAL' || normalized === 'PENDING';
 };
 
+export const isPreAuthRequiredRow = (
+  row: Pick<UnifiedBillingChargeRow, 'preAuthorizationRequired'>
+): boolean => row.preAuthorizationRequired === true;
+
+export const isRowFullyReserved = (
+  row: UnifiedBillingChargeRow,
+  summary?: EncounterBillingSummary | null
+): boolean => resolveRowPaymentStatus(row, summary) === 'RESERVED';
+
+export const shouldShowPreAuthRowActions = (
+  row: UnifiedBillingChargeRow,
+  summary?: EncounterBillingSummary | null
+): boolean =>
+  isPreAuthRequiredRow(row) &&
+  !isRowFullyReserved(row, summary) &&
+  (isPreAuthRejected(row.preAuthorizationStatus) ||
+    isPreAuthPartial(row.preAuthorizationStatus));
+
 export const findPendingPreAuthItems = (
   pspRows: PatientServiceAndProduct[]
 ): PatientServiceAndProduct[] =>
-  pspRows.filter(row =>
-    isPreAuthPending(
-      (row as PatientServiceAndProduct & { preAuthorizationStatus?: string })
-        .preAuthorizationStatus
-    )
-  );
+  pspRows.filter(row => {
+    const rowAny = row as PatientServiceAndProduct & {
+      preAuthorizationRequired?: boolean | null;
+      preAuthorizationStatus?: string | null;
+    };
+
+    if (rowAny.preAuthorizationRequired !== true) {
+      return false;
+    }
+
+    return (
+      isPreAuthPending(rowAny.preAuthorizationStatus) ||
+      isPreAuthPartial(rowAny.preAuthorizationStatus)
+    );
+  });
 
 export const buildTimelineEvents = (
   encounter: PatientEncounter | null | undefined,
@@ -1692,6 +1743,18 @@ export const mapSummaryItemToRow = (
   currency: item.currency ?? 'SAR',
   status: item.status,
   chargedAt: item.chargedAt ?? chargeDate ?? null,
+  preAuthorizationStatus:
+    (
+      linkedPsp as PatientServiceAndProduct & {
+        preAuthorizationStatus?: string | null;
+      }
+    )?.preAuthorizationStatus ?? null,
+  preAuthorizationRequired:
+    (
+      linkedPsp as PatientServiceAndProduct & {
+        preAuthorizationRequired?: boolean | null;
+      }
+    )?.preAuthorizationRequired ?? null,
   isBilled: item.chargeLineId != null
 };
 };
@@ -1703,6 +1766,7 @@ export const mapPspItemToRow = (
   const rowAny = row as PatientServiceAndProduct & {
     createdDate?: string | null;
     preAuthorizationStatus?: string | null;
+    preAuthorizationRequired?: boolean | null;
     itemCode?: string | null;
     itemName?: string | null;
     priceSource?: string | null;
@@ -1733,6 +1797,7 @@ export const mapPspItemToRow = (
     status: row.isBilled ? 'BILLED' : 'PENDING',
     chargedAt: rowAny.createdDate ?? null,
     preAuthorizationStatus: rowAny.preAuthorizationStatus ?? null,
+    preAuthorizationRequired: rowAny.preAuthorizationRequired ?? null,
     isBilled: row.isBilled
   };
 };
@@ -1831,9 +1896,14 @@ export const mergeBillingChargeRows = (
 export const findRejectedPreAuthItems = (
   pspRows: PatientServiceAndProduct[]
 ): PatientServiceAndProduct[] =>
-  pspRows.filter(row =>
-    isPreAuthRejected(
-      (row as PatientServiceAndProduct & { preAuthorizationStatus?: string })
-        .preAuthorizationStatus
-    )
-  );
+  pspRows.filter(row => {
+    const rowAny = row as PatientServiceAndProduct & {
+      preAuthorizationRequired?: boolean | null;
+      preAuthorizationStatus?: string | null;
+    };
+
+    return (
+      rowAny.preAuthorizationRequired === true &&
+      isPreAuthRejected(rowAny.preAuthorizationStatus)
+    );
+  });

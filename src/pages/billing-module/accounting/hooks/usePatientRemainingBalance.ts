@@ -102,6 +102,7 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
   const walletAvailable = resolvePatientWalletAvailable(ledgerSummary);
   const walletReserved = resolvePatientWalletReserved(ledgerSummary);
   const walletConsumed = Number(ledgerSummary?.consumedAmount ?? 0);
+  const insuranceOutstanding = Number(ledgerSummary?.insuranceOutstandingAmount ?? 0);
 
   const refreshBalance = async () => {
     await Promise.all([refetchLedgerSummary(), refetchFinancialDocuments()]);
@@ -112,6 +113,7 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
     walletAvailable,
     walletReserved,
     walletConsumed,
+    insuranceOutstanding,
     invoiceOutstandingTotal,
     remainingBalance,
     loadingBalance:

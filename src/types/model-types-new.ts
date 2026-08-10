@@ -2961,6 +2961,7 @@ export interface PatientPaymentDetails {
 export interface PatientLedgerSummaryDTO {
   patientId: number;
   totalDebt: number;
+  insuranceOutstandingAmount?: number;
   walletBalance: number;
   reservedBalance?: number;
   consumedAmount?: number;
@@ -4042,6 +4043,7 @@ export type PatientServiceAndProduct = {
   createdDate?: string | null;
   preAuthorizationStatus?: string | null;
   preAuthorizationReferenceNo?: string | null;
+  preAuthorizationRequired?: boolean | null;
   itemName?: string | null;
   itemCode?: string | null;
   priceSource?: string | null;
@@ -6801,6 +6803,27 @@ export interface ClaimSubmissionResponse {
   outcome?: string | null;
   message?: string | null;
   submittedAt?: string | Date | null;
+}
+
+export interface PendingClaimInvoiceResponse {
+  financialDocumentId?: number | null;
+  documentNumber?: string | null;
+  encounterId?: number | null;
+  patientId?: number | null;
+  payorId?: number | null;
+  claimReference?: string | null;
+  totalAmount?: number | null;
+  currency?: string | null;
+  createdDate?: string | Date | null;
+}
+
+export interface ClaimBatchSubmitResponse {
+  uploadName?: string | null;
+  uploadId?: number | null;
+  outcome?: string | null;
+  message?: string | null;
+  submittedClaimCount?: number | null;
+  claims?: ClaimSubmissionResponse[] | null;
 }
 
 export interface WaseelClaimUploadResponse {
