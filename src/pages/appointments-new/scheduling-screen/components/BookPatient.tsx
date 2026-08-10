@@ -781,6 +781,11 @@ const BookPatient = ({
         return;
       }
 
+      if (appointmentData.requirePractitioner && !record.defaultPractitioner) {
+        dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+        return;
+      }
+
       if (record.service === 'FOLLOW_UP') {
         if (!appointmentDepartmentId) {
           dispatch(
