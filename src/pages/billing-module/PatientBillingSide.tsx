@@ -48,6 +48,7 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
     walletReserved,
     walletConsumed,
     remainingBalance,
+    insuranceOutstanding,
     loadingBalance
   } = usePatientRemainingBalance(patientId);
 
@@ -232,6 +233,15 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
               </Text>
             </div>
           </div>
+
+          {insuranceOutstanding > 0 && (
+            <div className="info-section" style={{ marginTop: '10px' }}>
+              <div className="info-column">
+                <Text className="info-label">Insurance pending (claims)</Text>
+                <Text className="info-value">{formatAmount(insuranceOutstanding)}</Text>
+              </div>
+            </div>
+          )}
         </>
       )}
 

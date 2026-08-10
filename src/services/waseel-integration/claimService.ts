@@ -2,12 +2,14 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
+  ClaimBatchSubmitResponse,
   ClaimSubmissionResponse,
   ClaimTrackingResponse,
+  PendingClaimInvoiceResponse,
   WaseelClaimUploadResponse
 } from '@/types/model-types-new';
 
-export type { ClaimTrackingResponse, ClaimSubmissionResponse, WaseelClaimUploadResponse };
+export type { ClaimTrackingResponse, ClaimSubmissionResponse, WaseelClaimUploadResponse, PendingClaimInvoiceResponse, ClaimBatchSubmitResponse };
 
 type PagedParams = {
   page: number;
@@ -129,6 +131,37 @@ export const claimApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    getPendingClaimInvoices: builder.query<
+      PendingClaimInvoiceResponse[],
+      { payorId?: number | null; fromDate?: string | null; toDate?: string | null }
+    >({
+      query: ({ payorId, fromDate, toDate }) => ({
+        url: '/api/patient/internal/waseel/claims/pending-invoices',
+        method: 'GET',
+        params: {
+          ...(payorId != null ? { payorId } : {}),
+          ...(fromDate ? { fromDate } : {}),
+          ...(toDate ? { toDate } : {})
+        }
+      }),
+      providesTags: ['ClaimTracking']
+    }),
+
+    submitClaimBatch: builder.mutation<
+      ClaimBatchSubmitResponse,
+      { financialDocumentIds: number[] }
+    >({
+      query: body => ({
+        url: '/api/patient/internal/waseel/claims/submit-batch',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['ClaimTracking'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -142,5 +175,7 @@ export const {
   useSubmitClaimForInvoiceMutation,
   useLazyGetClaimUploadSummaryQuery,
   useRefreshClaimUploadSummaryMutation,
-  useRefreshClaimStatusMutation
+  useRefreshClaimStatusMutation,
+  useGetPendingClaimInvoicesQuery,
+  useSubmitClaimBatchMutation
 } = claimApi;

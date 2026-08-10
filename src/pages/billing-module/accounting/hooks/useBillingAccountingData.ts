@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAppSelector } from '@/hooks';
 import { newEncounterBillingSummary } from '@/types/model-types-constructor-new';
@@ -231,7 +231,7 @@ export const useBillingAccountingData = ({
 
   const pspRows = pspResponse?.data ?? [];
 
-  const { lookups } = useBillingCatalogLookups({
+  const { lookups, lookupsLoading } = useBillingCatalogLookups({
     encounterId: selectedEncounterId,
     pspRows
   });
@@ -268,7 +268,21 @@ export const useBillingAccountingData = ({
     effectiveSummary?.wallet?.reservedBalance
   );
 
-  const refreshAll = async () => {
+  const loadingInsuranceContext =
+    coverageType === 'INSURANCE' &&
+    selectedInsuranceId != null &&
+    loadingWaseelCoverage &&
+    waseelCoverage == null;
+
+  const loadingBillingWorkspace =
+    selectedEncounterId != null &&
+    (loadingBillingMetrics ||
+      loadingSummary ||
+      loadingPsp ||
+      lookupsLoading ||
+      loadingInsuranceContext);
+
+  const refreshAll = useCallback(async () => {
     await Promise.all([
       refetchEncounters(),
       selectedEncounterId != null ? refetchSummary() : Promise.resolve(),
@@ -283,7 +297,23 @@ export const useBillingAccountingData = ({
         ? refetchWaseelCoverage()
         : Promise.resolve()
     ]);
-  };
+  }, [
+    coverageType,
+    patientId,
+    refetchEncounterInvoiceDetails,
+    refetchEncounters,
+    refetchFinancialDocuments,
+    refetchInvoiceAdjustments,
+    refetchInvoiceLineItems,
+    refetchLedgerSummary,
+    refetchPsp,
+    refetchSummary,
+    refetchWalletBalance,
+    refetchWaseelCoverage,
+    resolvedInvoiceId,
+    selectedEncounterId,
+    selectedInsuranceId
+  ]);
 
   return {
     patientId,
@@ -320,6 +350,7 @@ export const useBillingAccountingData = ({
     loadingInsurances,
     encounterInvoiceDetails:
       selectedEncounterId != null ? encounterInvoiceDetails ?? null : null,
-    refreshAll
+    refreshAll,
+    loadingBillingWorkspace
   };
 };

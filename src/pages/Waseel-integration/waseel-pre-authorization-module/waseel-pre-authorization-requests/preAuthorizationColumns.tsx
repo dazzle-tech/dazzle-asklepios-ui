@@ -25,7 +25,7 @@ type GetPreAuthorizationColumnsParams = {
 const renderStacked = (lines: string[]) => {
   if (!lines.length) return '-';
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, lineHeight: 1.35 }}>
+    <div className="preauth-table__stacked">
       {lines.map((line, index) => (
         <span key={`${line}-${index}`}>{line}</span>
       ))}
@@ -39,28 +39,27 @@ export const getPreAuthorizationColumns = ({
   patientMap
 }: GetPreAuthorizationColumnsParams): ColumnConfig[] => [
   {
-    key: 'preAuthRefNo',
-    title: <Translate>Pre-Auth Ref No</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.preAuthRefNo || '-'
+    key: 'action',
+    dataKey: '',
+    title: <Translate>Action</Translate>,
+    width: 200,
+    align: 'center',
+    render: (row: PreAuthorizationTrackingResponse) => (
+      <PreAuthorizationRowActions row={row} {...handlers} />
+    )
   },
   {
-    key: 'approvalRequestId',
-    title: <Translate>Approval Request ID</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.approvalRequestId || '-'
-  },
-  {
-    key: 'approvalResponseId',
-    title: <Translate>Approval Response ID</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.approvalResponseId || '-'
+    key: 'status',
+    title: <Translate>Status</Translate>,
+    width: 130,
+    render: (row: PreAuthorizationTrackingResponse) => (
+      <MyBadgeStatus contant={row.status || '-'} color={getStatusColor(row.status)} />
+    )
   },
   {
     key: 'patientId',
     title: <Translate>Patient</Translate>,
-    flexGrow: 4,
-    fullText: true,
+    width: 220,
     render: (row: PreAuthorizationTrackingResponse) => {
       const patient = patientMap.get(String(row.patientId));
 
@@ -89,7 +88,7 @@ export const getPreAuthorizationColumns = ({
 
       return (
         <Whisper trigger="hover" placement="top" speaker={speaker}>
-          <div style={{ cursor: 'pointer' }}>
+          <div className="preauth-table__patient-cell">
             {mrn !== '-' ? `${fullName} - ${mrn}` : fullName}
           </div>
         </Whisper>
@@ -98,8 +97,8 @@ export const getPreAuthorizationColumns = ({
   },
   {
     key: 'encounterId',
-    title: <Translate>Visit Number</Translate>,
-    flexGrow: 2,
+    title: <Translate>Visit</Translate>,
+    width: 110,
     render: (row: PreAuthorizationTrackingResponse) => {
       const encounter = encounterMap.get(row.encounterId);
       return encounter?.encounterNumber || row.encounterId || '-';
@@ -108,7 +107,7 @@ export const getPreAuthorizationColumns = ({
   {
     key: 'visitDate',
     title: <Translate>Visit Date</Translate>,
-    flexGrow: 3,
+    width: 140,
     render: (row: PreAuthorizationTrackingResponse) => {
       const encounter = encounterMap.get(row.encounterId);
       return formatDateWithoutSeconds(encounter?.createdDate) || '-';
@@ -117,8 +116,7 @@ export const getPreAuthorizationColumns = ({
   {
     key: 'itemCode',
     title: <Translate>Item Code</Translate>,
-    flexGrow: 3,
-    fullText: true,
+    width: 130,
     render: (row: PreAuthorizationTrackingResponse) =>
       renderStacked(
         getPreAuthItems(row)
@@ -129,8 +127,7 @@ export const getPreAuthorizationColumns = ({
   {
     key: 'itemName',
     title: <Translate>Item Name</Translate>,
-    flexGrow: 4,
-    fullText: true,
+    width: 200,
     render: (row: PreAuthorizationTrackingResponse) =>
       renderStacked(
         getPreAuthItems(row)
@@ -140,29 +137,28 @@ export const getPreAuthorizationColumns = ({
   },
   {
     key: 'itemType',
-    title: <Translate>Item Type</Translate>,
-    flexGrow: 2,
+    title: <Translate>Type</Translate>,
+    width: 100,
     render: (row: PreAuthorizationTrackingResponse) =>
       joinItemField(row, item => item.itemType)
   },
   {
     key: 'itemDecision',
-    title: <Translate>Item Decision</Translate>,
-    flexGrow: 3,
+    title: <Translate>Decision</Translate>,
+    width: 120,
     render: (row: PreAuthorizationTrackingResponse) =>
       renderStacked(
         getPreAuthItems(row).map(item => {
           const decision = String(item.itemDecision ?? '').trim();
-          const code = String(item.itemCode ?? '').trim();
-          if (!decision && !code) return '';
-          return decision || '-';
+          if (!decision) return '';
+          return decision;
         }).filter(Boolean)
       )
   },
   {
     key: 'itemQuantity',
     title: <Translate>Qty</Translate>,
-    flexGrow: 2,
+    width: 80,
     render: (row: PreAuthorizationTrackingResponse) =>
       renderStacked(
         getPreAuthItems(row).map(item => {
@@ -175,118 +171,57 @@ export const getPreAuthorizationColumns = ({
   {
     key: 'itemNet',
     title: <Translate>Item Net</Translate>,
-    flexGrow: 2,
+    width: 100,
     render: (row: PreAuthorizationTrackingResponse) =>
       renderStacked(getPreAuthItems(row).map(item => formatMoney(item.net)).filter(v => v !== '-'))
   },
   {
-    key: 'waseelItemId',
-    title: <Translate>Waseel Item ID</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) =>
-      joinItemField(row, item => item.waseelItemId)
-  },
-  {
-    key: 'patientInsuranceId',
-    title: <Translate>Insurance ID</Translate>,
-    flexGrow: 2,
-    render: (row: PreAuthorizationTrackingResponse) => row.patientInsuranceId || '-'
-  },
-  {
-    key: 'eligibilityResponseId',
-    title: <Translate>Eligibility Response ID</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.eligibilityResponseId || '-'
-  },
-  {
-    key: 'dateOrdered',
-    title: <Translate>Date Ordered</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.dateOrdered || '-'
-  },
-  {
-    key: 'preauthType',
-    title: <Translate>Type</Translate>,
-    flexGrow: 2,
-    render: (row: PreAuthorizationTrackingResponse) => row.preauthType || '-'
-  },
-  {
-    key: 'preauthSubType',
-    title: <Translate>Sub Type</Translate>,
-    flexGrow: 2,
-    render: (row: PreAuthorizationTrackingResponse) => row.preauthSubType || '-'
-  },
-  {
     key: 'totalNet',
     title: <Translate>Total Net</Translate>,
-    flexGrow: 2,
+    width: 100,
     render: (row: PreAuthorizationTrackingResponse) => formatMoney(row.totalNet)
-  },
-  {
-    key: 'status',
-    title: <Translate>Status</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => (
-      <MyBadgeStatus contant={row.status || '-'} color={getStatusColor(row.status)} />
-    )
   },
   {
     key: 'outcome',
     title: <Translate>Outcome</Translate>,
-    flexGrow: 3,
+    width: 130,
     render: (row: PreAuthorizationTrackingResponse) => row.outcome || '-'
+  },
+  {
+    key: 'preauthType',
+    title: <Translate>Pre-Auth Type</Translate>,
+    width: 110,
+    render: (row: PreAuthorizationTrackingResponse) => row.preauthType || '-'
+  },
+  {
+    key: 'dateOrdered',
+    title: <Translate>Date Ordered</Translate>,
+    width: 140,
+    render: (row: PreAuthorizationTrackingResponse) => row.dateOrdered || '-'
+  },
+  {
+    key: 'approvalRequestId',
+    title: <Translate>Request ID</Translate>,
+    width: 130,
+    render: (row: PreAuthorizationTrackingResponse) => row.approvalRequestId || '-'
+  },
+  {
+    key: 'approvalResponseId',
+    title: <Translate>Response ID</Translate>,
+    width: 130,
+    render: (row: PreAuthorizationTrackingResponse) => row.approvalResponseId || '-'
   },
   {
     key: 'message',
     title: <Translate>Message</Translate>,
-    flexGrow: 4,
+    width: 180,
     expandable: true,
     render: (row: PreAuthorizationTrackingResponse) => row.message || row.disposition || '-'
   },
   {
-    key: 'itemDetails',
-    title: <Translate>Item Details</Translate>,
-    expandable: true,
-    render: (row: PreAuthorizationTrackingResponse) => {
-      const items = getPreAuthItems(row);
-      if (!items.length) return '-';
-
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {items.map((item, index) => (
-            <div
-              key={item.id ?? `${item.sequence ?? index}-${item.itemCode ?? index}`}
-              style={{
-                borderBottom: index < items.length - 1 ? '1px solid #e5e7eb' : 'none',
-                paddingBottom: index < items.length - 1 ? 8 : 0
-              }}
-            >
-              <div>
-                <strong>#{item.sequence ?? index + 1}</strong>{' '}
-                {item.itemCode || '-'} — {item.itemDescription || item.nonStandardDesc || '-'}
-              </div>
-              <div>
-                Type: {item.itemType || '-'} | Decision: {item.itemDecision || '-'} | Qty:{' '}
-                {item.quantity ?? '-'} {item.quantityCode || ''}
-              </div>
-              <div>
-                Unit: {formatMoney(item.unitPrice)} | Net: {formatMoney(item.net)} | Patient:{' '}
-                {formatMoney(item.patientShare)} | Payer: {formatMoney(item.payerShare)}
-              </div>
-              <div>
-                Waseel Item ID: {item.waseelItemId ?? '-'}
-                {item.reasonCodes ? ` | Reason: ${item.reasonCodes}` : ''}
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-  },
-  {
     key: 'isCancelled',
     title: <Translate>Cancelled</Translate>,
-    flexGrow: 2,
+    width: 100,
     render: (row: PreAuthorizationTrackingResponse) =>
       row.isCancelled ? (
         <MyBadgeStatus contant="Yes" color="#dc3545" />
@@ -295,26 +230,10 @@ export const getPreAuthorizationColumns = ({
       )
   },
   {
-    key: 'cancelStatus',
-    title: <Translate>Cancel Status</Translate>,
-    flexGrow: 3,
-    render: (row: PreAuthorizationTrackingResponse) => row.cancelStatus || '-'
-  },
-  {
     key: 'createdDate',
-    title: <Translate>Created Date</Translate>,
-    flexGrow: 3,
+    title: <Translate>Created</Translate>,
+    width: 140,
     render: (row: PreAuthorizationTrackingResponse) =>
       formatDateWithoutSeconds(row.createdDate) || '-'
-  },
-  {
-    key: 'action',
-    dataKey: '',
-    title: <Translate>ACTION</Translate>,
-    width: 220,
-    align: 'center',
-    render: (row: PreAuthorizationTrackingResponse) => (
-      <PreAuthorizationRowActions row={row} {...handlers} />
-    )
   }
 ];

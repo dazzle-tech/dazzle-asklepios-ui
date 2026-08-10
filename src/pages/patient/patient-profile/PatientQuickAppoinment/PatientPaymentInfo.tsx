@@ -82,6 +82,8 @@ import {
   newPatientInsurance
 } from '@/types/model-types-constructor-new';
 
+import WaseelCoverageDetailsView from '@/components/waseel/WaseelCoverageDetailsView';
+
 import type {
   BillingCoverageType,
   CreateAdvancePaymentRequest,
@@ -89,7 +91,6 @@ import type {
   EncounterBillingSummary,
   PatientInsurance,
   PrepareDefaultServicesRequest,
-  WaseelBenefitDetail,
   WaseelCoverageDetails
 } from '@/types/model-types-new';
 
@@ -113,7 +114,7 @@ import {
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
-import { formatEnumString, extractErrorMessage } from '@/utils';
+import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
@@ -655,6 +656,12 @@ const PatientPaymentInfo =
         useState(0);
 
       const [
+        eligibilityRefreshKey,
+        setEligibilityRefreshKey
+      ] =
+        useState(0);
+
+      const [
         pricingPreviewLoading,
         setPricingPreviewLoading
       ] =
@@ -779,7 +786,9 @@ const PatientPaymentInfo =
         isFetching:
           loadingWaseelCoverage,
         isError:
-          waseelCoverageError
+          waseelCoverageError,
+        refetch:
+          refetchWaseelCoverage
       } =
         useGetWaseelCoverageQuery(
           {
@@ -994,6 +1003,26 @@ const PatientPaymentInfo =
 
             await insuranceResponse.refetch();
 
+            setPreviewSettledEncounterId(null);
+            setDisplayReadyEncounterId(null);
+            setDefaultServiceRows(previous =>
+              previous.map(row => ({
+                ...row,
+                calculatedPrice: null,
+                priceSource: null,
+                priceListItemCode: null,
+                previewGrossAmount: null,
+                previewDiscountAmount: null,
+                previewTaxAmount: null,
+                previewNetAmount: null,
+                patientShare: null,
+                insuranceShare: null
+              }))
+            );
+            setEligibilityRefreshKey(previous => previous + 1);
+            await refetchSummary();
+            await refetchWaseelCoverage();
+
             dispatch(
               notify({
                 msg:
@@ -1012,13 +1041,8 @@ const PatientPaymentInfo =
           } catch (error: any) {
             dispatch(
               notify({
-                msg:
-                  extractErrorMessage(
-                    error
-                  ) ||
-                  'Eligibility check failed. Please verify insurance details or contact Waseel support.',
-                sev:
-                  'error'
+                msg: extractEligibilityErrorMessage(error),
+                sev: 'error'
               })
             );
           }
@@ -1027,6 +1051,8 @@ const PatientPaymentInfo =
           formState.patientInsuranceId,
           checkEligibility,
           insuranceResponse,
+          refetchSummary,
+          refetchWaseelCoverage,
           dispatch
         ]);
 
@@ -1589,6 +1615,7 @@ const PatientPaymentInfo =
           return JSON.stringify(
             {
               encounterId,
+              eligibilityRefreshKey,
               coverageType:
                 formState.coverageType,
               patientInsuranceId:
@@ -1614,6 +1641,7 @@ const PatientPaymentInfo =
           );
         }, [
           encounterId,
+          eligibilityRefreshKey,
           formState.coverageType,
           formState.patientInsuranceId,
           summary.currency,
@@ -4884,155 +4912,15 @@ const PatientPaymentInfo =
                   </div>
                 }
               >
-                {!formState.patientInsuranceId ? (
-                  <Message showIcon type="info">
-                    Select a patient insurance to load Waseel coverage.
-                  </Message>
-                ) : loadingWaseelCoverage ? (
-                  <Message showIcon type="info">
-                    Loading Waseel eligibility benefits...
-                  </Message>
-                ) : waseelCoverageError ? (
-                  <Message showIcon type="warning">
-                    No successful Waseel eligibility found. Please run eligibility check from the patient profile first.
-                  </Message>
-                ) : waseelCoverage ? (
-                  <>
-                    <div className="payment-info__waseel-metrics">
-                      <div className="payment-info__metric-card">
-                        <span className="payment-info__metric-label">
-                          Copayment %
-                        </span>
-                        <strong>
-                          {waseelCoverage.copaymentPercent ?? 0}%
-                        </strong>
-                      </div>
-                      <div className="payment-info__metric-card">
-                        <span className="payment-info__metric-label">
-                          Copayment Cap
-                        </span>
-                        <strong>
-                          {formatMoney(
-                            waseelCoverage.copaymentCap,
-                            activeCurrency
-                          )}
-                        </strong>
-                      </div>
-                      <div className="payment-info__metric-card">
-                        <span className="payment-info__metric-label">
-                          Network
-                        </span>
-                        <strong>
-                          {waseelCoverage.network ?? '-'}
-                        </strong>
-                      </div>
-                      <div className="payment-info__metric-card">
-                        <span className="payment-info__metric-label">
-                          Coverage Status
-                        </span>
-                        <strong>
-                          {waseelCoverage.inforce ??
-                            waseelCoverage.coverageStatus ??
-                            '-'}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="payment-info__table-wrapper payment-info__table-wrapper--compact">
-                      <MyTable
-                        data={
-                          waseelCoverage.benefits ??
-                          []
-                        }
-                        columns={[
-                          {
-                            key: 'categoryKey',
-                            title: 'Category',
-                            dataKey: 'categoryKey',
-                            width: 180,
-                            render: (
-                              row: WaseelBenefitDetail
-                            ) =>
-                              row.categoryKey ?? '-'
-                          },
-                          {
-                            key: 'itemCode',
-                            title: 'Item Code',
-                            dataKey: 'itemCode',
-                            width: 120,
-                            render: (
-                              row: WaseelBenefitDetail
-                            ) =>
-                              row.itemCode ?? '-'
-                          },
-                          {
-                            key: 'itemName',
-                            title: 'Item',
-                            dataKey: 'itemName',
-                            width: 160,
-                            render: (
-                              row: WaseelBenefitDetail
-                            ) =>
-                              row.itemName ?? '-'
-                          },
-                          {
-                            key: 'typeDisplay',
-                            title: 'Benefit Type',
-                            dataKey: 'typeDisplay',
-                            width: 220,
-                            render: (
-                              row: WaseelBenefitDetail
-                            ) =>
-                              row.typeDisplay ??
-                              row.typeCode ??
-                              '-'
-                          },
-                          {
-                            key: 'value',
-                            title: 'Value',
-                            dataKey: 'value',
-                            width: 100,
-                            render: (
-                              row: WaseelBenefitDetail
-                            ) => {
-                              if (
-                                row.value == null ||
-                                row.value === ''
-                              ) {
-                                return row.unit ?? '-';
-                              }
-
-                              return row.unit
-                                ? `${row.value} ${row.unit}`
-                                : row.value;
-                            }
-                          }
-                        ]}
-                        loading={
-                          loadingWaseelCoverage
-                        }
-                        height={220}
-                        page={0}
-                        rowsPerPage={
-                          waseelCoverage
-                            .benefits
-                            ?.length ?? 0
-                        }
-                        totalCount={
-                          waseelCoverage
-                            .benefits
-                            ?.length ?? 0
-                        }
-                        onPageChange={() =>
-                          undefined
-                        }
-                        onRowsPerPageChange={() =>
-                          undefined
-                        }
-                      />
-                    </div>
-                  </>
-                ) : null}
+                <WaseelCoverageDetailsView
+                  variant="payment"
+                  waseelCoverage={waseelCoverage}
+                  loading={loadingWaseelCoverage}
+                  hasError={Boolean(waseelCoverageError)}
+                  currency={activeCurrency}
+                  showEmptyMessage={!formState.patientInsuranceId}
+                  emptyMessage="Select a patient insurance to load Waseel coverage."
+                />
               </Panel>
             ) : null}
           </Panel>

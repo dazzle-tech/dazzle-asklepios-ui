@@ -182,7 +182,7 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
           value: formatMoney(reservedBalance, resolvedCurrency)
         },
         {
-          label: 'Ledger debt',
+          label: 'Patient ledger debt',
           value: formatMoney(totalDebt, resolvedCurrency),
           tone: totalDebt > 0 ? 'danger' : undefined
         }

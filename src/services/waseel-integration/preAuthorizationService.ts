@@ -218,6 +218,20 @@ export const preAuthorizationApi = createApi({
       }
     }),
 
+    refreshEncounterPreAuthorizationLocal: builder.mutation<
+      EncounterPreAuthorizationRefreshResponse,
+      { encounterId: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/refresh-local`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
     payRejectedPreAuthorizationItemAsCash: builder.mutation<
       unknown,
       { encounterId: number; patientServiceProductId: number }
@@ -260,6 +274,7 @@ export const {
   useCancelPreAuthorizationMutation,
   useCheckEncounterEligibilityMutation,
   useRefreshEncounterPreAuthorizationMutation,
+  useRefreshEncounterPreAuthorizationLocalMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useCloneRejectedPreAuthorizationItemMutation
 } = preAuthorizationApi;
