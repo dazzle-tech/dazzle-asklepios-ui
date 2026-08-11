@@ -170,6 +170,7 @@ const MyInput = ({
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
+  const dateOpenGuardRef = useRef(0);
   const [dateText, setDateText] = useState('');
   const dateTextRef = useRef<HTMLInputElement>(null);
 
@@ -214,7 +215,17 @@ const MyInput = ({
   };
 
   useEffect(() => {
+    if (isDateOpen) {
+      dateOpenGuardRef.current = Date.now();
+    }
+  }, [isDateOpen]);
+
+  useEffect(() => {
     const handleScroll = event => {
+      if (isDateOpen && Date.now() - dateOpenGuardRef.current < 200) {
+        return;
+      }
+
       const path = event.composedPath ? event.composedPath() : [];
 
       const menuClassList = [
@@ -248,7 +259,7 @@ const MyInput = ({
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, []);
+  }, [isDateOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);

@@ -306,9 +306,25 @@
 }
 
 
+.appointments-main-card.right-section {
+  overflow: visible;
+
+  > .rs-panel-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+    padding: 0;
+  }
+}
+
 .appointments-content-grid {
   padding: 10px;
   background: #ffffff;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
 }
 
 .appointments-calendar-pane {
@@ -322,7 +338,8 @@
 .appointments-right-pane {
   border-radius: 12px;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   .today-appointments-panel {
     flex: 1 1 0;
@@ -428,8 +445,52 @@
 }
 
 .appointments-mini-panel {
-  border: 1px solid var(--rs-border-primary) !important;
+  border: 1px solid var(--rs-border-primary);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  flex: 0 0 auto;
+  overflow: visible;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--rs-bg-card, #fff);
+  box-sizing: border-box;
+}
+
+.appointments-mini-panel__view-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.appointments-sidebar-calendar.rs-calendar {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 320px !important;
+  font-size: 12px;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+.appointments-mini-panel .rs-calendar-header {
+  width: 100% !important;
+  max-width: 100%;
+  padding-inline: 4px;
+  box-sizing: border-box;
+}
+
+.appointments-mini-panel .rs-calendar-panel {
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.appointments-mini-panel .rs-calendar-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.appointments-mini-panel .rs-calendar-table-cell-content {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .appointments-legend {
@@ -840,6 +901,19 @@
 
 .waiting-list-picker-popup {
   z-index: 1400 !important;
+  max-width: min(280px, calc(100vw - 24px));
+
+  .rs-calendar-header {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .rs-calendar {
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible !important;
+  }
 }
 
 .waiting-list-panel__filters {
@@ -864,8 +938,8 @@
   }
 
   &--compact {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
     margin-bottom: 6px;
     overflow: visible;
     position: relative;
@@ -878,6 +952,22 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .my-input-container > div {
+      width: 100% !important;
+      max-width: 100%;
+    }
+
+    .custom-date-input {
+      width: 100% !important;
+      max-width: 100%;
+      box-sizing: border-box;
+      min-height: 30px;
+
+      .rs-input.my-input {
+        line-height: 28px;
+      }
     }
   }
 
