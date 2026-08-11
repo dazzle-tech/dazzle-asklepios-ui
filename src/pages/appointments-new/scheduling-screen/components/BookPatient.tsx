@@ -11,12 +11,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faUser } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetAppointableServicesByLoggedInFacilityQuery } from '@/services/setup/serviceService';
+import {
+  useGetServicesByDepartmentQuery,
+  useGetServiceByIdQuery
+} from '@/services/setup/serviceService';
 import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetRoomByIdQuery } from '@/services/setup/room/roomService';
-import { useGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
@@ -452,23 +454,8 @@ const BookPatient = ({
     [practitioners]
   );
 
-  const serviceOptions = useMemo(
-    () =>
-      (services ?? []).map((s: any) => ({
-        id: s?.id,
-        label: s?.serviceName || s?.name || `Service #${s?.id ?? ''}`
-      })),
-    [services]
-  );
-
   const { data: practitionersAppointableByLoggedInFacility } =
     useGetAppointablePractitionerByLoggedInFacilityQuery(
-      { page: 0, size: 500, sort: 'id,asc' },
-      { skip: !open }
-    );
-
-  const { data: servicesAppointableByLoggedInFacility } =
-    useGetAppointableServicesByLoggedInFacilityQuery(
       { page: 0, size: 500, sort: 'id,asc' },
       { skip: !open }
     );
@@ -488,16 +475,162 @@ const BookPatient = ({
     }));
   }, [practitionerOptions, practitionersAppointableByLoggedInFacility]);
 
+  const selectedDefaultPractitionerId = useMemo(() => {
+    const parsed = Number(record?.defaultPractitioner);
+
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [record?.defaultPractitioner]);
+
+  const selectedDefaultServiceId = useMemo(() => {
+    const parsed = Number(record?.defaultService);
+
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [record?.defaultService]);
+
+  const { data: selectedDefaultPractitionerResponse } = useGetPractitionerByIdQuery(
+    selectedDefaultPractitionerId as number,
+    { skip: !open || !selectedDefaultPractitionerId }
+  );
+
+  const practitionerSpecialty = useMemo(() => {
+    if (!selectedDefaultPractitionerId) return '';
+
+    const fromList = (practitioners ?? []).find(
+      (p: any) => Number(p?.id) === selectedDefaultPractitionerId
+    );
+    if (fromList?.specialty) return String(fromList.specialty).trim();
+
+    const appointableList = (practitionersAppointableByLoggedInFacility as any)?.data ?? [];
+    const fromAppointable = appointableList.find(
+      (p: any) => Number(p?.id) === selectedDefaultPractitionerId
+    );
+    if (fromAppointable?.specialty) return String(fromAppointable.specialty).trim();
+
+    const practitioner =
+      (selectedDefaultPractitionerResponse as any)?.data ?? selectedDefaultPractitionerResponse;
+
+    return String(practitioner?.specialty ?? '').trim();
+  }, [
+    selectedDefaultPractitionerId,
+    practitioners,
+    practitionersAppointableByLoggedInFacility,
+    selectedDefaultPractitionerResponse
+  ]);
+
+  const { data: specialtyLinkedServicesResponse, isFetching: isSpecialtyServicesFetching } =
+    useGetServicesByDepartmentQuery(
+      {
+        sourceId: appointmentDepartmentId as number,
+        specialty: practitionerSpecialty,
+        page: 0,
+        size: 200,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          !appointmentDepartmentId ||
+          !selectedDefaultPractitionerId ||
+          !practitionerSpecialty,
+        refetchOnMountOrArgChange: true
+      }
+    );
+
+  const specialtyServiceIds = useMemo(() => {
+    const list = (specialtyLinkedServicesResponse as any)?.data ?? [];
+    return new Set(list.map((s: any) => Number(s?.id ?? s?.serviceId)).filter((id: number) => Number.isFinite(id)));
+  }, [specialtyLinkedServicesResponse]);
+
+  const needsSelectedServiceLookup =
+    Boolean(selectedDefaultServiceId) && !specialtyServiceIds.has(selectedDefaultServiceId as number);
+
+  const { data: selectedDefaultServiceResponse } = useGetServiceByIdQuery(
+    selectedDefaultServiceId as number,
+    { skip: !open || !selectedDefaultServiceId || !needsSelectedServiceLookup }
+  );
+
+  const mapServiceOption = (s: any) => ({
+    id: s?.id ?? s?.serviceId,
+    label: s?.serviceName || s?.name || `Service #${s?.id ?? s?.serviceId ?? ''}`
+  });
+
   const effectiveServiceOptions = useMemo(() => {
-    if ((serviceOptions ?? []).length > 0) return serviceOptions;
+    if (!selectedDefaultPractitionerId || !practitionerSpecialty) return [];
 
-    const fallback = (servicesAppointableByLoggedInFacility as any)?.data ?? [];
+    const specialtyServices = (specialtyLinkedServicesResponse as any)?.data ?? [];
+    let options = specialtyServices.map(mapServiceOption);
 
-    return (fallback ?? []).map((s: any) => ({
-      id: s?.id,
-      label: s?.serviceName || s?.name || `Service #${s?.id ?? ''}`
-    }));
-  }, [serviceOptions, servicesAppointableByLoggedInFacility]);
+    if (selectedDefaultServiceId && !specialtyServiceIds.has(selectedDefaultServiceId)) {
+      const svc =
+        (selectedDefaultServiceResponse as any)?.data ?? selectedDefaultServiceResponse;
+
+      const serviceName =
+        svc?.serviceName ||
+        svc?.name ||
+        appointmentData?.defaultServiceName ||
+        null;
+
+      if (serviceName) {
+        options = [
+          ...options,
+          {
+            id: selectedDefaultServiceId,
+            label: String(serviceName)
+          }
+        ];
+      }
+    }
+
+    return options;
+  }, [
+    selectedDefaultPractitionerId,
+    practitionerSpecialty,
+    specialtyLinkedServicesResponse,
+    specialtyServiceIds,
+    selectedDefaultServiceId,
+    selectedDefaultServiceResponse,
+    appointmentData?.defaultServiceName
+  ]);
+
+  useEffect(() => {
+    if (!open || readOnly) return;
+
+    if (!selectedDefaultPractitionerId || !practitionerSpecialty) {
+      if (record?.defaultService != null) {
+        setRecord((prev: any) => ({ ...prev, defaultService: null }));
+      }
+      return;
+    }
+
+    if (isSpecialtyServicesFetching) return;
+
+    const options = effectiveServiceOptions;
+    const currentId = Number(record?.defaultService);
+
+    if (!Number.isFinite(currentId) || currentId <= 0) {
+      if (options.length === 1) {
+        setRecord((prev: any) => ({ ...prev, defaultService: options[0].id }));
+      }
+      return;
+    }
+
+    const stillValid = options.some((o: any) => Number(o.id) === currentId);
+
+    if (!stillValid) {
+      setRecord((prev: any) => ({
+        ...prev,
+        defaultService: options.length === 1 ? options[0].id : null
+      }));
+    }
+  }, [
+    open,
+    readOnly,
+    selectedDefaultPractitionerId,
+    practitionerSpecialty,
+    isSpecialtyServicesFetching,
+    effectiveServiceOptions,
+    record?.defaultService
+  ]);
 
   useEffect(() => {
     if (!open || !readOnly || !appointmentData) return;
@@ -1317,7 +1450,12 @@ const BookPatient = ({
                             selectDataLabel="label"
                             selectDataValue="id"
                             width="100%"
-                            disabled={readOnly}
+                            disabled={
+                              readOnly ||
+                              !selectedDefaultPractitionerId ||
+                              !practitionerSpecialty ||
+                              isSpecialtyServicesFetching
+                            }
                           />
 
                           <MyInput
