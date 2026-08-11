@@ -158,6 +158,93 @@ export const patientEncounterService = createApi({
           : ['PatientEncounter']
     }),
 
+    searchEncounters: builder.query<
+      PagedResult<PatientEncounter>,
+      {
+        facilityId?: Id;
+        departmentId?: Id;
+        fromDate?: string;
+        toDate?: string;
+        statuses?: string | string[];
+        statusIn?: string[];
+        patientName?: string;
+        mrn?: string;
+        encounterReasons?: string[];
+        chiefComplaint?: string;
+        priorities?: string[];
+        hasPrescription?: boolean;
+        hasOrder?: boolean;
+        isObserved?: boolean;
+      } & PagedParams
+    >({
+      query: ({
+        facilityId,
+        departmentId,
+        fromDate,
+        toDate,
+        statuses,
+        statusIn,
+        patientName,
+        mrn,
+        encounterReasons,
+        chiefComplaint,
+        priorities,
+        hasPrescription,
+        hasOrder,
+        isObserved,
+        page,
+        size,
+        sort = 'id,desc',
+      }) => {
+        const src = statuses ?? statusIn;
+        const statusesCsv = Array.isArray(src)
+          ? src.join(',')
+          : src;
+
+        return {
+          url: `/api/patient/encounter/search`,
+          method: 'GET',
+          params: {
+            facilityId,
+            departmentId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterReasons,
+            chiefComplaint,
+            priorities,
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page,
+            size,
+            sort,
+          },
+        };
+      },
+
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : response?.content ?? [];
+
+        return mapPaged(rows, meta);
+      },
+
+      providesTags: res =>
+        res
+          ? [
+              ...res.data.map(e => ({
+                type: 'PatientEncounter' as const,
+                id: e.id,
+              })),
+              'PatientEncounter',
+            ]
+          : ['PatientEncounter'],
+    }),
+
     getPreviousEncountersSameDepartment: builder.query<
       PagedResult<PatientEncounter>,
       { patientId: Id; departmentId: Id } & PagedParams
@@ -405,6 +492,8 @@ export const {
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
 
+  useSearchEncountersQuery,
+  useLazySearchEncountersQuery,
   useCountTodayDepartmentTotalPatientsQuery,
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
