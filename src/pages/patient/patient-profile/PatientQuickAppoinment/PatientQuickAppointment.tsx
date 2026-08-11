@@ -146,6 +146,7 @@ const PatientQuickAppointment = ({
 
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
+  const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
 
   const isViewMode = Boolean(isDisabeld);
   const isPaymentMode = initialStep === 1;
@@ -440,6 +441,7 @@ const PatientQuickAppointment = ({
             onPaymentSaved={onEncounterSaved}
             onReceiptClosed={handleReceiptClosed}
             onPaymentDeferred={handlePaymentDeferred}
+            onConfirmingChange={setPaymentConfirmLoading}
           />
         );
       default:
@@ -498,7 +500,8 @@ const PatientQuickAppointment = ({
               <MyButton
                 appearance="primary"
                 onClick={handlePaymentConfirm}
-                disabled={paymentReadOnly}
+                disabled={paymentReadOnly || paymentConfirmLoading}
+                loading={paymentConfirmLoading}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
                 Confirm

@@ -61,6 +61,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentViewOnly, setPaymentViewOnly] = useState(false);
+  const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<PaymentReceiptData | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<any>({
@@ -281,6 +282,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       setPaymentModalOpen(open);
       if (!open) {
         setPaymentViewOnly(false);
+        setPaymentConfirmLoading(false);
         setReceiptOpen(false);
         setReceiptData(null);
         paymentInfoRef.current?.clear?.();
@@ -530,6 +532,8 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           cancelButtonLabel="Close"
           actionButtonLabel="Confirm"
           actionButtonFunction={handlePaymentConfirm}
+          actionButtonLoading={paymentConfirmLoading}
+          isDisabledActionBtn={paymentConfirmLoading}
           handleCancelFunction={() => paymentInfoRef.current?.clear?.()}
           content={
             paymentModalOpen && selectedVisit ? (
@@ -547,6 +551,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                 onReceiptReady={handleReceiptReady}
                 onReceiptClosed={handleReceiptClose}
                 onViewOnlyChange={setPaymentViewOnly}
+                onConfirmingChange={setPaymentConfirmLoading}
               />
             ) : null
           }
