@@ -754,15 +754,7 @@ const handleCancel = async () => {
                             disableByField='isValid'
 
                 />
-                <MyInput
-                    width="100%"
-                    column
-                    fieldLabel="Other Reason"
-                    fieldName="otherReason"
-                    record={otherReason}
-                    setRecord={setOtherReason}
-                    disabled={Boolean(selectedReasonValue) || isReasonViewOnly}
-                />
+             
             </div>
         </Form>
     );
