@@ -435,7 +435,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         </div>
       )}
 
-      <MyTable data={lookupsLoading ? [] : rows}
+      <MyTable data={rows}
         columns={columns}
         rowClassName={isReadOnly ? undefined : isSelected}
         onRowClick={isReadOnly ? undefined : rowData => { setPatientServiceAndProduct(rowData); }}
