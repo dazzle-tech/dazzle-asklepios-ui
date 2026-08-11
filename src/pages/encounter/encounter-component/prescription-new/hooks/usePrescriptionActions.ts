@@ -68,68 +68,69 @@ export const usePrescriptionActions = ({
 
         try {
             await Promise.all(
-                rowsToCancel.filter((r: any) => r?.id != null).map((r: any) => deleteMedication(Number(r.id)).unwrap())
+                rowsToCancel
+                    .filter((r: any) => r?.id != null)
+                    .map((r: any) =>
+                        deleteMedication({
+                            id: Number(r.id),
+                            cancellationReason: patientPrescriptionMedicationObject.cancellationReason,
+                        }).unwrap()
+                    )
             );
 
-            dispatch(notify({ msg: 'Selected medications deleted successfully', type: 'success' } as any));
+            dispatch(
+                notify({
+                    msg: 'Selected medications deleted successfully',
+                    type: 'success'
+                } as any)
+            );
 
             setOpenCancellation(false);
             setSelectedRows([]);
             await medicRefetch();
         } catch {
-            dispatch(notify({ msg: 'One or more deletions failed', type: 'error' } as any));
+            dispatch(notify({ msg: 'One or more deletions failed', type: 'error' }) as any);
         }
     };
 
-   const clearPrescriptionSelection = () => {
-  setCurrentPrescription(null);
-  setPreKeyRecord({ preKey: null });
-  setSelectedRows([]);
-  setSelectedPreviewMedication(null);
 
-  setPatientPrescriptionMedicationObject({
-    ...newPatientPrescriptionMedication,
-    prescriptionHeaderId: null
-  } as any);
-};
+    const handleConfirmSubmitPres = async () => {
+        if (!currentPrescription?.id) return;
 
-const handleConfirmSubmitPres = async () => {
-  if (!currentPrescription?.id) return;
+        const submittedPrescriptionId = currentPrescription.id;
 
-  const submittedPrescriptionId = currentPrescription.id;
+        const nonCancelledMeds = patientPrescriptionMedications.filter(
+            (m: any) => !isCanceledStatus((m as any)?.status)
+        );
 
-  const nonCancelledMeds = patientPrescriptionMedications.filter(
-    (m: any) => !isCanceledStatus((m as any)?.status)
-  );
+        if (nonCancelledMeds.length === 0) {
+            dispatch(notify({ msg: 'Cannot submit: all medications are cancelled', type: 'warning' } as any));
+            return;
+        }
 
-  if (nonCancelledMeds.length === 0) {
-    dispatch(notify({ msg: 'Cannot submit: all medications are cancelled', type: 'warning' } as any));
-    return;
-  }
+        try {
+            await submitPrescription({ id: submittedPrescriptionId }).unwrap();
 
-  try {
-    await submitPrescription({ id: submittedPrescriptionId }).unwrap();
+            await preRefetch();
+            await medicRefetch();
 
-    await preRefetch();
-    await medicRefetch();
+            dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
 
-    dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
+            setSummaryModalOpen(false);
+            setOpenCancellation(false);
+            setCurrentPrescription(null);
+            setPreKeyRecord({ preKey: null });
+            setSelectedRows([]);
+            setSelectedPreviewMedication(null);
 
-    setSummaryModalOpen(false);
-    setOpenCancellation(false);
-    setCurrentPrescription(null);
-    setPreKeyRecord({ preKey: null });
-    setSelectedRows([]);
-    setSelectedPreviewMedication(null);
-
-    setPatientPrescriptionMedicationObject({
-      ...newPatientPrescriptionMedication,
-      prescriptionHeaderId: null
-    } as any);
-  } catch {
-    dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
-  }
-};
+            setPatientPrescriptionMedicationObject({
+                ...newPatientPrescriptionMedication,
+                prescriptionHeaderId: null
+            } as any);
+        } catch {
+            dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
+        }
+    };
 
     const handleNewPrescriptionAndAddMedication = async () => {
         let prescription = currentPrescription;
