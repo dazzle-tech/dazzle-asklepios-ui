@@ -328,6 +328,21 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
+      key: 'quantity',
+
+      title: 'Qty',
+
+      width: 70,
+
+      render: (row: UnifiedBillingChargeRow) => {
+        const qty = Number(row.quantity ?? 1);
+        return Number.isInteger(qty) ? qty : qty.toFixed(2);
+      }
+
+    },
+
+    {
+
       key: 'priceSource',
 
       title: 'Price source',

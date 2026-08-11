@@ -11,6 +11,7 @@ import React, {
 import {
   Checkbox,
   Form,
+  Loader,
   Message,
   Panel,
   Tag,
@@ -196,6 +197,10 @@ type PatientPaymentInfoProps = {
 
   onViewOnlyChange?: (
     viewOnly: boolean
+  ) => void;
+
+  onConfirmingChange?: (
+    confirming: boolean
   ) => void;
 };
 
@@ -398,12 +403,14 @@ const SummaryMetric = ({
   label,
   value,
   variant = 'default',
-  mono = false
+  mono = false,
+  loading = false
 }: {
   label: string;
   value: string;
   variant?: MetricVariant;
   mono?: boolean;
+  loading?: boolean;
 }) => (
   <div
     className={`payment-info__summary-card${
@@ -428,7 +435,11 @@ const SummaryMetric = ({
         .filter(Boolean)
         .join(' ')}
     >
-      {value}
+      {loading ? (
+        <Loader size="xs" className="payment-info__metric-loader" />
+      ) : (
+        value
+      )}
     </span>
   </div>
 );
@@ -436,11 +447,13 @@ const SummaryMetric = ({
 const BillingMetric = ({
   label,
   value,
-  variant = 'default'
+  variant = 'default',
+  loading = false
 }: {
   label: string;
   value: string;
   variant?: MetricVariant;
+  loading?: boolean;
 }) => (
   <div className="payment-info__metric-row">
     <span className="payment-info__metric-label">
@@ -456,7 +469,11 @@ const BillingMetric = ({
         .filter(Boolean)
         .join(' ')}
     >
-      {value}
+      {loading ? (
+        <Loader size="xs" className="payment-info__metric-loader" />
+      ) : (
+        value
+      )}
     </span>
   </div>
 );
@@ -507,7 +524,8 @@ const PatientPaymentInfo =
         onReceiptClosed,
         onPaymentDeferred,
         onNothingToPay,
-        onViewOnlyChange
+        onViewOnlyChange,
+        onConfirmingChange
       },
       ref
     ) => {
@@ -709,6 +727,12 @@ const PatientPaymentInfo =
       const [
         pricingPreviewLoading,
         setPricingPreviewLoading
+      ] =
+        useState(false);
+
+      const [
+        isConfirming,
+        setIsConfirming
       ] =
         useState(false);
 
@@ -980,7 +1004,8 @@ const PatientPaymentInfo =
         Boolean(
           isViewOnlyMode ||
             lockAfterConfirm ||
-            isBusy
+            isBusy ||
+            isConfirming
         );
 
       const displayedEligibilityStatus =
@@ -1804,21 +1829,9 @@ const PatientPaymentInfo =
         }
 
         if (
-          loadingEncounterSummary
+          loadingEncounterSummary ||
+          pricingPreviewLoading
         ) {
-          return;
-        }
-
-        if (
-          summaryIsCalculated &&
-          !(
-            isInsurance &&
-            formState.patientInsuranceId
-          )
-        ) {
-          setDisplayReadyEncounterId(
-            encounterId
-          );
           return;
         }
 
@@ -1862,12 +1875,6 @@ const PatientPaymentInfo =
           setDisplayReadyEncounterId(
             encounterId
           );
-          return;
-        }
-
-        if (
-          pricingPreviewLoading
-        ) {
           return;
         }
 
@@ -2144,8 +2151,9 @@ const PatientPaymentInfo =
 
       const amountsLoading =
         Boolean(encounterId) &&
-        displayReadyEncounterId !==
-          encounterId;
+        (displayReadyEncounterId !==
+          encounterId ||
+          pricingPreviewLoading);
 
       const walletAmountLoading =
         loadingLedgerBalance &&
@@ -2271,18 +2279,22 @@ const PatientPaymentInfo =
         if (
           amountsLoading ||
           !paymentMethodSelected ||
-          outstanding <= 0 ||
           lockAfterConfirm ||
           formState.payZeroNow
         ) {
           return;
         }
 
+        const nextAmount =
+          outstanding > 0
+            ? outstanding
+            : 0;
+
         setFormState(
           previous => {
             if (
-              previous.paymentAmount >
-              0
+              previous.paymentAmount ===
+              nextAmount
             ) {
               return previous;
             }
@@ -2290,7 +2302,7 @@ const PatientPaymentInfo =
             return {
               ...previous,
               paymentAmount:
-                outstanding
+                nextAmount
             };
           }
         );
@@ -3027,7 +3039,8 @@ const PatientPaymentInfo =
 
       const handleConfirm =
         async () => {
-          lastConfirmPayZeroNowRef.current = false;
+          lastConfirmPayZeroNowRef.current =
+            false;
 
           if (
             isViewOnlyMode
@@ -3042,85 +3055,96 @@ const PatientPaymentInfo =
             return false;
           }
 
-          if (
-            hasNothingToBill
-          ) {
-            try {
-              const {
-                message:
-                  preparedMessage
-              } =
-                await prepareServices();
+          setIsConfirming(
+            true
+          );
+          onConfirmingChange?.(
+            true
+          );
 
-              await refetchSummary();
+          try {
+            if (
+              hasNothingToBill
+            ) {
+              try {
+                const {
+                  message:
+                    preparedMessage
+                } =
+                  await prepareServices();
 
-              setSummaryRefreshKey(
-                previous =>
-                  previous + 1
-              );
+                await refetchSummary();
 
-              dispatch(
-                notify({
-                  msg:
-                    preparedMessage ??
-                    'Encounter billing completed. No default services to bill.',
-                  sev: 'success'
-                })
-              );
+                setSummaryRefreshKey(
+                  previous =>
+                    previous + 1
+                );
 
-              if (
-                onPaymentSaved
+                dispatch(
+                  notify({
+                    msg:
+                      preparedMessage ??
+                      'Encounter billing completed. No default services to bill.',
+                    sev:
+                      'success'
+                  })
+                );
+
+                if (
+                  onPaymentSaved
+                ) {
+                  await onPaymentSaved();
+                }
+
+                if (
+                  onPaymentDeferred
+                ) {
+                  onPaymentDeferred();
+                } else if (
+                  onNothingToPay
+                ) {
+                  onNothingToPay();
+                } else if (
+                  onReceiptClosed
+                ) {
+                  onReceiptClosed();
+                }
+
+                return true;
+              } catch (
+                error: any
               ) {
-                await onPaymentSaved();
+                dispatch(
+                  notify({
+                    msg:
+                      normalizeError(
+                        error
+                      ),
+                    sev:
+                      'warning'
+                  })
+                );
+
+                return false;
               }
+            }
 
-              if (
-                onPaymentDeferred
-              ) {
-                onPaymentDeferred();
-              } else if (
-                onNothingToPay
-              ) {
-                onNothingToPay();
-              } else if (
-                onReceiptClosed
-              ) {
-                onReceiptClosed();
-              }
-
-              return true;
-            } catch (
-              error: any
+            if (
+              !hasPayableBalance
             ) {
               dispatch(
                 notify({
                   msg:
-                    normalizeError(
-                      error
-                    ),
-                  sev: 'warning'
+                    'All services for this encounter are already paid.',
+                  sev:
+                    'info'
                 })
               );
 
               return false;
             }
-          }
 
-          if (
-            !hasPayableBalance
-          ) {
-            dispatch(
-              notify({
-                msg:
-                  'All services for this encounter are already paid.',
-                sev: 'info'
-              })
-            );
-
-            return false;
-          }
-
-          try {
+            try {
             const {
               ids,
               message:
@@ -3332,6 +3356,14 @@ const PatientPaymentInfo =
             );
 
             return false;
+          }
+          } finally {
+            setIsConfirming(
+              false
+            );
+            onConfirmingChange?.(
+              false
+            );
           }
         };
 
@@ -3553,17 +3585,86 @@ const PatientPaymentInfo =
           partial:
             Partial<DefaultServiceRow>
         ) => {
+          const shouldRefreshPricing =
+            partial.isExempted !=
+              null ||
+            partial.quantity !=
+              null ||
+            partial.selected !=
+              null;
+
+          if (shouldRefreshPricing) {
+            setPricingPreviewLoading(
+              true
+            );
+            setDisplayReadyEncounterId(
+              null
+            );
+            setPreviewSettledEncounterId(
+              null
+            );
+          }
+
           setDefaultServiceRows(
             previous =>
               previous.map(
-                row =>
-                  row.serviceId ===
-                  serviceId
-                    ? {
-                        ...row,
-                        ...partial
-                      }
-                    : row
+                row => {
+                  if (
+                    row.serviceId !==
+                    serviceId
+                  ) {
+                    return shouldRefreshPricing
+                      ? {
+                          ...row,
+                          calculatedPrice:
+                            null,
+                          priceSource:
+                            null,
+                          priceListItemCode:
+                            null,
+                          previewGrossAmount:
+                            null,
+                          previewDiscountAmount:
+                            null,
+                          previewTaxAmount:
+                            null,
+                          previewNetAmount:
+                            null,
+                          patientShare:
+                            null,
+                          insuranceShare:
+                            null
+                        }
+                      : row;
+                  }
+
+                  return {
+                    ...row,
+                    ...partial,
+                    ...(shouldRefreshPricing
+                      ? {
+                          calculatedPrice:
+                            null,
+                          priceSource:
+                            null,
+                          priceListItemCode:
+                            null,
+                          previewGrossAmount:
+                            null,
+                          previewDiscountAmount:
+                            null,
+                          previewTaxAmount:
+                            null,
+                          previewNetAmount:
+                            null,
+                          patientShare:
+                            null,
+                          insuranceShare:
+                            null
+                        }
+                      : {})
+                  };
+                }
               )
           );
         };
@@ -4589,6 +4690,7 @@ const PatientPaymentInfo =
                 value={formatDisplayMoney(
                   previewTotals.netAmount
                 )}
+                loading={amountsLoading}
               />
               <SummaryMetric
                 label="Amount Due"
@@ -4596,6 +4698,7 @@ const PatientPaymentInfo =
                   previewTotals.patientOutstandingAmount
                 )}
                 variant="highlight"
+                loading={amountsLoading}
               />
               <SummaryMetric
                 label="Wallet Available"
@@ -4608,6 +4711,7 @@ const PatientPaymentInfo =
                       )
                 }
                 variant="success"
+                loading={walletAmountLoading}
               />
             </div>
 
@@ -5159,6 +5263,7 @@ const PatientPaymentInfo =
                 value={
                   summaryDisplayRecord.grossAmount
                 }
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Discount"
@@ -5166,6 +5271,7 @@ const PatientPaymentInfo =
                   summaryDisplayRecord.discountAmount
                 }
                 variant="muted"
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Exemption"
@@ -5173,12 +5279,14 @@ const PatientPaymentInfo =
                   summaryDisplayRecord.exemptionAmount
                 }
                 variant="muted"
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Tax"
                 value={
                   summaryDisplayRecord.taxAmount
                 }
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Net Amount"
@@ -5186,6 +5294,7 @@ const PatientPaymentInfo =
                   summaryDisplayRecord.netAmount
                 }
                 variant="highlight"
+                loading={amountsLoading}
               />
             </div>
           </div>
@@ -5200,12 +5309,14 @@ const PatientPaymentInfo =
                 value={
                   summaryDisplayRecord.patientResponsibilityAmount
                 }
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Insurance Share"
                 value={
                   summaryDisplayRecord.insuranceResponsibilityAmount
                 }
+                loading={amountsLoading}
               />
               <BillingMetric
                 label="Amount Due"
@@ -5213,6 +5324,7 @@ const PatientPaymentInfo =
                   summaryDisplayRecord.patientOutstandingAmount
                 }
                 variant="highlight"
+                loading={amountsLoading}
               />
             </div>
           </div>
@@ -5228,12 +5340,14 @@ const PatientPaymentInfo =
                   summaryDisplayRecord.walletAvailableBalance
                 }
                 variant="success"
+                loading={walletAmountLoading}
               />
               <BillingMetric
                 label="Reserved Balance"
                 value={
                   summaryDisplayRecord.walletReservedBalance
                 }
+                loading={walletAmountLoading}
               />
             </div>
           </div>

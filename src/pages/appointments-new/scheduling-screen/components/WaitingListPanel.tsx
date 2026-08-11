@@ -732,6 +732,7 @@ const WaitingListPanel = ({ facilityId, departmentId, departmentOptions = [], on
           setRecord={handleFilterRecordChange}
           width="100%"
           preventOverflow={false}
+          menuClassName="waiting-list-picker-popup"
           container={PICKER_MENU_CONTAINER}
         />
       </div>
