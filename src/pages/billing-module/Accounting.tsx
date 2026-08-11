@@ -123,6 +123,12 @@ const Accounting: React.FC = () => {
     setCoverageType('SELF_PAY');
     setSelectedInsuranceId(null);
     setSelectedChargeRowIds([]);
+    setDepositModalOpen(false);
+    setCollectPaymentModalOpen(false);
+    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setPreAuthActionLoadingId(null);
+    setCanCloseCalculation(true);
+    setBillingRefreshPending(false);
   }, [patientId]);
 
   useEffect(() => {
@@ -164,6 +170,10 @@ const Accounting: React.FC = () => {
     setDepositModalOpen(false);
     setCollectPaymentModalOpen(false);
     setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setPreAuthActionLoadingId(null);
+    setCanCloseCalculation(true);
+    setBillingRefreshPending(false);
+    setExpand(false);
   };
 
   const handleCollectRemaining = () => {
@@ -521,6 +531,14 @@ const Accounting: React.FC = () => {
                 patientId={patientId}
                 encounterId={selectedEncounterId}
                 departmentId={departmentId}
+                specialty={selectedEncounter?.specialty}
+                practitionerId={
+                  toNumber(
+                    selectedEncounter?.practitionerId ??
+                      (selectedEncounter as { practitioner?: { id?: number } })?.practitioner?.id,
+                    0
+                  ) || null
+                }
                 facilityId={facilityId != null ? Number(facilityId) : null}
                 currency={summary.currency ?? facilityCurrency}
                 summary={summary}
@@ -700,7 +718,7 @@ const Accounting: React.FC = () => {
           <PatientBillingSide
             patient={patient}
             onDeposit={() => setDepositModalOpen(true)}
-            setPatient={handleClosePatient}
+            onClearPatient={handleClosePatient}
           />
           <div className="billing-accounting billing-accounting__sidebar-timeline">
             <div className="billing-accounting__panel">

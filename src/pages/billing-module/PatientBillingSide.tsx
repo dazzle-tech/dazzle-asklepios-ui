@@ -14,7 +14,6 @@ import MyButton from '@/components/MyButton/MyButton';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPrimaryDocumentByPatientQuery } from '@/services/patients/patientDocumentsService';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
-import { newPatient } from '@/types/model-types-constructor-new';
 import { ApAttachment } from '@/types/model-types';
 
 import { usePatientRemainingBalance } from './accounting/hooks/usePatientRemainingBalance';
@@ -25,7 +24,7 @@ import '../encounter/encounter-main-info-section/styles.less';
 interface PatientBillingSideProps {
   patient: any;
   onDeposit?: () => void;
-  setPatient?: (patient: any) => void;
+  onClearPatient?: () => void;
 }
 
 const formatAmount = (amount: number | null | undefined) =>
@@ -37,7 +36,7 @@ const formatAmount = (amount: number | null | undefined) =>
 const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
   patient,
   onDeposit,
-  setPatient
+  onClearPatient
 }) => {
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
 
@@ -95,12 +94,12 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
 
   return (
     <Panel className="patient-panel">
-      {setPatient && (
+      {onClearPatient && (
         <div className="patient-panel-close-btn">
           <IoMdClose
             size={22}
             className="icons-style"
-            onClick={() => setPatient({ ...newPatient })}
+            onClick={onClearPatient}
           />
         </div>
       )}
