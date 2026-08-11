@@ -147,9 +147,11 @@ export const useBillingAccountingData = ({
     refetchOnMountOrArgChange: true
   });
 
-  const encounters = encountersResponse?.data ?? [];
+  const encounters = patientId == null ? [] : (encountersResponse?.data ?? []);
   const selectedEncounter =
-    encounters.find(encounter => encounter.id === selectedEncounterId) ?? null;
+    patientId == null || selectedEncounterId == null
+      ? null
+      : (encounters.find(encounter => encounter.id === selectedEncounterId) ?? null);
 
   const fallbackSummary = useMemo(
     () =>
@@ -229,7 +231,8 @@ export const useBillingAccountingData = ({
   const loadingPsp =
     selectedEncounterId != null && (loadingPspInitial || fetchingPsp);
 
-  const pspRows = pspResponse?.data ?? [];
+  const pspRows =
+    selectedEncounterId == null ? [] : (pspResponse?.data ?? []);
 
   const { lookups, lookupsLoading } = useBillingCatalogLookups({
     encounterId: selectedEncounterId,
@@ -237,14 +240,19 @@ export const useBillingAccountingData = ({
   });
 
   const chargeRows = useMemo(
-    () => mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
-    [effectiveSummary, lookups, pspRows]
+    () =>
+      selectedEncounterId == null
+        ? []
+        : mergeBillingChargeRows(effectiveSummary, pspRows, lookups),
+    [effectiveSummary, lookups, pspRows, selectedEncounterId]
   );
 
   const timelineEvents = useMemo(
     () =>
-      buildTimelineEvents(selectedEncounter, effectiveSummary, pspRows),
-    [selectedEncounter, effectiveSummary, pspRows]
+      patientId == null || selectedEncounterId == null
+        ? []
+        : buildTimelineEvents(selectedEncounter, effectiveSummary, pspRows),
+    [patientId, selectedEncounter, effectiveSummary, pspRows, selectedEncounterId]
   );
 
   const rejectedPreAuthItems = useMemo(
@@ -340,14 +348,14 @@ export const useBillingAccountingData = ({
     timelineEvents,
     rejectedPreAuthItems,
     pendingPreAuthItems,
-    waseelCoverage,
-    loadingWaseelCoverage,
-    waseelCoverageError,
-    walletBalance,
-    reservedBalance,
-    patientLedgerSummary,
-    patientInsurances: insuranceResponse?.data ?? [],
-    loadingInsurances,
+    waseelCoverage: patientId == null ? null : waseelCoverage,
+    loadingWaseelCoverage: patientId != null && loadingWaseelCoverage,
+    waseelCoverageError: patientId != null && waseelCoverageError,
+    walletBalance: patientId == null ? 0 : walletBalance,
+    reservedBalance: patientId == null ? 0 : reservedBalance,
+    patientLedgerSummary: patientId == null ? null : patientLedgerSummary,
+    patientInsurances: patientId == null ? [] : (insuranceResponse?.data ?? []),
+    loadingInsurances: patientId != null && loadingInsurances,
     encounterInvoiceDetails:
       selectedEncounterId != null ? encounterInvoiceDetails ?? null : null,
     refreshAll,
