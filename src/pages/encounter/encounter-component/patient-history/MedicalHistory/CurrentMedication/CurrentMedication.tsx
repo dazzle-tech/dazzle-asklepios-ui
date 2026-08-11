@@ -345,7 +345,7 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
         }
         content={
           <>
-            {!toShowData && (
+            
               <div className="margin-bottom-10">
                 <MyInput
                   fieldType="check"
@@ -360,7 +360,7 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
                   }}
                 />
               </div>
-            )}
+           
 
             <MyTable
               height={450}
