@@ -11,15 +11,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useSubmitPatientSatisfactionSurveyMutation } from '@/services/patient-satisfaction/patientSatisfactionSurveyService';
 import { SURVEY_SECTIONS } from './surveyConfig';
 import type { SurveyAnswerValue, SurveyLanguage, SurveyQuestion } from './types';
-import {
-  clearDependentAnswers,
-  findNextSurveyPosition,
-  findPreviousSurveyPosition,
-  getVisibleQuestionIndex,
-  getVisibleQuestions,
-  isFirstVisibleQuestion,
-  isLastVisibleQuestion
-} from './surveyNavigation';
+import { clearDependentAnswers, getVisibleQuestions } from './surveyNavigation';
 import { buildSubmitAnswers, formatSurveyDate } from './surveyUtils';
 import './styles.less';
 
@@ -41,7 +33,7 @@ const COPY = {
     instructionsTitle: 'SURVEY INSTRUCTIONS:',
     proceed: 'Proceed to Survey',
     identityPrompt: 'How would you like to continue?',
-    continueWithName: (name: string) => `Continue as ${name}`,
+    continueWithName: (name: string) => (name ? `Continue as ${name}` : 'Continue as'),
     continueAnonymous: 'Continue anonymously',
     anonymousPatientName: 'Anonymous',
     selectIdentity: 'Please choose how you would like to continue.',
@@ -51,7 +43,7 @@ const COPY = {
     next: 'Next',
     submit: 'Submit',
     clearSelection: 'Clear Selection',
-    requiredAnswer: 'Please select an answer to continue.',
+    requiredAnswer: 'Please answer all required questions to continue.',
     requiredCheckbox: 'Please agree to continue.',
     maxCharacters: (count: number) => `Max number of characters: ${count}`,
     submitFailed: 'Unable to submit the survey. Please try again.',
@@ -68,7 +60,7 @@ const COPY = {
     instructionsTitle: 'تعليمات الاستبيان:',
     proceed: 'ابدأ الاستبيان',
     identityPrompt: 'كيف تريد المتابعة؟',
-    continueWithName: (name: string) => `المتابعة باسم ${name}`,
+    continueWithName: (name: string) => (name ? `المتابعة باسم ${name}` : 'المتابعة باسم'),
     continueAnonymous: 'المتابعة بشكل مجهول',
     anonymousPatientName: 'مجهول',
     selectIdentity: 'يرجى اختيار طريقة المتابعة.',
@@ -78,7 +70,7 @@ const COPY = {
     next: 'التالي',
     submit: 'إرسال',
     clearSelection: 'مسح الاختيار',
-    requiredAnswer: 'يرجى اختيار إجابة للمتابعة.',
+    requiredAnswer: 'يرجى الإجابة على جميع الأسئلة المطلوبة للمتابعة.',
     requiredCheckbox: 'يرجى الموافقة للمتابعة.',
     maxCharacters: (count: number) => `الحد الأقصى لعدد الأحرف: ${count}`,
     submitFailed: 'تعذر إرسال الاستبيان. يرجى المحاولة مرة أخرى.',
@@ -89,6 +81,25 @@ const COPY = {
         ? `يرجى تقييم الخدمات التي تلقيتها في زيارتك الأخيرة إلى ${facility}. اختر الإجابة التي تصف تجربتك بأفضل شكل. إذا كان السؤال لا ينطبق عليك، يرجى الانتقال إلى السؤال التالي. عند الانتهاء، يرجى النقر على "إرسال". ستبقى هويتك سرية اذا اردت. هذا الاستبيان لتقييم زيارتك إلى ${department} بتاريخ ${visitDate}. يجب أن تتعلق جميع الإجابات بهذه الزيارة فقط.`
         : `يرجى تقييم الخدمات التي تلقيتها في زيارتك الأخيرة إلى ${facility}. اختر الإجابة التي تصف تجربتك بأفضل شكل. إذا كان السؤال لا ينطبق عليك، يرجى الانتقال إلى السؤال التالي. عند الانتهاء، يرجى النقر على "إرسال". ستبقى هويتك سرية اذا اردت. هذا الاستبيان لتقييم زيارتك بتاريخ ${visitDate}. يجب أن تتعلق جميع الإجابات بهذه الزيارة فقط.`
   }
+};
+
+const isQuestionAnswered = (
+  question: SurveyQuestion,
+  answers: Record<string, SurveyAnswerValue>
+) => {
+  const selectedAnswer = answers[question.code];
+
+  if (question.type === 'checkbox') {
+    return selectedAnswer?.value === 'AGREED';
+  }
+
+  if (question.optional) return true;
+
+  if (question.type === 'text') {
+    return Boolean(selectedAnswer?.answer?.trim());
+  }
+
+  return Boolean(selectedAnswer);
 };
 
 const PatientSatisfactionSurveyPage = () => {
@@ -115,7 +126,6 @@ const PatientSatisfactionSurveyPage = () => {
   });
   const [landingRecord, setLandingRecord] = useState({ patientName: patientNameFromUrl });
   const [sectionIndex, setSectionIndex] = useState(0);
-  const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, SurveyAnswerValue>>({});
   const [submitError, setSubmitError] = useState('');
   const [landingError, setLandingError] = useState('');
@@ -141,28 +151,23 @@ const PatientSatisfactionSurveyPage = () => {
   }, [identityMode, effectivePatientName, copy.anonymousPatientName, copy.patientNameLabel]);
 
   const currentSection = SURVEY_SECTIONS[sectionIndex];
-  const currentQuestion = currentSection?.questions[questionIndex];
   const visibleSectionQuestions = useMemo(
     () => (currentSection ? getVisibleQuestions(currentSection, answers) : []),
     [currentSection, answers]
   );
-  const visibleQuestionNumber = currentQuestion
-    ? getVisibleQuestionIndex(currentSection, currentQuestion, answers) + 1
-    : 0;
 
-  const isLastQuestion = currentQuestion
-    ? isLastVisibleQuestion(sectionIndex, questionIndex, answers)
-    : false;
+  const isLastSection = sectionIndex >= SURVEY_SECTIONS.length - 1;
+  const isFirstSection = sectionIndex <= 0;
 
-  const isFirstQuestion = currentQuestion
-    ? isFirstVisibleQuestion(sectionIndex, questionIndex, answers)
-    : true;
-
-  const selectedAnswer = currentQuestion ? answers[currentQuestion.code] : undefined;
+  const sectionTitle = currentSection
+    ? language === 'ar'
+      ? currentSection.titleAr
+      : currentSection.titleEn
+    : '';
 
   const stepperList = useMemo(
     () =>
-      SURVEY_SECTIONS.map((section, index) => ({
+      SURVEY_SECTIONS.map(section => ({
         key: section.id,
         value: <span>{language === 'ar' ? section.titleAr : section.titleEn}</span>,
         description: '',
@@ -260,24 +265,11 @@ const PatientSatisfactionSurveyPage = () => {
       delete next[questionCode];
       return next;
     });
+    setSubmitError('');
   };
 
-  const handleClearSelection = () => {
-    if (!currentQuestion) return;
-    handleClearSelectionForQuestion(currentQuestion.code);
-  };
-
-  const canProceedFromQuestion = () => {
-    if (!currentQuestion) return false;
-    if (currentQuestion.type === 'checkbox') {
-      return selectedAnswer?.value === 'AGREED';
-    }
-    if (currentQuestion.optional) return true;
-    if (currentQuestion.type === 'text') {
-      return Boolean(selectedAnswer?.answer?.trim());
-    }
-    return Boolean(selectedAnswer);
-  };
+  const canProceedFromSection = () =>
+    visibleSectionQuestions.every(question => isQuestionAnswered(question, answers));
 
   const handleProceedFromLanding = () => {
     if (!identityMode) {
@@ -310,13 +302,9 @@ const PatientSatisfactionSurveyPage = () => {
   };
 
   const handlePrevious = () => {
+    if (isFirstSection) return;
     setSubmitError('');
-
-    const previousPosition = findPreviousSurveyPosition(sectionIndex, questionIndex, answers);
-    if (!previousPosition) return;
-
-    setSectionIndex(previousPosition.sectionIndex);
-    setQuestionIndex(previousPosition.questionIndex);
+    setSectionIndex(prev => prev - 1);
   };
 
   const handleSubmit = async () => {
@@ -336,60 +324,38 @@ const PatientSatisfactionSurveyPage = () => {
   };
 
   const handleNext = async () => {
-    if (!canProceedFromQuestion()) {
+    if (!canProceedFromSection()) {
+      const incomplete = visibleSectionQuestions.find(
+        question => !isQuestionAnswered(question, answers)
+      );
       setSubmitError(
-        currentQuestion?.type === 'checkbox' ? copy.requiredCheckbox : copy.requiredAnswer
+        incomplete?.type === 'checkbox' ? copy.requiredCheckbox : copy.requiredAnswer
       );
       return;
     }
 
     setSubmitError('');
 
-    if (isLastQuestion) {
+    if (isLastSection) {
       await handleSubmit();
       return;
     }
 
-    const nextPosition = findNextSurveyPosition(sectionIndex, questionIndex, answers);
-    if (!nextPosition) return;
-
-    setSectionIndex(nextPosition.sectionIndex);
-    setQuestionIndex(nextPosition.questionIndex);
+    setSectionIndex(prev => prev + 1);
   };
 
-  const questionRecord = currentQuestion
-    ? currentQuestion.type === 'text'
-      ? { [currentQuestion.code]: selectedAnswer?.answer ?? '' }
-      : currentQuestion.type === 'checkbox'
-        ? { [currentQuestion.code]: selectedAnswer?.value === 'AGREED' }
-        : {}
-    : {};
+  const renderQuestionInput = (question: SurveyQuestion) => {
+    const selectedAnswer = answers[question.code];
 
-  const setQuestionRecord = (nextRecord: Record<string, any>) => {
-    if (!currentQuestion) return;
-
-    if (currentQuestion.type === 'text') {
-      handleTextChange(currentQuestion, nextRecord[currentQuestion.code] ?? '');
-      return;
-    }
-
-    if (currentQuestion.type === 'checkbox') {
-      handleCheckboxChange(currentQuestion, Boolean(nextRecord[currentQuestion.code]));
-    }
-  };
-
-  const renderQuestionInput = () => {
-    if (!currentQuestion) return null;
-
-    if (isOptionQuestion(currentQuestion)) {
+    if (isOptionQuestion(question)) {
       return (
         <>
           <div
             className={`patient-satisfaction-survey-options ${
-              currentQuestion.type === 'nps' ? 'patient-satisfaction-survey-options-nps' : ''
+              question.type === 'nps' ? 'patient-satisfaction-survey-options-nps' : ''
             }`}
           >
-            {(currentQuestion.options ?? []).map(option => {
+            {(question.options ?? []).map(option => {
               const isSelected = selectedAnswer?.value === option.value;
 
               return (
@@ -401,10 +367,8 @@ const PatientSatisfactionSurveyPage = () => {
                   radius={14}
                   className={`patient-satisfaction-survey-option-btn ${
                     isSelected ? 'is-selected' : 'is-unselected'
-                  } ${
-                    currentQuestion.type === 'nps' ? 'patient-satisfaction-survey-option-nps' : ''
-                  }`}
-                  onClick={() => handleSelectOption(currentQuestion, option.value)}
+                  } ${question.type === 'nps' ? 'patient-satisfaction-survey-option-nps' : ''}`}
+                  onClick={() => handleSelectOption(question, option.value)}
                 >
                   <span>{getOptionLabel(option)}</span>
                 </MyButton>
@@ -414,7 +378,10 @@ const PatientSatisfactionSurveyPage = () => {
 
           {selectedAnswer && (
             <div className="patient-satisfaction-survey-clear-selection">
-              <MyButton appearance="subtle" onClick={handleClearSelection}>
+              <MyButton
+                appearance="subtle"
+                onClick={() => handleClearSelectionForQuestion(question.code)}
+              >
                 <span>{copy.clearSelection}</span>
               </MyButton>
             </div>
@@ -423,36 +390,51 @@ const PatientSatisfactionSurveyPage = () => {
       );
     }
 
-    if (currentQuestion.type === 'text') {
+    if (question.type === 'text') {
+      const questionRecord = { [question.code]: selectedAnswer?.answer ?? '' };
+
       return (
         <Form fluid>
           <MyInput
             fieldType="textarea"
-            fieldName={currentQuestion.code}
+            fieldName={question.code}
             showLabel={false}
             record={questionRecord}
-            setRecord={setQuestionRecord}
+            setRecord={nextRecord => {
+              handleTextChange(question, nextRecord[question.code] ?? '');
+            }}
             width="100%"
             rows={8}
             height={220}
           />
           <div className="patient-satisfaction-survey-textarea-hint">
-            {copy.maxCharacters(currentQuestion.maxLength ?? 1500)}
+            {copy.maxCharacters(question.maxLength ?? 1500)}
           </div>
         </Form>
       );
     }
 
-    if (currentQuestion.type === 'checkbox') {
+    if (question.type === 'checkbox') {
+      const questionRecord = { [question.code]: selectedAnswer?.value === 'AGREED' };
+
       return (
         <Form fluid>
           <MyInput
             fieldType="check"
-            fieldName={currentQuestion.code}
+            fieldName={question.code}
             showLabel={false}
-            label={<span>{getQuestionText(currentQuestion)}</span>}
+            label={
+              <span>
+                {getQuestionText(question)}
+                {!question.optional && (
+                  <span className="patient-satisfaction-survey-required"> *</span>
+                )}
+              </span>
+            }
             record={questionRecord}
-            setRecord={setQuestionRecord}
+            setRecord={nextRecord => {
+              handleCheckboxChange(question, Boolean(nextRecord[question.code]));
+            }}
             width="100%"
           />
         </Form>
@@ -515,7 +497,7 @@ const PatientSatisfactionSurveyPage = () => {
                           fieldType="text"
                           fieldName="patientName"
                           showLabel
-                          label={<span>{copy.patientNameLabel}</span>}
+                          fieldLabel={copy.patientNameLabel}
                           record={landingRecord}
                           setRecord={nextRecord => {
                             setLandingRecord(nextRecord);
@@ -544,9 +526,7 @@ const PatientSatisfactionSurveyPage = () => {
                       onClick={handleSelectNamedIdentity}
                     >
                       <span>
-                        {copy.continueWithName(
-                          patientNameFromUrl || enteredPatientName || copy.patientNameLabel
-                        )}
+                        {copy.continueWithName(patientNameFromUrl || enteredPatientName)}
                       </span>
                     </MyButton>
                     <MyButton
@@ -594,7 +574,7 @@ const PatientSatisfactionSurveyPage = () => {
           />
         )}
 
-        {phase === 'survey' && currentQuestion && (
+        {phase === 'survey' && currentSection && (
           <>
             <Panel bordered className="patient-satisfaction-survey-stepper-card">
               <MyStepper
@@ -605,23 +585,33 @@ const PatientSatisfactionSurveyPage = () => {
             </Panel>
 
             <SectionContainer
-              title={
-                <span>
-                  {visibleQuestionNumber}/{visibleSectionQuestions.length}
-                </span>
-              }
+              title={<span>{sectionTitle}</span>}
               content={
                 <Panel bordered className="patient-satisfaction-survey-card">
-                  {currentQuestion.type !== 'checkbox' && (
-                    <div className="patient-satisfaction-survey-question-label">
-                      <MyLabel
-                        label={<span>{getQuestionText(currentQuestion)}</span>}
-                        size="large"
-                      />
-                    </div>
-                  )}
+                  <div className="patient-satisfaction-survey-questions">
+                    {visibleSectionQuestions.map((question, index) => (
+                      <div
+                        key={question.code}
+                        className="patient-satisfaction-survey-question-block"
+                      >
+                        {question.type !== 'checkbox' && (
+                          <div className="patient-satisfaction-survey-question-label">
+                            <MyLabel
+                              label={
+                                <span>
+                                  {index + 1}. {getQuestionText(question)}
+                                </span>
+                              }
+                              size="large"
+                              required={!question.optional}
+                            />
+                          </div>
+                        )}
 
-                  {renderQuestionInput()}
+                        {renderQuestionInput(question)}
+                      </div>
+                    ))}
+                  </div>
 
                   {submitError && <div className="patient-satisfaction-survey-error">{submitError}</div>}
                 </Panel>
@@ -633,7 +623,7 @@ const PatientSatisfactionSurveyPage = () => {
                     color="#111827"
                     radius={999}
                     width={130}
-                    disabled={isFirstQuestion || isSubmitting}
+                    disabled={isFirstSection || isSubmitting}
                     onClick={handlePrevious}
                   >
                     <span>{copy.previous}</span>
@@ -646,7 +636,7 @@ const PatientSatisfactionSurveyPage = () => {
                     loading={isSubmitting}
                     onClick={handleNext}
                   >
-                    <span>{isLastQuestion ? copy.submit : copy.next}</span>
+                    <span>{isLastSection ? copy.submit : copy.next}</span>
                   </MyButton>
                 </div>
               }

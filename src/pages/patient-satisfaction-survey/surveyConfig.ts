@@ -259,6 +259,33 @@ export const SURVEY_SECTIONS: SurveySection[] = [
         textAr: 'هل تلقيت خدمات الأشعة؟',
         type: 'choice',
         options: YES_NO_OPTIONS
+      },
+      {
+        code: 'RAD_STAFF_SATISFACTION',
+        textEn: 'How satisfied were you with the radiology staff?',
+        textAr: 'ما مدى رضاك عن طاقم الأشعة؟',
+        type: 'rating',
+        options: LIKERT_OPTIONS,
+        optional: true,
+        showWhen: { questionCode: 'RAD_RECEIVED_SERVICES', values: ['YES'] }
+      },
+      {
+        code: 'RAD_EXPLANATION_SATISFACTION',
+        textEn: 'How satisfied were you with the explanation provided before the procedure?',
+        textAr: 'ما مدى رضاك عن الشرح المقدم قبل الإجراء؟',
+        type: 'rating',
+        options: LIKERT_OPTIONS,
+        optional: true,
+        showWhen: { questionCode: 'RAD_RECEIVED_SERVICES', values: ['YES'] }
+      },
+      {
+        code: 'RAD_WAIT_TIME_SATISFACTION',
+        textEn: 'How satisfied were you with the waiting time for your radiology service?',
+        textAr: 'ما مدى رضاك عن وقت الانتظار لخدمة الأشعة؟',
+        type: 'rating',
+        options: LIKERT_OPTIONS,
+        optional: true,
+        showWhen: { questionCode: 'RAD_RECEIVED_SERVICES', values: ['YES'] }
       }
     ]
   },
