@@ -206,7 +206,7 @@ const Prescription = (props: Props) => {
     setCurrentPrescription(null);
   }, [patientPrescriptions, preKeyRecord.preKey]);
 
-  
+
   useEffect(() => {
     if (!preKeyRecord.preKey) {
       setCurrentPrescription(null);
@@ -231,9 +231,9 @@ const Prescription = (props: Props) => {
     { skip: !currentPrescription?.id }
   );
 
- const patientPrescriptionMedications = currentPrescription?.id
-  ? (asArray(patientPrescriptionMedicationsRaw) as PatientPrescriptionMedication[])
-  : [];
+  const patientPrescriptionMedications = currentPrescription?.id
+    ? (asArray(patientPrescriptionMedicationsRaw) as PatientPrescriptionMedication[])
+    : [];
   const visiblePatientPrescriptionMedications = patientPrescriptionMedications.filter(m =>
     showCanceled ? true : !isCanceledStatus((m as any)?.status)
   );
@@ -640,7 +640,7 @@ const Prescription = (props: Props) => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
         existingMedications={patientPrescriptionMedications}
@@ -652,10 +652,12 @@ const Prescription = (props: Props) => {
         object={patientPrescriptionMedicationObject as any}
         setObject={setPatientPrescriptionMedicationObject as any}
         handleCancle={handleCancle}
-        withReason={false}
+        fieldLabel="Reason"
+        fieldName="cancellationReason"
+        withReason={true}
+        required={true}
         title="Cancellation"
-        size="30vw"
-        bodyheight="30vh"
+       
       />
 
       <PatientHistorySummaryModal
@@ -671,18 +673,17 @@ const Prescription = (props: Props) => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          selectedMedicationForAttachments
+        title={`Attachments - ${selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-                (item: any) =>
-                  String(item.id) ===
-                  String(
-                    (selectedMedicationForAttachments as any)?.medicationsId ??
-                      (selectedMedicationForAttachments as any)?.genericMedicationsId
-                  )
-              )?.name || 'Medication'
+              (item: any) =>
+                String(item.id) ===
+                String(
+                  (selectedMedicationForAttachments as any)?.medicationsId ??
+                  (selectedMedicationForAttachments as any)?.genericMedicationsId
+                )
+            )?.name || 'Medication'
             : 'Medication'
-        }`}
+          }`}
         size="lg"
         hideActionBtn
         content={
@@ -691,7 +692,7 @@ const Prescription = (props: Props) => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

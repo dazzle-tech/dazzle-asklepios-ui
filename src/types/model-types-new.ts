@@ -3368,6 +3368,7 @@ export interface PatientPrescriptionMedication {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  cancellationReason?:string|null;
 }
 
 export interface ProgressNote {

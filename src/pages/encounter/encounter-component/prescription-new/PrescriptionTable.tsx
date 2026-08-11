@@ -4,7 +4,7 @@ import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { formatEnumString } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 
 import UserDateCell from '@/components/UserDateCell';
@@ -192,46 +192,72 @@ const PrescriptionTable = ({
       render: (rowData: any) => (rowData?.status ? formatEnumString(rowData.status) : '')
     },
     {
+      key: 'cancelled',
+      title: <Translate>Cancelled By / At</Translate>,
+      flexGrow: 2,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.cancelledBy || rowData.cancelledDate ? (
+          <>
+            <UserDateCell login={rowData.cancelledBy} />
+            <br />
+            <span className="date-table-style">
+              {rowData.cancelledDate
+                ? formatDateWithoutSeconds(rowData.cancelledDate)
+                : ''}
+            </span>
+          </>
+        ) : (
+          <span>-</span>
+        )
+    },
+    {
+      key: 'cancellationReason',
+      title: 'CANCELLATION REASON',
+      dataKey: 'cancellationReason',
+      expandable: true
+    },
+    {
       key: 'actions',
       title: 'Actions',
       flexGrow: 1.5,
       render: (rowData: any) => {
         const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
-        const isCancelled=String(rowData.status?? '').toUpperCase() === 'CANCELLED';
+        const isCancelled = String(rowData.status ?? '').toUpperCase() === 'CANCELLED';
         console.log(currentPrescription?.status);
-      return (
-        <div className="flex-c8">
-          <MdModeEdit
-            title={
-              edit
-                ? 'View Only'
-                : isSubmitted
-                  ? 'Prescription is submitted'
-                  : 'Edit'
-            }
-            size={20}
-            className={!edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
-            style={{
-              opacity: edit || isSubmitted || isCancelled ? 0.5 : 1,
-              cursor: edit || isSubmitted || isCancelled ? 'not-allowed' : 'pointer'
-            }}
-            onClick={e => {
-              e.stopPropagation();
+        return (
+          <div className="flex-c8">
+            <MdModeEdit
+              title={
+                edit
+                  ? 'View Only'
+                  : isSubmitted
+                    ? 'Prescription is submitted'
+                    : 'Edit'
+              }
+              size={20}
+              className={!edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
+              style={{
+                opacity: edit || isSubmitted || isCancelled ? 0.5 : 1,
+                cursor: edit || isSubmitted || isCancelled ? 'not-allowed' : 'pointer'
+              }}
+              onClick={e => {
+                e.stopPropagation();
 
-              if (edit || isSubmitted || isCancelled) return;
+                if (edit || isSubmitted || isCancelled) return;
 
-              setPatientPrescriptionMedicationObject({
-                ...rowData,
-                key: rowData.key ?? rowData.id,
-                id: rowData.id ?? rowData.key
-              });
+                setPatientPrescriptionMedicationObject({
+                  ...rowData,
+                  key: rowData.key ?? rowData.id,
+                  id: rowData.id ?? rowData.key
+                });
 
-              setOpenDetailsModal(true);
-              setOpenToAdd(false);
-            }}
-          />
-        </div>
-      );
+                setOpenDetailsModal(true);
+                setOpenToAdd(false);
+              }}
+            />
+          </div>
+        );
       }
     },
     {

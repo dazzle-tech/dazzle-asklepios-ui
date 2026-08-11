@@ -2291,7 +2291,8 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   createdBy: null,
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
+  cancellationReason:null
 };
 
 // =====================
