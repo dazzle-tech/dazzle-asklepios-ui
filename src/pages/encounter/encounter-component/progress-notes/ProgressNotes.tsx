@@ -256,6 +256,7 @@ const edit = viewMode === 'readOnly'
 
         <Form>
           <MyInput
+           className="show-cancelled"
             column
             width={220}
             fieldLabel={<Translate>Show Cancelled</Translate>}

@@ -686,7 +686,7 @@ const NormalConsultation = props => {
                   <span className="print-label">Print</span>
                 </MyButton> */}
 
-                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+                <Checkbox  className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                   <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>

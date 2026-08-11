@@ -562,7 +562,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
                   Review
                 </MyButton>
 
-                <Checkbox
+                <Checkbox className="show-cancelled"
                   checked={showCancelled}
                   onChange={(firstArg, secondArg) => {
                     const isShowCancelledChecked = getCheckboxCheckedValue(firstArg, secondArg);

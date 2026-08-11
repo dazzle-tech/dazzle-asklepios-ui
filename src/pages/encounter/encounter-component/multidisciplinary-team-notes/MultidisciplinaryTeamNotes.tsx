@@ -212,7 +212,7 @@ const MultidisciplinaryTeamNotes = () => {
             Cancel
           </MyButton>
 
-          <Checkbox><Translate>Show Cancelled</Translate></Checkbox>
+          <Checkbox className="show-cancelled"><Translate>Show Cancelled</Translate></Checkbox>
         </div>
         <MyButton prefixIcon={() => <PlusIcon />} onClick={handleNew}>
           Add New

@@ -466,7 +466,7 @@ const VaccinationTab = ({
                   Review
                 </MyButton>
 
-                <Checkbox
+                <Checkbox className="show-cancelled"
                   onChange={(value, checked) => {
                     if (checked) {
                       setEncounterStatus('3196709905099521');

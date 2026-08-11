@@ -349,7 +349,7 @@ const TelephonicConsultation = props => {
           Cancel
         </MyButton>
 
-        <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
+        <Checkbox className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
           <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>

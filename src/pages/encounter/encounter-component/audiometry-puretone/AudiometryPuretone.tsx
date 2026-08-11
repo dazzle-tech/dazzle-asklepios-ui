@@ -395,6 +395,7 @@ const AudiometryPuretone = () => {
                 <Translate>Cancel</Translate>
               </MyButton>
               <Checkbox
+               className="show-cancelled"
                 onChange={(value, checked) => {
                   if (checked) {
                     //TODO convert key to code

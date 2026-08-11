@@ -325,7 +325,7 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={edit}>
                     Cancel
                 </MyButton>
-                <Checkbox onChange={(value, checked) => { if (checked) { setPsychologicalExamStatus('3196709905099521'); } else { setPsychologicalExamStatus(''); } }}>
+                <Checkbox className="show-cancelled" onChange={(value, checked) => { if (checked) { setPsychologicalExamStatus('3196709905099521'); } else { setPsychologicalExamStatus(''); } }}>
                     <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { setAllData(true); } else { setAllData(false); } }}>

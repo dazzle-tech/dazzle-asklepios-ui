@@ -239,7 +239,7 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
               <MyButton prefixIcon={() => <CloseOutline />}>
                 <Translate>Cancel</Translate>
               </MyButton>
-              <Checkbox>
+              <Checkbox  className="show-cancelled">
                 <Translate>Show Cancelled</Translate>
               </Checkbox>
             </div>

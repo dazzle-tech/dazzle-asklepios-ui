@@ -698,7 +698,7 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
         </div>
         <div className="section-header">
           {/* Toggle canceled plans */}
-          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox className="show-cancelled" checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
             <Translate>Show Cancelled</Translate>
           </Checkbox>
           <div className="section-buttons">

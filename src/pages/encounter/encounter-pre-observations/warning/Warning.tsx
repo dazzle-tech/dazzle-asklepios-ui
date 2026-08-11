@@ -275,7 +275,7 @@ const Warning = (props: WarningProps) => {
             </>
           )}
           {/* Show Cancelled always showed*/}
-          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox className="show-cancelled" checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
             <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>

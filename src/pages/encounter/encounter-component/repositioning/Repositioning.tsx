@@ -284,7 +284,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                 <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !position?.key : true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
-                <Checkbox onChange={(value, checked) => {
+                <Checkbox className="show-cancelled" onChange={(value, checked) => {
                     if (checked) {
                         //TODO convert key to code
                         setPositionStatus('3196709905099521');
