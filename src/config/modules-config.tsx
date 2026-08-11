@@ -210,7 +210,6 @@ export const MODULES: Module[] =
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
         { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
-        { name: "Diagnostics Setup Old", code: "DIAGNOSTICS_SETUP_OLD", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "" },
         { name: "Vaccine Setup", code: "VACCINE_SETUP", description: "Vaccine", icon: "FaSyringe", viewOrder: 9, navPath: "vaccine-setup" },
         { name: "Procedure Setup", code: "PROCEDURE_SETUP", description: "", icon: "FaProductHunt", viewOrder: 10, navPath: "procedure-setup" },
         { name: "Room Bed Setup", code: "ROOM_BED_SETUP", description: "", icon: "FaBed", viewOrder: 16, navPath: "room" },
