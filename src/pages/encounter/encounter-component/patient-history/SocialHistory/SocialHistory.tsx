@@ -364,7 +364,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
           content={
             <div dir={dir}>
 
-              {!toShowData && (
+              
                 <div className="margin-bottom-10">
                   <MyInput
                     fieldType="check"
@@ -378,7 +378,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                     }}
                   />
                 </div>
-              )}
+              
               <MyTable
                 height={450}
                 data={filteredData}
