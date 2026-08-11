@@ -22,7 +22,8 @@ import PreAuthorizationFilters from './PreAuthorizationFilters';
 import PreAuthorizationRequestsTable from './PreAuthorizationRequestsTable';
 import PreAuthorizationCancelModal from './PreAuthorizationCancelModal';
 import PreAuthorizationCommunicationModal, {
-  type CommunicationAttachmentFile
+  type CommunicationAttachmentFile,
+  type CommunicationContentType
 } from './PreAuthorizationCommunicationModal';
 import PreAuthorizationCommunicationsDrawer from './PreAuthorizationCommunicationsDrawer';
 import { getPreAuthorizationColumns } from './preAuthorizationColumns';
@@ -47,6 +48,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [openCommunicationModal, setOpenCommunicationModal] = useState(false);
   const [openCommunicationsDrawer, setOpenCommunicationsDrawer] = useState(false);
   const [communicationMessage, setCommunicationMessage] = useState('');
+  const [communicationContentType, setCommunicationContentType] =
+    useState<CommunicationContentType>('text');
   const [communicationAttachment, setCommunicationAttachment] =
     useState<CommunicationAttachmentFile | null>(null);
 
@@ -191,6 +194,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const openCommunication = useCallback((row: PreAuthorizationTrackingResponse) => {
     setSelectedRow(row);
     setCommunicationMessage('');
+    setCommunicationContentType('text');
     setCommunicationAttachment(null);
     setOpenCommunicationModal(true);
   }, []);
@@ -302,8 +306,13 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     const message = communicationMessage.trim();
     const hasAttachment = !!communicationAttachment?.file;
 
-    if (!message && !hasAttachment) {
-      dispatch(notify({ msg: 'Please enter a message or attach a file', sev: 'error' }));
+    if (communicationContentType === 'text' && !message) {
+      dispatch(notify({ msg: 'Please enter a message', sev: 'error' }));
+      return;
+    }
+
+    if (communicationContentType === 'attachment' && !hasAttachment) {
+      dispatch(notify({ msg: 'Please attach a file', sev: 'error' }));
       return;
     }
 
@@ -316,13 +325,11 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
       let attachmentId: number | undefined;
 
-      // Same method as patient attachments: multipart upload -> Spaces + DB row.
-      if (hasAttachment && communicationAttachment) {
+      if (communicationContentType === 'attachment' && communicationAttachment) {
         const uploaded = await uploadPreAuthorizationAttachment({
           preAuthorizationId: Number(selectedRow.id),
           file: communicationAttachment.file,
           type: 'COMMUNICATION',
-          details: message || undefined,
           source: 'COMMUNICATION',
           sourceId: claimItemId
         }).unwrap();
@@ -340,8 +347,10 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         payloads: [
           {
             ...(claimItemId != null ? { claimItemId } : {}),
-            ...(message ? { payloadValue: message } : {}),
-            ...(attachmentId != null ? { attachmentId } : {})
+            ...(communicationContentType === 'text' ? { payloadValue: message } : {}),
+            ...(communicationContentType === 'attachment' && attachmentId != null
+              ? { attachmentId }
+              : {})
           }
         ]
       };
@@ -351,6 +360,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       dispatch(notify({ msg: 'Communication sent successfully', sev: 'success' }));
       setOpenCommunicationModal(false);
       setCommunicationMessage('');
+      setCommunicationContentType('text');
       setCommunicationAttachment(null);
       refetch();
     } catch {
@@ -425,14 +435,17 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
       <PreAuthorizationCommunicationModal
         open={openCommunicationModal}
+        contentType={communicationContentType}
         communicationMessage={communicationMessage}
         attachment={communicationAttachment}
         isSubmitting={isCommunicating}
         onClose={() => {
           setOpenCommunicationModal(false);
           setCommunicationMessage('');
+          setCommunicationContentType('text');
           setCommunicationAttachment(null);
         }}
+        onContentTypeChange={setCommunicationContentType}
         onMessageChange={setCommunicationMessage}
         onAttachmentChange={setCommunicationAttachment}
         onSubmit={submitCommunication}

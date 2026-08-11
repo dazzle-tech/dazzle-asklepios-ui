@@ -218,7 +218,7 @@ export interface ServiceItem {
   id?: number;
   type: string; // @Enumerated(EnumType.STRING)
   sourceId: number; // FK to the source entity (e.g., Department id)
-  practitionerId?: number | null; // FK to practitioner (required for DEPARTMENTS)
+  specialty?: string | null; // sub-specialty LOV key (required for DEPARTMENTS)
   serviceId?: number | null; // ManyToOne -> Service (nullable on the wire)
   createdBy: string;
   createdDate?: Date | null;
@@ -231,7 +231,7 @@ export interface ServiceItem {
 export interface ServiceItemCreate {
   type: string;
   sourceId: number;
-  practitionerId?: number | null;
+  specialty?: string | null;
   serviceId: number; // required by backend create
   createdBy?: string;
   createdDate?: Date | null;
@@ -245,7 +245,7 @@ export interface ServiceItemUpdate {
   id: number;
   type?: string | null;
   sourceId?: number | null;
-  practitionerId?: number | null;
+  specialty?: string | null;
   serviceId: number; // required by backend update
   isActive?: boolean | null;
   lastModifiedBy?: string | null;
@@ -2323,6 +2323,7 @@ export interface PatientEncounter {
   facilityId: number;
   departmentId: number;
 
+  specialty?: string | null;
   practitionerId?: number | null;
   appointmentId?: string | null;
   encounterType: string;
@@ -3322,7 +3323,7 @@ export interface PatientPrescription {
   id: number;
   patientId: number;
   encounterId: number;
-  prescriptionNum: number;
+  prescriptionNum: string;
   prescriptionDate: string;
   urgencyLevel: string;
   status?: string;

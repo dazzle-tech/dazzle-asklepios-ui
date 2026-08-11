@@ -59,6 +59,18 @@ export const communityAreaService = createApi({
       providesTags: ['CommunityArea']
     }),
 
+    getAreasByNameSearch: builder.query<
+      PagedResult<any>,
+      WithDistrict & { name: string } & PagedParams
+    >({
+      query: ({ districtId, name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/district/${districtId}/community-area/names/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['CommunityArea']
+    }),
+
     addArea: builder.mutation<any, WithDistrict & any>({
       query: ({ districtId, ...body }) => ({
         url: `/api/setup/district/${districtId}/community-area`,
@@ -107,6 +119,8 @@ export const {
   useLazyGetAreasByDistrictQuery,
   useGetAreasByNameQuery,
   useLazyGetAreasByNameQuery,
+  useGetAreasByNameSearchQuery,
+  useLazyGetAreasByNameSearchQuery,
   useAddAreaMutation,
   useUpdateAreaMutation,
   useToggleAreaActiveMutation,

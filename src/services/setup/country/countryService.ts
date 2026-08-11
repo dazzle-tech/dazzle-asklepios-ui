@@ -53,6 +53,18 @@ export const countryService = createApi({
       providesTags: ['Country']
     }),
 
+    getCountryNames: builder.query<
+      PagedResult<any>,
+      { name: string } & PagedParams
+    >({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/country/names/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Country']
+    }),
+
     getCountryByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
       query: ({ code, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/country/by-code/${encodeURIComponent(code)}`,
@@ -108,6 +120,9 @@ export const {
 
   useGetCountryByNameQuery,
   useLazyGetCountryByNameQuery,
+
+  useGetCountryNamesQuery,
+  useLazyGetCountryNamesQuery,
 
   useGetCountryByCodeQuery,
   useLazyGetCountryByCodeQuery,

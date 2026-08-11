@@ -692,7 +692,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item
+        {/* Don`t remove this commented code please */}
+        {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
             setOpenBulkRegistrationModal(true);
@@ -702,7 +703,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <FontAwesomeIcon icon={faUsersLine} />
             <Translate>Bulk Registration</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );

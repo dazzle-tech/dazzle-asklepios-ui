@@ -57,19 +57,23 @@ import {
 } from '@/services/waseel-integration/waseelSbsSetupService';
 
 import {
-  useGetActiveServicesByFacilityQuery
+  useGetActiveServicesByFacilityQuery,
+  useGetServicesByNameQuery
 } from '@/services/setup/serviceService';
 
 import {
-  useGetBrandMedicationsByIsActiveQuery
+  useGetBrandMedicationsByIsActiveQuery,
+  useGetBrandMedicationsByNameQuery
 } from '@/services/setup/brandmedication/BrandMedicationService';
 
 import {
-  useGetActiveDiagnosticTestsByTypeQuery
+  useGetActiveDiagnosticTestsByTypeQuery,
+  useGetAllDiagnosticTestsByNameAndTypeQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import {
-  useGetActiveProceduresByFacilityQuery
+  useGetActiveProceduresByFacilityQuery,
+  useGetProceduresByNameQuery
 } from '@/services/setup/procedure/procedureService';
 
 import type {
@@ -94,12 +98,12 @@ type Props = {
   ) => void;
 
   priceListSetupId:
-    number | string;
+  number | string;
 
   priceListName?: string;
 
   priceListType?:
-    PriceListSetupType;
+  PriceListSetupType;
 
   facilityId?: number;
 };
@@ -301,65 +305,20 @@ const PriceListSetupItems: React.FC<Props> = ({
   /*
    * Non-insurance Service & Product pagination.
    */
-  const [
-    servicePage,
-    setServicePage
-  ] = useState(0);
+  const [selectPage, setSelectPage] = useState(0);
+  const [selectSearch, setSelectSearch] = useState('');
+  const [debouncedSelectSearch, setDebouncedSelectSearch] = useState('');
+  const [selectedDirectItem, setSelectedDirectItem] =
+    useState<ServiceProductOption | null>(null);
+  const [selectData, setSelectData] = useState<ServiceProductOption[]>([]);
 
-  const [
-    serviceCache,
-    setServiceCache
-  ] = useState<ServiceProductOption[]>([]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSelectSearch(selectSearch.trim());
+    }, 300);
 
-  const [
-    medicationPage,
-    setMedicationPage
-  ] = useState(0);
-
-  const [
-    medicationCache,
-    setMedicationCache
-  ] = useState<ServiceProductOption[]>([]);
-
-  const [
-    laboratoryPage,
-    setLaboratoryPage
-  ] = useState(0);
-
-  const [
-    laboratoryCache,
-    setLaboratoryCache
-  ] = useState<ServiceProductOption[]>([]);
-
-  const [
-    radiologyPage,
-    setRadiologyPage
-  ] = useState(0);
-
-  const [
-    radiologyCache,
-    setRadiologyCache
-  ] = useState<ServiceProductOption[]>([]);
-
-  const [
-    pathologyPage,
-    setPathologyPage
-  ] = useState(0);
-
-  const [
-    pathologyCache,
-    setPathologyCache
-  ] = useState<ServiceProductOption[]>([]);
-
-  const [
-    procedurePage,
-    setProcedurePage
-  ] = useState(0);
-
-  const [
-    procedureCache,
-    setProcedureCache
-  ] = useState<ServiceProductOption[]>([]);
+    return () => clearTimeout(timer);
+  }, [selectSearch]);
 
   /*
    * Existing price-list items.
@@ -420,17 +379,14 @@ const PriceListSetupItems: React.FC<Props> = ({
     }
   );
 
-  /*
-   * Direct service query.
-   */
   const {
-    data: servicesResponse,
+    data: activeServicesResponse,
     isFetching: isFetchingServices
   } = useGetActiveServicesByFacilityQuery(
     {
       facilityId: Number(facilityId),
-      page: servicePage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -439,22 +395,39 @@ const PriceListSetupItems: React.FC<Props> = ({
         !childModalOpen ||
         isInsurancePriceList ||
         !facilityId ||
-        selectedItem.itemType !==
-          'SERVICE'
+        selectedItem.itemType !== 'SERVICE' ||
+        Boolean(debouncedSelectSearch)
     }
   );
 
-  /*
-   * Direct medication query.
-   */
+  const {
+    data: servicesSearchResponse,
+    isFetching: isFetchingServicesSearch
+  } = useGetServicesByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'SERVICE' ||
+        !debouncedSelectSearch
+    }
+  );
+
   const {
     data: medicationsResponse,
     isFetching: isFetchingMedications
   } = useGetBrandMedicationsByIsActiveQuery(
     {
       isActive: true,
-      page: medicationPage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'id,asc'
     },
     {
@@ -462,22 +435,39 @@ const PriceListSetupItems: React.FC<Props> = ({
         !open ||
         !childModalOpen ||
         isInsurancePriceList ||
-        selectedItem.itemType !==
-          'MEDICATION'
+        selectedItem.itemType !== 'MEDICATION' ||
+        Boolean(debouncedSelectSearch)
     }
   );
 
-  /*
-   * Direct laboratory query.
-   */
+  const {
+    data: medicationsSearchResponse,
+    isFetching: isFetchingMedicationsSearch
+  } = useGetBrandMedicationsByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'MEDICATION' ||
+        !debouncedSelectSearch
+    }
+  );
+
   const {
     data: laboratoryResponse,
     isFetching: isFetchingLaboratory
   } = useGetActiveDiagnosticTestsByTypeQuery(
     {
       type: 'LABORATORY',
-      page: laboratoryPage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -485,22 +475,40 @@ const PriceListSetupItems: React.FC<Props> = ({
         !open ||
         !childModalOpen ||
         isInsurancePriceList ||
-        selectedItem.itemType !==
-          'LABORATORY'
+        selectedItem.itemType !== 'LABORATORY' ||
+        Boolean(debouncedSelectSearch)
     }
   );
 
-  /*
-   * Direct radiology query.
-   */
+  const {
+    data: laboratorySearchResponse,
+    isFetching: isFetchingLaboratorySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'LABORATORY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'LABORATORY' ||
+        !debouncedSelectSearch
+    }
+  );
+
   const {
     data: radiologyResponse,
     isFetching: isFetchingRadiology
   } = useGetActiveDiagnosticTestsByTypeQuery(
     {
       type: 'RADIOLOGY',
-      page: radiologyPage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -508,22 +516,40 @@ const PriceListSetupItems: React.FC<Props> = ({
         !open ||
         !childModalOpen ||
         isInsurancePriceList ||
-        selectedItem.itemType !==
-          'RADIOLOGY'
+        selectedItem.itemType !== 'RADIOLOGY' ||
+        Boolean(debouncedSelectSearch)
     }
   );
 
-  /*
-   * Direct pathology query.
-   */
+  const {
+    data: radiologySearchResponse,
+    isFetching: isFetchingRadiologySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'RADIOLOGY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'RADIOLOGY' ||
+        !debouncedSelectSearch
+    }
+  );
+
   const {
     data: pathologyResponse,
     isFetching: isFetchingPathology
   } = useGetActiveDiagnosticTestsByTypeQuery(
     {
       type: 'PATHOLOGY',
-      page: pathologyPage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -531,22 +557,40 @@ const PriceListSetupItems: React.FC<Props> = ({
         !open ||
         !childModalOpen ||
         isInsurancePriceList ||
-        selectedItem.itemType !==
-          'PATHOLOGY'
+        selectedItem.itemType !== 'PATHOLOGY' ||
+        Boolean(debouncedSelectSearch)
     }
   );
 
-  /*
-   * Direct procedure query.
-   */
+  const {
+    data: pathologySearchResponse,
+    isFetching: isFetchingPathologySearch
+  } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+    {
+      type: 'PATHOLOGY',
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'PATHOLOGY' ||
+        !debouncedSelectSearch
+    }
+  );
+
   const {
     data: proceduresResponse,
     isFetching: isFetchingProcedures
   } = useGetActiveProceduresByFacilityQuery(
     {
       facilityId: Number(facilityId),
-      page: procedurePage,
-      size: 50,
+      page: selectPage,
+      size: 20,
       sort: 'name,asc'
     },
     {
@@ -555,10 +599,122 @@ const PriceListSetupItems: React.FC<Props> = ({
         !childModalOpen ||
         isInsurancePriceList ||
         !facilityId ||
-        selectedItem.itemType !==
-          'PROCEDURE'
+        selectedItem.itemType !== 'PROCEDURE' ||
+        Boolean(debouncedSelectSearch)
     }
   );
+
+  const {
+    data: proceduresSearchResponse,
+    isFetching: isFetchingProceduresSearch
+  } = useGetProceduresByNameQuery(
+    {
+      name: debouncedSelectSearch,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'PROCEDURE' ||
+        !debouncedSelectSearch
+    }
+  );
+
+  const currentSelectResponse = useMemo(() => {
+    switch (selectedItem.itemType) {
+      case 'MEDICATION':
+        return debouncedSelectSearch
+          ? medicationsSearchResponse
+          : medicationsResponse;
+
+      case 'LABORATORY':
+        return debouncedSelectSearch
+          ? laboratorySearchResponse
+          : laboratoryResponse;
+
+      case 'RADIOLOGY':
+        return debouncedSelectSearch
+          ? radiologySearchResponse
+          : radiologyResponse;
+
+      case 'PATHOLOGY':
+        return debouncedSelectSearch
+          ? pathologySearchResponse
+          : pathologyResponse;
+
+      case 'SERVICE':
+        return debouncedSelectSearch
+          ? servicesSearchResponse
+          : activeServicesResponse;
+
+      case 'PROCEDURE':
+        return debouncedSelectSearch
+          ? proceduresSearchResponse
+          : proceduresResponse;
+
+      default:
+        return null;
+    }
+  }, [
+    selectedItem.itemType,
+    debouncedSelectSearch,
+
+    medicationsResponse,
+    medicationsSearchResponse,
+
+    laboratoryResponse,
+    laboratorySearchResponse,
+
+    radiologyResponse,
+    radiologySearchResponse,
+
+    pathologyResponse,
+    pathologySearchResponse,
+
+    activeServicesResponse,
+    servicesSearchResponse,
+
+    proceduresResponse,
+    proceduresSearchResponse
+  ]);
+
+
+  useEffect(() => {
+    if (!currentSelectResponse?.data) {
+      return;
+    }
+
+    const incomingRows = normalizeServiceProductOptions(
+      normalizePageData(currentSelectResponse)
+    );
+
+    setSelectData(previous => {
+      if (selectPage === 0) {
+        return incomingRows;
+      }
+
+      const existingIds = new Set(
+        previous.map(item => Number(item.id))
+      );
+
+      return [
+        ...previous,
+        ...incomingRows.filter(
+          item => !existingIds.has(Number(item.id))
+        )
+      ];
+    });
+  }, [
+    currentSelectResponse,
+    selectPage
+  ]);
+
+
+
 
   const [
     addPriceListItem,
@@ -676,6 +832,10 @@ const PriceListSetupItems: React.FC<Props> = ({
     };
   };
 
+  const mappingTotalPages = Number(
+    mappingResponse?.totalPages ?? 0
+  );
+
   const mappingNextLink =
     mappingResponse?.links?.next ??
     null;
@@ -687,10 +847,8 @@ const PriceListSetupItems: React.FC<Props> = ({
     );
 
   const hasMoreMappings =
-    Boolean(mappingNextLink) ||
-    mappingTotalCount >
-      mappingCache.length;
-
+    mappingTotalPages > 0 &&
+    mappingPage + 1 < mappingTotalPages;
   useEffect(() => {
     const timeout =
       setTimeout(() => {
@@ -712,26 +870,29 @@ const PriceListSetupItems: React.FC<Props> = ({
         mappingResponse
       );
 
-    const options =
-      rows.map(
-        createMappingOption
-      );
+    const filteredRows = rows.filter(
+      mapping =>
+        mapping.itemType ===
+        selectedItem.itemType
+    );
+
+    const options = filteredRows.map(
+      createMappingOption
+    );
 
     setMappingCache(previous => {
       if (mappingPage === 0) {
         return options;
       }
 
-      const existingIds =
-        new Set(
-          previous.map(
-            item => Number(item.id)
-          )
-        );
+      const existingIds = new Set(
+        previous.map(
+          item => Number(item.id)
+        )
+      );
 
       return [
         ...previous,
-
         ...options.filter(
           item =>
             !existingIds.has(
@@ -745,341 +906,206 @@ const PriceListSetupItems: React.FC<Props> = ({
     mappingPage
   ]);
 
-  /*
-   * Direct Service & Product caches.
-   */
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          servicesResponse
-        )
+  const mappingSelectData = useMemo(() => {
+    const filteredCache =
+      mappingCache.filter(
+        item =>
+          item.itemType ===
+          selectedItem.itemType
       );
 
-    setServiceCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        servicePage
-      )
+    if (
+      !selectedMapping?.id ||
+      selectedMapping.itemType !==
+      selectedItem.itemType
+    ) {
+      return filteredCache;
+    }
+
+    const exists = filteredCache.some(
+      item =>
+        Number(item.id) ===
+        Number(selectedMapping.id)
     );
+
+    if (exists) {
+      return filteredCache;
+    }
+
+    return [
+      selectedMapping as MappingOption,
+      ...filteredCache
+    ];
   }, [
-    servicesResponse,
-    servicePage
+    mappingCache,
+    selectedMapping,
+    selectedItem.itemType
   ]);
 
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          medicationsResponse
-        )
-      );
 
-    setMedicationCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        medicationPage
-      )
+  const directSelectData = useMemo(() => {
+    if (!selectedDirectItem?.id) {
+      return selectData;
+    }
+
+    const exists = selectData.some(
+      item =>
+        Number(item.id) === Number(selectedDirectItem.id)
     );
+
+    if (exists) {
+      return selectData;
+    }
+
+    return [
+      selectedDirectItem,
+      ...selectData
+    ];
   }, [
-    medicationsResponse,
-    medicationPage
+    selectData,
+    selectedDirectItem
   ]);
 
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          laboratoryResponse
-        )
-      );
 
-    setLaboratoryCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        laboratoryPage
-      )
-    );
+  const currentSelectTotal = Number(
+    currentSelectResponse?.totalCount ?? 0
+  );
+
+  const hasMoreDirectItems =
+    currentSelectTotal > 0 &&
+    selectData.length < currentSelectTotal;
+
+  const handleFetchMore = () => {
+    if (
+      isFetchingMedications ||
+      isFetchingMedicationsSearch ||
+      isFetchingLaboratory ||
+      isFetchingLaboratorySearch ||
+      isFetchingRadiology ||
+      isFetchingRadiologySearch ||
+      isFetchingPathology ||
+      isFetchingPathologySearch ||
+      isFetchingServices ||
+      isFetchingServicesSearch ||
+      isFetchingProcedures ||
+      isFetchingProceduresSearch
+    ) {
+      return;
+    }
+
+    if (!hasMoreDirectItems) {
+      return;
+    }
+
+    setSelectPage(previous => previous + 1);
+  };
+
+
+
+  const directItemSelectConfig = useMemo(() => {
+    switch (selectedItem.itemType) {
+      case 'MEDICATION':
+        return {
+          fieldLabel: 'Medication',
+          selectData: directSelectData,
+          loading:
+            isFetchingMedications ||
+            isFetchingMedicationsSearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
+      case 'LABORATORY':
+        return {
+          fieldLabel: 'Laboratory Test',
+          selectData: directSelectData,
+          loading:
+            isFetchingLaboratory ||
+            isFetchingLaboratorySearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+
+        };
+
+      case 'RADIOLOGY':
+        return {
+          fieldLabel: 'Radiology Test',
+          selectData,
+          loading:
+            isFetchingRadiology ||
+            isFetchingRadiologySearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
+      case 'PATHOLOGY':
+        return {
+          fieldLabel: 'Pathology Test',
+          selectData,
+          loading:
+            isFetchingPathology ||
+            isFetchingPathologySearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
+      case 'SERVICE':
+        return {
+          fieldLabel: 'Service',
+          selectData,
+          loading:
+            isFetchingServices ||
+            isFetchingServicesSearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
+      case 'PROCEDURE':
+        return {
+          fieldLabel: 'Procedure',
+          selectData,
+          loading:
+            isFetchingProcedures ||
+            isFetchingProceduresSearch,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
+      default:
+        return null;
+    }
   }, [
-    laboratoryResponse,
-    laboratoryPage
+    selectedItem.itemType,
+    selectData,
+    currentSelectResponse,
+
+    isFetchingMedications,
+    isFetchingMedicationsSearch,
+
+    isFetchingLaboratory,
+    isFetchingLaboratorySearch,
+
+    isFetchingRadiology,
+    isFetchingRadiologySearch,
+
+    isFetchingPathology,
+    isFetchingPathologySearch,
+
+    isFetchingServices,
+    isFetchingServicesSearch,
+
+    isFetchingProcedures,
+    isFetchingProceduresSearch
   ]);
 
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          radiologyResponse
-        )
-      );
 
-    setRadiologyCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        radiologyPage
-      )
-    );
-  }, [
-    radiologyResponse,
-    radiologyPage
-  ]);
 
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          pathologyResponse
-        )
-      );
+  const handleSelectSearch = (value: string) => {
+    setSelectSearch(value);
+    setSelectPage(0);
+    setSelectData([]);
+  };
 
-    setPathologyCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        pathologyPage
-      )
-    );
-  }, [
-    pathologyResponse,
-    pathologyPage
-  ]);
-
-  useEffect(() => {
-    const options =
-      normalizeServiceProductOptions(
-        normalizePageData(
-          proceduresResponse
-        )
-      );
-
-    setProcedureCache(previous =>
-      mergeOptions(
-        previous,
-        options,
-        procedurePage
-      )
-    );
-  }, [
-    proceduresResponse,
-    procedurePage
-  ]);
-
-  const directItemSelectConfig =
-    useMemo(() => {
-      switch (
-        selectedItem.itemType
-      ) {
-        case 'MEDICATION':
-          return {
-            fieldLabel:
-              'Medication',
-
-            selectData:
-              medicationCache,
-
-            loading:
-              isFetchingMedications,
-
-            hasMore:
-              Boolean(
-                medicationsResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                medicationsResponse
-                  ?.totalCount ??
-                0
-              ) >
-                medicationCache.length,
-
-            onFetchMore: () =>
-              setMedicationPage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        case 'LABORATORY':
-          return {
-            fieldLabel:
-              'Laboratory Test',
-
-            selectData:
-              laboratoryCache,
-
-            loading:
-              isFetchingLaboratory,
-
-            hasMore:
-              Boolean(
-                laboratoryResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                laboratoryResponse
-                  ?.totalCount ??
-                0
-              ) >
-                laboratoryCache.length,
-
-            onFetchMore: () =>
-              setLaboratoryPage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        case 'RADIOLOGY':
-          return {
-            fieldLabel:
-              'Radiology Test',
-
-            selectData:
-              radiologyCache,
-
-            loading:
-              isFetchingRadiology,
-
-            hasMore:
-              Boolean(
-                radiologyResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                radiologyResponse
-                  ?.totalCount ??
-                0
-              ) >
-                radiologyCache.length,
-
-            onFetchMore: () =>
-              setRadiologyPage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        case 'PATHOLOGY':
-          return {
-            fieldLabel:
-              'Pathology Test',
-
-            selectData:
-              pathologyCache,
-
-            loading:
-              isFetchingPathology,
-
-            hasMore:
-              Boolean(
-                pathologyResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                pathologyResponse
-                  ?.totalCount ??
-                0
-              ) >
-                pathologyCache.length,
-
-            onFetchMore: () =>
-              setPathologyPage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        case 'SERVICE':
-          return {
-            fieldLabel:
-              'Service',
-
-            selectData:
-              serviceCache,
-
-            loading:
-              isFetchingServices,
-
-            hasMore:
-              Boolean(
-                servicesResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                servicesResponse
-                  ?.totalCount ??
-                0
-              ) >
-                serviceCache.length,
-
-            onFetchMore: () =>
-              setServicePage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        case 'PROCEDURE':
-          return {
-            fieldLabel:
-              'Procedure',
-
-            selectData:
-              procedureCache,
-
-            loading:
-              isFetchingProcedures,
-
-            hasMore:
-              Boolean(
-                proceduresResponse
-                  ?.links?.next
-              ) ||
-              Number(
-                proceduresResponse
-                  ?.totalCount ??
-                0
-              ) >
-                procedureCache.length,
-
-            onFetchMore: () =>
-              setProcedurePage(
-                previous =>
-                  previous + 1
-              )
-          };
-
-        default:
-          return null;
-      }
-    }, [
-      selectedItem.itemType,
-
-      medicationCache,
-      laboratoryCache,
-      radiologyCache,
-      pathologyCache,
-      serviceCache,
-      procedureCache,
-
-      medicationsResponse,
-      laboratoryResponse,
-      radiologyResponse,
-      pathologyResponse,
-      servicesResponse,
-      proceduresResponse,
-
-      isFetchingMedications,
-      isFetchingLaboratory,
-      isFetchingRadiology,
-      isFetchingPathology,
-      isFetchingServices,
-      isFetchingProcedures
-    ]);
 
   const resetMappingDropdown =
     () => {
@@ -1096,26 +1122,12 @@ const PriceListSetupItems: React.FC<Props> = ({
       );
     };
 
-  const resetDirectItemDropdowns =
-    () => {
-      setServicePage(0);
-      setServiceCache([]);
-
-      setMedicationPage(0);
-      setMedicationCache([]);
-
-      setLaboratoryPage(0);
-      setLaboratoryCache([]);
-
-      setRadiologyPage(0);
-      setRadiologyCache([]);
-
-      setPathologyPage(0);
-      setPathologyCache([]);
-
-      setProcedurePage(0);
-      setProcedureCache([]);
-    };
+  const resetDirectItemDropdowns = () => {
+    setSelectPage(0);
+    setSelectSearch('');
+    setDebouncedSelectSearch('');
+    setSelectData([]);
+  };
 
   const resetAllDropdowns = () => {
     resetMappingDropdown();
@@ -1156,7 +1168,22 @@ const PriceListSetupItems: React.FC<Props> = ({
         Number(priceListSetupId),
 
       itemType:
-        'SERVICE',
+        undefined,
+
+      sourceId:
+        undefined,
+
+      itemCode:
+        undefined,
+
+      itemName:
+        undefined,
+
+      waseelItemMappingId:
+        undefined,
+
+      sbsCatalogId:
+        undefined,
 
       discountPercentage:
         0,
@@ -1174,9 +1201,10 @@ const PriceListSetupItems: React.FC<Props> = ({
   };
 
   const openEdit = (
-    row:
-      PriceListSetupItem
+    row: PriceListSetupItem
   ) => {
+    resetAllDropdowns();
+
     setSelectedItem({
       ...row
     });
@@ -1186,39 +1214,20 @@ const PriceListSetupItems: React.FC<Props> = ({
       row.waseelItemMappingId
     ) {
       setSelectedMapping({
-        id:
-          Number(
-            row.waseelItemMappingId
-          ),
-
-        itemType:
-          row.itemType,
-
-        sourceId:
-          row.sourceId,
-
-        itemCode:
-          row.itemCode,
-
-        itemName:
-          row.itemName,
-
-        sbsCatalogId:
-          Number(
-            row.sbsCatalogId ?? 0
-          ),
-
-        sbsCode:
-          '',
-
-        isActive:
-          row.isActive ?? true
+        id: Number(row.waseelItemMappingId),
+        itemType: row.itemType,
+        sourceId: row.sourceId,
+        itemCode: row.itemCode,
+        itemName: row.itemName,
+        sbsCatalogId: Number(
+          row.sbsCatalogId ?? 0
+        ),
+        sbsCode: '',
+        isActive: row.isActive ?? true
       });
     } else {
       setSelectedMapping(null);
     }
-
-    resetAllDropdowns();
 
     setChildModalOpen(true);
   };
@@ -1231,6 +1240,8 @@ const PriceListSetupItems: React.FC<Props> = ({
     ) {
       return;
     }
+
+
 
     const mapping =
       mappingCache.find(
@@ -1297,16 +1308,8 @@ const PriceListSetupItems: React.FC<Props> = ({
 
       sbsCatalogId:
         mapping.sbsCatalogId
-          ? Number(
-              mapping.sbsCatalogId
-            )
+          ? Number(mapping.sbsCatalogId)
           : undefined,
-
-      itemType:
-        (
-          mapping.itemType ||
-          previous.itemType
-        ) as PriceListItemType,
 
       itemCode:
         mapping.itemCode || '',
@@ -1374,32 +1377,13 @@ const PriceListSetupItems: React.FC<Props> = ({
     }));
   };
 
-  const handleFetchMoreMappings =
-    () => {
-      if (
-        loadingMappings ||
-        !hasMoreMappings
-      ) {
-        return;
-      }
+  const handleFetchMoreMappings = () => {
+    if (loadingMappings || !hasMoreMappings) {
+      return;
+    }
 
-      if (mappingNextLink) {
-        const {
-          page
-        } =
-          extractPaginationFromLink(
-            mappingNextLink
-          );
-
-        setMappingPage(page);
-        return;
-      }
-
-      setMappingPage(
-        previous =>
-          previous + 1
-      );
-    };
+    setMappingPage(previous => previous + 1);
+  };
 
   const validate = ():
     string | null => {
@@ -1444,9 +1428,9 @@ const PriceListSetupItems: React.FC<Props> = ({
 
     if (
       selectedItem.unitPrice ===
-        undefined ||
+      undefined ||
       selectedItem.unitPrice ===
-        null ||
+      null ||
       Number(
         selectedItem.unitPrice
       ) < 0
@@ -1470,7 +1454,7 @@ const PriceListSetupItems: React.FC<Props> = ({
 
     if (
       selectedItem.pricingMethod ===
-        'NO_CHARGE' &&
+      'NO_CHARGE' &&
       Number(
         selectedItem.unitPrice
       ) !== 0
@@ -1502,28 +1486,28 @@ const PriceListSetupItems: React.FC<Props> = ({
       SavePriceListSetupItemRequest = {
       waseelItemMappingId:
         isInsurancePriceList &&
-        selectedItem
-          .waseelItemMappingId
+          selectedItem
+            .waseelItemMappingId
           ? Number(
-              selectedItem
-                .waseelItemMappingId
-            )
+            selectedItem
+              .waseelItemMappingId
+          )
           : null,
 
       sbsCatalogId:
         isInsurancePriceList &&
-        selectedItem
-          .sbsCatalogId
+          selectedItem
+            .sbsCatalogId
           ? Number(
-              selectedItem
-                .sbsCatalogId
-            )
+            selectedItem
+              .sbsCatalogId
+          )
           : null,
 
       itemType:
         selectedItem
           .itemType as
-          PriceListItemType,
+        PriceListItemType,
 
       sourceId:
         Number(
@@ -1560,9 +1544,9 @@ const PriceListSetupItems: React.FC<Props> = ({
       requiresPreAuthorization:
         isInsurancePriceList
           ? Boolean(
-              selectedItem
-                .requiresPreAuthorization
-            )
+            selectedItem
+              .requiresPreAuthorization
+          )
           : false
     };
 
@@ -1694,83 +1678,83 @@ const PriceListSetupItems: React.FC<Props> = ({
     return (
       price -
       price *
-        discount /
-        100
+      discount /
+      100
     ).toFixed(4);
   };
 
   const columns:
     ColumnConfig[] = [
-    {
-      key: 'itemCode',
-      title:
-        <Translate>
-          Item Code
-        </Translate>
-    },
+      {
+        key: 'itemCode',
+        title:
+          <Translate>
+            Item Code
+          </Translate>
+      },
 
-    {
-      key: 'itemName',
-      title:
-        <Translate>
-          Item Name
-        </Translate>
-    },
+      {
+        key: 'itemName',
+        title:
+          <Translate>
+            Item Name
+          </Translate>
+      },
 
-    {
-      key: 'itemType',
-      title:
-        <Translate>
-          Item Type
-        </Translate>,
+      {
+        key: 'itemType',
+        title:
+          <Translate>
+            Item Type
+          </Translate>,
 
-      render: (
-        row:
-          PriceListSetupItem
-      ) =>
-        row.itemType
-          ? formatEnumString(
+        render: (
+          row:
+            PriceListSetupItem
+        ) =>
+          row.itemType
+            ? formatEnumString(
               row.itemType
             )
-          : ''
-    },
+            : ''
+      },
 
-    {
-      key: 'unitPrice',
-      title:
-        <Translate>
-          Unit Price
-        </Translate>,
-      align: 'center'
-    },
+      {
+        key: 'unitPrice',
+        title:
+          <Translate>
+            Unit Price
+          </Translate>,
+        align: 'center'
+      },
 
-    {
-      key:
-        'discountPercentage',
-      title:
-        <Translate>
-          Discount %
-        </Translate>,
-      align: 'center'
-    },
+      {
+        key:
+          'discountPercentage',
+        title:
+          <Translate>
+            Discount %
+          </Translate>,
+        align: 'center'
+      },
 
-    {
-      key: 'netPrice',
-      title:
-        <Translate>
-          Net Price
-        </Translate>,
-      align: 'center',
+      {
+        key: 'netPrice',
+        title:
+          <Translate>
+            Net Price
+          </Translate>,
+        align: 'center',
 
-      render: (
-        row:
-          PriceListSetupItem
-      ) =>
-        calculateNetPrice(row)
-    },
+        render: (
+          row:
+            PriceListSetupItem
+        ) =>
+          calculateNetPrice(row)
+      },
 
-    ...(isInsurancePriceList
-      ? [{
+      ...(isInsurancePriceList
+        ? [{
           key: 'requiresPreAuthorization',
           title:
             <Translate>
@@ -1785,49 +1769,49 @@ const PriceListSetupItems: React.FC<Props> = ({
               ? 'Yes'
               : 'No'
         }]
-      : []),
+        : []),
 
-    {
-      key: 'actions',
-      title:
-        <Translate>
-          Actions
-        </Translate>,
-      width: 100,
-      align: 'right',
+      {
+        key: 'actions',
+        title:
+          <Translate>
+            Actions
+          </Translate>,
+        width: 100,
+        align: 'right',
 
-      render: (
-        row:
-          PriceListSetupItem
-      ) => (
-        <div className="container-of-icons">
-          <MdModeEdit
-            className="icons-style"
-            title="Edit"
-            size={22}
-            fill="var(--primary-gray)"
-            onClick={() =>
-              openEdit(row)
-            }
-          />
+        render: (
+          row:
+            PriceListSetupItem
+        ) => (
+          <div className="container-of-icons">
+            <MdModeEdit
+              className="icons-style"
+              title="Edit"
+              size={22}
+              fill="var(--primary-gray)"
+              onClick={() =>
+                openEdit(row)
+              }
+            />
 
-          <MdDelete
-            className="icons-style"
-            title="Delete"
-            size={22}
-            fill="var(--primary-pink)"
-            onClick={() => {
-              setSelectedItem(row);
+            <MdDelete
+              className="icons-style"
+              title="Delete"
+              size={22}
+              fill="var(--primary-pink)"
+              onClick={() => {
+                setSelectedItem(row);
 
-              setDeleteConfirmationOpen(
-                true
-              );
-            }}
-          />
-        </div>
-      )
-    }
-  ];
+                setDeleteConfirmationOpen(
+                  true
+                );
+              }}
+            />
+          </div>
+        )
+      }
+    ];
 
   const childForm = () => (
     <Form fluid>
@@ -1860,59 +1844,27 @@ const PriceListSetupItems: React.FC<Props> = ({
               fieldLabel="Waseel Item Mapping"
               fieldType="selectPagination"
               fieldName="waseelItemMappingId"
-              selectData={mappingCache}
+              selectData={mappingSelectData}
               selectDataLabel="displayName"
               selectDataValue="id"
               record={selectedItem}
               setRecord={updatedItem => {
-                setSelectedItem(
-                  updatedItem
-                );
-
-                const mapping =
-                  mappingCache.find(
-                    item =>
-                      Number(item.id) ===
-                      Number(
-                        updatedItem
-                          .waseelItemMappingId
-                      )
-                  );
-
-                handleMappingSelected(
-                  mapping || null
-                );
+                setSelectedItem(updatedItem);
               }}
               searchable
-              searchKeyWard={
-                mappingSearch
-              }
-              setSearchKeyWard={
-                setMappingSearch
-              }
-              loading={
-                loadingMappings
-              }
-              hasMore={
-                hasMoreMappings
-              }
-              onFetchMore={
-                handleFetchMoreMappings
-              }
-              onSelectItem={mapping =>
-                handleMappingSelected(
-                  mapping
-                )
-              }
-              disabled={
-                !selectedItem.itemType
-              }
-              menuMaxHeight={380}
+              searchKeyWard={mappingSearch}
+              setSearchKeyWard={setMappingSearch}
+              loading={loadingMappings}
+              hasMore={hasMoreMappings}
+              onFetchMore={handleFetchMoreMappings}
+              onSelectItem={handleMappingSelected}
+              disabled={!selectedItem.itemType}
               placeholder={
                 !selectedItem.itemType
                   ? 'Select item type first'
                   : 'Select Waseel mapping'
               }
+              menuMaxHeight={380}
             />
           </div>
         ) : (
@@ -1925,67 +1877,56 @@ const PriceListSetupItems: React.FC<Props> = ({
               required
               width="100%"
               fieldLabel={
-                directItemSelectConfig
-                  .fieldLabel
+                directItemSelectConfig.fieldLabel
               }
               fieldType="selectPagination"
               fieldName="sourceId"
-              selectData={
-                directItemSelectConfig
-                  .selectData
-              }
+              selectData={directSelectData}
               selectDataLabel="displayName"
               selectDataValue="id"
               record={selectedItem}
               setRecord={updatedItem => {
-                setSelectedItem(
-                  updatedItem
-                );
+                setSelectedItem(updatedItem);
 
                 const selected =
-                  directItemSelectConfig
-                    .selectData
-                    .find(
-                      item =>
-                        Number(
-                          item.id
-                        ) ===
-                        Number(
-                          updatedItem
-                            .sourceId
-                        )
-                    );
+                  directItemSelectConfig.selectData.find(
+                    item =>
+                      Number(item.id) ===
+                      Number(updatedItem.sourceId)
+                  );
 
                 handleDirectItemSelected(
                   selected || null
                 );
               }}
               searchable
+
+              searchKeyWard={selectSearch}
+              setSearchKeyWard={handleSelectSearch}
+
               loading={
-                directItemSelectConfig
-                  .loading
+                directItemSelectConfig.loading
               }
               hasMore={
-                directItemSelectConfig
-                  .hasMore
+                directItemSelectConfig.hasMore
               }
               onFetchMore={
-                directItemSelectConfig
-                  .onFetchMore
+                directItemSelectConfig.onFetchMore
               }
-              onSelectItem={selected =>
-                handleDirectItemSelected(
-                  selected
-                )
-              }
-              disabled={
-                !selectedItem.itemType
-              }
+
+              onSelectItem={selected => {
+                setSelectedDirectItem(selected);
+                handleDirectItemSelected(selected);
+              }}
+
+              disabled={!selectedItem.itemType}
+
               placeholder={
                 !selectedItem.itemType
                   ? 'Select item type first'
                   : `Select ${directItemSelectConfig.fieldLabel}`
               }
+
               menuMaxHeight={380}
             />
           )
@@ -2053,7 +1994,7 @@ const PriceListSetupItems: React.FC<Props> = ({
               record={
                 selectedMapping ?? {}
               }
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
 
             <MyInput
@@ -2064,7 +2005,7 @@ const PriceListSetupItems: React.FC<Props> = ({
               record={
                 selectedMapping ?? {}
               }
-              setRecord={() => {}}
+              setRecord={() => { }}
             />
           </div>
         </>
@@ -2291,8 +2232,8 @@ const PriceListSetupItems: React.FC<Props> = ({
             {childForm()}
           </div>
         }
-        mainSize="lg"
-        childSize="md"
+        mainSize="md"
+        childSize="xs"
         actionButtonLabel={
           selectedItem.id
             ? 'Save'

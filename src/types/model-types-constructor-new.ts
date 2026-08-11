@@ -216,7 +216,7 @@ export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',
   sourceId: 0,
-  practitionerId: undefined,
+  specialty: undefined,
   serviceId: undefined,
   createdBy: '',
   createdDate: null,
@@ -1905,6 +1905,7 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   facilityId: 0,
   departmentId: 0,
 
+  specialty: null,
   practitionerId: null,
   appointmentId: null,
   encounterType: '',

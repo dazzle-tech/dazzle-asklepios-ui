@@ -295,7 +295,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
         title="Family History"
         content={
           <>
-            {!toShowData && (
+           
               <div className="margin-bottom-10">
                 <MyInput
                   fieldType="check"
@@ -309,7 +309,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
                   }}
                 />
               </div>
-            )}
+            
 
             <MyTable
               height={450}

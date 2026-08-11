@@ -116,6 +116,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
+        fieldType="textnumber"
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -125,6 +126,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         vr={validationResult}
         column
         fieldName="workPhone"
+        fieldType="textnumber"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}

@@ -141,17 +141,44 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
-    // Get specialist practitioners by department
+    // Get specialist practitioners by department (optional specialty filter)
     getSpecialistPractitionersByDepartment: builder.query<
       PagedResult<any>,
+      { departmentId: number | string; specialty?: string } & PagedParams
+    >({
+      query: ({ departmentId, specialty, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/specialists/by-department',
+        method: 'GET',
+        params: {
+          departmentId,
+          ...(specialty ? { specialty } : {}),
+          page,
+          size,
+          sort
+        }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get distinct specialties (sub-specialties) by department
+    getSpecialtiesByDepartment: builder.query<
+      PagedResult<string>,
       { departmentId: number | string } & PagedParams
     >({
       query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
-        url: '/api/setup/practitioner/specialists/by-department',
+        url: '/api/setup/practitioner/specialties/by-department',
         method: 'GET',
         params: { departmentId, page, size, sort }
       }),
-      transformResponse: (response: any[], meta) => {
+      transformResponse: (response: string[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
@@ -319,7 +346,7 @@ export const PractitionerService = createApi({
         };
       },
       providesTags: ['Practitioner']
-    })
+    }),
   })
 });
 
@@ -337,6 +364,8 @@ export const {
   useLazyGetPractitionerByDepartmentQuery,
   useGetSpecialistPractitionersByDepartmentQuery,
   useLazyGetSpecialistPractitionersByDepartmentQuery,
+  useGetSpecialtiesByDepartmentQuery,
+  useLazyGetSpecialtiesByDepartmentQuery,
   useGetPractitionerByIdQuery,
   useLazyGetPractitionerByIdQuery,
   useGetActiveAppointablePractitionersQuery,

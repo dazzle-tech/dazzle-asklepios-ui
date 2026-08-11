@@ -22,6 +22,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
 import { InputPicker } from 'rsuite';
+import { MdCalendarToday } from 'react-icons/md';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -169,6 +170,12 @@ const MyInput = ({
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
+  const dateOpenGuardRef = useRef(0);
+  const [dateText, setDateText] = useState('');
+  const dateTextRef = useRef<HTMLInputElement>(null);
+
+  const [dateTimeText, setDateTimeText] = useState('');
+  const dateTimeTextRef = useRef<HTMLInputElement>(null);
   const [isDateTimeOpen, setIsDateTimeOpen] = useState(false);
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
@@ -179,8 +186,46 @@ const MyInput = ({
 
   const allowEnterNewLine = props.allowEnterNewLine ?? true;
 
+  const formatDateTimeText = (value: any) => {
+    if (!value) return '';
+
+    const date = dayjs(value);
+
+    if (!date.isValid()) return '';
+
+    return date.format('DD-MM-YYYY HH:mm');
+  };
+
+  const getDateTimeFromText = (text: string) => {
+    const match = text.match(
+      /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})$/
+    );
+
+    if (!match) return null;
+
+    const [, day, month, year, hour, minute] = match;
+
+    const parsed = dayjs(
+      `${year}-${month}-${day} ${hour}:${minute}`,
+      'YYYY-MM-DD HH:mm',
+      true
+    );
+
+    return parsed.isValid() ? parsed : null;
+  };
+
+  useEffect(() => {
+    if (isDateOpen) {
+      dateOpenGuardRef.current = Date.now();
+    }
+  }, [isDateOpen]);
+
   useEffect(() => {
     const handleScroll = event => {
+      if (isDateOpen && Date.now() - dateOpenGuardRef.current < 200) {
+        return;
+      }
+
       const path = event.composedPath ? event.composedPath() : [];
 
       const menuClassList = [
@@ -214,7 +259,7 @@ const MyInput = ({
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, []);
+  }, [isDateOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -231,6 +276,50 @@ const MyInput = ({
       setRecording(false);
     }
   }, [props.disabled, recording]);
+
+  const formatDateText = (value: any) => {
+    if (!value) return '';
+
+    const date = dayjs(value);
+
+    if (!date.isValid()) return '';
+
+    return date.format('DD-MM-YYYY');
+  };
+
+  const getDateFromText = (text: string) => {
+    const match = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+    if (!match) return null;
+
+    const [, day, month, year] = match;
+
+    const parsed = dayjs(
+      `${year}-${month}-${day}`,
+      'YYYY-MM-DD',
+      true
+    );
+
+    return parsed.isValid() ? parsed : null;
+  };
+
+  const updateDateFromText = (
+    text: string,
+    commit = true
+  ) => {
+    setDateText(text);
+
+    if (!commit) return;
+
+    const parsed = getDateFromText(text);
+
+    if (!parsed) return;
+
+    setRecord?.({
+      ...record,
+      [fieldName]: parsed.format('YYYY-MM-DD')
+    });
+  };
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
@@ -368,6 +457,8 @@ const MyInput = ({
         ? dataList
           .filter(item => item?.[props.disableByField] === false).map(item => item[valueKey])
         : [];
+
+
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -417,40 +508,660 @@ const MyInput = ({
           />
         );
 
-      case 'datetime':
+
+      case 'datetime': {
+        const currentDateTimeText =
+          dateTimeText || formatDateTimeText(record?.[fieldName]);
+
         return (
-          <Form.Control
-            className="custom-date-input"
-            style={
-              {
+          <div
+            ref={pickerRef}
+            style={{
+              position: 'relative',
+              width: props?.width ?? 145
+            }}
+          >
+            {/* Hidden RSuite DatePicker - calendar + time only */}
+            <DatePicker
+              value={
+                record?.[fieldName]
+                  ? new Date(record[fieldName])
+                  : null
+              }
+              onChange={(value: Date | null) => {
+                if (!value) {
+                  setDateTimeText('');
+
+                  setRecord?.({
+                    ...record,
+                    [fieldName]: null
+                  });
+
+                  setIsDateTimeOpen(false);
+                  return;
+                }
+
+                const formatted = dayjs(value).format(
+                  'DD-MM-YYYY HH:mm'
+                );
+
+                setDateTimeText(formatted);
+
+                setRecord?.({
+                  ...record,
+                  [fieldName]: dayjs(value).toISOString()
+                });
+
+                setIsDateTimeOpen(false);
+              }}
+              format="dd-MM-yyyy HH:mm"
+              cleanable={false}
+              editable={false}
+
+              menuClassName={clsx(
+                'my-input-calendar-popup',
+                props?.menuClassName
+              )}
+
+              open={isDateTimeOpen}
+
+              onOpen={() => {
+                setPlacement(calculatePlacement());
+                setIsDateTimeOpen(true);
+              }}
+
+              onClose={() => setIsDateTimeOpen(false)}
+
+              placement={placement}
+              preventOverflow={pickerPreventOverflow}
+              container={resolveContainer()}
+
+              shouldDisableDate={(date: Date) => {
+                const today = new Date(
+                  new Date().setHours(0, 0, 0, 0)
+                );
+
+                if (props.disablePastDates) {
+                  return date < today;
+                }
+
+                if (props.disableFutureDates) {
+                  return date > today;
+                }
+
+                return false;
+              }}
+
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                pointerEvents: 'none',
+                zIndex: -1
+              }}
+            />
+
+            {/* Real DateTime input */}
+            <div
+              className="custom-date-input rs-picker"
+              style={{
                 width: props?.width ?? 145,
-                '--input-height': `${props?.height ?? 30}px`
-              } as React.CSSProperties
-            }
-            disabled={props.disabled}
-            name={fieldName}
-            value={record[fieldName] ? new Date(record[fieldName]) : null}
-            accepter={CustomDateTimePicker}
-            onChange={handleValueChange}
-            placeholder={props.placeholder}
-            onKeyDown={focusNextField}
-            open={isDateTimeOpen}
-            onOpen={() => {
-              setPlacement(calculatePlacement());
-              setIsDateTimeOpen(true);
-            }}
-            onClose={() => setIsDateTimeOpen(false)}
-            placement={placement}
-            preventOverflow={pickerPreventOverflow}
-            container={resolveContainer()}
-            shouldDisableDate={(date: Date) => {
-              const today = new Date(new Date().setHours(0, 0, 0, 0));
-              if (props.disablePastDates) return date < today;
-              if (props.disableFutureDates) return date > today;
-              return false;
-            }}
-          />
+                height: props?.height ?? 30,
+                position: 'relative'
+              }}
+            >
+              <input
+                ref={dateTimeTextRef}
+                type="text"
+                name={fieldName}
+                disabled={props.disabled}
+                value={currentDateTimeText}
+                placeholder={
+                  props.placeholder ?? 'DD-MM-YYYY HH:mm'
+                }
+                className={`rs-input my-input ${inputColor ? `input-${inputColor}` : ''
+                  }`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  paddingRight: 38,
+                  cursor: props.disabled
+                    ? 'not-allowed'
+                    : 'text'
+                }}
+
+                onChange={() => {
+                  // Manual keyboard handling
+                }}
+
+                onFocus={() => {
+                  if (!props.disabled) {
+                    setPlacement(calculatePlacement());
+                  }
+                }}
+
+                onClick={() => {
+                  if (!props.disabled) {
+                    setPlacement(calculatePlacement());
+                    setIsDateTimeOpen(true);
+                  }
+                }}
+
+                onBlur={() => {
+                  const value =
+                    dateTimeTextRef.current?.value || '';
+
+                  const parsed =
+                    getDateTimeFromText(value);
+
+                  if (parsed) {
+                    setRecord?.({
+                      ...record,
+                      [fieldName]: parsed.toISOString()
+                    });
+                  }
+
+                  const recordValue = parsed
+                    ? parsed.toDate()
+                    : record?.[fieldName]
+                      ? new Date(record[fieldName])
+                      : null;
+
+                  if (!recordValue) return;
+
+                  const minDate = new Date(1900, 0, 1);
+
+                  const today = new Date(
+                    new Date().setHours(0, 0, 0, 0)
+                  );
+
+                  if (
+                    props.showWarningIfBeforeYear1900 &&
+                    recordValue < minDate
+                  ) {
+                    dispatch(
+                      notify({
+                        msg: 'Date cannot be before 01-01-1900',
+                        sev: 'warning'
+                      })
+                    );
+
+                    return;
+                  }
+
+                  if (
+                    props.showWarningIfInPast &&
+                    recordValue < today
+                  ) {
+                    dispatch(
+                      notify({
+                        msg: 'Date cannot be in the past',
+                        sev: 'warning'
+                      })
+                    );
+                  }
+                }}
+
+                onKeyDown={(
+                  e: React.KeyboardEvent<HTMLInputElement>
+                ) => {
+                  const input = e.currentTarget;
+
+                  /*
+                  * ENTER
+                  */
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+
+                    setIsDateTimeOpen(false);
+                    focusNextField(e);
+
+                    return;
+                  }
+
+                  /*
+                  * ESC
+                  */
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+
+                    setIsDateTimeOpen(false);
+
+                    return;
+                  }
+
+                  /*
+                  * CTRL + A
+                  */
+                  if (
+                    e.ctrlKey &&
+                    e.key.toLowerCase() === 'a'
+                  ) {
+                    e.preventDefault();
+
+                    input.setSelectionRange(0, 16);
+
+                    return;
+                  }
+
+                  /*
+                  * LEFT / RIGHT
+                  *
+                  * DD-MM-YYYY HH:mm
+                  *
+                  * 0123456789012345
+                  *       ↑
+                  */
+                  if (
+                    e.key === 'ArrowLeft' ||
+                    e.key === 'ArrowRight'
+                  ) {
+                    e.preventDefault();
+
+                    const current =
+                      input.selectionStart ?? 0;
+
+                    let next =
+                      e.key === 'ArrowRight'
+                        ? current + 1
+                        : current - 1;
+
+                    /*
+                    * Skip separators:
+                    *
+                    * position 2  = -
+                    * position 5  = -
+                    * position 10 = space
+                    * position 13 = :
+                    */
+                    if (
+                      next === 2 ||
+                      next === 5 ||
+                      next === 10 ||
+                      next === 13
+                    ) {
+                      next +=
+                        e.key === 'ArrowRight'
+                          ? 1
+                          : -1;
+                    }
+
+                    next = Math.max(
+                      0,
+                      Math.min(16, next)
+                    );
+
+                    input.setSelectionRange(
+                      next,
+                      next
+                    );
+
+                    return;
+                  }
+
+                  /*
+                  * TAB
+                  */
+                  if (e.key === 'Tab') {
+                    return;
+                  }
+                  if (e.key === 'Backspace') {
+                    e.preventDefault();
+
+                    const value =
+                      input.value ||
+                      '01-01-2000 00:00';
+
+                    let position =
+                      input.selectionStart ?? 0;
+                    if (
+                      input.selectionStart !==
+                      input.selectionEnd
+                    ) {
+                      const start =
+                        input.selectionStart ?? 0;
+
+                      const end =
+                        input.selectionEnd ?? start;
+
+                      const chars =
+                        value.split('');
+
+                      for (
+                        let i = start;
+                        i < end;
+                        i++
+                      ) {
+                        if (
+                          chars[i] !== '-' &&
+                          chars[i] !== ' ' &&
+                          chars[i] !== ':'
+                        ) {
+                          chars[i] = '0';
+                        }
+                      }
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateTimeText(newValue);
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          start,
+                          start
+                        );
+                      }, 0);
+
+                      return;
+                    }
+
+                    if (position <= 0) return;
+
+                    let deletePosition =
+                      position - 1;
+                    while (
+                      deletePosition >= 0 &&
+                      (
+                        value[deletePosition] === '-' ||
+                        value[deletePosition] === ' ' ||
+                        value[deletePosition] === ':'
+                      )
+                    ) {
+                      deletePosition--;
+                    }
+
+                    if (deletePosition < 0) return;
+
+                    const chars =
+                      value.split('');
+
+                    chars[deletePosition] = '0';
+
+                    const newValue =
+                      chars.join('');
+
+                    setDateTimeText(newValue);
+
+                    setTimeout(() => {
+                      input.setSelectionRange(
+                        deletePosition,
+                        deletePosition
+                      );
+                    }, 0);
+
+                    return;
+                  }
+                  if (e.key === 'Delete') {
+                    e.preventDefault();
+
+                    const value =
+                      input.value ||
+                      '01-01-2000 00:00';
+
+                    const position =
+                      input.selectionStart ?? 0;
+
+                    if (position >= 16) return;
+
+                    let deletePosition =
+                      position;
+
+                    while (
+                      deletePosition < 16 &&
+                      (
+                        value[deletePosition] === '-' ||
+                        value[deletePosition] === ' ' ||
+                        value[deletePosition] === ':'
+                      )
+                    ) {
+                      deletePosition++;
+                    }
+
+                    if (deletePosition >= 16) return;
+
+                    const chars =
+                      value.split('');
+
+                    chars[deletePosition] = '0';
+
+                    const newValue =
+                      chars.join('');
+
+                    setDateTimeText(newValue);
+
+                    setTimeout(() => {
+                      input.setSelectionRange(
+                        deletePosition,
+                        deletePosition
+                      );
+                    }, 0);
+
+                    return;
+                  }
+
+                  if (/^\d$/.test(e.key)) {
+                    e.preventDefault();
+
+                    const value =
+                      input.value ||
+                      '01-01-2000 00:00';
+
+                    let position =
+                      input.selectionStart ?? 0;
+
+                    const selectionEnd =
+                      input.selectionEnd ?? 0;
+
+                    if (
+                      position >= 0 &&
+                      position <= 1
+                    ) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateTimeText(newValue);
+
+                      const next =
+                        position === 1
+                          ? 3
+                          : 1;
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+
+                    if (
+                      position >= 3 &&
+                      position <= 4
+                    ) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateTimeText(newValue);
+
+                      const next =
+                        position === 4
+                          ? 6
+                          : 4;
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+                    if (
+                      position >= 6 &&
+                      position <= 9
+                    ) {
+                      e.stopPropagation();
+
+                      let year =
+                        value.substring(6, 10);
+                      if (
+                        position === 6 ||
+                        selectionEnd === 10
+                      ) {
+                        year = `${e.key}000`;
+                        position = 6;
+                      } else {
+                        const yearChars =
+                          year.split('');
+
+                        yearChars[
+                          position - 6
+                        ] = e.key;
+
+                        year =
+                          yearChars.join('');
+                      }
+
+                      const newValue =
+                        value.substring(0, 6) +
+                        year +
+                        value.substring(10);
+
+                      setDateTimeText(newValue);
+
+                      const next =
+                        Math.min(
+                          position + 1,
+                          11
+                        );
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+                    if (
+                      position >= 11 &&
+                      position <= 12
+                    ) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateTimeText(newValue);
+
+                      const next =
+                        position === 12
+                          ? 14
+                          : 12;
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+                    if (
+                      position >= 14 &&
+                      position <= 15
+                    ) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateTimeText(newValue);
+
+                      const next =
+                        Math.min(
+                          position + 1,
+                          16
+                        );
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+                  }
+                }}
+              />
+
+              <button
+                type="button"
+                disabled={props.disabled}
+                tabIndex={-1}
+                onMouseDown={e => {
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  if (props.disabled) return;
+
+                  setPlacement(
+                    calculatePlacement()
+                  );
+
+                  setIsDateTimeOpen(
+                    prev => !prev
+                  );
+                }}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  height: '100%',
+                  width: 36,
+                  border: 'none',
+                  background: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: props.disabled
+                    ? 'not-allowed'
+                    : 'pointer',
+                  color: '#8c8c8c'
+                }}
+              >
+                <MdCalendarToday size={16} />
+              </button>
+            </div>
+          </div>
         );
+      }
+
 
       case 'time':
         return (
@@ -525,7 +1236,6 @@ const MyInput = ({
               .includes(localSearch.toLowerCase());
           });
 
-        // 🔥 calculate popup width
         const longestLabel = dataList.reduce(
           (longest, item) => {
             const text = isArrayLabel
@@ -747,8 +1457,8 @@ const MyInput = ({
               )}
 
               menuStyle={{
-                minWidth: props?.width ?? 
-                "12vw",
+                minWidth: props?.width ??
+                  "12vw",
                 width: 'auto',
               }}
 
@@ -784,23 +1494,28 @@ const MyInput = ({
           : !localSearch
             ? dataList
             : dataList.filter(item => {
-                const text = isArrayLabel
-                  ? buildCombinedLabel(item, labelKeys, '')
-                  : String(item?.[primaryLabelKey] ?? '');
+              const text = isArrayLabel
+                ? buildCombinedLabel(item, labelKeys, '')
+                : String(item?.[primaryLabelKey] ?? '');
 
-                return text.toLowerCase().includes(localSearch.toLowerCase());
-              });
+              return text.toLowerCase().includes(localSearch.toLowerCase());
+            });
+
+        const shouldAutoLoadSearch =
+          Boolean(props.searchable) &&
+          isServerSideSearch &&
+          Boolean(String(searchTerm).trim());
 
         const pickerData = [
           ...filteredData,
-          ...(props.hasMore
+          ...(props.hasMore && !shouldAutoLoadSearch
             ? [
-                {
-                  [valueKey]: '__load_more__',
-                  [primaryLabelKey]: 'Load more...',
-                  isLoadMore: true
-                }
-              ]
+              {
+                [valueKey]: '__load_more__',
+                [primaryLabelKey]: 'Load more...',
+                isLoadMore: true
+              }
+            ]
             : [])
         ];
 
@@ -812,13 +1527,12 @@ const MyInput = ({
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${
-                inputColor ? `input-${inputColor}` : ''
-              }`}
+              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
+                }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={false}
+              searchable={props.searchable ?? false}
               data={pickerData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
@@ -884,7 +1598,9 @@ const MyInput = ({
 
                 if (key.length === 1) {
                   if (isServerSideSearch && props.setSearchKeyWard) {
-                    props.setSearchKeyWard(String(props.searchKeyWard ?? '') + key);
+                    props.setSearchKeyWard(
+                      String(props.searchKeyWard ?? '') + key
+                    );
                   } else {
                     setLocalSearch(prev => prev + key);
                   }
@@ -911,24 +1627,24 @@ const MyInput = ({
               renderValue={
                 isArrayLabel
                   ? (value, item, selectedElement) => {
-                      if (!item) return selectedElement;
+                    if (!item) return selectedElement;
 
-                      return (
-                        <span>
-                          {buildCombinedLabel(item, labelKeys, selectedElement)}
-                        </span>
-                      );
-                    }
+                    return (
+                      <span>
+                        {buildCombinedLabel(item, labelKeys, selectedElement)}
+                      </span>
+                    );
+                  }
                   : props.isEnum
                     ? (value, item, selectedElement) => {
-                        const base =
-                          (item && item[primaryLabelKey]) ||
-                          selectedElement ||
-                          value ||
-                          '';
+                      const base =
+                        (item && item[primaryLabelKey]) ||
+                        selectedElement ||
+                        value ||
+                        '';
 
-                        return <span>{formatEnumString(String(base))}</span>;
-                      }
+                      return <span>{formatEnumString(String(base))}</span>;
+                    }
                     : undefined
               }
               placeholder={searchTerm ? `Search: ${searchTerm}` : props.placeholder}
@@ -967,57 +1683,57 @@ const MyInput = ({
           </div>
         );
       }
- 
-     case 'multyPicker': {
-  const dataList = props?.selectData ?? [];
-  const valueKey = props?.selectDataValue ?? '';
 
-  return (
-    <div ref={pickerRef}>
-      <Form.Control
-        style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-        block
-        disabled={props.disabled}
-        accepter={TagPicker}
-        container={resolveContainer()}
-        placement={placement}
-        preventOverflow={pickerPreventOverflow}
-        name={fieldName}
-        data={dataList}
-        labelKey={props?.selectDataLabel ?? ''}
-        valueKey={valueKey}
-        value={record ? record[fieldName] : []}
-        onChange={handleValueChange}
-        placeholder={props.placeholder ?? 'Select...'}
-        creatable={props.creatable ?? false}
-        groupBy={props.groupBy ?? null}
-        searchBy={props.searchBy}
-        menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
-        onKeyDown={focusNextField}
-        open={isMultyPickerOpen}
-        onOpen={() => {
-          setPlacement(calculatePlacement());
-          setIsMultyPickerOpen(true);
-        }}
-        onClose={() => setIsMultyPickerOpen(false)}
-        disabledItemValues={getDisabledValues(dataList, valueKey)}
-      />
-    </div>
-  );
-}
-        case 'color':
-  return (
-    <input
-      type="color"
-      value={record?.[fieldName] || '#1976d2'}
-      onChange={(e) =>
-        setRecord({
-          ...record,
-          [fieldName]: e.target.value
-        })
+      case 'multyPicker': {
+        const dataList = props?.selectData ?? [];
+        const valueKey = props?.selectDataValue ?? '';
+
+        return (
+          <div ref={pickerRef}>
+            <Form.Control
+              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+              block
+              disabled={props.disabled}
+              accepter={TagPicker}
+              container={resolveContainer()}
+              placement={placement}
+              preventOverflow={pickerPreventOverflow}
+              name={fieldName}
+              data={dataList}
+              labelKey={props?.selectDataLabel ?? ''}
+              valueKey={valueKey}
+              value={record ? record[fieldName] : []}
+              onChange={handleValueChange}
+              placeholder={props.placeholder ?? 'Select...'}
+              creatable={props.creatable ?? false}
+              groupBy={props.groupBy ?? null}
+              searchBy={props.searchBy}
+              menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
+              onKeyDown={focusNextField}
+              open={isMultyPickerOpen}
+              onOpen={() => {
+                setPlacement(calculatePlacement());
+                setIsMultyPickerOpen(true);
+              }}
+              onClose={() => setIsMultyPickerOpen(false)}
+              disabledItemValues={getDisabledValues(dataList, valueKey)}
+            />
+          </div>
+        );
       }
-    />
-  );
+      case 'color':
+        return (
+          <input
+            type="color"
+            value={record?.[fieldName] || '#1976d2'}
+            onChange={(e) =>
+              setRecord({
+                ...record,
+                [fieldName]: e.target.value
+              })
+            }
+          />
+        );
       case 'checkPicker': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
 
@@ -1032,12 +1748,12 @@ const MyInput = ({
         const filteredData = !localSearch
           ? dataList
           : dataList.filter(item => {
-              const text = isArrayLabel
-                ? buildCombinedLabel(item, labelKeys, '')
-                : String(item?.[primaryLabelKey] ?? '');
+            const text = isArrayLabel
+              ? buildCombinedLabel(item, labelKeys, '')
+              : String(item?.[primaryLabelKey] ?? '');
 
-              return text.toLowerCase().includes(localSearch.toLowerCase());
-            });
+            return text.toLowerCase().includes(localSearch.toLowerCase());
+          });
 
         return (
           <div ref={pickerRef}>
@@ -1046,9 +1762,8 @@ const MyInput = ({
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${
-                inputColor ? `input-${inputColor}` : ''
-              }`}
+              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
+                }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
@@ -1136,51 +1851,55 @@ const MyInput = ({
         );
       }
 
-      case 'date':
+      case 'date': {
+        const currentDateText = dateText || formatDateText(record?.[fieldName]);
+
         return (
-          <div ref={pickerRef}>
-            <Form.Control
-              className="custom-date-input"
-              style={
-                {
-                  width: props?.width ?? 145,
-                  '--input-height': `${props?.height ?? 30}px`
-                } as React.CSSProperties
+          <div
+            ref={pickerRef}
+            style={{
+              position: 'relative',
+              width: props?.width ?? 145
+            }}
+          >
+            <DatePicker
+              value={
+                record?.[fieldName]
+                  ? dayjs(record[fieldName]).toDate()
+                  : null
               }
-              disabled={props.disabled}
-              name={fieldName}
-              accepter={CustomDatePicker}
-              value={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
               onChange={(value: Date | null) => {
-                const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
-                setRecord?.({ ...record, [fieldName]: dateStr });
-              }}
-              onBlur={() => {
-                const value = record?.[fieldName];
-                const minDate = new Date(1900, 0, 1);
-                const today = new Date(new Date().setHours(0, 0, 0, 0));
+                if (!value) {
+                  setDateText('');
 
-                if (props.showWarningIfBeforeYear1900 && value && new Date(value) < minDate) {
-                  dispatch(notify({ msg: 'Date cannot be before 01-01-1900', sev: 'warning' }));
+                  setRecord?.({
+                    ...record,
+                    [fieldName]: null
+                  });
+
                   return;
                 }
 
-                if (props.showWarningIfInPast && value && new Date(value) < today) {
-                  dispatch(notify({ msg: 'Date cannot be in the past', sev: 'warning' }));
-                }
+                const formatted = dayjs(value).format('DD-MM-YYYY');
+
+                setDateText(formatted);
+
+                setRecord?.({
+                  ...record,
+                  [fieldName]: dayjs(value).format('YYYY-MM-DD')
+                });
+
+                setIsDateOpen(false);
               }}
-              placeholder={props.placeholder ?? 'DD-MM-YYYY'}
-              onKeyDown={(e: any) => {
-                const input = e.target as HTMLInputElement;
-                if (e.ctrlKey && e.key.toLowerCase() === 'a') {
-                  e.preventDefault();
-                  setTimeout(() => {
-                    input.setSelectionRange(0, 2);
-                  }, 0);
-                  return;
-                }
-                focusNextField(e);
-              }}
+              format="dd-MM-yyyy"
+              cleanable={false}
+              editable={false}
+
+              menuClassName={clsx(
+                'my-input-calendar-popup',
+                props?.menuClassName
+              )}
+
               open={isDateOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
@@ -1191,16 +1910,471 @@ const MyInput = ({
               preventOverflow={pickerPreventOverflow}
               container={resolveContainer()}
               shouldDisableDate={(date: Date) => {
-                const today = new Date(new Date().setHours(0, 0, 0, 0));
+                const today = new Date(
+                  new Date().setHours(0, 0, 0, 0)
+                );
+
                 const minDate = new Date(1900, 0, 1);
+
                 if (date < minDate) return true;
-                if (props.disablePastDates) return date < today;
-                if (props.disableFutureDates) return date > today;
+
+                if (props.disablePastDates) {
+                  return date < today;
+                }
+
+                if (props.disableFutureDates) {
+                  return date > today;
+                }
+
                 return false;
               }}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                pointerEvents: 'none',
+                zIndex: -1
+              }}
             />
+
+            <div
+              className="custom-date-input rs-picker"
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30,
+                position: 'relative'
+              }}
+            >
+              <input
+                ref={dateTextRef}
+                type="text"
+                name={fieldName}
+                disabled={props.disabled}
+                value={currentDateText}
+                placeholder={props.placeholder ?? 'DD-MM-YYYY'}
+                className={`rs-input my-input ${inputColor ? `input-${inputColor}` : ''
+                  }`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  paddingRight: 38,
+                  cursor: props.disabled ? 'not-allowed' : 'text'
+                }}
+                onChange={() => {
+                }}
+                onFocus={() => {
+                  if (!props.disabled) {
+                    setPlacement(calculatePlacement());
+                  }
+                }}
+                onClick={() => {
+                  if (!props.disabled) {
+                    setPlacement(calculatePlacement());
+                    setIsDateOpen(true);
+                  }
+                }}
+                onBlur={() => {
+                  const value = dateTextRef.current?.value || '';
+
+                  const parsed = getDateFromText(value);
+
+                  if (parsed) {
+                    setRecord?.({
+                      ...record,
+                      [fieldName]: parsed.format('YYYY-MM-DD')
+                    });
+                  }
+
+                  const recordValue = parsed
+                    ? parsed.toDate()
+                    : record?.[fieldName]
+                      ? new Date(record[fieldName])
+                      : null;
+
+                  if (!recordValue) return;
+
+                  const minDate = new Date(1900, 0, 1);
+
+                  const today = new Date(
+                    new Date().setHours(0, 0, 0, 0)
+                  );
+
+                  if (
+                    props.showWarningIfBeforeYear1900 &&
+                    recordValue < minDate
+                  ) {
+                    dispatch(
+                      notify({
+                        msg: 'Date cannot be before 01-01-1900',
+                        sev: 'warning'
+                      })
+                    );
+
+                    return;
+                  }
+
+                  if (
+                    props.showWarningIfInPast &&
+                    recordValue < today
+                  ) {
+                    dispatch(
+                      notify({
+                        msg: 'Date cannot be in the past',
+                        sev: 'warning'
+                      })
+                    );
+                  }
+                }}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                  const input = e.currentTarget;
+
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setIsDateOpen(false);
+                    focusNextField(e);
+                    return;
+                  }
+
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsDateOpen(false);
+                    return;
+                  }
+
+                  if (
+                    e.ctrlKey &&
+                    e.key.toLowerCase() === 'a'
+                  ) {
+                    e.preventDefault();
+
+                    input.setSelectionRange(0, 10);
+
+                    return;
+                  }
+
+                  if (
+                    e.key === 'ArrowLeft' ||
+                    e.key === 'ArrowRight'
+                  ) {
+                    e.preventDefault();
+
+                    const current =
+                      input.selectionStart ?? 0;
+
+                    let next =
+                      e.key === 'ArrowRight'
+                        ? current + 1
+                        : current - 1;
+
+                    if (
+                      next === 2 ||
+                      next === 5
+                    ) {
+                      next += e.key === 'ArrowRight' ? 1 : -1;
+                    }
+
+                    next = Math.max(
+                      0,
+                      Math.min(10, next)
+                    );
+
+                    input.setSelectionRange(
+                      next,
+                      next
+                    );
+
+                    return;
+                  }
+
+                  if (e.key === 'Tab') {
+                    return;
+                  }
+
+                  if (e.key === 'Backspace') {
+                    e.preventDefault();
+
+                    const value =
+                      input.value || '01-01-2000';
+
+                    let position =
+                      input.selectionStart ?? 0;
+
+                    if (
+                      input.selectionStart !==
+                      input.selectionEnd
+                    ) {
+                      const start =
+                        input.selectionStart ?? 0;
+
+                      const end =
+                        input.selectionEnd ?? start;
+
+                      const chars =
+                        value.split('');
+
+                      for (
+                        let i = start;
+                        i < end;
+                        i++
+                      ) {
+                        if (chars[i] !== '-') {
+                          chars[i] = '0';
+                        }
+                      }
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateText(newValue);
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          start,
+                          start
+                        );
+                      }, 0);
+
+                      return;
+                    }
+
+                    if (position <= 0) return;
+
+                    let deletePosition =
+                      position - 1;
+                    if (
+                      value[deletePosition] === '-'
+                    ) {
+                      deletePosition--;
+                    }
+
+                    if (deletePosition < 0) {
+                      return;
+                    }
+
+                    const chars =
+                      value.split('');
+
+                    chars[deletePosition] = '0';
+
+                    const newValue =
+                      chars.join('');
+
+                    setDateText(newValue);
+
+                    setTimeout(() => {
+                      input.setSelectionRange(
+                        deletePosition,
+                        deletePosition
+                      );
+                    }, 0);
+
+                    return;
+                  }
+
+                  if (e.key === 'Delete') {
+                    e.preventDefault();
+
+                    const value =
+                      input.value || '01-01-2000';
+
+                    const position =
+                      input.selectionStart ?? 0;
+
+                    if (position >= 10) return;
+
+                    let deletePosition =
+                      position;
+
+                    if (
+                      value[deletePosition] === '-'
+                    ) {
+                      deletePosition++;
+                    }
+
+                    if (deletePosition >= 10) {
+                      return;
+                    }
+
+                    const chars =
+                      value.split('');
+
+                    chars[deletePosition] = '0';
+
+                    const newValue =
+                      chars.join('');
+
+                    setDateText(newValue);
+
+                    setTimeout(() => {
+                      input.setSelectionRange(
+                        deletePosition,
+                        deletePosition
+                      );
+                    }, 0);
+
+                    return;
+                  }
+
+                  /*
+                  * NUMBERS
+                  */
+                  if (/^\d$/.test(e.key)) {
+                    e.preventDefault();
+
+                    const value =
+                      input.value || '01-01-2000';
+
+                    let position =
+                      input.selectionStart ?? 0;
+
+                    const selectionStart =
+                      input.selectionStart ?? 0;
+
+                    const selectionEnd =
+                      input.selectionEnd ?? 0;
+
+                    if (position <= 1) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateText(newValue);
+
+                      const next =
+                        position === 1
+                          ? 3
+                          : 1;
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+
+                    if (
+                      position >= 3 &&
+                      position <= 4
+                    ) {
+                      const chars =
+                        value.split('');
+
+                      chars[position] = e.key;
+
+                      const newValue =
+                        chars.join('');
+
+                      setDateText(newValue);
+
+                      const next =
+                        position === 4
+                          ? 6
+                          : 4;
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+
+                    if (
+                      position >= 6 &&
+                      position <= 9
+                    ) {
+                      e.stopPropagation();
+
+                      let year =
+                        value.substring(6, 10);
+                      if (
+                        position === 6 ||
+                        selectionEnd === 10
+                      ) {
+                        year = `${e.key}000`;
+                        position = 6;
+                      } else {
+                        const yearChars =
+                          year.split('');
+
+                        yearChars[
+                          position - 6
+                        ] = e.key;
+
+                        year =
+                          yearChars.join('');
+                      }
+
+                      const newValue =
+                        value.substring(0, 6) +
+                        year;
+
+                      setDateText(newValue);
+
+                      const next =
+                        Math.min(
+                          position + 1,
+                          10
+                        );
+
+                      setTimeout(() => {
+                        input.setSelectionRange(
+                          next,
+                          next
+                        );
+                      }, 0);
+
+                      return;
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                disabled={props.disabled}
+                tabIndex={-1}
+                onMouseDown={e => {
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  if (props.disabled) return;
+
+                  setPlacement(calculatePlacement());
+                  setIsDateOpen(prev => !prev);
+                }}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  height: '100%',
+                  width: 36,
+                  border: 'none',
+                  background: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: props.disabled
+                    ? 'not-allowed'
+                    : 'pointer',
+                  color: '#8c8c8c'
+                }}
+              >
+                <MdCalendarToday size={16} />
+              </button>
+            </div>
           </div>
         );
+      }
 
       case 'number': {
         const numInputWidth = props?.width ?? 145;
@@ -1513,6 +2687,7 @@ const MyInput = ({
       }
     }
   };
+
 
   return (
     <Form.Group

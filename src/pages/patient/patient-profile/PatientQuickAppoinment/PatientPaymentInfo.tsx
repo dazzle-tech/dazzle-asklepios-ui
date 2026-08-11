@@ -45,8 +45,12 @@ import {
 } from '@/services/security/facilityService';
 
 import {
-  useLazyGetServicesByDepartmentQuery
+  useGetServicesByDepartmentQuery
 } from '@/services/setup/serviceService';
+
+import {
+  useGetPractitionerByIdQuery
+} from '@/services/setup/practitioner/PractitionerService';
 
 import {
   useGetInsurancesByPatientQuery
@@ -551,6 +555,42 @@ const PatientPaymentInfo =
       );
 
       const {
+        data: practitionerResponse
+      } =
+        useGetPractitionerByIdQuery(
+          practitionerId as number,
+          {
+            skip:
+              !practitionerId
+          }
+        );
+
+      const encounterSpecialty =
+        useMemo(() => {
+          const fromEncounter =
+            String(
+              localEncounter?.specialty ??
+                ''
+            ).trim();
+
+          if (fromEncounter) {
+            return fromEncounter;
+          }
+
+          const practitioner =
+            practitionerResponse?.data ??
+            practitionerResponse;
+
+          return String(
+            practitioner?.specialty ??
+              ''
+          ).trim();
+        }, [
+          localEncounter?.specialty,
+          practitionerResponse
+        ]);
+
+      const {
         data:
           facilityResponse
       } =
@@ -840,11 +880,28 @@ const PatientPaymentInfo =
       ] =
         useCreateAdvancePaymentMutation();
 
-      const [
-        triggerGetServices,
-        servicesResponse
-      ] =
-        useLazyGetServicesByDepartmentQuery();
+      const servicesResponse =
+        useGetServicesByDepartmentQuery(
+          {
+            sourceId:
+              departmentId as number,
+            specialty:
+              encounterSpecialty,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,asc'
+          },
+          {
+            skip:
+              !departmentId ||
+              !encounterSpecialty,
+            refetchOnMountOrArgChange:
+              true
+          }
+        );
 
       const insuranceResponse =
         useGetInsurancesByPatientQuery(
@@ -1280,35 +1337,24 @@ const PatientPaymentInfo =
       useEffect(() => {
         if (
           !departmentId ||
-          !practitionerId
+          !encounterSpecialty
         ) {
           setDefaultServiceRows(
             []
           );
-          return;
         }
-
-        triggerGetServices(
-          {
-            sourceId:
-              departmentId,
-            practitionerId,
-            page:
-              0,
-            size:
-              200,
-            sort:
-              'id,asc'
-          },
-          true
-        );
       }, [
         departmentId,
-        practitionerId,
-        triggerGetServices
+        encounterSpecialty
       ]);
 
       useEffect(() => {
+        if (
+          !servicesResponse.data
+        ) {
+          return;
+        }
+
         const list =
           extractResponseList(
             servicesResponse.data

@@ -13,10 +13,24 @@ import {
   useUpdateAddressMutation
 } from '@/services/patients/AddressService';
 
-import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
-import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
-import { useGetActiveCommunitiesQuery } from '@/services/setup/country/districtCommunityService';
-import { useGetActiveAreasQuery } from '@/services/setup/country/communityAreaService';
+import {
+  useGetActiveCountriesQuery,
+  useGetCountryNamesQuery
+} from '@/services/setup/country/countryService';
+import {
+  useGetActiveDistrictsQuery,
+  useGetDistrictsByNameSearchQuery
+} from '@/services/setup/country/countryDistrictService';
+
+import {
+  useGetActiveCommunitiesQuery,
+  useGetCommunitiesByNameSearchQuery
+} from '@/services/setup/country/districtCommunityService';
+
+import {
+  useGetActiveAreasQuery,
+  useGetAreasByNameSearchQuery
+} from '@/services/setup/country/communityAreaService';
 import { useEnumOptions } from '@/services/enumsApi';
 
 import { useAppDispatch } from '@/hooks';
@@ -226,14 +240,58 @@ const AddressTab: React.FC<AddressTabProps> = ({
   const [communitySearch, setCommunitySearch] = useState('');
   const [areaSearch, setAreaSearch] = useState('');
 
-  const [openChangeLog, setOpenChangeLog] = useState(false);
+  const [selectedCountry, setSelectedCountry] =
+    useState<SimpleCountry | null>(null);
+
 
   const countryEnum = useEnumOptions('CountryName');
 
-  const countryLabelMap = useMemo(
-    () => Object.fromEntries(countryEnum.map(o => [o.value, o.label])),
+  const countryEnumKey = useMemo(
+    () =>
+      countryEnum
+        .map(option => `${option.value}:${option.label}`)
+        .join('|'),
     [countryEnum]
   );
+
+  const countryLabelMap = useMemo(
+    () =>
+      Object.fromEntries(
+        countryEnum.map(option => [option.value, option.label])
+      ),
+    [countryEnumKey]
+  );
+
+  const handleCountrySearch = (value: string) => {
+    setCountryPage(0);
+    setCountrySearch(value);
+    setCountryCache([]);
+  };
+
+  const handleDistrictSearch = (value: string) => {
+    setDistrictPage(0);
+    setDistrictSearch(value);
+    setDistrictCache([]);
+  };
+
+  const handleCommunitySearch = (value: string) => {
+    setCommunityPage(0);
+    setCommunitySearch(value);
+    setCommunityCache([]);
+  };
+
+  const handleAreaSearch = (value: string) => {
+    setAreaPage(0);
+    setAreaSearch(value);
+    setAreaCache([]);
+  };
+
+  const [openChangeLog, setOpenChangeLog] = useState(false);
+
+
+
+
+
 
   const getCountryDisplayName = (country?: any) => {
     if (!country) return '';
@@ -269,16 +327,18 @@ const AddressTab: React.FC<AddressTabProps> = ({
     };
 
     if (country) {
+      const mappedCountry = {
+        id: country.id,
+        name: country.name,
+        code: country.code,
+        displayName: getCountryDisplayName(country)
+      } as SimpleCountry;
+
       setCountryCache(prev =>
-        mergeUniqueById(prev, [
-          {
-            id: country.id,
-            name: country.name,
-            code: country.code,
-            displayName: getCountryDisplayName(country)
-          } as any
-        ])
+        mergeUniqueById(prev, [mappedCountry])
       );
+
+      setSelectedCountry(mappedCountry);
     }
 
     if (district) {
@@ -339,7 +399,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
     setBlockServerHydration(false);
     setHasHydratedFromCchi(false);
 
-    setCountrySearch('');
     setDistrictSearch('');
     setCommunitySearch('');
     setAreaSearch('');
@@ -353,6 +412,8 @@ const AddressTab: React.FC<AddressTabProps> = ({
     setDistrictCache([]);
     setCommunityCache([]);
     setAreaCache([]);
+    setCountrySearch('');
+    setSelectedCountry(null);
 
     setRefreshToken(prev => prev + 1);
   };
@@ -381,92 +442,266 @@ const AddressTab: React.FC<AddressTabProps> = ({
     } catch {
       sessionStorage.removeItem(cchiStorageKey);
     }
-  }, [cchiStorageKey, cchiAddress, countryLabelMap]);
+  }, [cchiStorageKey, cchiAddress]);
 
   const { data: addressesResult, isFetching } = useGetPatientAddressesQuery(
     { patientId },
     { skip: !patientId }
   );
 
-  const { data: countriesResponse } = useGetActiveCountriesQuery({
-    page: countryPage,
-    size: PAGE_SIZE,
-    search: countrySearch || undefined,
-    sort: 'id,asc',
-    refreshToken
-  });
 
-  const { data: districtsResponse } = useGetActiveDistrictsQuery(
+
+
+  const isCountrySearching = countrySearch.trim().length > 0;
+
+  const isDistrictSearching = districtSearch.trim().length > 0;
+  const isCommunitySearching = communitySearch.trim().length > 0;
+  const isAreaSearching = areaSearch.trim().length > 0;
+
+  const {
+    data: countriesResponse,
+    isFetching: isFetchingCountries
+  } = useGetActiveCountriesQuery(
+    {
+      page: countryPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    {
+      skip: isCountrySearching
+    }
+  );
+
+  const {
+    data: searchedCountriesResponse,
+    isFetching: isFetchingSearchedCountries
+  } = useGetCountryNamesQuery(
+    {
+      name: countrySearch.trim(),
+      page: countryPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    {
+      skip: !isCountrySearching
+    }
+  );
+
+
+
+
+  const {
+    data: districtsResponse,
+    isFetching: isFetchingDistricts
+  } = useGetActiveDistrictsQuery(
     {
       page: districtPage,
       size: PAGE_SIZE,
-      search: districtSearch || undefined,
       sort: 'id,asc',
       countryId: address.locationJson?.country?.id,
-      refreshToken
+      timestamp: refreshToken
     },
-    { skip: !address.locationJson?.country?.id }
+    {
+      skip:
+        !address.locationJson?.country?.id ||
+        isDistrictSearching
+    }
   );
 
-  const { data: communitiesResponse } = useGetActiveCommunitiesQuery(
+  const {
+    data: searchedDistrictsResponse,
+    isFetching: isFetchingSearchedDistricts
+  } = useGetDistrictsByNameSearchQuery(
+    {
+      countryId: address.locationJson?.country?.id!,
+      name: districtSearch.trim(),
+      page: districtPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !address.locationJson?.country?.id ||
+        !isDistrictSearching
+    }
+  );
+
+  const {
+    data: communitiesResponse,
+    isFetching: isFetchingCommunities
+  } = useGetActiveCommunitiesQuery(
     {
       page: communityPage,
       size: PAGE_SIZE,
-      search: communitySearch || undefined,
       sort: 'id,asc',
       districtId: address.locationJson?.district?.id,
-      refreshToken
+      timestamp: refreshToken
     },
-    { skip: !address.locationJson?.district?.id }
+    {
+      skip:
+        !address.locationJson?.district?.id ||
+        isCommunitySearching
+    }
   );
 
-  const { data: areasResponse } = useGetActiveAreasQuery(
+  const {
+    data: searchedCommunitiesResponse,
+    isFetching: isFetchingSearchedCommunities
+  } = useGetCommunitiesByNameSearchQuery(
+    {
+      districtId: address.locationJson?.district?.id!,
+      name: communitySearch.trim(),
+      page: communityPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !address.locationJson?.district?.id ||
+        !isCommunitySearching
+    }
+  );
+
+  const {
+    data: areasResponse,
+    isFetching: isFetchingAreas
+  } = useGetActiveAreasQuery(
     {
       page: areaPage,
       size: PAGE_SIZE,
-      search: areaSearch || undefined,
       sort: 'id,asc',
       communityId: address.locationJson?.community?.id,
-      refreshToken
+      timestamp: refreshToken
     },
-    { skip: !address.locationJson?.community?.id }
+    {
+      skip:
+        !address.locationJson?.community?.id ||
+        isAreaSearching
+    }
+  );
+
+  const {
+    data: searchedAreasResponse,
+    isFetching: isFetchingSearchedAreas
+  } = useGetAreasByNameSearchQuery(
+    {
+      districtId: address.locationJson?.district?.id!,
+      name: areaSearch.trim(),
+      page: areaPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    {
+      skip:
+        !address.locationJson?.district?.id ||
+        !isAreaSearching
+    }
   );
 
   useEffect(() => {
     if (!cchiAddress || !cchiStorageKey) return;
 
-    sessionStorage.setItem(cchiStorageKey, JSON.stringify(cchiAddress));
+    sessionStorage.setItem(
+      cchiStorageKey,
+      JSON.stringify(cchiAddress)
+    );
+
     hydrateAddressIntoState(cchiAddress);
-  }, [cchiAddress, cchiStorageKey, countryLabelMap]);
+  }, [cchiAddress, cchiStorageKey]);
+
+
 
   useEffect(() => {
-    if (!countriesResponse?.data) return;
+    const response = isCountrySearching
+      ? searchedCountriesResponse
+      : countriesResponse;
 
-    const mapped = countriesResponse.data.map((c: any) => ({
-      ...c,
-      displayName: getCountryDisplayName(c)
+    if (!response?.data) return;
+
+    const mapped = response.data.map((country: any) => ({
+      ...country,
+      displayName: getCountryDisplayName(country)
     }));
 
-    setCountryCache(prev => mergeUniqueById(prev, mapped));
-  }, [countriesResponse, countryLabelMap]);
+    setCountryCache(prev => {
+      if (countryPage === 0) {
+        return mapped;
+      }
+
+      return mergeUniqueById(prev, mapped);
+    });
+  }, [
+    countriesResponse,
+    searchedCountriesResponse,
+    isCountrySearching,
+    countryPage,
+    countryLabelMap
+  ]);
+
 
   useEffect(() => {
-    if (!districtsResponse?.data) return;
+    const response = isDistrictSearching
+      ? searchedDistrictsResponse
+      : districtsResponse;
 
-    setDistrictCache(prev => mergeUniqueById(prev, districtsResponse.data));
-  }, [districtsResponse]);
+    if (!response?.data) return;
+
+    setDistrictCache(prev => {
+      if (districtPage === 0) {
+        return response.data;
+      }
+
+      return mergeUniqueById(prev, response.data);
+    });
+  }, [
+    districtsResponse,
+    searchedDistrictsResponse,
+    isDistrictSearching,
+    districtPage
+  ]);
+
 
   useEffect(() => {
-    if (!communitiesResponse?.data) return;
+    const response = isCommunitySearching
+      ? searchedCommunitiesResponse
+      : communitiesResponse;
 
-    setCommunityCache(prev => mergeUniqueById(prev, communitiesResponse.data));
-  }, [communitiesResponse]);
+    if (!response?.data) return;
+
+    setCommunityCache(prev => {
+      if (communityPage === 0) {
+        return response.data;
+      }
+
+      return mergeUniqueById(prev, response.data);
+    });
+  }, [
+    communitiesResponse,
+    searchedCommunitiesResponse,
+    isCommunitySearching,
+    communityPage
+  ]);
 
   useEffect(() => {
-    if (!areasResponse?.data) return;
+    const response = isAreaSearching
+      ? searchedAreasResponse
+      : areasResponse;
 
-    setAreaCache(prev => mergeUniqueById(prev, areasResponse.data));
-  }, [areasResponse]);
+    if (!response?.data) return;
+
+    setAreaCache(prev => {
+      if (areaPage === 0) {
+        return response.data;
+      }
+
+      return mergeUniqueById(prev, response.data);
+    });
+  }, [
+    areasResponse,
+    searchedAreasResponse,
+    isAreaSearching,
+    areaPage
+  ]);
 
   useEffect(() => {
     if (!patientId || isFetching) return;
@@ -494,16 +729,18 @@ const AddressTab: React.FC<AddressTabProps> = ({
     if (existing.locationJson?.country) {
       const country = existing.locationJson.country;
 
+      const mappedCountry = {
+        id: country.id,
+        name: country.name,
+        code: country.code,
+        displayName: getCountryDisplayName(country)
+      } as SimpleCountry;
+
       setCountryCache(prev =>
-        mergeUniqueById(prev, [
-          {
-            id: country.id,
-            name: country.name,
-            code: country.code,
-            displayName: getCountryDisplayName(country)
-          } as any
-        ])
+        mergeUniqueById(prev, [mappedCountry])
       );
+
+      setSelectedCountry(mappedCountry);
     }
 
     if (existing.locationJson?.district) {
@@ -550,7 +787,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
     isFetching,
     patientId,
     blockServerHydration,
-    countryLabelMap,
     hasHydratedFromCchi,
     address?.id
   ]);
@@ -613,6 +849,25 @@ const AddressTab: React.FC<AddressTabProps> = ({
     }
   };
 
+
+
+
+  const countrySelectData = (() => {
+    if (!selectedCountry?.id) {
+      return countryCache;
+    }
+
+    const exists = countryCache.some(
+      item => String(item?.id) === String(selectedCountry.id)
+    );
+
+    if (exists) {
+      return countryCache;
+    }
+
+    return [selectedCountry, ...countryCache];
+  })();
+
   return (
     <>
       <SectionContainer
@@ -650,22 +905,59 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 fieldLabel="Country"
                 fieldType="selectPagination"
                 fieldName="countryId"
-                selectData={countryCache}
+
+                selectData={countrySelectData}
                 selectDataLabel="displayName"
                 selectDataValue="id"
+
                 record={address}
                 setRecord={setAddress}
+
                 searchKeyWard={countrySearch}
-                setSearchKeyWard={setCountrySearch}
-                hasMore={!!countriesResponse?.links?.next}
+                setSearchKeyWard={handleCountrySearch}
+
+                loading={
+                  isFetchingCountries ||
+                  isFetchingSearchedCountries
+                }
+
+                hasMore={
+                  isCountrySearching
+                    ? !!searchedCountriesResponse?.links?.next
+                    : !!countriesResponse?.links?.next
+                }
+
                 onFetchMore={() => {
-                  if (countriesResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(countriesResponse.links.next);
+                  if (isCountrySearching) {
+                    if (!searchedCountriesResponse?.links?.next) {
+                      return;
+                    }
+
+                    const { page } = extractPaginationFromLink(
+                      searchedCountriesResponse.links.next
+                    );
+
                     setCountryPage(page);
+                    return;
                   }
+
+                  if (!countriesResponse?.links?.next) {
+                    return;
+                  }
+
+                  const { page } = extractPaginationFromLink(
+                    countriesResponse.links.next
+                  );
+
+                  setCountryPage(page);
                 }}
+
                 onSelectItem={(item: SimpleCountry | null) => {
-                  if (!item) return clearAddressManually();
+                  if (!item) {
+                    return clearAddressManually();
+                  }
+
+                  setSelectedCountry(item);
 
                   setAddress(prev => ({
                     ...prev,
@@ -699,6 +991,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
 
                   setRefreshToken(prev => prev + 1);
                 }}
+
                 disabled={!patientId}
               />
 
@@ -717,14 +1010,33 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 }}
                 setRecord={setAddress}
                 searchKeyWard={districtSearch}
-                setSearchKeyWard={setDistrictSearch}
-                hasMore={!!districtsResponse?.links?.next}
+                setSearchKeyWard={handleDistrictSearch}
+
+                loading={
+                  isFetchingDistricts ||
+                  isFetchingSearchedDistricts
+                }
+
+                hasMore={
+                  isDistrictSearching
+                    ? !!searchedDistrictsResponse?.links?.next
+                    : !!districtsResponse?.links?.next
+                }
                 disabled={!address.countryId}
                 onFetchMore={() => {
-                  if (districtsResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(districtsResponse.links.next);
-                    setDistrictPage(page);
+                  const response = isDistrictSearching
+                    ? searchedDistrictsResponse
+                    : districtsResponse;
+
+                  if (!response?.links?.next) {
+                    return;
                   }
+
+                  const { page } = extractPaginationFromLink(
+                    response.links.next
+                  );
+
+                  setDistrictPage(page);
                 }}
                 onSelectItem={(item: SimpleDistrict | null) => {
                   if (!item) return;
@@ -774,14 +1086,33 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 }}
                 setRecord={setAddress}
                 searchKeyWard={communitySearch}
-                setSearchKeyWard={setCommunitySearch}
-                hasMore={!!communitiesResponse?.links?.next}
+                setSearchKeyWard={handleCommunitySearch}
+
+                loading={
+                  isFetchingCommunities ||
+                  isFetchingSearchedCommunities
+                }
+
+                hasMore={
+                  isCommunitySearching
+                    ? !!searchedCommunitiesResponse?.links?.next
+                    : !!communitiesResponse?.links?.next
+                }
                 disabled={!address.districtId}
                 onFetchMore={() => {
-                  if (communitiesResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(communitiesResponse.links.next);
-                    setCommunityPage(page);
+                  const response = isCommunitySearching
+                    ? searchedCommunitiesResponse
+                    : communitiesResponse;
+
+                  if (!response?.links?.next) {
+                    return;
                   }
+
+                  const { page } = extractPaginationFromLink(
+                    response.links.next
+                  );
+
+                  setCommunityPage(page);
                 }}
                 onSelectItem={(item: SimpleCommunity | null) => {
                   if (!item) return;
@@ -822,14 +1153,33 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 }}
                 setRecord={setAddress}
                 searchKeyWard={areaSearch}
-                setSearchKeyWard={setAreaSearch}
-                hasMore={!!areasResponse?.links?.next}
+                setSearchKeyWard={handleAreaSearch}
+
+                loading={
+                  isFetchingAreas ||
+                  isFetchingSearchedAreas
+                }
+
+                hasMore={
+                  isAreaSearching
+                    ? !!searchedAreasResponse?.links?.next
+                    : !!areasResponse?.links?.next
+                }
                 disabled={!address.communityId}
                 onFetchMore={() => {
-                  if (areasResponse?.links?.next) {
-                    const { page } = extractPaginationFromLink(areasResponse.links.next);
-                    setAreaPage(page);
+                  const response = isAreaSearching
+                    ? searchedAreasResponse
+                    : areasResponse;
+
+                  if (!response?.links?.next) {
+                    return;
                   }
+
+                  const { page } = extractPaginationFromLink(
+                    response.links.next
+                  );
+
+                  setAreaPage(page);
                 }}
                 onSelectItem={(item: SimpleArea | null) => {
                   if (!item) return;
