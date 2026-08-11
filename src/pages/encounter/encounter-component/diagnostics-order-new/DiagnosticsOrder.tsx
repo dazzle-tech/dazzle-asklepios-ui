@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef,useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import './styles.less';
@@ -9,10 +9,13 @@ import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupMod
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
-
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 const DiagnosticsOrder = (props: any) => {
   const patientPrevTestsRef = useRef<any>(null);
   const location = useLocation();
+  const [loading, setLoading] = useState(false);
+
   //add new patient edits
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
@@ -26,7 +29,8 @@ const DiagnosticsOrder = (props: any) => {
         patient,
         encounter,
         edit,
-        patientPrevTestsRef
+        patientPrevTestsRef,
+        setLoading
     });
 
   const isInsideModalOrPopup = (node: EventTarget | null) => {
@@ -195,6 +199,28 @@ const DiagnosticsOrder = (props: any) => {
         facilityId={vm.selectedDepartment?.facilityId}
         onClose={() => vm.setSelectedOrderTestForReschedule(null)}
       />
+      <Backdrop
+  open={loading}
+  sx={{
+    zIndex: 9999999,
+    backgroundColor: 'rgba(0,0,0,0.4)'
+  }}
+>
+  <div
+    style={{
+      background: 'white',
+      padding: '20px 30px',
+      borderRadius: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '10px'
+    }}
+  >
+    <CircularProgress />
+    <span>Loading...</span>
+  </div>
+</Backdrop>
     </div>
   );
 };
