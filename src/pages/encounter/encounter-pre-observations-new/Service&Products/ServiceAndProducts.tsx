@@ -24,6 +24,17 @@ import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnostic
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
+const LOCKED_PAYMENT_STATUSES = new Set([
+  'RESERVED',
+  'PARTIALLY_RESERVED',
+  'PAID',
+  'PARTIALLY_PAID',
+  'DEBIT',
+  'PARTIALLY_DEBIT',
+  'EXEMPTED',
+  'CANCELLED'
+]);
+
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const location = useLocation();
   const encounter = location.state?.encounter;
@@ -55,10 +66,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   );
 
   const billingFinalized = isBillingChargeFinalized(billingSummary ?? null);
-  const isReadOnly = Boolean(edit || billingFinalized);
 
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
+  const isReadOnly = Boolean(edit || billingFinalized);
 
   const [openModal, setOpenModal] = useState(false);
   const [popupOpen, setPopupOpen] = useState<boolean>(false);
@@ -66,10 +77,48 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     useState<PatientServiceAndProduct>({ ...newPatientServiceAndProduct });
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const [lookupsLoading, setLookupsLoading] = useState(false);
 
-  const rows = patientServiceProductListResponse?.data ?? [];
+  const rows = useMemo(
+    () =>
+      (patientServiceProductListResponse?.data ?? []).filter(
+        row => row?.paymentStatus !== 'CANCELLED'
+      ),
+    [patientServiceProductListResponse?.data]
+  );
   const totalCount = patientServiceProductListResponse?.totalCount ?? 0;
+
+  const billingItemsByPspId = useMemo(() => {
+    const map = new Map<number, any>();
+    (billingSummary?.items ?? []).forEach((item: any) => {
+      const pspId = Number(item?.patientServiceProductId);
+      if (Number.isFinite(pspId) && pspId > 0) {
+        map.set(pspId, item);
+      }
+    });
+    return map;
+  }, [billingSummary?.items]);
+
+  const canMutateRow = (rowData: PatientServiceAndProduct) => {
+    if (isReadOnly) return false;
+    if (rowData?.serviceSource !== ServiceSource.SERVICE_AND_PRODUCT) return false;
+    if (rowData?.isBilled) return false;
+
+    const paymentStatus = String(rowData?.paymentStatus ?? '').toUpperCase();
+    if (LOCKED_PAYMENT_STATUSES.has(paymentStatus)) return false;
+
+    const billingItem = billingItemsByPspId.get(Number(rowData?.id));
+    if (billingItem) {
+      const reservedAmount = Number(billingItem.reservedAmount ?? 0);
+      const allocatedAmount = Number(billingItem.allocatedAmount ?? 0);
+      const lineStatus = String(billingItem.status ?? '').toUpperCase();
+
+      // Reserved / allocated / closed charge lines must stay view-only to protect billing math.
+      if (reservedAmount > 0 || allocatedAmount > 0) return false;
+      if (lineStatus === 'CLOSED' || lineStatus === 'CANCELLED') return false;
+    }
+
+    return true;
+  };
 
   const serviceIds = useMemo(
     () =>
@@ -133,18 +182,38 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const [diagnosticTestsMap, setDiagnosticTestsMap] = useState<Record<number | string, any>>({});
   const [proceduresMap, setProceduresMap] = useState<Record<number | string, any>>({});
 
+  const lookupKey = useMemo(
+    () =>
+      JSON.stringify({
+        serviceIds,
+        medicationIds,
+        diagnosticTestIds,
+        procedureIds
+      }),
+    [serviceIds, medicationIds, diagnosticTestIds, procedureIds]
+  );
+
   useEffect(() => {
+    let cancelled = false;
+
     const loadLookups = async () => {
       if (!rows.length) {
         setServicesMap({});
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
-        setLookupsLoading(false);
         return;
       }
 
-      setLookupsLoading(true);
+      const hasLookupTargets =
+        serviceIds.length > 0 ||
+        medicationIds.length > 0 ||
+        diagnosticTestIds.length > 0 ||
+        procedureIds.length > 0;
+
+      if (!hasLookupTargets) {
+        return;
+      }
 
       try {
         const servicesPromise = serviceIds.length
@@ -176,6 +245,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
             proceduresPromise,
           ]);
 
+        if (cancelled) {
+          return;
+        }
+
         const medicationsList = Array.isArray(medicationsData)
           ? medicationsData
           : medicationsData?.data ?? [];
@@ -196,27 +269,23 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
           Object.fromEntries((proceduresData ?? []).map((item: any) => [item.id, item]))
         );
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         setServicesMap({});
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
-      } finally {
-        setLookupsLoading(false);
       }
     };
 
-    loadLookups();
-  }, [
-    rows,
-    serviceIds,
-    medicationIds,
-    diagnosticTestIds,
-    procedureIds,
-    fetchServicesBulk,
-    fetchBrandMedicationsBulk,
-    fetchDiagnosticTestsBulk,
-    fetchProcedureById,
-  ]);
+    void loadLookups();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lookupKey, rows.length]);
 
   const isSelected = (rowData: PatientServiceAndProduct) => {
     if (rowData && patientServiceAndProduct && rowData.id === patientServiceAndProduct.id) {
@@ -231,6 +300,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     try {
       await deletePatientServiceProduct({
         id: patientServiceAndProduct?.id,
+        encounterId: encounter?.id
       }).unwrap();
 
       dispatch(
@@ -238,7 +308,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       );
 
       setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
-      refetch();
+      await refetch();
       setOpenModal(false);
     } catch (error) {
       dispatch(
@@ -314,7 +384,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       title: '',
       render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          {(!isReadOnly && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdModeEdit
+          {canMutateRow(rowData) && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
@@ -326,7 +396,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
             }}
           />}
 
-          {(!isReadOnly && !rowData?.isBilled && (rowData.serviceSource === ServiceSource.SERVICE_AND_PRODUCT)) && <MdDelete
+          {canMutateRow(rowData) && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"
@@ -382,7 +452,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       )}
 
       <MyTable
-        data={lookupsLoading ? [] : rows}
+        data={rows}
         columns={columns}
         rowClassName={isReadOnly ? undefined : isSelected}
         onRowClick={
@@ -393,7 +463,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               }
         }
         totalCount={totalCount}
-        loading={isLoading || lookupsLoading}
+        loading={isLoading}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}

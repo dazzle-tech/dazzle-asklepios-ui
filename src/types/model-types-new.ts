@@ -4044,6 +4044,7 @@ export type PatientServiceAndProduct = {
   billingInvoiceItemId?: number | null;
   serviceSource: ServiceSource;
   SourceId?: number | null;
+  paymentStatus?: string | null;
   createdDate?: string | null;
   preAuthorizationStatus?: string | null;
   preAuthorizationReferenceNo?: string | null;
