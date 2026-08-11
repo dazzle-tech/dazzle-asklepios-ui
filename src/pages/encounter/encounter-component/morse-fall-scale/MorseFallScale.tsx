@@ -173,6 +173,7 @@ const MorseFallScale = () => {
             Cancel
           </MyButton>
           <MyInput
+           className="show-cancelled"
             fieldType="check"
             fieldName=""
             record=""

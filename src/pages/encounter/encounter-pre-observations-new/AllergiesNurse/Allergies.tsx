@@ -364,7 +364,7 @@ const Allergies = (props: AllergiesProps) => {
             Undo Resolved
           </MyButton>
 
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)} className="show-cancelled">
             <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>

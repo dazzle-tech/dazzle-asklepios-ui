@@ -1,17 +1,30 @@
 .modal-view-only {
 
-  // disabled-panel inside modal: keep pointer-events blocked but remove opacity
-  // (opacity cascades to ALL children including checkboxes — can't be overridden per-child)
-  // Our button/input rules below handle the visual disabled state instead.
+  // =========================================================
+  // View-only container
+  // =========================================================
+
   .disabled-panel {
+    // Do NOT apply opacity to the whole panel because
+    // opacity affects checkbox internals as well.
     opacity: 1 !important;
   }
 
-button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab),
-.rs-btn:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab) {
-  pointer-events: none !important;
-  opacity: 0.5 !important;
-}
+
+  // =========================================================
+  // Buttons
+  // =========================================================
+
+  button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab),
+  .rs-btn:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-tab) {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+  }
+
+
+  // =========================================================
+  // Normal inputs
+  // =========================================================
 
   input[type="text"],
   input[type="number"],
@@ -29,33 +42,38 @@ button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-
     opacity: 0.7 !important;
   }
 
+
+  // =========================================================
   // Tabs
+  // =========================================================
+
   .rs-nav-item,
   .rs-nav-item * {
     pointer-events: all !important;
     opacity: 1 !important;
   }
 
+
+  // =========================================================
   // Toggles
-  .rs-toggle,
-  .rs-btn-toggle,
-  .rs-toggle *,
-  .rs-btn-toggle * {
-    pointer-events: all !important;
+  // =========================================================
+
+.disabled-panel .rs-toggle,
+.disabled-panel .rs-btn-toggle {
+  pointer-events: none !important;
+}
+
+  .rs-checkbox,
+  .rs-check-item,
+  .rs-radio {
+    pointer-events: none !important;
     opacity: 1 !important;
   }
 
-  // Checkboxes — interactive + no forced opacity (RSuite manages internal opacity)
-  .rs-checkbox,
-  .rs-check-item,
-  .rs-radio,
-  .rs-checkbox *,
-  .rs-check-item *,
-  .rs-radio * {
-    pointer-events: all !important;
-  }
+  // =========================================================
+  // Medical Sheets search toolbar
+  // =========================================================
 
-  // Medical Sheets search toolbar stays fully interactive
   .container-bt input,
   .container-bt .rs-input,
   .container-bt button,
@@ -65,42 +83,99 @@ button:not(.rs-nav-item):not(.rs-toggle):not(.rs-btn-toggle):not(.medical-sheet-
   }
 
 
+  // =========================================================
+  // FILTER FORM
+  //
+  // This is the exception.
+  // Search / Clear / Show Cancelled etc. remain interactive.
+  // =========================================================
 
-.filter-form-disable-fix,
-.filter-form-disable-fix * {
+  .filter-form-disable-fix,
+  .filter-form-disable-fix * {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+
+  .filter-form-disable-fix .rs-input,
+  .filter-form-disable-fix .rs-picker,
+  .filter-form-disable-fix .rs-picker-toggle,
+  .filter-form-disable-fix input,
+  .filter-form-disable-fix button,
+  .filter-form-disable-fix .rs-btn {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+
+  // Checkbox inside filter form
+  // e.g. Show Cancelled
+  .filter-form-disable-fix .rs-checkbox,
+  .filter-form-disable-fix .rs-check-item,
+  .filter-form-disable-fix .rs-radio,
+  .filter-form-disable-fix .rs-checkbox *,
+  .filter-form-disable-fix .rs-check-item *,
+  .filter-form-disable-fix .rs-radio * {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+
+  .filter-form-disable-fix .rs-checkbox button,
+  .filter-form-disable-fix .rs-check-item button,
+  .filter-form-disable-fix .rs-radio button {
+    pointer-events: all !important;
+    opacity: 1 !important;
+  }
+
+
+  // =========================================================
+  // Edit icon
+  // =========================================================
+
+  .edit-icon {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+
+  // =========================================================
+  // Encounter Edit / Delete actions
+  // =========================================================
+
+  .view-only-action-edit-delete-encounter {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+
+  // Keep this for elements that may exist outside the
+  // .modal-view-only nesting
+  .view-only-action-edit-delete-encounter {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+// =========================================================
+// Interactive filter toggles / checkboxes
+// =========================================================
+
+.filter-form-disable-fix .rs-toggle,
+.filter-form-disable-fix .rs-btn-toggle,
+.filter-form-disable-fix .rs-toggle *,
+.filter-form-disable-fix .rs-btn-toggle * {
   pointer-events: all !important;
   opacity: 1 !important;
 }
 
-.filter-form-disable-fix .rs-input,
-.filter-form-disable-fix .rs-picker,
-.filter-form-disable-fix .rs-picker-toggle,
-.filter-form-disable-fix input,
-.filter-form-disable-fix button,
-.filter-form-disable-fix .rs-btn {
-  pointer-events: all !important;
-  opacity: 1 !important;
-}
 
-
-.modal-view-only .edit-icon {
-  pointer-events: none !important;
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-}
-
-.modal-view-only .view-only-action-edit-delete-encounter {
-  pointer-events: none !important;
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-}
-
-
-
-.view-only-action-edit-delete-encounter {
-  pointer-events: none !important;
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-}
+  .show-cancelled,
+  .show-cancelled * {
+    pointer-events: all !important;
+    // opacity: 1 !important;
+  }
 
 }

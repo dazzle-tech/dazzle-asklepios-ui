@@ -198,7 +198,7 @@ const tablebuttons = (
         }}>
         Cancel
       </MyButton>
-      <Checkbox>
+      <Checkbox className="show-cancelled">
         <Translate>Show Cancelled</Translate>
       </Checkbox>
     </div>

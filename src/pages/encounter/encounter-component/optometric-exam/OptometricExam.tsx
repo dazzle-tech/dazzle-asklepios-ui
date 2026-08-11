@@ -240,7 +240,7 @@ const OptometricExam = () => {
         <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!optometricExam?.key}>
           <Translate>Cancel</Translate>
         </MyButton>
-        <Checkbox onChange={(value, checked) => {
+        <Checkbox className="show-cancelled" onChange={(value, checked) => {
           if (checked) {
             //TODO convert key to code
             setOptometricExamStatus('3196709905099521');

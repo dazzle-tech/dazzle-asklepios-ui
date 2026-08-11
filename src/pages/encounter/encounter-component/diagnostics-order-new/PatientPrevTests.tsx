@@ -266,6 +266,7 @@ const queryParams =
       <>
       <div dir={dir}>
         <Checkbox
+         className="show-cancelled"
           checked={showCancelled}
           onChange={(_, checked) => setShowCancelled(checked)}
         >

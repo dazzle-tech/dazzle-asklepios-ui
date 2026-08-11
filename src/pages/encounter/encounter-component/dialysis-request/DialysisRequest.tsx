@@ -185,7 +185,7 @@ const DialysisRequest = () => {
         Cancel
       </MyButton>
 
-      <Checkbox><Translate>Show Cancelled</Translate>
+      <Checkbox className="show-cancelled"><Translate>Show Cancelled</Translate>
       </Checkbox>
     </div>
 
