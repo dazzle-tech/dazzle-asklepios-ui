@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import { usePrepareDefaultServicesMutation } from '@/services/billing/billingTransactionService';
+import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
 import { notify } from '@/utils/uiReducerActions';
 import type {
@@ -33,6 +34,8 @@ type PrepareServicesPanelProps = {
   patientId: number | null;
   encounterId: number | null;
   departmentId: number | null;
+  specialty?: string | null;
+  practitionerId?: number | null;
   facilityId: number | null;
   currency: string;
   summary: EncounterBillingSummary;
@@ -51,6 +54,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   patientId,
   encounterId,
   departmentId,
+  specialty,
+  practitionerId,
   facilityId,
   currency,
   summary,
@@ -67,6 +72,26 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   const dispatch = useAppDispatch();
   const [serviceRows, setServiceRows] = useState<PrepareServiceRow[]>([]);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
+
+  const resolvedPractitionerId = toNumber(practitionerId, 0) || null;
+
+  const { data: practitionerResponse } = useGetPractitionerByIdQuery(
+    resolvedPractitionerId as number,
+    {
+      skip: !resolvedPractitionerId
+    }
+  );
+
+  // Same specialty resolution as Collect payment / PatientPaymentInfo default services.
+  const encounterSpecialty = useMemo(() => {
+    const fromEncounter = String(specialty ?? '').trim();
+    if (fromEncounter) {
+      return fromEncounter;
+    }
+
+    const practitioner = (practitionerResponse as any)?.data ?? practitionerResponse;
+    return String(practitioner?.specialty ?? '').trim();
+  }, [specialty, practitionerResponse]);
 
   const [triggerGetServices, servicesResponse] = useLazyGetServicesByDepartmentQuery();
   const [prepareDefaultServices, { isLoading: preparing }] = usePrepareDefaultServicesMutation();
@@ -99,20 +124,30 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   );
 
   useEffect(() => {
-    if (!departmentId) {
+    if (!departmentId || !encounterSpecialty) {
       setServiceRows([]);
       return;
     }
 
     triggerGetServices({
       sourceId: departmentId,
+      specialty: encounterSpecialty,
       page: 0,
       size: 200,
       sort: 'id,asc'
     });
-  }, [departmentId, triggerGetServices]);
+  }, [departmentId, encounterSpecialty, triggerGetServices]);
 
   useEffect(() => {
+    if (!departmentId || !encounterSpecialty) {
+      setServiceRows([]);
+      return;
+    }
+
+    if (!servicesResponse.data) {
+      return;
+    }
+
     const list = extractResponseList(servicesResponse.data);
     const billedBySourceId = new Map(
       (summary.items ?? [])
@@ -157,7 +192,13 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         };
       });
     });
-  }, [servicesResponse.data, summary.items, servicesArePrepared]);
+  }, [
+    departmentId,
+    encounterSpecialty,
+    servicesResponse.data,
+    summary.items,
+    servicesArePrepared
+  ]);
 
   const selectedRows = useMemo(
     () =>
@@ -398,9 +439,14 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         <div className="billing-accounting__empty">
           This encounter has no department. Services cannot be loaded for calculation.
         </div>
+      ) : !encounterSpecialty ? (
+        <div className="billing-accounting__empty">
+          This encounter has no specialty. Default services cannot be loaded until specialty is set
+          (same as Collect payment).
+        </div>
       ) : !serviceRows.length ? (
         <div className="billing-accounting__empty">
-          No active services are configured for this department in setup.
+          No default services are configured for this department and specialty in setup.
         </div>
       ) : (
         <MyTable

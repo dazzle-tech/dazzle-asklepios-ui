@@ -521,6 +521,14 @@ const Accounting: React.FC = () => {
                 patientId={patientId}
                 encounterId={selectedEncounterId}
                 departmentId={departmentId}
+                specialty={selectedEncounter?.specialty}
+                practitionerId={
+                  toNumber(
+                    selectedEncounter?.practitionerId ??
+                      (selectedEncounter as { practitioner?: { id?: number } })?.practitioner?.id,
+                    0
+                  ) || null
+                }
                 facilityId={facilityId != null ? Number(facilityId) : null}
                 currency={summary.currency ?? facilityCurrency}
                 summary={summary}
