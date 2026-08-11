@@ -692,7 +692,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-       // Don`t remove this commented code please
+        {/* Don`t remove this commented code please */}
         {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
