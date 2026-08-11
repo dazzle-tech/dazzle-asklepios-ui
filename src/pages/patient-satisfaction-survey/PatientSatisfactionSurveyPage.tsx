@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Form, Panel } from 'rsuite';
+import { Checkbox, Form, Panel } from 'rsuite';
 import Logo from '@/images/Logo_BLUE_New1.svg';
 import MyButton from '@/components/MyButton/MyButton';
 import { useBranding } from '@/hooks/useBranding';
@@ -444,18 +444,22 @@ const PatientSatisfactionSurveyPage = () => {
     }
 
     if (currentQuestion.type === 'checkbox') {
+      const isChecked = selectedAnswer?.value === 'AGREED';
+
       return (
-        <Form fluid>
-          <MyInput
-            fieldType="check"
-            fieldName={currentQuestion.code}
-            showLabel={false}
-            label={<span>{getQuestionText(currentQuestion)}</span>}
-            record={questionRecord}
-            setRecord={setQuestionRecord}
-            width="100%"
+        <div
+          className={`patient-satisfaction-survey-checkbox-field ${
+            isRtl ? 'is-rtl' : 'is-ltr'
+          }`}
+        >
+          <Checkbox
+            checked={isChecked}
+            onChange={(_, checked) => handleCheckboxChange(currentQuestion, checked)}
           />
-        </Form>
+          <span className="patient-satisfaction-survey-checkbox-text">
+            {getQuestionText(currentQuestion)}
+          </span>
+        </div>
       );
     }
 
