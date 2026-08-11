@@ -1,22 +1,22 @@
-import React, { useState } from "react";
-import ChildModal from "@/components/ChildModal";
+import React, { useMemo, useState } from "react";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-
-import { useAppSelector } from "@/hooks";
-import { useGetActiveFacilitiesQuery } from "@/services/security/facilityService";
-import { useGetAllPriceListsQuery } from "@/services/billing/PriceListService";
-
-import { newPriceList } from "@/types/model-types-constructor-new";
-import { PriceList } from "@/types/model-types-new";
+import {newPriceListSetup } from "@/types/model-types-constructor-new";
 import { conjureValueBasedOnIDFromList, formatEnumString } from "@/utils";
 
 import { Tooltip, Whisper } from "rsuite";
-import { MdRule, MdPlaylistAdd } from "react-icons/md";
-
-import ViewPriceListAttributes from "./ViewPriceListAttributes";
+import {  MdPlaylistAdd } from "react-icons/md";
 import ViewPriceListItemsModal from "./ViewPriceListItemsModal";
 import MyModal from "@/components/MyModal/MyModal";
+import {
+  useGetPriceListSetupsByLoggedInFacilityQuery,
+} from '@/services/setup/priceListSetup/priceListSetupService';
+import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
+import type {
+  PriceListSetup as PriceListSetupModel
+} from '@/types/model-types-new';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 type Props = {
   open: boolean;
@@ -24,42 +24,55 @@ type Props = {
 };
 
 const ViewPriceListModal = ({ open, setOpen }: Props) => {
-  const authSlice = useAppSelector((state) => state.auth);
 
-  const loggedInFacilityId =
-    authSlice?.selectedDepartment?.facilityId ??
-    authSlice?.tenant?.selectedFacility?.id ??
-    authSlice?.selectedFacility?.id;
-
-  const [priceList, setPriceList] = useState<PriceList>({
-    ...newPriceList,
+  const [priceList, setPriceList] = useState<PriceListSetupModel>({
+    ...newPriceListSetup,
   });
 
+  const [
+    paginationParams,
+    setPaginationParams
+  ] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc',
+    timestamp: Date.now()
+  });
   const [openItemsModal, setOpenItemsModal] = useState(false);
-  const [openAttributesModal, setOpenAttributesModal] = useState(false);
 
-  const { data: allFacilities = [] } =
-    useGetActiveFacilitiesQuery(null);
+  const {
+      data: payerListResponse
+    } = useGetAllNphiesPayersQuery({
+      page: 0,
+      size: 500,
+      sort: 'nameEn,asc'
+    });
 
-  const { data: priceListResponse, isFetching } =
-    useGetAllPriceListsQuery(
-      {
-        page: 0,
-        size: 1000,
-        sort: "id,asc",
-      },
-      {
-        skip: !open,
-      }
-    );
+  const {
+    data: facilityListResponse
+  } = useGetAllFacilitiesQuery({});
 
-  const priceLists = (priceListResponse?.data ?? []).filter(
-    (item: PriceList) =>
-      Number(item?.facilityId) === Number(loggedInFacilityId) &&
-      item?.isActive
+  const {
+    data: priceListPage,
+    isFetching,
+    refetch
+  } = useGetPriceListSetupsByLoggedInFacilityQuery({
+    page: paginationParams.page,
+    size: paginationParams.size,
+    sort: paginationParams.sort,
+    timestamp: paginationParams.timestamp
+  });
+
+  const tableData = useMemo(
+    () => priceListPage?.data ?? [],
+    [priceListPage?.data]
   );
 
-  const itemsIcon = (rowData: PriceList) => (
+  const totalCount =
+    priceListPage?.totalCount ?? 0;
+
+
+  const itemsIcon = (rowData: PriceListSetupModel) => (
     <div
       style={{
         display: "flex",
@@ -88,73 +101,171 @@ const ViewPriceListModal = ({ open, setOpen }: Props) => {
         </span>
       </Whisper>
 
-      <Whisper
-        trigger="hover"
-        placement="top"
-        speaker={<Tooltip>Attributes</Tooltip>}
-      >
-        <span
-          className="icons-style"
-          style={{
-            cursor: "pointer",
-            display: "inline-flex",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setPriceList(rowData);
-            setOpenAttributesModal(true);
-          }}
-        >
-          <MdRule size={22} />
-        </span>
-      </Whisper>
     </div>
   );
 
+  const handlePageChange = (
+    _: unknown,
+    newPage: number
+  ) => {
+    setPaginationParams(previous => ({
+      ...previous,
+      page: newPage,
+      timestamp: Date.now()
+    }));
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newSize = Number(
+      event.target.value
+    );
+
+    setPaginationParams(previous => ({
+      ...previous,
+      page: 0,
+      size: newSize,
+      timestamp: Date.now()
+    }));
+  };
+
   const tableColumns = [
     {
-      key: "facilityId",
+      key: 'facilityId',
       title: <Translate>Facility</Translate>,
       flexGrow: 3,
-      render: (rowData: PriceList) =>
+
+      render: (
+        row: PriceListSetupModel
+      ) =>
         conjureValueBasedOnIDFromList(
-          allFacilities,
-          rowData?.facilityId,
-          "name"
-        ),
+          facilityListResponse ?? [],
+          row.facilityId,
+          'name'
+        )
     },
+
     {
-      key: "name",
+      key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 4,
+      flexGrow: 4
     },
+
     {
-      key: "type",
+      key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 3,
-      render: (rowData: PriceList) => (
-        <span>{formatEnumString(rowData.type)}</span>
-      ),
+      flexGrow: 2,
+
+      render: (
+        row: PriceListSetupModel
+      ) =>
+        row.type
+          ? formatEnumString(row.type)
+          : ''
     },
+
     {
-      key: "effectiveFrom",
-      title: <Translate>Effective From</Translate>,
+      key: 'payerName',
+      title: <Translate>Payer</Translate>,
       flexGrow: 3,
+
+      render: (
+        row: PriceListSetupModel
+      ) => {
+        if (row.payerName) {
+          return row.payerName;
+        }
+
+        if (!row.payerId) {
+          return '-';
+        }
+
+        const payer =
+          payerListResponse?.data?.find(
+            item =>
+              Number(item.id) ===
+              Number(row.payerId)
+          );
+
+        return (
+          payer?.nameEn ||
+          payer?.nameAr ||
+          '-'
+        );
+      }
     },
+
     {
-      key: "effectiveTo",
-      title: <Translate>Effective To</Translate>,
-      flexGrow: 3,
-      render: (rowData: PriceList) => (
-        <span>{rowData.effectiveTo ?? "-"}</span>
-      ),
+      key: 'versionNumber',
+      title: <Translate>Version</Translate>,
+      width: 90,
+      align: 'center' as const
+    },
+
+    {
+      key: 'effectiveFrom',
+      title:
+        <Translate>
+          Effective From
+        </Translate>,
+      flexGrow: 2
+    },
+
+    {
+      key: 'effectiveTo',
+      title:
+        <Translate>
+          Effective To
+        </Translate>,
+      flexGrow: 2,
+
+      render: (
+        row: PriceListSetupModel
+      ) =>
+        row.effectiveTo || '-'
+    },
+
+    {
+      key: 'currency',
+      title: <Translate>Currency</Translate>,
+      width: 100,
+      align: 'center' as const
+    },
+
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      width: 110,
+
+      render: (
+        row: PriceListSetupModel
+      ) => (
+        <MyBadgeStatus
+          contant={
+            row.status
+              ? formatEnumString(
+                row.status
+              )
+              : 'Draft'
+          }
+          color={
+            row.status === 'ACTIVE'
+              ? '#415be7'
+              : row.status === 'CANCELLED'
+                ? '#d9534f'
+                : '#b1acac'
+          }
+        />
+      )
     },
     {
       key: "items",
       title: "",
       flexGrow: 1,
-      render: (rowData: PriceList) => itemsIcon(rowData),
+      render: (rowData: PriceListSetupModel) => itemsIcon(rowData),
     },
+    
   ];
 
   const direction =
@@ -176,22 +287,26 @@ const ViewPriceListModal = ({ open, setOpen }: Props) => {
       content={
         <div dir={dir}>
           <MyTable
-            data={priceLists}
+            data={tableData}
+            totalCount={totalCount}
             columns={tableColumns}
             loading={isFetching}
+            page={paginationParams.page}
+            rowsPerPage={paginationParams.size}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={
+              handleRowsPerPageChange
+            }
           />
 
           <ViewPriceListItemsModal
             open={openItemsModal}
             setOpen={setOpenItemsModal}
-            priceList={priceList}
+            priceListSetupId={priceList?.id}
+            priceListName={priceList?.name}
+            priceListType={priceList?.type}
           />
 
-          <ViewPriceListAttributes
-            open={openAttributesModal}
-            setOpen={setOpenAttributesModal}
-            priceList={priceList}
-          />
         </div>
       }
     />

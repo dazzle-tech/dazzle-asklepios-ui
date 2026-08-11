@@ -660,6 +660,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
+            setOpenPriceListModal(true);
           }}
         >
           <div className="container-of-icon-and-key1">
@@ -1094,6 +1095,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         setOpen={setOpenPriceListModal}
         patient={localPatient}
       />
+      
 
       <ScanDocumentModal
         open={openScanDocumentModal}

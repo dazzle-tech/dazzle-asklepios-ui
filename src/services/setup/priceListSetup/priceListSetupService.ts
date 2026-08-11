@@ -162,6 +162,56 @@ export const priceListSetupService = createApi({
             ]
     }),
 
+    getPriceListSetupsByLoggedInFacility: builder.query<
+      PagedResult<PriceListSetup>,
+      PagedParams
+    >({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc'
+      }) => ({
+        url: '/api/setup/price-list-setups/by-loggedIn-facility',
+        params: {
+          page,
+          size,
+          sort
+        }
+      }),
+
+      transformResponse: (
+        response:
+          | PriceListSetup[]
+          | SpringPageResponse<PriceListSetup>,
+        meta
+      ) =>
+        mapPagedResponse<PriceListSetup>(
+          response,
+          meta
+        ),
+
+      providesTags: result =>
+        result
+          ? [
+              ...result.data
+                .filter(item => item.id !== undefined)
+                .map(item => ({
+                  type: 'PriceListSetup' as const,
+                  id: item.id!
+                })),
+              {
+                type: 'PriceListSetup' as const,
+                id: 'LIST'
+              }
+            ]
+          : [
+              {
+                type: 'PriceListSetup' as const,
+                id: 'LIST'
+              }
+            ]
+    }),
+
     getPriceListSetupById: builder.query<
       PriceListSetup,
       { id: Id }
@@ -514,6 +564,8 @@ export const priceListSetupService = createApi({
 export const {
   useGetPriceListSetupsQuery,
   useLazyGetPriceListSetupsQuery,
+  useGetPriceListSetupsByLoggedInFacilityQuery,
+  useLazyGetPriceListSetupsByLoggedInFacilityQuery,
 
   useGetPriceListSetupByIdQuery,
   useLazyGetPriceListSetupByIdQuery,
