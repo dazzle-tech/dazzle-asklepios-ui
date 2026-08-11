@@ -59,3 +59,20 @@ export type PatientSatisfactionSurveyResponse = {
   overallPercentage?: number | null;
   createdDate: string;
 };
+
+export type PatientSatisfactionSurveyResponseAnswerVM = {
+  id: number;
+  questionCode: string;
+  answer: string;
+  score?: number | null;
+};
+
+export type PatientSatisfactionSurveyResponseVM = PatientSatisfactionSurveyResponse & {
+  answers: PatientSatisfactionSurveyResponseAnswerVM[];
+};
+
+export type PatientSatisfactionSurveyPageableParams = {
+  page: number;
+  size: number;
+  sort?: string;
+};

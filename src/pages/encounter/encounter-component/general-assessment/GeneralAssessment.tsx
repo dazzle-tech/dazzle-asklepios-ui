@@ -392,7 +392,9 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                 <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !generalAssessment?.key : true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
-                <Checkbox onChange={(value, checked) => {
+                <Checkbox
+                 className="show-cancelled"
+                  onChange={(value, checked) => {
                     if (checked) {
                         //TODO convert key to code
                         setGeneralAssessmentStatus('3196709905099521');

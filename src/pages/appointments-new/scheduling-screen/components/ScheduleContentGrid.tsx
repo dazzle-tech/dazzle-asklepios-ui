@@ -140,7 +140,7 @@ const ScheduleContentGrid = ({
   return (
     <div
       className="appointments-content-grid"
-      style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1, position: 'relative' }}
+      style={{ display: 'grid', gridTemplateColumns: '1fr minmax(300px, 320px)', gap: 12, flex: 1, position: 'relative' }}
     >
       {isLoading && (
         <div
@@ -306,8 +306,8 @@ const ScheduleContentGrid = ({
           minHeight: 0
         }}
       >
-        <Panel bordered className="appointments-mini-panel" style={{ padding: 10, borderRadius: 12, flex: '0 0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        <div className="appointments-mini-panel">
+          <div className="appointments-mini-panel__view-toggle">
             <ButtonGroup
               style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
               size="xs"
@@ -356,9 +356,9 @@ const ScheduleContentGrid = ({
               }
             }}
             compact
-            style={{ width: '100%', height: 220, fontSize: 12 }}
+            className="appointments-sidebar-calendar"
           />
-        </Panel>
+        </div>
 
         <TodayAppointmentsList
           selectedDate={rightPanelDate ?? currentCalendarDate}

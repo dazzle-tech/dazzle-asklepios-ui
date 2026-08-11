@@ -662,6 +662,7 @@ const ERWaitingList = () => {
         <MyInput
           column
           width={150}
+           className="show-cancelled"
           fieldType="check"
           fieldLabel={<Translate>Show Cancelled</Translate>}
           fieldName="showCancelled"

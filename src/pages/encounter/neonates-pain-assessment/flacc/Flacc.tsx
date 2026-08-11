@@ -43,7 +43,7 @@ const Flacc = () => {
   const tableButtons = (
     <>
       <div className="table-buttons-left-part-handle-positions">
-        <Checkbox
+        <Checkbox className="show-cancelled"
           checked={!showCanceled}
           onChange={() => {
             setShowCanceled(!showCanceled);

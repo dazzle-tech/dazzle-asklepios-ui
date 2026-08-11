@@ -236,7 +236,7 @@ const VaccineReccord = () => {
         {vaccinesByIds.map((v: any, index: number) => (
           <MyButton
             key={v?.id ?? index}
-            className="main-content-btn"
+            className="main-content-btn filter-form-disable-fix"
             onClick={() => {
               setSelectedVaccine(v);
               setPageIndex(0);
@@ -304,6 +304,7 @@ const VaccineReccord = () => {
 
         <div className="cancel-checkbox-container">
           <Checkbox
+            className="show-cancelled"
             checked={showCancelled}
             onChange={(_value, checked) => {
               setShowCancelled(Boolean(checked));

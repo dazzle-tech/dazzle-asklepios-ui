@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Form, Panel } from 'rsuite';
+import { Checkbox, Form, Panel } from 'rsuite';
 import Logo from '@/images/Logo_BLUE_New1.svg';
 import MyButton from '@/components/MyButton/MyButton';
 import { useBranding } from '@/hooks/useBranding';
@@ -414,30 +414,27 @@ const PatientSatisfactionSurveyPage = () => {
       );
     }
 
+
     if (question.type === 'checkbox') {
-      const questionRecord = { [question.code]: selectedAnswer?.value === 'AGREED' };
+      const isChecked = selectedAnswer?.value === 'AGREED';
 
       return (
-        <Form fluid>
-          <MyInput
-            fieldType="check"
-            fieldName={question.code}
-            showLabel={false}
-            label={
-              <span>
-                {getQuestionText(question)}
-                {!question.optional && (
-                  <span className="patient-satisfaction-survey-required"> *</span>
-                )}
-              </span>
-            }
-            record={questionRecord}
-            setRecord={nextRecord => {
-              handleCheckboxChange(question, Boolean(nextRecord[question.code]));
-            }}
-            width="100%"
+        <div
+          className={`patient-satisfaction-survey-checkbox-field ${
+            isRtl ? 'is-rtl' : 'is-ltr'
+          }`}
+        >
+          <Checkbox
+            checked={isChecked}
+            onChange={(_, checked) => handleCheckboxChange(question, checked)}
           />
-        </Form>
+          <span className="patient-satisfaction-survey-checkbox-text">
+            {getQuestionText(question)}
+            {!question.optional && (
+              <span className="patient-satisfaction-survey-required"> *</span>
+            )}
+          </span>
+        </div>
       );
     }
 

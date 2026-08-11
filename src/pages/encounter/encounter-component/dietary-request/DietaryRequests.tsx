@@ -615,7 +615,7 @@ const getRowClassName = rowData => {
     <>
       <div className="table-buttons-left-part-handle-positions">
         <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
-        <Checkbox><Translate>Show Cancelled</Translate></Checkbox>
+        <Checkbox className="show-cancelled"><Translate>Show Cancelled</Translate></Checkbox>
       </div>
       <div className="bt-right">
         <MyButton

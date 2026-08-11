@@ -600,6 +600,7 @@ return (
       <Panel dir={dir}>
         <div className="gcs-table-header">
           <Checkbox
+           className="show-cancelled"
             checked={showCanceled}
             onChange={() => {
               setShowCanceled(prev => !prev);

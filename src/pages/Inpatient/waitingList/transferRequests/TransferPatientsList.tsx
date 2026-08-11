@@ -71,6 +71,7 @@ const TransferPatientsList = () => {
             />
             <div className='checkboxes-container-transfer-patient-list'>
                 <Checkbox
+                 className="show-cancelled"
                     onChange={(value, checked) => {
                         setTransferRequest(checked ? '91098528988200' : '');
                     }}

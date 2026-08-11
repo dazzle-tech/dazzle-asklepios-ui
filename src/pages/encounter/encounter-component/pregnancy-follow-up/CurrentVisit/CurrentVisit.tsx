@@ -129,7 +129,7 @@ const tablebuttons = (
   <div className="table-buttons-container">
     <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-        <Checkbox
+        <Checkbox className="show-cancelled"
           checked={showCancelled}
           onChange={(value, checked, event) => {
             // Log the checkbox state for debugging
