@@ -197,9 +197,9 @@ export const MODULES: Module[] =
         { name: "Potential Duplicate", code: "POTENTIAL_DUPLICATE", description: "", icon: "FaInstalod", viewOrder: 15, navPath: "potintial-duplicate" },
         { name: "Brand Medications", code: "BRAND_MEDICATIONS", description: "", icon: "FaBottleDroplet", viewOrder: 8, navPath: "brand-medications" },
         { name: "Lists Of Value", code: "LISTS_OF_VALUE", description: "", icon: "FaList", viewOrder: 8, navPath: "lov-setup" },
-        { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
-        { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
-        { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
+        // { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
+        // { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
+        // { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
         { name: "Uom Group", code: "UOM_GROUP", description: "", icon: "FaBox", viewOrder: 7, navPath: "uom-group" },
         { name: "Prescription Instructions", code: "PRESCRIPTION_INSTRUCTIONS", description: "", icon: "FaPrescriptionBottle", viewOrder: 15, navPath: "prescription-instructions" },
         { name: "Age Group", code: "AGE_GROUP", description: "Age Group Setup", icon: "FaBaby", viewOrder: 10, navPath: "age-group" },
@@ -210,7 +210,6 @@ export const MODULES: Module[] =
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
         { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
-        { name: "Diagnostics Setup Old", code: "DIAGNOSTICS_SETUP_OLD", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "" },
         { name: "Vaccine Setup", code: "VACCINE_SETUP", description: "Vaccine", icon: "FaSyringe", viewOrder: 9, navPath: "vaccine-setup" },
         { name: "Procedure Setup", code: "PROCEDURE_SETUP", description: "", icon: "FaProductHunt", viewOrder: 10, navPath: "procedure-setup" },
         { name: "Room Bed Setup", code: "ROOM_BED_SETUP", description: "", icon: "FaBed", viewOrder: 16, navPath: "room" },
@@ -356,66 +355,12 @@ export const MODULES: Module[] =
         { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
         { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
+        { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
 
 
       ],
     },
-    {
-      name: "Patient Old",
-      description: "Legacy patient screens",
-      icon: "FaUserClock",
-      viewOrder: 2,
-      screens: [
-        {
-          name: "Patient Registration (Old)",
-          code: "PATIENT_REGISTRATION_OLD",
-          description: "",
-          icon: "FaFilePen",
-          viewOrder: 0,
-          navPath: "patient-old/patient-profile"
-        },
-        {
-          name: "Facility Patient List (Old)",
-          code: "FACILITY_PATIENT_LIST_OLD",
-          description: "",
-          icon: "FaPersonRays",
-          viewOrder: 1,
-          navPath: "patient-old/facility-patient-list"
-        },
-        {
-          name: "Patient List (Old)",
-          code: "PATIENT_LIST_OLD",
-          description: "",
-          icon: "FaList",
-          viewOrder: 2,
-          navPath: "patient-old/patient-list"
-        },
-        {
-          name: "Patient Chart (Old)",
-          code: "PATIENT_CHART_OLD",
-          description: "",
-          icon: "FaChartLine",
-          viewOrder: 3,
-          navPath: "patient-old/patient-chart"
-        },
-        {
-          name: "Patient EMR (Old)",
-          code: "PATIENT_EMR_OLD",
-          description: "",
-          icon: "FaFileWaveform",
-          viewOrder: 4,
-          navPath: "patient-old/patient-emr"
-        },
-        {
-          name: "Merge Patient Files (Old)",
-          code: "MERGE_PATIENT_FILES_OLD",
-          description: "",
-          icon: "FaFolderTree",
-          viewOrder: 5,
-          navPath: "patient-old/patient-merge-files"
-        }
-      ]
-    },
+
     {
       name: "Scheduling",
       description: "",

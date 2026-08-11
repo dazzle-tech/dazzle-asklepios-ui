@@ -10,8 +10,11 @@ import {
   useUpdateRolePermissionsMutation
 } from '@/services/userService';
 import { useEnumByName } from '@/services/enumsApi';
-import { Toggle } from 'rsuite';
+import { Form, Toggle } from 'rsuite';
 import { CircularProgress } from '@mui/material';
+import { InputGroup, Input } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
+import MyInput from '@/components/MyInput';
 
 interface Permission {
   screen: string;
@@ -27,6 +30,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   const [updatePermissions, { isLoading: isSaving }] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
+  const [search, setSearch] = useState({value:""});
 
   // Reset selected state when roleId changes
   useEffect(() => {
@@ -37,7 +41,26 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   useEffect(() => {
     setSelected(initialPermissions || []);
   }, [initialPermissions]);
+  const filteredModules = React.useMemo(() => {
+    if (!search.value.trim()) {
+      return MODULES;
+    }
 
+    const searchText = search.value.toLowerCase();
+
+    return MODULES.map(module => ({
+      ...module,
+      screens: (module.screens || []).filter(
+        screen =>
+          screen.name?.toLowerCase().includes(searchText) ||
+          screen.code?.toLowerCase().includes(searchText)
+      )
+    })).filter(
+      module =>
+        module.name?.toLowerCase().includes(searchText) ||
+        (module.screens?.length ?? 0) > 0
+    );
+  }, [search]);
   const togglePermission = (screenCode: string, operation: string) => {
     setSelected(prev => {
       const exists = prev.some(p => p.screen === screenCode && p.permission === operation);
@@ -242,8 +265,20 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         </div>
       )}
 
+      <Form   >
+        <MyInput
+          width={'20vw'}
+          rightAddon={<SearchIcon />}
+          fieldName="value"
+          record={search}
+          setRecord={setSearch}
+          placeholder="Search module or screen..."
+          showLabel={false}
+
+        />
+      </Form>
       <MyNestedTable
-        data={MODULES}
+        data={filteredModules}
         columns={columns}
         getNestedTable={getNestedTable}
         loading={isLoading}

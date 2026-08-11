@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -50,11 +50,12 @@ import {
   resolveDiagnosticBillingItemType
 } from '@/utils/billingRuleEvaluationUtils';
 
+
 type UseDiagnosticsOrderArgs = {
     patient?: any;
     encounter?: any;
     edit?: boolean;
-
+  setLoading?: (value: boolean) => void;
     patientPrevTestsRef?: React.RefObject<any>;
 };
 const extractErrorMessage = (error: any) => {
@@ -75,7 +76,7 @@ const extractErrorMessage = (error: any) => {
   return msg;
 };
 
-export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef }: UseDiagnosticsOrderArgs) => {
+export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef,setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -477,6 +478,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const handleCancle = async () => {
     try {
+      setLoading(true);
       await Promise.all(
         selectedRows.map((itemId: number) =>
           cancelDiagnosticOrderTest({
@@ -498,6 +500,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       CloseConfirmDeleteModel();
       orderTestRefetch()
 
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -633,6 +638,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const handleSaveTests = async () => {
     setOpenTestsModal(false);
+   
 
     const _orderId = toNumericId(orders?.id ?? orders?.key);
     const fromDepartmentId = resolveFromDepartmentId();
@@ -648,6 +654,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
 
     try {
+      setLoading(true);
+3
       const pickTestId = (t: any) =>
         toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
 
@@ -766,9 +774,16 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
         })
       );
     }
+    finally {
+      console.log("Fainaly ")
+       setLoading(false);
+
+    }
   };
 
   const handleSaveOrders = async () => {
+setLoading(true);
+
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
@@ -800,9 +815,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       console.error('Create order failed:', error);
       dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
     }
+    finally {
+      setLoading(false);
+
+     }
   };
 
   const handleSubmitPres = async () => {
+
     const _orderId = orders?.id;
     if (!_orderId) {
       dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
@@ -821,6 +841,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
 
     try {
+      setLoading(true);
       await updateOrder({
         id: _orderId,
         body: {
@@ -844,6 +865,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     } catch (error) {
       console.error('Submit failed', error);
       dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -884,6 +908,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
 
     try {
+      setLoading(true);
       await createOrderTest({
         orderId: _orderId,
         testId: t.id,
@@ -902,6 +927,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           sev: msg.toLowerCase().includes('already') ? 'warning' : 'error'
         })
       );
+    }
+    finally{
+      setLoading(false);
     }
   };
 

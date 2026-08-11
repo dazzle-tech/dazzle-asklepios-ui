@@ -3323,7 +3323,7 @@ export interface PatientPrescription {
   id: number;
   patientId: number;
   encounterId: number;
-  prescriptionNum: number;
+  prescriptionNum: string;
   prescriptionDate: string;
   urgencyLevel: string;
   status?: string;

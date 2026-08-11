@@ -1818,6 +1818,7 @@ const ScheduleScreen = () => {
 
         <Panel
           bordered
+          bodyFill
           className="right-section appointments-main-card"
           style={{ display: 'flex', flexDirection: 'column', minHeight: 620 }}
         >

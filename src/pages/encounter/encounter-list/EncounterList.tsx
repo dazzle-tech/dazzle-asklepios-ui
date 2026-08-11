@@ -61,6 +61,8 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+// NEW: same practitioner-by-department hook used in AddResourceModal
+import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
 // import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
@@ -255,6 +257,7 @@ const EncounterList = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [practitionerId, setPractitionerId] = useState<string | number | undefined>(undefined);
 
   const [filtersKey, setFiltersKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
@@ -326,7 +329,7 @@ const handlePatientSearchClick = useCallback(() => {
   } = useFilterEncountersQuery(appliedFilters as any, {
     skip: !appliedFilters
   });
-  
+
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
       facility: selectedDepartment?.facilityId,
@@ -372,6 +375,43 @@ const handlePatientSearchClick = useCallback(() => {
   const patientBulkIdsRef = useRef<string[]>([]);
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
+
+  // ─── NEW: Practitioners for this department (used to resolve practitioner name) ───
+  const [triggerGetPractitionersByDepartment, { isFetching: isPractitionersLoading }] =
+    useLazyGetPractitionerByDepartmentQuery();
+  const [departmentPractitioners, setDepartmentPractitioners] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!departmentId) {
+      setDepartmentPractitioners([]);
+      return;
+    }
+    triggerGetPractitionersByDepartment({ departmentId, page: 0, size: 200, sort: 'id,asc' })
+      .unwrap()
+      .then((res: any) => setDepartmentPractitioners(res?.data ?? []))
+      .catch(() => setDepartmentPractitioners([]));
+  }, [departmentId, triggerGetPractitionersByDepartment]);
+  useEffect(() => {
+    console.log('Department practitioners updated:', departmentPractitioners);
+  }, [departmentPractitioners]);
+
+  const practitionerMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (departmentPractitioners ?? []).forEach((p: any) => {
+      if (p?.id != null) map.set(String(p.id), p);
+    });
+    return map;
+  }, [departmentPractitioners]);
+
+  const practitionerOptions = useMemo(
+  () =>
+    (departmentPractitioners ?? []).map((p: any) => ({
+      label: `${p?.firstName ?? ''} ${p?.lastName ?? ''}`.trim(),
+      value: p?.id
+    })),
+  [departmentPractitioners]
+);
+  // ─────────────────────────────────────────────────────────────────────────────────
 
   const patientIdsForBulk = useMemo(() => {
     const ids = (tableData as any[])
@@ -425,6 +465,22 @@ const handlePatientSearchClick = useCallback(() => {
         formatEnumString(patientFromMap?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
       const isPrivate = patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
 
+      // ─── NEW: resolve practitioner name for this encounter ───
+      const practitionerId =
+        row?.practitioner?.id ?? row?.practitionerId ?? row?.defaultPractitionerId ?? null;
+      const practitionerFromMap =
+        practitionerId != null ? practitionerMap.get(String(practitionerId)) : null;
+
+      const practitionerFirstName = String(
+        practitionerFromMap?.firstName ?? row?.practitioner?.firstName ?? ''
+      ).trim();
+      const practitionerLastName = String(
+        practitionerFromMap?.lastName ?? row?.practitioner?.lastName ?? ''
+      ).trim();
+      const practitionerFullName =
+        [practitionerFirstName, practitionerLastName].filter(Boolean).join(' ').trim() || '-';
+      // ───────────────────────────────────────────────────────────
+
       return {
         ...row,
         key: row?.id,
@@ -438,11 +494,14 @@ const handlePatientSearchClick = useCallback(() => {
           sexAtBirth,
           isPrivatePatient: isPrivate
         },
+        practitionerObject: {
+          id: practitionerId,
+          fullName: practitionerFullName
+        },
         patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
-  }, [tableData, patientMap]);
-
+  }, [tableData, patientMap, practitionerMap]);
   const getEncounterId = (row: any) => row?.id ?? null;
 
   const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
@@ -641,6 +700,7 @@ const handlePatientSearchClick = useCallback(() => {
     setHasPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
+    setPractitionerId(undefined);
 
     const clearedSearch = {
       searchByField: 'fullName',
@@ -665,6 +725,7 @@ const handlePatientSearchClick = useCallback(() => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
+      practitionerId: undefined,
       page: 0,
       size: pageSize,
       sort: DEFAULT_SORT
@@ -697,7 +758,7 @@ const handlePatientSearchClick = useCallback(() => {
     }
   };
 
-  
+
 
   const tableColumns = [
     {
@@ -735,6 +796,12 @@ const handlePatientSearchClick = useCallback(() => {
           </Whisper>
         );
       }
+    },
+    {
+      key: 'practitionerFullName',
+      title: 'PRACTITIONER',
+      render: (row: any) => <span>{row?.practitionerObject?.fullName ?? '-'}</span>,
+      expandable: true,
     },
     {
       key: 'encounterReason',
@@ -870,7 +937,7 @@ const handlePatientSearchClick = useCallback(() => {
         );
       }
     },
-      
+
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
@@ -1063,7 +1130,6 @@ const handlePatientSearchClick = useCallback(() => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
-
           <MyInput
             column
             width={180}
@@ -1079,7 +1145,7 @@ const handlePatientSearchClick = useCallback(() => {
     setRecord={setPatientSearchDraft}
     onSearchClick={handlePatientSearchClick}
     liveSearchMinLength={3}
-/>
+ />
 
           <MyInput
             column
@@ -1098,7 +1164,7 @@ const handlePatientSearchClick = useCallback(() => {
           />
         </Form>
       </div>
-      
+
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1114,6 +1180,10 @@ const handlePatientSearchClick = useCallback(() => {
             uniqueNonEmpty(priorities) ??
             uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
           const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+          const normalizedPractitionerId =
+          practitionerId === null || practitionerId === undefined || practitionerId === ''
+          ? undefined
+          : practitionerId;
 
           setPage(0);
 
@@ -1130,6 +1200,7 @@ const handlePatientSearchClick = useCallback(() => {
             hasPrescription,
             hasOrder,
             isObserved,
+            practitionerId: normalizedPractitionerId,  
             page: 0,
             size: pageSize,
             sort: DEFAULT_SORT
@@ -1180,6 +1251,23 @@ const handlePatientSearchClick = useCallback(() => {
                 fieldLabel="Priority"
                 searchable={true}
               />
+              <MyInput
+               width={200}
+               fieldName="practitionerId"
+               fieldType="select"
+               record={{ practitionerId }}
+               setRecord={(v: any) => {
+                const next = v?.practitionerId;
+                setPractitionerId(next === null || next === undefined || next === '' ? undefined : next);
+                setPage(0);
+              }}
+               selectData={practitionerOptions}
+               selectDataLabel="label"
+               selectDataValue="value"
+               placeholder="Select Practitioner"
+               fieldLabel="Practitioner"
+               searchable={true}
+               />
             </Form>
           </div>
         }
@@ -1289,6 +1377,7 @@ const handlePatientSearchClick = useCallback(() => {
           <div style={{display: 'flex', justifyContent:'end'}}>
           <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
           </div>
+
           <MyTable
             filters={filters()}
             height={600}
@@ -1374,7 +1463,6 @@ const handlePatientSearchClick = useCallback(() => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
-
         </Panel>
         <DoctorAppoitmentsView
          open={openDoctorAppointments}

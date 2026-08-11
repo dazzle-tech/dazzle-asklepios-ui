@@ -222,9 +222,11 @@ export const uiSlice = createSlice({
       state.loading = false;
     },
     showSystemLoader: state => {
+      console.log("showSystemLoader called");
       state.systemLoader = true;
     },
     hideSystemLoader: state => {
+      console.log("hideSystemLoader called");
       state.systemLoader = false;
     },
     openChangePassword: state => {

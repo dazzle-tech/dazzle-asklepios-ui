@@ -28,7 +28,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
-
+  const { data: adverseLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
 
@@ -161,6 +161,25 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
         return keys
           .map((key: string) =>
             conjureValueBasedOnKeyFromList(complicationsLov?.object ?? [], key, 'lovDisplayVale') ?? key
+          )
+          .join(', ');
+      }
+    },
+     {
+      key: 'AdverseReactions',
+      title: 'Adverse Reactions',
+      flexGrow: 3,
+      render: (row: any) => {
+        const keys = (row?.adverseReactionsToAnesthesia || '')
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter(Boolean);
+
+        if (!keys.length) return '';
+
+        return keys
+          .map((key: string) =>
+            conjureValueBasedOnKeyFromList(adverseLov?.object ?? [], key, 'lovDisplayVale') ?? key
           )
           .join(', ');
       }
@@ -321,7 +340,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
           content={
             <>
 
-              {!toShowData && (
+              
                 <div className="margin-bottom-10">
                   <MyInput
                     fieldType="check"
@@ -334,7 +353,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
                     }}
                   />
                 </div>
-              )}
+              
               <MyTable
                 height={450}
                 data={filteredData}

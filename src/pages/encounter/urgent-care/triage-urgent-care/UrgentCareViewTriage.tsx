@@ -13,11 +13,14 @@ import { useEnumOptions } from '@/services/enumsApi';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import MyInput from '@/components/MyInput';
+import Allergies from "@/pages/encounter/encounter-pre-observations-new/AllergiesNurse/Allergies";
 
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import type { ApEncounter } from '@/types/model-types';
 import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
+import BodyMeasurements from "@/pages/encounter/encounter-pre-observations-new/observations/BodyMeasurements";
+
 
   type Props = {
     patient?: any;
@@ -215,6 +218,26 @@ const handleGoBack = () => {
           )}
         </Row>
 
+        <Row gutter={30}>
+                {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+                  <SectionContainer
+                    title={<Translate>Body Measurements</Translate>}
+                    content={
+                      <Form fluid>
+                        <BodyMeasurements
+                          patient={patient}
+                          patientId={patientId}
+                          encounterId={encounterId}
+                          encounter={encounter}
+                          disabled
+                          width="100%"
+                        />
+                      </Form>
+                    }
+                  />
+                )}
+              </Row>
+
       <Row gutter={30}>
         {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
           <SectionContainer
@@ -229,6 +252,15 @@ const handleGoBack = () => {
           />
         )}
       </Row>
+
+      <Row gutter={30}>
+              {!Number.isNaN(patientId) && (
+                <SectionContainer
+                  title={<Translate>Allergies</Translate>}
+                  content={<Allergies patient={patient} encounter={encounter} showTableActions={false} showTableButtons={false} readonly/>}
+                />
+              )}
+            </Row>
 
         <Row gutter={30}>
           <SectionContainer

@@ -223,9 +223,6 @@ const AddEncounterVaccine = ({
   const [administrationReaction, setAdministrationReactions] = useState<{
     administrationReactionsLkey: string | null;
   }>({ administrationReactionsLkey: '' });
-  const [externalFacilityToggle, setExternalFacilityToggle] = useState<{
-    isExternalFacility: boolean;
-  }>({ isExternalFacility: !!(encounterVaccination as any)?.isExternalFacility });
 
   const [brandPage, setBrandPage] = useState(0);
   const [allBrands, setAllBrands] = useState<VaccineBrand[]>([]);
@@ -235,6 +232,8 @@ const AddEncounterVaccine = ({
   const [addEncounterVaccination] = useAddEncounterVaccinationMutation();
   const [updateEncounterVaccination] = useUpdateEncounterVaccinationMutation();
 
+  const { data: valueUnitLov } =
+    useGetLovValuesByCodeQuery('VALUE_UNIT');
   const typeEnumOptions = useEnumOptions('VaccineType');
   const roaEnumOptions = useEnumOptions('MedRoa');
   const numOfDosesEnumOptions = useEnumOptions('NumberOfDoses');
@@ -262,12 +261,59 @@ const AddEncounterVaccine = ({
     { skip: !vaccineDose?.id }
   );
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (vaccineObject?.id) {
+      setVaccine({
+        ...(newVaccine as Vaccine),
+        ...(vaccineObject as Vaccine)
+      });
+    }
+
+    if (vaccineBrandObject?.id) {
+      setVaccineBrand({
+        ...(newVaccineBrand as VaccineBrand),
+        ...(vaccineBrandObject as VaccineBrand)
+      });
+
+      setBrandPicker({
+        vaccineBrandId: Number(vaccineBrandObject.id)
+      });
+    } else if (encounterVaccination?.vaccineBrandId) {
+      setBrandPicker({
+        vaccineBrandId: Number(encounterVaccination.vaccineBrandId)
+      });
+    }
+
+    if (vaccineDoseObjet?.id) {
+      setVaccineDose({
+        ...(newVaccineDose as VaccineDose),
+        ...(vaccineDoseObjet as VaccineDose)
+      });
+
+      setDosePicker({
+        vaccineDoseId: Number(vaccineDoseObjet.id)
+      });
+    } else if (encounterVaccination?.vaccineDoseId) {
+      setDosePicker({
+        vaccineDoseId: Number(encounterVaccination.vaccineDoseId)
+      });
+    }
+
+  }, [
+    open,
+    vaccineObject,
+    vaccineBrandObject,
+    vaccineDoseObjet,
+    encounterVaccination?.id
+  ]);
+
   const handleClearField = () => {
     setEncounterVaccination({
       ...(newEncounterVaccination as EncounterVaccination),
       status: null
     } as any);
-    setExternalFacilityToggle({ isExternalFacility: false });
     setVaccine({ ...(newVaccine as Vaccine) });
     setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
     setVaccineDose({ ...(newVaccineDose as VaccineDose) });
@@ -469,18 +515,6 @@ const AddEncounterVaccine = ({
         : ({ ...(newVaccineDose as VaccineDose), doseNumber: '' } as VaccineDose)
     );
   }, [vaccineDose?.id, nextDoseData, intervalOneData, allDoses]);
-
-  useEffect(() => {
-    const isExternal = !!externalFacilityToggle.isExternalFacility;
-    setEncounterVaccination(
-      prev =>
-        ({
-          ...prev,
-          externalFacilityName: isExternal ? (prev as any).externalFacilityName ?? '' : ''
-        } as any)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalFacilityToggle.isExternalFacility]);
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -807,8 +841,8 @@ const AddEncounterVaccine = ({
               fieldLabel="Is External Facility"
               fieldType="checkbox"
               fieldName="isExternalFacility"
-              record={externalFacilityToggle}
-              setRecord={setExternalFacilityToggle}
+              record={encounterVaccination}
+              setRecord={setEncounterVaccination}
               disabled={isDisabledField}
             />
             <MyInput
@@ -818,7 +852,10 @@ const AddEncounterVaccine = ({
               fieldName="externalFacilityName"
               record={evForForm}
               setRecord={setEncounterVaccination}
-              disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
+              disabled={
+                isDisabledField ||
+                !(encounterVaccination as any)?.isExternalFacility
+              }
             />
             <MyInput
               width={"100%"}
@@ -932,21 +969,12 @@ const AddEncounterVaccine = ({
                     )?.lovDisplayVale || ' ',
 
                   unit: (item: any) => {
-                    const foundUnit = unitEnumOptions?.find((unit: any) =>
-                      String(unit.value) === String(item.unit) ||
-                      String(unit.key) === String(item.unit) ||
-                      String(unit.name) === String(item.unit)
+                    const foundUnit = valueUnitLov?.object?.find(
+                      (unit: any) =>
+                        String(unit.key) === String(item.unit)
                     );
 
-                    return (
-                      foundUnit?.label ||
-                      foundUnit?.name ||
-                      String(item.unit || '')
-                        .toLowerCase()
-                        .split('_')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ')
-                    );
+                    return foundUnit?.lovDisplayVale || String(item.unit || '');
                   },
                   isActive: (item: any) => {
                     const active = allBrands?.find(

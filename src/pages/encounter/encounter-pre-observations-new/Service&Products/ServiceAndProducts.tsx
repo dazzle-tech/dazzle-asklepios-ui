@@ -40,12 +40,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const encounter = location.state?.encounter;
   const dispatch = useAppDispatch();
 
-  const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
+  const [paginationParams, setPaginationParams] = useState({ page: 0, size: 15, sort: 'id,asc', });
 
   const [deletePatientServiceProduct] = useDeletePatientServiceOrProductMutation();
 
@@ -317,22 +312,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     }
   };
 
-  const handlePageChange = (event, newPage) => {
-    setPaginationParams({ ...paginationParams, page: newPage });
-  };
+  const handlePageChange = (_event: unknown, newPage: number) => { setPaginationParams(prev => ({ ...prev, page: newPage, })); };
 
-  const handleSortChange = (newSortColumn: string, newSortType: 'asc' | 'desc') => {
-    setSortColumn(newSortColumn);
-    setSortType(newSortType);
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { const newSize = Number(event.target.value); setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, })); };
 
-    const sortValue = `${newSortColumn},${newSortType}`;
-    setPaginationParams({
-      ...paginationParams,
-      sort: sortValue,
-      page: 0,
-      timestamp: Date.now()
-    });
-  };
+  const handleSortChange = (newSortColumn: string, newSortType: 'asc' | 'desc') => { setSortColumn(newSortColumn); setSortType(newSortType); setPaginationParams(prev => ({ ...prev, page: 0, sort: `${newSortColumn},${newSortType}`, })); };
 
   const getDisplayName = (rowData: PatientServiceAndProduct) => {
     switch (rowData.billingItemType) {
@@ -451,35 +435,19 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         </div>
       )}
 
-      <MyTable
-        data={rows}
+      <MyTable data={lookupsLoading ? [] : rows}
         columns={columns}
         rowClassName={isReadOnly ? undefined : isSelected}
-        onRowClick={
-          isReadOnly
-            ? undefined
-            : rowData => {
-                setPatientServiceAndProduct(rowData);
-              }
-        }
+        onRowClick={isReadOnly ? undefined : rowData => { setPatientServiceAndProduct(rowData); }}
         totalCount={totalCount}
         loading={isLoading}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={e => {
-          const newSize = Number(e.target.value);
-          setPaginationParams({
-            ...paginationParams,
-            size: newSize,
-            page: 0,
-            timestamp: Date.now()
-          });
-        }}
+        onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}
         sortType={sortType}
-        onSortChange={handleSortChange}
-      />
+        onSortChange={handleSortChange} />
 
       <AddEditPatientServiceAndProduct
         open={popupOpen && !isReadOnly}
