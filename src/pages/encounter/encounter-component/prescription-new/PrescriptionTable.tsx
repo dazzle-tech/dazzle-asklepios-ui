@@ -197,27 +197,28 @@ const PrescriptionTable = ({
       flexGrow: 1.5,
       render: (rowData: any) => {
         const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
-
+        const isCancelled=String(rowData.status?? '').toUpperCase() === 'CANCELLED';
+        console.log(currentPrescription?.status);
       return (
         <div className="flex-c8">
           <MdModeEdit
             title={
-              !edit
+              edit
                 ? 'View Only'
                 : isSubmitted
                   ? 'Prescription is submitted'
                   : 'Edit'
             }
             size={20}
-            className={edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
+            className={!edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
             style={{
-              opacity: !edit || isSubmitted ? 0.5 : 1,
-              cursor: !edit || isSubmitted ? 'not-allowed' : 'pointer'
+              opacity: edit || isSubmitted || isCancelled ? 0.5 : 1,
+              cursor: edit || isSubmitted || isCancelled ? 'not-allowed' : 'pointer'
             }}
             onClick={e => {
               e.stopPropagation();
 
-              if (!edit || isSubmitted) return;
+              if (edit || isSubmitted || isCancelled) return;
 
               setPatientPrescriptionMedicationObject({
                 ...rowData,
