@@ -183,10 +183,9 @@ const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/Wareh
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
 const UsersNew = lazy (() => import ( './pages/system-configurations/users-setup-new'));
 const FacilityPatients = lazy (() => import ( './pages/patient/facility-patients/FacilityPatients'));
-
+const PatientsEncounters = lazy (() => import ( './pages/patient/PatientsEncounters/PatientsEncounters'));
 import 'survey-core/survey-core.min.css';
 import 'survey-creator-core/survey-creator-core.min.css';
-
 const FormTemplatesUseScreen = lazy (() => import ( './components/FormsTemplate/FormTemplatesUseScreen'));
 const MyConsultations = lazy (() => import ( './components/MyConsultations/MyConsultations'));
 const CallOverlay = lazy (() => import ( './components/Overlay/CallOverlay'));
@@ -744,7 +743,8 @@ const App = () => {
                 />
               </Route>
 
-                <Route path="facility-patients" element={<FacilityPatients />} />
+              <Route path="facility-patients" element={<FacilityPatients />} />
+              <Route path="patients-encounters-list" element={<PatientsEncounters />} />
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
