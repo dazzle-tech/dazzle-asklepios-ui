@@ -267,7 +267,4 @@ export const {
   useGetLabResultLogsByResultIdQuery,
   useBulkCreateDiagnosticOrderTestResultMutation,
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
-
-  
-  useBulkCreateDiagnosticOrderTestResultMutation
 } = diagnosticOrderTestResultService;
