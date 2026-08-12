@@ -62,7 +62,9 @@ export type BulkRejectDTO = {
   ids: number[];
   rejectedReason: string;
 };
-
+export type DiagnosticOrderTestResultBulkCreateDTO = {
+  results: DiagnosticOrderTestResultCreateDTO[];
+};
 /* ================= Service ================= */
 
 export const diagnosticOrderTestResultService = createApi({
@@ -224,6 +226,18 @@ export const diagnosticOrderTestResultService = createApi({
       }),
       invalidatesTags: ["DiagnosticOrderTestResult"],
     }),
+    /* 🔹 Bulk Create */
+bulkCreateDiagnosticOrderTestResult: builder.mutation<
+  void,
+  DiagnosticOrderTestResultBulkCreateDTO>({
+  query: (body) => ({
+    url: "/api/patient/diagnostic-order-tests-results/bulk",
+    method: "POST",
+    body,
+  }),
+  invalidatesTags: ["DiagnosticOrderTestResult"],}
+),
+    
   }),
 });
 
@@ -241,4 +255,5 @@ export const {
   useGetFilledProfileTestIdsQuery,
   useGetFilledProfileTestIdsByOrderTestQuery,
   useGetLabResultLogsByResultIdQuery,
+  useBulkCreateDiagnosticOrderTestResultMutation
 } = diagnosticOrderTestResultService;
