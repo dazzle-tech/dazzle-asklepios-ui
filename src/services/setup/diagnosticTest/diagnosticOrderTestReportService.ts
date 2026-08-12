@@ -37,6 +37,10 @@ export interface PacsStudyDTO {
   expiresAt: string;
   patient: PacsPatientDTO;
 }
+export type BulkIdsDTO = {
+  ids: number[];
+};
+
 export const diagnosticOrderTestReportService = createApi({
   reducerPath: "diagnosticOrderTestReportApi",
   baseQuery: BaseQuery,
@@ -186,6 +190,16 @@ export const diagnosticOrderTestReportService = createApi({
     { type: 'RadiologyImage', id: reportId }
   ]
 }),
+
+ bulkToggleReviewDiagnosticOrderTestReport: builder.mutation<
+  void,BulkIdsDTO>({
+  query: (body) => ({
+    url: "/api/patient/radiology/reports/bulk-toggle-review",
+    method: "POST",
+    body,
+  }),
+  invalidatesTags: ["RadiologyReport"],
+}),
   }),
 });
 
@@ -208,4 +222,5 @@ export const {
   useLazyGetRadiologyImageStatusLogQuery,
   useGetStudyImageLinkByReportIdQuery,
   useLazyGetStudyImageLinkByReportIdQuery,
+  useBulkToggleReviewDiagnosticOrderTestReportMutation
 } = diagnosticOrderTestReportService;
