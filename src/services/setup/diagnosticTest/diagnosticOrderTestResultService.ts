@@ -237,6 +237,16 @@ bulkCreateDiagnosticOrderTestResult: builder.mutation<
   }),
   invalidatesTags: ["DiagnosticOrderTestResult"],}
 ),
+ bulkToggleReviewDiagnosticOrderTestResult: builder.mutation<
+  void,
+  BulkIdsDTO>({
+  query: (body) => ({
+    url: "/api/patient/diagnostic-order-tests-results/bulk-toggle-review",
+    method: "POST",
+    body,
+  }),
+  invalidatesTags: ["DiagnosticOrderTestResult"],
+}),   
     
   }),
 });
@@ -255,5 +265,9 @@ export const {
   useGetFilledProfileTestIdsQuery,
   useGetFilledProfileTestIdsByOrderTestQuery,
   useGetLabResultLogsByResultIdQuery,
+  useBulkCreateDiagnosticOrderTestResultMutation,
+  useBulkToggleReviewDiagnosticOrderTestResultMutation,
+
+  
   useBulkCreateDiagnosticOrderTestResultMutation
 } = diagnosticOrderTestResultService;

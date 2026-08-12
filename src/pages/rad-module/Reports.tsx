@@ -19,6 +19,7 @@ import {
     useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
+    useBulkToggleReviewDiagnosticOrderTestReportMutation,
     useFilterRadiologyReportsQuery,
     useReviewRadiologyReportMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
@@ -30,13 +31,14 @@ import { faComment, faFileLines, faStar } from '@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
 import '@/pages/lab-module-new/ReviewResultsIcon.less';
 import PatientSearch from '@/components/PatientSearch';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import UserDateCell from '@/components/UserDateCell';
 import './styles.less'
+import MyButton from '@/components/MyButton/MyButton';
 const startOfDay = (d: Date) => {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
@@ -114,15 +116,16 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
     const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
     const [filtersKey, setFiltersKey] = useState(0);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
     const [departmentFilter, setDepartmentFilter] = useState<any>({
-    fromDepartmentIdIn: null
+        fromDepartmentIdIn: null
     });
 
     const [orderIdFilter, setOrderIdFilter] = useState('');
-        
+
     const [
         createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
 
@@ -140,24 +143,24 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             : {})
     };
 
-if (
-    selectedPatient?.id ||
-    departmentFilter?.fromDepartmentIdIn ||
-    orderDate.fromDate ||
-    orderDate.toDate
-) {
-    queryParams.orderIdIn =
-        orderIdIn && orderIdIn.length > 0 ? orderIdIn : [-1];
-}
+    if (
+        selectedPatient?.id ||
+        departmentFilter?.fromDepartmentIdIn ||
+        orderDate.fromDate ||
+        orderDate.toDate
+    ) {
+        queryParams.orderIdIn =
+            orderIdIn && orderIdIn.length > 0 ? orderIdIn : [-1];
+    }
 
-const orderIdNumber = Number(orderIdFilter);
+    const orderIdNumber = Number(orderIdFilter);
 
-if (
-  orderIdFilter.trim() &&
-  Number.isFinite(orderIdNumber)
-) {
-  queryParams.orderNumber = orderIdNumber;
-}
+    if (
+        orderIdFilter.trim() &&
+        Number.isFinite(orderIdNumber)
+    ) {
+        queryParams.orderNumber = orderIdNumber;
+    }
 
     const { data, isFetching, refetch } =
         useFilterRadiologyReportsQuery({
@@ -170,50 +173,51 @@ if (
     const reports = data?.data ?? [];
     const totalCount = data?.totalCount ?? 0;
 
-        const normalizedReports = useMemo(() => {
-            return reports.map(report => {
-                const orderTest =
-                    orderTestsMap[String(report.orderTestId)];
+    const normalizedReports = useMemo(() => {
+        return reports.map(report => {
+            const orderTest =
+                orderTestsMap[String(report.orderTestId)];
 
-                const order =
-                    ordersMap[String(orderTest?.orderId)];
+            const order =
+                ordersMap[String(orderTest?.orderId)];
 
-                const patient =
-                    patientsMap[String(order?.patientId)];
+            const patient =
+                patientsMap[String(order?.patientId)];
 
-                console.log({
-                    reportId: report.id,
-                    orderTestId: report.orderTestId,
-                    orderId: order?.id,
-                    patientId: order?.patientId,
-                    patientName: patient?.fullName
-                });
-
-                return {
-                    ...report,
-                    _patientName: patient
-                        ? [
-                            patient.firstName,
-                            patient.secondName,
-                            patient.lastName
-                        ]
-                            .filter(Boolean)
-                            .join(' ')
-                        : '—',
-                    _order: order,
-                    _orderTest: orderTest
-                };
+            console.log({
+                reportId: report.id,
+                orderTestId: report.orderTestId,
+                orderId: order?.id,
+                patientId: order?.patientId,
+                patientName: patient?.fullName
             });
-        }, [
-            reports,
-            orderTestsMap,
-            ordersMap,
-            patientsMap
-        ]);
+
+            return {
+                ...report,
+                _patientName: patient
+                    ? [
+                        patient.firstName,
+                        patient.secondName,
+                        patient.lastName
+                    ]
+                        .filter(Boolean)
+                        .join(' ')
+                    : '—',
+                _order: order,
+                _orderTest: orderTest
+            };
+        });
+    }, [
+        reports,
+        orderTestsMap,
+        ordersMap,
+        patientsMap
+    ]);
 
 
     const [reviewReport] = useReviewRadiologyReportMutation();
-
+   const [bulkToggleReviewDiagnosticOrderTestReport] =
+  useBulkToggleReviewDiagnosticOrderTestReportMutation();
     const handleReview = async (row: any) => {
         try {
             await reviewReport({
@@ -259,7 +263,7 @@ if (
     );
 
     const { data: departmentsList = [] } =
-    useGetAllDepartmentsWithoutPaginationQuery();
+        useGetAllDepartmentsWithoutPaginationQuery();
 
     const {
         data: comments,
@@ -324,9 +328,82 @@ if (
             });
 
     }, [patientIds]);
+    const handleReviewSelected = async () => {
+        if (!selectedRows.length) {
+            dispatch(
+                notify({
+                    msg: 'Please select at least one result',
+                    sev: 'warning'
+                })
+            );
+            return;
+        }
 
+        try {
+            await bulkToggleReviewDiagnosticOrderTestReport({
+                ids: selectedRows
+            }).unwrap();
+            dispatch(
+                notify({
+                    msg: 'Selected results reviewed successfully',
+                    sev: 'success'
+                })
+            );
+
+            setSelectedRows([]);
+            refetch();
+        } catch (error) {
+            console.log("Error", error)
+            dispatch(
+                notify({
+                    msg: 'Failed to review selected reports',
+                    sev: 'error'
+                })
+            );
+        }
+    };
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
+        } else {
+            setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
+        }
+    };
+
+    const handleCheckboxChange = (rowId: number) => {
+        setSelectedRows(prev =>
+            prev.includes(rowId) ? prev.filter(id => id !== rowId) : [...prev, rowId]
+        );
+    };
+    const allRowIds = useMemo(
+        () => normalizedReports.map(row => row.id),
+        [normalizedReports]
+    );
+    const isAllSelected = allRowIds.length > 0 && allRowIds.every(id => selectedRows.includes(id));
+    const isSomeSelected = allRowIds.some(id => selectedRows.includes(id)) && !isAllSelected;
     const columns: ColumnConfig[] = useMemo(
         () => [
+            {
+                key: 'check',
+                title: (
+                    <Checkbox
+                        checked={isAllSelected}
+                        indeterminate={isSomeSelected}
+                        onChange={(_, checked) => handleSelectAll(checked)}
+                        onClick={e => e.stopPropagation()}
+                    />
+                ),
+                width: 60,
+                align: 'center',
+                render: (rowData: any) => {
+
+                    return <Checkbox
+                        checked={selectedRows.includes(rowData.id)}
+                        onChange={() => handleCheckboxChange(rowData.id)}
+                        onClick={e => e.stopPropagation()}
+                    />
+                }
+            },
             {
                 key: 'patient',
                 title: <Translate>PATIENT NAME</Translate>,
@@ -429,7 +506,7 @@ if (
                 )
             },
         ],
-        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds]
+        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds ,isAllSelected,isSomeSelected,selectedRows]
     );
 
     const resetFilters = () => {
@@ -451,13 +528,31 @@ if (
         setSelectedPatient(null);
 
         setDepartmentFilter({
-        fromDepartmentIdIn: null
+            fromDepartmentIdIn: null
         });
 
         setOrderIdFilter('');
         setFiltersKey(prev => prev + 1);
     };
+    const tablebuttons = (
+        <HStack spacing={10} style={{ marginBottom: 10 }}>
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Review Result</Tooltip>}>
+                <span style={{ display: 'inline-block' }}>
+                    <MyButton
+                        disabled={!selectedRows.length}
+                        onClick={handleReviewSelected}
+                    >
+                        {showReviewed
+                            ? `Delete Review Selected (${selectedRows.length})`
+                            : `Review Selected (${selectedRows.length})`}
+                    </MyButton>
 
+                </span>
+            </Whisper>
+
+
+        </HStack>
+    );
     const filters = (
         <Form fluid key={filtersKey}>
             <div className="report-review-results-filters-main-container">
@@ -495,37 +590,37 @@ if (
                 <div className="reviewed-reports-filters" style={{ marginTop: '1.4vw' }}>
 
                     <PatientSearch
-                    value={selectedPatient}
-                    onChange={setSelectedPatient}
-                    showLabel={false}
-                    width="22vw"
-                    containerMinWidth={250}
+                        value={selectedPatient}
+                        onChange={setSelectedPatient}
+                        showLabel={false}
+                        width="22vw"
+                        containerMinWidth={250}
                     />
 
                     <MyInput
-                    width="12vw"
-                    placeholder="Department Name"
-                    fieldType="select"
-                    fieldName="fromDepartmentIdIn"
-                    record={departmentFilter}
-                    setRecord={setDepartmentFilter}
-                    selectData={departmentsList}
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                    showLabel={false}
-                    cleanable
+                        width="12vw"
+                        placeholder="Department Name"
+                        fieldType="select"
+                        fieldName="fromDepartmentIdIn"
+                        record={departmentFilter}
+                        setRecord={setDepartmentFilter}
+                        selectData={departmentsList}
+                        selectDataLabel="name"
+                        selectDataValue="id"
+                        showLabel={false}
+                        cleanable
                     />
 
                     <MyInput
-                    fieldType="text"
-                    fieldName="orderId"
-                    placeholder="Order ID"
-                    showLabel={false}
-                    record={{ orderId: orderIdFilter }}
-                    setRecord={(record: any) => {
-                        setOrderIdFilter(record.orderId ?? '');
-                        setPage(0);
-                    }}
+                        fieldType="text"
+                        fieldName="orderId"
+                        placeholder="Order ID"
+                        showLabel={false}
+                        record={{ orderId: orderIdFilter }}
+                        setRecord={(record: any) => {
+                            setOrderIdFilter(record.orderId ?? '');
+                            setPage(0);
+                        }}
                     />
                 </div>
 
@@ -538,6 +633,7 @@ if (
                     </Checkbox>
                 </div>
             </div>
+            <div className="test-table-buttons-main-container">{tablebuttons}</div>
 
             <AdvancedSearchFilters
                 searchFilter={false}
@@ -546,6 +642,7 @@ if (
             />
         </Form>
     );
+
 
     useEffect(() => {
         orderTestIds.forEach(id => {
@@ -595,7 +692,6 @@ if (
         });
     }, [orderTestsMap]);
 
-        console.log('Radiology queryParams', queryParams);
 
 
     useEffect(() => {
@@ -610,7 +706,7 @@ if (
             return;
         }
 
-            fetchOrders({
+        fetchOrders({
             submittedDateFrom: fromDate
                 ? startOfDay(fromDate).toISOString()
                 : undefined,
@@ -626,14 +722,14 @@ if (
             ...(departmentFilter?.fromDepartmentIdIn
                 ? {
                     fromDepartmentIdIn: [
-                    Number(departmentFilter.fromDepartmentIdIn)
+                        Number(departmentFilter.fromDepartmentIdIn)
                     ]
                 }
                 : {}),
 
             page: 0,
             size: 10000
-            })
+        })
             .unwrap()
             .then(res => {
                 const ids = (res?.data ?? [])
@@ -644,10 +740,10 @@ if (
             })
             .catch(() => setOrderIdIn([]));
     }, [
-  orderDate,
-  selectedPatient?.id,
-  departmentFilter?.fromDepartmentIdIn
-]);
+        orderDate,
+        selectedPatient?.id,
+        departmentFilter?.fromDepartmentIdIn
+    ]);
 
     useEffect(() => {
         setPage(0);
@@ -658,7 +754,7 @@ if (
         selectedPatient?.id,
         departmentFilter?.fromDepartmentIdIn,
         orderIdFilter
-        ]);
+    ]);
 
 
     // Direction handling for RTL/LTR
