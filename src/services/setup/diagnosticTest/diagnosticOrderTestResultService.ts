@@ -247,6 +247,7 @@ bulkCreateDiagnosticOrderTestResult: builder.mutation<
   }),
   invalidatesTags: ["DiagnosticOrderTestResult"],
 }),   
+    
   }),
 });
 
@@ -265,7 +266,8 @@ export const {
   useGetFilledProfileTestIdsByOrderTestQuery,
   useGetLabResultLogsByResultIdQuery,
   useBulkCreateDiagnosticOrderTestResultMutation,
-  useBulkToggleReviewDiagnosticOrderTestResultMutation
+  useBulkToggleReviewDiagnosticOrderTestResultMutation,
 
   
+  useBulkCreateDiagnosticOrderTestResultMutation
 } = diagnosticOrderTestResultService;

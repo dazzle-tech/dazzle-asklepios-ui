@@ -25,6 +25,7 @@ import {
 import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
 import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
+import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { PhoneNumberInput } from '@/components';
 
@@ -204,25 +205,43 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [selectedPractitionerId, setSelectedPractitionerId] = useState<number | null>(null);
 
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const [selectedFacilityId, setSelectedFacilityId] = useState<number>(0);
 
+  const [practPage, setPractPage] = useState(0);
+  const practSize = 20;
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
+  const [
+    triggerPractitionersByDept,
+    { data: practitionersList, isFetching: isPractitionersFetching }
+  ] = useLazyGetPractitionersByDepartmentQuery();
+
   const deptHasMore = Boolean(deptList?.links?.next);
+  const practHasMore = Boolean(practitionersList?.links?.next);
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  const resetPractitionersState = () => {
+    setSelectedPractitionerId(null);
+    setPractPage(0);
+    setAllPractitioners([]);
+  };
+
   const resetDepartmentsState = () => {
     setSelectedDepartmentId(null);
     setDeptPage(0);
     setAllDepartments([]);
+    resetPractitionersState();
   };
 
   const handleClearModal = () => {
@@ -307,16 +326,19 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
     if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
       setAllDepartments([]);
+      resetPractitionersState();
       return;
     }
 
     if (!selectedFacilityId) {
       setAllDepartments([]);
+      resetPractitionersState();
       return;
     }
 
     if (encounterType !== 'EMERGENCY') {
       setAllDepartments([]);
+      resetPractitionersState();
       return;
     }
 
@@ -328,6 +350,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       setDeptPage(0);
       setSelectedDepartmentId(null);
       setAllDepartments([]);
+      resetPractitionersState();
     }
   }, [open, pageCode, selectedFacilityId]);
 
@@ -336,6 +359,72 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       handleClearModal();
     }
   }, [open]);
+
+  const mergePractitioners = (rows: any[], page: number) => {
+    setAllPractitioners(prev => {
+      if (page === 0) return rows;
+
+      const seenIds = new Set(prev.map((p: any) => Number(p.id)));
+      const merged = [...prev];
+
+      rows.forEach((p: any) => {
+        if (!seenIds.has(Number(p.id))) {
+          merged.push(p);
+        }
+      });
+
+      return merged;
+    });
+  };
+
+  const fetchPractitioners = async (departmentId: number, page = 0) => {
+    if (!departmentId) return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') return;
+
+    try {
+      const result = await triggerPractitionersByDept({
+        departmentId,
+        page,
+        size: practSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      mergePractitioners(result?.data ?? [], page);
+    } catch (error) {
+      console.error('fetchPractitioners error:', error);
+
+      if (page === 0) {
+        setAllPractitioners([]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
+      resetPractitionersState();
+      return;
+    }
+
+    if (!selectedDepartmentId) {
+      resetPractitionersState();
+      return;
+    }
+
+    setSelectedPractitionerId(null);
+    setPractPage(0);
+    setAllPractitioners([]);
+    fetchPractitioners(Number(selectedDepartmentId), 0);
+  }, [open, pageCode, selectedDepartmentId]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!selectedDepartmentId) return;
+    if (practPage === 0) return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') return;
+
+    fetchPractitioners(Number(selectedDepartmentId), practPage);
+  }, [practPage]);
 
   const isPhoneValid = (phone: any) => {
     if (!phone) return false;
@@ -391,6 +480,16 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         );
         return;
       }
+
+      if (!selectedPractitionerId) {
+        dispatch(
+          notify({
+            msg: 'Please select a practitioner before saving.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
     }
 
     try {
@@ -428,19 +527,18 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
         const facilityId = selectedFacilityId;
         const departmentId = selectedDepartmentId;
-
-        const practitionerId = 0;
+        const practitionerId = Number(selectedPractitionerId ?? 0);
 
         const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
           facilityId: Number(facilityId),
           departmentId: Number(departmentId),
-          resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
-          resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
+          resourceType: 'PRACTITIONER' as modelTypes.TemplateType,
+          resourceId: practitionerId,
           patientId: Number(savedPatient.id ?? 0),
           service: 'URGENT_VISIT' as modelTypes.EncounterReason,
           priority: 'NORMAL',
           defaultServiceId: null,
-          defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+          defaultPractitionerId: practitionerId,
           reason: null,
           note: null,
           followUpEncounterId: null,
@@ -603,6 +701,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
                   setDeptPage(0);
                   setSelectedDepartmentId(null);
                   setAllDepartments([]);
+                  resetPractitionersState();
                 }
               }}
               disabled={true}
@@ -636,6 +735,38 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
                 }
               }}
             />
+
+            <MyInput
+              width={"14vw"}
+              required
+              column
+              fieldType="selectPagination"
+              fieldLabel="Practitioner"
+              fieldName="practitionerId"
+              selectData={allPractitioners}
+              selectDataLabel={['firstName', 'lastName']}
+              selectDataValue="id"
+              record={{ practitionerId: selectedPractitionerId }}
+              setRecord={(record: any) => {
+                if (record.practitionerId !== undefined) {
+                  setSelectedPractitionerId(
+                    record.practitionerId === null || record.practitionerId === ''
+                      ? null
+                      : Number(record.practitionerId)
+                  );
+                }
+              }}
+              searchable
+              disabled={!selectedDepartmentId}
+              loading={isPractitionersFetching}
+              hasMore={practHasMore}
+              onFetchMore={() => {
+                if (practitionersList?.links?.next) {
+                  const { page } = extractPaginationFromLink(practitionersList.links.next);
+                  setPractPage(page);
+                }
+              }}
+            />
           </>
         )}
         </div>
@@ -654,7 +785,12 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       selectedFacilityId,
       isDepartmentsFetching,
       deptHasMore,
-      deptList?.links?.next
+      deptList?.links?.next,
+      allPractitioners,
+      selectedPractitionerId,
+      isPractitionersFetching,
+      practHasMore,
+      practitionersList?.links?.next
     ]
   );
 

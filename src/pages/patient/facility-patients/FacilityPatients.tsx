@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
@@ -50,7 +55,7 @@ const FacilityPatients = () => {
         patientName: undefined,
         insuranceId: undefined,
         page: 0,
-        size: rowsPerPage,
+        size: 15,
         sort: 'id,desc',
     });
 
@@ -71,100 +76,97 @@ const FacilityPatients = () => {
         >
     >({});
 
+    const requestedDocumentsRef = useRef<Set<number>>(new Set());
+
     const { data: payors } = useGetAllPayorsQuery({
         page: 0,
         size: 1000,
         sort: 'name,asc'
     });
 
-
     useEffect(() => {
         const patients = data?.data ?? [];
 
         if (!patients.length) {
-            setPrimaryDocuments({});
             return;
         }
 
         let cancelled = false;
 
         const loadPrimaryDocuments = async () => {
-            try {
-                const results = await Promise.all(
-                    patients.map(async patient => {
-                        if (!patient?.id) {
-                            return null;
-                        }
+            const patientsToLoad = patients.filter(patient => {
+                if (!patient?.id) {
+                    return false;
+                }
 
-                        try {
-                            const response = await getDocumentsByPatient({
+                if (requestedDocumentsRef.current.has(patient.id)) {
+                    return false;
+                }
+
+                requestedDocumentsRef.current.add(patient.id);
+
+                return true;
+            });
+
+            if (!patientsToLoad.length) {
+                return;
+            }
+
+            const results = await Promise.all(
+                patientsToLoad.map(async patient => {
+                    try {
+                        const response =
+                            await getDocumentsByPatient({
                                 patientId: patient.id,
                                 page: 0,
                                 size: 100,
                                 sort: 'createdDate,desc'
                             }).unwrap();
 
-                            const primaryDocument = (
-                                response?.data ?? []
-                            ).find(
-                                document => document?.isPrimary === true
-                            );
+                        const primaryDocument = (
+                            response?.data ?? []
+                        ).find(
+                            document =>
+                                document?.isPrimary === true
+                        );
 
-                            if (!primaryDocument) {
-                                return {
-                                    patientId: patient.id,
-                                    document: null
-                                };
-                            }
-
-                            return {
-                                patientId: patient.id,
-                                document: {
+                        return {
+                            patientId: patient.id,
+                            document: primaryDocument
+                                ? {
                                     type: primaryDocument.type,
                                     number: primaryDocument.number
                                 }
-                            };
-                        } catch (error) {
-                            console.error(
-                                `Failed to load documents for patient ${patient.id}`,
-                                error
-                            );
+                                : null
+                        };
+                    } catch (error) {
+                        console.error(
+                            `Failed to load documents for patient ${patient.id}`,
+                            error
+                        );
 
-                            return {
-                                patientId: patient.id,
-                                document: null
-                            };
-                        }
-                    })
-                );
-
-                if (cancelled) return;
-
-                const documentMap: Record<
-                    number,
-                    {
-                        type?: string;
-                        number?: string;
+                        return {
+                            patientId: patient.id,
+                            document: null
+                        };
                     }
-                > = {};
+                })
+            );
+
+            if (cancelled) {
+                return;
+            }
+
+            setPrimaryDocuments(prev => {
+                const next = { ...prev };
 
                 results.forEach(result => {
-                    if (!result) return;
-
-                    documentMap[result.patientId] =
+                    next[result.patientId] =
                         result.document ?? {};
                 });
 
-                setPrimaryDocuments(documentMap);
-            } catch (error) {
-                if (!cancelled) {
-                    console.error(
-                        'Failed to load primary patient documents',
-                        error
-                    );
-                    setPrimaryDocuments({});
-                }
-            }
+                return next;
+            });
         };
 
         loadPrimaryDocuments();
@@ -309,7 +311,9 @@ const FacilityPatients = () => {
 
         setPage(0);
 
-        setAppliedFilters({
+        setAppliedFilters(prev => ({
+            ...prev,
+
             registrationDateFrom:
                 filterRecord.registrationDateFrom || today,
 
@@ -322,12 +326,9 @@ const FacilityPatients = () => {
             insuranceId:
                 filterRecord.insuranceId || undefined,
 
-            page: 0,
             size: rowsPerPage,
-            sort: 'id,desc',
-        });
+        }));
     };
-
     const handleClear = () => {
         const cleared = {
             registrationDateFrom: today,
@@ -345,17 +346,17 @@ const FacilityPatients = () => {
 
         setPage(0);
 
-        setAppliedFilters({
+        setAppliedFilters(prev => ({
+            ...prev,
+
             registrationDateFrom: today,
             registrationDateTo: today,
             patientName: undefined,
             insuranceId: undefined,
-            page: 0,
-            size: rowsPerPage,
-            sort: 'id,desc',
-        });
 
-        // Force date inputs to reset their internal state
+            size: rowsPerPage,
+        }));
+
         setDateKey(prev => prev + 1);
     };
 
@@ -371,7 +372,6 @@ const FacilityPatients = () => {
         setAppliedFilters(prev => ({
             ...prev,
             page: newPage,
-            size: rowsPerPage,
         }));
     };
 
@@ -385,7 +385,6 @@ const FacilityPatients = () => {
 
         setAppliedFilters(prev => ({
             ...prev,
-            page: 0,
             size: newSize,
         }));
     };
@@ -422,17 +421,6 @@ const FacilityPatients = () => {
                                         setFilterRecord(prev => ({
                                             ...prev,
                                             patientName: patientSearch.patientName
-                                        }));
-
-                                        setPage(0);
-
-                                        setAppliedFilters(prev => ({
-                                            ...prev,
-                                            patientName:
-                                                String(patientSearch.patientName ?? '').trim() ||
-                                                undefined,
-                                            page: 0,
-                                            size: rowsPerPage,
                                         }));
                                     }}
                                 />
