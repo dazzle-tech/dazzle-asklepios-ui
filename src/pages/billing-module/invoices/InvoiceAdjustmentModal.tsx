@@ -255,7 +255,10 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         return sum + Number(line.remainingAmount ?? 0);
       }
       if (draft.action === 'PARTIAL_CREDIT') {
-        return sum + Number(draft.amount ?? 0);
+        const partialAmount = Number(draft.amount ?? 0);
+        const remainingOnLine = Number(line.remainingAmount ?? 0);
+        // Only the unpaid portion reduces invoice outstanding; the rest is a refund on paid lines.
+        return sum + Math.min(partialAmount, remainingOnLine);
       }
       const oldNet = lineNetAmount(line);
       const projectedNet = projectLineNetAfterChange(
@@ -267,6 +270,24 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       return sum + credit;
     }, 0);
   }, [creditDrafts, invoiceLines]);
+
+  const creditWithinLineLimits = useMemo(
+    () =>
+      creditDrafts.every(draft => {
+        if (!draft.enabled) return true;
+        const line = invoiceLines.find(item => item.id === draft.lineId);
+        if (!line) return true;
+
+        if (draft.action !== 'PARTIAL_CREDIT') {
+          return true;
+        }
+
+        const amount = Number(draft.amount ?? 0);
+        const maxLineCredit = Number(line.netAmount ?? line.remainingAmount ?? 0);
+        return amount > 0.0001 && amount <= maxLineCredit + 0.0001;
+      }),
+    [creditDrafts, invoiceLines]
+  );
 
   const selectedDebitTotal = useMemo(() => {
     const addTotal = debitAdds.reduce((sum, draft) => {
@@ -354,23 +375,11 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
   const totalAmount = kind === 'CREDIT_NOTE' ? selectedCreditTotal : selectedDebitTotal;
   const maxCredit = Number(summary?.outstandingBalance ?? 0);
-  const allowsPaidLineRemoval =
-    kind === 'CREDIT_NOTE' &&
-    creditDrafts.some(
-      draft =>
-        draft.enabled &&
-        draft.action === 'REMOVE' &&
-        invoiceLines.some(
-          line =>
-            line.id === draft.lineId &&
-            Number(line.netAmount ?? 0) > 0.0001 &&
-            Number(line.paidAmount ?? 0) > 0.0001
-        )
-    );
+  const creditExceedsOutstanding =
+    kind === 'CREDIT_NOTE' && selectedCreditOutstandingReduction > maxCredit + 0.0001;
   const creditWithinLimit =
     kind !== 'CREDIT_NOTE' ||
-    selectedCreditOutstandingReduction <= maxCredit + 0.0001 ||
-    (maxCredit <= 0 && allowsPaidLineRemoval && selectedCreditTotal > 0);
+    (!creditExceedsOutstanding && creditWithinLineLimits);
 
   const handleSubmit = async () => {
     const lines = kind === 'CREDIT_NOTE' ? buildCreditLines() : buildDebitLines();
@@ -803,9 +812,14 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
             placeholder={`Why is this ${kindLabel(kind).toLowerCase()} being issued?`}
           />
 
-          {!creditWithinLimit && (
+          {creditExceedsOutstanding && (
             <Form.HelpText style={{ color: '#e74c3c' }}>
               Selected credit exceeds outstanding balance.
+            </Form.HelpText>
+          )}
+          {!creditWithinLineLimits && (
+            <Form.HelpText style={{ color: '#e74c3c' }}>
+              Partial credit exceeds the service line amount.
             </Form.HelpText>
           )}
         </Form>
