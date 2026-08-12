@@ -281,6 +281,13 @@ const [dateKey, setDateKey] = useState(0);
     const columns = useMemo(
         () => [
             {
+                key: 'encounterId',
+                title: 'Encounter Id',
+                render: (row: any) => {
+                    return row.id ?? '-';
+                },
+            },
+            {
                 key: 'patientName',
                 title: 'Patient Name',
                 render: (row: any) => getPatientName(row),
