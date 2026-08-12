@@ -16,6 +16,7 @@ const AdvancedSearchFilters = ({
   searchOnClick = () => {},
   content = null,
   showAdvancedButton = true,
+  hideSearchBtn = false,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -34,7 +35,7 @@ const AdvancedSearchFilters = ({
 
         {extraActions}
 
-        {searchFilter && (
+        {searchFilter && !hideSearchBtn && (
           <MyButton
             prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
             onClick={searchOnClick}
