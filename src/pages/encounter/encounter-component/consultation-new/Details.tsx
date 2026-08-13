@@ -336,37 +336,37 @@ const Details = ({
     }
   }, [formData?.toFacilityId, open, getDepartmentsByFacility]);
 
-useEffect(() => {
-  if (!specialtyName) return;
-  if (!patient?.id || !encounter?.id) return;
+  useEffect(() => {
+    if (!specialtyName) return;
+    if (!patient?.id || !encounter?.id) return;
 
-  const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
+    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
 
-  setLocalAiSummary(null);
+    setLocalAiSummary(null);
 
-  getSpecialtyConsultation({
-    patientId: Number(patient.id),
-    encounterId: Number(encounter.id),
-    specialty: specialtyApi
-  })
-    .unwrap()
-    .then(res => {
-      const actionsText = Array.isArray(res?.actions) && res.actions.length > 0
-        ? '\n\nActions:\n' +
+    getSpecialtyConsultation({
+      patientId: Number(patient.id),
+      encounterId: Number(encounter.id),
+      specialty: specialtyApi
+    })
+      .unwrap()
+      .then(res => {
+        const actionsText = Array.isArray(res?.actions) && res.actions.length > 0
+          ? '\n\nActions:\n' +
           res.actions
             .map(
               (a, index) =>
                 `${index + 1}. ${a.title}${a.priority ? ` (${a.priority})` : ''}\n${a.description || ''}`
             )
             .join('\n\n')
-        : '';
+          : '';
 
-      setLocalAiSummary((res?.summary ?? '') + actionsText);
-    })
-    .catch(() => {
-      setLocalAiSummary(null);
-    });
-}, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id]);
+        setLocalAiSummary((res?.summary ?? '') + actionsText);
+      })
+      .catch(() => {
+        setLocalAiSummary(null);
+      });
+  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id]);
 
   useEffect(() => {
     setShowAiPanel(false);
@@ -456,7 +456,16 @@ useEffect(() => {
     if (!formData.consultationContent) {
       fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
     }
-
+    if (
+      formData.approvalNumber !== null &&
+      formData.approvalNumber !== undefined &&
+      String(formData.approvalNumber).length > 10
+    ) {
+      fieldErrors.push({
+        field: 'approvalNumber',
+        message: 'must not exceed 10 digits'
+      });
+    }
     return fieldErrors.length > 0
       ? {
         data: {
@@ -720,7 +729,7 @@ useEffect(() => {
                               }
                             }}
                             required
-                                    disableByField='isValid'
+                            disableByField='isValid'
 
                           />
 
@@ -834,7 +843,7 @@ useEffect(() => {
                       setRecord={setFormData}
                       searchable={false}
                       required
-                              disableByField='isValid'
+                      disableByField='isValid'
 
                     />
                     <MyInput
@@ -849,7 +858,7 @@ useEffect(() => {
                       setRecord={setFormData}
                       searchable={false}
                       required
-                              disableByField='isValid'
+                      disableByField='isValid'
 
                     />
                     <MyInput
