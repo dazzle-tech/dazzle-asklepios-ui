@@ -287,3 +287,95 @@
     font-size: 16px;
   }
 }
+
+
+.patient-satisfaction-survey-options-rating {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.patient-satisfaction-survey-option-rating {
+  min-height: 150px !important;
+  padding: 18px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px;
+  border-radius: 20px !important;
+  transition: all 0.2s ease;
+}
+
+.patient-satisfaction-survey-rating-icon {
+  font-size: 58px;
+  line-height: 1;
+}
+
+.patient-satisfaction-survey-rating-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.patient-satisfaction-survey-option-rating.is-unselected {
+  opacity: 0.85;
+}
+
+.patient-satisfaction-survey-option-rating.is-selected {
+  transform: translateY(-4px);
+  border-width: 3px !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+
+@media (max-width: 768px) {
+  .patient-satisfaction-survey-options-rating {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .patient-satisfaction-survey-option-rating {
+    min-height: 125px !important;
+  }
+
+  .patient-satisfaction-survey-rating-icon {
+    font-size: 45px;
+  }
+
+  .patient-satisfaction-survey-rating-label {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-satisfaction-survey-options-rating {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(1)
+  .patient-satisfaction-survey-rating-icon {
+  color: #dc2626;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(2)
+  .patient-satisfaction-survey-rating-icon {
+  color: #f97316;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(3)
+  .patient-satisfaction-survey-rating-icon {
+  color: #eab308;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(4)
+  .patient-satisfaction-survey-rating-icon {
+  color: #84cc16;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(5)
+  .patient-satisfaction-survey-rating-icon {
+  color: #16a34a;
+}
