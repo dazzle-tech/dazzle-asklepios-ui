@@ -457,6 +457,17 @@ useEffect(() => {
       fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
     }
 
+     if (
+      formData.approvalNumber !== null &&
+      formData.approvalNumber !== undefined &&
+      String(formData.approvalNumber).length > 10
+    ) {
+      fieldErrors.push({
+        field: 'approvalNumber',
+        message: 'must not exceed 10 digits'
+      });
+    }
+
     return fieldErrors.length > 0
       ? {
         data: {
