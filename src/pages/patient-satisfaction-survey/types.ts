@@ -1,3 +1,5 @@
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+
 export type SurveyLanguage = 'en' | 'ar';
 
 export type SurveyResponseStatus = 'IN_PROGRESS' | 'COMPLETED'|'ABANDONED';
@@ -9,6 +11,8 @@ export type SurveyQuestionOption = {
   labelEn: string;
   labelAr: string;
   score?: number;
+  icon?: IconDefinition;
+
 };
 
 export type SurveyQuestion = {

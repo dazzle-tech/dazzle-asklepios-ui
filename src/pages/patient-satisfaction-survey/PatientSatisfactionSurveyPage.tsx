@@ -14,7 +14,7 @@ import type { SurveyAnswerValue, SurveyLanguage, SurveyQuestion } from './types'
 import { clearDependentAnswers, getVisibleQuestions } from './surveyNavigation';
 import { buildSubmitAnswers, formatSurveyDate } from './surveyUtils';
 import './styles.less';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 type SurveyPhase = 'landing' | 'survey' | 'thankyou';
 
 const SURVEY_THEME = {
@@ -351,9 +351,13 @@ const PatientSatisfactionSurveyPage = () => {
       return (
         <>
           <div
-            className={`patient-satisfaction-survey-options ${
-              question.type === 'nps' ? 'patient-satisfaction-survey-options-nps' : ''
-            }`}
+            className={`patient-satisfaction-survey-options ${question.type === 'nps'
+              ? 'patient-satisfaction-survey-options-nps'
+              : ''
+              } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION' 
+                ? 'patient-satisfaction-survey-options-rating'
+                : ''
+              }`}
           >
             {(question.options ?? []).map(option => {
               const isSelected = selectedAnswer?.value === option.value;
@@ -365,12 +369,26 @@ const PatientSatisfactionSurveyPage = () => {
                   size="md"
                   width="100%"
                   radius={14}
-                  className={`patient-satisfaction-survey-option-btn ${
-                    isSelected ? 'is-selected' : 'is-unselected'
-                  } ${question.type === 'nps' ? 'patient-satisfaction-survey-option-nps' : ''}`}
+                  className={`patient-satisfaction-survey-option-btn ${isSelected ? 'is-selected' : 'is-unselected'
+                    } ${question.type === 'nps'
+                      ? 'patient-satisfaction-survey-option-nps'
+                      : ''
+                    } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION' 
+                      ? 'patient-satisfaction-survey-option-rating'
+                      : ''
+                    }`}
                   onClick={() => handleSelectOption(question, option.value)}
                 >
-                  <span>{getOptionLabel(option)}</span>
+                  {question.type === 'rating' && option.icon && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION' ? (
+                    <FontAwesomeIcon
+                      icon={option.icon}
+                      className="patient-satisfaction-survey-rating-icon"
+                    />
+                  ) : null}
+
+                  <span className="patient-satisfaction-survey-rating-label">
+                    {getOptionLabel(option)}
+                  </span>
                 </MyButton>
               );
             })}
@@ -420,9 +438,8 @@ const PatientSatisfactionSurveyPage = () => {
 
       return (
         <div
-          className={`patient-satisfaction-survey-checkbox-field ${
-            isRtl ? 'is-rtl' : 'is-ltr'
-          }`}
+          className={`patient-satisfaction-survey-checkbox-field ${isRtl ? 'is-rtl' : 'is-ltr'
+            }`}
         >
           <Checkbox
             checked={isChecked}
@@ -517,9 +534,8 @@ const PatientSatisfactionSurveyPage = () => {
                       size="md"
                       width="100%"
                       radius={14}
-                      className={`patient-satisfaction-survey-option-btn ${
-                        identityMode === 'named' ? 'is-selected' : 'is-unselected'
-                      }`}
+                      className={`patient-satisfaction-survey-option-btn ${identityMode === 'named' ? 'is-selected' : 'is-unselected'
+                        }`}
                       onClick={handleSelectNamedIdentity}
                     >
                       <span>
@@ -531,9 +547,8 @@ const PatientSatisfactionSurveyPage = () => {
                       size="md"
                       width="100%"
                       radius={14}
-                      className={`patient-satisfaction-survey-option-btn ${
-                        identityMode === 'anonymous' ? 'is-selected' : 'is-unselected'
-                      }`}
+                      className={`patient-satisfaction-survey-option-btn ${identityMode === 'anonymous' ? 'is-selected' : 'is-unselected'
+                        }`}
                       onClick={handleSelectAnonymousIdentity}
                     >
                       <span>{copy.continueAnonymous}</span>

@@ -1,11 +1,48 @@
 import type { SurveyQuestionOption, SurveySection } from './types';
+import {
+  faFaceSadTear,
+  faFaceFrown,
+  faFaceMeh,
+  faFaceSmile,
+  faFaceGrinStars
+} from '@fortawesome/free-solid-svg-icons';
 
 export const LIKERT_OPTIONS: SurveyQuestionOption[] = [
-  { value: 'VERY_POOR', labelEn: 'Very Poor', labelAr: 'سيء جداً', score: 1 },
-  { value: 'POOR', labelEn: 'Poor', labelAr: 'سيء', score: 2 },
-  { value: 'FAIR', labelEn: 'Fair', labelAr: 'مقبول', score: 3 },
-  { value: 'GOOD', labelEn: 'Good', labelAr: 'جيد', score: 4 },
-  { value: 'VERY_GOOD', labelEn: 'Very Good', labelAr: 'جيد جداً', score: 5 }
+  {
+    value: 'VERY_POOR',
+    labelEn: 'Very Poor',
+    labelAr: 'سيء جداً',
+    score: 1,
+    icon: faFaceSadTear
+  },
+  {
+    value: 'POOR',
+    labelEn: 'Poor',
+    labelAr: 'سيء',
+    score: 2,
+    icon: faFaceFrown
+  },
+  {
+    value: 'FAIR',
+    labelEn: 'Fair',
+    labelAr: 'مقبول',
+    score: 3,
+    icon: faFaceMeh
+  },
+  {
+    value: 'GOOD',
+    labelEn: 'Good',
+    labelAr: 'جيد',
+    score: 4,
+    icon: faFaceSmile
+  },
+  {
+    value: 'VERY_GOOD',
+    labelEn: 'Very Good',
+    labelAr: 'جيد جداً',
+    score: 5,
+    icon: faFaceGrinStars
+  }
 ];
 
 export const YES_NO_OPTIONS: SurveyQuestionOption[] = [
@@ -38,72 +75,26 @@ export const NPS_OPTIONS: SurveyQuestionOption[] = Array.from({ length: 11 }, (_
 
 export const SURVEY_SECTIONS: SurveySection[] = [
   {
-    id: 'basic_questions',
-    titleEn: 'Basic Questions',
-    titleAr: 'أسئلة أساسية',
-    questions: [
-      {
-        code: 'BASIC_COMPLETER',
-        textEn: 'Who is completing this survey?',
-        textAr: 'من يقوم بتعبئة هذا الاستبيان؟',
-        type: 'choice',
-        options: [
-          { value: 'PATIENT', labelEn: 'Patient', labelAr: 'المريض' },
-          {
-            value: 'PARENT_OR_GUARDIAN',
-            labelEn: 'Parent Or Guardian (If The Patient Is A Minor)',
-            labelAr: 'ولي الأمر (إذا كان المريض قاصراً)'
-          }
-        ]
-      },
-      {
-        code: 'BASIC_FIRST_VISIT',
-        textEn: 'Was this your first visit here?',
-        textAr: 'هل كانت هذه زيارتك الأولى هنا؟',
-        type: 'choice',
-        options: YES_NO_OPTIONS
-      }
-    ]
-  },
-  {
     id: 'access',
     titleEn: 'Access',
     titleAr: 'الوصول',
     questions: [
       {
-        code: 'ACCESS_ARRIVAL_METHOD',
-        textEn: 'You got to the center',
-        textAr: 'لقد وصلت إلى المركز',
-        type: 'choice',
-        options: [
-          { value: 'BOOKED_APPOINTMENT', labelEn: 'Booked Appointment', labelAr: 'موعد محجوز' },
-          { value: 'WITHOUT_APPOINTMENT', labelEn: 'Without An Appointment', labelAr: 'بدون موعد' }
-        ]
-      },
-      {
-        code: 'ACCESS_CONTACT_EASE',
-        textEn: 'Ease of contacting (e.g., email, phone, web portal) the hospital',
-        textAr: 'سهولة التواصل مع المستشفى (مثل البريد الإلكتروني أو الهاتف أو البوابة الإلكترونية)',
+        code: 'ACCESS_ARRIVAL_AND_CONTACT_EASE',
+        textEn: 'The ease of accessing the center and communicating through social media channels.',
+        textAr: 'سهولة الوصول للمركز والتواصل عبر قنوات التواصل الاجتماعي',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
       {
-        code: 'ACCESS_RECEPTION_COURTESY',
-        textEn: 'Courtesy of the receptionists',
-        textAr: 'لطف موظفي الاستقبال',
+        code: 'ACCESS_RECEPTION_COURTESY_AND_REGISTRATION_EASE',
+        textEn: 'The professionalism of the reception staff and the ease of registration upon arrival',
+        textAr: 'احترافية موظفي الاستقبال وسهولة التسجيل عند الوصول',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
-      {
-        code: 'ACCESS_REGISTRATION_EASE',
-        textEn: 'Ease of registration upon arrival',
-        textAr: 'سهولة التسجيل عند الوصول',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      }
     ]
   },
   {
@@ -112,29 +103,13 @@ export const SURVEY_SECTIONS: SurveySection[] = [
     titleAr: 'التنقل خلال زيارتك',
     questions: [
       {
-        code: 'VISIT_DELAY_INFORMATION',
-        textEn: 'Degree to which you were informed about any delays',
-        textAr: 'مدى إبلاغك بأي تأخير',
+        code: 'VISIT_DELAY_INFORMATION_AND_WAIT_TIME',
+        textEn: 'Were you informed of any delays, and how would you rate the length of your wait at the clinic from the time you arrived until you left?',
+        textAr: 'هل تم إبلاغك بوجود أي تأخير، وكيف تقيَم مدة انتظارك في العيادة من وقت الوصول حتى المغادرة؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
-      {
-        code: 'VISIT_WAIT_TIME',
-        textEn: 'Wait time at clinic (from arriving to leaving)',
-        textAr: 'وقت الانتظار في العيادة (من الوصول حتى المغادرة)',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'VISIT_WAITING_COMFORT',
-        textEn: 'Comfort of the waiting area',
-        textAr: 'راحة منطقة الانتظار',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      }
     ]
   },
   {
@@ -143,21 +118,13 @@ export const SURVEY_SECTIONS: SurveySection[] = [
     titleAr: 'التمريض',
     questions: [
       {
-        code: 'NURSE_LISTENING',
-        textEn: 'How well the nurse listened to you',
-        textAr: 'مدى استماع الممرض/ة إليك',
+        code: 'NURSE_LISTENING_CONCERN',
+        textEn: 'To what extent did you feel that the nurse listened to you attentively, understood your concerns, and cared about your needs?',
+        textAr: 'إلى أي مدى شعرت بأن الممرض/ة استمع/ت لك باهتمام وفهم/ت مشكلتك واهتم/ت باحتياجاتك',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
-      {
-        code: 'NURSE_CONCERN',
-        textEn: 'Concern the nurse showed for your problem',
-        textAr: 'اهتمام الممرض/ة بمشكلتك',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      }
     ]
   },
   {
@@ -166,41 +133,17 @@ export const SURVEY_SECTIONS: SurveySection[] = [
     titleAr: 'الطبيب',
     questions: [
       {
-        code: 'PHYSICIAN_CONCERN',
-        textEn: 'Concern the physician showed for your questions or worries',
-        textAr: 'اهتمام الطبيب بأسئلتك أو مخاوفك',
+        code: 'PHYSICIAN_COMMUNICATION',
+        textEn: 'To what extent did you feel that the physician cared about your questions and concerns and provided clear explanations about your condition and treatment options, including their benefits and risks?',
+        textAr: 'إلى أي مدى شعرت بأن الطبيب اهتم بأسئلتك ومخاوفك، وقدم لك شرحًا واضحًا عن حالتك وخيارات العلاج وفوائدها ومخاطرها؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
       {
-        code: 'PHYSICIAN_EXPLANATION',
-        textEn: 'Explanations the physician gave you about your problem or condition',
-        textAr: 'الشروحات التي قدمها الطبيب عن مشكلتك أو حالتك',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'PHYSICIAN_SHARED_DECISIONS',
-        textEn: "Physician's efforts to include you in decisions about your care",
-        textAr: 'جهود الطبيب لإشراكك في قرارات رعايتك',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'PHYSICIAN_TREATMENT_DISCUSSION',
-        textEn: "Physician's discussion of any proposed treatment (options, risks, benefits, etc.)",
-        textAr: 'مناقشة الطبيب لأي علاج مقترح (الخيارات، المخاطر، الفوائد، إلخ)',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'PHYSICIAN_RECOMMEND',
-        textEn: 'Likelihood of your recommending this physician to others',
-        textAr: 'احتمالية توصيتك بهذا الطبيب للآخرين',
+        code: 'PHYSICIAN_SHARED_DECISION',
+        textEn: 'To what extent did you feel that the physician involved you in decisions about your care and treatment, and would you recommend this physician to others?',
+        textAr: 'إلى أي مدى شعرت بأن الطبيب شاركك في اتخاذ قرارات الرعاية والعلاج، وهل توصي به للآخرين؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
@@ -220,18 +163,9 @@ export const SURVEY_SECTIONS: SurveySection[] = [
         options: YES_NO_OPTIONS
       },
       {
-        code: 'LAB_BLOOD_DRAW_WAIT',
-        textEn: 'Waiting time to get your blood drawn',
-        textAr: 'وقت الانتظار لسحب الدم',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true,
-        showWhen: { questionCode: 'LAB_RECEIVED_SERVICES', values: ['YES'] }
-      },
-      {
-        code: 'LAB_BLOOD_DRAW_COMFORT',
-        textEn: 'Concern shown for your comfort when your blood was drawn',
-        textAr: 'الاهتمام براحتك أثناء سحب الدم',
+        code: 'LAB_BLOOD_DRAW_WAIT_COMFORT',
+        textEn: 'How satisfied were you with the waiting time for your blood draw and the staff member’s concern for your comfort during the procedure?',
+        textAr: 'إلى أي مدى كنت راضيًا عن وقت الانتظار لسحب الدم، واهتمام الموظف براحتك أثناء الإجراء؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true,
@@ -239,8 +173,8 @@ export const SURVEY_SECTIONS: SurveySection[] = [
       },
       {
         code: 'LAB_BLOOD_DRAW_SKILL',
-        textEn: 'Skill of the person who took your blood (e.g., did it quickly, with minimal pain)',
-        textAr: 'مهارة الشخص الذي سحب الدم (مثل السرعة وتقليل الألم)',
+        textEn: 'How would you rate the skill of the staff member who drew your blood in terms of speed, accuracy, and minimizing pain?',
+        textAr: 'كيف تقيّم مهارة الموظف الذي قام بسحب الدم من حيث السرعة، والدقة، وتقليل الألم؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true,
@@ -262,26 +196,17 @@ export const SURVEY_SECTIONS: SurveySection[] = [
       },
       {
         code: 'RAD_STAFF_SATISFACTION',
-        textEn: 'How satisfied were you with the radiology staff?',
-        textAr: 'ما مدى رضاك عن طاقم الأشعة؟',
+        textEn: 'How satisfied were you with the care and attention provided by the radiology staff?',
+        textAr: 'ما مدى رضاك عن تعامل واهتمام طاقم الأشعة؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true,
         showWhen: { questionCode: 'RAD_RECEIVED_SERVICES', values: ['YES'] }
       },
       {
-        code: 'RAD_EXPLANATION_SATISFACTION',
-        textEn: 'How satisfied were you with the explanation provided before the procedure?',
-        textAr: 'ما مدى رضاك عن الشرح المقدم قبل الإجراء؟',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true,
-        showWhen: { questionCode: 'RAD_RECEIVED_SERVICES', values: ['YES'] }
-      },
-      {
-        code: 'RAD_WAIT_TIME_SATISFACTION',
-        textEn: 'How satisfied were you with the waiting time for your radiology service?',
-        textAr: 'ما مدى رضاك عن وقت الانتظار لخدمة الأشعة؟',
+        code: 'RAD_EXPLANATION_AND_WAIT_SATISFACTION',
+        textEn: 'How satisfied were you with the explanation provided and the waiting time before your radiology procedure?',
+        textAr: 'ما مدى رضاك عن الشرح ووقت الانتظار قبل إجراء الأشعة؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true,
@@ -302,62 +227,13 @@ export const SURVEY_SECTIONS: SurveySection[] = [
         options: YES_NO_OPTIONS
       },
       {
-        code: 'PHARMACY_WAIT_TIME',
-        textEn: 'Waiting time to get your medications',
-        textAr: 'وقت الانتظار للحصول على الأدوية',
+        code: 'PHARMACY_SATISFACTION',
+        textEn: 'How satisfied are you with the availability of prescribed medications, waiting time, and the pharmacist’s explanation of your prescription?',
+        textAr: 'ما مدى رضاك عن توفر الأدوية الموصوفة، ووقت الانتظار، وشرح الصيدلي لوصفتك؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true,
         showWhen: { questionCode: 'PHARMACY_RECEIVED_MEDICATIONS', values: ['YES'] }
-      },
-      {
-        code: 'PHARMACY_PRESCRIPTION_EXPLANATION',
-        textEn: "Pharmacist's explanation of your prescription",
-        textAr: 'شرح الصيدلي لوصفتك الطبية',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true,
-        showWhen: { questionCode: 'PHARMACY_RECEIVED_MEDICATIONS', values: ['YES'] }
-      },
-      {
-        code: 'PHARMACY_AVAILABILITY',
-        textEn: 'Availability of prescribed medications',
-        textAr: 'توفر الأدوية الموصوفة',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true,
-        showWhen: { questionCode: 'PHARMACY_RECEIVED_MEDICATIONS', values: ['YES'] }
-      }
-    ]
-  },
-  {
-    id: 'personal_issues',
-    titleEn: 'Personal Issues',
-    titleAr: 'مسائل شخصية',
-    questions: [
-      {
-        code: 'PERSONAL_PRIVACY',
-        textEn: 'Our concern for your privacy',
-        textAr: 'اهتمامنا بخصوصيتك',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'PERSONAL_SAFETY',
-        textEn: 'How well the staff protected your safety (by washing hands, wearing ID, etc.)',
-        textAr: 'مدى حماية الموظفين لسلامتك (مثل غسل اليدين وارتداء بطاقة التعريف، إلخ)',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'PERSONAL_CLEANLINESS',
-        textEn: 'Cleanliness of our clinics',
-        textAr: 'نظافة عياداتنا',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
       }
     ]
   },
@@ -367,45 +243,27 @@ export const SURVEY_SECTIONS: SurveySection[] = [
     titleAr: 'التقييم العام',
     questions: [
       {
-        code: 'OVERALL_STAFF_TEAMWORK',
-        textEn: 'How well the staff worked together to care for you',
-        textAr: 'مدى تعاون الموظفين لتقديم الرعاية لك',
+        code: 'OVERALL_ENVIRONMENT_STAFF_SATISFACTION',
+        textEn: 'How satisfied were you with your privacy and safety, the cleanliness of the clinic, and the teamwork of the staff?',
+        textAr: 'ما مدى رضاك عن خصوصيتك وسلامتك، ونظافة العيادة وتعاون الموظفين؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
       {
-        code: 'OVERALL_RECOMMEND_PRACTICE',
-        textEn: 'Likelihood of your recommending our practice to others',
-        textAr: 'احتمالية توصيتك بممارستنا للآخرين',
+        code: 'OVERALL_CARE_RECOMMENDATION',
+        textEn: 'How satisfied were you with the care you received and how well your needs were met, and how likely are you to recommend our center to others?',
+        textAr: 'ما مدى رضاك عن الرعاية التي تلقيتها وتلبية احتياجاتك، وما مدى احتمالية توصيتك بمركزنا للآخرين؟',
         type: 'rating',
         options: LIKERT_OPTIONS,
         optional: true
       },
       {
-        code: 'OVERALL_CARE_RATING',
-        textEn: 'Overall rating of care received during your visit',
-        textAr: 'التقييم العام للرعاية التي تلقيتها أثناء زيارتك',
+        code: 'OVERALL_SATISFACTION_RECOMMENDATION',
+        textEn: 'How satisfied are you with the services you received, and how likely are you to recommend this center to others?',
+        textAr: 'ما مدى رضاك عن الخدمات التي تلقيتها، وما مدى احتمالية أن توصي بهذا المركز للآخرين؟',
         type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'OVERALL_HELP_TIMING',
-        textEn: 'I received exactly the help I want (and need) exactly when I want (and need) it',
-        textAr: 'تلقيت بالضبط المساعدة التي أريدها (وأحتاجها) في الوقت الذي أريده (وأحتاجه)',
-        type: 'agreement',
-        options: AGREEMENT_OPTIONS,
-        optional: true
-      },
-      {
-        code: 'OVERALL_NPS',
-        textEn:
-          "On a scale from 0 to 10, where 0 means 'Not at all likely' and 10 means 'Extremely likely', how likely is it that you would recommend this hospital to a friend or family?",
-        textAr:
-          'على مقياس من 0 إلى 10، حيث 0 يعني "غير محتمل على الإطلاق" و10 يعني "محتمل للغاية"، ما مدى احتمالية أن توصي بهذا المستشفى لصديق أو فرد من العائلة؟',
-        type: 'nps',
-        options: NPS_OPTIONS
+        options: LIKERT_OPTIONS
       },
       {
         code: 'OVERALL_COMMENTS',
