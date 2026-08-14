@@ -354,7 +354,7 @@ const PatientSatisfactionSurveyPage = () => {
             className={`patient-satisfaction-survey-options ${question.type === 'nps'
               ? 'patient-satisfaction-survey-options-nps'
               : ''
-              } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION' 
+              } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION'
                 ? 'patient-satisfaction-survey-options-rating'
                 : ''
               }`}
@@ -365,15 +365,15 @@ const PatientSatisfactionSurveyPage = () => {
               return (
                 <MyButton
                   key={option.value}
-                  appearance="ghost"
+                  appearance={isSelected ? 'default' : 'ghost'}
                   size="md"
                   width="100%"
                   radius={14}
-                  className={`patient-satisfaction-survey-option-btn ${isSelected ? 'is-selected' : 'is-unselected'
+                  className={`patient-satisfaction-survey-option-btn 
                     } ${question.type === 'nps'
                       ? 'patient-satisfaction-survey-option-nps'
                       : ''
-                    } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION' 
+                    } ${question.type === 'rating' && question.code === 'OVERALL_SATISFACTION_RECOMMENDATION'
                       ? 'patient-satisfaction-survey-option-rating'
                       : ''
                     }`}

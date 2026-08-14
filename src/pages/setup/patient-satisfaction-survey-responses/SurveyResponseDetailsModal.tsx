@@ -19,10 +19,19 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
   response
 }) => {
   const questionLabelByCode = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<
+      string,
+      {
+        textEn: string;
+        textAr: string;
+      }
+    >();
 
     getAllSurveyQuestions().forEach(question => {
-      map.set(question.code, question.textEn);
+      map.set(question.code, {
+        textEn: question.textEn,
+        textAr: question.textAr
+      });
     });
 
     return map;
@@ -30,10 +39,20 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
 
   const answerRows = useMemo(
     () =>
-      (response?.answers ?? []).map(answer => ({
-        ...answer,
-        questionLabel: questionLabelByCode.get(answer.questionCode) ?? answer.questionCode
-      })),
+      (response?.answers ?? []).map(answer => {
+        const question = questionLabelByCode.get(answer.questionCode);
+
+        const isArabic = /[\u0600-\u06FF]/.test(answer.answer ?? '');
+
+        return {
+          ...answer,
+          questionLabel: question
+            ? isArabic
+              ? question.textAr
+              : question.textEn
+            : answer.questionCode
+        };
+      }),
     [response?.answers, questionLabelByCode]
   );
 
@@ -73,24 +92,28 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
               </strong>{' '}
               {response.patientName || '-'}
             </div>
+
             <div>
               <strong>
                 <Translate>Status</Translate>:
               </strong>{' '}
               {formatEnumString(response.status)}
             </div>
+
             <div>
               <strong>
                 <Translate>Started At</Translate>:
               </strong>{' '}
               {formatDateWithoutSeconds(response.startedAt)}
             </div>
+
             <div>
               <strong>
                 <Translate>Completed At</Translate>:
               </strong>{' '}
               {formatDateWithoutSeconds(response.completedAt ?? '')}
             </div>
+
             <div>
               <strong>
                 <Translate>Created Date</Translate>:
@@ -99,7 +122,11 @@ const SurveyResponseDetailsModal: React.FC<SurveyResponseDetailsModalProps> = ({
             </div>
           </div>
 
-          <MyTable data={answerRows} columns={answerColumns} height={360} />
+          <MyTable
+            data={answerRows}
+            columns={answerColumns}
+            height={360}
+          />
         </div>
       }
     />
