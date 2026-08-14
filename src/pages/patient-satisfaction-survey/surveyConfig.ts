@@ -251,14 +251,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
         optional: true
       },
       {
-        code: 'OVERALL_CARE_RECOMMENDATION',
-        textEn: 'How satisfied were you with the care you received and how well your needs were met, and how likely are you to recommend our center to others?',
-        textAr: 'ما مدى رضاك عن الرعاية التي تلقيتها وتلبية احتياجاتك، وما مدى احتمالية توصيتك بمركزنا للآخرين؟',
-        type: 'rating',
-        options: LIKERT_OPTIONS,
-        optional: true
-      },
-      {
         code: 'OVERALL_SATISFACTION_RECOMMENDATION',
         textEn: 'How satisfied are you with the services you received, and how likely are you to recommend this center to others?',
         textAr: 'ما مدى رضاك عن الخدمات التي تلقيتها، وما مدى احتمالية أن توصي بهذا المركز للآخرين؟',
