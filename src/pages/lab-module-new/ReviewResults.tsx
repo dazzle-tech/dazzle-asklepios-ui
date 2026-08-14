@@ -694,7 +694,7 @@ const ReviewResults = forwardRef<any, any>(
           )
         },
       ],
-      [patientsMap, normalizedResults]
+      [patientsMap, normalizedResults,,isAllSelected,isSomeSelected,selectedRows]
     );
 
     const filters = () => (
