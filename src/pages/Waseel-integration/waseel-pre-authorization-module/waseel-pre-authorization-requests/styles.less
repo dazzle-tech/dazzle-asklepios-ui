@@ -4,6 +4,40 @@
   box-sizing: border-box;
 }
 
+.active-admins-page--split .preauth-requests-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.95fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.preauth-requests-layout {
+  width: 100%;
+}
+
+.preview-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-resubmit-btn {
+  border: 1px solid var(--primary-color, #2563eb);
+  background: var(--primary-color, #2563eb);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.preview-resubmit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .preauth-requests-table {
   width: 100%;
 }

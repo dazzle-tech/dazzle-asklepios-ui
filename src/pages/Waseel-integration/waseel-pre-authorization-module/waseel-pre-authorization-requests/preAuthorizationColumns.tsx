@@ -42,7 +42,7 @@ export const getPreAuthorizationColumns = ({
     key: 'action',
     dataKey: '',
     title: <Translate>Action</Translate>,
-    width: 200,
+    width: 240,
     align: 'center',
     render: (row: PreAuthorizationTrackingResponse) => (
       <PreAuthorizationRowActions row={row} {...handlers} />

@@ -5,7 +5,8 @@ import {
   useSearchPreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
   useCommunicatePreAuthorizationMutation,
-  useUploadPreAuthorizationAttachmentMutation
+  useUploadPreAuthorizationAttachmentMutation,
+  useResubmitPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 
 import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
@@ -28,7 +29,7 @@ import PreAuthorizationCommunicationModal, {
 import PreAuthorizationCommunicationsDrawer from './PreAuthorizationCommunicationsDrawer';
 import { getPreAuthorizationColumns } from './preAuthorizationColumns';
 import { initialFilters, type Filters } from './types';
-import { filterPreAuthorizationRows } from './utils';
+import { filterPreAuthorizationRows, containsFailure, canResubmitPreAuthorization } from './utils';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 import './styles.less';
@@ -77,6 +78,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
+  const [resubmitPreAuthorization, { isLoading: isResubmitting }] =
+    useResubmitPreAuthorizationMutation();
 
   const [getEncountersByIds, { data: encountersData, isFetching: isEncountersFetching }] =
     useLazyGetEncountersByIdsQuery();
@@ -191,6 +194,11 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     setOpenPreview(true);
   }, []);
 
+  const closePreview = useCallback(() => {
+    setOpenPreview(false);
+    setSelectedRow(null);
+  }, []);
+
   const openCommunication = useCallback((row: PreAuthorizationTrackingResponse) => {
     setSelectedRow(row);
     setCommunicationMessage('');
@@ -246,6 +254,54 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       }
     },
     [dispatch, refetch, searchFromWaseel]
+  );
+
+  const extractApiErrorMessage = (error: any, fallback: string) =>
+    error?.data?.message ||
+    error?.data?.detail ||
+    error?.data?.title ||
+    error?.message ||
+    fallback;
+
+  const handleResubmit = useCallback(
+    async (row: PreAuthorizationTrackingResponse) => {
+      if (!row.id) {
+        dispatch(notify({ msg: 'No preAuthorizationId found for this pre-authorization', sev: 'error' }));
+        return;
+      }
+
+      try {
+        dispatch(showSystemLoader());
+        const newRequest = await resubmitPreAuthorization(Number(row.id)).unwrap();
+        const failed =
+          containsFailure(newRequest.outcome) || containsFailure(newRequest.status);
+
+        dispatch(
+          notify({
+            msg: failed
+              ? newRequest.message ||
+                  newRequest.disposition ||
+                  'Pre-authorization was resubmitted but Waseel returned an error'
+              : 'Pre-authorization resubmitted successfully',
+            sev: failed ? 'warning' : 'success'
+          })
+        );
+
+        setSelectedRow(newRequest);
+        setOpenPreview(true);
+        await refetch();
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg: extractApiErrorMessage(error, 'Failed to resubmit pre-authorization'),
+            sev: 'error'
+          })
+        );
+      } finally {
+        dispatch(hideSystemLoader());
+      }
+    },
+    [dispatch, refetch, resubmitPreAuthorization]
   );
 
   const submitCancel = async () => {
@@ -374,6 +430,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         handlers: {
           onView: openView,
           onRefreshFromWaseel: handleRefreshFromWaseel,
+          onResubmit: handleResubmit,
           onCommunication: openCommunication,
           onViewCommunications: openCommunicationsHistory,
           onCancel: openCancel
@@ -384,6 +441,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     [
       openView,
       handleRefreshFromWaseel,
+      handleResubmit,
       openCommunication,
       openCommunicationsHistory,
       openCancel,
@@ -395,34 +453,70 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const isSelected = (row: PreAuthorizationTrackingResponse) =>
     row?.id === selectedRow?.id ? 'selected-row' : '';
 
+  const selectedPreviewPreAuth = useMemo(() => {
+    if (!selectedRow) return null;
+
+    const patient = patientMap.get(String(selectedRow.patientId));
+    const patientName = patient
+      ? [
+          patient?.firstName,
+          patient?.secondName,
+          patient?.thirdName,
+          patient?.lastName
+        ]
+          .map((part: string) => String(part ?? '').trim())
+          .filter(Boolean)
+          .join(' ')
+      : undefined;
+
+    return {
+      ...selectedRow,
+      patientName
+    };
+  }, [selectedRow, patientMap]);
+
   return (
-    <div className="active-admins-page" dir={dir}>
-      <PreAuthorizationRequestsTable
-        data={tableData}
-        columns={columns}
-        rowClassName={isSelected}
-        onRowClick={openView}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        loading={tableLoading}
-        onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
-        onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0);
-        }}
-        filters={
-          <PreAuthorizationFilters
-            filtersKey={filtersKey}
-            filters={filters}
-            selectedFilter={selectedFilter}
-            onFiltersChange={setFilters}
-            onSelectedFilterChange={setSelectedFilter}
-            onSearch={handleSearch}
-            onReset={handleReset}
+    <div className={`active-admins-page${openPreview ? ' active-admins-page--split' : ''}`} dir={dir}>
+      <div className="preauth-requests-layout">
+        <PreAuthorizationRequestsTable
+          data={tableData}
+          columns={columns}
+          rowClassName={isSelected}
+          onRowClick={openView}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          loading={tableLoading || isResubmitting}
+          height={openPreview ? 480 : 680}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+          filters={
+            <PreAuthorizationFilters
+              filtersKey={filtersKey}
+              filters={filters}
+              selectedFilter={selectedFilter}
+              onFiltersChange={setFilters}
+              onSelectedFilterChange={setSelectedFilter}
+              onSearch={handleSearch}
+              onReset={handleReset}
+            />
+          }
+        />
+
+        {openPreview && selectedRow && selectedPreviewPreAuth && (
+          <PreviewWaseelPreAuthorizationRequests
+            open={openPreview}
+            preAuth={selectedPreviewPreAuth}
+            canResubmit={selectedRow.canResubmit ?? canResubmitPreAuthorization(selectedRow)}
+            isResubmitting={isResubmitting}
+            onResubmit={() => handleResubmit(selectedRow)}
+            onClose={closePreview}
           />
-        }
-      />
+        )}
+      </div>
 
       <PreAuthorizationCancelModal
         open={openCancelModal}

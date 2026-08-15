@@ -97,3 +97,21 @@ export const canCancelPreAuthorization = (row: PreAuthorizationTrackingResponse)
   !!row.approvalRequestId &&
   !row.isCancelled &&
   !['CANCELLED', 'REJECTED', 'FAILED'].includes(String(row.status ?? '').toUpperCase());
+
+export const containsFailure = (value?: string | null) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+
+  return (
+    normalized.includes('error') ||
+    normalized.includes('failed') ||
+    normalized.includes('rejected') ||
+    normalized.includes('denied')
+  );
+};
+
+export const canResubmitPreAuthorization = (row: PreAuthorizationTrackingResponse) => {
+  if (row.isCancelled) return false;
+
+  return containsFailure(row.status) || containsFailure(row.outcome);
+};

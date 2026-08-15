@@ -10,12 +10,15 @@ import './styles.less';
 interface PreviewWaseelPreAuthorizationRequestsProps {
   open: boolean;
   preAuth: any;
+  canResubmit?: boolean;
+  isResubmitting?: boolean;
+  onResubmit?: () => void;
   onClose: () => void;
 }
 
 const PreviewWaseelPreAuthorizationRequests: React.FC<
   PreviewWaseelPreAuthorizationRequestsProps
-> = ({ open, preAuth, onClose }) => {
+> = ({ open, preAuth, canResubmit = false, isResubmitting = false, onResubmit, onClose }) => {
   const [previewData, setPreviewData] = useState<any>({
     preAuthRefNo: '',
     encounterNo: '',
@@ -77,9 +80,22 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
         <div className="preview-header">
           <div className="preview-title">Pre-Authorization Preview</div>
 
-          <button className="close-preview-btn" onClick={onClose} type="button">
-            ✕
-          </button>
+          <div className="preview-header__actions">
+            {canResubmit && onResubmit && (
+              <button
+                className="preview-resubmit-btn"
+                onClick={onResubmit}
+                type="button"
+                disabled={isResubmitting}
+              >
+                {isResubmitting ? 'Resubmitting…' : 'Resubmit'}
+              </button>
+            )}
+
+            <button className="close-preview-btn" onClick={onClose} type="button">
+              ✕
+            </button>
+          </div>
         </div>
       }
     >
@@ -387,6 +403,15 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                               .join(' ') || '-'
                           }}
                           fieldName="quantity"
+                          disabled
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <MyInput
+                          fieldType="text"
+                          fieldLabel="Unit Price"
+                          record={{ unitPrice: item?.unitPrice ?? '-' }}
+                          fieldName="unitPrice"
                           disabled
                         />
                       </Col>

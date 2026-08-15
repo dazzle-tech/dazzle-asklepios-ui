@@ -3330,6 +3330,14 @@ export const newPreAuthorizationTrackingResponse: modelTypes.PreAuthorizationTra
   cancelOutcome: null,
   cancelMessage: null,
 
+  searchCompleted: null,
+  canCommunicate: null,
+  canCancel: null,
+  canResubmit: null,
+  waseelClaimItemIds: null,
+  items: null,
+  communicationCount: null,
+
   createdDate: null,
   createdBy: null,
   lastModifiedDate: null,
