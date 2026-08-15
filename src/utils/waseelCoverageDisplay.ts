@@ -25,7 +25,8 @@ const isOutpatientRule = (rule: InsuranceBenefitRule): boolean => {
   return (
     providerType.includes('outpatient') ||
     itemName.includes('outpatient') ||
-    category.includes('outpatient')
+    category.includes('outpatient') ||
+    providerType.includes('other_healthcare')
   );
 };
 
@@ -119,6 +120,10 @@ export const selectPreferredBillingBenefitRule = (
 export const resolveDisplayedCopaymentPercent = (
   coverage: WaseelCoverageDetails
 ): number | null => {
+  if (coverage.copaymentPercent != null) {
+    return Number(coverage.copaymentPercent);
+  }
+
   const preferredRule = selectPreferredBillingBenefitRule(
     coverage.benefitRules
   );
@@ -127,12 +132,16 @@ export const resolveDisplayedCopaymentPercent = (
     return Number(preferredRule.patientCopaymentPercentage);
   }
 
-  return coverage.copaymentPercent ?? null;
+  return null;
 };
 
 export const resolveDisplayedCopaymentCap = (
   coverage: WaseelCoverageDetails
 ): number | null => {
+  if (coverage.copaymentCap != null) {
+    return Number(coverage.copaymentCap);
+  }
+
   const preferredRule = selectPreferredBillingBenefitRule(
     coverage.benefitRules
   );
@@ -141,7 +150,7 @@ export const resolveDisplayedCopaymentCap = (
     return Number(preferredRule.patientMaximumCopayment);
   }
 
-  return coverage.copaymentCap ?? null;
+  return null;
 };
 
 export const formatNetworkLabel = (
@@ -292,4 +301,98 @@ export const classifyBenefitTypeLabel = (
   }
 
   return typeDisplay ?? typeCode ?? 'Benefit';
+};
+
+export type InsuranceCopayInput = {
+  copaymentPercent?: number | null;
+  copaymentCap?: number | null;
+};
+
+const toCopayAmount = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const resolveInsuranceCopayFromCoverage = (
+  coverage?: WaseelCoverageDetails | null
+): InsuranceCopayInput | null => {
+  if (!coverage) {
+    return null;
+  }
+
+  const copaymentPercent = resolveDisplayedCopaymentPercent(coverage);
+  const copaymentCap = resolveDisplayedCopaymentCap(coverage);
+
+  if (copaymentPercent == null && copaymentCap == null) {
+    return null;
+  }
+
+  return {
+    copaymentPercent,
+    copaymentCap
+  };
+};
+
+export const resolveInsuranceCopayFromPlan = (
+  plan?: {
+    patientShare?: number | string | null;
+    maxLimit?: number | string | null;
+  } | null
+): InsuranceCopayInput | null => {
+  if (!plan) {
+    return null;
+  }
+
+  const copaymentPercent = toCopayAmount(plan.patientShare);
+  const copaymentCap = toCopayAmount(plan.maxLimit);
+
+  if (copaymentPercent == null && copaymentCap == null) {
+    return null;
+  }
+
+  return {
+    copaymentPercent,
+    copaymentCap
+  };
+};
+
+/**
+ * Patient copay from plan percent with optional per-service cap.
+ * Matches backend InsuranceCalculationService patient-side logic.
+ */
+export const calculateInsuranceSplitFromCopay = (
+  netAmount: number,
+  copay?: InsuranceCopayInput | null
+): { patientShare: number; insuranceShare: number } => {
+  const net = Number.isFinite(Number(netAmount)) ? Number(netAmount) : 0;
+
+  if (net <= 0) {
+    return { patientShare: 0, insuranceShare: 0 };
+  }
+
+  if (!copay) {
+    return { patientShare: net, insuranceShare: 0 };
+  }
+
+  const percent = toCopayAmount(copay.copaymentPercent);
+  const cap = toCopayAmount(copay.copaymentCap);
+  const hasPercent = percent != null && percent > 0;
+  const hasCap = cap != null && cap > 0;
+
+  if (!hasPercent && !hasCap) {
+    return { patientShare: net, insuranceShare: 0 };
+  }
+
+  let patientShare = hasPercent ? (net * percent) / 100 : 0;
+
+  if (hasCap) {
+    patientShare = Math.min(patientShare, cap);
+  }
+
+  patientShare = Math.min(Math.max(0, patientShare), net);
+
+  return {
+    patientShare,
+    insuranceShare: Math.max(0, net - patientShare)
+  };
 };

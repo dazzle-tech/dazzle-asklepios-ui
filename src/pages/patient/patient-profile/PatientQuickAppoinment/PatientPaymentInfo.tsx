@@ -120,6 +120,10 @@ import {
   type PaymentReceiptData
 } from './paymentPreviewUtils';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
+import {
+  resolveInsuranceCopayFromCoverage,
+  resolveInsuranceCopayFromPlan
+} from '@/utils/waseelCoverageDisplay';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
@@ -974,6 +978,30 @@ const PatientPaymentInfo =
       const isInsurance =
         formState.coverageType ===
         'INSURANCE';
+
+      const insuranceCopay =
+        useMemo(() => {
+          if (!isInsurance) {
+            return null;
+          }
+
+          const fromPlan =
+            resolveInsuranceCopayFromPlan(
+              patientInsurance
+            );
+
+          if (fromPlan) {
+            return fromPlan;
+          }
+
+          return resolveInsuranceCopayFromCoverage(
+            waseelCoverage
+          );
+        }, [
+          isInsurance,
+          waseelCoverage,
+          patientInsurance
+        ]);
 
       const showCardFields = false;
 
@@ -2139,13 +2167,15 @@ const PatientPaymentInfo =
                 0
                 ? payableSelectedRows
                 : selectedRows,
-              isInsurance
+              isInsurance,
+              insuranceCopay
             ),
           [
             summary,
             payableSelectedRows,
             selectedRows,
-            isInsurance
+            isInsurance,
+            insuranceCopay
           ]
         );
 
@@ -2180,14 +2210,16 @@ const PatientPaymentInfo =
                 ? payableSelectedRows
                 : selectedRows,
               activeCurrency,
-              isInsurance
+              isInsurance,
+              insuranceCopay
             ),
           [
             summary,
             payableSelectedRows,
             selectedRows,
             activeCurrency,
-            isInsurance
+            isInsurance,
+            insuranceCopay
           ]
         );
 
@@ -2436,7 +2468,8 @@ const PatientPaymentInfo =
               computePreviewBillingTotals(
                 billingSummary,
                 selectedRows,
-                isInsurance
+                isInsurance,
+                insuranceCopay
               ),
 
             notes:

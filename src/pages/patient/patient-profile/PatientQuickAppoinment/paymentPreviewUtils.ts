@@ -1,5 +1,9 @@
 import type { EncounterBillingItemSummary, EncounterBillingSummary } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
+import {
+  calculateInsuranceSplitFromCopay,
+  type InsuranceCopayInput
+} from '@/utils/waseelCoverageDisplay';
 
 export type PreviewServiceRow = {
   serviceId: number;
@@ -247,10 +251,61 @@ export const filterPayableServiceRows = <T extends PreviewServiceRow>(
 ): T[] =>
   rows.filter(row => isDefaultServicePayable(row.serviceId, summary));
 
+const resolveInsuranceShares = (
+  row: PreviewServiceRow,
+  netAmount: number,
+  isInsurance: boolean,
+  insuranceCopay?: InsuranceCopayInput | null
+): { patientShare: number; insuranceShare: number } => {
+  const net = toAmount(netAmount);
+
+  if (row.isExempted || net <= 0) {
+    return { patientShare: 0, insuranceShare: 0 };
+  }
+
+  if (!isInsurance) {
+    return { patientShare: net, insuranceShare: 0 };
+  }
+
+  if (insuranceCopay) {
+    return calculateInsuranceSplitFromCopay(net, insuranceCopay);
+  }
+
+  if (row.patientShare != null || row.insuranceShare != null) {
+    return {
+      patientShare: toAmount(row.patientShare),
+      insuranceShare: toAmount(row.insuranceShare)
+    };
+  }
+
+  return { patientShare: net, insuranceShare: 0 };
+};
+
+const recalculateSummaryItemShares = (
+  item: EncounterBillingItemSummary,
+  isInsurance: boolean,
+  insuranceCopay?: InsuranceCopayInput | null
+): EncounterBillingItemSummary => {
+  if (!isInsurance || !insuranceCopay) {
+    return item;
+  }
+
+  const net = toAmount(item.netAmount);
+  const split = calculateInsuranceSplitFromCopay(net, insuranceCopay);
+
+  return {
+    ...item,
+    patientResponsibilityAmount: split.patientShare,
+    insuranceResponsibilityAmount: split.insuranceShare,
+    outstandingAmount: split.patientShare
+  };
+};
+
 export const computePreviewBillingTotals = (
   summary: EncounterBillingSummary,
   selectedRows: PreviewServiceRow[],
-  isInsurance: boolean
+  isInsurance: boolean,
+  insuranceCopay?: InsuranceCopayInput | null
 ): PreviewBillingTotals => {
   const hasInsurancePreviewPricing =
     isInsurance &&
@@ -259,6 +314,9 @@ export const computePreviewBillingTotals = (
         !row.isExempted &&
         row.previewNetAmount != null
     );
+
+  const shouldRecalculateInsuranceShares =
+    isInsurance && insuranceCopay != null;
 
   if (
     hasCalculatedSummary(summary) &&
@@ -277,6 +335,53 @@ export const computePreviewBillingTotals = (
       patientResponsibilityAmount: toAmount(summary.patientResponsibilityAmount),
       insuranceResponsibilityAmount: toAmount(summary.insuranceResponsibilityAmount),
       patientOutstandingAmount: outstandingAmount,
+      isPreview: false
+    };
+  }
+
+  if (
+    hasCalculatedSummary(summary) &&
+    !hasInsurancePreviewPricing &&
+    isInsurance &&
+    shouldRecalculateInsuranceShares &&
+    selectedRows.length === 0
+  ) {
+    let grossAmount = 0;
+    let discountAmount = 0;
+    let exemptionAmount = 0;
+    let taxAmount = 0;
+    let patientResponsibilityAmount = 0;
+    let insuranceResponsibilityAmount = 0;
+
+    (summary.items ?? []).forEach(item => {
+      grossAmount += toAmount(item.grossAmount);
+      discountAmount += toAmount(item.discountAmount);
+      exemptionAmount += toAmount(item.exemptionAmount);
+      taxAmount += toAmount(item.taxAmount);
+
+      const split = calculateInsuranceSplitFromCopay(
+        toAmount(item.netAmount),
+        insuranceCopay
+      );
+
+      patientResponsibilityAmount += split.patientShare;
+      insuranceResponsibilityAmount += split.insuranceShare;
+    });
+
+    const netAmount = Math.max(
+      0,
+      grossAmount - discountAmount - exemptionAmount
+    );
+
+    return {
+      grossAmount,
+      discountAmount,
+      exemptionAmount,
+      taxAmount,
+      netAmount,
+      patientResponsibilityAmount,
+      insuranceResponsibilityAmount,
+      patientOutstandingAmount: patientResponsibilityAmount,
       isPreview: false
     };
   }
@@ -303,13 +408,15 @@ export const computePreviewBillingTotals = (
 
       const lineNet = toAmount(row.previewNetAmount);
 
-      if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
-        patientResponsibilityAmount += toAmount(row.patientShare);
-        insuranceResponsibilityAmount += toAmount(row.insuranceShare);
-        return;
-      }
+      const split = resolveInsuranceShares(
+        row,
+        lineNet,
+        isInsurance,
+        insuranceCopay
+      );
 
-      patientResponsibilityAmount += lineNet;
+      patientResponsibilityAmount += split.patientShare;
+      insuranceResponsibilityAmount += split.insuranceShare;
       return;
     }
 
@@ -323,13 +430,15 @@ export const computePreviewBillingTotals = (
       return;
     }
 
-    if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
-      patientResponsibilityAmount += toAmount(row.patientShare);
-      insuranceResponsibilityAmount += toAmount(row.insuranceShare);
-      return;
-    }
+    const split = resolveInsuranceShares(
+      row,
+      lineGross,
+      isInsurance,
+      insuranceCopay
+    );
 
-    patientResponsibilityAmount += lineGross;
+    patientResponsibilityAmount += split.patientShare;
+    insuranceResponsibilityAmount += split.insuranceShare;
   });
 
   const netAmount = Math.max(0, grossAmount - discountAmount - exemptionAmount);
@@ -351,7 +460,8 @@ export const buildPreviewChargeLines = (
   summary: EncounterBillingSummary,
   selectedRows: PreviewServiceRow[],
   currency: string,
-  isInsurance: boolean
+  isInsurance: boolean,
+  insuranceCopay?: InsuranceCopayInput | null
 ): EncounterBillingItemSummary[] => {
   const hasInsurancePreviewPricing =
     isInsurance &&
@@ -362,6 +472,12 @@ export const buildPreviewChargeLines = (
     );
 
   if ((summary.items ?? []).length > 0 && !hasInsurancePreviewPricing) {
+    if (isInsurance && insuranceCopay) {
+      return (summary.items ?? []).map(item =>
+        recalculateSummaryItemShares(item, isInsurance, insuranceCopay)
+      );
+    }
+
     return summary.items;
   }
 
@@ -384,15 +500,15 @@ export const buildPreviewChargeLines = (
         ? toAmount(row.previewNetAmount)
         : grossAmount;
 
-    const patientResponsibilityAmount =
-      isInsurance && row.patientShare != null
-        ? toAmount(row.patientShare)
-        : exempted
-          ? 0
-          : netAmount;
+    const split = resolveInsuranceShares(
+      row,
+      netAmount,
+      isInsurance,
+      insuranceCopay
+    );
 
-    const insuranceResponsibilityAmount =
-      isInsurance && row.insuranceShare != null ? toAmount(row.insuranceShare) : 0;
+    const patientResponsibilityAmount = split.patientShare;
+    const insuranceResponsibilityAmount = split.insuranceShare;
 
     return {
       patientServiceProductId: null,

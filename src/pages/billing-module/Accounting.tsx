@@ -140,9 +140,21 @@ const Accounting: React.FC = () => {
       return;
     }
 
+    const primaryInsurance =
+      patientInsurances.find(
+        insurance => insurance?.isPrimary === true || insurance?.isPrimary === 'true'
+      ) ?? patientInsurances[0] ?? null;
+
     if (encounterInvoiceDetails == null) {
-      setCoverageType('SELF_PAY');
-      setSelectedInsuranceId(null);
+      const hasInsuranceCharge =
+        Number(summary?.insuranceResponsibilityAmount ?? 0) > 0 ||
+        Number(summary?.insuranceOutstandingAmount ?? 0) > 0;
+
+      if (hasInsuranceCharge && primaryInsurance?.id != null) {
+        setCoverageType('INSURANCE');
+        setSelectedInsuranceId(Number(primaryInsurance.id));
+      }
+
       return;
     }
 
@@ -152,14 +164,22 @@ const Accounting: React.FC = () => {
     setCoverageType(resolvedCoverage);
 
     const insuranceId =
-      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ?? null;
+      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ??
+      primaryInsurance?.id ??
+      null;
 
     if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
       setSelectedInsuranceId(Number(insuranceId));
     } else if (resolvedCoverage === 'SELF_PAY') {
       setSelectedInsuranceId(null);
     }
-  }, [selectedEncounterId, encounterInvoiceDetails]);
+  }, [
+    selectedEncounterId,
+    encounterInvoiceDetails,
+    patientInsurances,
+    summary?.insuranceResponsibilityAmount,
+    summary?.insuranceOutstandingAmount
+  ]);
 
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
