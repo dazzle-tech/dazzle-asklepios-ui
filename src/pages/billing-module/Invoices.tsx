@@ -2313,6 +2313,12 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         facilityId={facilityId}
 
+        patientInsuranceId={
+          encounterDetails?.patientInsuranceId ??
+          encounterDetails?.eligibilitySnapshot?.patientInsuranceId ??
+          null
+        }
+
         loading={creatingCreditNote || creatingDebitNote}
 
         loadingLines={loadingInvoiceLineItems || loadingAddableChargeLines}

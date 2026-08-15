@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-import { FaRotate } from 'react-icons/fa6';
+import { FaPaperPlane, FaRotate } from 'react-icons/fa6';
 import { MdCancel, MdOutlineMessage, MdOutlineForum } from 'react-icons/md';
 
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
@@ -15,11 +15,13 @@ type PreAuthorizationRowActionsProps = PreAuthorizationRowHandlers & {
 const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
   row,
   onRefreshFromWaseel,
+  onResubmit,
   onCommunication,
   onViewCommunications,
   onCancel
 }) => {
   const canCancel = row.canCancel ?? canCancelPreAuthorization(row);
+  const canResubmit = row.canResubmit === true;
   const hasApprovalRequest = !!row.approvalRequestId;
   const canCommunicate =
     row.canCommunicate === true ||
@@ -29,7 +31,7 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
   const hasCommunications = communicationCount > 0;
 
   return (
-    <div className="container-of-icons">
+    <div className="container-of-icons" onClick={event => event.stopPropagation()}>
       <Whisper
         placement="top"
         trigger="hover"
@@ -47,6 +49,28 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
             style={{
               cursor: hasApprovalRequest ? 'pointer' : 'not-allowed',
               opacity: hasApprovalRequest ? 1 : 0.35
+            }}
+          />
+        </span>
+      </Whisper>
+
+      <Whisper
+        placement="top"
+        trigger="hover"
+        container={() => document.body}
+        speaker={<Tooltip>Resubmit failed request</Tooltip>}
+      >
+        <span>
+          <FaPaperPlane
+            className="icons-style"
+            size={18}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (canResubmit) onResubmit(row);
+            }}
+            style={{
+              cursor: canResubmit ? 'pointer' : 'not-allowed',
+              opacity: canResubmit ? 1 : 0.35
             }}
           />
         </span>

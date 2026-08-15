@@ -88,6 +88,7 @@ import {
 } from '@/types/model-types-constructor-new';
 
 import WaseelCoverageDetailsView from '@/components/waseel/WaseelCoverageDetailsView';
+import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
 
 import type {
   BillingCoverageType,
@@ -874,6 +875,21 @@ const PatientPaymentInfo =
           }
         );
 
+      const displayedPatientInsurance =
+        useMemo(
+          () =>
+            overlayPatientInsuranceWithWaseelCoverage(
+              patientInsurance ??
+                null,
+              waseelCoverage
+            ) ??
+            patientInsurance,
+          [
+            patientInsurance,
+            waseelCoverage
+          ]
+        );
+
       const [
         prepareDefaultServices,
         {
@@ -1250,19 +1266,31 @@ const PatientPaymentInfo =
                     insurance?.key ??
                     insurance?.patientInsuranceId;
 
+                  const displayedInsurance =
+                    String(insuranceId) ===
+                    String(
+                      formState.patientInsuranceId ??
+                        ''
+                    )
+                      ? overlayPatientInsuranceWithWaseelCoverage(
+                          insurance,
+                          waseelCoverage
+                        ) ?? insurance
+                      : insurance;
+
                   return {
-                    ...insurance,
+                    ...displayedInsurance,
                     id: insuranceId,
 
                     label:
                       [
-                        insurance?.payerName ||
-                          insurance?.payerNphiesId ||
+                        displayedInsurance?.payerName ||
+                          displayedInsurance?.payerNphiesId ||
                           'Insurance',
 
-                        insurance?.policyClassName,
+                        displayedInsurance?.policyClassName,
 
-                        insurance?.memberCardId
+                        displayedInsurance?.memberCardId
                       ]
                         .filter(Boolean)
                         .join(' • ')
@@ -1271,7 +1299,9 @@ const PatientPaymentInfo =
               ),
           [
             filteredInsurances,
-            insurancePage
+            insurancePage,
+            formState.patientInsuranceId,
+            waseelCoverage
           ]
         );
 
@@ -4887,7 +4917,7 @@ const PatientPaymentInfo =
                   fieldLabel="Payer NPHIES ID"
                   fieldName="payerNphiesId"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4901,7 +4931,7 @@ const PatientPaymentInfo =
                   fieldLabel="Member Card ID"
                   fieldName="memberCardId"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4915,7 +4945,21 @@ const PatientPaymentInfo =
                   fieldLabel="Policy Number"
                   fieldName="policyNumber"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Policy Holder"
+                  fieldName="policyHolderName"
+                  record={
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4929,7 +4973,7 @@ const PatientPaymentInfo =
                   fieldLabel="Policy Class"
                   fieldName="policyClassName"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4943,7 +4987,21 @@ const PatientPaymentInfo =
                   fieldLabel="Insurance Group"
                   fieldName="groupName"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
+                    {}
+                  }
+                  setRecord={() =>
+                    undefined
+                  }
+                />
+
+                <MyInput
+                  column
+                  disabled
+                  fieldLabel="Group Number"
+                  fieldName="groupNumber"
+                  record={
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4957,7 +5015,7 @@ const PatientPaymentInfo =
                   fieldLabel="Plan Code"
                   fieldName="planCode"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4971,7 +5029,7 @@ const PatientPaymentInfo =
                   fieldLabel="Network"
                   fieldName="networkId"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4985,7 +5043,7 @@ const PatientPaymentInfo =
                   fieldLabel="GP Visit Copay"
                   fieldName="gpVisitCopay"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -4999,7 +5057,7 @@ const PatientPaymentInfo =
                   fieldLabel="Specialist Visits Limit"
                   fieldName="specialistVisitsLimit"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>
@@ -5048,7 +5106,7 @@ const PatientPaymentInfo =
                   fieldType="date"
                   fieldName="expirationDate"
                   record={
-                    patientInsurance ??
+                    displayedPatientInsurance ??
                     {}
                   }
                   setRecord={() =>

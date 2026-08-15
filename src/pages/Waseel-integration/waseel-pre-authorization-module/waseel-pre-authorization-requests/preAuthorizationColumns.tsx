@@ -42,7 +42,7 @@ export const getPreAuthorizationColumns = ({
     key: 'action',
     dataKey: '',
     title: <Translate>Action</Translate>,
-    width: 200,
+    width: 230,
     align: 'center',
     render: (row: PreAuthorizationTrackingResponse) => (
       <PreAuthorizationRowActions row={row} {...handlers} />
@@ -51,9 +51,17 @@ export const getPreAuthorizationColumns = ({
   {
     key: 'status',
     title: <Translate>Status</Translate>,
-    width: 130,
+    width: 150,
     render: (row: PreAuthorizationTrackingResponse) => (
-      <MyBadgeStatus contant={row.status || '-'} color={getStatusColor(row.status)} />
+      <div className="preauth-table__stacked">
+        <MyBadgeStatus contant={row.status || '-'} color={getStatusColor(row.status)} />
+        {row.resubmittedFromId != null ? (
+          <span>From #{row.resubmittedFromId}</span>
+        ) : null}
+        {row.resubmittedAsId != null ? (
+          <span>Resubmitted as #{row.resubmittedAsId}</span>
+        ) : null}
+      </div>
     )
   },
   {

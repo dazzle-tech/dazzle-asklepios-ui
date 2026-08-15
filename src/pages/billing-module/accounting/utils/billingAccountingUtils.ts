@@ -653,7 +653,7 @@ export const computeEncounterPatientShare = (
     : chargeRows
         .filter(isRowAwaitingBilling)
         .reduce(
-          (total, row) => total + Number(row.patientAmount ?? row.netAmount ?? 0),
+          (total, row) => total + Number(row.patientAmount ?? 0),
           0
         );
 
@@ -1773,10 +1773,16 @@ export const mapPspItemToRow = (
   };
 
   const netAmount =
+    Number(row.netAmount ?? 0) ||
     Number(row.unitPrice ?? 0) * Number(row.quantity ?? 1) -
-    Number(row.discountAmount ?? 0) -
-    Number(row.exemptionAmount ?? 0) +
-    Number(row.taxAmount ?? 0);
+      Number(row.discountAmount ?? 0) -
+      Number(row.exemptionAmount ?? 0) +
+      Number(row.taxAmount ?? 0);
+
+  const patientShare = Number(row.patientShareAmount ?? 0);
+  const insuranceShare = Number(row.insuranceShareAmount ?? 0);
+  const hasStoredSplit = patientShare > 0 || insuranceShare > 0;
+  const patientAmount = hasStoredSplit ? patientShare : netAmount;
 
   return {
     id: `psp-${row.id}`,
@@ -1790,9 +1796,9 @@ export const mapPspItemToRow = (
     unitPrice: row.unitPrice,
     priceSource: rowAny.priceSource?.trim() || null,
     netAmount,
-    patientAmount: netAmount,
-    insuranceAmount: 0,
-    outstandingAmount: netAmount,
+    patientAmount,
+    insuranceAmount: hasStoredSplit ? insuranceShare : 0,
+    outstandingAmount: patientAmount,
     currency: row.currency ?? 'SAR',
     status: row.isBilled ? 'BILLED' : 'PENDING',
     chargedAt: rowAny.createdDate ?? null,

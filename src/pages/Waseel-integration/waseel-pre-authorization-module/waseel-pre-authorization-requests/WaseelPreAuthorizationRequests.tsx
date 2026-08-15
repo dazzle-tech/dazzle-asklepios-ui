@@ -5,7 +5,8 @@ import {
   useSearchPreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
   useCommunicatePreAuthorizationMutation,
-  useUploadPreAuthorizationAttachmentMutation
+  useUploadPreAuthorizationAttachmentMutation,
+  useResubmitPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 
 import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
@@ -21,6 +22,7 @@ import PreviewWaseelPreAuthorizationRequests from './PreviewWaseelPreAuthorizati
 import PreAuthorizationFilters from './PreAuthorizationFilters';
 import PreAuthorizationRequestsTable from './PreAuthorizationRequestsTable';
 import PreAuthorizationCancelModal from './PreAuthorizationCancelModal';
+import PreAuthorizationResubmitModal from './PreAuthorizationResubmitModal';
 import PreAuthorizationCommunicationModal, {
   type CommunicationAttachmentFile,
   type CommunicationContentType
@@ -31,6 +33,7 @@ import { initialFilters, type Filters } from './types';
 import { filterPreAuthorizationRows } from './utils';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
+import { extractApiErrorMessage } from '@/utils';
 import './styles.less';
 
 const WaseelPreAuthorizationRequests: React.FC = () => {
@@ -44,6 +47,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [openResubmitModal, setOpenResubmitModal] = useState(false);
 
   const [openCommunicationModal, setOpenCommunicationModal] = useState(false);
   const [openCommunicationsDrawer, setOpenCommunicationsDrawer] = useState(false);
@@ -74,6 +78,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
   const [searchFromWaseel] = useSearchPreAuthorizationMutation();
   const [cancelPreAuthorization, { isLoading: isCancelling }] = useCancelPreAuthorizationMutation();
+  const [resubmitPreAuthorization, { isLoading: isResubmitting }] =
+    useResubmitPreAuthorizationMutation();
   const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
@@ -210,6 +216,21 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     setOpenCancelModal(true);
   }, []);
 
+  const openResubmit = useCallback((row: PreAuthorizationTrackingResponse) => {
+    if (row.canResubmit !== true) {
+      dispatch(
+        notify({
+          msg: 'This pre-authorization cannot be resubmitted',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedRow(row);
+    setOpenResubmitModal(true);
+  }, [dispatch]);
+
   // Keep modal selection in sync after Search/refetch so waseelClaimItemIds are available.
   useEffect(() => {
     if (selectedRow?.id == null) return;
@@ -284,6 +305,44 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       refetch();
     } catch {
       dispatch(notify({ msg: 'Failed to cancel pre-authorization', sev: 'error' }));
+    }
+  };
+
+  const submitResubmit = async () => {
+    if (!selectedRow?.id) {
+      dispatch(notify({ msg: 'No pre-authorization selected', sev: 'error' }));
+      return;
+    }
+
+    try {
+      const result = await resubmitPreAuthorization({
+        preAuthorizationId: Number(selectedRow.id)
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: result?.id
+            ? `Pre-authorization resubmitted as #${result.id}`
+            : 'Pre-authorization resubmitted successfully',
+          sev: 'success'
+        })
+      );
+
+      setOpenResubmitModal(false);
+      setPage(0);
+      await refetch();
+
+      if (result) {
+        setSelectedRow(result);
+        setOpenPreview(true);
+      }
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Failed to resubmit pre-authorization',
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -374,6 +433,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         handlers: {
           onView: openView,
           onRefreshFromWaseel: handleRefreshFromWaseel,
+          onResubmit: openResubmit,
           onCommunication: openCommunication,
           onViewCommunications: openCommunicationsHistory,
           onCancel: openCancel
@@ -384,6 +444,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     [
       openView,
       handleRefreshFromWaseel,
+      openResubmit,
       openCommunication,
       openCommunicationsHistory,
       openCancel,
@@ -431,6 +492,20 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         onClose={() => setOpenCancelModal(false)}
         onCancelReasonChange={setCancelReason}
         onSubmit={submitCancel}
+      />
+
+      <PreAuthorizationResubmitModal
+        open={openResubmitModal}
+        row={selectedRow}
+        isSubmitting={isResubmitting}
+        onClose={() => setOpenResubmitModal(false)}
+        onSubmit={submitResubmit}
+      />
+
+      <PreviewWaseelPreAuthorizationRequests
+        open={openPreview}
+        preAuth={selectedRow}
+        onClose={() => setOpenPreview(false)}
       />
 
       <PreAuthorizationCommunicationModal

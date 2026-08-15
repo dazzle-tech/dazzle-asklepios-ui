@@ -28,6 +28,7 @@ export type EncounterInvoiceDetails = {
   financiallyClosedAt?: string;
   financiallyClosedBy?: string;
   coverageType: string;
+  patientInsuranceId?: number | null;
   eligibilityReference?: string;
   eligibilitySnapshot?: BillingEligibilitySnapshot | null;
   patient: {
@@ -87,6 +88,8 @@ export type BillingEligibilitySnapshot = {
   memberId?: string;
   policyNumber?: string;
   policyHolder?: string;
+  policyClassName?: string;
+  expiryDate?: string;
   network?: string;
   coverageStatus?: string;
   inforce?: string;

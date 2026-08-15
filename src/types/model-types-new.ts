@@ -4053,6 +4053,9 @@ export type PatientServiceAndProduct = {
   itemName?: string | null;
   itemCode?: string | null;
   priceSource?: string | null;
+  netAmount?: number | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
 };
 
 export enum ServiceSource {
@@ -5212,6 +5215,9 @@ export interface PreAuthorizationTrackingResponse {
   searchCompleted?: boolean | null;
   canCommunicate?: boolean | null;
   canCancel?: boolean | null;
+  canResubmit?: boolean | null;
+  resubmittedFromId?: number | null;
+  resubmittedAsId?: number | null;
   waseelClaimItemIds?: number[] | null;
   items?: PreAuthorizationTrackingItemResponse[] | null;
   communicationCount?: number | null;
@@ -6136,6 +6142,14 @@ export type WaseelCoverageDetails = {
   eligibilityCheckedAt?: string | null;
   benefits?: WaseelBenefitDetail[];
   benefitRules?: InsuranceBenefitRule[];
+  policyClassName?: string | null;
+  expiryDate?: string | null;
+  payerName?: string | null;
+  coverageType?: string | null;
+  relationWithSubscriber?: string | null;
+  planCode?: string | null;
+  groupName?: string | null;
+  groupNumber?: string | null;
 };
 
 export type EncounterBillingSummary = {

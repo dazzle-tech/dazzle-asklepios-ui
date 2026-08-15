@@ -29,6 +29,8 @@ export type PendingNewServiceLine = InvoiceLineAdjustmentRequest & {
   discountAmount?: number;
   taxAmount?: number;
   netAmount?: number;
+  patientShareAmount?: number;
+  insuranceShareAmount?: number;
 };
 
 type AddBillingServiceProductModalProps = {
@@ -39,6 +41,8 @@ type AddBillingServiceProductModalProps = {
   facilityId?: number | null;
   invoiceId?: number | null;
   currency?: string;
+  documentSubtype?: string | null;
+  patientInsuranceId?: number | null;
   referenceInvoiceLines?: InvoiceLineItem[];
   onAdd: (line: PendingNewServiceLine) => void;
 };
@@ -51,6 +55,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
   facilityId,
   invoiceId,
   currency = 'SAR',
+  documentSubtype,
+  patientInsuranceId,
   referenceInvoiceLines,
   onAdd
 }) => {
@@ -84,6 +90,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     invoiceDiscountAmount: number;
     invoiceTaxAmount: number;
     netAmount: number;
+    patientShareAmount: number;
+    insuranceShareAmount: number;
   } | null>(null);
 
   useEffect(() => {
@@ -115,6 +123,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       invoiceDiscountAmount: number;
       invoiceTaxAmount: number;
       netAmount: number;
+      patientShareAmount?: number;
+      insuranceShareAmount?: number;
     }) => {
       setLinePricingPreview({
         grossAmount: pricingPreview.grossAmount,
@@ -122,7 +132,11 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         itemTaxAmount: pricingPreview.itemTaxAmount,
         invoiceDiscountAmount: pricingPreview.invoiceDiscountAmount,
         invoiceTaxAmount: pricingPreview.invoiceTaxAmount,
-        netAmount: pricingPreview.netAmount
+        netAmount: pricingPreview.netAmount,
+        patientShareAmount: Number(
+          pricingPreview.patientShareAmount ?? pricingPreview.netAmount ?? 0
+        ),
+        insuranceShareAmount: Number(pricingPreview.insuranceShareAmount ?? 0)
       });
       setRecord(current => ({
         ...current,
@@ -290,24 +304,24 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         procedureId:
           billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
         quantity: Number(nextRecord.quantity ?? 1),
-        coverageType: 'SELF_PAY' as const,
-        patientInsuranceId: null,
+        coverageType: patientInsuranceId != null ? ('INSURANCE' as const) : ('SELF_PAY' as const),
+        patientInsuranceId: patientInsuranceId ?? null,
         invoiceId: invoiceId ?? undefined
       };
     },
-    [currency, encounterId, facilityId, invoiceId, patientId]
+    [currency, encounterId, facilityId, invoiceId, patientId, patientInsuranceId]
   );
 
   const applyInvoiceScopeFallback = useCallback(
-    (
-      preview: {
-        grossAmount: number;
-        itemDiscountAmount: number;
-        itemTaxAmount: number;
-        invoiceDiscountAmount: number;
-        invoiceTaxAmount: number;
-        netAmount: number;
-      },
+    <T extends {
+      grossAmount: number;
+      itemDiscountAmount: number;
+      itemTaxAmount: number;
+      invoiceDiscountAmount: number;
+      invoiceTaxAmount: number;
+      netAmount: number;
+    }>(
+      preview: T,
       lineGross: number
     ) => {
       if (
@@ -376,6 +390,11 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
             ? Number(preview.netAmount)
             : Math.max(0, lineGross - itemDiscount - invoiceDiscount + itemTax + invoiceTax);
 
+        const patientShareAmount = Number(
+          preview.patientShareAmount ?? lineNet
+        );
+        const insuranceShareAmount = Number(preview.insuranceShareAmount ?? 0);
+
         return applyInvoiceScopeFallback(
           {
             unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
@@ -384,7 +403,9 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
             itemTaxAmount: itemTax,
             invoiceDiscountAmount: invoiceDiscount,
             invoiceTaxAmount: invoiceTax,
-            netAmount: lineNet
+            netAmount: lineNet,
+            patientShareAmount,
+            insuranceShareAmount
           },
           lineGross
         );
@@ -438,16 +459,9 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         unitPrice: pricingPreview.unitPrice,
         currency
       }));
-      setLinePricingPreview({
-        grossAmount: pricingPreview.grossAmount,
-        itemDiscountAmount: pricingPreview.itemDiscountAmount,
-        itemTaxAmount: pricingPreview.itemTaxAmount,
-        invoiceDiscountAmount: pricingPreview.invoiceDiscountAmount,
-        invoiceTaxAmount: pricingPreview.invoiceTaxAmount,
-        netAmount: pricingPreview.netAmount
-      });
+      applyPricingPreview(pricingPreview);
     },
-    [currency, itemSelectConfig, record, resolvePricingPreview]
+    [applyPricingPreview, currency, itemSelectConfig, record, resolvePricingPreview]
   );
 
   const handleQuantityChange = useCallback(
@@ -476,6 +490,14 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     if (validationError) return;
 
     const itemLabel = resolveItemLabel();
+    const patientShareAmount = Number(
+      linePricingPreview?.patientShareAmount ?? linePricingPreview?.netAmount ?? 0
+    );
+    const insuranceShareAmount = Number(linePricingPreview?.insuranceShareAmount ?? 0);
+    const billedShare =
+      String(documentSubtype ?? '').toUpperCase() === 'INSURANCE_CLAIM'
+        ? insuranceShareAmount
+        : patientShareAmount;
     const line: PendingNewServiceLine = {
       tempId: `new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       action: 'ADD_NEW',
@@ -501,7 +523,9 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       taxAmount:
         Number(linePricingPreview?.itemTaxAmount ?? 0) +
         Number(linePricingPreview?.invoiceTaxAmount ?? 0),
-      netAmount: linePricingPreview?.netAmount,
+      netAmount: billedShare || linePricingPreview?.netAmount,
+      patientShareAmount,
+      insuranceShareAmount,
       currency: record.currency,
       serviceSource: 'SERVICE_AND_PRODUCT',
       notes: itemLabel,
@@ -622,6 +646,14 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           <div>
             <span>Net</span>
             <strong>{linePricingPreview.netAmount.toFixed(2)} {currency}</strong>
+          </div>
+          <div>
+            <span>Patient share</span>
+            <strong>{linePricingPreview.patientShareAmount.toFixed(2)} {currency}</strong>
+          </div>
+          <div>
+            <span>Insurance share</span>
+            <strong>{linePricingPreview.insuranceShareAmount.toFixed(2)} {currency}</strong>
           </div>
         </div>
       ) : null}
