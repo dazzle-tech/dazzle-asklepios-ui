@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
@@ -79,6 +79,25 @@ const ContactTab: React.FC<ContactTabProps> = ({
     [languages]
   );
 
+    useEffect(() => {
+      if (!localPatient?.id && !localPatient?.preferredLanguage && languageOptions.length > 0) {
+        const arabicLanguage = languageOptions.find(
+          language => language.langKey === 'arb'
+        );
+
+        if (arabicLanguage) {
+          setLocalPatient({
+            ...localPatient,
+            preferredLanguage: arabicLanguage.langKey,
+          });
+        }
+      }
+    }, [
+      localPatient?.id,
+      localPatient?.preferredLanguage,
+      languageOptions,
+      setLocalPatient,
+    ]);
 
   return (
     <Form layout="inline" fluid className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}> 
@@ -132,20 +151,20 @@ const ContactTab: React.FC<ContactTabProps> = ({
         width={170}
       />
 
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Preferred Language"
-        fieldType="select"
-        fieldName="preferredLanguage"
-        selectData={languageOptions}
-        selectDataLabel="langName"
-        selectDataValue="langKey"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable
-        width={170}
-      />
+    <MyInput
+      vr={validationResult}
+      column
+      fieldLabel="Preferred Language"
+      fieldType="select"
+      fieldName="preferredLanguage"
+      selectData={languageOptions}
+      selectDataLabel="langName"
+      selectDataValue="langKey"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      searchable
+      width={170}
+    />
 
 
       <MyInput
