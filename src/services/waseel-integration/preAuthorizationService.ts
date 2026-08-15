@@ -191,6 +191,20 @@ export const preAuthorizationApi = createApi({
       }
     }),
 
+    resubmitPreAuthorization: builder.mutation<
+      PreAuthorizationTrackingResponse,
+      { preAuthorizationId: number }
+    >({
+      query: ({ preAuthorizationId }) => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/resubmit`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
+    }),
+
     checkEncounterEligibility: builder.mutation<
       EligibilityCheckResponse,
       { encounterId: number }
@@ -272,6 +286,7 @@ export const {
   useDownloadPreAuthorizationAttachmentMutation,
   useCommunicatePreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
+  useResubmitPreAuthorizationMutation,
   useCheckEncounterEligibilityMutation,
   useRefreshEncounterPreAuthorizationMutation,
   useRefreshEncounterPreAuthorizationLocalMutation,

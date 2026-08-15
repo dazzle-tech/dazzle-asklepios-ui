@@ -4,6 +4,7 @@ import {
   useGetPreAuthorizationTrackingQuery,
   useSearchPreAuthorizationMutation,
   useCancelPreAuthorizationMutation,
+  useResubmitPreAuthorizationMutation,
   useCommunicatePreAuthorizationMutation,
   useUploadPreAuthorizationAttachmentMutation
 } from '@/services/waseel-integration/preAuthorizationService';
@@ -74,6 +75,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
 
   const [searchFromWaseel] = useSearchPreAuthorizationMutation();
   const [cancelPreAuthorization, { isLoading: isCancelling }] = useCancelPreAuthorizationMutation();
+  const [resubmitPreAuthorization] = useResubmitPreAuthorizationMutation();
   const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
@@ -227,6 +229,48 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     }
   }, [preAuthorizationRows, selectedRow]);
 
+  const handleResubmit = useCallback(
+    async (row: PreAuthorizationTrackingResponse) => {
+      if (!row.id) {
+        dispatch(notify({ msg: 'No preAuthorizationId found for this pre-authorization', sev: 'error' }));
+        return;
+      }
+
+      try {
+        dispatch(showSystemLoader());
+        const result = await resubmitPreAuthorization({
+          preAuthorizationId: Number(row.id)
+        }).unwrap();
+
+        const status = String(result.status ?? '').toUpperCase();
+        const failedAgain = status === 'FAILED' || status === 'ERROR';
+
+        dispatch(
+          notify({
+            msg: failedAgain
+              ? result.message || 'Pre-authorization resubmission was not accepted by Waseel'
+              : 'Pre-authorization resubmitted successfully',
+            sev: failedAgain ? 'error' : 'success'
+          })
+        );
+        await refetch();
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              error?.data?.detail ||
+              error?.data?.message ||
+              'Failed to resubmit pre-authorization',
+            sev: 'error'
+          })
+        );
+      } finally {
+        dispatch(hideSystemLoader());
+      }
+    },
+    [dispatch, refetch, resubmitPreAuthorization]
+  );
+
   const handleRefreshFromWaseel = useCallback(
     async (row: PreAuthorizationTrackingResponse) => {
       if (!row.approvalRequestId) {
@@ -376,7 +420,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
           onRefreshFromWaseel: handleRefreshFromWaseel,
           onCommunication: openCommunication,
           onViewCommunications: openCommunicationsHistory,
-          onCancel: openCancel
+          onCancel: openCancel,
+          onResubmit: handleResubmit
         },
         encounterMap,
         patientMap
@@ -387,6 +432,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       openCommunication,
       openCommunicationsHistory,
       openCancel,
+      handleResubmit,
       encounterMap,
       patientMap
     ]

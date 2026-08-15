@@ -1,11 +1,11 @@
 import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-import { FaRotate } from 'react-icons/fa6';
+import { FaPaperPlane, FaRotate } from 'react-icons/fa6';
 import { MdCancel, MdOutlineMessage, MdOutlineForum } from 'react-icons/md';
 
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
 
-import { canCancelPreAuthorization } from './utils';
+import { canCancelPreAuthorization, canResubmitPreAuthorization } from './utils';
 import type { PreAuthorizationRowHandlers } from './types';
 
 type PreAuthorizationRowActionsProps = PreAuthorizationRowHandlers & {
@@ -17,9 +17,11 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
   onRefreshFromWaseel,
   onCommunication,
   onViewCommunications,
-  onCancel
+  onCancel,
+  onResubmit
 }) => {
   const canCancel = row.canCancel ?? canCancelPreAuthorization(row);
+  const canResubmit = canResubmitPreAuthorization(row);
   const hasApprovalRequest = !!row.approvalRequestId;
   const canCommunicate =
     row.canCommunicate === true ||
@@ -96,6 +98,28 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
               {communicationCount > 99 ? '99+' : communicationCount}
             </span>
           )}
+        </span>
+      </Whisper>
+
+      <Whisper
+        placement="top"
+        trigger="hover"
+        container={() => document.body}
+        speaker={<Tooltip>Resubmit to Waseel</Tooltip>}
+      >
+        <span>
+          <FaPaperPlane
+            className="icons-style"
+            size={18}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (canResubmit) onResubmit(row);
+            }}
+            style={{
+              cursor: canResubmit ? 'pointer' : 'not-allowed',
+              opacity: canResubmit ? 1 : 0.35
+            }}
+          />
         </span>
       </Whisper>
 

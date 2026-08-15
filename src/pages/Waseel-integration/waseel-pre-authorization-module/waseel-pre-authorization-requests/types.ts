@@ -62,4 +62,5 @@ export type PreAuthorizationRowHandlers = {
   onCommunication: (row: PreAuthorizationTrackingResponse) => void;
   onViewCommunications: (row: PreAuthorizationTrackingResponse) => void;
   onCancel: (row: PreAuthorizationTrackingResponse) => void;
+  onResubmit: (row: PreAuthorizationTrackingResponse) => void;
 };

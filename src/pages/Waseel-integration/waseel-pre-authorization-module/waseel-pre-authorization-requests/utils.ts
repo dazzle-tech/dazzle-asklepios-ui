@@ -97,3 +97,18 @@ export const canCancelPreAuthorization = (row: PreAuthorizationTrackingResponse)
   !!row.approvalRequestId &&
   !row.isCancelled &&
   !['CANCELLED', 'REJECTED', 'FAILED'].includes(String(row.status ?? '').toUpperCase());
+
+export const canResubmitPreAuthorization = (row: PreAuthorizationTrackingResponse) => {
+  if (row.canResubmit === true) return true;
+  if (row.canResubmit === false) return false;
+
+  const status = String(row.status ?? '').toUpperCase();
+  const neverAcceptedByPayer =
+    !row.approvalRequestId && !row.approvalResponseId && !row.preAuthRefNo;
+
+  return (
+    !row.isCancelled &&
+    (status === 'FAILED' || status === 'ERROR') &&
+    neverAcceptedByPayer
+  );
+};

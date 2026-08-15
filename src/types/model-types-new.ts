@@ -5212,6 +5212,7 @@ export interface PreAuthorizationTrackingResponse {
   searchCompleted?: boolean | null;
   canCommunicate?: boolean | null;
   canCancel?: boolean | null;
+  canResubmit?: boolean | null;
   waseelClaimItemIds?: number[] | null;
   items?: PreAuthorizationTrackingItemResponse[] | null;
   communicationCount?: number | null;
