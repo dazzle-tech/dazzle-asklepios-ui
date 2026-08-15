@@ -80,6 +80,18 @@ const EligibilitySnapshotPanel: React.FC<EligibilitySnapshotPanelProps> = ({
             <Text muted>Policy holder</Text>
             <Text>{snapshot.policyHolder ?? '-'}</Text>
           </div>
+          {snapshot.policyClassName ? (
+            <div>
+              <Text muted>Policy class</Text>
+              <Text>{snapshot.policyClassName}</Text>
+            </div>
+          ) : null}
+          {snapshot.expiryDate ? (
+            <div>
+              <Text muted>Expiry</Text>
+              <Text>{snapshot.expiryDate}</Text>
+            </div>
+          ) : null}
           <div>
             <Text muted>Network</Text>
             <Text>{snapshot.network ?? '-'}</Text>

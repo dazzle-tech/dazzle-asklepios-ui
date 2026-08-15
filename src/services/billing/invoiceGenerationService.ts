@@ -87,6 +87,8 @@ export type BillingEligibilitySnapshot = {
   memberId?: string;
   policyNumber?: string;
   policyHolder?: string;
+  policyClassName?: string;
+  expiryDate?: string;
   network?: string;
   coverageStatus?: string;
   inforce?: string;

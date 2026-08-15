@@ -301,8 +301,22 @@ const WaseelCoverageDetailsView: React.FC<WaseelCoverageDetailsViewProps> = ({
           'policyHolder'
         )}
         {renderMetric(
+          'Policy Class',
+          waseelCoverage.policyClassName ?? '-',
+          'policyClassName'
+        )}
+        {renderMetric(
+          'Expiry Date',
+          waseelCoverage.expiryDate ?? '-',
+          'expiryDate'
+        )}
+        {renderMetric(
           'Network',
-          waseelCoverage.network ?? '-',
+          formatNetworkLabel(
+            preferredRule?.networkType,
+            preferredRule?.itemName,
+            waseelCoverage.network
+          ),
           'network'
         )}
         {renderMetric(
@@ -337,6 +351,18 @@ const WaseelCoverageDetailsView: React.FC<WaseelCoverageDetailsViewProps> = ({
               'maximumBenefit'
             )
           : null}
+        {renderMetric(
+          'Plan Code',
+          waseelCoverage.planCode ?? '-',
+          'planCode'
+        )}
+        {renderMetric(
+          'Group',
+          [waseelCoverage.groupName, waseelCoverage.groupNumber]
+            .filter(Boolean)
+            .join(' · ') || '-',
+          'group'
+        )}
       </div>
 
       <div style={{ marginBottom: 12 }}>

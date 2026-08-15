@@ -116,9 +116,72 @@ export const selectPreferredBillingBenefitRule = (
   );
 };
 
+const firstNonBlank = (
+  ...values: Array<string | number | null | undefined>
+): string | undefined => {
+  for (const value of values) {
+    if (value == null) {
+      continue;
+    }
+
+    const text = String(value).trim();
+    if (text) {
+      return text;
+    }
+  }
+
+  return undefined;
+};
+
+export const overlayPatientInsuranceWithWaseelCoverage = <
+  T extends Record<string, any>
+>(
+  insurance: T | null | undefined,
+  coverage?: WaseelCoverageDetails | null
+): T | null | undefined => {
+  if (!insurance || !coverage) {
+    return insurance;
+  }
+
+  return {
+    ...insurance,
+    memberCardId:
+      firstNonBlank(coverage.memberId, insurance.memberCardId) ??
+      insurance.memberCardId,
+    policyNumber:
+      firstNonBlank(coverage.policyNumber, insurance.policyNumber) ??
+      insurance.policyNumber,
+    policyHolderName:
+      firstNonBlank(coverage.policyHolder, insurance.policyHolderName) ??
+      insurance.policyHolderName,
+    policyClassName:
+      firstNonBlank(coverage.policyClassName, insurance.policyClassName) ??
+      insurance.policyClassName,
+    expirationDate:
+      firstNonBlank(coverage.expiryDate, insurance.expirationDate) ??
+      insurance.expirationDate,
+    planCode:
+      firstNonBlank(coverage.planCode, insurance.planCode) ??
+      insurance.planCode,
+    groupName:
+      firstNonBlank(coverage.groupName, insurance.groupName) ??
+      insurance.groupName,
+    groupNumber:
+      firstNonBlank(coverage.groupNumber, insurance.groupNumber) ??
+      insurance.groupNumber,
+    payerName:
+      firstNonBlank(coverage.payerName, insurance.payerName) ??
+      insurance.payerName
+  };
+};
+
 export const resolveDisplayedCopaymentPercent = (
   coverage: WaseelCoverageDetails
 ): number | null => {
+  if (coverage.copaymentPercent != null) {
+    return Number(coverage.copaymentPercent);
+  }
+
   const preferredRule = selectPreferredBillingBenefitRule(
     coverage.benefitRules
   );
@@ -127,12 +190,16 @@ export const resolveDisplayedCopaymentPercent = (
     return Number(preferredRule.patientCopaymentPercentage);
   }
 
-  return coverage.copaymentPercent ?? null;
+  return null;
 };
 
 export const resolveDisplayedCopaymentCap = (
   coverage: WaseelCoverageDetails
 ): number | null => {
+  if (coverage.copaymentCap != null) {
+    return Number(coverage.copaymentCap);
+  }
+
   const preferredRule = selectPreferredBillingBenefitRule(
     coverage.benefitRules
   );
@@ -141,7 +208,7 @@ export const resolveDisplayedCopaymentCap = (
     return Number(preferredRule.patientMaximumCopayment);
   }
 
-  return coverage.copaymentCap ?? null;
+  return null;
 };
 
 export const formatNetworkLabel = (

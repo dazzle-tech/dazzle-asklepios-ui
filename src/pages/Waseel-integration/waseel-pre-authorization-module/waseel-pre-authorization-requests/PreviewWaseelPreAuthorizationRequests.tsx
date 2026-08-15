@@ -63,7 +63,9 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
         preAuth?.disposition ??
         '-',
       validUntil: preAuth?.validUntil ?? '-',
-      status: preAuth?.status ?? preAuth?.outcome ?? '-'
+      status: preAuth?.status ?? preAuth?.outcome ?? '-',
+      resubmittedFromId: preAuth?.resubmittedFromId ?? '-',
+      resubmittedAsId: preAuth?.resubmittedAsId ?? '-'
     });
   }, [preAuth]);
 
@@ -187,7 +189,9 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                       color={
                         previewData.status === 'APPROVED' || previewData.status === 'OK'
                           ? '#28a745'
-                          : previewData.status === 'REJECTED'
+                          : previewData.status === 'REJECTED' ||
+                              previewData.status === 'FAILED' ||
+                              previewData.status === 'Error'
                             ? '#dc3545'
                             : previewData.status === 'PENDING' ||
                                 previewData.status === 'Queued'
@@ -197,6 +201,28 @@ const PreviewWaseelPreAuthorizationRequests: React.FC<
                     />
                   </div>
                 </Col>
+                {previewData.resubmittedFromId !== '-' ? (
+                  <Col md={8}>
+                    <MyInput
+                      fieldType="text"
+                      fieldLabel="Resubmitted From"
+                      record={previewData}
+                      fieldName="resubmittedFromId"
+                      disabled
+                    />
+                  </Col>
+                ) : null}
+                {previewData.resubmittedAsId !== '-' ? (
+                  <Col md={8}>
+                    <MyInput
+                      fieldType="text"
+                      fieldLabel="Resubmitted As"
+                      record={previewData}
+                      fieldName="resubmittedAsId"
+                      disabled
+                    />
+                  </Col>
+                ) : null}
               </Row>
             </Form>
           }
