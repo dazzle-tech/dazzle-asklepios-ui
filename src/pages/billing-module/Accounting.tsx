@@ -158,12 +158,16 @@ const Accounting: React.FC = () => {
 
   useEffect(() => {
     if (selectedEncounterId == null) {
+      setCoverageType('SELF_PAY');
+      setSelectedInsuranceId(null);
       return;
     }
 
     if (encounterInvoiceDetails == null) {
-      setCoverageType('SELF_PAY');
-      setSelectedInsuranceId(null);
+      return;
+    }
+
+    if (Number(encounterInvoiceDetails.encounterId) !== Number(selectedEncounterId)) {
       return;
     }
 
@@ -172,15 +176,22 @@ const Accounting: React.FC = () => {
     );
     setCoverageType(resolvedCoverage);
 
+    const encounterInsuranceId = toNumber(
+      (selectedEncounter as { patientInsuranceId?: number } | null)?.patientInsuranceId,
+      0
+    );
+
     const insuranceId =
-      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ?? null;
+      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ??
+      encounterInvoiceDetails.patientInsuranceId ??
+      (encounterInsuranceId > 0 ? encounterInsuranceId : null);
 
     if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
       setSelectedInsuranceId(Number(insuranceId));
     } else if (resolvedCoverage === 'SELF_PAY') {
       setSelectedInsuranceId(null);
     }
-  }, [selectedEncounterId, encounterInvoiceDetails]);
+  }, [selectedEncounterId, encounterInvoiceDetails, selectedEncounter]);
 
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });

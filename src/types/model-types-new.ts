@@ -4053,6 +4053,9 @@ export type PatientServiceAndProduct = {
   itemName?: string | null;
   itemCode?: string | null;
   priceSource?: string | null;
+  netAmount?: number | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
 };
 
 export enum ServiceSource {

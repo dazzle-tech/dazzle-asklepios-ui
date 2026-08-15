@@ -28,6 +28,7 @@ export type EncounterInvoiceDetails = {
   financiallyClosedAt?: string;
   financiallyClosedBy?: string;
   coverageType: string;
+  patientInsuranceId?: number | null;
   eligibilityReference?: string;
   eligibilitySnapshot?: BillingEligibilitySnapshot | null;
   patient: {
