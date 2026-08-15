@@ -186,7 +186,7 @@ const DiscountCreditNoteModal: React.FC<DiscountCreditNoteModalProps> = ({
   };
 
   const canPreview = buildRequest() != null;
-  const canSubmit = canPreview && preview != null;
+  const canSubmit = canPreview;
 
   const previewColumns = [
     {
@@ -260,6 +260,8 @@ const DiscountCreditNoteModal: React.FC<DiscountCreditNoteModalProps> = ({
                 value={documentItemId}
                 onChange={value => setDocumentItemId(value as number | null)}
                 placeholder="Select invoice line"
+                container={() => document.body}
+                preventOverflow
               />
               {selectedLine ? (
                 <Text muted size="sm">

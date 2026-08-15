@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, Modal, SelectPicker, Text } from 'rsuite';
+import { Checkbox, Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -55,6 +55,7 @@ type InvoiceAdjustmentModalProps = {
   patientId?: number | null;
   encounterId?: number | null;
   facilityId?: number | null;
+  patientInsuranceId?: number | null;
   loading?: boolean;
   loadingLines?: boolean;
   onClose: () => void;
@@ -157,6 +158,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
   patientId,
   encounterId,
   facilityId,
+  patientInsuranceId,
   loading = false,
   loadingLines = false,
   onClose,
@@ -240,8 +242,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         Number(draft.quantity ?? 0),
         Number(draft.unitPrice ?? 0)
       );
-      const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - projectedNet));
-      return sum + credit;
+      return sum + Math.max(0, oldNet - projectedNet);
     }, 0);
   }, [creditDrafts, invoiceLines]);
 
@@ -278,13 +279,23 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         const line = invoiceLines.find(item => item.id === draft.lineId);
         if (!line) return true;
 
-        if (draft.action !== 'PARTIAL_CREDIT') {
-          return true;
+        if (draft.action === 'PARTIAL_CREDIT') {
+          const amount = Number(draft.amount ?? 0);
+          const maxLineCredit = Number(line.netAmount ?? line.remainingAmount ?? 0);
+          return amount > 0.0001 && amount <= maxLineCredit + 0.0001;
         }
 
-        const amount = Number(draft.amount ?? 0);
-        const maxLineCredit = Number(line.netAmount ?? line.remainingAmount ?? 0);
-        return amount > 0.0001 && amount <= maxLineCredit + 0.0001;
+        if (draft.action === 'REDUCE') {
+          const oldNet = lineNetAmount(line);
+          const projectedNet = projectLineNetAfterChange(
+            line,
+            Number(draft.quantity ?? 0),
+            Number(draft.unitPrice ?? 0)
+          );
+          return oldNet - projectedNet > 0.0001;
+        }
+
+        return true;
       }),
     [creditDrafts, invoiceLines]
   );
@@ -315,6 +326,12 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
     }, 0);
 
     return addTotal + increaseTotal + pendingNewServices.reduce((sum, line) => {
+      if (invoice?.documentSubtype === 'INSURANCE_CLAIM' && line.insuranceShareAmount != null) {
+        return sum + Number(line.insuranceShareAmount);
+      }
+      if (line.patientShareAmount != null) {
+        return sum + Number(line.patientShareAmount);
+      }
       if (line.netAmount != null) {
         return sum + Number(line.netAmount);
       }
@@ -444,24 +461,30 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         const draft = creditDrafts.find(item => item.lineId === row.id);
         if (!draft) return '-';
         return (
-          <SelectPicker
-            cleanable={false}
-            searchable={false}
-            size="sm"
-            data={creditActionOptions}
+          <select
             value={draft.action}
             disabled={!draft.enabled}
-            onChange={value =>
+            onChange={event =>
               setCreditDrafts(current =>
                 current.map(item =>
                   item.lineId === row.id
-                    ? { ...item, action: (value as CreditLineDraft['action']) ?? 'REMOVE' }
+                    ? {
+                        ...item,
+                        action: (event.target.value as CreditLineDraft['action']) ?? 'REMOVE'
+                      }
                     : item
                 )
               )
             }
+            className="billing-invoices__inline-input"
             style={{ width: 180 }}
-          />
+          >
+            {creditActionOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         );
       }
     },
@@ -819,7 +842,8 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
           )}
           {!creditWithinLineLimits && (
             <Form.HelpText style={{ color: '#e74c3c' }}>
-              Partial credit exceeds the service line amount.
+              Partial credit must be within the line amount, and qty/price updates must reduce the
+              current line.
             </Form.HelpText>
           )}
         </Form>
@@ -855,6 +879,8 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         facilityId={facilityId}
         invoiceId={invoice?.id ?? null}
         currency={currency}
+        documentSubtype={invoice?.documentSubtype}
+        patientInsuranceId={patientInsuranceId}
         referenceInvoiceLines={invoiceLines}
         onAdd={line => setPendingNewServices(current => [...current, line])}
       />

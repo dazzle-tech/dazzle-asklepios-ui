@@ -219,6 +219,8 @@ export type PreviewCatalogItemPricingResult = {
   itemTaxAmount?: number | null;
   invoiceDiscountAmount?: number | null;
   invoiceTaxAmount?: number | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
 };
 
 export type CreateAdjustmentRequest = {
