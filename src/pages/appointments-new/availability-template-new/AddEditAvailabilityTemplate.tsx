@@ -203,7 +203,7 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
     if (!record?.facilityId) { dispatch(notify({ msg: 'Facility is required', sev: 'warning' })); return; }
     if (!record?.templateType) { dispatch(notify({ msg: 'Template Type is required', sev: 'warning' })); return; }
     if (!record?.departmentId) { dispatch(notify({ msg: 'Department is required', sev: 'warning' })); return; }
-    if (record?.requirePractitioner && !record?.defaultPractitionerId) {
+    if (!record?.defaultPractitionerId) {
       dispatch(notify({ msg: 'Default Practitioner is required', sev: 'warning' }));
       return;
     }
@@ -361,8 +361,8 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
   // ─── Form ─────────────────────────────────────────────────────────────────────
   const formContent = () => (
     <div className="availability-template-modal">
-      <Row>
-        <Col md={12}>
+      <Row className="availability-template-top-row">
+        <Col md={12} className="availability-template-column--left">
           <SectionContainer
             title="Basic Information"
             content={
@@ -441,16 +441,13 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
                   <Col md={12}>
                     <MyInput fieldName="versionNo" fieldType="number" record={record} setRecord={setRecord} width="100%" disabled showZero/>
                   </Col>
-                  <Col md={12}>
-                    <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} />
-                  </Col>
                 </Row>
               </Form>
             }
           />
         </Col>
 
-        <Col md={12}>
+        <Col md={12} className="availability-template-column--right">
           <SectionContainer
             title="Department Details"
             content={
@@ -477,11 +474,12 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
                 <MyInput width="100%" fieldType="number" fieldLabel="Number Of Resources" fieldName="numberOfResourcesExpected" record={record} setRecord={setRecord} />
                 <Row>
                   <Col md={12}>
-                    <MyInput width="100%" fieldType="check" fieldName="requirePractitioner" record={record} setRecord={setRecord} showLabel={false} />
+                    <MyInput width="100%" fieldType="check" fieldName="requirePractitioner" record={record} setRecord={setRecord} showLabel={false} disabled />
                   </Col>
-                  {record['requirePractitioner'] && (
+                 
                     <Col md={12}>
                       <MyInput
+                      required
                         key={`practitioner-${record?.departmentId}`}
                         width="100%"
                         fieldType="selectPagination"
@@ -501,9 +499,18 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
                         }}
                       />
                     </Col>
-                  )}
+                  
                 </Row>
                 <MyInput width="100%" fieldType="check" fieldName="requirePreAssessment" record={record} setRecord={setRecord} showLabel={false} />
+              </Form>
+            }
+          />
+          <SectionContainer
+            title="Appointment Details"
+            content={
+              <Form fluid>
+                <MyInput width="100%" fieldType="check" fieldName="requireConfirmation" record={record} setRecord={setRecord} showLabel={false} />
+                <MyInput width="100%" fieldType="check" fieldName="allowWalkInBooking" record={record} setRecord={setRecord} showLabel={false} />
               </Form>
             }
           />

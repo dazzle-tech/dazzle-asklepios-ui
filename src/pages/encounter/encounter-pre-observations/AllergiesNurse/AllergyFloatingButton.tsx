@@ -13,73 +13,101 @@ import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medi
 import './styles.less';
 
 import Draggable from 'react-draggable';
-import { FaTimes } from 'react-icons/fa'; // أيقونة X
+import { FaTimes } from 'react-icons/fa';
+import DetailsModal from '@/pages/encounter/encounter-pre-observations-new/AllergiesNurse/DetailsModal';
+import MyButton from '@/components/MyButton/MyButton';
 
-const AllergyFloatingButton = ({ patient }: { patient: any }) => {
+const AllergyFloatingButton = ({ patient, encounter }: { patient: any; encounter?: any }) => {
+  const [openAddAllergy, setOpenAddAllergy] = useState(false);
+  const [selectedAllergy, setSelectedAllergy] = useState<any>({});
   const [visible, setVisible] = useState(true);
   const [wasDragged, setWasDragged] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLDivElement>(null);
 
   const {
-      data: allergiesListResponse,
-      refetch: fetchallerges,
-      isLoading
-    } = useGetPatientAllergiesByPatientIdQuery(
-      {
-        patientId: patient?.id,
-      },
-      {
-        skip: !patient?.id
-      }
-    );
-     const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
+    data: allergiesListResponse,
+    refetch: fetchallerges,
+    isLoading
+  } = useGetPatientAllergiesByPatientIdQuery(
+    {
+      patientId: patient?.id,
+    },
+    {
+      skip: !patient?.id
+    }
+  );
+  const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
 
-   const { data: allergensListResponse } = useGetAllergensQuery({});
-     const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
+  const { data: allergensListResponse } = useGetAllergensQuery({});
+  const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
 
- const tableColumns: any[] = [
-      {
-        key: 'allergenType',
-        title: <Translate>Allergy Type</Translate>,
-        render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
-      },
-      {
-        key: 'allergen',
-        title: <Translate>Allergen</Translate>,
-        render: (rowData: PatientAllergiesResponseVM) => {
-          if (rowData?.allergenId && allergensListResponse?.data) {
-            const allergen = allergensListResponse.data.find(
-              (item: any) => item.id === rowData.allergenId
-            );
-            return <p>{allergen?.name ?? '-'}</p>;
-          }
-  
-          else if (rowData?.medicationClassId && medicationClassesListResponse) {
-            const medicationClass = medicationClassesListResponse.find(
-              (item: any) => item.id === rowData.medicationClassId
-            );
-            return <p>{medicationClass?.name ?? '-'}</p>;
-          }
-  
-          return <p>-</p>;
+  const tableColumns: any[] = [
+    {
+      key: 'allergenType',
+      title: <Translate>Allergy Type</Translate>,
+      render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
+    },
+    {
+      key: 'allergen',
+      title: <Translate>Allergen</Translate>,
+      render: (rowData: PatientAllergiesResponseVM) => {
+        if (rowData?.allergenId && allergensListResponse?.data) {
+          const allergen = allergensListResponse.data.find(
+            (item: any) => item.id === rowData.allergenId
+          );
+          return <p>{allergen?.name ?? '-'}</p>;
         }
-      },
-      {
-        key: 'severity',
-        title: <Translate>Severity</Translate>,
-        render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
-      },
-    ].filter(Boolean);
+
+        else if (rowData?.medicationClassId && medicationClassesListResponse) {
+          const medicationClass = medicationClassesListResponse.find(
+            (item: any) => item.id === rowData.medicationClassId
+          );
+          return <p>{medicationClass?.name ?? '-'}</p>;
+        }
+
+        return <p>-</p>;
+      }
+    },
+    {
+      key: 'severity',
+      title: <Translate>Severity</Translate>,
+      render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
+    },
+  ].filter(Boolean);
 
   return (
     <>
-       {visible ? (
+      {visible ? (
         <Draggable nodeRef={fabRef}>
           <div ref={fabRef} className="allergy-floating-fab">
             <div className="fab-header">
-              <span>Allergies</span>
-              <FaTimes className="close-icon" onClick={() => setVisible(false)} />
+              <div className="fab-title">
+                Allergies
+              </div>
+
+              <div className="fab-header-actions">
+
+                <MyButton
+                  size="xs"
+                  className="fab-add-btn"
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setSelectedAllergy({});
+                    setOpenAddAllergy(true);
+                  }}
+                >
+                  Add
+                </MyButton>
+
+                <FaTimes
+                  className="close-icon"
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={() => setVisible(false)}
+                />
+
+              </div>
             </div>
             <div className="table-scroll-wrapper">
               <MyTable
@@ -115,6 +143,19 @@ const AllergyFloatingButton = ({ patient }: { patient: any }) => {
           </div>
         </Draggable>
       )}
+
+
+      <DetailsModal
+        open={openAddAllergy}
+        setOpen={setOpenAddAllergy}
+        allerges={selectedAllergy}
+        setAllerges={setSelectedAllergy}
+        edit={false}
+        patient={patient}
+        encounter={encounter}
+        fetchallerges={fetchallerges}
+        openToAdd={openAddAllergy}
+      />
     </>
   );
 };

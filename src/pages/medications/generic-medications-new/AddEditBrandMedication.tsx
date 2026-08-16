@@ -1,5 +1,6 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import AddEditUom from '@/pages/setup/uom-group/AddEditUom';
@@ -190,6 +191,15 @@ const AddEditBrandMedication = ({
                   selectData={currencyOptions ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"
+                  record={brandMedication}
+                  setRecord={setBrandMedication}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <BillingRuleSelect
+                  billingItemType="MEDICATION"
                   record={brandMedication}
                   setRecord={setBrandMedication}
                 />

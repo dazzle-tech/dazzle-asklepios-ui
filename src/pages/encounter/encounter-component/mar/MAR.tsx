@@ -487,6 +487,7 @@ const MAR = () => {
           />
         )}
         <MyInput
+          className="show-cancelled"
           column
           fieldName=""
           fieldLabel={<Translate>Show Cancelled</Translate>}

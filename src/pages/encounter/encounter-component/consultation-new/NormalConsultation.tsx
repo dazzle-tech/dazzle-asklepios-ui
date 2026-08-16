@@ -208,7 +208,7 @@ const NormalConsultation = props => {
   const refetch = useCallback(() => {
     const safeRefetch = (query: any) => {
       if (!query) return;
-      
+
       const isInitialized =
         query.status !== 'uninitialized' &&
         query.isUninitialized !== true &&
@@ -355,6 +355,14 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'consultationType',
+        title: <Translate>CONSULTATION TYPE</Translate>,
+        flexGrow: 1,
+        render: (rowData: Consultation) => (
+          <span>{formatEnumString(String(rowData.consultationType ?? ''))}</span>
+        )
+      },
+      {
         key: 'created',
         title: <Translate>Created By / At</Translate>,
         expandable: true,
@@ -442,7 +450,7 @@ const NormalConsultation = props => {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        expandable: true,
+        expandable: false,
         render: row => {
           const text = row.responseText || '';
           const MAX = 20;
@@ -571,8 +579,11 @@ const NormalConsultation = props => {
                 setOpenDetailsModal(true);
               }}
               className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
-              style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
-            />
+              style={{
+                opacity: edit ? 0.5 : 1,
+                pointerEvents: edit ? 'none' : 'auto',
+                cursor: edit ? 'not-allowed' : 'pointer',
+              }} />
           );
         }
       }
@@ -675,7 +686,7 @@ const NormalConsultation = props => {
                   <span className="print-label">Print</span>
                 </MyButton> */}
 
-                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+                <Checkbox  className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                   <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>

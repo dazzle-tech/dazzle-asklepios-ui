@@ -45,17 +45,17 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
     cancellationReason: ''
   });
 
-const { data: medicationsResponse, isLoading } =
-  useGetCurrentMedicationsQuery(
-    {
-      patientId: patient?.id,
-      ...pagination,
-      showCancelled
-    },
-    {
-      skip: !patient?.id
-    }
-  );
+  const { data: medicationsResponse, isLoading } =
+    useGetCurrentMedicationsQuery(
+      {
+        patientId: patient?.id,
+        ...pagination,
+        showCancelled
+      },
+      {
+        skip: !patient?.id
+      }
+    );
 
   const [cancelCurrentMedication] =
     useCancelCurrentMedicationMutation();
@@ -101,42 +101,42 @@ const { data: medicationsResponse, isLoading } =
     setOpenCancelModal(true);
   };
 
-    const handleCancel = async () => {
-      try {
-        await cancelCurrentMedication({
-          id: cancelObject.id,
-          cancellationReason: cancelObject.cancellationReason
-        }).unwrap();
+  const handleCancel = async () => {
+    try {
+      await cancelCurrentMedication({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Current Medication cancelled successfully.',
-            sev: 'success'
-          })
-        );
+      dispatch(
+        notify({
+          msg: 'Current Medication cancelled successfully.',
+          sev: 'success'
+        })
+      );
 
-        setOpenCancelModal(false);
+      setOpenCancelModal(false);
 
-        setCancelObject({
-          id: null,
-          status: '',
-          cancellationReason: ''
-        });
-      } catch (error: any) {
-        const errorMessage =
-          error?.data?.message ||
-          error?.data?.detail ||
-          error?.error ||
-          'Failed to cancel Current Medication.';
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Current Medication.';
 
-        dispatch(
-          notify({
-            msg: errorMessage,
-            sev: 'error'
-          })
-        );
-      }
-    };
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setPagination(prev => ({
@@ -155,96 +155,102 @@ const { data: medicationsResponse, isLoading } =
     }));
   };
 
-const tableData = useMemo(
-  () => medicationsResponse?.data ?? [],
-  [medicationsResponse?.data]
-);
+  const tableData = useMemo(
+    () => medicationsResponse?.data ?? [],
+    [medicationsResponse?.data]
+  );
 
-const totalCount = medicationsResponse?.totalCount ?? 0;
+  const totalCount = medicationsResponse?.totalCount ?? 0;
 
 
-const columns = [
-  {
-    key: 'medication',
-    title: 'MEDICATION NAME',
-    flexGrow: 4,
-    render: (row: any) =>
-      activeIngredientMap.get(
-        String(row.activeIngredientId)
-      ) ?? ''
-  },
-  {
-    key: 'instructions',
-    title: 'INSTRUCTIONS',
-    flexGrow: 5,
-    render: (row: any) => row.instructions ?? ''
-  },
-  {
-    key: 'startDate',
-    title: 'START DATE',
-    flexGrow: 3,
-    render: (row: any) =>
-      row?.startDate
-        ? new Date(row.startDate).toLocaleDateString()
-        : ''
-  },
-{
-  key: 'status',
-  title: <Translate>STATUS</Translate>,
-  flexGrow: 3,
-  render: (row: any) => {
-    const status = row?.status ?? 'ACTIVE';
-    return (
-      <MyBadgeStatus
-        contant={formatEnumString(status)}
-        color={
-          status === 'CANCELLED'
-            ? '#dc3545'
-            : status === 'ACTIVE'
-              ? '#28a745'
-              : '#6c757d'
-        }
-      />
-    );
-  }
-},
-  {
-    key: 'createdDate',
-    title: <Translate>CREATED AT / BY</Translate>,
-    expandable: true,
-    render: (row: any) => (
-      <UserDateCell
-        login={row?.createdBy}
-        date={row?.createdDate}
-      />
-    )
-  },
-  {
-    key: 'lastModifiedDate',
-    title: <Translate>UPDATED AT / BY</Translate>,
-    expandable: true,
-    render: (row: any) => (
-      <UserDateCell
-        login={row?.lastModifiedBy}
-        date={row?.lastModifiedDate}
-      />
-    )
-  },
-  {
-    key: 'cancelledDate',
-    title: <Translate>CANCELLED AT / BY</Translate>,
-    expandable: true,
-    render: (row: any) =>
-      row?.status?.toString?.() === 'CANCELLED' ? (
+  const columns = [
+    {
+      key: 'medication',
+      title: 'MEDICATION NAME',
+      flexGrow: 4,
+      render: (row: any) =>
+        activeIngredientMap.get(
+          String(row.activeIngredientId)
+        ) ?? ''
+    },
+    {
+      key: 'dosage',
+      title: 'DOSAGE',
+      flexGrow: 2,
+      render: (row: any) => (row.dosage ?? row.unit ? `${row.dosage ?? ''} ${formatEnumString(row.unit) ?? ''}`.trim() : '')
+    },
+    {
+      key: 'frequency',
+      title: 'FREQUENCY',
+      flexGrow: 3,
+      render: (row: any) => row.frequency ? formatEnumString(row.frequency) : ''
+    },
+    {
+      key: 'startDate',
+      title: 'START DATE',
+      flexGrow: 3,
+      render: (row: any) =>
+        row?.startDate
+          ? new Date(row.startDate).toLocaleDateString()
+          : ''
+    },
+    {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 3,
+      render: (row: any) => {
+        const status = row?.status ?? 'ACTIVE';
+        return (
+          <MyBadgeStatus
+            contant={formatEnumString(status)}
+            color={
+              status === 'CANCELLED'
+                ? '#dc3545'
+                : status === 'ACTIVE'
+                  ? '#28a745'
+                  : '#6c757d'
+            }
+          />
+        );
+      }
+    },
+    {
+      key: 'createdDate',
+      title: <Translate>CREATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
         <UserDateCell
-          login={row?.cancelledBy}
-          date={row?.cancelledDate}
+          login={row?.createdBy}
+          date={row?.createdDate}
         />
-      ) : (
-        <span>-</span>
       )
-  },
-  {
+    },
+    {
+      key: 'lastModifiedDate',
+      title: <Translate>UPDATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
+    },
+    {
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) =>
+        row?.status?.toString?.() === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        ) : (
+          <span>-</span>
+        )
+    },
+    {
       key: 'cancellationReason',
       title: <Translate>CANCELLATION REASON</Translate>,
       expandable: true,
@@ -259,9 +265,9 @@ const columns = [
         ) : (
           '-'
         )
-  },
-  ...(!toShowData
-    ? [
+    },
+    ...(!toShowData
+      ? [
         {
           key: 'actions',
           title: '',
@@ -281,18 +287,26 @@ const columns = [
                 {status !== 'CANCELLED' && (
                   <>
                     <MdModeEdit
-                      className="icons-style"
+                      className="icons-style view-only-action-edit-delete-encounter"
                       size={22}
                       fill="var(--primary-gray)"
                       onClick={() =>
                         handleEdit(row)
                       }
+                      style={{
+                        opacity: edit ? 0.5 : 1,
+                        pointerEvents: edit ? 'none' : 'auto',
+                        cursor: edit ? 'not-allowed' : 'pointer',
+                      }}
                     />
 
                     <MdDelete
                       size={22}
+                      className="view-only-action-edit-delete-encounter"
                       style={{
-                        cursor: 'pointer',
+                        opacity: edit ? 0.5 : 1,
+                        pointerEvents: edit ? 'none' : 'auto',
+                        cursor: edit ? 'not-allowed' : 'pointer',
                         color:
                           'var(--rs-red-500, #f44336)'
                       }}
@@ -308,8 +322,8 @@ const columns = [
           }
         }
       ]
-    : [])
-];
+      : [])
+  ];
 
   return (
     <div className="medical-container-div">
@@ -331,7 +345,7 @@ const columns = [
         }
         content={
           <>
-            {!toShowData && (
+            
               <div className="margin-bottom-10">
                 <MyInput
                   fieldType="check"
@@ -346,7 +360,7 @@ const columns = [
                   }}
                 />
               </div>
-            )}
+           
 
             <MyTable
               height={450}

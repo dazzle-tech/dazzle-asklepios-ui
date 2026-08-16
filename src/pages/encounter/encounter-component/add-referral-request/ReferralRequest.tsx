@@ -15,7 +15,7 @@ import {
 } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newReferralRequest } from '@/types/model-types-constructor-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom';
@@ -271,15 +271,14 @@ const ReferralRequest = () => {
               : null,
         toDepartmentId: referral?.toDepartmentId ? Number(referral.toDepartmentId) : null,
         referralReason: referral.referralReason,
-        priority: referral.priority,
-        status: referral.status ?? 'PENDING'
+        priority: referral.priority
       };
 
       if (referral?.id) {
         await updateReferral({ id: referral.id, data: payload }).unwrap();
         dispatch(notify({ msg: 'Referral updated successfully', sev: 'success' }));
       } else {
-        await createReferral(payload as any).unwrap();
+        await createReferral({ ...payload, status: 'REQUESTED' } as any).unwrap();
         dispatch(notify({ msg: 'Referral created successfully', sev: 'success' }));
       }
 
@@ -288,7 +287,7 @@ const ReferralRequest = () => {
       refetch();
       return true;
     } catch (err: any) {
-      handleCrudError(err, dispatch, REFERRAL_ERROR_MAP);
+      dispatch(notify({ msg: extractErrorMessage(err) || 'Save Failed', sev: 'warning' }));
       return false;
     } finally {
       dispatch(hideSystemLoader());
@@ -412,6 +411,7 @@ const ReferralRequest = () => {
       align: 'center',
       render: (rowData: any) => (
         <MdModeEdit
+        className="view-only-action-edit-delete-encounter"
           className="icons-style"
           title="Edit"
           size={24}

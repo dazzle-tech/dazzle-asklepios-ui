@@ -12,7 +12,13 @@ import {
   useCreateBulkPatientServicesOrProductsMutation,
   useGetPatientServicesAndProductsByEncounterAndSourceQuery,
 } from '@/services/encounters/patientServicesAndProductsService';
-import { PatientServiceProductCreateDTO, ServiceSource } from '@/types/model-types-new';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage
+} from '@/utils/billingRuleEvaluationUtils';
+import { PatientServiceProductCreateDTO, ServiceSource, BillingEventType } from '@/types/model-types-new';
 import { newPatientServiceProductCreateDTO } from '@/types/model-types-constructor-new';
 
 type Props = {
@@ -68,6 +74,7 @@ const AddBulkServicesToConsultationModal = ({
 
   const [createBulkPatientServicesOrProducts, { isLoading: isSaving }] =
     useCreateBulkPatientServicesOrProductsMutation();
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
 
   const {
     data: existingServicesResponse,
@@ -86,12 +93,19 @@ const AddBulkServicesToConsultationModal = ({
     }
   );
 
-  const services = activeServicesResponse?.data ?? [];
-  const existingServices = existingServicesResponse?.data ?? [];
+  const services = useMemo(
+    () => activeServicesResponse?.data ?? [],
+    [activeServicesResponse?.data]
+  );
+
+  const existingServices = useMemo(
+    () => existingServicesResponse?.data ?? [],
+    [existingServicesResponse?.data]
+  );
 
   const selectedServicesPreview = useMemo(() => {
     const ids = new Set((record.serviceIds ?? []).map(id => String(id)));
-    return services.filter(service => ids.has(String(service.id)));
+    return services.filter((service: any) => ids.has(String(service.id)));
   }, [record.serviceIds, services]);
 
   const existingServiceIds = useMemo(
@@ -99,44 +113,73 @@ const AddBulkServicesToConsultationModal = ({
       Array.from(
         new Set(
           existingServices
-            .filter(item => item.billingItemType === 'SERVICE' && item.serviceId != null)
-            .map(item => item.serviceId)
+            .filter((item: any) => item.billingItemType === 'SERVICE' && item.serviceId != null)
+            .map((item: any) => item.serviceId)
         )
       ),
     [existingServices]
   );
 
-  const [fetchServicesBulk] = useLazyGetServicesBulkByIdsQuery();
-  const [existingServicesMap, setExistingServicesMap] = useState<Record<number | string, any>>(
-    {}
+  const existingServiceIdsKey = useMemo(
+    () => existingServiceIds.map(id => String(id)).sort().join(','),
+    [existingServiceIds]
   );
+
+  const [fetchServicesBulk] = useLazyGetServicesBulkByIdsQuery();
+
+  const [existingServicesMap, setExistingServicesMap] = useState<Record<number | string, any>>({});
   const [existingServicesLookupLoading, setExistingServicesLookupLoading] = useState(false);
 
   useEffect(() => {
-    const loadExistingServicesLookups = async () => {
-      if (!existingServiceIds.length) {
-        setExistingServicesMap({});
-        setExistingServicesLookupLoading(false);
-        return;
-      }
+    if (!open) {
+      return;
+    }
 
+    if (!existingServiceIds.length) {
+      setExistingServicesMap(prev => (Object.keys(prev).length === 0 ? prev : {}));
+      setExistingServicesLookupLoading(false);
+      return;
+    }
+
+    let mounted = true;
+
+    const loadExistingServicesLookups = async () => {
       setExistingServicesLookupLoading(true);
 
       try {
-        const servicesData = await fetchServicesBulk(existingServiceIds, true).unwrap();
+        const ids = existingServiceIds.map(id => Number(id)).filter(id => !Number.isNaN(id));
 
-        setExistingServicesMap(
-          Object.fromEntries((servicesData ?? []).map((item: any) => [item.id, item]))
+        const servicesData = await fetchServicesBulk(ids, true).unwrap();
+
+        if (!mounted) return;
+
+        const nextMap = Object.fromEntries(
+          (servicesData ?? []).map((item: any) => [item.id, item])
         );
-      } catch (error) {
-        setExistingServicesMap({});
+
+        setExistingServicesMap(prev => {
+          const prevJson = JSON.stringify(prev);
+          const nextJson = JSON.stringify(nextMap);
+
+          return prevJson === nextJson ? prev : nextMap;
+        });
+      } catch {
+        if (mounted) {
+          setExistingServicesMap(prev => (Object.keys(prev).length === 0 ? prev : {}));
+        }
       } finally {
-        setExistingServicesLookupLoading(false);
+        if (mounted) {
+          setExistingServicesLookupLoading(false);
+        }
       }
     };
 
     loadExistingServicesLookups();
-  }, [existingServiceIds, fetchServicesBulk]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [open, existingServiceIdsKey, fetchServicesBulk]);
 
   const handleClose = () => {
     setRecord({
@@ -151,13 +194,21 @@ const AddBulkServicesToConsultationModal = ({
   const handleQuantityChange = (serviceId: number | string, value: number) => {
     const parsedValue = Math.max(1, Number(value) || 1);
 
-    setRecord(prev => ({
-      ...prev,
-      quantities: {
-        ...prev.quantities,
-        [String(serviceId)]: parsedValue,
-      },
-    }));
+    setRecord(prev => {
+      const currentValue = prev.quantities?.[String(serviceId)] ?? 1;
+
+      if (currentValue === parsedValue) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        quantities: {
+          ...prev.quantities,
+          [String(serviceId)]: parsedValue,
+        },
+      };
+    });
   };
 
   const increaseQuantity = (serviceId: number | string) => {
@@ -187,7 +238,25 @@ const AddBulkServicesToConsultationModal = ({
     }
 
     try {
-      const payload: PatientServiceProductCreateDTO[] = selectedServicesPreview.map(service => {
+      for (const service of selectedServicesPreview) {
+        const evaluation = await evaluateBillingRule(
+          buildBillingRuleEvaluationRequest('SERVICE', BillingEventType.ENCOUNTER_CREATED, {
+            serviceId: Number(service.id)
+          })
+        ).unwrap();
+
+        if (!evaluation.ruleFound) {
+          dispatch(
+            notify({
+              msg: `${service.name ?? 'Service'}: ${formatBillingRuleEvaluationMessage(evaluation)}`,
+              sev: 'error'
+            })
+          );
+          return;
+        }
+      }
+
+      const payload: PatientServiceProductCreateDTO[] = selectedServicesPreview.map((service: any) => {
         const quantity = Number(record.quantities?.[String(service.id)] ?? 1);
 
         return {
@@ -224,7 +293,7 @@ const AddBulkServicesToConsultationModal = ({
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.message || 'Failed to add services',
+          msg: extractBillingRuleErrorMessage(error) || error?.data?.message || 'Failed to add services',
           sev: 'error',
         })
       );
@@ -258,19 +327,13 @@ const AddBulkServicesToConsultationModal = ({
             searchable
             loading={isFetchingServices}
             placeholder="Select one or more services"
-            onSelectItem={selectedItem => {
-              setRecord(prev => ({
-                ...prev,
-                lastSelectedService: selectedItem ?? null,
-              }));
-            }}
           />
 
           {!!selectedServicesPreview.length && (
             <div style={{ marginTop: 16 }}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>Selected Services</div>
 
-              {selectedServicesPreview.map(service => {
+              {selectedServicesPreview.map((service: any) => {
                 const quantity = record.quantities?.[String(service.id)] ?? 1;
                 const unitPrice = Number(service.price ?? 0);
                 const totalPrice = quantity * unitPrice;
@@ -373,7 +436,7 @@ const AddBulkServicesToConsultationModal = ({
                 No services added before for this consultation
               </div>
             ) : (
-              existingServices.map(item => (
+              existingServices.map((item: any) => (
                 <div
                   key={item.id}
                   style={{

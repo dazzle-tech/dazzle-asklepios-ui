@@ -535,7 +535,7 @@ const Referrals = (props: any) => {
                 >
                   Cancel
                 </MyButton>
-                <Checkbox
+                <Checkbox className="show-cancelled"
                   checked={!showCanceled}
                   onChange={() => {
                     setShowCanceled(!showCanceled);

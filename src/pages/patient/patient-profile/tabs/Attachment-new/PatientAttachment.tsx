@@ -17,6 +17,7 @@ import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/Att
 import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
 import { PatientAttachment as PatientAttachmentType, EncounterAttachment } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import UserDateCell from '@/components/UserDateCell';
 
 const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -351,15 +352,25 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             title: <Translate>Created By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: PatientAttachmentType) => row?.createdDate ? <>{row?.createdBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdDate)}</span> </> : ' '
+            render: (row: PatientAttachmentType) => (
+                <UserDateCell
+                    login={row?.createdBy}
+                    date={row?.createdDate}
+                />
+            )
         },
         {
             key: 'lastModifiedDate',
             title: <Translate>Updated By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: PatientAttachmentType) => row?.lastModifiedDate ? <>{row?.lastModifiedBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.lastModifiedDate)}</span> </> : ' '
-        },
+            render: (row: PatientAttachmentType) => (
+                <UserDateCell
+                    login={row?.lastModifiedBy}
+                    date={row?.lastModifiedDate}
+                />
+            )
+        }
     ];
 
     // Effects
@@ -374,18 +385,18 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={!localPatient?.id && !localPatient?.key}
+                    disabled={!localPatient?.id && !localPatient?.key || localPatient?.patientStatus === 'MERGED'}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter' || localPatient?.patientStatus === 'MERGED'}
                     onClick={handleOpenEditModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}>
                     Edit
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter' || localPatient?.patientStatus === 'MERGED'}
                     onClick={() => setDeleteModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
                     Delete

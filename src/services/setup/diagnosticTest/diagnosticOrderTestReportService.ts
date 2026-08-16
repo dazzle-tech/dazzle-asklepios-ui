@@ -20,6 +20,26 @@ type PagedResult<T> = {
   totalCount: number;
   links?: LinkMap;
 };
+export interface PacsPatientDTO {
+  id: string;
+  firstName: string;
+  secondName: string;
+  lastName: string;
+}
+
+export interface PacsStudyDTO {
+  study: string;
+  studyDescription: string;
+  studyDate: string;
+  modality: string;
+  accessionNumber: string;
+  link: string;
+  expiresAt: string;
+  patient: PacsPatientDTO;
+}
+export type BulkIdsDTO = {
+  ids: number[];
+};
 
 export const diagnosticOrderTestReportService = createApi({
   reducerPath: "diagnosticOrderTestReportApi",
@@ -161,6 +181,25 @@ export const diagnosticOrderTestReportService = createApi({
       }),
       invalidatesTags: ["RadiologyImage", "RadiologyReport"],
     }),
+    getStudyImageLinkByReportId: builder.query<PacsStudyDTO[], number>({
+  query: reportId => ({
+    url: `/api/patient/radiology/reports/${reportId}/image-links`,
+    method: 'GET'
+  }),
+  providesTags: (result, error, reportId) => [
+    { type: 'RadiologyImage', id: reportId }
+  ]
+}),
+
+ bulkToggleReviewDiagnosticOrderTestReport: builder.mutation<
+  void,BulkIdsDTO>({
+  query: (body) => ({
+    url: "/api/patient/radiology/reports/bulk-toggle-review",
+    method: "POST",
+    body,
+  }),
+  invalidatesTags: ["RadiologyReport"],
+}),
   }),
 });
 
@@ -181,4 +220,7 @@ export const {
   useSecondApproveRadiologyReportMutation,
   useGetRadiologyImageStatusLogQuery,
   useLazyGetRadiologyImageStatusLogQuery,
+  useGetStudyImageLinkByReportIdQuery,
+  useLazyGetStudyImageLinkByReportIdQuery,
+  useBulkToggleReviewDiagnosticOrderTestReportMutation
 } = diagnosticOrderTestReportService;

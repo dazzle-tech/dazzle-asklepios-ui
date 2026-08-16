@@ -15,6 +15,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { PatientDocument } from '@/types/model-types-new';
+import clsx from 'clsx';
 
 const DocumentInfo = ({
   validationResult,
@@ -112,7 +113,10 @@ const DocumentInfo = ({
       title={
         <div className="flex-row-22">
           Document
-          <MyButton onClick={handleSave} disabled={!patientId}>
+          <MyButton onClick={handleSave} disabled={!patientId}  
+              className={clsx('icon-button', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+              style={{ cursor: localPatient?.patientStatus === 'MERGED' ? 'not-allowed' : 'pointer' }}
+          >
             {doc?.id ? 'Update' : 'Save'}
           </MyButton>
         </div>

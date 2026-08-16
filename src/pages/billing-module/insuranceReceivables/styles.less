@@ -1,0 +1,126 @@
+.insurance-receivables-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 12px 16px 24px;
+  background:
+    radial-gradient(circle at top left, rgba(14, 116, 144, 0.08), transparent 32%),
+    linear-gradient(180deg, #f4f7f8 0%, #eef3f5 100%);
+}
+
+.insurance-receivables-hero-panel,
+.insurance-receivables-table-panel {
+  border: 1px solid #d7e2e6 !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  margin-bottom: 16px;
+}
+
+.insurance-receivables-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: stretch;
+  padding: 8px 4px;
+}
+
+.insurance-receivables-hero-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0e7490;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.insurance-receivables-hero-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.insurance-receivables-hero-subtitle {
+  margin: 8px 0 0;
+  max-width: 680px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.insurance-receivables-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: 420px;
+}
+
+.insurance-receivables-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.insurance-receivables-kpi--success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.insurance-receivables-kpi--danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.insurance-receivables-kpi--warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.insurance-receivables-kpi-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.insurance-receivables-kpi strong {
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.insurance-receivables-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.insurance-receivables-toolbar-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insurance-receivables-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+@media (max-width: 1100px) {
+  .insurance-receivables-hero {
+    flex-direction: column;
+  }
+
+  .insurance-receivables-kpi-grid {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

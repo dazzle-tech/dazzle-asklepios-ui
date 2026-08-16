@@ -105,6 +105,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [getEncounterByAppointment] = useLazyGetEncountersByAppointmentQuery();
     const [getEncounterById] = useLazyGetEncounterByIdQuery();
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
     const [createdEncounter, setCreatedEncounter] = useState<PatientEncounter | null>(null);
     const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
     const paymentContextKeyRef = useRef<string>('');
@@ -754,15 +755,7 @@ const handleCancel = async () => {
                             disableByField='isValid'
 
                 />
-                <MyInput
-                    width="100%"
-                    column
-                    fieldLabel="Other Reason"
-                    fieldName="otherReason"
-                    record={otherReason}
-                    setRecord={setOtherReason}
-                    disabled={Boolean(selectedReasonValue) || isReasonViewOnly}
-                />
+             
             </div>
         </Form>
     );
@@ -941,7 +934,10 @@ const handleCancel = async () => {
                 open={paymentModalOpen}
                 setOpen={(open: boolean) => {
                   setPaymentModalOpen(open);
-                  if (!open) resetPaymentState();
+                  if (!open) {
+                    setPaymentConfirmLoading(false);
+                    resetPaymentState();
+                  }
                 }}
                 title="Add Payment"
                 size="70vw"
@@ -950,6 +946,8 @@ const handleCancel = async () => {
                 hideActionBtn={false}
                 actionButtonLabel="Confirm Payment"
                 actionButtonFunction={handlePaymentConfirm}
+                actionButtonLoading={paymentConfirmLoading}
+                isDisabledActionBtn={paymentConfirmLoading}
                 content={
                     createdEncounter && resolvedPatient ? (
                         <PatientPaymentInfo
@@ -964,6 +962,7 @@ const handleCancel = async () => {
                             setPayment={setPaymentDraft}
                             patientInsurance={patientInsuranceDraft}
                             setPatientInsurance={setPatientInsuranceDraft}
+                            onConfirmingChange={setPaymentConfirmLoading}
                         />
                     ) : (
                         <div>Loading...</div>

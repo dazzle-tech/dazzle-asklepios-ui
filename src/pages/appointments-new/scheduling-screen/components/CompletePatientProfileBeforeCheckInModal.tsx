@@ -261,10 +261,7 @@ const CompletePatientProfileBeforeCheckInModal: React.FC<
       dispatch(notify({ msg: 'Please enter primary mobile number', sev: 'warning' }));
       return null;
     }
-    if (!email) {
-      dispatch(notify({ msg: 'Please enter email', sev: 'warning' }));
-      return null;
-    }
+    
 
     try {
       const updated = await updatePatient({

@@ -16,6 +16,7 @@ import { formatEnumString } from '@/utils';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
+import clsx from 'clsx';
 
 const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
 
@@ -92,7 +93,7 @@ const AddExtraDetails = ({
   refetch
 }) => {
   const dispatch = useAppDispatch();
-
+  console.log('Secondary Document:', secondaryDocument);
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
@@ -167,7 +168,7 @@ const AddExtraDetails = ({
   }, [open, saudiCountryId]);
 
   const content = () => (
-    <Form layout="inline" fluid className="patient-doc-secondary-container">
+    <Form layout="inline" fluid    className={clsx('patient-doc-secondary-container', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
       <MyInput
         required
         column
@@ -234,25 +235,17 @@ const AddExtraDetails = ({
       return;
     }
 
+     if (!isNoDoc) {
     try {
-      if (isNoDoc) {
-        await addNoDocument({
-          patientId: localPatient.id,
-          type: 'NO_DOCUMENT',
-          isPrimary: true
-        }).unwrap();
-      } else {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
           number: String(secondaryDocument.number ?? '').trim(),
-          isPrimary: secondaryDocument.type === 'NATIONAL_ID'
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
-      }
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       refetch();
@@ -260,6 +253,7 @@ const AddExtraDetails = ({
     } catch (err) {
       dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
     }
+  }
   };
 
   return (

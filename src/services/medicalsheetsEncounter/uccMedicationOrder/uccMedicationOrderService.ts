@@ -68,6 +68,7 @@ export const uccMedicationOrderService = createApi({
     }),
 
     // ================= FILTER (PAGINATION) =================
+
     filterUccMedicationOrders: builder.query<
       PagedResult<modelTypes.PatientUccMedicationOrder>,
       {
@@ -83,12 +84,20 @@ export const uccMedicationOrderService = createApi({
         size?: number;
         sort?: string;
         timestamp?: number;
+        orderDateFrom?: string;
+        orderDateTo?: string;
+        patientIds?: number[];
       }
     >({
       query: ({
         patientId,
+        patientIds,
         encounterId,
         activeIngredientId,
+
+        orderDateFrom,
+        orderDateTo,
+
         status,
         statusIn,
         statusNotIn,
@@ -101,8 +110,13 @@ export const uccMedicationOrderService = createApi({
         url: `/api/patient/urgent-care-medication-orders/filter`,
         params: {
           patientId,
+          patientIds,
           encounterId,
           activeIngredientId,
+
+          orderDateFrom,
+          orderDateTo,
+
           status,
           statusIn,
           statusNotIn,
@@ -120,7 +134,6 @@ export const uccMedicationOrderService = createApi({
       ): PagedResult<modelTypes.PatientUccMedicationOrder> => {
         const headers = meta?.response?.headers;
 
-        // 🔥 الحالة 1: Spring Page object
         if (response?.content) {
           return {
             data: response.content ?? [],
@@ -128,7 +141,6 @@ export const uccMedicationOrderService = createApi({
           };
         }
 
-        // 🔥 الحالة 2: Header-based pagination
         return {
           data: response ?? [],
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
@@ -139,7 +151,6 @@ export const uccMedicationOrderService = createApi({
       providesTags: ['UccMedicationOrder'],
     }),
 
-    // ================= SUBMIT =================
 submitUccMedicationOrder: builder.mutation<
   modelTypes.PatientUccMedicationOrder,
   { id: Id; isHighAlert: boolean }
@@ -147,7 +158,7 @@ submitUccMedicationOrder: builder.mutation<
   query: ({ id, isHighAlert }) => ({
     url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
     method: 'POST',
-    body: { isHighAlert }, // 🔥 لازم
+    body: { isHighAlert },
   }),
   invalidatesTags: (_res, _err, { id }) => [
     { type: 'UccMedicationOrder', id },

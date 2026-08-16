@@ -26,6 +26,13 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+type FacilityPatientsParams = PagedParams & {
+  patientName?: string;
+  registrationDateFrom?: string;
+  registrationDateTo?: string;
+  insuranceId?: number;
+};
+
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -43,7 +50,10 @@ type PatientBasicInformationResponseVM = {
   dateOfBirth: string;
   sexAtBirth: string;
 };
-
+type UpdatePatientConditionsRequest = {
+  id: number;
+  patientConditions: string;
+};
 export const newPatientService = createApi({
   reducerPath: 'patientsApi',
   baseQuery: BaseQuery,
@@ -55,11 +65,42 @@ export const newPatientService = createApi({
       }),
       providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
     }),
-
+        
     getPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/patients',
         params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: res =>
+        res
+          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+          : ['Patient']
+    }),
+
+    getFacilityPatients: builder.query<
+      PagedResult<modelTypes.Patient>,
+      FacilityPatientsParams
+    >({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        patientName,
+        registrationDateFrom,
+        registrationDateTo,
+        insuranceId
+      }) => ({
+        url: '/api/patient/facility-patients',
+        params: {
+          page,
+          size,
+          sort,
+          patientName,
+          registrationDateFrom,
+          registrationDateTo,
+          insuranceId
+        }
       }),
       transformResponse: mapPaged,
       providesTags: res =>
@@ -329,6 +370,19 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+    updatePatientConditions: builder.mutation<
+  any,
+  UpdatePatientConditionsRequest
+>({
+  query: ({ id, patientConditions }) => ({
+    url: `/api/patient/${id}/conditions`,
+    method: 'PUT',
+    body: {
+      patientConditions
+    }
+  }),
+  invalidatesTags: ['Patient']
+}),
   })
 });
 
@@ -369,6 +423,9 @@ export const {
   useLazyGetPatientWristbandQuery,
   useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientLabelPdfQuery,
-  useLazyGetPatientInformationPdfQuery
+  useGetFacilityPatientsQuery,
+  useLazyGetFacilityPatientsQuery,
+  useLazyGetPatientInformationPdfQuery,
+  useUpdatePatientConditionsMutation
 
 } = newPatientService;

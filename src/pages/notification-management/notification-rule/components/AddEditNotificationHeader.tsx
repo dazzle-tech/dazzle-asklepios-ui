@@ -50,6 +50,7 @@ const AddEditNotificationHeader: React.FC<AddEditNotificationHeaderProps> = ({
   const moduleOptions = useEnumOptions('NotificationModule');
   const categoryOptions = useEnumOptions('NotificationCategory');
   const priorityOptions = useEnumOptions('NotificationPriority');
+  const codeOptions = useEnumOptions('NotificationCode');
 
   useEffect(() => {
     if (header?.id) {
@@ -72,7 +73,7 @@ const AddEditNotificationHeader: React.FC<AddEditNotificationHeaderProps> = ({
     const dto = header?.id ? updateDTO : createDTO;
 
     let errorMsg = '';
-    if (!dto.code?.trim()) errorMsg = 'Code can’t be empty';
+    if (!dto.code) errorMsg = 'Code can’t be empty';
     if (!dto.name?.trim()) {
       errorMsg = errorMsg ? `${errorMsg}, Name can’t be empty` : 'Name can’t be empty';
     }
@@ -135,11 +136,16 @@ const AddEditNotificationHeader: React.FC<AddEditNotificationHeaderProps> = ({
                 <Col md={12}>
                   <MyInput
                     fieldName="code"
-                    fieldType="text"
+                    fieldType="select"
+                    fieldLabel="Code"
+                    selectData={codeOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     record={dto}
                     setRecord={setDTO}
                     width="100%"
                     required
+                    searchable
                   />
                 </Col>
                 <Col md={12}>

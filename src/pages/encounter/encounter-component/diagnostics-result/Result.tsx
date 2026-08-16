@@ -65,44 +65,44 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
-  const renderMarker = (marker?: string) => {
-    const isCritical =
-      marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+const renderMarker = (marker?: string) => {
+  const isCritical =
+    marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
 
-    if (isCritical) {
-      return (
-        <Whisper
-          placement="top"
-          speaker={<Tooltip>Critical</Tooltip>}
+  if (isCritical) {
+    return (
+      <Whisper
+        placement="top"
+        speaker={<Tooltip>Critical</Tooltip>}
+      >
+        <span
+          style={{
+            color: 'red',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
         >
-          <span
-            style={{
-              color: 'red',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-          >
-            <FontAwesomeIcon icon={faTriangleExclamation} />
-            <FontAwesomeIcon
-              icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
-            />
-          </span>
-        </Whisper>
-      );
-    }
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <FontAwesomeIcon
+            icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+          />
+        </span>
+      </Whisper>
+    );
+  }
 
-    switch (marker) {
-      case 'ABNORMAL_MARKER':
-        return <FontAwesomeIcon icon={faCircleExclamation} />;
-      case 'UPPER_LIMIT':
-        return <FontAwesomeIcon icon={faArrowUp} />;
-      case 'LOWER_LIMIT':
-        return <FontAwesomeIcon icon={faArrowDown} />;
-      default:
-        return formatEnumString(marker);
-    }
-  };
+  switch (marker) {
+    case 'ABNORMAL_MARKER':
+      return <FontAwesomeIcon icon={faCircleExclamation} />;
+    case 'UPPER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowUp} />;
+    case 'LOWER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowDown} />;
+    default:
+      return formatEnumString(marker);
+  }
+};
 
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const patientId = patient?.id;
@@ -276,140 +276,175 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   );
 
 
- 
+
+  const orderMap = useMemo(
+    () => new Map(orders.map((o: any) => [o.id, o])),
+    [orders]
+  );
+
   const normalizedResults = useMemo(() => {
-    return results.map((r: any) => {
-      const orderTest = orderTestMap.get(r.orderTestId);
-      const test = orderTest ? testMap.get(orderTest.testId) : null;
-      const profile = profilesMap.get(r.profileTestId);
-      const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
+  return results.map((r: any) => {
+    const orderTest = orderTestMap.get(r.orderTestId);
 
-      let value = '';
-      let unit = '';
-      let normalRangeValue = ' ';
+    const order = orderTest
+      ? orderMap.get(String(orderTest.orderId))
+      : null;
 
-      if (isLovTest) {
-        value = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.resultValueText
-        );
+    const test = orderTest
+      ? testMap.get(orderTest.testId)
+      : null;
 
-        normalRangeValue = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.viewNormalRange
-        );
-      } else {
-        value =
-          r.resultValueNumber !== null &&
-            r.resultValueNumber !== undefined
-            ? String(r.resultValueNumber)
-            : '';
+    const profile = profilesMap.get(r.profileTestId);
 
-        unit =
-          valueUnitLov?.object?.find(
-            (u: any) =>
-              String(u.key) === String(test?.defaultProfileResultUnit)
-          )?.lovDisplayVale ?? '';
+    const resultType =
+      profile?.resultType?.toUpperCase()?.trim();
 
-        normalRangeValue = r.viewNormalRange ?? ' ';
-      }
+    let value = '';
+    let unit = '';
+    let normalRangeValue = ' ';
 
-      return {
-        ...r,
-        orderId: orderTest?.orderId ?? ' ',
-        testName: profile?.name ?? ' ',
-        resultValue: value,
-        unit,
-        normalRange: normalRangeValue
-      };
-    });
-  }, [
-    results,
-    orderTestMap,
-    testMap,
-    profilesMap,
-    valueUnitLov,
-    lovDefinitions,
-    allLovValues
-  ]);
+    if (resultType === 'LOV') {
 
-const allSelected =
-  normalizedResults.length > 0 &&
-  normalizedResults.every(row => selectedRows.includes(row.id));
+      value = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.resultValueText
+      );
 
-    const handleSelectAll = (checked: boolean) => {
-      if (checked) {
-        setSelectedRows(normalizedResults.map(row => row.id));
-      } else {
-        setSelectedRows([]);
-      }
+      normalRangeValue = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        r.viewNormalRange
+      );
+
+    } else if (resultType === 'TEXT') {
+
+      value = r.resultValueText ?? '';
+      normalRangeValue = ' ';
+
+    } else {
+
+      value =
+        r.resultValueNumber !== null &&
+        r.resultValueNumber !== undefined
+          ? String(r.resultValueNumber)
+          : '';
+
+      unit =
+        valueUnitLov?.object?.find(
+          (u: any) =>
+            String(u.key) ===
+            String(test?.defaultProfileResultUnit)
+        )?.lovDisplayVale ?? '';
+
+      normalRangeValue = r.viewNormalRange ?? ' ';
+    }
+
+    return {
+      ...r,
+      orderId: orderTest?.orderId ?? '',
+      orderNumber: order?.orderNumber ?? '',
+      testName: profile?.name ?? ' ',
+      profile,
+      resultValue: value,
+      unit,
+      normalRange: normalRangeValue
     };
+  });
+}, [
+  results,
+  orderTestMap,
+  orderMap,
+  testMap,
+  profilesMap,
+  valueUnitLov,
+  lovDefinitions,
+  allLovValues
+]);
 
-    const handleSelectRow = (rowId: number, checked: boolean) => {
-      if (checked) {
-        setSelectedRows(prev => [...prev, rowId]);
-      } else {
-        setSelectedRows(prev => prev.filter(id => id !== rowId));
-      }
-    };
+  const allSelected =
+    normalizedResults.length > 0 &&
+    normalizedResults.every(row => selectedRows.includes(row.id));
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows(normalizedResults.map(row => row.id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (rowId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedRows(prev => [...prev, rowId]);
+    } else {
+      setSelectedRows(prev => prev.filter(id => id !== rowId));
+    }
+  };
 
   const columns = [
     {
-  key: 'select',
-  width: 60,
-  align: 'center',
-  title: (
-    <Checkbox
-      checked={allSelected}
-      onChange={(_, checked) => handleSelectAll(checked)}
-    />
-  ),
-  render: (row: any) => (
-    <Checkbox
-      checked={selectedRows.includes(row.id)}
-      onChange={(_, checked) =>
-        handleSelectRow(row.id, checked)
-      }
-    />
-  )
+      key: 'select',
+      width: 60,
+      align: 'center',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          onChange={(_, checked) => handleSelectAll(checked)}
+        />
+      ),
+      render: (row: any) => (
+        <Checkbox
+          checked={selectedRows.includes(row.id)}
+          onChange={(_, checked) =>
+            handleSelectRow(row.id, checked)
+          }
+        />
+      )
     },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
-      render: (row: any) => row.orderId
+      render: (row: any) => row.orderNumber
     },
     {
       key: 'resultDate',
       title: <Translate>RESULT DATE</Translate>,
       render: (row: any) =>
-        row.reviewDate ? formatDateWithoutSeconds(row.reviewDate) : ' '
+        row.reviewDate ? formatDateWithoutSeconds(row.createdDate) : ' '
     },
     {
       key: 'testName',
       title: <Translate>TEST NAME</Translate>,
       render: (row: any) => row.testName
     },
-    {
-      key: 'result',
-      title: <Translate>TEST RESULT, UNIT</Translate>,
-      render: (row: any) => {
-        const hasValue =
-          row.resultValue !== null &&
-          row.resultValue !== undefined &&
-          row.resultValue !== '';
+   {
+  key: 'result',
+  title: <Translate>TEST RESULT, UNIT</Translate>,
+  render: (row: any) => {
 
-        return (
-          <>
-            <span>{row.resultValue}</span>
-            {hasValue && row.unit && (
-              <span style={{ marginLeft: 6, color: '#666' }}>
-                {row.unit}
-              </span>
-            )}
-          </>
-        );
-      }
-    },
+    const resultType =
+      row?.profile?.resultType?.toUpperCase()?.trim();
+
+    const hasValue =
+      row.resultValue !== null &&
+      row.resultValue !== undefined &&
+      row.resultValue !== '';
+
+    const showUnit =
+      resultType === 'NUMBER';
+
+    return (
+      <>
+        <span>{row.resultValue}</span>
+
+        {hasValue && showUnit && row.unit && (
+          <span style={{ marginLeft: 6, color: '#666' }}>
+            {row.unit}
+          </span>
+        )}
+      </>
+    );
+  }
+},
     {
       key: 'normalRange',
       title: <Translate>NORMAL RANGE</Translate>,
@@ -443,7 +478,7 @@ const allSelected =
   ];
 
   const filters = (
-    <Form fluid>
+    <Form fluid className="filter-form-disable-fix">
       <div className='diagnostics-result-filters-main-container'>
         <MyInput
           width={160}

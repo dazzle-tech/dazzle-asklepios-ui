@@ -22,6 +22,7 @@ import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAs
 import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
 import PatientPlan from './PatientPlan';
 import PrimaryCareProviderTable from './PrimaryCareProviderTable/PrimaryCareProviderTable';
+import PatientPreviousAssessments from './PatientPreviousAssessments';
 // import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
 const PatientSummary = ({
@@ -98,7 +99,19 @@ const PatientSummary = ({
           />
         ),
         display: false
-      }
+      },
+{
+id:'c14',
+content:(
+
+<PatientPreviousAssessments
+    encounter={encounter}
+/>
+
+),
+
+display:false
+}
       // { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
       // { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
       // {
@@ -107,6 +120,7 @@ const PatientSummary = ({
       //   display: false
       // }
     ]
+    
   });
 
   useEffect(() => {

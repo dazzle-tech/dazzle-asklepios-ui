@@ -1,20 +1,27 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+import {
+  useCancelPatientPrescriptionMutation,
+  useGetPatientPrescriptionQuery,
+  useSubmitPatientPrescriptionMutation
+} from '@/services/patients/Prescription/patientPrescriptionService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
-  faDesktop,
   faFileLines,
   faRobot,
   faUserPlus
@@ -24,22 +31,22 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
-import { Col, Divider, Drawer, Form, List, Panel, Row, Tooltip, Whisper } from 'rsuite';
+import { Divider, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
+import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
+import AiAssistantPopup from './AiAssistantPopup';
 import AllergiesModal from './AllergiesModal';
+import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import WarningiesModal from './WarningiesModal';
-import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
-import AiAssistantPopup from './AiAssistantPopup';
-import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
-import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 type EncounterModalProps = {
   patient?: any;
@@ -56,7 +63,7 @@ const Encounter = ({
 }: EncounterModalProps = {}) => {
   const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [action, setAction] = useState(() => () => {});
+  const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -65,7 +72,7 @@ const Encounter = ({
   const propsData = inModal
     ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
     : (location.state || {});
-    
+
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
   const encounterId = propsData?.encounter?.id;
@@ -151,7 +158,7 @@ const Encounter = ({
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -196,9 +203,47 @@ const Encounter = ({
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
+  const [showDraftPrescriptionModal, setShowDraftPrescriptionModal] = useState(false);
+  const [pendingDraftPrescription, setPendingDraftPrescription] = useState<any>(null);
+  const [isDraftPrescriptionActionInProgress, setIsDraftPrescriptionActionInProgress] = useState(false);
+
+  const [submitPrescription] = useSubmitPatientPrescriptionMutation();
+  const [cancelPrescription] = useCancelPatientPrescriptionMutation();
+
+  const patientIdForPrescriptions = patientToSend?.id ?? patientToSend?.key ?? null;
+  const encounterIdForPrescriptions = propsData?.encounter?.id ?? localEncounter?.id ?? null;
+
+  const { data: patientPrescriptionsResponse } = useGetPatientPrescriptionQuery(
+    {
+      patientId: patientIdForPrescriptions ? Number(patientIdForPrescriptions) : undefined,
+      encounterId: encounterIdForPrescriptions ? Number(encounterIdForPrescriptions) : undefined,
+      page: 0,
+      size: 500,
+      sort: 'prescriptionNum,desc'
+    },
+    { skip: !patientIdForPrescriptions || !encounterIdForPrescriptions }
+  );
+
+  const draftPrescriptions = useMemo(() => {
+    const list = patientPrescriptionsResponse?.data ?? [];
+    return list.filter((item: any) => String(item?.status ?? '').toUpperCase() === 'DRAFT');
+  }, [patientPrescriptionsResponse]);
+
+  const selectedDraftPrescription = draftPrescriptions?.[0] ?? pendingDraftPrescription;
+
+  const { data: draftMedicationResponse } = useGetPatientPrescriptionMedicationsQuery(
+    selectedDraftPrescription?.id
+      ? { prescriptionHeaderId: Number(selectedDraftPrescription.id), page: 0, size: 200, sort: 'id,desc' }
+      : (undefined as any),
+    { skip: !selectedDraftPrescription?.id }
+  );
+
+  const draftPrescriptionMedications = useMemo(() => {
+    const list = (draftMedicationResponse as any)?.data ?? [];
+    return Array.isArray(list) ? list : [];
+  }, [draftMedicationResponse]);
 
   useEffect(() => {
     if (location.state?.fromPage) {
@@ -206,9 +251,19 @@ const Encounter = ({
     }
   }, [location.state]);
 
+// useEffect(() => {
+//   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
+// }, [propsData?.viewMode, propsData?.readOnly]);
 useEffect(() => {
-  setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
-}, [propsData?.viewMode, propsData?.readOnly]);
+
+  const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
+  const isReadOnly = propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
+  const isMerged = patientToSend?.patientStatus === 'MERGED';
+  const isCompleted = encounterStatus === 'COMPLETED';
+  const isCancelled = encounterStatus === 'CANCELLED';
+
+  setEdit(isReadOnly || isMerged || isCompleted || isCancelled);
+}, [propsData?.viewMode, propsData?.readOnly, propsData?.encounter?.status, localEncounter?.status, patientToSend?.patientStatus]);
 
   useEffect(() => {
     if (
@@ -264,7 +319,7 @@ useEffect(() => {
     };
   }, [patientToSend, encounterId]);
 
-  const handleCompleteEncounter = async () => {
+  const completeEncounterNow = async () => {
     try {
       if (propsData?.encounter) {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
@@ -280,6 +335,49 @@ useEffect(() => {
       const msg = errorMap[backendMessage] || 'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  const handleSubmitEncounter = async () => {
+    const draftPrescription = draftPrescriptions?.[0];
+
+    if (draftPrescription?.id) {
+      setPendingDraftPrescription(draftPrescription);
+      setShowDraftPrescriptionModal(true);
+      return;
+    }
+
+    await completeEncounterNow();
+  };
+
+  const handleDraftPrescriptionAction = async (action: 'submit' | 'cancel') => {
+    if (!pendingDraftPrescription?.id) {
+      await completeEncounterNow();
+      return;
+    }
+
+    setIsDraftPrescriptionActionInProgress(true);
+
+    try {
+      if (action === 'submit') {
+        await submitPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
+        dispatch(notify({ msg: 'Prescription submitted successfully', sev: 'success' }));
+      } else {
+        await cancelPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
+        dispatch(notify({ msg: 'Prescription cancelled', sev: 'info' }));
+      }
+
+      setShowDraftPrescriptionModal(false);
+      setPendingDraftPrescription(null);
+      await completeEncounterNow();
+    } catch (error: any) {
+      const message =
+        action === 'submit'
+          ? 'Failed to submit prescription draft'
+          : 'Failed to cancel prescription draft';
+      dispatch(notify({ msg: error?.message || message, sev: 'error' }));
+    } finally {
+      setIsDraftPrescriptionActionInProgress(false);
     }
   };
 
@@ -299,7 +397,7 @@ useEffect(() => {
     if (!aiHasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
       );
 
       if (movedDistance > 5) setAiHasMoved(true);
@@ -482,15 +580,7 @@ useEffect(() => {
                     record={searchTerm}
                     setRecord={setSearchTerm}
                     showLabel={false}
-                    enterClick={() => setIsDrawerOpen(true)}
-                    rightAddon={
-                      <FaSearch
-                        className="icons-style-2"
-                        onClick={() => {
-                          setIsDrawerOpen(true);
-                        }}
-                      />
-                    }
+                    rightAddon={<FaSearch className="icons-style-2" />}
                   />
                 </Form>
               </div>
@@ -517,6 +607,8 @@ useEffect(() => {
                   Create Follow-up
                 </MyButton>
 
+
+
                 <MyButton
                   disabled={edit}
                   size="small"
@@ -526,6 +618,11 @@ useEffect(() => {
                 >
                   Sick Leave
                 </MyButton>
+                
+                <VisitReportPrintButton
+                  row={localEncounter}
+                  systemColor={true}
+                />
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -558,7 +655,7 @@ useEffect(() => {
                         return;
                       }
 
-                      handleCompleteEncounter();
+                      handleSubmitEncounter();
                     } catch (error) {
                       console.error('Diagnosis check error:', error);
                       dispatch(
@@ -613,91 +710,48 @@ useEffect(() => {
             </div>
 
             <Divider />
+<div className="medical-sheets-tabs">
+  <MyButton
+    className={`medical-sheet-tab ${location.pathname === '/encounter' ? 'active' : ''}`}
+    onClick={() => {
+      if (onSheetNavigate) {
+        onSheetNavigate('');
+      } else {
+        navigate('/encounter', { state: sharedNavigationState });
+      }
+    }}
+  >
+    <FontAwesomeIcon icon={faClockRotateLeft} />
+    <Translate>Dashboard</Translate>
+  </MyButton>
 
-            <Drawer
-              open={isDrawerOpen}
-              onClose={() => setIsDrawerOpen(false)}
-              placement="left"
-              style={{ zIndex: 999999999999 }}
-              className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
-            >
-              <Drawer.Header className="header-drawer">
-                <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
-              </Drawer.Header>
+  {visibleSheets.map(({ code, name, icon, path }) => {
+    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
+    const isActive = location.pathname === fullPath;
 
-              <Drawer.Body className="drawer-body">
-                <Form fluid>
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
-                        width="100%"
-                        placeholder="Search screens..."
-                        fieldName={'term'}
-                        record={searchTerm}
-                        setRecord={setSearchTerm}
-                        showLabel={false}
-                        rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                      />
-                    </Col>
-                  </Row>
-                </Form>
-
-                <List hover className="drawer-list-style">
-                  <List.Item
-                    className="drawer-item return-button"
-                    onClick={() => {
-                      if (onSheetNavigate) {
-                        onSheetNavigate('');
-                      } else {
-                        const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                        navigate(basePath, { state: sharedNavigationState });
-                      }
-                      setIsDrawerOpen(false);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                    <Translate>Dashboard</Translate>
-                  </List.Item>
-
-                  {visibleSheets.map(({ code, name, icon, path }) => {
-                    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
-
-                    return (
-                      <List.Item
-                        key={code}
-                        className="drawer-item"
-                        onClick={() => {
-                          setIsDrawerOpen(false);
-                          if (onSheetNavigate) {
-                            const relativePath = path.startsWith('/') ? path.slice(1) : path;
-                            onSheetNavigate(relativePath);
-                          } else {
-                            navigate(fullPath, { state: sharedNavigationState });
-                          }
-                        }}
-                      >
-                        {onSheetNavigate ? (
-                          <span className="inherit-link">
-                            {icon}
-                            <span className="margin-left-10">
-                              <Translate>{name}</Translate>
-                            </span>
-                          </span>
-                        ) : (
-                          <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
-                            {icon}
-                            <span className="margin-left-10">
-                              <Translate>{name}</Translate>
-                            </span>
-                          </Link>
-                        )}
-                      </List.Item>
-                    );
-                  })}
-                </List>
-              </Drawer.Body>
-            </Drawer>
-
+    return (
+      <MyButton
+        key={code}
+        className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
+        onClick={() => {
+          if (onSheetNavigate) {
+            const relativePath = path.startsWith('/') ? path.slice(1) : path;
+            onSheetNavigate(relativePath);
+          } else {
+            navigate(fullPath, { state: sharedNavigationState });
+          }
+        }}
+       
+      >
+        {icon}
+        <span>
+          <Translate>{name}</Translate>
+        </span>
+      </MyButton>
+    );
+  })}
+</div>
+           
             <div className="content-with-sticky">
               <div className="main-content-area">
                 {outletContent !== undefined ? outletContent : (
@@ -767,7 +821,7 @@ useEffect(() => {
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={() => {}}
+        onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />
@@ -786,10 +840,26 @@ useEffect(() => {
         encounterId={encounterId ?? localEncounter?.id ?? null}
       />
 
+      <IncompletePrescriptionModal
+        open={showDraftPrescriptionModal}
+        setOpen={setShowDraftPrescriptionModal}
+        prescription={selectedDraftPrescription}
+        medications={draftPrescriptionMedications}
+        loading={isDraftPrescriptionActionInProgress}
+        onSubmit={() => handleDraftPrescriptionAction('submit')}
+        onCancel={() => handleDraftPrescriptionAction('cancel')}
+        onClose={() => setPendingDraftPrescription(null)}
+      />
+
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
         encounter={propsData?.encounter}
+        onSuccess={() => {
+          if (localEncounter?.encounterType === 'EMERGENCY') {
+            handleGoBack();
+          }
+        }}
       />
 
       <ConsultationPopup

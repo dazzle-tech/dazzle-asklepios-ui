@@ -195,6 +195,7 @@ const ERWaitingList = () => {
       hasOrder,
       isObserved,
       page,
+      practitionerId: undefined,
       size: pageSize,
       sort: DEFAULT_SORT,
       timestamp: searchTick
@@ -388,7 +389,8 @@ const ERWaitingList = () => {
         from: 'ER_Waiting_List',
         info: 'toViewTriage',
         patient: patientData,
-        encounter: encounterData
+        encounter: encounterData,
+        viewMode: 'readOnly'
       }
     });
   };
@@ -660,6 +662,7 @@ const ERWaitingList = () => {
         <MyInput
           column
           width={150}
+           className="show-cancelled"
           fieldType="check"
           fieldLabel={<Translate>Show Cancelled</Translate>}
           fieldName="showCancelled"

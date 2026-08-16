@@ -380,6 +380,7 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                 <Translate>Cancel</Translate>
               </MyButton>
               <Checkbox
+               className="show-cancelled"
                 onChange={(value, checked) =>
                   setElectrocardiogramEcgStatus(checked ? '3196709905099521' : '')
                 }

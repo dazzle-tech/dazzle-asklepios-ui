@@ -10,14 +10,19 @@ import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faUser } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetAppointableServicesByLoggedInFacilityQuery } from '@/services/setup/serviceService';
-import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import {
+  useGetPractitionerByIdQuery,
+  useGetSpecialistPractitionersByDepartmentQuery
+} from '@/services/setup/practitioner/PractitionerService';
 import { useGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetRoomByIdQuery } from '@/services/setup/room/roomService';
-import { useGetServiceByIdQuery } from '@/services/setup/serviceService';
+import {
+  useGetServiceByIdQuery,
+  useGetServicesByDepartmentQuery
+} from '@/services/setup/serviceService';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -29,6 +34,7 @@ import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/enco
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { ShieldCheck, Check, X } from 'lucide-react';
 import { useGetAppointmentPolicyAssignmentsByAppointmentIdQuery } from '@/services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { useGetPrimaryDocumentByPatientQuery } from '@/services/patients/patientDocumentsService';
 
 type BookPatientProps = {
   open: boolean;
@@ -62,8 +68,8 @@ const BookPatient = ({
   open,
   setOpen,
   appointmentData,
-  practitioners = [],
-  services = [],
+  practitioners: _practitioners = [],
+  services: _services = [],
   onBooked,
   readOnly = false
 }: BookPatientProps) => {
@@ -139,9 +145,10 @@ const BookPatient = ({
             appointmentData.encounterReason ??
             appointmentData.visitTypeLkey) === 'FOLLOW_UP'
             ? appointmentData.followUpEncounterId ??
-              appointmentData.previousEncounterId ??
-              prev.followUpEncounterId ??
-              null
+            appointmentData.followUpEncounter?.id ??
+            appointmentData.previousEncounterId ??
+            prev.followUpEncounterId ??
+            null
             : null
       }));
 
@@ -184,13 +191,18 @@ const BookPatient = ({
       followUpEncounterId:
         (appointmentService ?? prev.service) === 'FOLLOW_UP'
           ? appointmentData?.followUpEncounterId ??
-            appointmentData?.previousEncounterId ??
-            prev.followUpEncounterId ??
-            null
+          appointmentData?.previousEncounterId ??
+          prev.followUpEncounterId ??
+          null
           : null
     }));
 
     if (!hasPatientOnAppointment) {
+      setRecord(prev => ({
+        ...prev,
+        patientId: null
+      }));
+
       setSelectedPatient(null);
       setPatientAction('select');
       setQuickPatientModalOpen(false);
@@ -336,6 +348,7 @@ const BookPatient = ({
 
   const appointmentDetailsRecord = useMemo(
     () => ({
+
       facility: (facilityByIdResponse as any)?.name || '-',
       department:
         (departmentByIdResponse as any)?.name ||
@@ -351,16 +364,16 @@ const BookPatient = ({
           ? (resourceDepartmentById as any)?.name
           : isPractitionerResource
             ? (resourcePractitionerById as any)?.fullName ||
-              [
-                (resourcePractitionerById as any)?.firstName,
-                (resourcePractitionerById as any)?.lastName
-              ]
-                .filter(Boolean)
-                .join(' ')
+            [
+              (resourcePractitionerById as any)?.firstName,
+              (resourcePractitionerById as any)?.lastName
+            ]
+              .filter(Boolean)
+              .join(' ')
             : isCatalogResource
               ? (resourceCatalogById as any)?.name
               : isDiagnosticTestResource
-                ? (resourceDiagnosticTestById as any)?.name
+                ? (resourceDiagnosticTestById as any)?.data?.name
                 : isRoomResource
                   ? (resourceRoomById as any)?.name || (resourceRoomById as any)?.roomName
                   : isServiceResource
@@ -430,46 +443,52 @@ const BookPatient = ({
     };
   }, [appointmentData]);
 
-  const practitionerOptions = useMemo(
-    () =>
-      (practitioners ?? []).map((p: any) => ({
-        id: p?.id,
-        label:
-          p?.fullName ||
-          [p?.firstName, p?.lastName].filter(Boolean).join(' ') ||
-          p?.name ||
-          `Practitioner #${p?.id ?? ''}`
-      })),
-    [practitioners]
-  );
+  const selectedPractitionerId = useMemo(() => {
+    const parsed = Number(record?.defaultPractitioner);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [record?.defaultPractitioner]);
 
-  const serviceOptions = useMemo(
-    () =>
-      (services ?? []).map((s: any) => ({
-        id: s?.id,
-        label: s?.serviceName || s?.name || `Service #${s?.id ?? ''}`
-      })),
-    [services]
-  );
-
-  const { data: practitionersAppointableByLoggedInFacility } =
-    useGetAppointablePractitionerByLoggedInFacilityQuery(
-      { page: 0, size: 500, sort: 'id,asc' },
-      { skip: !open }
+  const { data: practitionersByDepartmentResponse } =
+    useGetSpecialistPractitionersByDepartmentQuery(
+      {
+        departmentId: appointmentDepartmentId as number,
+        page: 0,
+        size: 500,
+        sort: 'id,asc'
+      },
+      { skip: !open || !appointmentDepartmentId }
     );
 
-  const { data: servicesAppointableByLoggedInFacility } =
-    useGetAppointableServicesByLoggedInFacilityQuery(
-      { page: 0, size: 500, sort: 'id,asc' },
-      { skip: !open }
-    );
+  const { data: selectedPractitionerResponse } = useGetPractitionerByIdQuery(
+    selectedPractitionerId as number,
+    { skip: !open || !selectedPractitionerId }
+  );
+
+  const selectedPractitionerSpecialty = useMemo(() => {
+    const practitioner =
+      (selectedPractitionerResponse as any)?.data ?? selectedPractitionerResponse;
+
+    return String(practitioner?.specialty ?? '').trim();
+  }, [selectedPractitionerResponse]);
+
+  const { data: servicesByDepartmentSpecialtyResponse } = useGetServicesByDepartmentQuery(
+    {
+      sourceId: appointmentDepartmentId as number,
+      specialty: selectedPractitionerSpecialty,
+      page: 0,
+      size: 200,
+      sort: 'id,asc'
+    },
+    {
+      skip: !open || !appointmentDepartmentId || !selectedPractitionerId || !selectedPractitionerSpecialty,
+      refetchOnMountOrArgChange: true
+    }
+  );
 
   const effectivePractitionerOptions = useMemo(() => {
-    if ((practitionerOptions ?? []).length > 0) return practitionerOptions;
+    const rows = (practitionersByDepartmentResponse as any)?.data ?? practitionersByDepartmentResponse ?? [];
 
-    const fallback = (practitionersAppointableByLoggedInFacility as any)?.data ?? [];
-
-    return (fallback ?? []).map((p: any) => ({
+    return (Array.isArray(rows) ? rows : []).map((p: any) => ({
       id: p?.id,
       label:
         p?.fullName ||
@@ -477,18 +496,67 @@ const BookPatient = ({
         p?.name ||
         `Practitioner #${p?.id ?? ''}`
     }));
-  }, [practitionerOptions, practitionersAppointableByLoggedInFacility]);
+  }, [practitionersByDepartmentResponse]);
 
   const effectiveServiceOptions = useMemo(() => {
-    if ((serviceOptions ?? []).length > 0) return serviceOptions;
+    if (!selectedPractitionerId || !selectedPractitionerSpecialty) return [];
 
-    const fallback = (servicesAppointableByLoggedInFacility as any)?.data ?? [];
+    const rows =
+      (servicesByDepartmentSpecialtyResponse as any)?.data ??
+      servicesByDepartmentSpecialtyResponse ??
+      [];
 
-    return (fallback ?? []).map((s: any) => ({
+    return (Array.isArray(rows) ? rows : []).map((s: any) => ({
       id: s?.id,
       label: s?.serviceName || s?.name || `Service #${s?.id ?? ''}`
     }));
-  }, [serviceOptions, servicesAppointableByLoggedInFacility]);
+  }, [
+    selectedPractitionerId,
+    selectedPractitionerSpecialty,
+    servicesByDepartmentSpecialtyResponse
+  ]);
+
+  const setBookingPreferenceRecord = (next: any) => {
+    setRecord((prev: any) => {
+      const resolved = typeof next === 'function' ? next(prev) : { ...prev, ...next };
+
+      if (resolved?.defaultPractitioner !== prev?.defaultPractitioner) {
+        return { ...resolved, defaultService: null };
+      }
+
+      return resolved;
+    });
+  };
+
+  useEffect(() => {
+    if (!open || !record?.defaultService) return;
+    if (!selectedPractitionerId) {
+      setRecord((prev: any) =>
+        prev?.defaultService == null ? prev : { ...prev, defaultService: null }
+      );
+      return;
+    }
+
+    if (!selectedPractitionerSpecialty) return;
+
+    const serviceId = Number(record.defaultService);
+    const stillValid = effectiveServiceOptions.some(
+      (s: any) => Number(s?.id) === serviceId
+    );
+
+    if (!stillValid && servicesByDepartmentSpecialtyResponse != null) {
+      setRecord((prev: any) =>
+        prev?.defaultService == null ? prev : { ...prev, defaultService: null }
+      );
+    }
+  }, [
+    open,
+    record?.defaultService,
+    selectedPractitionerId,
+    selectedPractitionerSpecialty,
+    effectiveServiceOptions,
+    servicesByDepartmentSpecialtyResponse
+  ]);
 
   useEffect(() => {
     if (!open || !readOnly || !appointmentData) return;
@@ -506,6 +574,15 @@ const BookPatient = ({
   }, [open, readOnly, appointmentData, viewPatientById]);
 
   const bookingPatientId = Number(record?.patientId);
+
+
+  const {
+    data: primaryDocument
+  } = useGetPrimaryDocumentByPatientQuery(bookingPatientId, {
+    skip: !bookingPatientId
+  });
+
+
   const isFollowUpService = record?.service === 'FOLLOW_UP';
 
   useEffect(() => {
@@ -553,28 +630,33 @@ const BookPatient = ({
   }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId, triggerPrevious]);
 
   useEffect(() => {
+    if (!open) return;
+
     const rows = prevList?.data ?? [];
 
-    if (!rows.length) return;
+    setAllPrevEncounters(previous => {
+      if (!rows.length) return previous;
 
-    setAllPrevEncounters(previousEncounters => {
-      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
-      const merged = [...previousEncounters];
+      const seen = new Set(previous.map((e: any) => e.id));
 
-      rows.forEach((encounter: any) => {
-        if (!seenIds.has(encounter.id)) merged.push(encounter);
+      const merged = [...previous];
+
+      rows.forEach((e: any) => {
+        if (!seen.has(e.id)) {
+          merged.push(e);
+        }
       });
 
       return merged;
     });
-  }, [prevList]);
+  }, [open, prevList?.data]);
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
   const modifiedPrevEncounters = useMemo(() => {
     return (allPrevEncounters ?? []).map((encounter: any) => ({
       ...encounter,
-      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${encounter.status ?? ''}`
+      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${getEncounterTreatmentStatus(encounter)}`
     }));
   }, [allPrevEncounters]);
 
@@ -658,7 +740,9 @@ const BookPatient = ({
     if (!open || !patientSidebarOpen) return;
 
     const compute = () => {
-      const dialog = document.querySelector('.book-patient-modal .rs-modal-dialog') as HTMLElement | null;
+      const dialog =
+        (document.querySelector('.rs-modal-dialog.book-patient-modal') as HTMLElement | null) ??
+        (document.querySelector('.book-patient-modal') as HTMLElement | null);
 
       if (!dialog) return;
 
@@ -756,8 +840,8 @@ const BookPatient = ({
         return;
       }
 
-      if (appointmentData.requirePractitioner && !record.defaultPractitioner) {
-        dispatch(notify({ msg: 'Practitioner is required for this appointment', sev: 'warning' }));
+      if (!record.defaultPractitioner) {
+        dispatch(notify({ msg: 'Please select default practitioner', sev: 'warning' }));
         return;
       }
 
@@ -1124,12 +1208,20 @@ const BookPatient = ({
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document Type</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentTypeLkey || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {bookingPatientId
+                                ? formatEnumString(primaryDocument?.type || '-')
+                                : '-'}
+                            </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 10, color: '#A1A9B8', margin: 0 }}>Document No</p>
-                            <p style={{ margin: 0 }}>{selectedPatient?.documentNo || '-'}</p>
+                            <p style={{ margin: 0 }}>
+                              {bookingPatientId
+                                ? primaryDocument?.number || '-'
+                                : '-'}
+                            </p>
                           </div>
 
                           <div style={{ flex: 1 }}>
@@ -1265,13 +1357,13 @@ const BookPatient = ({
                             fieldName="defaultPractitioner"
                             fieldLabel="Default Practitioner"
                             record={record}
-                            setRecord={setRecord}
+                            setRecord={setBookingPreferenceRecord}
                             selectData={effectivePractitionerOptions}
                             selectDataLabel="label"
                             selectDataValue="id"
                             width="100%"
-                            disabled={readOnly}
-                            required={appointmentData?.requirePractitioner}
+                            disabled={readOnly || !appointmentDepartmentId}
+                            required={!readOnly}
                           />
 
                           <MyInput
@@ -1279,12 +1371,13 @@ const BookPatient = ({
                             fieldName="defaultService"
                             fieldLabel="Default Service"
                             record={record}
-                            setRecord={setRecord}
+                            setRecord={setBookingPreferenceRecord}
                             selectData={effectiveServiceOptions}
                             selectDataLabel="label"
                             selectDataValue="id"
                             width="100%"
-                            disabled={readOnly}
+                            disabled={readOnly || !selectedPractitionerId}
+
                           />
 
                           <MyInput
@@ -1333,46 +1426,6 @@ const BookPatient = ({
                             disabled={readOnly}
                           />
 
-                          <MyInput
-                            fieldType="select"
-                            fieldName="priority"
-                            fieldLabel="Priority"
-                            record={record}
-                            setRecord={setRecord}
-                            selectData={encounterPriorityEnum ?? []}
-                            selectDataLabel="label"
-                            selectDataValue="value"
-                            width="100%"
-                            searchable={false}
-                            required={!readOnly}
-                            disabled={readOnly}
-                          />
-
-                          <MyInput
-                            fieldType="select"
-                            fieldName="originType"
-                            fieldLabel="Origin Type"
-                            record={record}
-                            setRecord={setRecord}
-                            selectData={patOriginLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            width="100%"
-                            searchable={false}
-                            disabled={readOnly}
-                                    disableByField='isValid'
-
-                          />
-
-                          <MyInput
-                            fieldName="originName"
-                            fieldLabel="Origin Name"
-                            record={record}
-                            setRecord={setRecord}
-                            width="100%"
-                            disabled={readOnly}
-                          />
-
                           {record?.service === 'FOLLOW_UP' && (
                             <div style={{ gridColumn: '1 / -1' }}>
                               <MyInput
@@ -1400,6 +1453,48 @@ const BookPatient = ({
                               />
                             </div>
                           )}
+
+                          <MyInput
+                            fieldType="select"
+                            fieldName="priority"
+                            fieldLabel="Priority"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={encounterPriorityEnum ?? []}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            width="100%"
+                            searchable={false}
+                            required={!readOnly}
+                            disabled={readOnly}
+                          />
+
+                          <MyInput
+                            fieldType="select"
+                            fieldName="originType"
+                            fieldLabel="Origin Type"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={patOriginLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            width="100%"
+                            searchable={false}
+                            disabled={readOnly}
+                            disableByField='isValid'
+
+                          />
+
+                          <MyInput
+                            fieldName="originName"
+                            fieldLabel="Origin Name"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                            disabled={readOnly}
+                          />
+
+
                         </div>
                       </Panel>
                     }

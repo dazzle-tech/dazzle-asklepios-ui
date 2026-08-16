@@ -41,16 +41,21 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+  const consultationType = useEnumOptions('ConsultationType');
   const consultationLevel = useEnumOptions('ConsultationLevel');
 
   const [triggerGetSpecialistPractitioners, practitionersResult] =
     useLazyGetSpecialistPractitionersQuery();
 
-  const [
-    getSpecialtyConsultation,
-    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
-  ] = useGetSpecialtyConsultationMutation();
+
+    const [
+      getSpecialtyConsultation,
+      {
+        isLoading: aiLoading,
+        error: aiError
+      }
+    ] = useGetSpecialtyConsultationMutation();
+
 
   const aiSummary = localAiSummary;
   const destinationType = formData?.destinationType ?? 'DEPARTMENT';
@@ -289,13 +294,9 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   disabled={true}
                   fieldType="select"
                   fieldLabel="Consultation Type"
-                  selectData={
-                    Array.isArray(consultationTypeLovQueryResponse?.object)
-                      ? consultationTypeLovQueryResponse.object
-                      : []
-                  }
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={Array.isArray(consultationType) ? consultationType : []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   fieldName={'consultationType'}
                   record={formData}
                   setRecord={() => {}}

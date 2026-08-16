@@ -1,5 +1,8 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import BillingRuleSelect, {
+  testTypeToBillingItemType
+} from '@/components/BillingRuleSelect/BillingRuleSelect';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
@@ -359,7 +362,12 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   selectDataValue="value"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
-
+                  onSelectItem={() => {
+                    setDiagnosticsTest(prev => ({
+                      ...prev,
+                      billingRuleId: null
+                    }));
+                  }}
                 />
               </div>
               <div className="container-of-field-diagnostic">
@@ -435,7 +443,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         placeholder="Selected LOV"
                       />
                     </div>
-
                   )}
 
                   {diagnosticsTest.defaultProfileResultType === 'NUMBER' && (
@@ -452,7 +459,21 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         record={diagnosticsTest}
                         setRecord={setDiagnosticsTest}
                       />
-                    </div>)}
+                    </div>
+                  )}
+
+                  {diagnosticsTest.defaultProfileResultType === 'TEXT' && (
+                    <div className="container-of-field-diagnostic">
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Text Result"
+                        fieldName="defaultProfileResultType"
+                        disabled
+                        record={diagnosticsTest}
+                        setRecord={setDiagnosticsTest}
+                      />
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -501,6 +522,18 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                     selectData={Currency ?? []}
                     selectDataLabel="label"
                     selectDataValue="value"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+              </div>
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <BillingRuleSelect
+                    billingItemType={testTypeToBillingItemType(
+                      diagnosticsTest?.type
+                    )}
                     record={diagnosticsTest}
                     setRecord={setDiagnosticsTest}
                   />

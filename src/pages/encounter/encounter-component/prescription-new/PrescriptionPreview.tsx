@@ -198,7 +198,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
     <div className="prescription-preview-container" dir={dir}>
       <SectionContainer
         title={<Text className="font-style">Active Ingredients</Text>}
-        content={<ActiveIngrediantList selectedGeneric={medId ? { id: medId } : null} />}
+        content={<ActiveIngrediantList selectedGeneric={medId ?  medId : null} activeIngredientId={orderMedication.activeIngredientId} />}
       />
 
       <SectionContainer
@@ -399,42 +399,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
           <Form fluid>
             <MyTagInput tags={record.parametersToMonitor?.split(',') ?? []} setTags={noop} />
 
-            {/* <div className="prescription-refills-blocks">
-              <MyInput
-                disabled
-                width={140}
-                fieldType="number"
-                fieldLabel="Number of Refills"
-                fieldName="numberOfRefills"
-                record={record}
-                setRecord={noop}
-              />
-
-              <MyInput
-                disabled
-                width={180}
-                fieldType="number"
-                fieldLabel="Refill Interval Value"
-                fieldName="refillValue"
-                record={record}
-                setRecord={noop}
-              />
-
-              <MyInput
-                disabled
-                width={180}
-                fieldType="text"
-                fieldLabel="Refill Interval Unit"
-                record={{
-                  refillIntervalUnitText: getLov(
-                    refillunitQueryResponse,
-                    record.refillUnit ?? record.refillIntervalUnitLkey
-                  )
-                }}
-                fieldName="refillIntervalUnitText"
-                setRecord={noop}
-              />
-            </div> */}
+          
           </Form>
         }
       />

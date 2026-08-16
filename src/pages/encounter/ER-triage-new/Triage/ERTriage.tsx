@@ -100,7 +100,7 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
 
 const ERTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
-  const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
+  const COMPLETE_TRIAGE_STATUS_CODE = 'COMPLETED';
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
@@ -331,6 +331,7 @@ const ERTriage = () => {
       statuses: statusesCsv,
       patientName,
       mrn,
+      practitionerId: undefined,
       page,
       size: pageSize,
       sort: DEFAULT_SORT,
@@ -544,7 +545,8 @@ const ERTriage = () => {
         from: 'ER_Triage',
         info: 'toViewTriage',
         patient: patientData,
-        encounter: encounterData
+        encounter: encounterData,
+        viewMode: 'readOnly'
       }
     });
   };

@@ -80,9 +80,9 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
   { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit', isDefaultMedicalSheet: true },
-  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true },
-  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true },
-  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true  },
   { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result', isDefaultMedicalSheet: true },
   // { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
   { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
@@ -101,14 +101,21 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
   // { name: 'Care Plan & Goals', code: 'CARE_PLAN_AND_GOALS', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/care-plan-and-goals' },
   // { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
-  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record' },
-  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
+  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record', isDefaultMedicalSheet: true  },
+  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record', isDefaultMedicalSheet: true  },
   // { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
   // { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
   // { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
   // { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
-  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes', isDefaultMedicalSheet: true, isDefaultNurseMedicalSheet: true },
+  {
+    name: 'Progress Notes / Additional Notes',
+    code: 'PROGRESS_NOTES',
+    icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
+    path: '/progress-notes',
+    isDefaultMedicalSheet: true,
+    isDefaultNurseMedicalSheet: true
+  },
   // { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   // { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   // { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
@@ -126,7 +133,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   // { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
-  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
+  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
   // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   // { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
@@ -140,7 +147,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   // { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products', isDefaultNurseMedicalSheet: true },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use', isDefaultMedicalSheet: true  },
   {
     name: 'Nurse Assessment',
     code: 'NURSE_ASSESSMENT',
@@ -152,9 +159,10 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment'
+    , isDefaultMedicalSheet: true 
   },
 
-  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' },
 
 ];
 
@@ -168,6 +176,8 @@ export const MODULES: Module[] =
       viewOrder: 0.5,
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
+        { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
+        { name: "WhatsApp Settings", code: "WHATSAPP_SETTINGS", description: "", icon: "FaWhatsapp", viewOrder: 0.6, navPath: "whatsapp-settings" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
@@ -187,9 +197,9 @@ export const MODULES: Module[] =
         { name: "Potential Duplicate", code: "POTENTIAL_DUPLICATE", description: "", icon: "FaInstalod", viewOrder: 15, navPath: "potintial-duplicate" },
         { name: "Brand Medications", code: "BRAND_MEDICATIONS", description: "", icon: "FaBottleDroplet", viewOrder: 8, navPath: "brand-medications" },
         { name: "Lists Of Value", code: "LISTS_OF_VALUE", description: "", icon: "FaList", viewOrder: 8, navPath: "lov-setup" },
-        { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
-        { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
-        { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
+        // { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
+        // { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
+        // { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
         { name: "Uom Group", code: "UOM_GROUP", description: "", icon: "FaBox", viewOrder: 7, navPath: "uom-group" },
         { name: "Prescription Instructions", code: "PRESCRIPTION_INSTRUCTIONS", description: "", icon: "FaPrescriptionBottle", viewOrder: 15, navPath: "prescription-instructions" },
         { name: "Age Group", code: "AGE_GROUP", description: "Age Group Setup", icon: "FaBaby", viewOrder: 10, navPath: "age-group" },
@@ -200,7 +210,6 @@ export const MODULES: Module[] =
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
         { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
-        { name: "Diagnostics Setup Old", code: "DIAGNOSTICS_SETUP_OLD", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "" },
         { name: "Vaccine Setup", code: "VACCINE_SETUP", description: "Vaccine", icon: "FaSyringe", viewOrder: 9, navPath: "vaccine-setup" },
         { name: "Procedure Setup", code: "PROCEDURE_SETUP", description: "", icon: "FaProductHunt", viewOrder: 10, navPath: "procedure-setup" },
         { name: "Room Bed Setup", code: "ROOM_BED_SETUP", description: "", icon: "FaBed", viewOrder: 16, navPath: "room" },
@@ -213,6 +222,14 @@ export const MODULES: Module[] =
         { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+        {
+          name: "Patient Satisfaction Survey Responses",
+          code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",
+          description: "View submitted patient satisfaction survey responses",
+          icon: "FaClipboardQuestion",
+          viewOrder: 6,
+          navPath: "patient-satisfaction-survey-responses"
+        },
         { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },
         { name: "Clinical Protocols Setup", code: "CLINICAL_PROTOCOLS_SETUP", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "" },
         { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
@@ -232,7 +249,79 @@ export const MODULES: Module[] =
           navPath: "price-list",
         },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
-        { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
+        {
+          name: 'Patient Merge Config',
+          code: 'PATIENT_MERGE_CONFIG',
+          description: "Policy Definition",
+          icon: "faUserDoctor",
+          viewOrder: 24,
+          navPath: 'patient-merge-config'
+        },
+        {
+          name: "NPHIES Payers",
+          code: "NPHIES_PAYER",
+          description: "NPHIES Payers",
+          icon: "FaBuilding",
+          viewOrder: 24,
+          navPath: "nphies-payers"
+        },
+        {
+          name: "Waseel SBS Setup",
+          code: "WASEEL_SBS_SETUP",
+          description: "Waseel SBS Setup",
+          icon: "FaBuilding",
+          viewOrder: 25,
+          navPath: "waseel-sbs-setup"
+        },
+        {
+          name: "Price List Setup",
+          code: "PRICE_LIST_SETUP",
+          description: "Price List Setup",
+          icon: "FaListAlt",
+          viewOrder: 26,
+          navPath: "price-list-setup"
+        },
+        {
+          name: "Billing Rule Setup",
+          code: "BILLING_RULE_SETUP",
+          description: "Billing Rule Setup",
+          icon: "FaGavel",
+          viewOrder: 27,
+          navPath: "billing-rule-setup"
+        },
+        {
+          name: "Financial Document Numbering",
+          code: "FINANCIAL_DOCUMENT_NUMBERING",
+          description: "Financial Document Numbering Setup",
+          icon: "FaHashtag",
+          viewOrder: 28,
+          navPath: "financial-document-numbering"
+        },
+        {
+          name: "Billing Configuration",
+          code: "BILLING_CONFIGURATION",
+          description: "Billing Configuration",
+          icon: "FaCog", // or FaMoneyCheckAlt, FaSlidersH, etc.
+          viewOrder: 29,
+          navPath: "billing-configuration"
+        },
+        {
+          name: "Tax Configuration",
+          code: "TAX_CONFIGURATION",
+          description: "Tax Configuration",
+          icon: "FaPercentage",
+          viewOrder: 30,
+          navPath: "tax-setup"
+        },
+        {
+          name: "Discount Configuration",
+          code: "DISCOUNT_CONFIGURATION",
+          description: "Discount Configuration",
+          icon: "FaTags",
+          viewOrder: 31,
+          navPath: "discount-setup"
+        }
+        // { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
 
       ],
     },
@@ -273,65 +362,13 @@ export const MODULES: Module[] =
         { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
         { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
+        { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
+        { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
+
 
       ],
     },
-    {
-      name: "Patient Old",
-      description: "Legacy patient screens",
-      icon: "FaUserClock",
-      viewOrder: 2,
-      screens: [
-        {
-          name: "Patient Registration (Old)",
-          code: "PATIENT_REGISTRATION_OLD",
-          description: "",
-          icon: "FaFilePen",
-          viewOrder: 0,
-          navPath: "patient-old/patient-profile"
-        },
-        {
-          name: "Facility Patient List (Old)",
-          code: "FACILITY_PATIENT_LIST_OLD",
-          description: "",
-          icon: "FaPersonRays",
-          viewOrder: 1,
-          navPath: "patient-old/facility-patient-list"
-        },
-        {
-          name: "Patient List (Old)",
-          code: "PATIENT_LIST_OLD",
-          description: "",
-          icon: "FaList",
-          viewOrder: 2,
-          navPath: "patient-old/patient-list"
-        },
-        {
-          name: "Patient Chart (Old)",
-          code: "PATIENT_CHART_OLD",
-          description: "",
-          icon: "FaChartLine",
-          viewOrder: 3,
-          navPath: "patient-old/patient-chart"
-        },
-        {
-          name: "Patient EMR (Old)",
-          code: "PATIENT_EMR_OLD",
-          description: "",
-          icon: "FaFileWaveform",
-          viewOrder: 4,
-          navPath: "patient-old/patient-emr"
-        },
-        {
-          name: "Merge Patient Files (Old)",
-          code: "MERGE_PATIENT_FILES_OLD",
-          description: "",
-          icon: "FaFolderTree",
-          viewOrder: 5,
-          navPath: "patient-old/patient-merge-files"
-        }
-      ]
-    },
+
     {
       name: "Scheduling",
       description: "",
@@ -698,10 +735,18 @@ export const MODULES: Module[] =
         {
           name: "Claims",
           code: "CLAIMS",
-          description: "",
-          icon: "FaMobileRetro",
+          description: "Insurance claims generated from finalized invoices",
+          icon: "FaFileInvoiceDollar",
           viewOrder: 2,
           navPath: "billing-claims",
+        },
+        {
+          name: "Insurance Receivables",
+          code: "INSURANCE_RECEIVABLES",
+          description: "Insurance payer receivables and claim payment progress",
+          icon: "FaMoneyBillTrendUp",
+          viewOrder: 3,
+          navPath: "insurance-receivables",
         },
         {
           name: "Price Lists",
@@ -737,9 +782,10 @@ export const MODULES: Module[] =
       icon: "FaRegIdBadge",
       viewOrder: 2,
       screens: [
-
-        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "insurance-eligibility-requests" },
-  ],
+        { name: "Pre Authorization Requests", code: "WASEEL_PRE_AUTHORIZATION_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "waseel-pre-authorization-requests" },
+        { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 2, navPath: "insurance-eligibility-requests" },
+        { name: "Claims", code: "CLAIMS", description: "Waseel insurance claim submissions", icon: "FaFileInvoiceDollar", viewOrder: 3, navPath: "billing-claims" },
+      ],
     }
 
 

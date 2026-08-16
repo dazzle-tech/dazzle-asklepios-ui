@@ -65,13 +65,19 @@ export const laboratoryReportsService = createApi({
 
     getLaboratoryReportsPdf: builder.query<
       Blob,
-      { resultIds: number[]; lang?: string }
+      {
+        resultIds: number[];
+        timezone: string;
+        lang?: string
+      }
     >({
-      query: ({ resultIds, lang = 'en' }) => ({
+      query: ({ resultIds, timezone, lang = 'en' }) => ({
         url: '/api/analytics/laboratory-reports/results/pdf',
         method: 'GET',
+
         params: {
           resultIds,
+          timezone,
           lang,
         },
         responseHandler: response => response.blob(),

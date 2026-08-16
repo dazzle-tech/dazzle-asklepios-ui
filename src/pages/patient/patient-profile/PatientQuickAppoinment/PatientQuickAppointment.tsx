@@ -15,6 +15,7 @@ import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import {
   newPatientEncounter,
   newPatientInsurance,
@@ -145,6 +146,7 @@ const PatientQuickAppointment = ({
 
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
+  const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
 
   const isViewMode = Boolean(isDisabeld);
   const isPaymentMode = initialStep === 1;
@@ -216,6 +218,7 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
+    if (!localEncounter?.practitionerId) missingFields.push('Practitioner');
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
     if (!localEncounter?.priorityLevel) missingFields.push('Priority');
     if (!localEncounter?.encounterDate) missingFields.push('Date');
@@ -247,36 +250,7 @@ const PatientQuickAppointment = ({
     );
   };
 
-  const checkDuplicateEncounter = async (
-    patientId: number,
-    departmentId: number,
-    encounterDate: any
-  ): Promise<boolean> => {
-    if (!patientId || !departmentId || !encounterDate) return false;
-    try {
-      const result: any = await fetchPatientEncounters(
-        { patientId, page: 0, size: 200, sort: 'createdDate,desc' },
-        true
-      ).unwrap();
 
-      const list: any[] = Array.isArray(result?.data)
-        ? result.data
-        : Array.isArray(result)
-          ? result
-          : [];
-
-      return list.some((e: any) => {
-        const sameDept =
-          Number(e?.departmentId ?? e?.department?.id ?? 0) === Number(departmentId);
-        const status = String(e?.status ?? '').toUpperCase();
-        const isCancelled = status === 'CANCELLED';
-        const dateValue = e?.encounterDate ?? e?.createdDate;
-        return sameDept && !isCancelled && isSameLocalDate(dateValue, encounterDate);
-      });
-    } catch {
-      return false;
-    }
-  };
   const extractErrorMessage = (response: any): string => {
     try {
       const msg = response?.data?.message ?? response?.message;
@@ -293,25 +267,11 @@ const PatientQuickAppointment = ({
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
 
-    const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+    const patientId = Number(localPatient?.id );
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
     const departmentId = Number(localEncounter?.departmentId ?? 0);
 
-    const hasDuplicate = await checkDuplicateEncounter(
-      patientId,
-      departmentId,
-      localEncounter?.encounterDate
-    );
-
-    if (hasDuplicate) {
-      dispatch(
-        notify({
-          msg: 'Patient already has same department encounter Today',
-          sev: 'error'
-        })
-      );
-      return;
-    }
+   
 
     try {
 
@@ -426,15 +386,25 @@ const PatientQuickAppointment = ({
       const ok = await paymentRef.current?.confirm();
       if (!ok) return;
 
-      setIsPaymentSaved(true);
-
       if (onEncounterSaved) await onEncounterSaved();
-
-      setQuickAppointmentModel(false);
-      dispatch(notify({ msg: 'Payment Confirmed Successfully', sev: 'success' }));
     } catch (err: any) {
       dispatch(notify({ msg: 'Error confirming payment', sev: 'error' }));
     }
+  };
+
+  const handlePaymentDeferred = () => {
+    setQuickAppointmentModel(false);
+  };
+
+  const handleReceiptClosed = () => {
+    setIsPaymentSaved(true);
+    setQuickAppointmentModel(false);
+    dispatch(
+      notify({
+        msg: 'Payment collected successfully.',
+        sev: 'success'
+      })
+    );
   };
 
   const handlePaymentClear = () => {
@@ -469,6 +439,9 @@ const PatientQuickAppointment = ({
             patientInsurance={patientInsuranceDraft}
             setPatientInsurance={setPatientInsuranceDraft}
             onPaymentSaved={onEncounterSaved}
+            onReceiptClosed={handleReceiptClosed}
+            onPaymentDeferred={handlePaymentDeferred}
+            onConfirmingChange={setPaymentConfirmLoading}
           />
         );
       default:
@@ -487,7 +460,7 @@ const PatientQuickAppointment = ({
     <MyModal
       open={quickAppointmentModel}
       setOpen={setQuickAppointmentModel}
-      title="Quick Appointment"
+      title="Walk-in Patient"
       steps={[
         {
           title: 'Encounter',
@@ -498,12 +471,12 @@ const PatientQuickAppointment = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
-                disabled={encounterReadOnly}
+                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
               >
                 Clear
               </MyButton>
               <MyButton
-                disabled={encounterReadOnly}
+                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
                 onClick={handleSave}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
@@ -527,7 +500,8 @@ const PatientQuickAppointment = ({
               <MyButton
                 appearance="primary"
                 onClick={handlePaymentConfirm}
-                disabled={paymentReadOnly}
+                disabled={paymentReadOnly || paymentConfirmLoading}
+                loading={paymentConfirmLoading}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
                 Confirm
@@ -537,8 +511,8 @@ const PatientQuickAppointment = ({
         }
       ]}
       content={(step: number) => <div dir={dir}>{conjureFormContent(step)}</div>}
-      size="55vw"
-      bodyheight="65vh"
+      size="68vw"
+      bodyheight="72vh"
       hideActionBtn={true}
       initialStep={initialStep}
     />

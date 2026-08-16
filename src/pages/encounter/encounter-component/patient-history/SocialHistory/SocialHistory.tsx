@@ -63,10 +63,10 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     { skip: !isValidPatientId }
   );
 
-const [cancelSocialHistory, { isLoading }] =
-  useCancelSocialHistoryMutation();
+  const [cancelSocialHistory, { isLoading }] =
+    useCancelSocialHistoryMutation();
 
-const filteredData = data?.data ?? [];
+  const filteredData = data?.data ?? [];
 
   useEffect(() => {
     if (previewRow && previewRef.current) {
@@ -112,56 +112,56 @@ const filteredData = data?.data ?? [];
     setOpen(true);
   };
 
-    const handleCancel = async () => {
-      try {
-        await cancelSocialHistory({
-          id: cancelObject.id,
-          cancellationReason: cancelObject.cancellationReason
-        }).unwrap();
+  const handleCancel = async () => {
+    try {
+      await cancelSocialHistory({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Social History cancelled successfully.',
-            sev: 'success'
-          })
-        );
+      dispatch(
+        notify({
+          msg: 'Social History cancelled successfully.',
+          sev: 'success'
+        })
+      );
 
-        if (previewRow?.id === cancelObject.id) {
-          setPreviewRow(null);
-        }
-
-        setOpenCancelModal(false);
-
-        setCancelObject({
-          id: null,
-          status: '',
-          cancellationReason: ''
-        });
-      } catch (error: any) {
-        const errorMessage =
-          error?.data?.message ||
-          error?.data?.detail ||
-          error?.error ||
-          'Failed to cancel Social History.';
-
-        dispatch(
-          notify({
-            msg: errorMessage,
-            sev: 'error'
-          })
-        );
+      if (previewRow?.id === cancelObject.id) {
+        setPreviewRow(null);
       }
-    };
+
+      setOpenCancelModal(false);
+
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Social History.';
+
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const openCancelDialog = (row: any) => {
-  setCancelObject({
-    id: row.id,
-    status: row.status || 'ACTIVE',
-    cancellationReason: ''
-  });
+    setCancelObject({
+      id: row.id,
+      status: row.status || 'ACTIVE',
+      cancellationReason: ''
+    });
 
-  setOpenCancelModal(true);
-};
+    setOpenCancelModal(true);
+  };
 
   const columns = [
     {
@@ -241,18 +241,18 @@ const filteredData = data?.data ?? [];
       )
     },
     {
-  key: 'cancelledDate',
-  title: <Translate>CANCELLED AT / BY</Translate>,
-  expandable: true,
-  render: (row: any) =>
-    row?.status === 'CANCELLED' ? (
-      <UserDateCell
-        login={row?.cancelledBy}
-        date={row?.cancelledDate}
-      />
-    ) : (
-      <span>-</span>
-    )
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        ) : (
+          <span>-</span>
+        )
     },
     {
       key: 'cancellationReason',
@@ -272,56 +272,68 @@ const filteredData = data?.data ?? [];
     },
     ...(!toShowData
       ? [
-          {
-            key: 'actions',
-            title: '',
-            flexGrow: 1,
-            render: row => (
-              <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
-                {row.status !== 'CANCELLED' && (
-                  <>
-                    <MdModeEdit
-                      size={22}
-                      fill="var(--primary-gray)"
-                      className="pointer"
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleEdit(row);
-                      }}
-                    />
+        {
+          key: 'actions',
+          title: '',
+          flexGrow: 1,
+          render: row => (
+            <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
+              {row.status !== 'CANCELLED' && (
+                <>
+                  <MdModeEdit
+                    className="view-only-action-edit-delete-encounter"
+                    size={22}
+                    fill="var(--primary-gray)"
+                    className="pointer"
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleEdit(row);
+                    }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
+                  />
 
                   <MdDelete
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
                     className="pointer"
                     title="Cancel"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={e => {
                       e.stopPropagation();
                       openCancelDialog(row);
                     }}
                   />
-                  </>
-                )}
-              </div>
-            )
-          }
-        ]
+                </>
+              )}
+            </div>
+          )
+        }
+      ]
       : [])
   ];
 
-const { data: createdByFullName } = useGetUserFullNameByLoginQuery(
-  previewRow?.createdBy,
-  {
-    skip: !previewRow?.createdBy
-  }
-);
+  const { data: createdByFullName } = useGetUserFullNameByLoginQuery(
+    previewRow?.createdBy,
+    {
+      skip: !previewRow?.createdBy
+    }
+  );
 
-const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
-  previewRow?.lastModifiedBy,
-  {
-    skip: !previewRow?.lastModifiedBy
-  }
-);
+  const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
+    previewRow?.lastModifiedBy,
+    {
+      skip: !previewRow?.lastModifiedBy
+    }
+  );
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -346,13 +358,13 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
               >
                 Add
               </MyButton>
-              
+
             )
           }
           content={
             <div dir={dir}>
 
-              {!toShowData && (
+              
                 <div className="margin-bottom-10">
                   <MyInput
                     fieldType="check"
@@ -366,7 +378,7 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                     }}
                   />
                 </div>
-              )}
+              
               <MyTable
                 height={450}
                 data={filteredData}
@@ -428,7 +440,7 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                                 record={{
                                   cigaretteAmount:
                                     previewRow.cigaretteAmount !== null &&
-                                    previewRow.cigaretteAmount !== undefined
+                                      previewRow.cigaretteAmount !== undefined
                                       ? previewRow.cigaretteAmount
                                       : '-'
                                 }}
@@ -544,30 +556,28 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           {previewRow.substanceUse && (
                             <>
                               <MyInput
-                                width={180}
+                                width={"15vw"}
                                 column
                                 fieldLabel="Route"
                                 fieldName="route"
                                 fieldType="select"
                                 selectData={routeLov?.object ?? []}
-                                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
                               />
 
                               <MyInput
-                                width={180}
+                                width={"15vw"}
                                 column
                                 fieldLabel="Frequency"
                                 fieldName="frequency"
                                 fieldType="select"
                                 selectData={freqLov?.object ?? []}
-                                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
@@ -576,14 +586,14 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           )}
 
                           <MyInput
-                            width={180}
+                            width={"10vw"}
                             column
                             fieldLabel="Physical limitations"
                             fieldName="physicalLimitation"
                             fieldType="select"
                             selectData={physicalLov?.object ?? []}
-                             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
                             selectDataValue="key"
                             record={previewRow}
@@ -591,51 +601,51 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           />
 
                           <MyInput
-                            width={180}
+                            width={"10vw"}
                             column
                             fieldLabel="Diagnosed eating disorders"
                             fieldName="diagnosedEatingDisorders"
                             fieldType="select"
                             selectData={diagnoseLov?.object ?? []}
-                             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
                             selectDataValue="key"
                             record={previewRow}
                             disabled
                           />
 
-<MyInput
-  width={220}
-  column
-  fieldType="text"
-  fieldLabel={<Translate>Created By / At</Translate>}
-  fieldName="createdBy"
-  record={{
-    createdBy: previewRow?.createdDate
-      ? `${createdByFullName || previewRow?.createdBy || '-'} - ${formatDateWithoutSeconds(
-          previewRow.createdDate
-        )}`
-      : createdByFullName || previewRow?.createdBy || '-'
-  }}
-  disabled
-/>
+                          <MyInput
+                            width={220}
+                            column
+                            fieldType="text"
+                            fieldLabel={<Translate>Created By / At</Translate>}
+                            fieldName="createdBy"
+                            record={{
+                              createdBy: previewRow?.createdDate
+                                ? `${createdByFullName || previewRow?.createdBy || '-'} - ${formatDateWithoutSeconds(
+                                  previewRow.createdDate
+                                )}`
+                                : createdByFullName || previewRow?.createdBy || '-'
+                            }}
+                            disabled
+                          />
 
-{previewRow.lastModifiedDate && (
-  <MyInput
-    width={220}
-    column
-    fieldType="text"
-    fieldLabel="Last Modified By / At"
-    fieldName="lastModifiedBy"
-    record={{
-      lastModifiedBy: `${lastModifiedByFullName || previewRow?.lastModifiedBy || '-'} - ${formatDateWithoutSeconds(
-        previewRow.lastModifiedDate
-      )}`
-    }}
-    disabled
-  />
-)}
+                          {previewRow.lastModifiedDate && (
+                            <MyInput
+                              width={220}
+                              column
+                              fieldType="text"
+                              fieldLabel="Last Modified By / At"
+                              fieldName="lastModifiedBy"
+                              record={{
+                                lastModifiedBy: `${lastModifiedByFullName || previewRow?.lastModifiedBy || '-'} - ${formatDateWithoutSeconds(
+                                  previewRow.lastModifiedDate
+                                )}`
+                              }}
+                              disabled
+                            />
+                          )}
                         </div>
                       </Form>
                     }

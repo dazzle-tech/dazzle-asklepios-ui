@@ -6,7 +6,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import {
   useGetAllCptQuery,
   useImportCptMutation,
-  useLazyGetCptByCategoryQuery,
+  useLazyGetCptByMainCategoryQuery,
+  useLazyGetCptByServiceCategoryQuery,
   useLazyGetCptByCodeQuery,
   useLazyGetCptByDescriptionQuery,
   type ImportResult,
@@ -17,8 +18,6 @@ import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useEnumOptions } from '@/services/enumsApi';
-import { formatEnumString } from '@/utils';
 import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 
 const CPTSetup: React.FC = () => {
@@ -53,7 +52,8 @@ const CPTSetup: React.FC = () => {
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
   // Lazy queries
-  const [fetchByCategory] = useLazyGetCptByCategoryQuery();
+  const [fetchByMainCategory] = useLazyGetCptByMainCategoryQuery();
+  const [fetchByServiceCategory] = useLazyGetCptByServiceCategoryQuery();
   const [fetchByCode] = useLazyGetCptByCodeQuery();
   const [fetchByDescription] = useLazyGetCptByDescriptionQuery();
 
@@ -63,9 +63,6 @@ const CPTSetup: React.FC = () => {
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const [conflictsPage, setConflictsPage] = useState(0);
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
-
-  // Enums
-  const cptCategoryOptions = useEnumOptions('CptCategory');
 
   // Main list
   const { data: cptListResponse, isFetching, refetch } = useGetAllCptQuery(paginationParams);
@@ -84,7 +81,7 @@ const CPTSetup: React.FC = () => {
   // Header
   useEffect(() => {
     dispatch(setPageCode('CPT'));
-    dispatch(setDivContent('CPT Diagnosis List'));
+    dispatch(setDivContent('CPT Procedures List'));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -114,8 +111,14 @@ const CPTSetup: React.FC = () => {
       const f = recordOfFilter.filter;
       const v = recordOfFilter.value;
       if (!f || v === undefined || v === null || v === '') return true;
-      if (f === 'category')
-        return String(row?.category ?? '').toUpperCase() === String(v).toUpperCase();
+      if (f === 'mainCategory')
+        return String(row?.mainCategory ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
+      if (f === 'serviceCategory')
+        return String(row?.serviceCategory ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
       if (f === 'code')
         return String(row?.code ?? '')
           .toLowerCase()
@@ -332,7 +335,8 @@ const CPTSetup: React.FC = () => {
 
   // Filter fields
   const filterFields = [
-    { label: 'Category', value: 'category' },
+    { label: 'Main Category', value: 'mainCategory' },
+    { label: 'Service Category', value: 'serviceCategory' },
     { label: 'Code', value: 'code' },
     { label: 'Description', value: 'description' }
   ];
@@ -348,9 +352,15 @@ const CPTSetup: React.FC = () => {
   ) => {
     if (!value) return undefined;
     const common = { page, size, sort, ts: ts ?? filterTs };
-    if (fieldName === 'category') {
-      return await fetchByCategory({
-        category: String(value).toUpperCase(),
+    if (fieldName === 'mainCategory') {
+      return await fetchByMainCategory({
+        mainCategory: String(value),
+        ...common
+      }).unwrap();
+    }
+    if (fieldName === 'serviceCategory') {
+      return await fetchByServiceCategory({
+        serviceCategory: String(value),
         ...common
       }).unwrap();
     } else if (fieldName === 'code') {
@@ -420,19 +430,7 @@ const CPTSetup: React.FC = () => {
         width="170px"
       />
 
-      {recordOfFilter.filter === 'category' ? (
-        <MyInput
-          width={300}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={cptCategoryOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      ) : (
+      {recordOfFilter.filter ? (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -444,11 +442,15 @@ const CPTSetup: React.FC = () => {
               ? 'Enter Code'
               : recordOfFilter.filter === 'description'
               ? 'Enter description'
+              : recordOfFilter.filter === 'mainCategory'
+              ? 'Enter main category'
+              : recordOfFilter.filter === 'serviceCategory'
+              ? 'Enter service category'
               : 'Enter value'
           }
           width={300}
         />
-      )}
+      ) : null}
 
       <MyButton
         color="var(--deep-blue)"
@@ -477,9 +479,19 @@ const CPTSetup: React.FC = () => {
   const columns = [
     { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
     {
-      key: 'category',
-      title: 'Category',
-      render: (row: any) => (row?.category ? formatEnumString(row?.category) : '')
+      key: 'codeCategory',
+      title: 'Code Category',
+      render: (row: any) => row?.codeCategory ?? ''
+    },
+    {
+      key: 'serviceCategory',
+      title: 'Service Category',
+      render: (row: any) => row?.serviceCategory ?? ''
+    },
+    {
+      key: 'mainCategory',
+      title: 'Main Category',
+      render: (row: any) => row?.mainCategory ?? ''
     },
     { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
     {
@@ -502,10 +514,19 @@ const CPTSetup: React.FC = () => {
       render: (row: Conflict) => row.incomingDescription
     },
     {
-      key: 'incomingCategory',
-      title: 'Incoming Category',
-      render: (row: Conflict) =>
-        row.incomingCategory ? formatEnumString(row.incomingCategory) : ''
+      key: 'incomingCodeCategory',
+      title: 'Incoming Code Category',
+      render: (row: Conflict) => row.incomingCodeCategory
+    },
+    {
+      key: 'incomingServiceCategory',
+      title: 'Incoming Service Category',
+      render: (row: Conflict) => row.incomingServiceCategory
+    },
+    {
+      key: 'incomingMainCategory',
+      title: 'Incoming Main Category',
+      render: (row: Conflict) => row.incomingMainCategory
     },
     {
       key: 'existingDescription',
@@ -513,10 +534,19 @@ const CPTSetup: React.FC = () => {
       render: (row: Conflict) => row.existingDescription
     },
     {
-      key: 'existingCategory',
-      title: 'Existing Category',
-      render: (row: Conflict) =>
-        row.existingCategory ? formatEnumString(row.existingCategory) : ''
+      key: 'existingCodeCategory',
+      title: 'Existing Code Category',
+      render: (row: Conflict) => row.existingCodeCategory
+    },
+    {
+      key: 'existingServiceCategory',
+      title: 'Existing Service Category',
+      render: (row: Conflict) => row.existingServiceCategory
+    },
+    {
+      key: 'existingMainCategory',
+      title: 'Existing Main Category',
+      render: (row: Conflict) => row.existingMainCategory
     }
   ];
 
@@ -528,6 +558,13 @@ const CPTSetup: React.FC = () => {
     ) || [];
 
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
+
+  const downloadPublicFile = (url: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = `${url}?v=${Date.now()}`;
+    link.download = fileName;
+    link.click();
+  };
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -553,7 +590,21 @@ const CPTSetup: React.FC = () => {
           >
             <div>{filters()}</div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <MyButton
+                appearance="ghost"
+                onClick={() => downloadPublicFile('/templates/CPT_Code.xlsx', 'CPT_Code.xlsx')}
+              >
+                Download Template
+              </MyButton>
+              <MyButton
+                appearance="ghost"
+                onClick={() =>
+                  downloadPublicFile('/templates/CPT_Code_Sample.xlsx', 'CPT_Code_Sample.xlsx')
+                }
+              >
+                Download Sample
+              </MyButton>
               <MyButton onClick={() => setOpenCodesImportModal(true)}>
                 Import CPT (Excel / CSV)
               </MyButton>

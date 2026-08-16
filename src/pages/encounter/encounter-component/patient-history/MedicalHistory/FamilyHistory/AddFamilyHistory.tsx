@@ -123,7 +123,27 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
   /* ENUM OPTIONS */
 
-  const relations = useEnumOptions('Relations');
+const relations = useEnumOptions('Relations', {
+  exclude: [
+    'SPOUSE',
+    'FRIEND',
+    'SON',
+    'DAUGHTER',
+    'MOTHER_IN_LAW',
+    'FATHER_IN_LAW',
+    'SON_IN_LAW',
+    'DAUGHTER_IN_LAW',
+    'STEPFATHER',
+    'STEPMOTHER',
+    'STEPDAUGHTER',
+    'STEPBROTHER',
+    'STEPSON',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'STEPSISTER',
+    'COUSIN',
+  ],
+});
 
   /* MUTATIONS */
 
@@ -192,7 +212,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         fieldLabel="Condition"
         fieldName="condition"
@@ -202,7 +222,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         fieldLabel="Relation"
         fieldType="select"
@@ -217,7 +237,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={'100%'}
+        width={'14vw'}
         column
         fieldLabel="Inherited Diseases"
         fieldType="checkbox"

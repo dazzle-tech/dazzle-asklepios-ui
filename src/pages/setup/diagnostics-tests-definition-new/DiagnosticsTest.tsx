@@ -139,6 +139,19 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     return [];
   };
 
+  // Re-run the currently active filter (if any) against its current page/size/sort.
+  // Used after add/update so the filtered list stays in sync with the server.
+  const refreshCurrentFilterIfActive = async (
+    page = filterPagination.page,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!isFiltered) return;
+    const valueForFilter =
+      recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+    await handleFilterChange(recordOfFilter.filter, valueForFilter, page, size, sort);
+  };
+
 
   const handleAddNewDiagnosticTest = async () => {
     try {
@@ -244,7 +257,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         }
       }
 
-      refetchDiagnostics();
+      await refetchDiagnostics();
+      // Keep the filtered list (if a filter is active) in sync with the newly added record
+      await refreshCurrentFilterIfActive();
       setDiagnosticsTest(response);
 
       dispatch(
@@ -353,7 +368,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
       const response = await updateDiagnosticTest(payload).unwrap();
 
-      refetchDiagnostics();
+      await refetchDiagnostics();
+      // Keep the filtered list (if a filter is active) in sync with the updated record
+      await refreshCurrentFilterIfActive();
       setDiagnosticsTest({ ...response });
 
       dispatch(
@@ -376,17 +393,69 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   const handleToggleActive = async (id: number) => {
     try {
+      const currentItem = (
+        isFiltered
+          ? filteredList
+          : diagnodticsTestList?.data ?? []
+      ).find(item => item.id === id);
+
+      if (!currentItem) return;
+
+      const newActiveStatus = !currentItem.isActive;
+
+      
       await toggleDiagnosticTestActive(id).unwrap();
-      dispatch(notify({ msg: 'Status updated successfully', sev: 'success' }));
-      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch {
-      dispatch(notify({ msg: 'Failed to update status', sev: 'error' }));
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        isActive: newActiveStatus
+      }));
+
+      if (isFiltered) {
+        setFilteredList(prev =>
+          prev.map(item =>
+            item.id === id
+              ? {
+                  ...item,
+                  isActive: newActiveStatus
+                }
+              : item
+          )
+        );
+
+
+      } else {
+        await refetchDiagnostics();
+      }
+
+      dispatch(
+        notify({
+          msg: newActiveStatus
+            ? 'Diagnostic Test activated successfully'
+            : 'Diagnostic Test deactivated successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      console.error(error);
+
+      dispatch(
+        notify({
+          msg: 'Failed to update status',
+          sev: 'error'
+        })
+      );
     }
   };
 
-  const handleDeactiveReactivateDiagnostic = () => {
-    handleToggleActive(diagnosticsTest.id);
-    setOpenConfirmDeleteDiagnosticTest(false);
+  const handleDeactiveReactivateDiagnostic = async () => {
+    if (!diagnosticsTest?.id) return;
+
+    try {
+      await handleToggleActive(diagnosticsTest.id);
+    } finally {
+      setOpenConfirmDeleteDiagnosticTest(false);
+    }
   };
 
 
@@ -429,19 +498,28 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
       let response;
 
+      // _cb makes every call's query args unique so RTK Query always performs
+      // a fresh network fetch instead of possibly reusing a cached result from
+      // an earlier call with the exact same (type/name, page, size, sort).
+      // This is what makes the filtered list reflect a just-added/updated record
+      // immediately, without needing to trigger a page/sort change first.
+      const cacheBuster = Date.now();
+
       if (field === 'type') {
         response = await diagnosticTestByTypes({
           type: trimmedValue,
           page,
           size,
-          sort
+          sort,
+          _cb: cacheBuster
         }).unwrap();
       } else if (field === 'name') {
         response = await diagnosticTestByName({
           name: trimmedValue,
           page,
           size,
-          sort
+          sort,
+          _cb: cacheBuster
         }).unwrap();
       } else {
         setIsFiltered(false);
@@ -450,7 +528,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         return;
       }
 
-      setFilteredList(response.data ?? []);
+      setFilteredList([...(response.data ?? [])]);
       setFilteredTotal(response.totalCount ?? 0);
       setFilterPagination(prev => ({
         ...prev,
@@ -751,10 +829,27 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      page: newPage
-    }));
+    if (isFiltered) {
+      // Update the filtered-pagination page and re-fetch that page from the active filter
+      setFilterPagination(prev => ({
+        ...prev,
+        page: newPage
+      }));
+      const valueForFilter =
+        recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+      handleFilterChange(
+        recordOfFilter.filter,
+        valueForFilter,
+        newPage,
+        filterPagination.size,
+        filterPagination.sort
+      );
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage
+      }));
+    }
   };
 
   // Effects
@@ -800,6 +895,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   return (
     <Panel dir={dir}>
       <MyTable
+        key={`${isFiltered}-${filteredTotal}-${filteredList.length}-${paginationParams.timestamp}`}
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

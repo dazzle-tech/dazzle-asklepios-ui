@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path');
-
+ 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
-
+ 
 const isProduction = process.env.NODE_ENV === 'production';
-
+ 
 // Check environment variable to determine if source maps should be generated
 // In Docker, we set this to 'false' to save memory.
 const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
-
+ 
 module.exports = {
   entry: './src/index.tsx',
   // FIXED: Only generate source maps if the environment variable allows it
@@ -38,7 +38,7 @@ module.exports = {
     publicPath: isProduction ? './' : '/',
     clean: true,
   },
-
+ 
   module: {
     rules: [
       // TS/TSX
@@ -47,7 +47,7 @@ module.exports = {
         use: ['babel-loader'],
         exclude: /node_modules/,
       },
-
+ 
       // Images
       {
         test: /\.(jpg|png|svg)$/i,
@@ -55,7 +55,7 @@ module.exports = {
         parser: { dataUrlCondition: { maxSize: 8 * 1024 } },
         generator: { publicPath: '/', filename: 'images/[name][ext]' },
       },
-
+ 
       {
         test: /tw\.build\.css$/i,
         use: [
@@ -63,8 +63,8 @@ module.exports = {
           'css-loader',
         ],
       },
-
-
+ 
+ 
       {
         test: /\.css$/i,
         exclude: /tw\.build\.css$/i,
@@ -85,7 +85,7 @@ module.exports = {
           },
         ],
       },
-
+ 
       {
         test: /\.less$/i,
         use: [
@@ -101,7 +101,7 @@ module.exports = {
           },
         ],
       },
-
+ 
       {
         test: /\.(woff2?|eot|ttf|otf)$/i,
         type: 'asset/resource',
@@ -109,7 +109,7 @@ module.exports = {
       },
     ],
   },
-
+ 
   plugins: [
     new HtmlwebpackPlugin({
       title: 'Title',
@@ -123,7 +123,7 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',
-    }),
-  ],
+    }),
+  ],
 };
-
+ 

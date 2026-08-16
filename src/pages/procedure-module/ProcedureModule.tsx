@@ -671,7 +671,7 @@ const ProcedureModule: React.FC = () => {
 
         <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
 
-        <Checkbox style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+        <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>

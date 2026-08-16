@@ -47,6 +47,9 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
     cancellationReason: ''
   });
 
+  const { data: diagnosisStatusLov } =
+    useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
+
   const [pagination, setPagination] = useState({
     page: 0,
     size: 15,
@@ -217,9 +220,15 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
       key: 'conditionStatus',
       title: 'CONDITION STATUS',
       flexGrow: 3,
-      render: (row: any) => (
-        <p>{formatEnumString(row?.conditionStatus)}</p>
-      )
+      render: (row: any) => {
+        const value = conjureValueBasedOnKeyFromList(
+          diagnosisStatusLov?.object ?? [],
+          row?.conditionStatus,
+          'lovDisplayVale'
+        );
+
+        return value ?? row?.conditionStatus ?? '';
+      }
     },
     {
       key: 'status',
@@ -308,16 +317,26 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
               {row?.status !== 'CANCELLED' && (
                 <>
                   <MdModeEdit
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--primary-gray)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
                   <MdDelete
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     title="Cancel"
                     onClick={() => openCancelDialog(row)}
                   />
@@ -353,7 +372,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
         }
         content={
           <>
-            {!toShowData && (
+          
               <div className="margin-bottom-10">
                 <MyInput
                   fieldType="check"
@@ -370,7 +389,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
                   }}
                 />
               </div>
-            )}
+           
 
             <MyTable
               height={450}
@@ -389,6 +408,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
               open={open}
               initialData={selectedProblem}
               patient={patient}
+              onSaved={refetch}
               setOpen={() => {
                 setOpen(false);
                 setSelectedProblem(null);

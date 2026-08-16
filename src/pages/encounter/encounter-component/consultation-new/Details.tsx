@@ -277,7 +277,7 @@ const Details = ({
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+  const consultationType = useEnumOptions('ConsultationType');
   const consultationLevel = useEnumOptions('ConsultationLevel');
 
   const [createConsultation] = useCreateMutation();
@@ -338,22 +338,35 @@ const Details = ({
 
   useEffect(() => {
     if (!specialtyName) return;
+    if (!patient?.id || !encounter?.id) return;
 
     const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
 
     setLocalAiSummary(null);
+
     getSpecialtyConsultation({
-      request_id: `req-${patient?.id ?? ''}-${encounter?.id ?? ''}`,
+      patientId: Number(patient.id),
+      encounterId: Number(encounter.id),
       specialty: specialtyApi
     })
       .unwrap()
       .then(res => {
-        setLocalAiSummary(res?.summary ?? null);
+        const actionsText = Array.isArray(res?.actions) && res.actions.length > 0
+          ? '\n\nActions:\n' +
+          res.actions
+            .map(
+              (a, index) =>
+                `${index + 1}. ${a.title}${a.priority ? ` (${a.priority})` : ''}\n${a.description || ''}`
+            )
+            .join('\n\n')
+          : '';
+
+        setLocalAiSummary((res?.summary ?? '') + actionsText);
       })
-      .catch(error => {
+      .catch(() => {
         setLocalAiSummary(null);
       });
-  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id, open]);
+  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id]);
 
   useEffect(() => {
     setShowAiPanel(false);
@@ -443,7 +456,16 @@ const Details = ({
     if (!formData.consultationContent) {
       fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
     }
-
+    if (
+      formData.approvalNumber !== null &&
+      formData.approvalNumber !== undefined &&
+      String(formData.approvalNumber).length > 10
+    ) {
+      fieldErrors.push({
+        field: 'approvalNumber',
+        message: 'must not exceed 10 digits'
+      });
+    }
     return fieldErrors.length > 0
       ? {
         data: {
@@ -635,7 +657,7 @@ const Details = ({
 
                     {destinationType === 'DEPARTMENT' && (
                       <MyInput
-                        width={'12vw'}
+                        width={'18vw'}
                         disabled={!formData?.toFacilityId}
                         fieldType="select"
                         fieldLabel="Department"
@@ -707,7 +729,7 @@ const Details = ({
                               }
                             }}
                             required
-                                    disableByField='isValid'
+                            disableByField='isValid'
 
                           />
 
@@ -821,22 +843,22 @@ const Details = ({
                       setRecord={setFormData}
                       searchable={false}
                       required
-                              disableByField='isValid'
+                      disableByField='isValid'
 
                     />
                     <MyInput
                       width={'12vw'}
                       fieldType="select"
                       fieldLabel="Consultation Type"
-                      selectData={consultationTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
+                      selectData={consultationType ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
                       fieldName={'consultationType'}
                       record={formData}
                       setRecord={setFormData}
                       searchable={false}
                       required
-                              disableByField='isValid'
+                      disableByField='isValid'
 
                     />
                     <MyInput

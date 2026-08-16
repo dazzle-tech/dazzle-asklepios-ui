@@ -114,7 +114,9 @@ const EncounterPreObservations = ({ }) => {
         encounter={propsData.encounter}
       />
     },
-    { title: "Patient History", content: <PatientHistory /> },
+    { title: "Patient History", content: <PatientHistory edit={propsData.edit}
+        patient={propsData.patient}
+        encounter={propsData.encounter}/> },
     { title: "Previous Measurements", content: <PreviousMeasurements patient={propsData.patient} /> },
     {
       title: "Attachments", content: <PatientAttachment

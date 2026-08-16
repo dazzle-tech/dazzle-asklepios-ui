@@ -78,8 +78,6 @@ const BulkCollectSampleModal = ({
 
   const handleSave = async () => {
     if (
-      !record.quantity ||
-      !record.unit ||
       !record.collectedAt ||
       !record.sourceOfSample ||
       !selectedExpiryDate.dateTime
@@ -114,10 +112,6 @@ const BulkCollectSampleModal = ({
       u => String(u.key) === String(record.unit)
     )?.lovDisplayVale;
 
-    if (!unitText) {
-      dispatch(notify({ msg: 'Invalid unit', sev: 'error' }));
-      return;
-    }
 
     try {
       await bulkCreate({
@@ -196,23 +190,9 @@ const BulkCollectSampleModal = ({
                 setRecord={setRecord}
                 column
                 width={'14vw'}
-                required
+              
               />
-              <MyInput
-                fieldLabel="Unit"
-                fieldName="unit"
-                fieldType="select"
-                selectData={valueUnitLov?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                selectDataValue="key"
-                record={record}
-                setRecord={setRecord}
-                column
-                width={'14vw'}
-                required
-              />
+             
 
               <MyInput
                 fieldLabel="Sample Collected"

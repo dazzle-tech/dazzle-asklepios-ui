@@ -1,0 +1,56 @@
+// src/pages/setup/BillingConfiguration/styles.less
+
+.billing-configuration-two-columns {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.billing-configuration-value {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.container-of-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.icons-style {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.icons-style:hover {
+  transform: scale(1.08);
+  opacity: 0.8;
+}
+
+.container-of-add-new-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.selected-row {
+  background-color:
+    rgba(65, 91, 231, 0.08) !important;
+}
+
+@media (
+  max-width: 768px
+) {
+  .billing-configuration-two-columns {
+    grid-template-columns: 1fr;
+  }
+}

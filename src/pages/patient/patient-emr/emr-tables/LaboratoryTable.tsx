@@ -1,7 +1,7 @@
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import {
   useFilterDiagnosticOrderTestResultsQuery
@@ -15,10 +15,6 @@ import {
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-
-import {
-  useGetBulkPatientBasicInfoMutation
-} from '@/services/patient/patientService';
 
 import {
   useGetAllDiagnosticTestProfilesQuery
@@ -36,6 +32,9 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { Tooltip, Whisper } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowDown, faArrowUp, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   patient: any;
@@ -82,11 +81,9 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
-  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
-  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
   const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
     page: 0,
@@ -224,39 +221,49 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     });
   }, [orderTestsMap, ordersMap, fetchOrderById]);
 
-  const patientIds = useMemo(() => {
-    return Object.values(ordersMap)
-      .map((o: any) => o?.patientId)
-      .filter(Boolean)
-      .map(String)
-      .filter((id, i, arr) => arr.indexOf(id) === i);
-  }, [ordersMap]);
+  const renderMarker = (marker?: string) => {
+    const isCritical =
+      marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
 
-  useEffect(() => {
-    if (!patientIds.length) return;
+    if (isCritical) {
+      return (
+        <Whisper
+          placement="top"
+          speaker={<Tooltip>Critical</Tooltip>}
+        >
+          <span
+            style={{
+              color: 'red',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <FontAwesomeIcon
+              icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+            />
+          </span>
+        </Whisper>
+      );
+    }
 
-    const numericIds = patientIds.map((id) => Number(id));
-
-    getBulkPatientBasicInfo(numericIds)
-      .unwrap()
-      .then((res: any[]) => {
-        const map: Record<string, any> = {};
-
-        res.forEach((p: any, index: number) => {
-          const originalId = numericIds[index];
-          map[String(originalId)] = p;
-        });
-
-        setPatientsMap(map);
-      })
-      .catch(() => {});
-  }, [patientIds, getBulkPatientBasicInfo]);
+    switch (marker) {
+      case 'ABNORMAL_MARKER':
+        return <FontAwesomeIcon icon={faCircleExclamation} />;
+      case 'UPPER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowUp} />;
+      case 'LOWER_LIMIT':
+        return <FontAwesomeIcon icon={faArrowDown} />;
+      default:
+        return formatEnumString(marker);
+    }
+  };
 
   const normalizedResults = useMemo(() => {
     return results.map((r: any) => {
       const orderTest = orderTestsMap[String(r.orderTestId)];
       const order = ordersMap[String(orderTest?.orderId)];
-      const patientInfo = patientsMap[String(order?.patientId)];
       const profile = profilesMap.get(r.profileTestId);
 
       const test = testsMap.get(Number(orderTest?.testId));
@@ -264,9 +271,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
       return {
         ...r,
-        _patientName: patientInfo
-            ? [patientInfo.firstName, patientInfo.secondName, patientInfo.lastName].filter(Boolean).join(' ')
-            : '—',
         _profile: profile,
         _test: test,
         _lab: lab,
@@ -277,7 +281,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     results,
     orderTestsMap,
     ordersMap,
-    patientsMap,
     profilesMap,
     testsMap,
     labByTestIdMap
@@ -289,11 +292,6 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       title: <Translate>VISIT ID</Translate>,
       width: 120,
       render: (row: any) => row._visitId ?? '-'
-    },
-    {
-      key: 'patient',
-      title: <Translate>PATIENT</Translate>,
-      render: (row: any) => row._patientName
     },
     {
       key: 'created',
@@ -334,12 +332,17 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       )
     },
     {
+      key: 'marker',
+      title: <Translate>MARKER</Translate>,
+      align: 'center',
+      render: (row: any) => renderMarker(row.marker)
+    },
+    {
       key: 'result',
       title: <Translate>RESULT</Translate>,
       render: (row: any) => {
         const profile = row._profile;
         const value = row.resultValueNumber ?? row.resultValueText ?? '';
-
         if (isLovProfile(profile)) {
           return resolveLovDisplayValue(
             profile,

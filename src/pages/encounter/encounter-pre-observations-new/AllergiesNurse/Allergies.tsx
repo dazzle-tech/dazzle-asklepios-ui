@@ -39,6 +39,7 @@ interface AllergiesProps {
   edit?: boolean;
   showTableActions?: boolean;
   showTableButtons?: boolean;
+  readonly?: boolean;
 }
 
 const NameCell = ({ login }: { login?: string | null }) => {
@@ -338,7 +339,7 @@ const Allergies = (props: AllergiesProps) => {
           <MyButton
             prefixIcon={() => <CloseOutlineIcon />}
             onClick={() => setOpenCancellationReasonModel(true)}
-            disabled={!allerges?.id || allerges?.status === 'CANCELLED'}
+            disabled={!allerges?.id || allerges?.status === 'CANCELLED' || props?.readonly}
           >
             Cancel
           </MyButton>
@@ -347,7 +348,7 @@ const Allergies = (props: AllergiesProps) => {
             prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
             onClick={() => setOpenConfirmResolvedModel(true)}
             disabled={
-              !allerges?.id || allerges?.status === 'RESOLVED' || allerges?.status === 'CANCELLED'
+              !allerges?.id || allerges?.status === 'RESOLVED' || allerges?.status === 'CANCELLED' || props?.readonly
             }
           >
             Resolved
@@ -357,20 +358,20 @@ const Allergies = (props: AllergiesProps) => {
             prefixIcon={() => <ReloadIcon />}
             onClick={() => setOpenConfirmUndoResolvedModel(true)}
             disabled={
-              !allerges?.id || allerges?.status === 'ACTIVE' || allerges?.status === 'CANCELLED'
+              !allerges?.id || allerges?.status === 'ACTIVE' || allerges?.status === 'CANCELLED' || props?.readonly
             }
           >
             Undo Resolved
           </MyButton>
 
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)} className="show-cancelled">
             <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>
 
         <div className="bt-right-2">
           <MyButton
-            disabled={edit}
+            disabled={edit || props?.readonly}
             prefixIcon={() => <PlusIcon />}
             onClick={() => {
               handleClear();

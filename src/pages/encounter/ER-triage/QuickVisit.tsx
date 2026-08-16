@@ -109,7 +109,7 @@ const QuickVisit = ({ }) => {
                                 />
                                 <div className="left-buttons-contant">
                                     {/* TODO update status to be a LOV value */}
-                                    {!localEncounter.discharge && localEncounter.status !== "CLOSED" && (<MyButton
+                                    {!localEncounter.discharge && localEncounter.status !== "COMPLETED" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                                         onClick={() => localEncounter?.encounterType == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 
@@ -195,7 +195,13 @@ const QuickVisit = ({ }) => {
                     <EncounterDischarge
                         open={openDischargeModal}
                         setOpen={setOpenDischargeModal}
-                        encounter={propsData.encounter} />
+                        encounter={propsData.encounter}
+                        onSuccess={() => {
+                            if (localEncounter?.encounterType === 'EMERGENCY') {
+                                navigate('/ER-department');
+                            }
+                        }}
+                    />
                 </div>
             )}
         </>

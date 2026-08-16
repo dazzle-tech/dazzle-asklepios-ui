@@ -10,7 +10,8 @@ import {
   faRectangleXmark,
   faUserDoctor,
   faCommentMedical,
-  faUserNurse
+  faUserNurse,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -57,6 +58,10 @@ import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
 import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
 
@@ -236,7 +241,7 @@ const UrgentCareList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -270,7 +275,7 @@ const [dateFilter, setDateFilter] = useState({
   toDate: initialNow
 });
 
-  const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
+  const DEFAULT_STATUS = useMemo(() => [ 'ONGOING','ASSIGNED_TO_BED'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
@@ -330,6 +335,7 @@ useEffect(() => {
       fromDate,
       toDate,
       statusIn: DEFAULT_STATUS,
+      practitionerId: undefined,
       page: 0,
       size: pageSize,
       sort: DEFAULT_SORT
@@ -600,9 +606,7 @@ useEffect(() => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -616,6 +620,9 @@ useEffect(() => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -686,6 +693,31 @@ useEffect(() => {
 
   };
 
+  const handleViewVisit = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    navigate('/encounter', {
+      state: {
+        info: 'viewEncounter',
+        fromPage: 'Urgent_Care_List',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: false,
+        viewMode: 'readOnly'
+      }
+    });
+  };
+
   const handleGoToNurseStation = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -705,7 +737,7 @@ useEffect(() => {
         fromPage: 'Urgent_Care_List',
         patient: fullPatient,
         encounter: encounterData,
-        edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+        edit: String(encounterData?.status ?? '').toUpperCase() === 'COMPLETED'
       }
     });
   };
@@ -870,8 +902,8 @@ useEffect(() => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
+        if (statusUpper === 'COMPLETED') {
+          return <span className="location-table-style">Completed</span>;
         }
 
         const assignments = row?.activeAssignmentsForEncounter ?? [];
@@ -990,9 +1022,11 @@ useEffect(() => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
+          ,
+          ASSIGNED_TO_BED: '#76bac8'
         };
 
         return (
@@ -1003,11 +1037,13 @@ useEffect(() => {
         );
       }
     },
+       
     {
       key: 'actions',
       title: ' ',
       render: (row: any) => {
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
@@ -1015,6 +1051,7 @@ useEffect(() => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
+        const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
@@ -1033,41 +1070,62 @@ useEffect(() => {
               </div>
             </Whisper>
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    handleGoToVisit(row);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipViewVisit}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleViewVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    setLocalPatient(row?.patientObject ?? { ...newPatient });
-                    if (row?.isObserved) {
-                      handleGoToNurseStation(row);
-                    } else {
-                      setOpenNurseAssessment(true);
-                    }
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {!isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleGoToVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            {statusUpper !== 'CLOSED' &&
+            {!isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="black"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      setLocalPatient(row?.patientObject ?? { ...newPatient });
+                      if (row?.isObserved) {
+                        handleGoToNurseStation(row);
+                      } else {
+                        setOpenNurseAssessment(true);
+                      }
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserNurse} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
+            {statusUpper !== 'COMPLETED' &&
               statusUpper !== 'DISCHARGED' &&
               statusUpper !== 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
@@ -1170,9 +1228,9 @@ useEffect(() => {
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}

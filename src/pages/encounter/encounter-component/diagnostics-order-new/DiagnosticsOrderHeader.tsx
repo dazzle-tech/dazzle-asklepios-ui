@@ -111,6 +111,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
       <div className="enhanced-header">
         <div className="header-first-row">
           <SelectPicker
+            className="filter-form-disable-fix"
             data={ordersList ?? []}
             labelKey="orderNumber"
             valueKey="id"
@@ -143,17 +144,20 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             >
               New Order
             </MyButton>
-
+            
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}
-              onClick={() => setOrders({ ...orders, isUrgent: !orders.isUrgent })}
-              backgroundColor={orders.isUrgent ? 'var(--primary-orange)' : 'var(--primary-blue)'}
+              onClick={() => {
+                setOrders({
+                  ...orders,
+                  isUrgent: !(orders?.isUrgent ?? false)
+                });
+              }}
+              backgroundColor={orders?.isUrgent ? 'var(--primary-orange)' : 'var(--primary-blue)'}
               disabled={
-                edit
-                  ? true
-                  : orders.id
-                    ? orders?.status !== 'NEW' && orders?.statusLkey !== '164797574082125'
-                    : true
+                edit ||
+                !orders?.id ||
+                (orders?.status !== 'NEW' && orders?.statusLkey !== '164797574082125')
               }
             >
               Urgent
@@ -163,7 +167,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         </div>
 
         {/* Row 2 - Filters */}
-        <div className="header-second-row">
+        <div className="header-second-row filter-form-disable-fix">
           <Form fluid layout="inline">
             <MyInput
               column
@@ -222,9 +226,9 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
         {/* Row 3 - Actions */}
         <div className="header-third-row">
-          <MyButton onClick={() => setOpenRequestTestModal(true)} appearance="ghost">
+          {/* <MyButton onClick={() => setOpenRequestTestModal(true)} appearance="ghost">
             <FontAwesomeIcon icon={faVial} /> Request New TestSetup
-          </MyButton>
+          </MyButton> */}
 
           <MyButton disabled={isSubmitDisabled} onClick={() => setRecallFavoriteModal(true)}>
             <FontAwesomeIcon icon={faStar} /> Recall Favorite

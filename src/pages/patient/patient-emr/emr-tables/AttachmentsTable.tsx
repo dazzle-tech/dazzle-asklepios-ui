@@ -23,7 +23,7 @@ import {
   useGetEncounterAttachmentsByEncounterIdsQuery
 } from "@/services/encounters/attachmentsService";
 
-import { useGetEncountersQuery } from "@/services/encounterService";
+import { useGetEncountersByPatientQuery } from "@/services/encounters/patientEncounterService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 import { initialListRequest } from "@/types/types";
@@ -43,9 +43,9 @@ const AttachmentsTable = ({ localPatient }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-const patientId = Number(localPatient?.id ?? localPatient?.key);
+  const patientId = Number(localPatient?.id ?? localPatient?.key);
 
-const hasPatient = Number.isFinite(patientId);
+  const hasPatient = Number.isFinite(patientId);
 
 
   const [getPatientDownloadUrl] = useGetPatientDownloadUrlMutation();
@@ -58,27 +58,26 @@ const hasPatient = Number.isFinite(patientId);
 
   // ---------------- PATIENT ENCOUNTERS ----------------
 
-  const { data: encountersResponse, isLoading: loadingEncounters } =
-   useGetEncountersQuery(
-      {
-        ...initialListRequest,
-        pageSize: 1000,
-        filters: [
-          {
-            fieldName: "patient_key",
-            operator: "match",
-            value: patientId
-          }
-        ]
-      },
-      { skip: !hasPatient }
-    );
+const { data: encountersPaged, isLoading: loadingEncounters } =
+  useGetEncountersByPatientQuery(
+    {
+      patientId,
+      page: 0,
+      size: 1000,
+      sort: "id,desc"
+    },
+    {
+      skip: !hasPatient
+    }
+  );
 
-  const patientEncounters = encountersResponse?.object ?? [];
+const patientEncounters = encountersPaged?.data ?? [];
 
-  const encounterIds = patientEncounters
-    .map(enc => enc.id || enc.key)
-    .filter(Boolean);
+const encounterIds = patientEncounters
+  .map(enc => Number(enc.id))
+  .filter(id => Number.isFinite(id) && id > 0);
+
+
 
   // ---------------- PATIENT ATTACHMENTS ----------------
 
@@ -86,7 +85,7 @@ const hasPatient = Number.isFinite(patientId);
     data: patientAttachmentsResponse,
     refetch: patientAttachmentsRefetch,
     isLoading: loadingPatientAttachments
-    } = useGetPatientAttachmentsQuery(
+  } = useGetPatientAttachmentsQuery(
     { patientId },
     {
       skip: !hasPatient,
@@ -110,23 +109,21 @@ const hasPatient = Number.isFinite(patientId);
     }
   );
 
-  const encounterAttachments = encounterAttachmentsResponse ?? [];
 
+  const encounterAttachments = encounterAttachmentsResponse ?? [];
   // ---------------- MERGE DATA ----------------
 
-  const combinedAttachments = useMemo(() => {
-    return [
-      ...patientAttachments.map(att => ({
-        ...att,
-        attachmentType: "patient"
-      })),
+  const combinedAttachments = useMemo(() => [
+    ...patientAttachments.map(att => ({
+      ...att,
+      attachmentType: "patient"
+    })),
+    ...encounterAttachments.map(att => ({
+      ...att,
+      attachmentType: "encounter"
+    }))
+  ], [patientAttachments, encounterAttachments]);
 
-      ...encounterAttachments.map(att => ({
-        ...att,
-        attachmentType: "encounter"
-      }))
-    ];
-  }, [patientAttachments, encounterAttachments]);
 
   const totalCount = combinedAttachments.length;
 
@@ -249,10 +246,10 @@ const hasPatient = Number.isFinite(patientId);
       render: row =>
         row.type
           ? conjureValueBasedOnKeyFromList(
-              attachmentTypesLov,
-              row.type,
-              "lovDisplayVale"
-            )
+            attachmentTypesLov,
+            row.type,
+            "lovDisplayVale"
+          )
           : "-"
     },
 

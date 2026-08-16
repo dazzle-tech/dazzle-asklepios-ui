@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 
 import type { PatientEncounter } from '@/types/model-types-new';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 
 import { useEnumOptions } from '@/services/enumsApi';
 
@@ -15,6 +16,8 @@ import {
 
 import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
 
+import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+
 import {
   useLazyCountTodayEncountersByFacilityQuery,
   useLazyGetPreviousEncountersSameDepartmentQuery
@@ -24,6 +27,15 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import './style.less';
+import clsx from 'clsx';
+
+const formatSpecialtyLabel = (value?: string | null) => {
+  if (!value) return '';
+  return value
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};
 
 const RegistrationEncounter = ({
   localEncounter,
@@ -47,6 +59,7 @@ const RegistrationEncounter = ({
   const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
   const [validationResult] = useState({});
+  const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT']
@@ -86,6 +99,18 @@ const RegistrationEncounter = ({
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+  const mergeDepartments = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllDepartments(previousDepartments => {
+      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
+      const merged = [...previousDepartments];
+      rows.forEach((department: any) => {
+        if (!seenIds.has(Number(department.id))) merged.push(department);
+      });
+      return merged;
+    });
+  };
 
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
@@ -199,7 +224,10 @@ useEffect(() => {
       page: 0,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedFacilityId,
@@ -220,23 +248,12 @@ useEffect(() => {
       page: deptPage,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptPage, selectedFacilityId, localReferral?.toFacilityId, localEncounter?.encounterType]);
-
-  useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
-
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
-      });
-      return merged;
-    });
-  }, [deptList]);
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
@@ -248,10 +265,33 @@ useEffect(() => {
     { data: practitionersList, isFetching: isPractitionersFetching }
   ] = useLazyGetPractitionersByDepartmentQuery();
 
-  const practitionersData = practitionersList?.data ?? [];
+  const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
+    useLazyGetServicesByDepartmentQuery();
+
   const practHasMore = Boolean(practitionersList?.links?.next);
 
   const prevDeptRef = useRef<number | null>(null);
+
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+
+  const specialtyDisplayLabel = useMemo(
+    () => formatSpecialtyLabel(localEncounter?.specialty),
+    [localEncounter?.specialty]
+  );
+
+  const mergePractitioners = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllPractitioners(previousPractitioners => {
+      const seenIds = new Set(
+        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
+      );
+      const merged = [...previousPractitioners];
+      rows.forEach((practitioner: any) => {
+        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
+      });
+      return merged;
+    });
+  };
 
   useEffect(() => {
     const departmentId = Number(localEncounter?.departmentId ?? 0);
@@ -264,11 +304,15 @@ useEffect(() => {
     setPractPage(0);
 
     if (hasDepartmentChanged) {
-      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => ({
         ...prevEncounter,
+        specialty: null,
         practitionerId: null,
-        followUpEncounterId: null
+        followUpEncounterId: null,
+        defaultServiceId: null
       }));
+      setAllPractitioners([]);
     }
 
     triggerPractitionersByDept({
@@ -276,7 +320,10 @@ useEffect(() => {
       page: 0,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localEncounter?.departmentId]);
 
@@ -290,27 +337,107 @@ useEffect(() => {
       page: practPage,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [practPage, localEncounter?.departmentId]);
 
-  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+  useEffect(() => {
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    const specialty = String(localEncounter?.specialty ?? '').trim();
+
+    if (!departmentId || !specialty) {
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => {
+        if (!prevEncounter?.defaultServiceId) return prevEncounter;
+        return { ...prevEncounter, defaultServiceId: null };
+      });
+      return;
+    }
+
+    triggerGetDefaultService({
+      sourceId: departmentId,
+      specialty,
+      page: 0,
+      size: 5,
+      sort: 'id,asc'
+    })
+      .unwrap()
+      .then((res: any) => {
+        const service = (res?.data ?? [])[0];
+        const serviceId = service?.id != null ? Number(service.id) : null;
+        const label = String(service?.name ?? service?.serviceName ?? '').trim();
+        setDefaultServiceLabel(label);
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: serviceId
+        }));
+      })
+      .catch(() => {
+        setDefaultServiceLabel('');
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: null
+        }));
+      });
+  }, [
+    localEncounter?.departmentId,
+    localEncounter?.specialty,
+    triggerGetDefaultService,
+    setLocalEncounter
+  ]);
 
   useEffect(() => {
-    const rows = practitionersData ?? [];
-    if (!rows.length) return;
+    if (localEncounter?.departmentId) return;
 
-    setAllPractitioners(previousPractitioners => {
-      const seenIds = new Set(
-        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
-      );
-      const merged = [...previousPractitioners];
-      rows.forEach((practitioner: any) => {
-        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
-      });
-      return merged;
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+    prevDeptRef.current = null;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (!prevEncounter?.practitionerId && !prevEncounter?.followUpEncounterId) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
     });
-  }, [practitionersData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.departmentId]);
+
+  useEffect(() => {
+    if (localEncounter?.encounterType) return;
+
+    setDeptPage(0);
+    setAllDepartments([]);
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (
+        !prevEncounter?.departmentId &&
+        !prevEncounter?.practitionerId &&
+        !prevEncounter?.followUpEncounterId
+      ) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        departmentId: 0,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.encounterType]);
 
   useEffect(() => {
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
@@ -325,11 +452,27 @@ useEffect(() => {
       const injectedPractitioner = {
         id: practitionerId,
         firstName: (localEncounter as any)?.practitionerFirstName ?? '',
-        lastName: (localEncounter as any)?.practitionerLastName ?? `#${practitionerId}`
+        lastName: (localEncounter as any)?.practitionerLastName ?? `#${practitionerId}`,
+        subSpecialty: localEncounter?.specialty ?? null,
       };
       return [injectedPractitioner, ...previousPractitioners];
     });
   }, [localEncounter?.practitionerId]);
+
+  useEffect(() => {
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    if (!practitionerId || localEncounter?.specialty) return;
+
+    const selectedPractitioner = allPractitioners.find(
+      (practitioner: any) => Number(practitioner.id) === practitionerId
+    );
+    if (!selectedPractitioner?.specialty) return;
+
+    setLocalEncounter((prevEncounter: any) => ({
+      ...prevEncounter,
+      specialty: String(selectedPractitioner.specialty),
+    }));
+  }, [localEncounter?.practitionerId, localEncounter?.specialty, allPractitioners, setLocalEncounter]);
 
   const [prevPage, setPrevPage] = useState(0);
   const prevSize = 15;
@@ -400,11 +543,40 @@ useEffect(() => {
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
+  const handlePractitionerChange = (updatedRecord: PatientEncounter) => {
+    const practitionerId = Number(updatedRecord?.practitionerId ?? 0);
+
+    if (!practitionerId) {
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => ({
+        ...prevEncounter,
+        practitionerId: null,
+        specialty: null,
+        defaultServiceId: null,
+      }));
+      return;
+    }
+
+    const selectedPractitioner = allPractitioners.find(
+      (practitioner: any) => Number(practitioner.id) === practitionerId
+    );
+    const specialty = selectedPractitioner?.specialty
+      ? String(selectedPractitioner.specialty)
+      : null;
+
+    setLocalEncounter((prevEncounter: any) => ({
+      ...prevEncounter,
+      practitionerId,
+      specialty,
+      defaultServiceId: null,
+    }));
+  };
+
   const modifiedPrevEncounters = useMemo(() => {
     return (allPrevEncounters ?? []).map((encounter: any) => ({
       ...encounter,
       combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${
-        encounter.status ?? ''
+        getEncounterTreatmentStatus(encounter)
       }`
     }));
   }, [allPrevEncounters]);
@@ -415,7 +587,7 @@ useEffect(() => {
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
-  return (<div dir={dir}>
+  return (<div dir={dir} className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
     <Form fluid layout="inline" className="fields-container">
       <MyInput
         vr={validationResult}
@@ -475,6 +647,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
+        required
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
@@ -483,7 +656,7 @@ useEffect(() => {
         selectDataLabel={['firstName', 'lastName']}
         selectDataValue="id"
         record={localEncounter}
-        setRecord={setLocalEncounter}
+        setRecord={handlePractitionerChange}
         disabled={isReadOnly || !localEncounter?.departmentId}
         loading={isPractitionersFetching}
         searchable
@@ -494,6 +667,38 @@ useEffect(() => {
             setPractPage(page);
           }
         }}
+      />
+
+      <MyInput
+        vr={validationResult}
+        required
+        column
+        fieldLabel="Specialty"
+        fieldName="specialtyDisplay"
+        record={{ specialtyDisplay: specialtyDisplayLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.practitionerId
+            ? 'Select practitioner first'
+            : specialtyDisplayLabel || 'No specialty assigned'
+        }
+      />
+
+      <MyInput
+        column
+        fieldLabel="Default Service"
+        fieldName="defaultServiceLabel"
+        record={{ defaultServiceLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.specialty
+            ? 'Select practitioner first'
+            : isDefaultServiceFetching
+              ? 'Loading...'
+              : defaultServiceLabel || 'No linked service found'
+        }
       />
 
       <MyInput

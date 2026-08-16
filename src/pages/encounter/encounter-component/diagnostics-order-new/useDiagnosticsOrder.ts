@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -39,16 +39,25 @@ import type {
   DiagnosticOrderTestUpdateDTO
 } from '@/types/model-types-new';
 
-import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
+import { DiagnosticOrderTestStatus, DiagnosticStatus, BillingEventType } from '@/types/model-types-new';
 import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
 import { formatEnumString } from '@/utils';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage,
+  resolveDiagnosticBillingItemType
+} from '@/utils/billingRuleEvaluationUtils';
+
 
 type UseDiagnosticsOrderArgs = {
-  patient?: any;
-  encounter?: any;
-  edit?: boolean;
+    patient?: any;
+    encounter?: any;
+    edit?: boolean;
+  setLoading?: (value: boolean) => void;
+    patientPrevTestsRef?: React.RefObject<any>;
 };
-
 const extractErrorMessage = (error: any) => {
   const data = error?.data;
 
@@ -67,7 +76,7 @@ const extractErrorMessage = (error: any) => {
   return msg;
 };
 
-export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnosticsOrderArgs) => {
+export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef,setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -317,6 +326,48 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+
+  const validateDiagnosticBillingRule = async (
+    testId: number,
+    orderType?: string | null,
+    options?: { notify?: boolean }
+  ) => {
+    const shouldNotify = options?.notify !== false;
+    const billingItemType = resolveDiagnosticBillingItemType(orderType);
+
+    if (!billingItemType) {
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: 'Unable to determine billing item type for this diagnostic test.',
+            sev: 'warning'
+          })
+        );
+      }
+      return false;
+    }
+
+    const evaluation = await evaluateBillingRule(
+      buildBillingRuleEvaluationRequest(billingItemType, BillingEventType.ITEM_ORDERED, {
+        diagnosticTestId: testId
+      })
+    ).unwrap();
+
+    if (!evaluation.ruleFound) {
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: formatBillingRuleEvaluationMessage(evaluation),
+            sev: 'error'
+          })
+        );
+      }
+      return false;
+    }
+
+    return true;
+  };
 
 
   // Modals state
@@ -368,6 +419,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       }
 
       if (!orderTestId) {
+        const billingRuleReady = await validateDiagnosticBillingRule(
+          testId,
+          resolveOrderType(test)
+        );
+        if (!billingRuleReady) {
+          return;
+        }
+
         const createPayload: DiagnosticOrderTestCreateDTO = {
           orderId: _orderId,
           testId,
@@ -396,6 +455,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       if (_orderId) {
         await orderTestRefetch();
+        patientPrevTestsRef?.current?.refetchPrevTests();
         setTableVersion(v => v + 1);
       }
 
@@ -403,7 +463,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (error: any) {
       console.error('Save test failed', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -413,6 +478,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const handleCancle = async () => {
     try {
+      setLoading(true);
       await Promise.all(
         selectedRows.map((itemId: number) =>
           cancelDiagnosticOrderTest({
@@ -426,12 +492,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       setSelectedRows([]);
       CloseConfirmDeleteModel();
       await orderTestRefetch();
+      
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error) {
       console.error('Cancel failed:', error);
       dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
       CloseConfirmDeleteModel();
       orderTestRefetch()
 
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -567,6 +638,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const handleSaveTests = async () => {
     setOpenTestsModal(false);
+   
 
     const _orderId = toNumericId(orders?.id ?? orders?.key);
     const fromDepartmentId = resolveFromDepartmentId();
@@ -582,6 +654,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
 
     try {
+      setLoading(true);
+3
       const pickTestId = (t: any) =>
         toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
 
@@ -622,6 +696,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       let added: string[] = [];
       let duplicates: string[] = [];
+      let failed: string[] = [];
 
       await Promise.all(
         validTests.map(async item => {
@@ -634,6 +709,16 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           }
 
           try {
+            const billingRuleReady = await validateDiagnosticBillingRule(
+              testId,
+              item.type || 'LABORATORY',
+              { notify: false }
+            );
+            if (!billingRuleReady) {
+              failed.push(`${testName}: billing rule is not configured`);
+              return;
+            }
+
             await createOrderTest({
               orderId: _orderId,
               testId,
@@ -641,8 +726,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
             }).unwrap();
 
             added.push(testName);
-          } catch (e) {
-            console.warn('❌ Failed test:', testId, e);
+          } catch (e: any) {
+            const message =
+              extractBillingRuleErrorMessage(e) || extractErrorMessage(e);
+            failed.push(`${testName}: ${message}`);
           }
         })
       );
@@ -665,15 +752,38 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
         );
       }
 
-      await orderTestRefetch();
+      if (failed.length) {
+        dispatch(
+          notify({
+            msg:
+              'Could not add the following test(s):\n\n' +
+              failed.join('\n'),
+            sev: 'error'
+          })
+        );
+      }
 
+      await orderTestRefetch();
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
       console.error('Save tests failed:', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
+    }
+    finally {
+      console.log("Fainaly ")
+       setLoading(false);
+
     }
   };
 
   const handleSaveOrders = async () => {
+setLoading(true);
+
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
@@ -705,9 +815,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       console.error('Create order failed:', error);
       dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
     }
+    finally {
+      setLoading(false);
+
+     }
   };
 
   const handleSubmitPres = async () => {
+
     const _orderId = orders?.id;
     if (!_orderId) {
       dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
@@ -726,6 +841,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
 
     try {
+      setLoading(true);
       await updateOrder({
         id: _orderId,
         body: {
@@ -743,7 +859,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       await ordersRefetch();
       await orderTestRefetch();
-
+      patientPrevTestsRef?.current?.refetchPrevTests();
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
       return true;
@@ -751,6 +867,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       console.error('Submit failed', error);
       dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
       return false;
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -791,6 +910,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
 
     try {
+      setLoading(true);
       await createOrderTest({
         orderId: _orderId,
         testId: t.id,
@@ -799,6 +919,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       dispatch(notify({ msg: 'Test recalled successfully', sev: 'success' }));
       await orderTestRefetch();
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
       const msg = extractErrorMessage(error);
 
@@ -808,6 +929,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           sev: msg.toLowerCase().includes('already') ? 'warning' : 'error'
         })
       );
+    }
+    finally{
+      setLoading(false);
     }
   };
 

@@ -496,7 +496,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           fieldName="latesthearingtest"
                           fieldLabel="Hearing Test"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -512,7 +512,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -525,7 +525,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -538,7 +538,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -554,7 +554,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>

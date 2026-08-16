@@ -275,11 +275,22 @@ export const serviceService = createApi({
       ],
     }),
 
-    // GET /api/setup/service/by-department?sourceId=...
-    getServicesByDepartment: builder.query<PagedResult<any>, { sourceId: Id } & PagedParams>({
-      query: ({ sourceId, page, size, sort = 'id,asc' }) => ({
+    // GET /api/setup/service/by-department?sourceId=...&specialty=...
+    getServicesByDepartment: builder.query<
+      PagedResult<any>,
+      { sourceId: Id; specialty?: string | null } & PagedParams
+    >({
+      query: ({ sourceId, specialty, page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/service/by-department',
-        params: { sourceId, page, size, sort },
+        params: {
+          sourceId,
+          ...(specialty != null && specialty !== ''
+            ? { specialty }
+            : {}),
+          page,
+          size,
+          sort,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],

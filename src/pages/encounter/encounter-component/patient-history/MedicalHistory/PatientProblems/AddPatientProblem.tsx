@@ -15,7 +15,7 @@ import {
 } from '@/services/patients/patientProblemService';
 
 import {
-  useUpdatePatientMutation,
+  useUpdatePatientConditionsMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
 
@@ -82,19 +82,20 @@ const normalizeConditions = (value = '') =>
     )
   );
 
-const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
+const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
+  const [formKey, setFormKey] = useState(0);
 
   const patientConditions = useEnumOptions('Condition');
-  const statusOptions = useEnumOptions('EncounterVaccinationStatus');
 
+  const { data: statusLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-  const [updatePatient] = useUpdatePatientMutation();
+  const [updatePatientConditions] = useUpdatePatientConditionsMutation();
   const [getProblems] = useLazyGetPatientProblemsQuery();
   const [getPatient] = useLazyGetPatientByIdQuery();
 
@@ -140,10 +141,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     try {
       if (formData.id) {
         await updatePatientProblem(payload).unwrap();
-        console.log('UPDATED PAYLOAD', payload.condition);
       } else {
         await addPatientProblem(payload).unwrap();
-        console.log('ADDED PAYLOAD', payload.condition);
       }
 
       const response = await getProblems(
@@ -157,8 +156,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         true
       ).unwrap();
 
-      console.log('PROBLEMS RESPONSE', response.data);
-
       const conditions = Array.from(
         new Set(
           [
@@ -171,17 +168,11 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         )
       ).join(',');
 
-      console.log('FINAL CONDITIONS TO SAVE ON PATIENT', conditions);
-
-      await updatePatient({
+      await updatePatientConditions({
         id: patient.id,
-        data: {
-          ...patient,
-          patientConditions: conditions
-        }
+        patientConditions: conditions
       }).unwrap();
-
-      const fresh = await getPatient(
+      await getPatient(
         {
           id: patient.id,
           timestamp: Date.now()
@@ -189,9 +180,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         true
       ).unwrap();
 
-      console.log('PATIENT AFTER UPDATE', fresh?.patientConditions);
-
       dispatch(setRefetchPatientSide(true));
+      onSaved?.();
 
       dispatch(
         notify({
@@ -207,9 +197,9 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       } else {
         setFormData({
           ...emptyPatientProblem,
-          patientId: Number(patient?.id),
-          condition: ''
+          patientId: Number(patient?.id)
         });
+        setFormKey(prev => prev + 1);
       }
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
@@ -223,6 +213,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
           <Col md={12}>
             <div style={{ marginBottom: 12 }}>
               <MultiSelectAppender
+                key={formKey}
                 label="Condition"
                 options={patientConditions ?? []}
                 optionLabel="label"
@@ -261,9 +252,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
               fieldLabel="Condition Status"
               fieldType="select"
               fieldName="conditionStatus"
-              selectData={statusOptions ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
+              selectData={statusLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              disableByField="isValid"
               record={formData}
               setRecord={setFormData}
               searchable={false}

@@ -1,6 +1,7 @@
 import {
   InAppNotificationRecipientParams,
   useGetInAppNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '@/services/notification-management/notificationService';
 import { NotificationResponseVM } from '@/types/model-types-new';
@@ -36,8 +37,15 @@ const InAppNotificationsPopover = forwardRef<HTMLElement, InAppNotificationsPopo
       skip: !recipientParams,
     });
     const [markNotificationRead, { isLoading: isMarkingRead }] = useMarkNotificationReadMutation();
+    const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] =
+      useMarkAllNotificationsReadMutation();
 
     const notifications = useMemo(() => (data ?? []).slice(0, POPOVER_LIMIT), [data]);
+    const hasUnread = useMemo(
+      () => (data ?? []).some(notification => isUnreadInAppNotification(notification.status)),
+      [data]
+    );
+    const isUpdatingRead = isMarkingRead || isMarkingAllRead;
 
     const handleMarkRead = async (
       event: React.MouseEvent,
@@ -53,6 +61,21 @@ const InAppNotificationsPopover = forwardRef<HTMLElement, InAppNotificationsPopo
         dispatch(
           notify({
             msg: extractErrorMessage(error) || 'Failed to mark notification as read',
+            sev: 'warning',
+          })
+        );
+      }
+    };
+
+    const handleMarkAllRead = async () => {
+      if (!hasUnread || isMarkingAllRead) return;
+
+      try {
+        await markAllNotificationsRead().unwrap();
+      } catch (error) {
+        dispatch(
+          notify({
+            msg: extractErrorMessage(error) || 'Failed to mark all notifications as read',
             sev: 'warning',
           })
         );
@@ -105,8 +128,8 @@ const InAppNotificationsPopover = forwardRef<HTMLElement, InAppNotificationsPopo
                       size={20}
                       className="in-app-notifications-popover__mark-read"
                       style={{
-                        cursor: isMarkingRead ? 'not-allowed' : 'pointer',
-                        opacity: isMarkingRead ? 0.5 : 1,
+                        cursor: isUpdatingRead ? 'not-allowed' : 'pointer',
+                        opacity: isUpdatingRead ? 0.5 : 1,
                       }}
                       onClick={event => handleMarkRead(event, notification)}
                     />
@@ -136,6 +159,15 @@ const InAppNotificationsPopover = forwardRef<HTMLElement, InAppNotificationsPopo
       >
         {renderContent()}
         <div className="in-app-notifications-popover__footer">
+          {hasUnread ? (
+            <Button
+              appearance="link"
+              onClick={handleMarkAllRead}
+              disabled={isMarkingAllRead}
+            >
+              Mark all as read
+            </Button>
+          ) : null}
           <Button appearance="link" onClick={handleMoreNotifications}>
             More notifications
           </Button>

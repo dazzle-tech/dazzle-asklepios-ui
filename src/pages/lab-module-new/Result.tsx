@@ -65,6 +65,7 @@ import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
 import MyButton from '@/components/MyButton/MyButton';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -145,7 +146,7 @@ const Result = forwardRef<any, Props>(
 
     const [paginationParams, setPaginationParams] = useState<PaginationParams>({
       page: 0,
-      size: 5,
+      size: 20,
       sort: 'id,asc'
     });
     const [sortType, setSortType] = useState<SortType>('asc');
@@ -230,10 +231,11 @@ const Result = forwardRef<any, Props>(
       [normalizedResults]
     );
 
-    const selectableResultIds = useMemo(
-      () => selectableResults.map(r => r.id),
-      [selectableResults]
-    );
+    const
+      selectableResultIds = useMemo(
+        () => selectableResults.map(r => r.id),
+        [selectableResults]
+      );
 
     const isAllSelected =
       selectableResultIds.length > 0 &&
@@ -270,34 +272,41 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
+const resolveResultDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile) return ' ';
 
-    const resolveResultDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile) return ' ';
+  const resultType =
+    profile?.resultType?.toUpperCase()?.trim();
 
-      if (isLovProfile(profile)) {
-        return resolveLovDisplayValue(
-          profile,
-          row.resultValueText,
-          lovDefinitions,
-          allLovValues
-        );
-      }
+  if (resultType === 'LOV') {
+    return resolveLovDisplayValue(
+      profile,
+      row.resultValueText,
+      lovDefinitions,
+      allLovValues
+    );
+  }
 
-      return row.resultValueNumber ?? ' ';
-    };
+  if (resultType === 'TEXT') {
+    return row.resultValueText ?? ' ';
+  }
 
-    const resolveUnitDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
-      if (!profile.resultUnit) return null;
+  return row.resultValueNumber ?? ' ';
+};
 
-      const unit = valueUnitLov?.object?.find(
-        (u: any) => String(u.key) === String(profile.resultUnit)
-      )?.lovDisplayVale;
+   const resolveUnitDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile || isLovProfile(profile)) return null;
 
-      return unit || null;
-    };
+  if (!profile.resultUnit) return null;
+
+  const unit = valueUnitLov?.object?.find(
+    (u: any) => String(u.key) === String(profile.resultUnit)
+  )?.lovDisplayVale;
+
+  return unit || null;
+};
 
     const isCriticalResult = (row: any) =>
       row?.viewMarker === 'CRITICAL_UPPER' || row?.viewMarker === 'CRITICAL_LOWER';
@@ -319,46 +328,6 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
-
-    const doBulkApprove = async () => {
-      if (!selectedResultIds.length) return;
-      try {
-        await bulkApproveResults({ ids: selectedResultIds }).unwrap();
-        setSelectedResultIds([]);
-        refetch();
-        await refetchAllLabData();
-        dispatch(notify({ msg: 'Selected results approved successfully', sev: 'success' }));
-      } catch (e: any) {
-        dispatch(
-          notify({
-            msg: e?.data?.message || e?.data?.detail || e?.error || 'Bulk approve failed',
-            sev: 'error'
-          })
-        );
-      }
-    };
-
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const isResultEmpty = (row: any) => {
-      const profile = row.profile;
-
-      if (!profile) return true;
-
-      if (isLovProfile(profile)) {
-        return (
-          row.resultValueText === null ||
-          row.resultValueText === undefined ||
-          row.resultValueText === ''
-        );
-      }
-
-      return (
-        row.resultValueNumber === null ||
-        row.resultValueNumber === undefined
-      );
-    };
-
     const handleApprove = (row: any) => {
 
       if (isResultEmpty(row)) {
@@ -379,14 +348,59 @@ const Result = forwardRef<any, Props>(
         doApprove(row);
       }
     };
+    const doBulkApprove = async (idsToApprove?: number[]) => {
+      const resolvedIds = idsToApprove ?? selectedResultIds;
+      if (!resolvedIds?.length) return;
+      try {
+        await bulkApproveResults({ ids: resolvedIds }).unwrap();
+        setSelectedResultIds([]);
+        handleToggleSelectAll(false);
+        await refetch();
+        await refetchAllLabData();
+        dispatch(notify({ msg: 'Selected results approved successfully', sev: 'success' }));
+      } catch (e: any) {
+        dispatch(
+          notify({
+            msg: e?.data?.message || e?.data?.detail || e?.error || 'Bulk approve failed',
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+  const isResultEmpty = (row: any) => {
+  const profile = row.profile;
+
+  if (!profile) return true;
+
+  const resultType =
+    profile?.resultType?.toUpperCase()?.trim();
+
+  if (resultType === 'LOV' || resultType === 'TEXT') {
+    return (
+      row.resultValueText === null ||
+      row.resultValueText === undefined ||
+      row.resultValueText === ''
+    );
+  }
+
+  return (
+    row.resultValueNumber === null ||
+    row.resultValueNumber === undefined
+  );
+};
+
+
 
     const handleBulkApprove = () => {
       const eligibleIds = normalizedResults
-        .filter(
-          row =>
-            selectedResultIds.includes(row.id) &&
-            row.processingStatus === 'RESULT_READY'
-        )
+        .filter(row => {
+          const isSelected = selectedResultIds.includes(row.id);
+          const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+          return (isSelected || isSelectAllChecked) && row.processingStatus === 'RESULT_READY';
+        })
         .map(row => row.id);
 
       if (!eligibleIds.length) {
@@ -428,14 +442,15 @@ const Result = forwardRef<any, Props>(
         setPendingApproveRow(null);
         setOpenCriticalConfirmModal(true);
       } else {
-        doBulkApprove();
+        void doBulkApprove(eligibleIds);
       }
     };
 
     const handleCriticalConfirmYes = () => {
       setOpenCriticalConfirmModal(false);
       if (isBulkCriticalApprove) {
-        doBulkApprove();
+        const idsToApprove = selectedResultIds.length ? selectedResultIds : [];
+        void doBulkApprove(idsToApprove);
       } else if (pendingApproveRow) {
         doApprove(pendingApproveRow);
       }
@@ -451,11 +466,23 @@ const Result = forwardRef<any, Props>(
 
     const handleReject = async () => {
       try {
-        if (isBulkRejectMode) {
-          if (!selectedResultIds.length) return;
+        const resolvedIds = (() => {
+          if (isBulkRejectMode) {
+            const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+            if (isSelectAllChecked) {
+              return selectableResultIds;
+            }
+            return selectedResultIds;
+          }
 
+          return selectedResult?.id ? [selectedResult.id] : [];
+        })();
+
+        if (!resolvedIds.length) return;
+
+        if (isBulkRejectMode) {
           await bulkRejectResults({
-            ids: selectedResultIds,
+            ids: resolvedIds,
             rejectedReason: resultRejectReason
           }).unwrap();
 
@@ -501,7 +528,6 @@ const Result = forwardRef<any, Props>(
     };
 
     const toggleSelectRow = (row: any, checked: boolean) => {
-      if (row.processingStatus !== 'RESULT_READY') return;
 
       setSelectedResultIds(prev =>
         checked
@@ -512,14 +538,16 @@ const Result = forwardRef<any, Props>(
       );
     };
 
+
     const handleToggleSelectAll = (checked: boolean) => {
+      const allRowIds = normalizedResults.map(row => row.id);
+
       if (checked) {
-        setSelectedResultIds(selectableResultIds);
+        setSelectedResultIds(prev => Array.from(new Set([...prev, ...allRowIds])));
       } else {
-        setSelectedResultIds([]);
+        setSelectedResultIds(prev => prev.filter(id => !allRowIds.includes(id)));
       }
     };
-
     const columns: ColumnConfig[] = [
       {
         key: 'select',
@@ -528,18 +556,18 @@ const Result = forwardRef<any, Props>(
             checked={isAllSelected}
             indeterminate={isIndeterminate}
             onChange={(_, checked) => handleToggleSelectAll(checked)}
+            onClick={(e) => e.stopPropagation()}
           />
         ),
         align: 'center',
         width: 60,
         render: (row: any) => {
-          const disabled = row.processingStatus !== 'RESULT_READY';
           return (
             <Checkbox
               checked={selectedResultIds.includes(row.id)}
-              disabled={disabled}
               onChange={(_, checked) => toggleSelectRow(row, checked)}
               onClick={(e) => e.stopPropagation()}
+
             />
           );
         }
@@ -581,33 +609,48 @@ const Result = forwardRef<any, Props>(
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
-        render: (row: any) => (
-          <Whisper
-            placement="top"
-            trigger="hover"
-            container={() => document.body}
-            speaker={<Tooltip>View Normal Ranges</Tooltip>}
-          >
-            <span style={{ display: 'inline-block' }}>
-              <FaChartLine
-                size={18}
-                color="var(--primary-gray)"
-                style={{ cursor: 'pointer', opacity: 0.8 }}
-                onClick={() => {
-                  setSelectedResult(row);
-                  setOpenNormalRangeModal(true);
-                }}
-              />
-            </span>
-          </Whisper>
-        )
+        render: (row: any) => {
+
+          const isText =
+            row?.profile?.resultType?.toUpperCase() === 'TEXT';
+
+          if (isText) {
+            return '-';
+          }
+
+          return (
+            <Whisper
+              placement="top"
+              trigger="hover"
+              container={() => document.body}
+              speaker={<Tooltip>View Normal Ranges</Tooltip>}
+            >
+              <span style={{ display: 'inline-block' }}>
+                <FaChartLine
+                  size={18}
+                  color="var(--primary-gray)"
+                  style={{ cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => {
+                    setSelectedResult(row);
+                    setOpenNormalRangeModal(true);
+                  }}
+                />
+              </span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
           const profile = row.profile;
+          const isText =
+            profile?.resultType?.toUpperCase() === 'TEXT';
 
+          if (isText) {
+            return '-';
+          }
           const hasViewRange =
             row.viewNormalRange && row.viewNormalRange.trim() !== '';
 
@@ -688,11 +731,11 @@ const Result = forwardRef<any, Props>(
                 icon={faDiagramPredecessor}
                 style={{ cursor: 'pointer', opacity: 0.8 }}
                 onClick={() => {
-                    console.log('🔍 Selected Row:', row);
-                    console.log('🆔 row.profileTestId:', row.profileTestId);
+                  console.log('🔍 Selected Row:', row);
+                  console.log('🆔 row.profileTestId:', row.profileTestId);
 
-                    setSelectedComparisonProfileId(row.profileTestId);
-                    setOpenComparisonModal(true);
+                  setSelectedComparisonProfileId(row.profileTestId);
+                  setOpenComparisonModal(true);
                 }}
               />
             </span>
@@ -807,28 +850,6 @@ const Result = forwardRef<any, Props>(
                       marginRight: 10,
                       cursor: canReject ? 'pointer' : 'not-allowed',
                       opacity: canReject ? 1 : 0.4
-                    }}
-                  />
-                </span>
-              </Whisper>
-
-              <Whisper
-                placement="top"
-                trigger="hover"
-                speaker={<Tooltip>Print Result</Tooltip>}
-              >
-                <span>
-                  <FontAwesomeIcon
-                    icon={faPrint}
-                    className="icon-laboratory-size"
-                    style={{
-                      cursor: canPrint ? 'pointer' : 'not-allowed',
-                      opacity: canPrint ? 1 : 0.4
-                    }}
-                    onClick={() => {
-                      if (!canPrint) return;
-
-                      // print logic here
                     }}
                   />
                 </span>
@@ -983,36 +1004,41 @@ const Result = forwardRef<any, Props>(
                     </MyButton>
                   </span>
                 </Whisper>
+                <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <LaboratoryReportButton resultIds={selectedResultIds} />
+                  </span>
+                </Whisper>
               </HStack>
             </div>
           }
         >
-        <div className='laboratory-table-size-container'>
-          <MyTable
-            columns={columns}
-            data={normalizedResults}
-            loading={loading || isFetching}
-            page={paginationParams.page}
-            rowsPerPage={paginationParams.size}
-            totalCount={resultsResponse?.totalCount ?? 0}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            sortColumn={sortColumn}
-            sortType={sortType}
-            onSortChange={handleSortChange}
-            rowClassName={isResultSelected}
-            onRowClick={rowData => {
-              setSelectedRow(rowData);
-              if (rowData?.orderTestId) {
-                setTest({
-                  id: rowData.orderTestId,
-                  processingStatus: rowData.processingStatus,
-                  status: rowData.status
-                });
-              }
-            }}
-          />
-        </div>
+          <div className='laboratory-table-size-container'>
+            <MyTable
+              columns={columns}
+              data={normalizedResults}
+              loading={loading || isFetching}
+              page={paginationParams.page}
+              rowsPerPage={paginationParams.size}
+              totalCount={resultsResponse?.totalCount ?? 0}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortColumn={sortColumn}
+              sortType={sortType}
+              onSortChange={handleSortChange}
+              rowClassName={isResultSelected}
+              onRowClick={rowData => {
+                setSelectedRow(rowData);
+                if (rowData?.orderTestId) {
+                  setTest({
+                    id: rowData.orderTestId,
+                    processingStatus: rowData.processingStatus,
+                    status: rowData.status
+                  });
+                }
+              }}
+            />
+          </div>
 
           <ChatModal
             open={openResultNoteModal}
@@ -1102,9 +1128,9 @@ const Result = forwardRef<any, Props>(
             hideActionBtn
             content={() => (
               <LaboratoryResultComparison
-                  patient={{ id: order?.patientId }}
-                  profileTestId={selectedComparisonProfileId}
-                  hideTestNameFilter={true}
+                patient={{ id: order?.patientId }}
+                profileTestId={selectedComparisonProfileId}
+                hideTestNameFilter={true}
               />
             )}
           />

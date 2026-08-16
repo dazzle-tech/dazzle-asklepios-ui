@@ -8,7 +8,8 @@ import {
   faBedPulse,
   faFileWaveform,
   faRectangleXmark,
-  faUserDoctor
+  faUserDoctor,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
@@ -54,6 +55,10 @@ import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
 import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
 import dayjs from 'dayjs';
@@ -225,7 +230,7 @@ const ERList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -234,7 +239,8 @@ const ERList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -318,6 +324,7 @@ const ERList = () => {
       hasOrder,
       isObserved,
       page,
+      practitionerId: undefined,
       size: pageSize,
       sort: DEFAULT_SORT,
       timestamp: searchTick
@@ -640,9 +647,7 @@ const ERList = () => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -656,6 +661,9 @@ const ERList = () => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -724,6 +732,31 @@ const ERList = () => {
       }
     });
 
+  };
+
+  const handleViewVisit = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    navigate('/encounter', {
+      state: {
+        info: 'viewEncounter',
+        fromPage: 'ER_Department',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: false,
+        viewMode: 'readOnly'
+      }
+    });
   };
 
   const handleCancelEncounter = async () => {
@@ -826,8 +859,8 @@ const ERList = () => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
+        if (statusUpper === 'COMPLETED') {
+          return <span className="location-table-style">Completed</span>;
         }
 
         const assignments = row?.activeAssignmentsForEncounter ?? [];
@@ -914,6 +947,7 @@ const ERList = () => {
       title: 'DATE',
       render: (row: any) => row?.dischargeAt
     },
+  
     {
       key: 'status',
       title: 'STATUS',
@@ -925,7 +959,7 @@ const ERList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -936,8 +970,8 @@ const ERList = () => {
             contant={formatEnumString(row?.status) ?? row?.status ?? ''}
           />
         );
-      }
-    },
+      }}
+    ,
     {
       key: 'duration',
       title: 'DURATION',
@@ -950,30 +984,51 @@ const ERList = () => {
       title: ' ',
       render: (row: any) => {
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
+        const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    handleGoToVisit(row);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipViewVisit}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleViewVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            {statusUpper != 'CLOSED' &&
+            {!isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleGoToVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
+            {statusUpper != 'COMPLETED' &&
               statusUpper != 'DISCHARGED' &&
               statusUpper != 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
@@ -1075,9 +1130,9 @@ const ERList = () => {
           column
           width={260}
           fieldType="checkPicker"
-          fieldLabel="Encounter Status"
+          fieldLabel="Treatment Status"
           fieldName="statusIn"
-          selectData={EncounterStatusEnum}
+          selectData={TreatmentStatusEnum}
           selectDataLabel="label"
           selectDataValue="value"
           record={{ statusIn }}

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import clsx from 'clsx';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 interface ContactTabProps {
@@ -20,7 +21,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
   // Fetch LOV data for various fields
   useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
-  const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
@@ -69,10 +69,38 @@ const ContactTab: React.FC<ContactTabProps> = ({
 
 
   const { data: languages = [] } = useGetAllLanguagesQuery({});
+  const languageOptions = useMemo(
+    () =>
+      [...languages]
+        .filter(language => Boolean(language.langKey?.trim()))
+        .sort((left, right) =>
+          String(left.langName ?? '').localeCompare(String(right.langName ?? ''))
+        ),
+    [languages]
+  );
 
+    useEffect(() => {
+      if (!localPatient?.id && !localPatient?.preferredLanguage && languageOptions.length > 0) {
+        const arabicLanguage = languageOptions.find(
+          language => language.langKey === 'arb'
+        );
+
+        if (arabicLanguage) {
+          setLocalPatient({
+            ...localPatient,
+            preferredLanguage: arabicLanguage.langKey,
+          });
+        }
+      }
+    }, [
+      localPatient?.id,
+      localPatient?.preferredLanguage,
+      languageOptions,
+      setLocalPatient,
+    ]);
 
   return (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}> 
       <PhoneNumberInput
         column
         required
@@ -107,6 +135,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
+        fieldType="textnumber"
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -116,30 +145,29 @@ const ContactTab: React.FC<ContactTabProps> = ({
         vr={validationResult}
         column
         fieldName="workPhone"
+        fieldType="textnumber"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
       />
 
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Native Language"
-        fieldType="select"
-        fieldName="nativeLanguage"
-        selectData={languages ?? []}
-        selectDataLabel="langName"
-        selectDataValue="langKey"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        width={170}
-        disableByField="isValid"
-      />
+    <MyInput
+      vr={validationResult}
+      column
+      fieldLabel="Preferred Language"
+      fieldType="select"
+      fieldName="preferredLanguage"
+      selectData={languageOptions}
+      selectDataLabel="langName"
+      selectDataValue="langKey"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      searchable
+      width={170}
+    />
 
 
       <MyInput
-        required
         vr={validationResult}
         column
         fieldName="email"

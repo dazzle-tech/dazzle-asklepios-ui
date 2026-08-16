@@ -5,7 +5,8 @@ import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultMutation,
-  useGetFilledProfileTestIdsQuery
+  useGetFilledProfileTestIdsQuery,
+  useBulkCreateDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -48,12 +49,10 @@ const AddResultModal = ({
   const { data: lovDefinitions } =
     useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
-  const [createResult, { isLoading: isSavingResult }] =
-    useCreateDiagnosticOrderTestResultMutation();
-
   const [getProfilesForLab] =
     useGetActiveLabProfilesByTestIdsMutation();
-
+  const [bulkCreateResult, { isLoading: isSavingResult }] =
+    useBulkCreateDiagnosticOrderTestResultMutation();
   const [profilesByTestId, setProfilesByTestId] =
     useState<Record<number, any[]>>({});
 
@@ -127,45 +126,72 @@ const AddResultModal = ({
     );
   };
 
-  const handleSaveSingleResult = async (orderTest: any, profile: any) => {
-    const value = results?.[orderTest.testId]?.[profile.id];
+  const handleSaveTest = async (orderTest: any) => {
+    const profiles =
+      (profilesByTestId[orderTest.testId] ?? []).filter(
+        profile => !filledProfileTestIds.includes(profile.id)
+      );
 
-    if (value === undefined || value === null || value === '') {
+    const payload = profiles
+      .filter(profile => {
+        const value =
+          results?.[orderTest.testId]?.[profile.id];
+
+        return (
+          value !== undefined &&
+          value !== null &&
+          value !== ''
+        );
+      })
+      .map(profile => {
+        const value =
+          results?.[orderTest.testId]?.[profile.id];
+
+        const resultType =
+          profile?.resultType?.toUpperCase()?.trim();
+
+        const isNumber = [
+          'NUMBER',
+          'NUMERIC',
+          'INTEGER',
+          'FLOAT',
+          'DECIMAL'
+        ].includes(resultType);
+
+        return {
+          orderTestId: orderTest.id,
+          profileTestId: profile.id,
+          ...(isNumber
+            ? {
+              resultValueNumber: Number(value)
+            }
+            : {
+              resultValueText: String(value)
+            })
+        };
+      });
+
+    if (!payload.length) {
       dispatch(
         notify({
-          msg: 'Please enter result value',
+          msg: 'Please enter at least one result',
           sev: 'warning'
         })
       );
       return;
     }
 
-    const resultType = profile?.resultType?.toUpperCase()?.trim();
+    const res = await bulkCreateResult({
+      results: payload
+    });
 
-    const isNumber = [
-      'NUMBER',
-      'NUMERIC',
-      'INTEGER',
-      'FLOAT',
-      'DECIMAL'
-    ].includes(resultType);
-
-    const payload: any = {
-      orderTestId: orderTest.id,
-      profileTestId: profile.id,
-      ...(isNumber
-        ? { resultValueNumber: Number(value) }
-        : { resultValueText: String(value) })
-    };
-
-    const res = await createResult(payload);
     if ('error' in res) {
       dispatch(
         notify({
           msg:
             (res.error as any)?.data?.message ||
             (res.error as any)?.data?.detail ||
-            'Save result failed',
+            'Save results failed',
           sev: 'error'
         })
       );
@@ -174,14 +200,14 @@ const AddResultModal = ({
 
     dispatch(
       notify({
-        msg: `Result saved for ${profile.name}`,
+        msg: 'Results saved successfully',
         sev: 'success'
       })
     );
+
     await refetchFilledProfiles();
     onSuccess?.();
   };
-
   const buildColumns = (orderTest: any): ColumnConfig[] => [
     {
       key: 'name',
@@ -196,8 +222,12 @@ const AddResultModal = ({
       title: 'Result',
       width: 270,
       render: (profile: any) => {
-        const isLov =
-          profile?.resultType?.toUpperCase() === 'LOV';
+        const resultType =
+          profile?.resultType?.toUpperCase()?.trim();
+
+        const isLov = resultType === 'LOV';
+        const isText = resultType === 'TEXT';
+        const isNumber = resultType === 'NUMBER';
 
         if (filledProfileTestIds.includes(profile.id)) {
           return (
@@ -223,11 +253,18 @@ const AddResultModal = ({
             <div>
               <MyInput
                 fieldName={String(profile.id)}
-                fieldType={isLov ? 'select' : 'number'}
-                selectData={isLov ? resolveLovOptions(profile) : undefined}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                fieldType={
+                  isLov
+                    ? 'select'
+                    : isText
+                      ? 'text'
+                      : 'number'
+                }
 
+                selectData={isLov ? resolveLovOptions(profile) : undefined}
+                selectDataLabel="lovDisplayVale"
+                disableByField='isValid'
+                allowDecimal
                 selectDataValue="key"
                 showLabel={false}
                 record={rowRecord}
@@ -240,10 +277,10 @@ const AddResultModal = ({
                     }
                   }));
                 }}
-                width={140}
+                width={isText ? 220 : 140}
               />
             </div>
-            {!isLov && (
+            {isNumber && (
               <div
                 style={{
                   display: 'flex',
@@ -263,30 +300,31 @@ const AddResultModal = ({
                 </span>
               </div>
             )}
+
           </div>
         );
       }
     },
-    {
-      key: 'action',
-      title: 'Action',
-      width: 120,
-      align: 'center',
-      render: (profile: any) => {
+    // {
+    //   key: 'action',
+    //   title: 'Action',
+    //   width: 120,
+    //   align: 'center',
+    //   render: (profile: any) => {
 
-        return (
-          <MyButton
-            size="sm"
-            disabled={isSavingResult}
-            onClick={() =>
-              handleSaveSingleResult(orderTest, profile)
-            }
-          >
-            Save
-          </MyButton>
-        );
-      }
-    }
+    //     return (
+    //       <MyButton
+    //         size="sm"
+    //         disabled={isSavingResult}
+    //         onClick={() =>
+    //           handleSaveSingleResult(orderTest, profile)
+    //         }
+    //       >
+    //         Save
+    //       </MyButton>
+    //     );
+    //   }
+    // }
 
   ];
 
@@ -307,80 +345,99 @@ const AddResultModal = ({
     return profiles.length > 0;
   });
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Add Results"
-      size="40vw"
-      hideActionBtn
-      steps={[
-        { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
-      ]}
-      content={
-        <div dir={dir}>
-          {!hasAnyProfiles ? (
-            <div
-              style={{
-                height: '40vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                color: '#888'
-              }}
-            >
-              <FontAwesomeIcon
-                icon={faFlask}
-                style={{ fontSize: 40, marginBottom: 12, opacity: 0.6 }}
-              />
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Add Results"
+        size="50vw"
+        hideActionBtn
+        steps={[
+          { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
+        ]}
+        content={
+          <div dir={dir}>
+            {!hasAnyProfiles ? (
+              <div
+                style={{
+                  height: '40vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: '#888'
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faFlask}
+                  style={{ fontSize: 40, marginBottom: 12, opacity: 0.6 }}
+                />
 
-              <div style={{ fontSize: 16, fontWeight: 500 }}>
-                No Pending Results to Add
-              </div>
+                <div style={{ fontSize: 16, fontWeight: 500 }}>
+                  No Pending Results to Add
+                </div>
 
-              <div style={{ fontSize: 13, marginTop: 6 }}>
-                There are no remaining profiles to fill
+                <div style={{ fontSize: 13, marginTop: 6 }}>
+                  There are no remaining profiles to fill
+                </div>
               </div>
-            </div>
-          ) : (
-            <Form fluid>
-              {acceptedTests.map(orderTest => {
-                const profiles =
-                  (profilesByTestId[orderTest.testId] ?? []).filter(
-                    profile => !filledProfileTestIds.includes(profile.id)
+            ) : (
+              <Form fluid>
+                {acceptedTests.map(orderTest => {
+                  const profiles =
+                    (profilesByTestId[orderTest.testId] ?? []).filter(
+                      profile => !filledProfileTestIds.includes(profile.id)
+                    );
+
+                  if (profiles.length === 0) return null;
+
+                  return (
+                    <Panel
+                      key={orderTest.id}
+                      bordered
+                      header={
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%'
+                          }}
+                        >
+                          <strong>{orderTest.test?.name}</strong>
+
+                          <MyButton
+                            size="sm"
+                            disabled={isSavingResult}
+                            onClick={() => handleSaveTest(orderTest)}
+                          >
+                            Save Results
+                          </MyButton>
+                        </div>
+                      }
+                      style={{ marginBottom: 16 }}
+                    >
+                      <MyTable
+                        height={260}
+                        data={profiles}
+                        columns={buildColumns(orderTest)}
+                      />
+                    </Panel>
                   );
-
-                if (profiles.length === 0) return null;
-
-                return (
-                  <Panel
-                    key={orderTest.id}
-                    bordered
-                    header={<strong>{orderTest.test?.name}</strong>}
-                    style={{ marginBottom: 16 }}
-                  >
-                    <MyTable
-                      height={260}
-                      data={profiles}
-                      columns={buildColumns(orderTest)}
-                    />
-                  </Panel>
-                );
-              })}
-            </Form>
-          )}
-        </div>
-      }
-    />
-  </div>
+                })}
+              </Form>
+            )}
+          </div>
+        }
+      />
+    </div>
   );
 };
 

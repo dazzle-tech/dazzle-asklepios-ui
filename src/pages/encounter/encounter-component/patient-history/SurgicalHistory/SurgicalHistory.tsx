@@ -28,7 +28,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
-
+  const { data: adverseLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
 
@@ -51,22 +51,22 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
 
 
 
-const { data, isFetching } = useGetSurgicalHistoryQuery(
-  {
-    patientId,
-    page,
-    size,
-    sort: 'id,desc',
-    showCancelled
-  },
-  { skip: !isValidPatientId }
-);
+  const { data, isFetching } = useGetSurgicalHistoryQuery(
+    {
+      patientId,
+      page,
+      size,
+      sort: 'id,desc',
+      showCancelled
+    },
+    { skip: !isValidPatientId }
+  );
 
 
-const [cancelSurgicalHistory] = useCancelSurgicalHistoryMutation();
+  const [cancelSurgicalHistory] = useCancelSurgicalHistoryMutation();
 
 
-const filteredData = data?.data ?? [];
+  const filteredData = data?.data ?? [];
 
 
   const handleEdit = (row: any) => {
@@ -75,14 +75,14 @@ const filteredData = data?.data ?? [];
   };
 
   const openCancelDialog = (row: any) => {
-  setCancelObject({
-    id: row.id,
-    status: row.status || 'ACTIVE',
-    cancellationReason: ''
-  });
+    setCancelObject({
+      id: row.id,
+      status: row.status || 'ACTIVE',
+      cancellationReason: ''
+    });
 
-  setOpenCancelModal(true);
-};
+    setOpenCancelModal(true);
+  };
 
   const handleCancel = async () => {
     try {
@@ -151,14 +151,37 @@ const filteredData = data?.data ?? [];
       title: 'COMPLICATIONS',
       flexGrow: 3,
       render: (row: any) => {
-        console.log("rowwwwws:",row);
-        const value = conjureValueBasedOnKeyFromList(
-          complicationsLov?.object ?? [],
-          row?.complications,
-          'lovDisplayVale'
-        );
+        const keys = (row?.complications || '')
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter(Boolean);
 
-        return value ?? row?.complications ?? '';
+        if (!keys.length) return '';
+
+        return keys
+          .map((key: string) =>
+            conjureValueBasedOnKeyFromList(complicationsLov?.object ?? [], key, 'lovDisplayVale') ?? key
+          )
+          .join(', ');
+      }
+    },
+     {
+      key: 'AdverseReactions',
+      title: 'Adverse Reactions',
+      flexGrow: 3,
+      render: (row: any) => {
+        const keys = (row?.adverseReactionsToAnesthesia || '')
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter(Boolean);
+
+        if (!keys.length) return '';
+
+        return keys
+          .map((key: string) =>
+            conjureValueBasedOnKeyFromList(adverseLov?.object ?? [], key, 'lovDisplayVale') ?? key
+          )
+          .join(', ');
       }
     },
     {
@@ -205,18 +228,18 @@ const filteredData = data?.data ?? [];
       )
     },
     {
-  key: 'cancelledDate',
-  title: <Translate>CANCELLED AT / BY</Translate>,
-  expandable: true,
-  render: (row: any) =>
-    row?.status === 'CANCELLED' ? (
-      <UserDateCell
-        login={row?.cancelledBy}
-        date={row?.cancelledDate}
-      />
-    ) : (
-      <span>-</span>
-    )
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        ) : (
+          <span>-</span>
+        )
     },
     {
       key: 'cancellationReason',
@@ -253,15 +276,25 @@ const filteredData = data?.data ?? [];
                   <MdModeEdit
                     size={22}
                     fill="var(--primary-gray)"
-                    className="pointer"
+                    className="pointer view-only-action-edit-delete-encounter"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
                   <MdDelete
                     size={22}
                     fill="var(--rs-red-500, #f44336)"
-                    className="pointer"
+                    className="pointer view-only-action-edit-delete-encounter"
                     title="Cancel"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => openCancelDialog(row)}
                   />
                 </>
@@ -269,7 +302,7 @@ const filteredData = data?.data ?? [];
             </div>
           )
         }
-        ]
+      ]
       : [])
   ];
 
@@ -307,20 +340,20 @@ const filteredData = data?.data ?? [];
           content={
             <>
 
-            {!toShowData && (
-              <div className="margin-bottom-10">
-                <MyInput
-                  fieldType="check"
-                  fieldLabel="Show Cancelled"
-                  showLabel={false}
-                  fieldName="showCancelled"
-                  record={{ showCancelled }}
-                  setRecord={(record: any) => {
-                    setShowCancelled(record.showCancelled);
-                  }}
-                />
-              </div>
-            )}
+              
+                <div className="margin-bottom-10">
+                  <MyInput
+                    fieldType="check"
+                    fieldLabel="Show Cancelled"
+                    showLabel={false}
+                    fieldName="showCancelled"
+                    record={{ showCancelled }}
+                    setRecord={(record: any) => {
+                      setShowCancelled(record.showCancelled);
+                    }}
+                  />
+                </div>
+              
               <MyTable
                 height={450}
                 data={filteredData}

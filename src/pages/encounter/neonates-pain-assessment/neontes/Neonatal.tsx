@@ -44,6 +44,7 @@ const Neonatal = () => {
   const tableButtons = (
     <div className="actions-bar">
       <Checkbox
+       className="show-cancelled"
         checked={!showCanceled}
         onChange={() => {
           setShowCanceled(!showCanceled);

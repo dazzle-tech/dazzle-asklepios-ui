@@ -349,7 +349,7 @@ const handleSelectReport = (
   ];
 
   const filters = (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className="filter-form-disable-fix">
       <MyInput
         column
         width={180}

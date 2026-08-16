@@ -1,544 +1,778 @@
-
-
-import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagnifyingGlass, faBroom } from '@fortawesome/free-solid-svg-icons';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getHeight } from 'rsuite/esm/DOMHelper';
+import { Text } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWallet } from '@fortawesome/free-solid-svg-icons';
 
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { newApPatient } from '@/types/model-types-constructor';
+import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { notify } from '@/utils/uiReducerActions';
 
 import MyTab from '@/components/MyTab';
-import SectionContainer from '@/components/SectionsoContainer';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import SectionContainer from '@/components/SectionsoContainer';
 
-import Billing from './Billing';
-import Invoices from './Invoices';
-import Receipt from './Receipt';
 import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
 import PatientBillingSide from './PatientBillingSide';
-
-import { useGetPatientServicesAndProductsByPatientQuery } from '@/services/encounters/patientServicesAndProductsService';
-
-import { useGetServicesQuery } from '@/services/setup/serviceService';
-import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
-import {
-  BrandMedication,
-  InventoryProduct,
-  BillingItem,
-} from '@/types/model-types-new';
+import Invoices from './Invoices';
+import Receipt from './Receipt';
 
 import {
-  useGetPatientBalanceQuery,
-  useGetPatientLedgerSummaryQuery,
-} from '@/services/encounters/patientPaymentsService';
-import {
-  useCreatePatientInvoiceMutation,
-} from '@/services/patient/patientBillingInvoiceService';
-import {
-  useCreatePatientInvoiceItemMutation,
-} from '@/services/patient/patientBillingInvoiceItemService';
+  useCloneRejectedPreAuthorizationItemMutation,
+  usePayRejectedPreAuthorizationItemAsCashMutation,
+  useRefreshEncounterPreAuthorizationMutation
+} from '@/services/waseel-integration/preAuthorizationService';
+import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
+import EncounterSelector from './accounting/components/EncounterSelector';
+import BillingSummaryCards from './accounting/components/BillingSummaryCards';
+import BillingTimeline from './accounting/components/BillingTimeline';
+import BillingChargesTable from './accounting/components/BillingChargesTable';
+import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
+import CashFallbackBanner from './accounting/components/CashFallbackBanner';
+import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
+import WalletDepositModal from './accounting/components/WalletDepositModal';
+import CollectPaymentModal from './accounting/components/CollectPaymentModal';
+import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
+import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
+import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
+import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
+import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
+import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
+import './accounting/styles.less';
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
-  const authSlice = useAppSelector(state => state.auth);
 
-  const [encounter, setEncounter] = useState({ ...newApEncounter });
-  const [expand, setExpand] = useState<boolean>(false);
   const [patient, setPatient] = useState<any>({ ...newApPatient });
-
-  const [windowHeight] = useState(getHeight(window));
+  const [expand, setExpand] = useState(false);
   const [refetchData, setRefetchData] = useState(false);
+  const [windowHeight] = useState(getHeight(window));
 
-  const [dateFilter, setDateFilter] = useState<any>({
-    fromDate: new Date(),
-    toDate: new Date(),
-  });
+  const [selectedEncounterId, setSelectedEncounterId] = useState<number | null>(null);
+  const [coverageType, setCoverageType] = useState<'SELF_PAY' | 'INSURANCE'>('SELF_PAY');
+  const [selectedInsuranceId, setSelectedInsuranceId] = useState<number | null>(null);
+  const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
+  const [selectedChargeRowIds, setSelectedChargeRowIds] = useState<string[]>([]);
+  const [paymentReceiptModal, setPaymentReceiptModal] = useState<{
+    open: boolean;
+    receipt: PaymentReceiptData | null;
+    autoPrint?: boolean;
+  }>({ open: false, receipt: null, autoPrint: false });
+  const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
+  const [canCloseCalculation, setCanCloseCalculation] = useState(true);
+  const [billingRefreshPending, setBillingRefreshPending] = useState(false);
 
-  const [allBillingItems, setAllBillingItems] = useState<BillingItem[]>([]);
-  const [filteredBilling, setFilteredBilling] = useState<BillingItem[]>([]);
-  const [simulatedInvoiceIncrease, setSimulatedInvoiceIncrease] = useState(0);
-  const [simulatedPaymentDecrease, setSimulatedPaymentDecrease] = useState(0);
-  const [tabsResetKey, setTabsResetKey] = useState(0);
-
-  const divContent = 'Accounting';
-
-  // ---- RTK Billing mutations ----
-  const [createPatientInvoice] = useCreatePatientInvoiceMutation();
-  const [createPatientInvoiceItem] = useCreatePatientInvoiceItemMutation();
-
-  const toNumericId = (val: unknown): number | null => {
-    if (val == null || val === '') return null;
-    const n = Number(val as any);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  };
-  const patientNumericId =
-    toNumericId(patient?.id) ??
-    toNumericId((patient as any)?.patientId) ??
-    toNumericId(patient?.key) ??
-    null;
+  const patientId = resolvePatientId(patient);
 
   const {
-    data: patientWalletBalance,
-    refetch: refetchPatientWalletBalance,
-  } = useGetPatientBalanceQuery(
-    { patientId: patientNumericId as number },
-    { skip: patientNumericId == null }
-  );
-
-  const {
-    data: patientLedgerSummary,
-    refetch: refetchPatientLedgerSummary,
-  } = useGetPatientLedgerSummaryQuery(
-    { patientId: patientNumericId as number },
-    { skip: patientNumericId == null }
-  );
-
-  const balance = {
-    freeBalance: Number(
-      patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
-    ),
-    outstanding: Math.max(
-      0,
-      Number(patientLedgerSummary?.totalDebt ?? 0) +
-        simulatedInvoiceIncrease -
-        simulatedPaymentDecrease
-    ),
-  };
-
-  const {
-    data: patientServicesAndProductsResponse,
-    refetch: refetchPatientServicesAndProductsByPatient,
-  } = useGetPatientServicesAndProductsByPatientQuery(
-    {
-      patientId: patientNumericId as number,
-      page: 0,
-      size: 500,
-      sort: 'id,desc',
-    },
-    {
-      skip: patientNumericId == null,
-    }
-  );
-
-  // ---- Master data (services / products / brands) ----
-  const page = 0;
-  const size = 100;
-  const sort = 'id,asc';
-
-  const { data: serviceListResponse } = useGetServicesQuery({
-    facilityId: authSlice?.tenant?.selectedFacility?.id,
-    page,
-    size,
-    sort,
+    facilityId,
+    facilityCurrency,
+    encounters,
+    loadingEncounters,
+    selectedEncounter,
+    summary,
+    loadingSummary,
+    loadingBillingMetrics,
+    loadingPsp,
+    chargeRows,
+    resolvedInvoiceId,
+    invoiceAdjustments,
+    loadingInvoiceContext,
+    timelineEvents,
+    rejectedPreAuthItems,
+    pendingPreAuthItems,
+    waseelCoverage,
+    loadingWaseelCoverage,
+    waseelCoverageError,
+    walletBalance,
+    reservedBalance,
+    patientLedgerSummary,
+    patientInsurances,
+    loadingInsurances,
+    encounterInvoiceDetails,
+    refreshAll,
+    loadingBillingWorkspace
+  } = useBillingAccountingData({
+    patient,
+    selectedEncounterId,
+    selectedInsuranceId,
+    coverageType
   });
 
-  const { data: inventoryProductsResponse } = useGetInventoryProductsQuery({
-    page,
-    size,
-    sort,
-  });
+  const [refreshEncounterPreAuthorization, { isLoading: refreshingPreAuthorization }] =
+    useRefreshEncounterPreAuthorizationMutation();
+  const [payRejectedPreAuthorizationItemAsCash] =
+    usePayRejectedPreAuthorizationItemAsCashMutation();
+  const [cloneRejectedPreAuthorizationItem] =
+    useCloneRejectedPreAuthorizationItemMutation();
 
-  const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({
-    page: 0,
-    size: 500,
-    sort: 'id,asc',
-  });
+  const displayedPatientInsurances = useMemo(
+    () =>
+      (patientInsurances ?? []).map(insurance => {
+        const insuranceId = Number(
+          insurance?.id ?? (insurance as { patientInsuranceId?: number })?.patientInsuranceId
+        );
 
-  const services = serviceListResponse?.data ?? [];
-  const products: InventoryProduct[] = inventoryProductsResponse?.data ?? [];
-  const brands: BrandMedication[] = brandMedicationList?.data ?? [];
+        if (
+          selectedInsuranceId != null &&
+          Number.isFinite(insuranceId) &&
+          insuranceId === Number(selectedInsuranceId)
+        ) {
+          return overlayPatientInsuranceWithWaseelCoverage(insurance, waseelCoverage) ?? insurance;
+        }
 
-  const getProductById = (id?: number | string) =>
-    products.find(p => String((p as any).id ?? (p as any).Id) === String(id));
-
-  const getBrandById = (id?: number | string) =>
-    brands.find(b => String(b.id) === String(id));
+        return insurance;
+      }),
+    [patientInsurances, selectedInsuranceId, waseelCoverage]
+  );
 
   useEffect(() => {
-  dispatch(setPageCode('Operation_Module'));
-    dispatch(setDivContent(divContent));
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [dispatch]);
+    dispatch(setPageCode('Operation_Module'));
+    dispatch(setDivContent('Patient Billing'));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
-  // ---------- HELPERS ----------
+  useEffect(() => {
+    setSelectedEncounterId(null);
+    setCoverageType('SELF_PAY');
+    setSelectedInsuranceId(null);
+    setSelectedChargeRowIds([]);
+    setDepositModalOpen(false);
+    setCollectPaymentModalOpen(false);
+    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setPreAuthActionLoadingId(null);
+    setCanCloseCalculation(true);
+    setBillingRefreshPending(false);
+  }, [patientId]);
 
-  const applyDateFilterToBilling = (
-    items: BillingItem[],
-    fromDate: Date | null,
-    toDate: Date | null
-  ) => {
-    return items.filter(item => {
-      const itemDate = new Date(item.chargeDate);
-      if (fromDate && itemDate < fromDate) return false;
-      if (toDate && itemDate > toDate) return false;
-      return true;
-    });
-  };
+  useEffect(() => {
+    setSelectedChargeRowIds([]);
+  }, [selectedEncounterId]);
 
-  // ---------- HANDLERS ----------
-
-  const handleSearch = () => {
-    if (!patient?.key) return;
-
-    const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
-    const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
-
-    const patientItems = allBillingItems.filter(
-      item => item.patientKey === patient.key
-    );
-
-    const billing = applyDateFilterToBilling(patientItems, fromDate, toDate);
-    setFilteredBilling(billing);
-  };
-
-  const handleClearFilters = () => {
-    setDateFilter({
-      fromDate: null,
-      toDate: null,
-    });
-
-    if (!patient?.key) {
-      setFilteredBilling([]);
+  useEffect(() => {
+    if (selectedEncounterId == null) {
+      setCoverageType('SELF_PAY');
+      setSelectedInsuranceId(null);
       return;
     }
 
-    const patientItems = allBillingItems.filter(
-      item => item.patientKey === patient.key
+    if (encounterInvoiceDetails == null) {
+      return;
+    }
+
+    if (Number(encounterInvoiceDetails.encounterId) !== Number(selectedEncounterId)) {
+      return;
+    }
+
+    const resolvedCoverage = normalizeBillingCoverageType(
+      encounterInvoiceDetails.coverageType
     );
-    setFilteredBilling(patientItems);
-  };
+    setCoverageType(resolvedCoverage);
+
+    const encounterInsuranceId = toNumber(
+      (selectedEncounter as { patientInsuranceId?: number } | null)?.patientInsuranceId,
+      0
+    );
+
+    const insuranceId =
+      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ??
+      encounterInvoiceDetails.patientInsuranceId ??
+      (encounterInsuranceId > 0 ? encounterInsuranceId : null);
+
+    if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
+      setSelectedInsuranceId(Number(insuranceId));
+    } else if (resolvedCoverage === 'SELF_PAY') {
+      setSelectedInsuranceId(null);
+    }
+  }, [selectedEncounterId, encounterInvoiceDetails, selectedEncounter]);
 
   const handleClosePatient = () => {
     setPatient({ ...newApPatient });
-    setEncounter({ ...newApEncounter });
-    setAllBillingItems([]);
-    setFilteredBilling([]);
-    setDateFilter({ fromDate: null, toDate: null });
-    setSimulatedInvoiceIncrease(0);
-    setSimulatedPaymentDecrease(0);
-    setTabsResetKey(prev => prev + 1);
+    setSelectedEncounterId(null);
+    setCoverageType('SELF_PAY');
+    setSelectedInsuranceId(null);
+    setSelectedChargeRowIds([]);
+    setDepositModalOpen(false);
+    setCollectPaymentModalOpen(false);
+    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setPreAuthActionLoadingId(null);
+    setCanCloseCalculation(true);
+    setBillingRefreshPending(false);
+    setExpand(false);
   };
 
+  const handleCollectRemaining = () => {
+    const rowsNeedingPayment = chargeRows.filter(row => isRowCollectable(row));
 
-  const handleCreateInvoiceFromBilling = async (selectedIds: string[]) => {
-    const hasPatient = patient?.id != null || patient?.key != null;
-    if (!hasPatient || selectedIds.length === 0) {
-   
+    if (!rowsNeedingPayment.length) {
+      dispatch(
+        notify({
+          msg: 'All services on this encounter are already settled.',
+          sev: 'info'
+        })
+      );
       return;
     }
 
-    const facilityId = authSlice?.tenant?.selectedFacility?.id;
-    if (!facilityId) return;
-    if (patientNumericId == null || !Number.isFinite(Number(patientNumericId))) {
-     
+    if (isEncounterChargeCollectionComplete(summary, selectedEncounter)) {
+      dispatch(
+        notify({
+          msg: 'Checkout is already complete for this encounter. Any invoice balance is collected from Invoices or Pay outstanding below.',
+          sev: 'info'
+        })
+      );
       return;
     }
 
-    const itemsToInvoice = allBillingItems.filter(item =>
-      selectedIds.includes(item.id)
-    );
-    if (!itemsToInvoice.length) return;
+    setSelectedChargeRowIds(rowsNeedingPayment.map(row => row.id));
+    setCollectPaymentModalOpen(true);
+  };
 
-    const totalAmount: number = itemsToInvoice.reduce((sum, item) => {
-      const baseTotal =
-        item.totalPrice ?? item.price * (item.quantity || 1);
-      const afterDiscount = baseTotal - (item.discount || 0);
-      return sum + afterDiscount;
-    }, 0);
+  const handleConvertRejectedToCash = async () => {
+    if (selectedEncounterId == null) {
+      dispatch(notify({ msg: 'Select an encounter first.', sev: 'warning' }));
+      return;
+    }
 
-    const currency = itemsToInvoice[0]?.currency || 'USD';
+    if (!rejectedPreAuthItems.length) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(-1);
 
     try {
-      const invoicePayload = {
-        patientId: Number(patient?.id ?? patientNumericId),
-        facilityId: Number(facilityId),
-        status: 'PENDING',
-        totalAmount,
-        paidAmount: 0,
-        balanceAmount: totalAmount,
-        currency,
-      };
+      for (const item of rejectedPreAuthItems) {
+        if (item.id == null || item.isBilled) {
+          continue;
+        }
 
-      const invoice = await createPatientInvoice(invoicePayload as any).unwrap();
+        await payRejectedPreAuthorizationItemAsCash({
+          encounterId: selectedEncounterId,
+          patientServiceProductId: Number(item.id)
+        }).unwrap();
+      }
 
-      const itemPayloads = itemsToInvoice.map(it => ({
-        invoiceId: Number(invoice.id),
-        nurseServiceProductId: Number(it.nurseServiceProductKey),
-        // Keep both type and display name so payment screens can render full details later.
-        code: `${it.type}::${it.name}`,
-        quantity: Number(it.quantity),
-        unitPrice: Number(it.price),
-        totalPrice: Number(it.totalPrice ?? it.price * (it.quantity || 1)),
-        currency: it.currency,
-      }));
+      await refreshAll();
 
-      await Promise.all(
-        itemPayloads.map(p => createPatientInvoiceItem(p as any).unwrap())
+      dispatch(
+        notify({
+          msg: 'Rejected services billed as full cash using the insurance price list.',
+          sev: 'success'
+        })
       );
-
-      if (patient?.id) await refetchPatientServicesAndProductsByPatient();
-
-      await refetchPatientWalletBalance();
-      await refetchPatientLedgerSummary();
-      setSimulatedInvoiceIncrease(prev => prev + totalAmount);
-
-      setAllBillingItems(prev =>
-        prev.filter(item => !selectedIds.includes(item.id))
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to bill rejected services as cash.',
+          sev: 'error'
+        })
       );
-      setFilteredBilling(prev =>
-        prev.filter(item => !selectedIds.includes(item.id))
-      );
-    } catch (e) {
-      console.error('Error creating invoice from billing:', e);
+    } finally {
+      setPreAuthActionLoadingId(null);
     }
   };
 
-  // ---------- EFFECTS ----------
-
-  useEffect(() => {
-    if (!patient?.key) {
-      setAllBillingItems([]);
-      setFilteredBilling([]);
-      setSimulatedInvoiceIncrease(0);
-      setSimulatedPaymentDecrease(0);
-      return;
-    }
-  }, [patient]);
-
-  useEffect(() => {
-    if (patientNumericId == null) {
-      
-      return;
-    }
-    refetchPatientServicesAndProductsByPatient();
- 
-  }, [patient?.id, patient?.key, patientNumericId]);
-
-  useEffect(() => {
-    if (patientNumericId == null || !patient?.id) {
-      setAllBillingItems([]);
-      setFilteredBilling([]);
+  const handleRefreshPreAuthorization = async () => {
+    if (selectedEncounterId == null) {
+      dispatch(notify({ msg: 'Select an encounter first.', sev: 'warning' }));
       return;
     }
 
-    if (!patientServicesAndProductsResponse?.data) {
-      setAllBillingItems([]);
-      setFilteredBilling([]);
-      return;
-    }
+    setBillingRefreshPending(true);
 
-    const apiRows = (patientServicesAndProductsResponse.data ?? []).filter(
-      (row: any) => !row?.isBilled
-    );
-   
+    try {
+      const result = await refreshEncounterPreAuthorization({
+        encounterId: selectedEncounterId
+      }).unwrap();
 
-    const mapped: BillingItem[] = apiRows.map((row: any, index: number) => {
-      const id = String(row.id ?? index);
-      const itemType = String(
-        row.billingItemType ?? row.category ?? row.productType ?? 'OTHER'
-      ).toUpperCase();
+      setCanCloseCalculation(result.canCloseCalculation !== false);
+      await refreshAll();
 
-      const type =
-        itemType === 'SERVICE'
-          ? 'Service'
-          :  itemType === 'MEDICATION'
-          ? 'MEDICATION'
-          : itemType === 'PROCEDURE'
-          ? 'Procedure'
-          : itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY'
-          ? 'Diagnostic'
-          : 'Other';
-
-      let name = `Item #${id}`;
-      let clinic = '';
-
-      if (itemType === 'SERVICE') {
-        const service = services.find(s => s.id === row.serviceId);
-        name = service?.name ?? `Service #${row.serviceId}`;
-      } else if (itemType === 'PRODUCT') {
-        const product = getProductById(row.productId ?? row.warehouseProductId);
-        if (product) {
-          if (product.type === 'MEDICATION' && product.brandId) {
-            const brand = getBrandById(product.brandId);
-            name = brand?.name ?? product.name;
-          } else {
-            name = product.name;
-          }
-        } else {
-          name = `Product #${row.productId ?? row.warehouseProductId}`;
-        }
-      } else if (itemType === 'MEDICATION') {
-        const brand = getBrandById(row.brandMedicationId ?? row.productId);
-        name = brand?.name ?? `Medication #${row.brandMedicationId ?? row.productId}`;
-      } else if (itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY') {
-        name = `Diagnostic #${row.diagnosticTestId ?? row.productId ?? id}`;
-      } else if (itemType === 'PROCEDURE') {
-        name = `Procedure #${row.procedureId ?? row.productId ?? id}`;
-      }
-
-      const quantity = Number(row.quantity ?? 1);
-      const serviceRow = services.find(s => s.id === row.serviceId) as any;
-      const productRow = getProductById(row.productId ?? row.warehouseProductId) as any;
-      const price = Number(
-        row?.unitPrice ??
-        serviceRow?.price ??
-          serviceRow?.unitPrice ??
-          productRow?.sellingPrice ??
-          productRow?.salePrice ??
-          productRow?.price ??
-          0
+      dispatch(
+        notify({
+          msg:
+            result.message ??
+            'Pre-authorization statuses refreshed from Waseel.',
+          sev: result.canCloseCalculation === false ? 'warning' : 'success'
+        })
       );
-      const totalPrice = price * quantity;
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to refresh pre-authorization status from Waseel.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setBillingRefreshPending(false);
+    }
+  };
 
-      const dateFromBackend = (row as any).createdDate
-        ? new Date((row as any).createdDate)
-        : new Date();
+  const handlePayRejectedAsCash = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
 
-      const chargeDate = dateFromBackend.toISOString().slice(0, 10);
+    setPreAuthActionLoadingId(patientServiceProductId);
 
-      return {
-        id,
-        nurseServiceProductKey: String(row.id),
-        clinic,
-        chargeDate,
-        type,
-        name,
-        price,
-        totalPrice,
-        currency: row?.currency ?? 'USD',
-        discount: 0,
-        priceList: 'Standard',
-        patientKey: String(patientNumericId),
-        quantity,
-      };
-    });
+    try {
+      await payRejectedPreAuthorizationItemAsCash({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
 
-    setAllBillingItems(mapped);
-    setFilteredBilling(mapped);
-   
-  }, [patientServicesAndProductsResponse, patientNumericId, patient?.id, services, products, brands]);
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Service billed as full cash using the insurance price list.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to bill this rejected service as cash.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
+  const handleClonePreAuthorization = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await cloneRejectedPreAuthorizationItem({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
+
+      setCanCloseCalculation(false);
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'A new pre-authorization request was submitted to Waseel.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.message ??
+            'Unable to clone pre-authorization for this service.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
+  const selectedChargeRows = useMemo(
+    () => chargeRows.filter(row => selectedChargeRowIds.includes(row.id)),
+    [chargeRows, selectedChargeRowIds]
+  );
+
+  const departmentId = useMemo(
+    () =>
+      toNumber(
+        selectedEncounter?.departmentId ??
+          (selectedEncounter as { department?: { id?: number } })?.department?.id,
+        0
+      ) || null,
+    [selectedEncounter]
+  );
+
+  const encounterRemainingToPay = useMemo(() => {
+    if (loadingBillingWorkspace) {
+      return null;
+    }
+
+    if (invoiceAdjustments != null) {
+      return Number(invoiceAdjustments.outstandingBalance ?? 0);
+    }
+
+    return computeEncounterRemainingToPay(summary, chargeRows);
+  }, [summary, chargeRows, invoiceAdjustments, loadingBillingWorkspace]);
+
+  const selectedEncounterLabel = useMemo(
+    () => formatEncounterDisplayLabel(selectedEncounter),
+    [selectedEncounter]
+  );
+
+  const encounterClosedForBilling = useMemo(
+    () =>
+      isEncounterClosedForBilling(selectedEncounter, {
+        chargeRows
+      }),
+    [selectedEncounter, chargeRows]
+  );
+
+  const chargeCollectionComplete = useMemo(
+    () => isEncounterChargeCollectionComplete(summary, selectedEncounter),
+    [summary, selectedEncounter]
+  );
+
+  const billingServicesLocked = useMemo(
+    () => isBillingServicesLocked(summary, selectedEncounter, chargeRows),
+    [summary, selectedEncounter, chargeRows]
+  );
+
+  const billingWorkspaceLoading =
+    loadingBillingWorkspace || billingRefreshPending || refreshingPreAuthorization;
+
+  const billingChargeFinalized = chargeCollectionComplete;
+
+  const preAuthBlocksCheckout = useMemo(
+    () =>
+      coverageType === 'INSURANCE' &&
+      (pendingPreAuthItems.length > 0 || canCloseCalculation === false),
+    [canCloseCalculation, coverageType, pendingPreAuthItems.length]
+  );
 
   useEffect(() => {
-    setFilteredBilling(allBillingItems);
-  }, [allBillingItems]);
+    if (coverageType !== 'INSURANCE') {
+      setCanCloseCalculation(true);
+      return;
+    }
 
+    setCanCloseCalculation(pendingPreAuthItems.length === 0);
+  }, [coverageType, pendingPreAuthItems.length, selectedEncounterId]);
 
-  const contentOfSearchSection = () => (
-    <>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-          disabled={!patient?.key}
+  useEffect(() => {
+    if (billingServicesLocked) {
+      setSelectedChargeRowIds([]);
+      setCollectPaymentModalOpen(false);
+    }
+  }, [billingServicesLocked, selectedEncounterId]);
+
+  const billingWorkspace = useMemo(
+    () => (
+      <div className="billing-accounting">
+        <div className="billing-accounting__header">
+          <div>
+            <Text weight="semibold" size="lg">
+              Billing workspace
+            </Text>
+            <div className="billing-accounting__subtitle">
+              Step 1: prepare & calculate · Step 2: collect payment · Step 3: checkout & close
+              {selectedEncounterLabel ? (
+                <>
+                  {' '}
+                  · Encounter {selectedEncounterLabel}: remaining to pay{' '}
+                  {billingWorkspaceLoading || selectedEncounterId == null || encounterRemainingToPay == null
+                    ? '—'
+                    : formatMoney(
+                        encounterRemainingToPay,
+                        summary.currency ?? facilityCurrency
+                      )}
+                </>
+              ) : null}
+            </div>
+          </div>
+          <div className="billing-accounting__actions">
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
+              onClick={() => setDepositModalOpen(true)}
+              disabled={patientId == null}
+            >
+              {WALLET_DEPOSIT_BUTTON_LABEL}
+            </MyButton>
+            <MyButton onClick={() => refreshAll()} disabled={patientId == null}>
+              Refresh
+            </MyButton>
+          </div>
+        </div>
+
+        <BillingSummaryCards
+          summary={summary}
+          walletBalance={walletBalance}
+          reservedBalance={reservedBalance}
+          totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
+          loading={
+            selectedEncounterId == null ||
+            billingWorkspaceLoading ||
+            loadingInvoiceContext
+          }
+          currency={summary.currency ?? facilityCurrency}
+          coverageType={coverageType}
+          chargeRows={chargeRows}
+          invoiceAdjustments={invoiceAdjustments}
         />
-        <MyInput
-          width={180}
-          column
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-          disabled={!patient?.key}
-        />
-      </Form>
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'end' }}>
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
-          disabled={!patient?.key}
-          onClick={handleSearch}
-        >
-          Search
-        </MyButton>
 
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-          onClick={handleClearFilters}
-          disabled={!patient?.key}
-        >
-          Clear
-        </MyButton>
+        <EncounterSettlementBanner
+          summary={summary}
+          currency={summary.currency ?? facilityCurrency}
+          chargeRows={chargeRows}
+          loading={selectedEncounterId == null || billingWorkspaceLoading}
+        />
+
+        <CashFallbackBanner
+          rejectedItems={rejectedPreAuthItems}
+          converting={preAuthActionLoadingId === -1}
+          onConvertToCash={handleConvertRejectedToCash}
+        />
+
+        <div className="billing-accounting__grid">
+          <div className="billing-accounting__panel">
+            <div className="billing-accounting__panel-title">Encounters</div>
+            <EncounterSelector
+              encounters={encounters}
+              selectedEncounterId={selectedEncounterId}
+              loading={loadingEncounters}
+              onSelect={setSelectedEncounterId}
+              remainingToPay={encounterRemainingToPay ?? 0}
+              remainingLoading={selectedEncounterId == null || billingWorkspaceLoading}
+              currency={summary.currency ?? facilityCurrency}
+            />
+          </div>
+
+          <div className="billing-accounting__main-stack">
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                Prepare & calculate
+                <span className="billing-accounting__badge">Step 1</span>
+              </div>
+              <PrepareServicesPanel
+                patientId={patientId}
+                encounterId={selectedEncounterId}
+                departmentId={departmentId}
+                specialty={selectedEncounter?.specialty}
+                practitionerId={
+                  toNumber(
+                    selectedEncounter?.practitionerId ??
+                      (selectedEncounter as { practitioner?: { id?: number } })?.practitioner?.id,
+                    0
+                  ) || null
+                }
+                facilityId={facilityId != null ? Number(facilityId) : null}
+                currency={summary.currency ?? facilityCurrency}
+                summary={summary}
+                coverageType={coverageType}
+                selectedInsuranceId={selectedInsuranceId}
+                patientInsurances={displayedPatientInsurances}
+                onCoverageTypeChange={setCoverageType}
+                onInsuranceChange={setSelectedInsuranceId}
+                onPrepared={refreshAll}
+                chargeRows={chargeRows}
+                loadingBillingMetrics={billingWorkspaceLoading}
+                readOnly={billingChargeFinalized || preAuthBlocksCheckout}
+              />
+            </div>
+
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                All services & products
+                <span className="billing-accounting__badge">
+                  Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
+                </span>
+              </div>
+              <PreAuthorizationBillingControls
+                visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
+                pendingCount={pendingPreAuthItems.length}
+                canCloseCalculation={canCloseCalculation}
+                refreshing={refreshingPreAuthorization}
+                disabled={billingServicesLocked}
+                onRefresh={handleRefreshPreAuthorization}
+              />
+              <BillingChargesTable
+                rows={chargeRows}
+                billingSummary={summary}
+                loading={billingWorkspaceLoading}
+                currency={summary.currency ?? facilityCurrency}
+                chargeClosed={billingChargeFinalized}
+                disabled={billingServicesLocked}
+                selectedRowIds={selectedChargeRowIds}
+                onSelectionChange={setSelectedChargeRowIds}
+                onCollectPayment={() => setCollectPaymentModalOpen(true)}
+                showPreAuthActions={coverageType === 'INSURANCE'}
+                preAuthActionLoadingId={preAuthActionLoadingId}
+                onPayRejectedAsCash={handlePayRejectedAsCash}
+                onClonePreAuthorization={handleClonePreAuthorization}
+              />
+            </div>
+
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                Checkout & settlement
+                <span className="billing-accounting__badge">Step 3</span>
+              </div>
+              <BillingCheckoutPanel
+                summary={summary}
+                encounterId={selectedEncounterId}
+                currency={summary.currency ?? facilityCurrency}
+                coverageType={coverageType}
+                chargeRows={chargeRows}
+                encounterClosedForBilling={encounterClosedForBilling}
+                chargeCollectionComplete={chargeCollectionComplete}
+                invoiceId={resolvedInvoiceId}
+                invoiceAdjustments={invoiceAdjustments}
+                walletBalance={walletBalance}
+                walletReserved={reservedBalance}
+                loadingBillingMetrics={billingWorkspaceLoading}
+                preAuthBlocksCheckout={preAuthBlocksCheckout}
+                onCompleted={refreshAll}
+                onCollectRemaining={handleCollectRemaining}
+                onInvoicePaid={refreshAll}
+              />
+            </div>
+
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">Waseel eligibility</div>
+              <WaseelCoveragePanel
+                coverageType={coverageType}
+                selectedInsuranceId={selectedInsuranceId}
+                waseelCoverage={waseelCoverage}
+                loading={billingWorkspaceLoading && waseelCoverage == null}
+                hasError={waseelCoverageError}
+                currency={summary.currency ?? facilityCurrency}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+    ),
+    [
+      chargeRows,
+      canCloseCalculation,
+      coverageType,
+      departmentId,
+      encounters,
+      facilityCurrency,
+      facilityId,
+      handleClonePreAuthorization,
+      handleConvertRejectedToCash,
+      handlePayRejectedAsCash,
+      handleRefreshPreAuthorization,
+      loadingEncounters,
+      loadingPsp,
+      loadingSummary,
+      loadingWaseelCoverage,
+      patientId,
+      patientInsurances,
+      displayedPatientInsurances,
+      patientLedgerSummary?.totalDebt,
+      pendingPreAuthItems.length,
+      preAuthActionLoadingId,
+      preAuthBlocksCheckout,
+      refreshAll,
+      refreshingPreAuthorization,
+      rejectedPreAuthItems,
+      reservedBalance,
+      selectedChargeRowIds,
+      selectedEncounter,
+      selectedEncounterId,
+      selectedInsuranceId,
+      encounterRemainingToPay,
+      loadingBillingWorkspace,
+      billingWorkspaceLoading,
+      billingServicesLocked,
+      billingChargeFinalized,
+      chargeCollectionComplete,
+      encounterClosedForBilling,
+      resolvedInvoiceId,
+      invoiceAdjustments,
+      selectedEncounterLabel,
+      summary,
+      walletBalance,
+      waseelCoverage,
+      waseelCoverageError
+    ]
   );
 
   const tabData = [
     {
       title: 'Billing',
-      content: (
-        <Billing
-          data={filteredBilling}
-          patient={patient}
-          onCreateInvoice={handleCreateInvoiceFromBilling}
-        />
-      ),
+      content: billingWorkspace
     },
     {
       title: 'Invoices',
       content: (
         <Invoices
           patient={patient}
-          onSimulatedInvoicePayment={amount =>
-            setSimulatedPaymentDecrease(prev => prev + Number(amount || 0))
-          }
+          walletBalance={walletBalance}
         />
-      ),
+      )
     },
     {
-      title: 'Print Receipt(s)',
-      content: <Receipt patient={patient} />,
-    },
+      title: 'Issued Documents',
+      content: <Receipt patient={patient} />
+    }
   ];
 
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
   return (
-    <div className="container" dir={dir}>
+    <div className="container billing-accounting-page" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="left-box" style={{ width: '100%' }}>
-        <SectionContainer
-          title="Search Patient"
-          content={contentOfSearchSection()}
-        />
-        <MyTab key={`${patient?.id ?? 'no-patient'}-${tabsResetKey}`} data={tabData} lazy/>
+        {!patient?.id && (
+          <SectionContainer
+            title="Search patient"
+            content={
+              <div className="billing-accounting__subtitle">
+                Select a patient to review treatment start, charge history, Waseel coverage, and
+                wallet balance.
+              </div>
+            }
+          />
+        )}
+        <MyTab key={patientId ?? 'no-patient'} data={tabData} lazy />
       </div>
 
-      {patient?.id && (
-        <div className="right-box">
+      {patient?.id ? (
+        <div className="right-box billing-accounting-page__sidebar">
           <PatientBillingSide
             patient={patient}
-            balance={balance}
-            financeDetails={{
-              walletBalance: Number(
-                patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
-              ),
-              totalDebt: Number(patientLedgerSummary?.totalDebt ?? 0),
-              simulatedInvoiceIncrease,
-              simulatedPaymentDecrease,
-            }}
-            setPatient={() => handleClosePatient()}
+            onDeposit={() => setDepositModalOpen(true)}
+            onClearPatient={handleClosePatient}
           />
+          <div className="billing-accounting billing-accounting__sidebar-timeline">
+            <div className="billing-accounting__panel">
+              <div className="billing-accounting__panel-title">
+                Billing timeline
+                {selectedEncounterLabel && (
+                  <span className="billing-accounting__badge">
+                    Encounter {selectedEncounterLabel}
+                  </span>
+                )}
+              </div>
+              <BillingTimeline
+                events={timelineEvents}
+                loading={
+                  selectedEncounterId != null && (loadingSummary || loadingPsp)
+                }
+              />
+            </div>
+          </div>
         </div>
-      )}
-
-      {!patient?.id && (
-        <div className="right-box">
+      ) : (
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -547,7 +781,59 @@ const Accounting: React.FC = () => {
             refetchData={refetchData}
             setRefetchData={setRefetchData}
           />
-        </div>
+      )}
+
+      {patientId != null && (
+        <>
+          <WalletDepositModal
+            open={depositModalOpen}
+            onClose={() => setDepositModalOpen(false)}
+            patientId={patientId}
+            patient={patient}
+            encounter={selectedEncounter}
+            encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
+            currency={summary.currency ?? facilityCurrency}
+            onDeposited={refreshAll}
+            onReceiptReady={receipt =>
+              setPaymentReceiptModal({
+                open: true,
+                receipt,
+                autoPrint: true
+              })
+            }
+          />
+          <CollectPaymentModal
+            open={collectPaymentModalOpen}
+            onClose={() => setCollectPaymentModalOpen(false)}
+            patientId={patientId}
+            patient={patient}
+            encounter={selectedEncounter}
+            encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
+            currency={summary.currency ?? facilityCurrency}
+            walletBalance={walletBalance}
+            reservedBalance={sumEncounterReservedAmount(summary)}
+            billingSummary={summary}
+            selectedRows={selectedChargeRows}
+            onCollected={() => {
+              setSelectedChargeRowIds([]);
+              void refreshAll();
+            }}
+          />
+          <PaymentReceiptModal
+            open={paymentReceiptModal.open}
+            receipt={paymentReceiptModal.receipt}
+            autoPrint={paymentReceiptModal.autoPrint}
+            onClose={() =>
+              setPaymentReceiptModal({
+                open: false,
+                receipt: null,
+                autoPrint: false
+              })
+            }
+          />
+        </>
       )}
     </div>
   );

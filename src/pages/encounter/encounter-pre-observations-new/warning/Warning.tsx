@@ -181,7 +181,7 @@ const Warning = (props: WarningProps) => {
         return (
           <MdModeEdit
             title="Edit"
-            className="icons-style"
+            className="icons-style view-only-action-edit-delete-encounter"
             size={24}
             fill="var(--primary-gray)"
             onClick={e => {
@@ -378,7 +378,7 @@ const Warning = (props: WarningProps) => {
             </>
           )}
 
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
             <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>

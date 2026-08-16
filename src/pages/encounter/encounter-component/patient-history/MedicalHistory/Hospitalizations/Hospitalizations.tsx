@@ -253,16 +253,24 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
               {row?.status !== 'CANCELLED' && (
                 <>
                   <MdModeEdit
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     fill="var(--primary-gray)"
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
                     onClick={() => handleEdit(row)}
                   />
 
                   <MdDelete
+                    className="view-only-action-edit-delete-encounter"
                     size={22}
                     style={{
-                      cursor: 'pointer',
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
                       color: 'var(--rs-red-500, #f44336)'
                     }}
                     title="Cancel"
@@ -312,7 +320,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
         }
         content={
           <>
-            {!toShowData && (
+          
               <div className="margin-bottom-10">
                 <MyInput
                   fieldType="check"
@@ -325,7 +333,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                   }}
                 />
               </div>
-            )}
+           
             <MyTable
               data={tableData}
               loading={isFetching}

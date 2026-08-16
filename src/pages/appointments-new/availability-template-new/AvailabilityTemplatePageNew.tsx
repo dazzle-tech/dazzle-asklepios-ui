@@ -248,8 +248,6 @@ const AvailabilityTemplatePageNew = () => {
                 className="icons-style"
                 onClick={() => handlePublishTemplate(rowData)}
               />
-            </>
-          )}
           <MdOutlineCalendarMonth
             title="Schedule"
             size={24}
@@ -260,6 +258,8 @@ const AvailabilityTemplatePageNew = () => {
               setOpenScheduleModal(true);
             }}
           />
+          </>
+          )}
           <MdContentCopy
             title="Clone"
             size={24}

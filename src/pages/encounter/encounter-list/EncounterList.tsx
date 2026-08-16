@@ -9,13 +9,19 @@ import {
   faUserDoctor,
   faPrint,
   faFileWaveform,
-  faRectangleXmark
+  faRectangleXmark,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import {
+  getEncounterTreatmentStatus,
+  isEncounterAlreadyOngoingError,
+  shouldSkipEncounterStart
+} from '@/utils/encounterStatusHelpers';
 import DetailsCard from '@/components/DetailsCard';
 import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
@@ -55,8 +61,11 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+// NEW: same practitioner-by-department hook used in AddResourceModal
+import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
-
+import DoctorAppoitmentsView from './appointments';
+// import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -88,6 +97,11 @@ const derivePatientFilters = (appliedSearch: any) => {
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Encounter not found.',
   'patient.notfound': 'Patient not found.',
+  'startedBy.practitioner.notFound':
+    'Your user account is not linked to a practitioner profile. Ask an administrator to link your account before starting encounters.',
+  'startedBy.practitioner.validationFailed':
+    'Unable to validate practitioner profile for the current user.',
+  'startedBy.notDoctor': 'Only physician accounts can start clinical encounters.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
   'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
@@ -215,7 +229,6 @@ const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
@@ -236,6 +249,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
+  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -243,6 +257,7 @@ const EncounterList = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [practitionerId, setPractitionerId] = useState<string | number | undefined>(undefined);
 
   const [filtersKey, setFiltersKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
@@ -252,7 +267,7 @@ const EncounterList = () => {
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
   const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -262,7 +277,8 @@ const EncounterList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -295,10 +311,15 @@ const EncounterList = () => {
   });
   const [record, setRecord] = useState<any>({});
 
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+const handlePatientSearchClick = useCallback(() => {
+    setPatientSearchApplied(prev => ({
+        ...prev,
+        ...(patientSearchDraft ?? {})
+    }));
+
     setPage(0);
-  }, [patientSearchDraft]);
+}, [patientSearchDraft]);
+
 
   const {
     data: encountersPaged,
@@ -355,6 +376,43 @@ const EncounterList = () => {
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
 
+  // ─── NEW: Practitioners for this department (used to resolve practitioner name) ───
+  const [triggerGetPractitionersByDepartment, { isFetching: isPractitionersLoading }] =
+    useLazyGetPractitionerByDepartmentQuery();
+  const [departmentPractitioners, setDepartmentPractitioners] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!departmentId) {
+      setDepartmentPractitioners([]);
+      return;
+    }
+    triggerGetPractitionersByDepartment({ departmentId, page: 0, size: 200, sort: 'id,asc' })
+      .unwrap()
+      .then((res: any) => setDepartmentPractitioners(res?.data ?? []))
+      .catch(() => setDepartmentPractitioners([]));
+  }, [departmentId, triggerGetPractitionersByDepartment]);
+  useEffect(() => {
+    console.log('Department practitioners updated:', departmentPractitioners);
+  }, [departmentPractitioners]);
+
+  const practitionerMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (departmentPractitioners ?? []).forEach((p: any) => {
+      if (p?.id != null) map.set(String(p.id), p);
+    });
+    return map;
+  }, [departmentPractitioners]);
+
+  const practitionerOptions = useMemo(
+  () =>
+    (departmentPractitioners ?? []).map((p: any) => ({
+      label: `${p?.firstName ?? ''} ${p?.lastName ?? ''}`.trim(),
+      value: p?.id
+    })),
+  [departmentPractitioners]
+);
+  // ─────────────────────────────────────────────────────────────────────────────────
+
   const patientIdsForBulk = useMemo(() => {
     const ids = (tableData as any[])
       .map(row => row?.patient?.id)
@@ -407,6 +465,22 @@ const EncounterList = () => {
         formatEnumString(patientFromMap?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
       const isPrivate = patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
 
+      // ─── NEW: resolve practitioner name for this encounter ───
+      const practitionerId =
+        row?.practitioner?.id ?? row?.practitionerId ?? row?.defaultPractitionerId ?? null;
+      const practitionerFromMap =
+        practitionerId != null ? practitionerMap.get(String(practitionerId)) : null;
+
+      const practitionerFirstName = String(
+        practitionerFromMap?.firstName ?? row?.practitioner?.firstName ?? ''
+      ).trim();
+      const practitionerLastName = String(
+        practitionerFromMap?.lastName ?? row?.practitioner?.lastName ?? ''
+      ).trim();
+      const practitionerFullName =
+        [practitionerFirstName, practitionerLastName].filter(Boolean).join(' ').trim() || '-';
+      // ───────────────────────────────────────────────────────────
+
       return {
         ...row,
         key: row?.id,
@@ -420,11 +494,14 @@ const EncounterList = () => {
           sexAtBirth,
           isPrivatePatient: isPrivate
         },
+        practitionerObject: {
+          id: practitionerId,
+          fullName: practitionerFullName
+        },
         patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
-  }, [tableData, patientMap]);
-
+  }, [tableData, patientMap, practitionerMap]);
   const getEncounterId = (row: any) => row?.id ?? null;
 
   const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
@@ -433,9 +510,7 @@ const EncounterList = () => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
 
-    const statusUpper = String(row?.status ?? '').toUpperCase();
-
-    if (statusUpper === 'ONGOING') {
+    if (shouldSkipEncounterStart(row)) {
       return true;
     }
 
@@ -449,6 +524,9 @@ const EncounterList = () => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
+      if (isEncounterAlreadyOngoingError(error)) {
+        return true;
+      }
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -512,6 +590,31 @@ const EncounterList = () => {
         fromPage: 'EncounterList',
         patient: fullPatient,
         encounter: encounterData
+      }
+    });
+  };
+
+  const handleViewVisit = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    navigate('/encounter', {
+      state: {
+        info: 'viewEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: false,
+        viewMode: 'readOnly'
       }
     });
   };
@@ -597,6 +700,7 @@ const EncounterList = () => {
     setHasPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
+    setPractitionerId(undefined);
 
     const clearedSearch = {
       searchByField: 'fullName',
@@ -621,6 +725,7 @@ const EncounterList = () => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
+      practitionerId: undefined,
       page: 0,
       size: pageSize,
       sort: DEFAULT_SORT
@@ -653,7 +758,7 @@ const EncounterList = () => {
     }
   };
 
-  
+
 
   const tableColumns = [
     {
@@ -691,6 +796,12 @@ const EncounterList = () => {
           </Whisper>
         );
       }
+    },
+    {
+      key: 'practitionerFullName',
+      title: 'PRACTITIONER',
+      render: (row: any) => <span>{row?.practitionerObject?.fullName ?? '-'}</span>,
+      expandable: true,
     },
     {
       key: 'encounterReason',
@@ -808,24 +919,25 @@ const EncounterList = () => {
       key: 'status',
       title: 'STATUS',
       render: (row: any) => {
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const statusColorMap: Record<string, string> = {
           NEW: '#0d6efd',
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
         return (
           <MyBadgeStatus
             color={statusColorMap[statusUpper] ?? '#969fb0'}
-            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
+            contant={formatEnumString(statusUpper) || '-'}
           />
         );
       }
     },
+
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
@@ -842,16 +954,18 @@ const EncounterList = () => {
       render: (row: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
-        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
+        const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            {canSeeNurseStation && (
+            {canSeeNurseStation && !isViewOnlyStatus && (
               <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
                 <div>
                   <MyButton
@@ -872,7 +986,24 @@ const EncounterList = () => {
               </Whisper>
             )}
 
-            {canSeeDoctorVisit && (
+            {canSeeDoctorVisit && isViewOnlyStatus && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipViewVisit}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleViewVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
+            {canSeeDoctorVisit && !isViewOnlyStatus && (
               <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
                 <div>
                   <MyButton
@@ -909,7 +1040,7 @@ const EncounterList = () => {
               </Whisper>
             )}
 
-            {canSeeCancel && isNew && (
+            {canSeeCancel && isNew && !row?.isObserved && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
@@ -930,7 +1061,6 @@ const EncounterList = () => {
                 <div>
                  <VisitReportPrintButton
                         row={row}
-                       
                       />
                 </div>
               </Whisper>
@@ -1000,7 +1130,6 @@ const EncounterList = () => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
-
           <MyInput
             column
             width={180}
@@ -1011,19 +1140,20 @@ const EncounterList = () => {
             setRecord={setDateFilter}
           />
 
-          <SearchPatientCriteria
-            record={patientSearchDraft}
-            setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
-          />
+<SearchPatientCriteria
+    record={patientSearchDraft}
+    setRecord={setPatientSearchDraft}
+    onSearchClick={handlePatientSearchClick}
+    liveSearchMinLength={3}
+ />
 
           <MyInput
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}
@@ -1034,6 +1164,7 @@ const EncounterList = () => {
           />
         </Form>
       </div>
+
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
@@ -1049,6 +1180,10 @@ const EncounterList = () => {
             uniqueNonEmpty(priorities) ??
             uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
           const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+          const normalizedPractitionerId =
+          practitionerId === null || practitionerId === undefined || practitionerId === ''
+          ? undefined
+          : practitionerId;
 
           setPage(0);
 
@@ -1065,6 +1200,7 @@ const EncounterList = () => {
             hasPrescription,
             hasOrder,
             isObserved,
+            practitionerId: normalizedPractitionerId,  
             page: 0,
             size: pageSize,
             sort: DEFAULT_SORT
@@ -1115,6 +1251,23 @@ const EncounterList = () => {
                 fieldLabel="Priority"
                 searchable={true}
               />
+              <MyInput
+               width={200}
+               fieldName="practitionerId"
+               fieldType="select"
+               record={{ practitionerId }}
+               setRecord={(v: any) => {
+                const next = v?.practitionerId;
+                setPractitionerId(next === null || next === undefined || next === '' ? undefined : next);
+                setPage(0);
+              }}
+               selectData={practitionerOptions}
+               selectDataLabel="label"
+               selectDataValue="value"
+               placeholder="Select Practitioner"
+               fieldLabel="Practitioner"
+               searchable={true}
+               />
             </Form>
           </div>
         }
@@ -1221,6 +1374,10 @@ const EncounterList = () => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
+          <div style={{display: 'flex', justifyContent:'end'}}>
+          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          </div>
+
           <MyTable
             filters={filters()}
             height={600}
@@ -1306,8 +1463,13 @@ const EncounterList = () => {
             actionButtonFunction={() => setOpenEMRModal(false)}
             cancelButtonLabel="Cancel"
           />
-
         </Panel>
+        <DoctorAppoitmentsView
+         open={openDoctorAppointments}
+         setOpen={setOpenDoctorAppointments}
+         facilityId={selectedDepartment?.facilityId}
+         departmentId={departmentId}
+        />
       </div>
     </>
   );

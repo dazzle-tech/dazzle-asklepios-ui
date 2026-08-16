@@ -1,0 +1,381 @@
+.patient-satisfaction-survey-page {
+  min-height: 100vh;
+  background: var(--background-light);
+  color: var(--black);
+  font-family: var(--font-family, 'Inter'), sans-serif;
+}
+
+.patient-satisfaction-survey-header-panel {
+  border: none !important;
+  border-bottom: 4px solid var(--primary-blue) !important;
+  border-radius: 0 !important;
+  background: #fff;
+  margin-bottom: 0;
+}
+
+.patient-satisfaction-survey-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px;
+}
+
+.patient-satisfaction-survey-logo-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.patient-satisfaction-survey-logo {
+  height: 48px;
+  width: auto;
+  max-width: min(220px, 40vw);
+  object-fit: contain;
+}
+
+.patient-satisfaction-survey-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.patient-satisfaction-survey-body {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 16px 48px;
+}
+
+.patient-satisfaction-survey-title {
+  text-align: center;
+  color: var(--primary-blue);
+  font-size: 34px;
+  font-weight: 600;
+  margin: 8px 0 24px;
+}
+
+.patient-satisfaction-survey-stepper-card,
+.patient-satisfaction-survey-card {
+  background: #fff;
+  border-radius: 18px;
+}
+
+.patient-satisfaction-survey-stepper-card {
+  padding: 18px 14px;
+  margin-bottom: 22px;
+  overflow-x: auto;
+}
+
+.patient-satisfaction-survey-card {
+  padding: 28px 24px 24px;
+}
+
+.patient-satisfaction-survey-landing-card {
+  padding: 24px;
+}
+
+.patient-satisfaction-survey-department {
+  text-align: center;
+  font-size: 24px;
+  color: var(--dark-blue-gray);
+  margin-bottom: 24px;
+}
+
+.patient-satisfaction-survey-identity-section {
+  margin-bottom: 24px;
+}
+
+.patient-satisfaction-survey-name-input {
+  margin-bottom: 16px;
+}
+
+.patient-satisfaction-survey-identity-prompt {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--dark-blue-gray);
+}
+
+.patient-satisfaction-survey-instructions {
+  background: var(--extra-light-blue);
+  border-radius: 12px;
+  padding: 18px 20px;
+  line-height: 1.7;
+  color: var(--dark-blue-gray);
+  font-size: 15px;
+}
+
+.patient-satisfaction-survey-instructions strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--black);
+}
+
+.patient-satisfaction-survey-center-action {
+  display: flex;
+  justify-content: center;
+}
+
+.patient-satisfaction-survey-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.patient-satisfaction-survey-question-block + .patient-satisfaction-survey-question-block {
+  padding-top: 24px;
+  border-top: 1px solid var(--extra-light-blue, #e8eef5);
+}
+
+.patient-satisfaction-survey-question-label {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.patient-satisfaction-survey-question-label .my-label {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--black);
+}
+
+.patient-satisfaction-survey-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.patient-satisfaction-survey-options-nps {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.patient-satisfaction-survey-option-btn.bt {
+  min-height: 52px;
+  font-size: 18px;
+}
+
+.patient-satisfaction-survey-option-btn.bt.is-selected {
+  color: #fff !important;
+  background-color: var(--primary-blue) !important;
+  border: 2px solid var(--primary-blue) !important;
+}
+
+.patient-satisfaction-survey-option-btn.bt.is-selected:hover {
+  filter: brightness(92%);
+}
+
+.patient-satisfaction-survey-option-btn.bt.is-unselected {
+  color: var(--dark-blue-gray) !important;
+  background-color: var(--one-health-theme-select) !important;
+  border: 2px solid var(--primary-blue) !important;
+}
+
+.patient-satisfaction-survey-option-nps {
+  width: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+}
+
+.patient-satisfaction-survey-clear-selection {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.patient-satisfaction-survey-textarea-hint {
+  margin-top: 8px;
+  color: var(--primary-blue);
+  font-size: 14px;
+}
+
+.patient-satisfaction-survey-nav {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.patient-satisfaction-survey-thankyou {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.patient-satisfaction-survey-thankyou p {
+  color: var(--primary-gray);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.patient-satisfaction-survey-error {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--primary-red);
+  font-size: 14px;
+}
+
+.patient-satisfaction-survey-required {
+  color: var(--primary-red, #e23670);
+  font-weight: 700;
+}
+
+.patient-satisfaction-survey-page .container-form-section {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.patient-satisfaction-survey-page .title-text {
+  display: block;
+  text-align: center;
+  color: var(--primary-blue);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.patient-satisfaction-survey-page .title-div {
+  justify-content: center;
+  background-color: var(--one-health-theme-header);
+}
+
+.patient-satisfaction-survey-checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.patient-satisfaction-survey-checkbox-field .rs-checkbox {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.patient-satisfaction-survey-checkbox-text {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--black);
+}
+
+.patient-satisfaction-survey-checkbox-field.is-ltr {
+  flex-direction: row;
+  direction: ltr;
+  text-align: left;
+}
+
+.patient-satisfaction-survey-checkbox-field.is-rtl {
+  flex-direction: row;
+  direction: rtl;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .patient-satisfaction-survey-title {
+    font-size: 28px;
+  }
+
+  .patient-satisfaction-survey-department {
+    font-size: 20px;
+  }
+
+  .patient-satisfaction-survey-question-label .my-label {
+    font-size: 20px;
+  }
+
+  .patient-satisfaction-survey-option-btn.bt {
+    font-size: 16px;
+  }
+}
+
+
+.patient-satisfaction-survey-options-rating {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.patient-satisfaction-survey-option-rating {
+  min-height: 150px !important;
+  padding: 18px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px;
+  border-radius: 20px !important;
+  transition: all 0.2s ease;
+}
+
+.patient-satisfaction-survey-rating-icon {
+  font-size: 58px;
+  line-height: 1;
+}
+
+.patient-satisfaction-survey-rating-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.patient-satisfaction-survey-option-rating.is-unselected {
+  opacity: 0.85;
+}
+
+.patient-satisfaction-survey-option-rating.is-selected {
+  transform: translateY(-4px);
+  border-width: 3px !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+
+@media (max-width: 768px) {
+  .patient-satisfaction-survey-options-rating {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .patient-satisfaction-survey-option-rating {
+    min-height: 125px !important;
+  }
+
+  .patient-satisfaction-survey-rating-icon {
+    font-size: 45px;
+  }
+
+  .patient-satisfaction-survey-rating-label {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-satisfaction-survey-options-rating {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(1)
+  .patient-satisfaction-survey-rating-icon {
+  color: #dc2626;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(2)
+  .patient-satisfaction-survey-rating-icon {
+  color: #f97316;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(3)
+  .patient-satisfaction-survey-rating-icon {
+  color: #eab308;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(4)
+  .patient-satisfaction-survey-rating-icon {
+  color: #84cc16;
+}
+
+.patient-satisfaction-survey-option-rating:nth-child(5)
+  .patient-satisfaction-survey-rating-icon {
+  color: #16a34a;
+}

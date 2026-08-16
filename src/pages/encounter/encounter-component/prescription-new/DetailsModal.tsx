@@ -866,7 +866,7 @@ const DetailsModal = ({
       dispatch(
         notify({
           msg: 'This active ingredient is high alert',
-          sev: 'error'
+          sev: 'warning'
         })
       );
     }
@@ -959,7 +959,7 @@ const DetailsModal = ({
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
-
+  
   return (
     <div dir={dir}>
       <AdvancedModal
@@ -1140,10 +1140,14 @@ const DetailsModal = ({
                               }));
                             }}
                           >
-                            {instructionTypeOptions?.map((instruction, index) => (
-                              <Radio key={index} value={instruction.value}>
-                                <Translate>{instruction.label}</Translate>
-                              </Radio>
+                            {instructionTypeOptions
+                              ?.filter(
+                                instruction => instruction.value !== 'MANUAL_INSTRUCTIONS'
+                              )
+                              .map((instruction, index) => (
+                                <Radio key={index} value={instruction.value}>
+                                  <Translate>{instruction.label}</Translate>
+                                </Radio>
                             ))}
                           </RadioGroup>
                         </div>

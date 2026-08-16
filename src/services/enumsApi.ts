@@ -98,7 +98,7 @@ export const enumsApi = createApi({
 export const { useGetAllEnumsQuery } = enumsApi;
 
 /* -------------------------------- Hooks -------------------------------- */
-
+ // Debug log
 export function useEnumByName(name: string): string[] {
   const token = localStorage.getItem('id_token');
 
@@ -108,12 +108,20 @@ export function useEnumByName(name: string): string[] {
   return allEnums[name] ?? [];
 }
 
+
+const EMPTY_EXCLUDE: string[] = [];
+const EMPTY_LABEL_OVERRIDES: Record<string, string> = {};
+
 export function useEnumOptions(
   name: string,
   params: EnumOptionsParams = {}
 ): { value: string; label: string }[] {
   const values = useEnumByName(name);
-  const { exclude = [], labelOverrides = {}, labelFormatter } = params;
+  const {
+    exclude = EMPTY_EXCLUDE,
+    labelOverrides = EMPTY_LABEL_OVERRIDES,
+    labelFormatter
+  } = params;
 
   return useMemo(() => {
     const filtered = values.filter(v => !exclude.includes(v));
@@ -126,6 +134,39 @@ export function useEnumOptions(
   }, [values, exclude, labelOverrides, labelFormatter]);
 }
 
+export function useEnumNames(
+  params: {
+    exclude?: string[];
+    labelOverrides?: Record<string, string>;
+    labelFormatter?: (value: string) => string;
+  } = {}
+): { value: string; label: string }[] {
+  const token = localStorage.getItem("id_token");
+
+  const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
+    skip: !token
+  });
+
+  const {
+    exclude = [],
+    labelOverrides = {},
+    labelFormatter = formatClassNameLabel
+  } = params;
+
+  return useMemo(() => {
+    return Object.keys(allEnums)
+      .filter(name => !exclude.includes(name))
+      .sort()
+      .map(name => {
+        const className = name.substring(name.lastIndexOf(".") + 1);
+
+        return {
+          value: className, // ActiveIngredientsControlled
+          label: labelOverrides[className] ?? labelFormatter(className) // Active Ingredients Controlled
+        };
+      });
+  }, [allEnums, exclude, labelOverrides, labelFormatter]);
+}
 export function useEnumCapitalized(
   name: string,
   params: Omit<EnumOptionsParams, 'labelFormatter'> & {
@@ -189,4 +230,12 @@ export function useEnumOptionsWithScore(
       score: extractScoreFromEnumValue(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
+}
+function formatClassNameLabel(value: string) {
+  const className = value.split('.').pop() ?? value;
+
+  return className
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .trim();
 }

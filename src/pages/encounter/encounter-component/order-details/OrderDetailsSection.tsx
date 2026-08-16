@@ -100,7 +100,7 @@ const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
                     Cancel
                   </MyButton>
 
-                  <Checkbox
+                  <Checkbox className="show-cancelled"
                     checked={showCancelled}
                     onChange={() => setShowCancelled(!showCancelled)}
                   >

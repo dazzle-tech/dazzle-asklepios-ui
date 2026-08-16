@@ -94,6 +94,7 @@ export const notificationHeaderService = createApi({
 export const {
   useGetAllNotificationHeadersQuery,
   useSearchNotificationHeadersQuery,
+  useLazySearchNotificationHeadersQuery,
   useGetNotificationHeaderByIdQuery,
   useLazyGetActiveNotificationHeaderQuery,
   useCreateNotificationHeaderMutation,

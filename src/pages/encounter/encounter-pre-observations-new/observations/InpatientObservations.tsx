@@ -207,7 +207,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { }} disabled={edit}>
                     <Translate>Cancel</Translate>
                 </MyButton>
-                <Checkbox onChange={(value, checked) => { if (checked) { } }}>
+                <Checkbox className="show-cancelled" onChange={(value, checked) => { if (checked) { } }}>
                     <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { } }}>

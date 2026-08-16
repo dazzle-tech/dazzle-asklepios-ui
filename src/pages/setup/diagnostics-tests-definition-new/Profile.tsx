@@ -148,48 +148,54 @@ const Profile = ({
     } else return '';
   };
 
-  const iconsForActions = (rowData: any) => (
-    <div className="container-of-icons" onClick={e => e.stopPropagation()}>
-      {!rowData?.isDefault &&
-        (rowData?.isActive ? (
-          <MdDelete
-            title="Deactivate"
-            size={24}
-            fill="var(--primary-pink)"
-            className="icons-style"
-            onClick={e => {
-              e.stopPropagation();
-              setDiagnosticsTestProfile(rowData);
-              setOpenConfirmDeleteProfile(true);
-            }}
-          />
-        ) : (
-          <FaUndo
-            title="Activate"
-            size={24}
-            fill="var(--primary-gray)"
-            className="icons-style"
-            onClick={e => {
-              e.stopPropagation();
-              setDiagnosticsTestProfile(rowData);
-              setOpenConfirmDeleteProfile(true);
-            }}
-          />
-        ))}
+  const iconsForActions = (rowData: any) => {
+    const isTextType = String(rowData?.resultType ?? '').toUpperCase() === 'TEXT';
 
-      <FaChartLine
-        className="icons-style"
-        title="Test Normal Ranges"
-        size={21}
-        fill="var(--primary-gray)"
-        onClick={e => {
-          e.stopPropagation();
-          setDiagnosticsTestProfile(rowData);
-          setOpenChild(true);
-        }}
-      />
-    </div>
-  );
+    return (
+      <div className="container-of-icons" onClick={e => e.stopPropagation()}>
+        {!rowData?.isDefault &&
+          (rowData?.isActive ? (
+            <MdDelete
+              title="Deactivate"
+              size={24}
+              fill="var(--primary-pink)"
+              className="icons-style"
+              onClick={e => {
+                e.stopPropagation();
+                setDiagnosticsTestProfile(rowData);
+                setOpenConfirmDeleteProfile(true);
+              }}
+            />
+          ) : (
+            <FaUndo
+              title="Activate"
+              size={24}
+              fill="var(--primary-gray)"
+              className="icons-style"
+              onClick={e => {
+                e.stopPropagation();
+                setDiagnosticsTestProfile(rowData);
+                setOpenConfirmDeleteProfile(true);
+              }}
+            />
+          ))}
+
+        {!isTextType && (
+          <FaChartLine
+            className="icons-style"
+            title="Test Normal Ranges"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={e => {
+              e.stopPropagation();
+              setDiagnosticsTestProfile(rowData);
+              setOpenChild(true);
+            }}
+          />
+        )}
+      </div>
+    );
+  };
   useEffect(() => {
     if (!open) {
       setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
@@ -417,13 +423,12 @@ const Profile = ({
   };
 
   const isLovType = diagnosticsTestProfile.resultType?.toUpperCase() === 'LOV';
+  const isNumberType = diagnosticsTestProfile?.resultType === 'NUMBER';
+  const isTextType = diagnosticsTestProfile?.resultType?.toUpperCase() === 'TEXT';
 
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
-        const isNumberType =
-  diagnosticsTestProfile?.resultType === 'NUMBER';
-
         return (
           <Form fluid>
             <div className="profile-form-header">
@@ -451,7 +456,7 @@ const Profile = ({
 
               </div>
               <div className='profile-lov-unit-main-container'>
-                {isNumberType && (
+                {!isTextType && isNumberType && (
                   <MyInput
                     column
                     menuMaxHeight={200}
@@ -459,9 +464,8 @@ const Profile = ({
                     fieldName="resultUnit"
                     fieldType="select"
                     selectData={unitsLovQueryResponse?.object ?? []}
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                    selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
                     selectDataValue="key"
                     record={diagnosticsTestProfile}
                     setRecord={setDiagnosticsTestProfile}
@@ -527,6 +531,22 @@ const Profile = ({
                 loading={isFetching}
                 columns={tableColumns}
                 rowClassName={isSelected}
+                page={paginationParams.page}
+                rowsPerPage={paginationParams.size}
+                totalCount={allDiagnosticTestProfiles?.totalCount ?? 0}
+                onPageChange={(_, newPage) =>
+                  setPaginationParams(prev => ({
+                    ...prev,
+                    page: newPage
+                  }))
+                }
+                onRowsPerPageChange={event =>
+                  setPaginationParams(prev => ({
+                    ...prev,
+                    page: 0,
+                    size: Number(event.target.value)
+                  }))
+                }
                 onRowClick={rowData => {
                   if (diagnosticsTestProfile?.id === rowData.id) {
                     setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
@@ -568,6 +588,7 @@ const Profile = ({
         <div className="container-of-add-new-button">
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
+            disabled={!diagnosticsTestProfile?.id || diagnosticsTestProfile.resultType?.toUpperCase() === 'TEXT'  }
             color="var(--deep-blue)"
             onClick={() => {
               setOpenSubChild(true);
@@ -696,8 +717,8 @@ useEffect(() => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
-      mainSize="37vw"
-      childSize="47vw"
+      mainSize="xs"
+      childSize="30vw"
     />
   );
 };

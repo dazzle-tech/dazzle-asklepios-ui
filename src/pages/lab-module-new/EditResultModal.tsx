@@ -27,9 +27,14 @@ type Props = {
   onSuccess?: () => void;
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (profile?: any) =>
+  profile?.resultType?.toUpperCase()?.trim();
 
+const isLovProfile = (profile?: any) =>
+  getResultType(profile) === 'LOV';
+
+const isTextProfile = (profile?: any) =>
+  getResultType(profile) === 'TEXT';
 const EditResultModal = ({
   open,
   setOpen,
@@ -44,7 +49,7 @@ const EditResultModal = ({
     resultUnit: null
   });
 
-const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
 
   const { data: allLovValues } =
@@ -88,22 +93,30 @@ const dispatch = useAppDispatch();
     { isLoading }
   ] = useUpdateDiagnosticOrderTestResultMutation();
 
-const handleSave = async () => {
+  const handleSave = async () => {
   if (!result?.id) return;
 
   const isLov = isLovProfile(profile);
+  const isText = isTextProfile(profile);
 
   try {
     await updateResult({
       id: result.id,
-    body: {
-    id: result.id,
-    orderTestId: result.orderTestId,
-    profileTestId: result.profileTestId,
+      body: {
+        id: result.id,
+        orderTestId: result.orderTestId,
+        profileTestId: result.profileTestId,
 
-    resultValueNumber: isLov ? null : form.resultValueNumber,
-    resultValueText: isLov ? form.resultValueText : null
-    }
+        resultValueNumber:
+          isLov || isText
+            ? null
+            : form.resultValueNumber,
+
+        resultValueText:
+          isLov || isText
+            ? form.resultValueText
+            : null
+      }
     }).unwrap();
 
     setOpen(false);
@@ -126,56 +139,70 @@ const handleSave = async () => {
   }
 };
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Edit Result"
-      size="30vw"
-      bodyheight='40vh'
-      actionButtonFunction={handleSave}
-      actionButtonLabel='Save'
-      position="center"
-      content={
-      <div dir={dir}>
-        <Form fluid>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Edit Result"
+        size="30vw"
+        bodyheight='40vh'
+        actionButtonFunction={handleSave}
+        actionButtonLabel='Save'
+        position="center"
+        content={
+          <div dir={dir}>
+            <Form fluid>
 
-          {isLovProfile(profile) ? (
-            <MyInput
-              fieldName="resultValueText"
-              fieldType="select"
-              label="RESULT"
-              record={form}
-              setRecord={setForm}
-              selectData={resolveLovOptions()}
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+              {isLovProfile(profile) ? (
 
-              selectDataValue="key"
-              width={"20vw"}
-            />
-          ) : (
-            <MyInput
-              fieldName="resultValueNumber"
-              fieldType="number"
-              label="RESULT"
-              record={form}
-              setRecord={setForm}
-              width={"20vw"}
-            />
-          )}
+                <MyInput
+                  fieldName="resultValueText"
+                  fieldType="select"
+                  label="RESULT"
+                  record={form}
+                  setRecord={setForm}
+                  selectData={resolveLovOptions()}
+                  selectDataLabel="lovDisplayVale"
+                  disableByField="isValid"
+                  selectDataValue="key"
+                  width="20vw"
+                />
 
-        </Form>
-      </div>
-      }
-    />
+              ) : isTextProfile(profile) ? (
+
+                <MyInput
+                  fieldName="resultValueText"
+                  fieldType="text"
+                  label="RESULT"
+                  record={form}
+                  setRecord={setForm}
+                  width="20vw"
+                />
+
+              ) : (
+
+                <MyInput
+                  fieldName="resultValueNumber"
+                  fieldType="number"
+                  label="RESULT"
+                  record={form}
+                  setRecord={setForm}
+                  width="20vw"
+                />
+
+              )}
+
+            </Form>
+          </div>
+        }
+      />
     </div>
   );
 };

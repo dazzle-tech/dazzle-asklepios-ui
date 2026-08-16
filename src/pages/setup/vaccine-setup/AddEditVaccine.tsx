@@ -177,6 +177,8 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const links = brandsPage?.links || {};
 
   const { data: manufactureLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
+
+  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 const vaccineType = useEnumOptions('VaccineType', {
   labelOverrides: {
     MRNA: 'mRNA'
@@ -305,16 +307,21 @@ const vaccineType = useEnumOptions('VaccineType', {
         </span>
       )
     },
-    {
-      key: 'volume',
-      title: <Translate>Volume</Translate>,
-      flexGrow: 3,
-      render: (rowData: VaccineBrand) => (
-        <>
-          {rowData.volume} {formatEnumString(rowData?.unit)}
-        </>
-      )
-    },
+{
+  key: 'volume',
+  title: <Translate>Volume</Translate>,
+  flexGrow: 3,
+  render: (rowData: VaccineBrand) => (
+    <>
+      {rowData.volume}{' '}
+      {conjureValueBasedOnKeyFromList(
+        valueUnitLov?.object ?? [],
+        rowData.unit,
+        'lovDisplayVale'
+      )}
+    </>
+  )
+},
     {
       key: 'marketingAuthorizationHolder',
       title: <Translate>Marketing Authorization Holder</Translate>,
@@ -853,6 +860,7 @@ const vaccineType = useEnumOptions('VaccineType', {
         width={350}
         column
         fieldType="number"
+        allowDecimal
         fieldLabel="Volume"
         fieldName="volume"
         record={vaccineBrand}
@@ -866,9 +874,9 @@ const vaccineType = useEnumOptions('VaccineType', {
         fieldLabel="Unit"
         fieldType="select"
         fieldName="unit"
-        selectData={volumUnit ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
+        selectData={valueUnitLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
         record={vaccineBrand}
         setRecord={setVaccineBrand}
         disabled={!editBrand && !vaccine?.id}

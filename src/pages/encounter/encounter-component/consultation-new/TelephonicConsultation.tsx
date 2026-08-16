@@ -31,7 +31,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
-
+  const edit = props.edit ?? location.state?.edit ?? false;
   const currentPatient = props.patient || location.state?.patient;
   const currentEncounter = props.encounter || location.state?.encounter;
   const isEditMode = props.edit ?? location.state?.edit ?? false;
@@ -283,7 +283,11 @@ const TelephonicConsultation = props => {
             size={22}
             fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
             title={editDisabled ? 'Edit not allowed for cancelled consultation' : 'Edit'}
-            style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+            style={{
+              opacity: edit ? 0.5 : 1,
+              pointerEvents: edit ? 'none' : 'auto',
+              cursor: edit ? 'not-allowed' : 'pointer',
+            }}
             className={clsx({ 'not-allowed-cell': editDisabled })}
             onClick={() => {
               if (editDisabled) return;
@@ -345,7 +349,7 @@ const TelephonicConsultation = props => {
           Cancel
         </MyButton>
 
-        <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
+        <Checkbox className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
           <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>
@@ -424,7 +428,7 @@ const TelephonicConsultation = props => {
             source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
             sourceId={consultationFormData?.id ? Number(consultationFormData.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

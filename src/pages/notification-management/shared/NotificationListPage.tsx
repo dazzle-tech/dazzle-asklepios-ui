@@ -77,6 +77,7 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
 
   const statusOptions = useEnumOptions('NotificationStatus');
   const priorityOptions = useEnumOptions('NotificationPriority');
+  const codeOptions = useEnumOptions('NotificationCode');
 
   const languageNameByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -257,7 +258,12 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     value && value.length > max ? `${value.substring(0, max)}...` : value || '-';
 
   const columns = [
-    { key: 'code', title: 'Code' },
+    {
+      key: 'code',
+      title: 'Code',
+      render: (row: NotificationResponseVM) =>
+        row.code ? formatEnumString(row.code) : '-',
+    },
     {
       key: 'status',
       title: 'Status',
@@ -389,11 +395,15 @@ const NotificationListPage: React.FC<NotificationListPageProps> = ({ channel }) 
     <Form layout="inline" fluid className="container-of-filters-channel-notification">
       <MyInput
         fieldName="code"
-        fieldType="text"
+        fieldType="select"
         placeholder="Code"
+        selectData={codeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={filtersState}
         setRecord={setFiltersState}
         column
+        searchable
       />
       <MyInput
         fieldName="status"
