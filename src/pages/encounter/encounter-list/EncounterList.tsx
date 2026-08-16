@@ -1040,7 +1040,7 @@ const handlePatientSearchClick = useCallback(() => {
               </Whisper>
             )}
 
-            {canSeeCancel && isNew && (
+            {canSeeCancel && isNew && !row?.isObserved && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
