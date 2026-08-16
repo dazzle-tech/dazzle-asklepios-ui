@@ -239,6 +239,7 @@ import { insuranceReceivablesApi } from './services/billing/insuranceReceivables
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
@@ -563,6 +564,8 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -824,6 +827,8 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         glasgowComaScaleAssessmentService.middleware,
+        systemConfigService.middleware,
+        medicationValidationService.middleware,
         cchiApi.middleware,
         eligibilityApi.middleware,
         preAuthorizationApi.middleware,
