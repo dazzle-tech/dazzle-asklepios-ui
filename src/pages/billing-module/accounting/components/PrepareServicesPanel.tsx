@@ -249,7 +249,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         sequence: index + 1,
         isExempted: row.isExempted
       })),
-      requestId: makeRequestId('PREPARE-DEFAULT-SERVICES')
+      requestId: makeRequestId('PREPARE-DEFAULT-SERVICES'),
+      acceptUncoveredAsCash: isInsurance ? true : null
     };
 
     try {

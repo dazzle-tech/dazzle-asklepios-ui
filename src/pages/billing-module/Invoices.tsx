@@ -134,6 +134,14 @@ import {
 
 } from '@/utils/apiErrorMessage';
 
+import {
+
+  ADJUSTMENT_CONSTRAINT_ERROR_MAP,
+
+  extractAdjustmentErrorMessage
+
+} from './invoices/adjustmentErrorMessage';
+
 
 
 const mergeErrorMaps = (...maps: Record<string, string>[]) =>
@@ -156,7 +164,9 @@ const ADJUSTMENT_FLOW_ERROR_MAP = mergeErrorMaps(
 
   ADJUSTMENT_ERROR_MAP,
 
-  FINANCIAL_DOCUMENT_NUMBERING_ERROR_MAP
+  FINANCIAL_DOCUMENT_NUMBERING_ERROR_MAP,
+
+  ADJUSTMENT_CONSTRAINT_ERROR_MAP
 
 );
 
@@ -1478,7 +1488,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         notify({
 
-          msg: extractApiErrorMessage(error, INVOICE_FLOW_ERROR_MAP),
+          msg: extractAdjustmentErrorMessage(error, ADJUSTMENT_FLOW_ERROR_MAP),
 
           sev: 'error'
 
@@ -1602,7 +1612,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         notify({
 
-          msg: extractApiErrorMessage(error, ADJUSTMENT_FLOW_ERROR_MAP),
+          msg: extractAdjustmentErrorMessage(error, ADJUSTMENT_FLOW_ERROR_MAP),
 
           sev: 'error'
 
