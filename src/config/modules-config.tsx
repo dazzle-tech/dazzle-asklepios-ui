@@ -336,6 +336,7 @@ export const MODULES: Module[] =
         { name: "SMS Notification", code: "SMS_NOTIFICATION", description: "", icon: "FaCommentSms", viewOrder: 2, navPath: "sms-notification" },
         { name: "In-App Notification", code: "IN_APP_NOTIFICATION", description: "", icon: "FaDesktop", viewOrder: 3, navPath: "in-app-notification" },
         { name: "WhatsApp Notification", code: "WHATSAPP_NOTIFICATION", description: "", icon: "FaWhatsapp", viewOrder: 4, navPath: "whatsapp-notification" },
+        { name: "Push Notification", code: "PUSH_NOTIFICATION", description: "", icon: "FaMobileAlt", viewOrder: 5, navPath: "push-notification" },
       ],
     },
     {

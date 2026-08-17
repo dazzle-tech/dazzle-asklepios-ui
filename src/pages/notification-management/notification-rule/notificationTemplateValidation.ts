@@ -4,6 +4,7 @@ import { formatEnumString } from '@/utils';
 export const RECIPIENT_RULE_VALUES: RecipientRule[] = [
   'PATIENT_EMAIL',
   'PATIENT_PHONE',
+  'PATIENT_USER',
   'PRACTITIONER_EMAIL',
   'PRACTITIONER_PHONE',
   'PRACTITIONER_USER',
@@ -311,6 +312,18 @@ export const validateNotificationTemplate = (
     }
     if (!dto.body?.trim()) {
       errors.push('Notification body is required');
+    }
+  }
+
+  if (channel === 'PUSH') {
+    if (!dto.toRecipientRule?.trim()) {
+      errors.push('Push to recipient rule is required');
+    }
+    if (!dto.title?.trim()) {
+      errors.push('Push notification title is required');
+    }
+    if (!dto.body?.trim()) {
+      errors.push('Push notification body is required');
     }
   }
 

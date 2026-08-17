@@ -241,6 +241,7 @@ const EmailNotification = lazy (() => import ( './pages/notification-management/
 const SmsNotification = lazy (() => import ( './pages/notification-management/sms-notification'));
 const InAppNotification = lazy (() => import ( './pages/notification-management/in-app-notification'));
 const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
+const PushNotification = lazy (() => import ( './pages/notification-management/push-notification'));
 
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
@@ -669,6 +670,7 @@ const App = () => {
               <Route path="sms-notification" element={<SmsNotification />} />
               <Route path="in-app-notification" element={<InAppNotification />} />
               <Route path="whatsapp-notification" element={<WhatsAppNotification />} />
+              <Route path="push-notification" element={<PushNotification />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />

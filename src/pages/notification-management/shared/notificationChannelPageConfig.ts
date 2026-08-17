@@ -75,6 +75,20 @@ export const NOTIFICATION_CHANNEL_PAGE_CONFIG: Record<
     bodyPreviewAsHtml: false,
     bodyViewAsHtml: false,
   },
+  PUSH: {
+    channel: 'PUSH',
+    pageCode: 'Push_Notification',
+    pageTitle: 'Push Notification',
+    modalTitle: 'Push Notification Details',
+    showRecipientEmailFilter: false,
+    showRecipientPhoneFilter: false,
+    showSubjectColumn: false,
+    showTitleColumn: true,
+    showEmailColumns: false,
+    showPhoneColumns: false,
+    bodyPreviewAsHtml: false,
+    bodyViewAsHtml: false,
+  },
 };
 
 export const getNotificationChannelPageConfig = (channel: NotificationChannel) =>

@@ -38,6 +38,7 @@ const NOTIFICATION_CHANNELS: {
   { key: 'IN_APP', label: 'In-App' },
   { key: 'SMS', label: 'SMS' },
   { key: 'WHATSAPP', label: 'WhatsApp' },
+  { key: 'PUSH', label: 'Push' },
 ];
 
 const NotificationRule = () => {
