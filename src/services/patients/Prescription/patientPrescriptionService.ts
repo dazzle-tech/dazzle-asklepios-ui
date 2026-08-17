@@ -124,11 +124,12 @@ export const patientPrescriptionService = createApi({
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
       PatientPrescription,
-      { id: number }
+      { id: number; acceptUncoveredAsCash?: boolean }
     >({
-      query: ({ id }) => ({
+      query: ({ id, acceptUncoveredAsCash }) => ({
         url: `/api/patient/patient-prescriptions/${id}/submit`,
         method: 'POST',
+        params: acceptUncoveredAsCash ? { acceptUncoveredAsCash: true } : undefined
       }),
       onQueryStarted,
       transformResponse: (response: any) => response,

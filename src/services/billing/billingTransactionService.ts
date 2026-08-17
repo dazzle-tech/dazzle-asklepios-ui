@@ -30,6 +30,31 @@ import type {
 export type BillingId =
   number | string;
 
+export type InsurancePriceListCoverageCheckRequest = {
+  encounterId: number;
+  billingItemType: string;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  diagnosticTestId?: number | null;
+  brandMedicationId?: number | null;
+  currency?: string | null;
+};
+
+export type InsurancePriceListCoverageCheckResult = {
+  insuranceVisit: boolean;
+  coveredByInsurance: boolean;
+  requiresCashConfirmation: boolean;
+  notCoveredReason: string | null;
+  billingItemType?: string | null;
+  sourceId?: number | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  cashUnitPrice?: number | null;
+  currency?: string | null;
+  patientInsuranceId?: number | null;
+  warningMessage?: string | null;
+};
+
 export const billingTransactionService =
   createApi({
     reducerPath:
@@ -422,6 +447,18 @@ export const billingTransactionService =
               method: 'POST',
               body
             })
+          }),
+
+        checkInsurancePriceListCoverage:
+          builder.mutation<
+            InsurancePriceListCoverageCheckResult,
+            InsurancePriceListCoverageCheckRequest
+          >({
+            query: body => ({
+              url: '/api/patient/insurance-coverage/price-list-check',
+              method: 'POST',
+              body
+            })
           })
       })
   });
@@ -447,6 +484,7 @@ export const {
 
   useReverseBillingRefundMutation,
 
-  useEvaluateBillingRuleMutation
+  useEvaluateBillingRuleMutation,
+  useCheckInsurancePriceListCoverageMutation
 } =
   billingTransactionService;

@@ -18,6 +18,7 @@ import {
   extractBillingRuleErrorMessage,
   formatBillingRuleEvaluationMessage
 } from '@/utils/billingRuleEvaluationUtils';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import { PatientServiceProductCreateDTO, ServiceSource, BillingEventType } from '@/types/model-types-new';
 import { newPatientServiceProductCreateDTO } from '@/types/model-types-constructor-new';
 
@@ -291,6 +292,9 @@ const AddBulkServicesToConsultationModal = ({
       handleClose();
       onSuccess?.();
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       dispatch(
         notify({
           msg: extractBillingRuleErrorMessage(error) || error?.data?.message || 'Failed to add services',

@@ -276,6 +276,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       onPrepared?.();
     } catch (error: any) {
       const message = normalizeBillingError(error);
+      if (!message) {
+        return;
+      }
       setResultMessage(message);
       dispatch(notify({ msg: message, sev: 'error' }));
     }

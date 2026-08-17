@@ -3565,6 +3565,7 @@ export type PatientProcedureCreateVM = {
   notes?: string | null;
   extraDocumentation?: string | null;
   result?: string | null;
+  acceptUncoveredAsCash?: boolean;
 };
 
 // UPDATE
@@ -3696,6 +3697,7 @@ export interface DiagnosticOrderTestCreateDTO {
   submitDate?: string;
   orderType?: TestType;
   icdDiagnosisId?: number;
+  acceptUncoveredAsCash?: boolean;
 }
 
 export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
@@ -4087,6 +4089,7 @@ export type PatientServiceProductCreateDTO = {
   currency: string;
   serviceSource: ServiceSource;
   SourceId?: number | null; // ID of the source entity (e.g., diagnostic order test ID, procedure ID, etc.)
+  acceptUncoveredAsCash?: boolean | null;
 };
 
 export type PatientServiceProductUpdateDTO = {
@@ -5055,6 +5058,7 @@ export interface DentalProcedureCreateDTO {
   serviceId?: number | null;
   cdtCodeId?: number | null;
   notes?: string | null;
+  acceptUncoveredAsCash?: boolean | null;
 }
 
 export interface DentalProcedureUpdateDTO {
@@ -6399,6 +6403,7 @@ export type PrepareDefaultServicesRequest = {
   items: PrepareDefaultServiceItem[];
   requestId: string;
   payZeroNow?: boolean | null;
+  acceptUncoveredAsCash?: boolean | null;
 };
 
 export type PreparedDefaultServiceResult = {
@@ -6441,6 +6446,11 @@ export type PreviewDefaultServicePricingResult = {
   priceListItemCode: string | null;
   patientShareAmount?: number | null;
   insuranceShareAmount?: number | null;
+  insuranceVisit?: boolean;
+  coveredByInsurance?: boolean;
+  requiresCashConfirmation?: boolean;
+  notCoveredReason?: string | null;
+  cashUnitPrice?: number | null;
 };
 
 export type PreviewDefaultServicesPricingResult = {

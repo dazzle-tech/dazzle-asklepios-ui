@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useLocation } from 'react-router-dom';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -12,6 +13,7 @@ import {
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   buildBillingRuleEvaluationRequest,
   extractBillingRuleErrorMessage,
@@ -77,6 +79,12 @@ const AddEditPatientServiceAndProduct = ({
 
     const [selectData, setSelectData] = useState<any[]>([]);
     const [selectedSelectItem, setSelectedSelectItem] = useState<any>(null);
+    const [coverageWarning, setCoverageWarning] = useState<{
+      itemName?: string | null;
+      itemCode?: string | null;
+      cashUnitPrice?: number | null;
+      currency?: string | null;
+    } | null>(null);
 
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -462,8 +470,20 @@ const AddEditPatientServiceAndProduct = ({
         patientInsuranceId: null
       }).unwrap();
 
+      if (preview.requiresCashConfirmation) {
+        setCoverageWarning({
+          itemName: selectedSelectItem?.name ?? selectedSelectItem?.testName,
+          itemCode: preview.priceListItemCode,
+          cashUnitPrice: preview.cashUnitPrice ?? preview.unitPrice,
+          currency: preview.currency ?? nextRecord.currency
+        });
+      } else {
+        setCoverageWarning(null);
+      }
+
       return Number(preview.unitPrice ?? preview.setupUnitPrice ?? setupFallbackPrice ?? 0);
     } catch {
+      setCoverageWarning(null);
       return setupFallbackPrice;
     }
   };
@@ -769,7 +789,8 @@ const AddEditPatientServiceAndProduct = ({
 
           quantity: Number(patientServiceAndProduct.quantity),
           unitPrice: patientServiceAndProduct.unitPrice ?? 0,
-          currency: patientServiceAndProduct.currency
+          currency: patientServiceAndProduct.currency,
+          acceptUncoveredAsCash: Boolean(coverageWarning)
         };
 
         await createPatientServiceAndProduct(createDTO).unwrap();
@@ -835,6 +856,9 @@ const AddEditPatientServiceAndProduct = ({
       setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
       setOpen(false);
     } catch (error) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       const errorMsg =
         extractBillingRuleErrorMessage(error) ||
         extractErrorMessage(error) ||
@@ -845,6 +869,7 @@ const AddEditPatientServiceAndProduct = ({
 
   const modalContent = (
     <Form fluid>
+      {coverageWarning ? <UncoveredInsuranceWarning items={[coverageWarning]} /> : null}
       <MyInput
         required
         fieldLabel="Category"
@@ -854,7 +879,8 @@ const AddEditPatientServiceAndProduct = ({
         selectDataLabel="label"
         selectDataValue="value"
         record={patientServiceAndProduct}
-        setRecord={val =>
+        setRecord={val => {
+          setCoverageWarning(null);
           setPatientServiceAndProduct({
             ...val,
             brandMedicationId: null,
@@ -863,8 +889,8 @@ const AddEditPatientServiceAndProduct = ({
             procedureId: null,
             unitPrice: 0,
             currency: ''
-          })
-        }
+          });
+        }}
         width="100%"
         searchable={false}
       />

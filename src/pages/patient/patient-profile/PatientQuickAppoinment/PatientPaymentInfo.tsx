@@ -372,6 +372,10 @@ const extractResponseList =
 
 const normalizeError =
   (error: any) => {
+    if (error?.data?.userCancelledUncoveredCash || error?.error?.data?.userCancelledUncoveredCash) {
+      return '';
+    }
+
     const data =
       error?.data ??
       error ??

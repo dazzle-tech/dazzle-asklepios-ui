@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Form, Loader, Radio, RadioGroup } from 'rsuite';
+import { Form, Loader, Message, Radio, RadioGroup } from 'rsuite';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -92,6 +92,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     netAmount: number;
     patientShareAmount: number;
     insuranceShareAmount: number;
+    requiresCashConfirmation?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -125,6 +126,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       netAmount: number;
       patientShareAmount?: number;
       insuranceShareAmount?: number;
+      requiresCashConfirmation?: boolean;
     }) => {
       setLinePricingPreview({
         grossAmount: pricingPreview.grossAmount,
@@ -136,7 +138,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         patientShareAmount: Number(
           pricingPreview.patientShareAmount ?? pricingPreview.netAmount ?? 0
         ),
-        insuranceShareAmount: Number(pricingPreview.insuranceShareAmount ?? 0)
+        insuranceShareAmount: Number(pricingPreview.insuranceShareAmount ?? 0),
+        requiresCashConfirmation: Boolean(pricingPreview.requiresCashConfirmation)
       });
       setRecord(current => ({
         ...current,
@@ -405,7 +408,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
             invoiceTaxAmount: invoiceTax,
             netAmount: lineNet,
             patientShareAmount,
-            insuranceShareAmount
+            insuranceShareAmount,
+            requiresCashConfirmation: Boolean(preview.requiresCashConfirmation)
           },
           lineGross
         );
@@ -617,6 +621,11 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
         ) : null}
       </div>
 
+      {linePricingPreview?.requiresCashConfirmation ? (
+        <Message type="warning" showIcon style={{ marginBottom: 12 }}>
+          This item is not on the insurance price list. Adding it will bill it as cash to the patient.
+        </Message>
+      ) : null}
       {linePricingPreview ? (
         <div className="billing-add-service-pricing-preview">
           <div>

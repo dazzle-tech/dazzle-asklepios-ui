@@ -9,6 +9,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import './styles.less';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 
@@ -22,11 +24,15 @@ const DetailsModal = ({
   order,
   edit,
   patient,
-  facilityId
+  facilityId,
+  encounterId
 }) => {
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
+  const { uncoveredItems, checkItem, clearUncoveredItems } = useInsurancePriceListCoverage(
+    encounterId ?? order?.encounterId
+  );
 
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
 
@@ -56,6 +62,19 @@ const DetailsModal = ({
     else if (testType === 'PATHOLOGY') setReceivedType('PATHOLOGY');
     else setReceivedType('');
   }, [test]);
+
+  useEffect(() => {
+    const testId = test?.id ?? test?.testId;
+    if (!openDetailsModel || !testId) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItem({
+      billingItemType: test?.type || 'LABORATORY',
+      diagnosticTestId: Number(testId)
+    });
+  }, [openDetailsModel, test?.id, test?.testId, test?.type, checkItem, clearUncoveredItems]);
 
   // ✅ بدون pagination
   const [allDepartments, setAllDepartments] = useState([]);
@@ -136,6 +155,7 @@ const DetailsModal = ({
         content={
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
+              <UncoveredInsuranceWarning items={uncoveredItems} />
               <div className="details-modal-diagnostic-order-inputs">
                 
                 {/* Reason */}

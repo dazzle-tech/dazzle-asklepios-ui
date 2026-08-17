@@ -1,6 +1,6 @@
 import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
@@ -13,6 +13,8 @@ import TestCardModal from './TestCardModal';
 import TransferList from './TransferTestList';
 
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 
 type Props = {
   // data
@@ -165,6 +167,29 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
   const isRTL = direction === 'RTL';
 
   const dir = isRTL ? 'rtl' : 'ltr';
+  const { uncoveredItems, checkItems, clearUncoveredItems } = useInsurancePriceListCoverage(
+    encounter?.id
+  );
+
+  useEffect(() => {
+    if (!openTestsModal) {
+      clearUncoveredItems();
+      return;
+    }
+
+    const tests = (rightItems ?? []).filter(item => item?.id);
+    if (!tests.length) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItems(
+      tests.map((item: any) => ({
+        billingItemType: item.type || item.testType || 'LABORATORY',
+        diagnosticTestId: Number(item.id ?? item.testId)
+      }))
+    );
+  }, [openTestsModal, rightItems, checkItems, clearUncoveredItems]);
 
   return (
     <div dir={dir}>
@@ -179,6 +204,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         edit={edit}
         patient={encounter?.patient}
         facilityId={encounter?.facilityId}
+        encounterId={encounter?.id}
       />
 
       <CancellationModal
@@ -218,6 +244,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         size="50vw"
         content={
           <div dir={dir}>
+            <UncoveredInsuranceWarning items={uncoveredItems} />
             <TransferList
               open={openTestsModal}
               leftItems={leftItems}

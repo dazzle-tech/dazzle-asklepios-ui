@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Checkbox, Col, Form, Row } from 'rsuite';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPen } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,6 +18,7 @@ import CdtCodeSearch from '@/components/CdtCodeSearch/CdtCodeSearch';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import { formatDateWithoutSeconds, conjureValueBasedOnKeyFromList } from '@/utils';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -78,6 +81,10 @@ const normalizeMsg = (msg: string) => {
 };
 
 const handleCrudError = (error: any, dispatch: any) => {
+  if (isUncoveredCashCancelled(error)) {
+    return;
+  }
+
   const data = error?.data ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
@@ -176,6 +183,8 @@ const DentalProcedures = props => {
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
+  const { uncoveredItems, checkItems, clearUncoveredItems, requiresCashConfirmation } =
+    useInsurancePriceListCoverage(encounter?.id);
 
   const [selectedRow, setSelectedRow] = useState<DentalProcedureResponseVM | null>(null);
   const [showCancelled, setShowCancelled] = useState(false);
@@ -191,6 +200,35 @@ const DentalProcedures = props => {
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
+
+  useEffect(() => {
+    if (!formModalOpen || formMode !== 'add') {
+      clearUncoveredItems();
+      return;
+    }
+
+    const checks = [];
+    if (form.procedureId) {
+      checks.push({ billingItemType: 'PROCEDURE', procedureId: Number(form.procedureId) });
+    }
+    if (form.serviceId) {
+      checks.push({ billingItemType: 'SERVICE', serviceId: Number(form.serviceId) });
+    }
+
+    if (!checks.length) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItems(checks);
+  }, [
+    formModalOpen,
+    formMode,
+    form.procedureId,
+    form.serviceId,
+    checkItems,
+    clearUncoveredItems
+  ]);
 
   const { data: toothSurfData } = useGetLovValuesByCodeQuery('TOOTH_SURF');
   const { data: valueUnitData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
@@ -347,7 +385,8 @@ const DentalProcedures = props => {
           procedureId: form.procedureId,
           serviceId: form.serviceId || null,
           cdtCodeId: form.cdtCodeId || null,
-          notes: form.notes?.trim() || null
+          notes: form.notes?.trim() || null,
+          acceptUncoveredAsCash: requiresCashConfirmation
         };
 
         await saveProcedure(createPayload).unwrap();
@@ -605,6 +644,7 @@ const DentalProcedures = props => {
         isDisabledActionBtn={isMutating}
         content={() => (
           <Form fluid className="fields-container">
+            <UncoveredInsuranceWarning items={uncoveredItems} />
             <Row>
               <Row>
                 <Col md={12}>

@@ -1,4 +1,6 @@
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
+import { useCheckInsurancePriceListCoverageMutation } from '@/services/billing/billingTransactionService';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 
 type Params = {
@@ -54,6 +56,8 @@ export const usePrescriptionActions = ({
     setOpenToAdd,
     isCanceledStatus
 }: Params) => {
+    const [checkInsuranceCoverage] = useCheckInsurancePriceListCoverageMutation();
+
     const handleCancle = async () => {
         const rowsToCancel = selectedRows.length
             ? selectedRows
@@ -109,7 +113,33 @@ export const usePrescriptionActions = ({
         }
 
         try {
-            await submitPrescription({ id: submittedPrescriptionId }).unwrap();
+            let acceptUncoveredAsCash = false;
+            if (encounterId) {
+                const coverageResults = await Promise.all(
+                    nonCancelledMeds.map(async (med: any) => {
+                        const brandId = med?.medicationsId ?? med?.genericMedicationsId;
+                        if (!brandId) {
+                            return false;
+                        }
+                        try {
+                            const result = await checkInsuranceCoverage({
+                                encounterId,
+                                billingItemType: 'MEDICATION',
+                                brandMedicationId: Number(brandId)
+                            }).unwrap();
+                            return Boolean(result.requiresCashConfirmation);
+                        } catch {
+                            return false;
+                        }
+                    })
+                );
+                acceptUncoveredAsCash = coverageResults.some(Boolean);
+            }
+
+            await submitPrescription({
+                id: submittedPrescriptionId,
+                acceptUncoveredAsCash
+            }).unwrap();
 
             await preRefetch();
             await medicRefetch();
@@ -127,7 +157,10 @@ export const usePrescriptionActions = ({
                 ...newPatientPrescriptionMedication,
                 prescriptionHeaderId: null
             } as any);
-        } catch {
+        } catch (error) {
+            if (isUncoveredCashCancelled(error)) {
+                return;
+            }
             dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
         }
     };
