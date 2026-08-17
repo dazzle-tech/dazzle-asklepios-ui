@@ -24,14 +24,14 @@ const InAppNotificationBell = () => {
 
   const recipientParams = useMemo(() => getInAppRecipientFromUser(user), [user]);
 
+  const unreadCountParams = useMemo(
+    () => (recipientParams ? { ...recipientParams, channel: 'IN_APP' as const } : null),
+    [recipientParams]
+  );
 
-
-  const { data: unreadCount = 0 } = useCountUnreadInAppNotificationsQuery(recipientParams!, {
-
-    skip: !recipientParams,
-
+  const { data: unreadCount = 0 } = useCountUnreadInAppNotificationsQuery(unreadCountParams!, {
+    skip: !unreadCountParams,
     pollingInterval: 60000,
-
   });
 
 

@@ -68,10 +68,10 @@ const InAppNotificationsPopover = forwardRef<HTMLElement, InAppNotificationsPopo
     };
 
     const handleMarkAllRead = async () => {
-      if (!hasUnread || isMarkingAllRead) return;
+      if (!hasUnread || isMarkingAllRead || !recipientParams?.recipientId) return;
 
       try {
-        await markAllNotificationsRead().unwrap();
+        await markAllNotificationsRead(recipientParams.recipientId).unwrap();
       } catch (error) {
         dispatch(
           notify({

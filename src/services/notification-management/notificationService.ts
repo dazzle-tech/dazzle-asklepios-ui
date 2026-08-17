@@ -12,6 +12,10 @@ export type InAppNotificationRecipientParams = {
   recipientId: number;
 };
 
+export type CountUnreadNotificationsParams = InAppNotificationRecipientParams & {
+  channel: NotificationChannel;
+};
+
 export const notificationService = createApi({
   reducerPath: 'notificationApi',
   baseQuery: BaseQuery,
@@ -91,11 +95,11 @@ export const notificationService = createApi({
       providesTags: ['Notification'],
     }),
 
-    countUnreadInAppNotifications: builder.query<number, InAppNotificationRecipientParams>({
-      query: ({ recipientType, recipientId }) => ({
-        url: '/api/notification/notifications/in-app/unread/count',
+    countUnreadInAppNotifications: builder.query<number, CountUnreadNotificationsParams>({
+      query: ({ recipientType, recipientId, channel }) => ({
+        url: '/api/notification/notifications/unread/count',
         method: 'GET',
-        params: { recipientType, recipientId },
+        params: { recipientType, recipientId, channel },
       }),
       transformResponse: (response: number | null | undefined) => response ?? 0,
       providesTags: ['Notification'],
@@ -109,9 +113,9 @@ export const notificationService = createApi({
       invalidatesTags: (_result, _error, id) => [{ type: 'Notification', id }, 'Notification'],
     }),
 
-    markAllNotificationsRead: builder.mutation<NotificationResponseVM[], void>({
-      query: () => ({
-        url: '/api/notification/notifications/read-all',
+    markAllNotificationsRead: builder.mutation<NotificationResponseVM[], number>({
+      query: recipientId => ({
+        url: `/api/notification/notifications/read-all/${recipientId}`,
         method: 'PATCH',
       }),
       transformResponse: (response: NotificationResponseVM[] | null | undefined) => response ?? [],
