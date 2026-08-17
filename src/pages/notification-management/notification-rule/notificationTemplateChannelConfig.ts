@@ -121,6 +121,21 @@ const CHANNEL_FIELD_CONFIG: Record<NotificationTemplateChannel, NotificationTemp
     requireToRecipientRule: true,
     requirePhoneRecipientRule: false,
   },
+  PUSH: {
+    subject: false,
+    title: true,
+    body: true,
+    toRecipientRule: true,
+    ccRecipientRule: false,
+    bccRecipientRule: false,
+    phoneRecipientRule: false,
+    ...NO_WHATSAPP_FIELDS,
+    requireSubject: false,
+    requireTitle: true,
+    requireBody: true,
+    requireToRecipientRule: true,
+    requirePhoneRecipientRule: false,
+  },
 };
 
 export const getNotificationTemplateChannelConfig = (

@@ -6577,7 +6577,7 @@ export type BillingOperationResult = {
  * BillingRefundReversalRequest
  * BillingRefundReversalResult
  */
-export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
+export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP' | 'PUSH';
 
 export type WhatsAppLanguageCode = string;
 
@@ -6610,6 +6610,7 @@ export type NotificationPriority = string;
 export type RecipientRule =
   | 'PATIENT_EMAIL'
   | 'PATIENT_PHONE'
+  | 'PATIENT_USER'
   | 'PRACTITIONER_EMAIL'
   | 'PRACTITIONER_PHONE'
   | 'DATA'
