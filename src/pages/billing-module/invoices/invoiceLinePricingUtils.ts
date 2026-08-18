@@ -170,6 +170,50 @@ export const projectLineNetAfterChange = (
   return (oldNet * newGross) / oldGross;
 };
 
+const hasInsuranceCopayRule = (line: {
+  chargeNetAmount?: number | null;
+  insuranceShareAmount?: number | null;
+  patientCopaymentPercentage?: number | null;
+}) =>
+  Number(line.chargeNetAmount ?? 0) > 0 &&
+  Number(line.insuranceShareAmount ?? 0) > 0 &&
+  Number(line.patientCopaymentPercentage ?? 0) > 0;
+
+/**
+ * Insurance qty/price reduce must re-run copay % + max on the remaining charge net.
+ * Do not scale the already-capped patient invoice share (75 → 37.50).
+ */
+export const projectInvoiceLineNetAfterChange = (
+  line: InvoiceLineItem,
+  newQuantity: number,
+  newUnitPrice: number,
+  documentSubtype?: string | null
+): number => {
+  if (hasInsuranceCopayRule(line)) {
+    const oldQty = Number(line.chargeQuantity ?? line.quantity ?? 1);
+    let newChargeNet = (Number(line.chargeNetAmount) * newQuantity) / (oldQty || 1);
+    const chargeUnit = Number(line.chargeUnitPrice ?? 0);
+    if (chargeUnit > 0 && Math.abs(newUnitPrice - chargeUnit) < 0.0001) {
+      newChargeNet = chargeUnit * newQuantity;
+    }
+
+    const copayPercent = Number(line.patientCopaymentPercentage);
+    const copayMax = Number(line.patientMaximumCopayment ?? 0);
+    let patientShare = (newChargeNet * copayPercent) / 100;
+    if (copayMax > 0) {
+      patientShare = Math.min(patientShare, copayMax);
+    }
+    patientShare = Math.min(Math.max(0, patientShare), newChargeNet);
+    const insuranceShare = Math.max(0, newChargeNet - patientShare);
+
+    return String(documentSubtype ?? '').toUpperCase() === 'INSURANCE_CLAIM'
+      ? Number(insuranceShare.toFixed(4))
+      : Number(patientShare.toFixed(4));
+  }
+
+  return projectLineNetAfterChange(line, newQuantity, newUnitPrice);
+};
+
 export const inferInvoiceScopeAdjustments = (
   grossAmount: number,
   referenceLines: InvoiceLineItem[] | undefined | null

@@ -12,12 +12,15 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
@@ -56,6 +59,10 @@ const handleProcedureCrudError = (
   keyMap: Record<string, string>,
   record: any
 ) => {
+  if (isUncoveredCashCancelled(err)) {
+    return;
+  }
+
   const data = err?.data ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
@@ -164,6 +171,8 @@ const Details = ({
   const [deptHasMore, setDeptHasMore] = useState(false);
   const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
   const dispatch = useAppDispatch();
+  const { uncoveredItems, checkItem, clearUncoveredItems, requiresCashConfirmation } =
+    useInsurancePriceListCoverage(encounter?.id);
 
   const [createProcedure] = useCreateProcdureMutation();
   const [updateProcedure] = useUpdateProcdureMutation();
@@ -302,6 +311,18 @@ const Details = ({
     setProcedurePage(0);
     setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
   }, [procedure?.categoryId, procedure?.toFacilityId]);
+
+  useEffect(() => {
+    if (!openDetailsModal || !procedure?.procedureId) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItem({
+      billingItemType: 'PROCEDURE',
+      procedureId: Number(procedure.procedureId)
+    });
+  }, [openDetailsModal, procedure?.procedureId, checkItem, clearUncoveredItems]);
 
   const hasMoreProcedures = procedureByFacility?.links?.next != null;
 
@@ -442,7 +463,10 @@ const Details = ({
           result: procedure.result
         }).unwrap();
       } else {
-        await createProcedure(procedureData).unwrap();
+        await createProcedure({
+          ...procedureData,
+          acceptUncoveredAsCash: requiresCashConfirmation
+        }).unwrap();
       }
 
       setOpenDetailsModal(false);
@@ -491,6 +515,7 @@ const Details = ({
             })}
           >
             <Form fluid>
+              <UncoveredInsuranceWarning items={uncoveredItems} />
               <div className="margin-bottom-10">
                 <SectionContainer
                   title="Procedure Details"

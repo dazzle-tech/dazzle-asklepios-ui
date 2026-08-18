@@ -42,13 +42,14 @@ import type {
 import { DiagnosticOrderTestStatus, DiagnosticStatus, BillingEventType } from '@/types/model-types-new';
 import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
 import { formatEnumString } from '@/utils';
-import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import { useEvaluateBillingRuleMutation, useCheckInsurancePriceListCoverageMutation } from '@/services/billing/billingTransactionService';
 import {
   buildBillingRuleEvaluationRequest,
   extractBillingRuleErrorMessage,
   formatBillingRuleEvaluationMessage,
   resolveDiagnosticBillingItemType
 } from '@/utils/billingRuleEvaluationUtils';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 
 
 type UseDiagnosticsOrderArgs = {
@@ -59,6 +60,10 @@ type UseDiagnosticsOrderArgs = {
     patientPrevTestsRef?: React.RefObject<any>;
 };
 const extractErrorMessage = (error: any) => {
+  if (isUncoveredCashCancelled(error)) {
+    return '';
+  }
+
   const data = error?.data;
 
   let msg =
@@ -327,6 +332,27 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
   const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+  const [checkInsuranceCoverage] = useCheckInsurancePriceListCoverageMutation();
+
+  const shouldAcceptUncoveredAsCash = async (
+    testId: number,
+    orderType?: string | null
+  ) => {
+    if (!encounterId) {
+      return false;
+    }
+
+    try {
+      const result = await checkInsuranceCoverage({
+        encounterId,
+        billingItemType: resolveDiagnosticBillingItemType(orderType) ?? 'LABORATORY',
+        diagnosticTestId: testId
+      }).unwrap();
+      return Boolean(result.requiresCashConfirmation);
+    } catch {
+      return false;
+    }
+  };
 
   const validateDiagnosticBillingRule = async (
     testId: number,
@@ -435,6 +461,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           notes: orderTest?.notes,
           orderType: resolveOrderType(test),
           icdDiagnosisId: orderTest?.icdDiagnosisId,
+          acceptUncoveredAsCash: await shouldAcceptUncoveredAsCash(
+            testId,
+            resolveOrderType(test)
+          )
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -462,6 +492,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       console.error('Save test failed', error);
       dispatch(
         notify({
@@ -655,7 +688,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     try {
       setLoading(true);
-3
+
       const pickTestId = (t: any) =>
         toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
 
@@ -722,11 +755,18 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
             await createOrderTest({
               orderId: _orderId,
               testId,
-              orderType: item.type || 'LABORATORY'
+              orderType: item.type || 'LABORATORY',
+              acceptUncoveredAsCash: await shouldAcceptUncoveredAsCash(
+                testId,
+                item.type || 'LABORATORY'
+              )
             }).unwrap();
 
             added.push(testName);
           } catch (e: any) {
+            if (isUncoveredCashCancelled(e)) {
+              return;
+            }
             const message =
               extractBillingRuleErrorMessage(e) || extractErrorMessage(e);
             failed.push(`${testName}: ${message}`);
@@ -766,6 +806,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       console.error('Save tests failed:', error);
       dispatch(
         notify({
@@ -864,6 +907,9 @@ setLoading(true);
       handleClearDiagnostics();
       return true;
     } catch (error) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       console.error('Submit failed', error);
       dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
       return false;
@@ -911,16 +957,21 @@ setLoading(true);
 
     try {
       setLoading(true);
+      const acceptUncoveredAsCash = await shouldAcceptUncoveredAsCash(t.id, t.type);
       await createOrderTest({
         orderId: _orderId,
         testId: t.id,
-        orderType: t.type
+        orderType: t.type,
+        acceptUncoveredAsCash
       }).unwrap();
 
       dispatch(notify({ msg: 'Test recalled successfully', sev: 'success' }));
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       const msg = extractErrorMessage(error);
 
       dispatch(

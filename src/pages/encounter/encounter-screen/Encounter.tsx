@@ -18,6 +18,7 @@ import {
   useSubmitPatientPrescriptionMutation
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   faChartLine,
   faCheckDouble,
@@ -371,6 +372,9 @@ useEffect(() => {
       setPendingDraftPrescription(null);
       await completeEncounterNow();
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       const message =
         action === 'submit'
           ? 'Failed to submit prescription draft'

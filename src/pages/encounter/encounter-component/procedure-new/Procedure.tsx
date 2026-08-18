@@ -8,6 +8,7 @@ import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
@@ -222,6 +223,9 @@ const Referrals = (props: any) => {
       handleClear();
       dispatch(notify('Saved successfully'));
     } catch (error) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       dispatch(notify('Save failed'));
     }
   };

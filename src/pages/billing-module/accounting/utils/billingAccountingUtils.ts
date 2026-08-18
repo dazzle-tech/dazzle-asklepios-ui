@@ -103,6 +103,10 @@ export const extractResponseList = (response: any): any[] => {
 };
 
 export const normalizeBillingError = (error: any): string => {
+  if (error?.data?.userCancelledUncoveredCash || error?.error?.data?.userCancelledUncoveredCash) {
+    return '';
+  }
+
   const data = error?.data ?? error ?? {};
   const message =
     data?.detail ?? data?.message ?? data?.title ?? error?.error ?? 'Unexpected billing error';

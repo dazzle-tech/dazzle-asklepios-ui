@@ -7,6 +7,8 @@ import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
@@ -58,6 +60,8 @@ const DetailsModal = ({
   existingMedications = []
 }) => {
   const dispatch = useAppDispatch();
+  const { uncoveredItems, checkItem, clearUncoveredItems } =
+    useInsurancePriceListCoverage(encounter?.id);
 
   const [openOrderModel, setOpenOrderModel] = useState(false);
 
@@ -303,7 +307,31 @@ const DetailsModal = ({
     setSelectedGeneric(Brand);
     setSearchKeyword(Brand.name ?? '');
     editBrandLoadedRef.current = loadKey;
-  }, [open, prescriptionMedication?.id, Brand, medIdForBrand]);
+  }, [
+    open,
+    prescriptionMedication?.id,
+    Brand,
+    medIdForBrand
+  ]);
+
+  useEffect(() => {
+    const brandId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
+    if (!open || !brandId) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItem({
+      billingItemType: 'MEDICATION',
+      brandMedicationId: Number(brandId)
+    });
+  }, [
+    open,
+    selectedGeneric?.id,
+    prescriptionMedication?.medicationsId,
+    checkItem,
+    clearUncoveredItems
+  ]);
 
   useEffect(() => {
     const hasMedication = prescriptionMedication?.id != null;
@@ -1019,6 +1047,7 @@ const DetailsModal = ({
         }
         rightContent={
           <div className="prescription-container" dir={dir}>
+            <UncoveredInsuranceWarning items={uncoveredItems} />
             <div className="prescription-top-row">
               <SectionContainer
                 title={<Text className="font-style">Prescription Details</Text>}

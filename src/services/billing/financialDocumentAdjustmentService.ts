@@ -111,6 +111,13 @@ export type InvoiceLineItem = {
   appliedDiscounts?: InvoiceLineAppliedDiscount[];
   appliedTaxes?: InvoiceLineAppliedTax[];
   lineSource?: 'INVOICE' | 'DEBIT_NOTE' | string | null;
+  chargeNetAmount?: number | null;
+  chargeUnitPrice?: number | null;
+  chargeQuantity?: number | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
+  patientCopaymentPercentage?: number | null;
+  patientMaximumCopayment?: number | null;
 };
 
 export type CollectInvoiceBalanceRequest = {
@@ -221,6 +228,11 @@ export type PreviewCatalogItemPricingResult = {
   invoiceTaxAmount?: number | null;
   patientShareAmount?: number | null;
   insuranceShareAmount?: number | null;
+  insuranceVisit?: boolean;
+  coveredByInsurance?: boolean;
+  requiresCashConfirmation?: boolean;
+  notCoveredReason?: string | null;
+  cashUnitPrice?: number | null;
 };
 
 export type CreateAdjustmentRequest = {

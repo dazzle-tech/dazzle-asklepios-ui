@@ -22,6 +22,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import {
   ColumnConfig
 } from '@/components/MyTable/MyTable';
@@ -142,6 +143,8 @@ type DefaultServiceRow = {
   previewDiscountAmount?: number | null;
   previewTaxAmount?: number | null;
   previewNetAmount?: number | null;
+  requiresCashConfirmation?: boolean;
+  cashUnitPrice?: number | null;
 };
 
 type BillingFormState = {
@@ -372,6 +375,10 @@ const extractResponseList =
 
 const normalizeError =
   (error: any) => {
+    if (error?.data?.userCancelledUncoveredCash || error?.error?.data?.userCancelledUncoveredCash) {
+      return '';
+    }
+
     const data =
       error?.data ??
       error ??
@@ -1119,7 +1126,9 @@ const PatientPaymentInfo =
                 previewTaxAmount: null,
                 previewNetAmount: null,
                 patientShare: null,
-                insuranceShare: null
+                insuranceShare: null,
+                requiresCashConfirmation: false,
+                cashUnitPrice: null
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -1699,6 +1708,39 @@ const PatientPaymentInfo =
           ]
         );
 
+      const uncoveredDefaultServices =
+        useMemo(() => {
+          if (!isInsurance) {
+            return [];
+          }
+
+          const rowsToCheck =
+            payableSelectedRows.length > 0
+              ? payableSelectedRows
+              : selectedRows;
+
+          return rowsToCheck
+            .filter(row => row.requiresCashConfirmation)
+            .map(row => ({
+              itemName: row.serviceName,
+              itemCode: row.priceListItemCode ?? null,
+              cashUnitPrice:
+                row.cashUnitPrice ??
+                row.calculatedPrice ??
+                row.setupPrice ??
+                null,
+              currency: activeCurrency
+            }));
+        }, [
+          isInsurance,
+          payableSelectedRows,
+          selectedRows,
+          activeCurrency
+        ]);
+
+      const hasUncoveredDefaultServices =
+        uncoveredDefaultServices.length > 0;
+
       const summaryIsCalculated =
         useMemo(
           () =>
@@ -2092,6 +2134,10 @@ const PatientPaymentInfo =
                             patientShare:
                               null,
                             insuranceShare:
+                              null,
+                            requiresCashConfirmation:
+                              false,
+                            cashUnitPrice:
                               null
                           };
                         }
@@ -2120,6 +2166,13 @@ const PatientPaymentInfo =
                             null,
                           insuranceShare:
                             priced.insuranceShareAmount ??
+                            null,
+                          requiresCashConfirmation:
+                            Boolean(
+                              priced.requiresCashConfirmation
+                            ),
+                          cashUnitPrice:
+                            priced.cashUnitPrice ??
                             null
                         };
                       }
@@ -2739,6 +2792,11 @@ const PatientPaymentInfo =
                 payZeroNow:
                   formState.payZeroNow
                     ? true
+                    : null,
+
+                acceptUncoveredAsCash:
+                  isInsurance
+                    ? true
                     : null
               };
 
@@ -2826,6 +2884,11 @@ const PatientPaymentInfo =
 
             payZeroNow:
               formState.payZeroNow
+                ? true
+                : null,
+
+            acceptUncoveredAsCash:
+              isInsurance
                 ? true
                 : null
           };
@@ -5289,6 +5352,9 @@ const PatientPaymentInfo =
               </div>
             }
           >
+          {hasUncoveredDefaultServices ? (
+            <UncoveredInsuranceWarning items={uncoveredDefaultServices} />
+          ) : null}
           {lastPaymentResult ? (
             <div className="payment-info__payment-success">
               <div className="payment-info__payment-success-title">

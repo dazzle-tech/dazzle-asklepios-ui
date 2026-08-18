@@ -17,7 +17,7 @@ import AddBillingServiceProductModal, {
 } from './AddBillingServiceProductModal';
 import {
   lineNetAmount,
-  projectLineNetAfterChange,
+  projectInvoiceLineNetAfterChange,
   resolvePricingBreakdown
 } from './invoiceLinePricingUtils';
 import './styles.less';
@@ -237,14 +237,15 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         return sum + Number(draft.amount ?? 0);
       }
       const oldNet = lineNetAmount(line);
-      const projectedNet = projectLineNetAfterChange(
+      const projectedNet = projectInvoiceLineNetAfterChange(
         line,
         Number(draft.quantity ?? 0),
-        Number(draft.unitPrice ?? 0)
+        Number(draft.unitPrice ?? 0),
+        invoice?.documentSubtype
       );
       return sum + Math.max(0, oldNet - projectedNet);
     }, 0);
-  }, [creditDrafts, invoiceLines]);
+  }, [creditDrafts, invoiceLines, invoice?.documentSubtype]);
 
   const selectedCreditOutstandingReduction = useMemo(() => {
     return creditDrafts.reduce((sum, draft) => {
@@ -262,15 +263,16 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         return sum + Math.min(partialAmount, remainingOnLine);
       }
       const oldNet = lineNetAmount(line);
-      const projectedNet = projectLineNetAfterChange(
+      const projectedNet = projectInvoiceLineNetAfterChange(
         line,
         Number(draft.quantity ?? 0),
-        Number(draft.unitPrice ?? 0)
+        Number(draft.unitPrice ?? 0),
+        invoice?.documentSubtype
       );
       const credit = Math.max(0, Math.min(Number(line.remainingAmount ?? 0), oldNet - projectedNet));
       return sum + credit;
     }, 0);
-  }, [creditDrafts, invoiceLines]);
+  }, [creditDrafts, invoiceLines, invoice?.documentSubtype]);
 
   const creditWithinLineLimits = useMemo(
     () =>
@@ -287,17 +289,18 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
 
         if (draft.action === 'REDUCE') {
           const oldNet = lineNetAmount(line);
-          const projectedNet = projectLineNetAfterChange(
+          const projectedNet = projectInvoiceLineNetAfterChange(
             line,
             Number(draft.quantity ?? 0),
-            Number(draft.unitPrice ?? 0)
+            Number(draft.unitPrice ?? 0),
+            invoice?.documentSubtype
           );
           return oldNet - projectedNet > 0.0001;
         }
 
         return true;
       }),
-    [creditDrafts, invoiceLines]
+    [creditDrafts, invoiceLines, invoice?.documentSubtype]
   );
 
   const selectedDebitTotal = useMemo(() => {
@@ -317,10 +320,11 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
       const line = invoiceOnlyLines.find(item => item.id === draft.lineId);
       if (!line) return sum;
       const oldNet = lineNetAmount(line);
-      const projectedNet = projectLineNetAfterChange(
+      const projectedNet = projectInvoiceLineNetAfterChange(
         line,
         Number(draft.quantity ?? 0),
-        Number(draft.unitPrice ?? 0)
+        Number(draft.unitPrice ?? 0),
+        invoice?.documentSubtype
       );
       return sum + Math.max(0, projectedNet - oldNet);
     }, 0);
