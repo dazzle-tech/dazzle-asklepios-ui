@@ -21,6 +21,7 @@ import {
   useBulkRescheduleAppointmentsMutation,
   useCancelAppointmentMutation,
   useGetBulkReschedulePreviewQuery,
+  useNotifyPatientForBulkRescheduleMutation,
 } from "@/services/appointment/appointmentService";
 import {
   useGetAvailabilityTemplatesByPublishStatusQuery,
@@ -446,6 +447,8 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
   const [cancelAppointment] = useCancelAppointmentMutation();
   const [bulkReschedule, { isLoading: bulkLoading }] =
     useBulkRescheduleAppointmentsMutation();
+  const [notifyPatientForBulkReschedule, { isLoading: notifyPatientLoading }] =
+    useNotifyPatientForBulkRescheduleMutation();
 
   const resetWizard = useCallback(() => {
     setStep(0);
@@ -1190,6 +1193,33 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
     }
   };
 
+  const handleNotifyPatient = async () => {
+    if (!originBatchId) {
+      dispatch(
+        notify({
+          msg: "Select a generation batch to continue.",
+          sev: "warning",
+        }),
+      );
+      return;
+    }
+
+    try {
+      await notifyPatientForBulkReschedule({ batchId: originBatchId }).unwrap();
+      dispatch(
+        notify({
+          msg: "Patient notification sent successfully.",
+          sev: "success",
+        }),
+      );
+    } catch (error) {
+      const errorMsg =
+        extractErrorMessage(error) ||
+        "Unable to send patient notification.";
+      dispatch(notify({ msg: errorMsg, sev: "error" }));
+    }
+  };
+
   const handleApplyBulkReschedule = async () => {
     if (!originBatchId || !replacementBatchId) {
       dispatch(notify({ msg: "Select a replacement batch.", sev: "warning" }));
@@ -1619,8 +1649,13 @@ const BulkRescheduleModal = ({ open, setOpen, onSuccess }: Props) => {
             >
               Cancel appointments
             </MyButton>
-            <MyButton appearance="default" disabled style={{ opacity: 0.65 }}>
-              Ask patient by notification (Coming soon)
+            <MyButton
+              appearance="default"
+              loading={notifyPatientLoading}
+              disabled={!originBatchId || notifyPatientLoading}
+              onClick={() => void handleNotifyPatient()}
+            >
+              Ask patient by notification
             </MyButton>
             <MyButton
               appearance="ghost"

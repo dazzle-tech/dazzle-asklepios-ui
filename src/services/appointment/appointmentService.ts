@@ -432,6 +432,13 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
+    notifyPatientForBulkReschedule: builder.mutation<void, { batchId: Id }>({
+      query: ({ batchId }) => ({
+        url: `${APPOINTMENT_BASE_URL}/bulk-reschedule/notify-patient/${batchId}`,
+        method: 'POST'
+      })
+    }),
+
     bulkRescheduleAppointments: builder.mutation<
       BulkAppointmentRescheduleResponseVM,
       BulkAppointmentRescheduleDTO
@@ -486,6 +493,7 @@ export const {
   useGetBulkReschedulePreviewQuery,
   useLazyGetBulkReschedulePreviewQuery,
   useCancelBulkRescheduleAppointmentsMutation,
+  useNotifyPatientForBulkRescheduleMutation,
   useBulkRescheduleAppointmentsMutation,
   useGetAppointmentLogsQuery,
   useLazyGetAppointmentLogsQuery
