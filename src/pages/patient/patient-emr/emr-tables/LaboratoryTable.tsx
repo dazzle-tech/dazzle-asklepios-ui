@@ -35,6 +35,7 @@ import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowDown, faArrowUp, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import UserDateCell from '@/components/UserDateCell';
 
 interface Props {
   patient: any;
@@ -297,13 +298,10 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       key: 'created',
       title: <Translate>CREATED BY / AT</Translate>,
       render: (row: any) => (
-        <>
-          {row.createdBy}
-          <br />
-          <span style={{ fontSize: 11, color: '#777' }}>
-            {formatDateWithoutSeconds(row.createdDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={row.createdBy}
+          date={row.createdDate}
+        />
       )
     },
     {

@@ -546,8 +546,9 @@ const handleBookAppointment = async () => {
                 const statusUpper = String(row?.status ?? '').toUpperCase();
                 const isRequested = statusUpper === 'REQUESTED';
                 return (
-                    <Form layout="inline" fluid className="nurse-doctor-form">
-                        <Whisper
+                    <Form fluid className="nurse-doctor-form">
+                      <div className="referal-request-icons-positioning">
+                          <Whisper
                             trigger="hover"
                             placement="top"
                             speaker={<Tooltip>Accept</Tooltip>}
@@ -562,25 +563,25 @@ const handleBookAppointment = async () => {
                                     <FontAwesomeIcon icon={faCircleCheck} />
                                 </MyButton>
                             </div>
-                        </Whisper>
-
-                        <Whisper
-                            trigger="hover"
-                            placement="top"
-                            speaker={<Tooltip>Reject</Tooltip>}
-                            container={getTooltipContainer}
-                        >
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    backgroundColor="var(--primary-pink)"
-                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
-                                    onClick={() => handleOpenReject(row)}
-                                >
-                                    <FontAwesomeIcon icon={faCircleXmark} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
+                          </Whisper>
+                          <Whisper
+                                trigger="hover"
+                                placement="top"
+                                speaker={<Tooltip>Reject</Tooltip>}
+                                container={getTooltipContainer}
+                            >
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        backgroundColor="var(--primary-pink)"
+                                        disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
+                                        onClick={() => handleOpenReject(row)}
+                                    >
+                                        <FontAwesomeIcon icon={faCircleXmark} />
+                                    </MyButton>
+                                </div>
+                          </Whisper>
+                      </div>
                     </Form>
                 );
             }

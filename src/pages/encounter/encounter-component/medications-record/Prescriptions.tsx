@@ -6,6 +6,7 @@ import type { PatientPrescription } from "@/types/model-types-new";
 import React, { useEffect, useMemo, useState } from "react";
 import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
+import UserDateCell from "@/components/UserDateCell";
 
 const Prescriptions = ({ patient }) => {
     const [prescription, setPrescription] = useState<PatientPrescription | null>(null);
@@ -102,17 +103,24 @@ const Prescriptions = ({ patient }) => {
                 formatDateWithoutSeconds(rowData?.createdDate),
         },
         {
-            key: "createdBy",
-            title: <Translate>Created By</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => rowData?.createdBy ?? "",
+        key: "createdBy",
+        title: <Translate>Created By</Translate>,
+        flexGrow: 1,
+            render: (rowData: any) => (
+                <UserDateCell
+                login={rowData?.createdBy}
+                />
+            ),
         },
         {
             key: "submittedBy",
             title: <Translate>Submitted By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => rowData?.submitedBy ?? "",
-        },
+            render: (rowData: any) => (
+                <UserDateCell
+                login={rowData?.submitedBy}
+                />
+            ),        },
         {
             key: "submittedAt",
             title: <Translate>Submitted at</Translate>,

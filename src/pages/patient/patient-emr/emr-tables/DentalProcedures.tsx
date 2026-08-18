@@ -10,6 +10,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 import { useEnumOptions } from '@/services/enumsApi';
+import UserDateCell from '@/components/UserDateCell';
 
 const DentalProcedures = ({ patient, encounter }: any) => {
   const [page, setPage] = useState(0);
@@ -98,17 +99,14 @@ const DentalProcedures = ({ patient, encounter }: any) => {
       }
     },
     {
-      key: 'created',
-      title: <Translate>Created By / At</Translate>,
-      render: row => (
-        <>
-          {row.createdBy || '-'}
-          <br />
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(row.createdDate)}
-          </span>
-        </>
-      )
+    key: "created",
+    title: <Translate>Created By / At</Translate>,
+      render: (rowData: any) => (
+        <UserDateCell
+          login={rowData?.createdBy}
+          date={rowData?.createdDate}
+        />
+      ),
     },
 
     // ─────────── Expandable ───────────

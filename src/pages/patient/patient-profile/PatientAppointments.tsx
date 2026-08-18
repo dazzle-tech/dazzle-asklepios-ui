@@ -87,7 +87,6 @@ const PatientAppointments = ({ patient }) => {
         if (!row.endDatetime) return '';
 
         const d = new Date(row.endDatetime);
-
         return (
           <span>
             {d.toLocaleTimeString([], {
@@ -118,7 +117,7 @@ const PatientAppointments = ({ patient }) => {
       key: 'reason',
       title: 'Reason',
       render: (rowData: any) => (
-        <span>{formatEnumString(rowData.reason)}</span>
+        <span>{formatEnumString(rowData.service)}</span>
       ),
     },
     {

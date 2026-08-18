@@ -83,19 +83,21 @@ const dispatch = useDispatch();
       title: <Translate>Encounter ID</Translate>,
       flexGrow: 1,
       render: (row: any) => (
-        <span
-          style={{
-            color: '#0d6efd',
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}
-            onClick={(e) => {
-            e.stopPropagation();
-            openVisit(row);
-            }}
-            >
+        // <span
+        //   style={{
+        //     color: '#0d6efd',
+        //     cursor: 'pointer',
+        //     textDecoration: 'underline'
+        //   }}
+        //     onClick={(e) => {
+        //     e.stopPropagation();
+        //     openVisit(row);
+        //     }}
+        //     >
+              <>
           {row?.encounterId ?? '-'}
-        </span>
+          </>
+        // </span>
       )
     },
     {

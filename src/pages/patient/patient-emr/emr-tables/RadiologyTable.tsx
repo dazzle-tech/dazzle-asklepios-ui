@@ -32,6 +32,7 @@ import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
+import UserDateCell from '@/components/UserDateCell';
 
 const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
 
@@ -285,13 +286,10 @@ const resolveCategoryLabel = (key?: any) =>
       key: 'created',
       title: <Translate>CREATED BY / AT</Translate>,
       render: (row: any) => (
-        <>
-          {row.createdBy ?? '-'}
-          <br />
-          <span style={{ fontSize: 11, color: '#777' }}>
-            {formatDateWithoutSeconds(row.createdDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={row.createdBy}
+          date={row.createdDate}
+        />
       )
     },
 
