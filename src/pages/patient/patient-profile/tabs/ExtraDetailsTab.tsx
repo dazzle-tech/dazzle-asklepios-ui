@@ -23,13 +23,6 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   const { data: responsiblePartyLovQueryResponse } = useGetLovValuesByCodeQuery('RESP_PARTY');
   const { data: educationalLevelLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
 
-  console.log('Marital Status LOV Response:', maritalStatusLovQueryResponse);
-  console.log('Occupation LOV Response:', occupationLovQueryResponse);
-  console.log('Nationality LOV Response:', nationalityLovQueryResponse);
-  console.log('Religion LOV Response:', religeonLovQueryResponse);
-  console.log('Ethnicity LOV Response:', ethnicityLovQueryResponse);
-  console.log('Responsible Party LOV Response:', responsiblePartyLovQueryResponse);
-  console.log('Educational Level LOV Response:', educationalLevelLovQueryResponse); ``
   return (
     <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
       <Form layout="inline" fluid
