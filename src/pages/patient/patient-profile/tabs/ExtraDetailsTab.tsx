@@ -29,144 +29,146 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   console.log('Religion LOV Response:', religeonLovQueryResponse);
   console.log('Ethnicity LOV Response:', ethnicityLovQueryResponse);
   console.log('Responsible Party LOV Response:', responsiblePartyLovQueryResponse);
-  console.log('Educational Level LOV Response:', educationalLevelLovQueryResponse);``
+  console.log('Educational Level LOV Response:', educationalLevelLovQueryResponse); ``
   return (
-     <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
-       <Form layout="inline" fluid
-       
-    >
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Marital Status"
-        fieldType="select"
-        fieldName="maritalStatus"
-        selectData={maritalStatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        disableByField='isValid'
+    <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
+      <Form layout="inline" fluid
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Nationality"
-        fieldType="select"
-        fieldName="nationality"
-        selectData={nationalityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disableByField='isValid'
+      >
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Marital Status"
+          fieldType="select"
+          fieldName="maritalStatus"
+          selectData={maritalStatusLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          searchable={false}
+          disableByField='isValid'
+          required
+        />
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Religion"
-        fieldType="select"
-        fieldName="religion"
-        selectData={religeonLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        disableByField='isValid'
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Occupation"
+          fieldType="select"
+          fieldName="occupation"
+          selectData={occupationLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          menuMaxHeight={200}
+          disableByField='isValid'
+          required
+        />
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Ethnicity"
-        fieldType="select"
-        fieldName="ethnicity"
-        selectData={ethnicityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        disableByField='isValid'
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Nationality"
+          fieldType="select"
+          fieldName="nationality"
+          selectData={nationalityLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disableByField='isValid'
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Religion"
+          fieldType="select"
+          fieldName="religion"
+          selectData={religeonLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          searchable={false}
+          disableByField='isValid'
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Occupation"
-        fieldType="select"
-        fieldName="occupation"
-        selectData={occupationLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        menuMaxHeight={200}
-        disableByField='isValid'
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Ethnicity"
+          fieldType="select"
+          fieldName="ethnicity"
+          selectData={ethnicityLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          searchable={false}
+          disableByField='isValid'
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Responsible Party"
-        fieldType="select"
-        fieldName="responsibleParty"
-        selectData={responsiblePartyLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        disableByField='isValid'
+        />
 
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Educational Level"
-        fieldType="select"
-        fieldName="educationalLevel"
-        selectData={educationalLevelLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        disableByField='isValid'
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Previous ID"
-        fieldName="previousId"
-        record={localPatient}
-        setRecord={setLocalPatient}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Archiving Number"
-        fieldName="archivingNumber"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        fieldType="number"
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Details"
-        fieldType="textarea"
-        fieldName="details"
-        record={localPatient}
-        setRecord={setLocalPatient}
-      />
-    </Form>
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Responsible Party"
+          fieldType="select"
+          fieldName="responsibleParty"
+          selectData={responsiblePartyLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          searchable={false}
+          disableByField='isValid'
+
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Educational Level"
+          fieldType="select"
+          fieldName="educationalLevel"
+          selectData={educationalLevelLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          searchable={false}
+          disableByField='isValid'
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Previous ID"
+          fieldName="previousId"
+          record={localPatient}
+          setRecord={setLocalPatient}
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Archiving Number"
+          fieldName="archivingNumber"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          fieldType="number"
+        />
+        <MyInput
+          vr={validationResult}
+          column
+          fieldLabel="Details"
+          fieldType="textarea"
+          fieldName="details"
+          record={localPatient}
+          setRecord={setLocalPatient}
+        />
+      </Form>
     </div>
-   
+
   );
 };
 
