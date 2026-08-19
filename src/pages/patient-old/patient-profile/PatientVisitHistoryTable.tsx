@@ -279,7 +279,7 @@ const PatientVisitHistoryTable = ({
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && !rowData?.isObserved && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
