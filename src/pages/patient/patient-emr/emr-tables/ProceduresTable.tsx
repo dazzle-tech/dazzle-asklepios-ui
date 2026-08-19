@@ -98,16 +98,18 @@ const ProceduresTable = ({ patient}) => {
       flexGrow: 1,
       render: row => (
 
-        <span
-          style={{
-            color: "#0d6efd",
-            cursor: "pointer",
-            textDecoration: "underline"
-          }}
-          onClick={() => openVisit(row.encounterId)}
-        >
+        // <span
+        //   style={{
+        //     color: "#0d6efd",
+        //     cursor: "pointer",
+        //     textDecoration: "underline"
+        //   }}
+        //   onClick={() => openVisit(row.encounterId)}
+        // >
+        <>
           {row.encounterId ?? "-"}
-        </span>
+        </>
+        // </span>
 
       )
     },

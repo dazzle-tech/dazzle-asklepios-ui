@@ -48,45 +48,48 @@ const PatientsEncounters = () => {
 const [page, setPage] = useState(0);
 const [rowsPerPage, setRowsPerPage] = useState(15);
 
-const [appliedFilters, setAppliedFilters] = useState<any>({
-    fromDate: todayDate,
-    toDate: todayDate,
+    const [appliedFilters, setAppliedFilters] = useState<any>({
+        fromDate: todayDate,
+        toDate: todayDate,
 
-    patientName: undefined,
-    mrn: undefined,
+        patientName: undefined,
+        mrn: undefined,
+        encounterNumber: undefined,
 
-    facilityId: currentFacility?.id ?? undefined,
-    departmentId: undefined,
-    practitionerId: undefined,
+        facilityId: currentFacility?.id ?? undefined,
+        departmentId: undefined,
+        practitionerId: undefined,
 
-    encounterReasons: undefined,
-    statusIn: undefined,
-    encounterStatuses: undefined,
+        encounterReasons: undefined,
+        statusIn: undefined,
+        encounterStatuses: undefined,
 
-    page: 0,
-    size: 15,
-    sort: 'id,desc',
-});
+        page: 0,
+        size: 15,
+        sort: 'id,desc',
+    });
+
     const [patientSearch, setPatientSearch] = useState({
         searchByField: 'fullName',
         patientName: '',
     });
 
-const [filterRecord, setFilterRecord] = useState({
-    fromDate: todayDate,
-    toDate: todayDate,
+    const [filterRecord, setFilterRecord] = useState({
+        fromDate: todayDate,
+        toDate: todayDate,
 
-    patientName: '',
-    mrn: '',
+        patientName: '',
+        mrn: '',
+        encounterNumber: '',
 
-    facilityId: currentFacility?.id ?? null,
-    departmentId: null,
-    practitionerId: null,
+        facilityId: currentFacility?.id ?? null,
+        departmentId: null,
+        practitionerId: null,
 
-    encounterReasons: [],
-    treatmentStatuses: [],
-    encounterStatuses: [],
-});
+        encounterReasons: [],
+        treatmentStatuses: [],
+        encounterStatuses: [],
+    });
 
 
     useEffect(() => {
@@ -284,7 +287,7 @@ const [dateKey, setDateKey] = useState(0);
                 key: 'encounterId',
                 title: 'Encounter Id',
                 render: (row: any) => {
-                    return row.id ?? '-';
+                    return row.encounterNumber ?? '-';
                 },
             },
             {
@@ -362,21 +365,24 @@ const [dateKey, setDateKey] = useState(0);
         const mrn =
             String(filterRecord.mrn ?? '').trim();
 
+        const encounterNumber =
+            String(filterRecord.encounterNumber ?? '').trim();
+
         const encounterReasons =
             Array.isArray(filterRecord.encounterReasons) &&
-                filterRecord.encounterReasons.length > 0
+            filterRecord.encounterReasons.length > 0
                 ? filterRecord.encounterReasons
                 : undefined;
 
         const treatmentStatuses =
             Array.isArray(filterRecord.treatmentStatuses) &&
-                filterRecord.treatmentStatuses.length > 0
+            filterRecord.treatmentStatuses.length > 0
                 ? filterRecord.treatmentStatuses
                 : undefined;
 
         const encounterStatuses =
             Array.isArray(filterRecord.encounterStatuses) &&
-                filterRecord.encounterStatuses.length > 0
+            filterRecord.encounterStatuses.length > 0
                 ? filterRecord.encounterStatuses
                 : undefined;
 
@@ -386,6 +392,7 @@ const [dateKey, setDateKey] = useState(0);
 
             patientName: patientName || undefined,
             mrn: mrn || undefined,
+            encounterNumber: encounterNumber || undefined,
 
             facilityId:
                 filterRecord.facilityId || undefined,
@@ -400,7 +407,6 @@ const [dateKey, setDateKey] = useState(0);
             statusIn: treatmentStatuses,
             encounterStatuses,
 
-            // IMPORTANT
             page: 0,
             size: rowsPerPage,
             sort: 'id,desc',
@@ -408,84 +414,87 @@ const [dateKey, setDateKey] = useState(0);
 
         console.log('SEARCH FILTERS:', newFilters);
 
+        setPage(0);
         setAppliedFilters(newFilters);
     };
 
-const handleClear = () => {
-    const cleared = {
-        fromDate: todayDate,
-        toDate: todayDate,
+    const handleClear = () => {
+        const cleared = {
+            fromDate: todayDate,
+            toDate: todayDate,
 
-        patientName: '',
-        mrn: '',
+            patientName: '',
+            mrn: '',
+            encounterNumber: '',
 
-        facilityId: currentFacility?.id ?? null,
-        departmentId: null,
-        practitionerId: null,
+            facilityId: currentFacility?.id ?? null,
+            departmentId: null,
+            practitionerId: null,
 
-        encounterReasons: [],
-        treatmentStatuses: [],
-        encounterStatuses: [],
+            encounterReasons: [],
+            treatmentStatuses: [],
+            encounterStatuses: [],
+        };
+
+        setFilterRecord(cleared);
+
+        setPatientSearch({
+            searchByField: 'fullName',
+            patientName: '',
+        });
+
+        setPage(0);
+
+            setAppliedFilters({
+                fromDate: todayDate,
+                toDate: todayDate,
+
+                patientName: undefined,
+                mrn: undefined,
+                encounterNumber: undefined,
+
+                facilityId: currentFacility?.id ?? undefined,
+                departmentId: undefined,
+                practitionerId: undefined,
+
+                encounterReasons: undefined,
+                statusIn: undefined,
+                encounterStatuses: undefined,
+
+                page: 0,
+                size: rowsPerPage,
+                sort: 'id,desc',
+            });
+
+        setDateKey(prev => prev + 1);
     };
 
-    setFilterRecord(cleared);
+    const handlePageChange = (
+        _event: unknown,
+        newPage: number
+    ) => {
+        setPage(newPage);
 
-    setPatientSearch({
-        searchByField: 'fullName',
-        patientName: '',
-    });
+        setAppliedFilters(prev => ({
+            ...prev,
+            page: newPage,
+        }));
+    };
 
-    setPage(0);
+    const handleRowsPerPageChange = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const newSize = Number(event.target.value);
 
-    setAppliedFilters({
-        fromDate: todayDate,
-        toDate: todayDate,
+        setRowsPerPage(newSize);
+        setPage(0);
 
-        patientName: undefined,
-        mrn: undefined,
-
-        facilityId: currentFacility?.id ?? undefined,
-        departmentId: undefined,
-        practitionerId: undefined,
-
-        encounterReasons: undefined,
-        statusIn: undefined,
-        encounterStatuses: undefined,
-
-        page: 0,
-        size: rowsPerPage,
-        sort: 'id,desc',
-    });
-
-    setDateKey(prev => prev + 1);
-};
-
-const handlePageChange = (
-    _event: unknown,
-    newPage: number
-) => {
-    setPage(newPage);
-
-    setAppliedFilters(prev => ({
-        ...prev,
-        page: newPage,
-    }));
-};
-
-const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-) => {
-    const newSize = Number(event.target.value);
-
-    setRowsPerPage(newSize);
-    setPage(0);
-
-    setAppliedFilters(prev => ({
-        ...prev,
-        page: 0,
-        size: newSize,
-    }));
-};
+        setAppliedFilters(prev => ({
+            ...prev,
+            page: 0,
+            size: newSize,
+        }));
+    };
 
     return (
         <SectionContainer
@@ -524,6 +533,15 @@ const handleRowsPerPageChange = (
                                     onSearchClick={handlePatientSearchClick}
                                 />
                             </div>
+
+                            <MyInput
+                                fieldName="encounterNumber"
+                                fieldType="text"
+                                fieldLabel="Encounter Number"
+                                record={filterRecord}
+                                setRecord={setFilterRecord}
+                                width="12vw"
+                            />
 
                             <MyInput
                                 fieldName="facilityId"

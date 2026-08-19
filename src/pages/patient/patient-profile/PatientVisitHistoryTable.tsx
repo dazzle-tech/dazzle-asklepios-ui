@@ -41,7 +41,7 @@ import {
   getEncounterLifecycleStatus,
   getEncounterTreatmentStatus
 } from '@/utils/encounterStatusHelpers';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
@@ -82,7 +82,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+  const [getDepartmentById] = useLazyGetDepartmentByIdQuery();
   const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
     useLazyGetDiagnosisFlagsByEncounterIdsQuery();
 
@@ -164,7 +164,14 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const departmentIds = useMemo(
     () =>
-      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
+      Array.from(
+        new Set(
+          encounters
+            .map((e: any) => e.departmentId)
+            .filter((id: any) => id != null)
+            .map((id: any) => Number(id))
+        )
+      ),
     [encounters]
   );
 
@@ -175,27 +182,40 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   useEffect(() => {
     if (!practitionerIds.length) {
-      setPractitionersMap(prev => (Object.keys(prev).length ? {} : prev));
+      setPractitionersMap(prev =>
+        Object.keys(prev).length ? {} : prev
+      );
       return;
     }
 
     const load = async () => {
       try {
-        const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
-        const nextMap = Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p]));
+        const practitioners =
+          await getPractitionersBulk(practitionerIds).unwrap();
+
+        const nextMap = Object.fromEntries(
+          practitioners.map((p: Practitioner) => [
+            String(p.id),
+            p
+          ])
+        );
 
         setPractitionersMap(prev => {
           const prevKeys = Object.keys(prev);
           const nextKeys = Object.keys(nextMap);
+
           if (
             prevKeys.length === nextKeys.length &&
             prevKeys.every(key => prev[key] === nextMap[key])
           ) {
             return prev;
           }
+
           return nextMap;
         });
-      } catch {}
+      } catch (err) {
+        console.error('getPractitionersBulk error:', err);
+      }
     };
 
     load();
@@ -203,33 +223,33 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   useEffect(() => {
     if (!departmentIds.length) {
-      setDepartmentsMap(prev => (Object.keys(prev).length ? {} : prev));
+      setDepartmentsMap({});
       return;
     }
 
     const loadDepartments = async () => {
       try {
-        const departments = await getDepartmentsBulk(departmentIds).unwrap();
-        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
+        const results = await Promise.all(
+          departmentIds.map(id =>
+            getDepartmentById(id).unwrap()
+          )
+        );
 
-        setDepartmentsMap(prev => {
-          const prevKeys = Object.keys(prev);
-          const nextKeys = Object.keys(nextMap);
-          if (
-            prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
-          ) {
-            return prev;
-          }
-          return nextMap;
-        });
+        const nextMap = Object.fromEntries(
+          results.map((department: Department) => [
+            String(department.id),
+            department
+          ])
+        );
+
+        setDepartmentsMap(nextMap);
       } catch (err) {
-        console.error('getDepartmentsBulk error:', err);
+        console.error('getDepartmentById error:', err);
       }
     };
 
     loadDepartments();
-  }, [departmentIds, getDepartmentsBulk]);
+  }, [departmentIds, getDepartmentById]);
 
   useEffect(() => {
     if (!encounterIds.length) return;
@@ -317,7 +337,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const isClosed = lifecycleStatus === 'CLOSED';
 
     const departmentType = departmentsMap[row.departmentId]?.type;
- 
+
     const Radiology = departmentType === 'RADIOLOGY';
     const Laboratory = departmentType === 'LABORATORY';
 
@@ -426,7 +446,11 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       {
         key: 'department',
         title: <Translate>Department</Translate>,
-        render: (row: any) => departmentsMap[row.departmentId]?.name ?? ''
+        render: (row: any) => {
+          const department = departmentsMap[String(row.departmentId)];
+
+          return department?.name || row?.department?.name || '-';
+        }
       },
       {
         key: 'practitioner',

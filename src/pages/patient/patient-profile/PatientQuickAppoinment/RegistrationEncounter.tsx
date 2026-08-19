@@ -14,7 +14,11 @@ import {
   useLazyGetDepartmentByIdQuery
 } from '@/services/security/departmentService';
 
-import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
+import {
+  useLazyGetPractitionersByDepartmentQuery,
+} from '@/services/setup/practitioner/PractitionerDepartmentService';
+
+import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
 
@@ -265,6 +269,9 @@ useEffect(() => {
     { data: practitionersList, isFetching: isPractitionersFetching }
   ] = useLazyGetPractitionersByDepartmentQuery();
 
+  const [triggerGetPractitionerById] =
+    useLazyGetPractitionerByIdQuery();
+
   const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
     useLazyGetServicesByDepartmentQuery();
 
@@ -440,24 +447,40 @@ useEffect(() => {
   }, [localEncounter?.encounterType]);
 
   useEffect(() => {
+    if (!isReadOnly) return;
+
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+
     if (!practitionerId) return;
 
-    setAllPractitioners(previousPractitioners => {
-      const alreadyExists = previousPractitioners.some(
-        (practitioner: any) => Number(practitioner?.id) === practitionerId
-      );
-      if (alreadyExists) return previousPractitioners;
+    const exists = allPractitioners.some(
+      practitioner => Number(practitioner?.id) === practitionerId
+    );
 
-      const injectedPractitioner = {
-        id: practitionerId,
-        firstName: (localEncounter as any)?.practitionerFirstName ?? '',
-        lastName: (localEncounter as any)?.practitionerLastName ?? `#${practitionerId}`,
-        subSpecialty: localEncounter?.specialty ?? null,
-      };
-      return [injectedPractitioner, ...previousPractitioners];
-    });
-  }, [localEncounter?.practitionerId]);
+    if (exists) return;
+
+    triggerGetPractitionerById(practitionerId)
+      .unwrap()
+      .then((practitioner: any) => {
+        if (!practitioner) return;
+
+        setAllPractitioners(previousPractitioners => {
+          const alreadyExists = previousPractitioners.some(
+            item => Number(item?.id) === practitionerId
+          );
+
+          if (alreadyExists) return previousPractitioners;
+
+          return [practitioner, ...previousPractitioners];
+        });
+      })
+      .catch(() => {});
+  }, [
+    isReadOnly,
+    localEncounter?.practitionerId,
+    allPractitioners,
+    triggerGetPractitionerById
+  ]);
 
   useEffect(() => {
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);

@@ -88,6 +88,8 @@ const NormalConsultation = props => {
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isNurse = jobRole === 'NURSE';
+  const isConsultationConfirmed = (row?: Consultation | null) =>
+  String(row?.status ?? '').toUpperCase() === 'CONFIRMED';
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -551,11 +553,10 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) => {
           const status = String(rowData.status ?? '').toUpperCase();
 
-          const editDisabled =
-            edit ||
-            status === 'CONFIRMED' ||
-            status === 'CANCELLED';
-
+const editDisabled =
+  edit ||
+  !['REQUESTED', 'NEW'].includes(status);
+  
           return (
             <MdModeEdit
               size={22}
@@ -569,12 +570,14 @@ const NormalConsultation = props => {
                 if (editDisabled) return;
 
                 if (rowData.toFacilityId) {
-                  getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+                  getDepartmentsByFacility({
+                    facilityId: rowData.toFacilityId
+                  });
                 }
 
                 setConsultation(rowData);
                 setSelectedRow(rowData);
-                setEditing(status !== 'NEW');
+                setEditing(true);
                 setModalKey(prev => prev + 1);
                 setOpenDetailsModal(true);
               }}
@@ -654,7 +657,8 @@ const NormalConsultation = props => {
             setConsultation(rowData);
             setSelectedRow(rowData);
             setSelectedRows([rowData]);
-            setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
+            const status = String(rowData.status ?? '').toUpperCase();
+            setEditing(status !== 'NEW' && status !== 'CONFIRMED');
             setPreviewConsultation(rowData);
           }}
           loading={isLoading}

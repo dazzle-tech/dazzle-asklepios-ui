@@ -303,19 +303,40 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     let unit = '';
     let normalRangeValue = ' ';
 
-    if (resultType === 'LOV') {
+      console.log('NORMAL RANGE DEBUG:', {
+        resultId: r.id,
+        orderTestId: r.orderTestId,
+        profileTestId: r.profileTestId,
+        testName: profile?.name,
+        resultType,
+        resultValueNumber: r.resultValueNumber,
+        resultValueText: r.resultValueText,
+        viewNormalRange: r.viewNormalRange,
+        normalRangeValue: r.normalRangeValue,
+        marker: r.marker,
+        viewMarker: r.viewMarker
+      });
 
-      value = resolveLovDisplayValue(
-        profile?.listOfValueId,
-        r.resultValueText
-      );
+      if (resultType === 'LOV') {
+        value = resolveLovDisplayValue(
+          profile?.listOfValueId,
+          r.resultValueText
+        );
 
-      normalRangeValue = resolveLovDisplayValue(
-        profile?.listOfValueId,
-        r.viewNormalRange
-      );
+        const rawNormalRange =
+          r.viewNormalRange?.trim()
+            ? r.viewNormalRange
+            : r.normalRangeValue?.trim()
+              ? r.normalRangeValue
+              : '';
 
-    } else if (resultType === 'TEXT') {
+        normalRangeValue = rawNormalRange
+          ? resolveLovDisplayValue(
+              profile?.listOfValueId,
+              rawNormalRange
+            )
+          : ' ';
+      } else if (resultType === 'TEXT') {
 
       value = r.resultValueText ?? '';
       normalRangeValue = ' ';
@@ -335,8 +356,13 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
             String(test?.defaultProfileResultUnit)
         )?.lovDisplayVale ?? '';
 
-      normalRangeValue = r.viewNormalRange ?? ' ';
-    }
+normalRangeValue =
+  r.viewNormalRange?.trim()
+    ? r.viewNormalRange
+    : r.normalRangeValue?.trim()
+      ? r.normalRangeValue
+      : ' ';
+        }
 
     return {
       ...r,
@@ -420,7 +446,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   key: 'result',
   title: <Translate>TEST RESULT, UNIT</Translate>,
   render: (row: any) => {
-
     const resultType =
       row?.profile?.resultType?.toUpperCase()?.trim();
 
@@ -448,7 +473,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     {
       key: 'normalRange',
       title: <Translate>NORMAL RANGE</Translate>,
-      render: (row: any) => row.normalRange ?? ' '
+      render: (row: any) => row.normalRange ?? '-'
     },
     {
       key: 'marker',
@@ -521,6 +546,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   if (!patientId) {
     return null;
   }
+
 
   return (
     <Panel defaultExpanded ref={ref}>

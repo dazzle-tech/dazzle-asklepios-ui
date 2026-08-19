@@ -172,6 +172,7 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
         priorities?: string[];
@@ -189,6 +190,7 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        encounterNumber,
         encounterReasons,
         chiefComplaint,
         priorities,
@@ -200,6 +202,7 @@ export const patientEncounterService = createApi({
         sort = 'id,desc',
       }) => {
         const src = statuses ?? statusIn;
+
         const statusesCsv = Array.isArray(src)
           ? src.join(',')
           : src;
@@ -215,6 +218,7 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            encounterNumber,
             encounterReasons,
             chiefComplaint,
             priorities,
