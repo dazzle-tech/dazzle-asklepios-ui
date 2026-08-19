@@ -196,14 +196,53 @@ const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
 const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
 
 const validatePatientNameFields = (patient: Patient): string | null => {
+  const errors: string[] = [];
+
+  if (!patient?.firstName?.trim()) {
+    errors.push('First Name must not be empty');
+  }
+
+  if (!patient?.secondName?.trim()) {
+    errors.push('Second Name must not be empty');
+  }
+
+  if (!patient?.lastName?.trim()) {
+    errors.push('Last Name must not be empty');
+  }
+
+  if (!patient?.sexAtBirth) {
+    errors.push('Sex At Birth must not be null');
+  }
+
+  if (!patient?.dateOfBirth) {
+    errors.push('Date of Birth must not be null');
+  }
+
+  if (!patient?.primaryMobileNumber?.trim()) {
+    errors.push('Primary Mobile Number must not be empty');
+  }
+
+  if (!patient?.maritalStatus) {
+    errors.push('Marital Status must not be empty');
+  }
+
+  if (!patient?.occupation) {
+    errors.push('Occupation must not be empty');
+  }
+
   for (const { key, label } of NAME_FIELDS) {
     const value = String((patient as any)[key] ?? '');
-    if (!value) continue;
-    if (INVALID_TRAILING_CHARS.test(value)) {
-      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+
+    if (value && INVALID_TRAILING_CHARS.test(value)) {
+      errors.push(
+        `${label} must not end with a space, hyphen (-), or hash (#).`
+      );
     }
   }
-  return null;
+
+  return errors.length > 0
+    ? `Please fix the following fields:\n${errors.map(error => `• ${error}`).join('\n')}`
+    : null;
 };
 
 const PatientProfile = () => {
