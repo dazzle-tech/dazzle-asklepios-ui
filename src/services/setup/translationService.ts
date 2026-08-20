@@ -81,26 +81,55 @@ export const translationService = createApi({
 
     //get Dictonary for all languages
 
+    // getDictionary: builder.query({
+    //   query: langKey => `/api/setup/translations`,
+    //   transformResponse: (rows: LanguageTranslation[]) => {
+    //     // const dict: Record<string, string> = {};
+    //     // for (const r of rows) {
+    //     //   const value =
+    //     //      r.translationText?.trim();
+    //     //   dict[r.translationKey] = value;
+    //     // }
+    //     // return dict;
+    //     const all: Record<string, Record<string, string>> = {};
+    //     for (const r of rows) {
+    //       const value = (r.translationText?.trim());
+    //       if (!all[r.langKey]) all[r.langKey] = {};
+    //       // If you want only verified, add: if (!r.verified) continue;
+    //       all[r.langKey][r.translationKey] = value;
+    //     }
+    //     return all;
+    //   },
+    // }),
     getDictionary: builder.query({
-      query: langKey => `/api/setup/translations`,
-      transformResponse: (rows: LanguageTranslation[]) => {
-        // const dict: Record<string, string> = {};
-        // for (const r of rows) {
-        //   const value =
-        //      r.translationText?.trim();
-        //   dict[r.translationKey] = value;
-        // }
-        // return dict;
-        const all: Record<string, Record<string, string>> = {};
-        for (const r of rows) {
-          const value = (r.translationText?.trim());
-          if (!all[r.langKey]) all[r.langKey] = {};
-          // If you want only verified, add: if (!r.verified) continue;
-          all[r.langKey][r.translationKey] = value;
-        }
-        return all;
-      },
-    }),
+  query: langKey => `/api/setup/translations`,
+
+  transformResponse: (rows: LanguageTranslation[]) => {
+    const all: Record<string, any> = {};
+
+for (const r of rows) {
+  const value = r.translationText?.trim();
+
+  if (!all[r.langKey]) {
+    all[r.langKey] = {
+      static: {},
+      enums: {},
+      lovs: {}
+    };
+  }
+
+  if (r.resourceType === 'ENUM') {
+    all[r.langKey].enums[r.resourceKey] = value;
+  } else if (r.resourceType === 'LOVVALUE') {
+    all[r.langKey].lovs[r.resourceKey] = value;
+  } else {
+    all[r.langKey].static[r.translationKey] = value;
+  }
+}
+
+    return all;
+  },
+}),
 
     // GET by pair (lang_key + translation_key)
     getTranslationByPair: builder.query({

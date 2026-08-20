@@ -62,7 +62,20 @@ function extractEnumStrings(
 }
 
 /* --------------------------- Default labeler --------------------------- */
+import { store } from '@/store';
+
 function formatEnumLabel(value: string) {
+  const state = store.getState();
+
+  const lang = state.ui.lang;
+  const translations = state.ui.translations;
+
+  const translated = translations?.[lang]?.enums?.[value];
+
+  if (translated) {
+    return translated;
+  }
+
   return value
     .replace(/_/g, ' ')
     .toLowerCase()

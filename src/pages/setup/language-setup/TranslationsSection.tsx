@@ -44,6 +44,7 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
   onEdit,
   languageSelected
 }) => {
+  console.log('rows', rows);
   const buttons = (
     <div className="flex-10">
       <MyButton
@@ -115,7 +116,23 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
               title: 'Translate',
               dataKey: 'translated',
               width: 80
-            }
+            },
+             {
+              key: 'resourceKey',
+              title: 'resource Key',
+            },
+              {
+              key: 'resourceType',
+              title: 'resource Type',
+            },
+              {
+              key: 'fieldName',
+              title: 'Field Name',
+            },
+              {
+              key: 'enumType',
+              title: 'Enum Type',
+            },
           ]}
           onRowClick={onRowClick}
           rowClassName={(rowData: LanguageTranslation) =>

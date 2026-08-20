@@ -1,3 +1,4 @@
+import { store } from '@/store';
 import { ListRequest } from '@/types/types';
 
 export { extractErrorMessage } from './extractErrorMessage';
@@ -325,8 +326,48 @@ export function formatDateWithoutSeconds(dateString) {
   });
 }
 
+// export const formatEnumString = (input: string): string => {
+//   if (!input) return '';
+
+//   return input
+//     .split('_')
+//     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+//     .join(' ');
+// };
+// export const formatEnumString = (input: string): string => {
+//   if (!input) return '';
+
+//   const language = localStorage.getItem('language');
+//   const dict = JSON.parse(localStorage.getItem('dict') || '{}');
+
+//   const translatedValue = dict?.[language]?.[input];
+
+//   if (translatedValue) {
+//     return translatedValue;
+//   }
+
+//   return input
+//     .split('_')
+//     .map(
+//       word =>
+//         word.charAt(0).toUpperCase() +
+//         word.slice(1).toLowerCase()
+//     )
+//     .join(' ');
+// };
 export const formatEnumString = (input: string): string => {
   if (!input) return '';
+
+  const state = store.getState();
+
+  const lang = state.ui.lang;
+  const translations = state.ui.translations;
+
+  const translated = translations?.[lang]?.enums?.[input];
+
+  if (translated) {
+    return translated;
+  }
 
   return input
     .split('_')

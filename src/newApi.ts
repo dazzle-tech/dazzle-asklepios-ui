@@ -7,17 +7,34 @@ import { RootState } from './store';
 // Create a base query instance with JWT token injection
 const baseFetchBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080',
+  // prepareHeaders: (headers: Headers, { getState }) => {
+  //   const state = getState() as RootState;
+
+  //   // Read JWT token from localStorage (id_token or token)
+  //   const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
+  //   if (jwt) {
+  //     headers.set('Authorization', `Bearer ${jwt}`); // Attach token to Authorization header
+  //   }
+
+  //   return headers;
+  // }
   prepareHeaders: (headers: Headers, { getState }) => {
-    const state = getState() as RootState;
+  const state = getState() as RootState;
 
-    // Read JWT token from localStorage (id_token or token)
-    const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
-    if (jwt) {
-      headers.set('Authorization', `Bearer ${jwt}`); // Attach token to Authorization header
-    }
+  const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
 
-    return headers;
+  if (jwt) {
+    headers.set('Authorization', `Bearer ${jwt}`);
   }
+
+  const language = localStorage.getItem('language');
+
+  if (language) {
+    headers.set('Accept-Language', language);
+  }
+
+  return headers;
+}
 });
 
 // Export BaseQuery

@@ -52,6 +52,7 @@ import {
   ApWarehouseUser
 
 } from '@/types/model-types';
+import { store } from '@/store';
 
 export const setupService = createApi({
   reducerPath: 'setupApi',
@@ -402,13 +403,42 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    // getLovValuesByCode: builder.query({
+    //   query: (code: String) => ({
+    //     url: `/reference-data/get-lov-values-by-code?code=${code}`
+    //   }),
+    //   onQueryStarted: onQueryStarted,
+    //   keepUnusedDataFor: 900 // 15 minutes
+    // }),
     getLovValuesByCode: builder.query({
-      query: (code: String) => ({
-        url: `/reference-data/get-lov-values-by-code?code=${code}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 900 // 15 minutes
-    }),
+  query: (code: String) => ({
+    url: `/reference-data/get-lov-values-by-code?code=${code}`
+  }),
+
+  transformResponse: (response: any) => {
+    const state = store.getState();
+
+    const lang = state.ui.lang;
+    const translations = state.ui.translations;
+
+    const lovTranslations =
+      translations?.[lang]?.lovs ?? {};
+
+    return {
+      ...response,
+
+      object: response.object?.map((item: any) => ({
+        ...item,
+
+        lovDisplayVale:
+          lovTranslations[item.key] ?? item.lovDisplayVale
+      }))
+    };
+  },
+
+  onQueryStarted: onQueryStarted,
+  keepUnusedDataFor: 900
+}),
     getLovValuesByCodeAndParent: builder.query({
       query: input => ({
         url: `/reference-data/get-lov-values-by-code?code=${input.code}&parentValueKey=${input.parentValueKey}`
