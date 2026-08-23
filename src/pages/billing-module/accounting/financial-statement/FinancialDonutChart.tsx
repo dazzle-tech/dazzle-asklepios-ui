@@ -4,7 +4,7 @@ import type { ChartData, ChartOptions } from 'chart.js';
 import 'chart.js/auto';
 import { useSelector } from 'react-redux';
 
-import { money } from './statementFormatters';
+import { money, resolveCssColor } from './statementFormatters';
 
 export type DonutSlice = {
   label: string;
@@ -36,8 +36,8 @@ const FinancialDonutChart: React.FC<FinancialDonutChartProps> = ({
       datasets: [
         {
           data: slices.map(slice => Math.max(Number(slice.value) || 0, 0)),
-          backgroundColor: slices.map(slice => slice.color),
-          borderColor: isDark ? '#2c2c2e' : '#ffffff',
+          backgroundColor: slices.map(slice => resolveCssColor(slice.color)),
+          borderColor: resolveCssColor('var(--rs-bg-card)'),
           borderWidth: 3,
           hoverOffset: 4
         }
@@ -80,7 +80,7 @@ const FinancialDonutChart: React.FC<FinancialDonutChartProps> = ({
       <div className="pfs-chart__legend">
         {slices.map(slice => (
           <div key={slice.label} className="pfs-chart__legend-item">
-            <span className="pfs-chart__swatch" style={{ background: slice.color }} />
+            <span className="pfs-chart__swatch" style={{ background: resolveCssColor(slice.color) }} />
             <span>{slice.label}</span>
             <strong>{money(slice.value, currency)}</strong>
           </div>

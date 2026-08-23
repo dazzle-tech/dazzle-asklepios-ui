@@ -40,6 +40,16 @@ export const statusLabel = (value?: string | null): string => {
   return labels[normalized] ?? formatBillingEnum(value);
 };
 
+export const resolveCssColor = (value: string): string => {
+  const match = value.match(/^var\((--[\w-]+)(?:,\s*([^)]+))?\)$/);
+  if (!match || typeof document === 'undefined') {
+    return value;
+  }
+
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim();
+  return resolved || match[2]?.trim() || value;
+};
+
 export const statusTone = (
   value?: string | null
 ): 'neutral' | 'info' | 'success' | 'warning' | 'danger' => {

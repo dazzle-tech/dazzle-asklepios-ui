@@ -1,46 +1,34 @@
 import React, { useMemo } from 'react';
-import { Loader, Text } from 'rsuite';
+import { Loader } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faUser, faShieldHalved, faStethoscope } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowLeft,
+  faUser,
+  faShieldHalved,
+  faStethoscope
+} from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import { useGetEncounterFinancialStatementQuery } from '@/services/billing/patientFinancialStatementService';
+import {
+  useGetEncounterFinancialStatementQuery,
+  useGetStatementAuditTrailQuery,
+  useGetStatementReceiptsQuery,
+  useGetStatementServiceLinesQuery,
+  useGetStatementTimelineQuery
+} from '@/services/billing/patientFinancialStatementService';
 import { formatBillingEnum } from '../utils/billingAccountingUtils';
 import FinancialDonutChart from './FinancialDonutChart';
 import { dash, money, statusLabel, statusTone, timestamp } from './statementFormatters';
 import { useStatementCatalogLookups } from './useStatementCatalogLookups';
+import useStatementTablePaging from './useStatementTablePaging';
 
 type PatientFinancialStatementViewProps = {
   encounterId: number;
   fallbackCurrency?: string;
   onBack: () => void;
 };
-
-const MetricCard = ({
-  label,
-  value,
-  hint,
-  tone
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: 'success' | 'danger';
-}) => (
-  <div className="pfs-metric">
-    <div className="pfs-metric__label">{label}</div>
-    <div
-      className={`pfs-metric__value${
-        tone === 'success' ? ' pfs-metric__value--success' : tone === 'danger' ? ' pfs-metric__value--danger' : ''
-      }`}
-    >
-      {value}
-    </div>
-    {hint ? <div className="pfs-metric__hint">{hint}</div> : null}
-  </div>
-);
 
 const Field = ({ label, value }: { label: string; value?: React.ReactNode }) => (
   <div className="pfs-field">
@@ -64,8 +52,10 @@ const BreakdownCard = ({
   currency: string;
   note: string;
 }) => (
-  <div className="pfs-card">
-    <div className="pfs-card__title">{title}</div>
+  <div className="pfs-panel">
+    <div className="pfs-panel__head">
+      <h3>{title}</h3>
+    </div>
     <div className="pfs-kv">
       {rows.map(row => (
         <div key={row.label} className="pfs-kv__row">
@@ -78,14 +68,80 @@ const BreakdownCard = ({
   </div>
 );
 
+const PagedLedgerTable = ({
+  title,
+  badge,
+  note,
+  data,
+  loading,
+  totalCount,
+  paging,
+  columns,
+  height = 360
+}: {
+  title: string;
+  badge?: string;
+  note?: string;
+  data: any[];
+  loading?: boolean;
+  totalCount: number;
+  paging: ReturnType<typeof useStatementTablePaging>;
+  columns: any[];
+  height?: number;
+}) => (
+  <section className="pfs-panel">
+    <div className="pfs-panel__head">
+      <h3>{title}</h3>
+      {badge ? <span className="pfs-count">{badge}</span> : null}
+    </div>
+    {note ? <div className="pfs-card__note pfs-card__note--inline">{note}</div> : null}
+    <MyTable
+      data={data}
+      loading={loading}
+      height={height}
+      page={paging.page}
+      rowsPerPage={paging.rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={paging.onPageChange}
+      onRowsPerPageChange={paging.onRowsPerPageChange}
+      columns={columns}
+    />
+  </section>
+);
+
 const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps> = ({
   encounterId,
   fallbackCurrency = 'SAR',
   onBack
 }) => {
   const navigate = useNavigate();
+  const servicePaging = useStatementTablePaging(10);
+  const receiptPaging = useStatementTablePaging(10);
+  const timelinePaging = useStatementTablePaging(10);
+  const auditPaging = useStatementTablePaging(5);
+
   const { data, isFetching, isError } = useGetEncounterFinancialStatementQuery(encounterId, {
     refetchOnMountOrArgChange: true
+  });
+  const serviceLinesQuery = useGetStatementServiceLinesQuery({
+    encounterId,
+    page: servicePaging.page,
+    size: servicePaging.rowsPerPage
+  });
+  const receiptsQuery = useGetStatementReceiptsQuery({
+    encounterId,
+    page: receiptPaging.page,
+    size: receiptPaging.rowsPerPage
+  });
+  const timelineQuery = useGetStatementTimelineQuery({
+    encounterId,
+    page: timelinePaging.page,
+    size: timelinePaging.rowsPerPage
+  });
+  const auditQuery = useGetStatementAuditTrailQuery({
+    encounterId,
+    page: auditPaging.page,
+    size: auditPaging.rowsPerPage
   });
 
   const lookups = useStatementCatalogLookups({
@@ -112,14 +168,20 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
   }
 
   if (isError || data == null) {
-    return (
-      <div className="pfs-empty">
-        Unable to load the financial statement for this visit.
-      </div>
-    );
+    return <div className="pfs-empty">Unable to load the financial statement for this visit.</div>;
   }
 
-  const { header, visitPatient, coveragePayer, invoiceBreakdown, patientSettlement, insuranceSplit, claimFinancial, finalSettlement, footer } = data;
+  const {
+    header,
+    visitPatient,
+    coveragePayer,
+    invoiceBreakdown,
+    patientSettlement,
+    insuranceSplit,
+    claimFinancial,
+    finalSettlement,
+    footer
+  } = data;
 
   return (
     <div className="pfs-statement">
@@ -133,39 +195,51 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
         </MyButton>
       </div>
 
-      <div className="pfs-hero">
+      <section className="pfs-banner">
         <div>
-          <div className="pfs-hero__eyebrow">Patient Financial Statement</div>
-          <Text weight="semibold" size="xxl">
-            {dash(header.encounterNumber)}
-          </Text>
-          <div className="pfs-hero__meta">
-            {dash(header.patientName)} · MRN {dash(header.medicalRecordNumber)} · {timestamp(header.encounterDateTime)} ·{' '}
-            {formatBillingEnum(header.visitType)}
+          <div className="pfs-banner__kicker">Patient Financial Statement</div>
+          <h2 className="pfs-banner__title">{dash(header.encounterNumber)}</h2>
+          <div className="pfs-banner__meta">
+            {dash(header.patientName)} · MRN {dash(header.medicalRecordNumber)} ·{' '}
+            {timestamp(header.encounterDateTime)} · {formatBillingEnum(header.visitType)}
           </div>
         </div>
-        <div className="pfs-hero__side">
+        <div className="pfs-banner__side">
           <StatusPill value={header.financialStatus} />
-          <div className="pfs-hero__invoice">Invoice {dash(header.invoiceNumber)}</div>
+          <div className="pfs-banner__invoice">Invoice {dash(header.invoiceNumber)}</div>
         </div>
-      </div>
+      </section>
 
-      <div className="pfs-metrics">
-        <MetricCard label="Gross services" value={money(header.grossServices, currency)} hint="Before VAT" />
-        <MetricCard label="VAT" value={money(header.vatAmount, currency)} hint="From service tax setup" />
-        <MetricCard label="Patient billed" value={money(header.patientBilled, currency)} hint="Share including VAT" />
-        <MetricCard
-          label="Collected"
-          value={money(header.collected, currency)}
-          hint="Allocated to this invoice"
-          tone={header.collected > 0 ? 'success' : undefined}
-        />
-        <MetricCard
-          label="Outstanding"
-          value={money(header.outstanding, currency)}
-          hint={header.outstanding <= 0 ? 'Settled' : 'Patient remaining'}
-          tone={header.outstanding > 0 ? 'danger' : 'success'}
-        />
+      <div className="pfs-kpis">
+        <div className="pfs-kpi pfs-kpi--primary">
+          <div className="pfs-kpi__label">Gross services</div>
+          <div className="pfs-kpi__value">{money(header.grossServices, currency)}</div>
+          <div className="pfs-kpi__hint">Before VAT</div>
+        </div>
+        <div className="pfs-kpi pfs-kpi--warning">
+          <div className="pfs-kpi__label">VAT</div>
+          <div className="pfs-kpi__value">{money(header.vatAmount, currency)}</div>
+          <div className="pfs-kpi__hint">From service tax setup</div>
+        </div>
+        <div className="pfs-kpi pfs-kpi--purple">
+          <div className="pfs-kpi__label">Patient billed</div>
+          <div className="pfs-kpi__value">{money(header.patientBilled, currency)}</div>
+          <div className="pfs-kpi__hint">Share including VAT</div>
+        </div>
+        <div className="pfs-kpi pfs-kpi--success">
+          <div className="pfs-kpi__label">Collected</div>
+          <div className={`pfs-kpi__value${header.collected > 0 ? ' is-success' : ''}`}>
+            {money(header.collected, currency)}
+          </div>
+          <div className="pfs-kpi__hint">Allocated to this invoice</div>
+        </div>
+        <div className={`pfs-kpi ${header.outstanding > 0 ? 'pfs-kpi--danger' : 'pfs-kpi--success'}`}>
+          <div className="pfs-kpi__label">Outstanding</div>
+          <div className={`pfs-kpi__value${header.outstanding > 0 ? ' is-danger' : ' is-success'}`}>
+            {money(header.outstanding, currency)}
+          </div>
+          <div className="pfs-kpi__hint">{header.outstanding <= 0 ? 'Settled' : 'Patient remaining'}</div>
+        </div>
       </div>
 
       <div className="pfs-progress">
@@ -184,8 +258,8 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           centerHint="Collected"
           currency={currency}
           slices={[
-            { label: 'Collected', value: header.collected, color: '#22c55e' },
-            { label: 'Outstanding', value: header.outstanding, color: '#ef4444' }
+            { label: 'Collected', value: header.collected, color: 'var(--primary-green)' },
+            { label: 'Outstanding', value: header.outstanding, color: 'var(--primary-red)' }
           ]}
         />
         <FinancialDonutChart
@@ -194,9 +268,9 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           centerHint="Invoice total"
           currency={currency}
           slices={[
-            { label: 'Net services', value: invoiceBreakdown.netServices, color: '#3b82f6' },
-            { label: 'VAT', value: invoiceBreakdown.vatAmount, color: '#f59e0b' },
-            { label: 'Discount', value: invoiceBreakdown.discountAmount, color: '#94a3b8' }
+            { label: 'Net services', value: invoiceBreakdown.netServices, color: 'var(--primary-blue)' },
+            { label: 'VAT', value: invoiceBreakdown.vatAmount, color: 'var(--primary-orange)' },
+            { label: 'Discount', value: invoiceBreakdown.discountAmount, color: 'var(--primary-gray)' }
           ]}
         />
         <FinancialDonutChart
@@ -205,15 +279,17 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           centerHint="Billed parties"
           currency={currency}
           slices={[
-            { label: 'Patient', value: finalSettlement.patientBilled, color: '#7c3aed' },
-            { label: 'Insurance', value: finalSettlement.insuranceBilled, color: '#2563eb' }
+            { label: 'Patient', value: finalSettlement.patientBilled, color: 'var(--primary-purple)' },
+            { label: 'Insurance', value: finalSettlement.insuranceBilled, color: 'var(--deep-blue)' }
           ]}
         />
       </div>
 
       <div className="pfs-info-grid">
-        <div className="pfs-card">
-          <div className="pfs-card__title">Visit & patient</div>
+        <div className="pfs-panel">
+          <div className="pfs-panel__head">
+            <h3>Visit & patient</h3>
+          </div>
           <div className="pfs-person">
             <FontAwesomeIcon icon={faUser} />
             <div>
@@ -241,8 +317,10 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           </div>
         </div>
 
-        <div className="pfs-card">
-          <div className="pfs-card__title">Coverage & payer</div>
+        <div className="pfs-panel">
+          <div className="pfs-panel__head">
+            <h3>Coverage & payer</h3>
+          </div>
           <div className="pfs-person">
             <FontAwesomeIcon icon={faShieldHalved} />
             <div>
@@ -261,32 +339,31 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
         </div>
       </div>
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">
-          Charged services
-          <span className="pfs-card__badge">{data.serviceLines.length} lines</span>
-        </div>
-        <MyTable
-          data={data.serviceLines}
-          height={Math.min(420, 120 + data.serviceLines.length * 56)}
-          columns={[
-            { key: 'serviceCode', title: 'Code', render: row => dash(row.serviceCode) },
-            { key: 'serviceName', title: 'Service', render: row => dash(row.serviceName) },
-            { key: 'quantity', title: 'Qty', render: row => dash(row.quantity) },
-            { key: 'unitPrice', title: 'Unit', render: row => money(row.unitPrice, currency) },
-            { key: 'grossAmount', title: 'Gross', render: row => money(row.grossAmount, currency) },
-            { key: 'discountAmount', title: 'Discount', render: row => money(row.discountAmount, currency) },
-            { key: 'netAmount', title: 'Net', render: row => money(row.netAmount, currency) },
-            { key: 'deductibleAmount', title: 'Deductible', render: row => money(row.deductibleAmount, currency) },
-            { key: 'copayAmount', title: 'Co-payment', render: row => money(row.copayAmount, currency) },
-            { key: 'nonCoveredAmount', title: 'Non-covered', render: row => money(row.nonCoveredAmount, currency) },
-            { key: 'patientResponsibility', title: 'Patient', render: row => money(row.patientResponsibility, currency) },
-            { key: 'insuranceShare', title: 'Insurance', render: row => money(row.insuranceShare, currency) },
-            { key: 'vatAmount', title: 'VAT', render: row => money(row.vatAmount, currency) },
-            { key: 'lineTotal', title: 'Line total', render: row => money(row.lineTotal, currency) }
-          ]}
-        />
-      </div>
+      <PagedLedgerTable
+        title="Charged services"
+        badge={`${serviceLinesQuery.data?.totalElements ?? 0} lines`}
+        data={serviceLinesQuery.data?.content ?? []}
+        loading={serviceLinesQuery.isFetching}
+        totalCount={serviceLinesQuery.data?.totalElements ?? 0}
+        paging={servicePaging}
+        height={420}
+        columns={[
+          { key: 'serviceCode', title: 'Code', render: row => dash(row.serviceCode) },
+          { key: 'serviceName', title: 'Service', render: row => dash(row.serviceName) },
+          { key: 'quantity', title: 'Qty', render: row => dash(row.quantity) },
+          { key: 'unitPrice', title: 'Unit', render: row => money(row.unitPrice, currency) },
+          { key: 'grossAmount', title: 'Gross', render: row => money(row.grossAmount, currency) },
+          { key: 'discountAmount', title: 'Discount', render: row => money(row.discountAmount, currency) },
+          { key: 'netAmount', title: 'Net', render: row => money(row.netAmount, currency) },
+          { key: 'deductibleAmount', title: 'Deductible', render: row => money(row.deductibleAmount, currency) },
+          { key: 'copayAmount', title: 'Co-payment', render: row => money(row.copayAmount, currency) },
+          { key: 'nonCoveredAmount', title: 'Non-covered', render: row => money(row.nonCoveredAmount, currency) },
+          { key: 'patientResponsibility', title: 'Patient', render: row => money(row.patientResponsibility, currency) },
+          { key: 'insuranceShare', title: 'Insurance', render: row => money(row.insuranceShare, currency) },
+          { key: 'vatAmount', title: 'VAT', render: row => money(row.vatAmount, currency) },
+          { key: 'lineTotal', title: 'Line total', render: row => money(row.lineTotal, currency) }
+        ]}
+      />
 
       <div className="pfs-three">
         <BreakdownCard
@@ -328,32 +405,26 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
         />
       </div>
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">Receipts on this visit</div>
-        <div className="pfs-card__note pfs-card__note--inline">
-          Includes wallet top-ups posted on the encounter.
-        </div>
-        <MyTable
-          data={data.receipts}
-          height={Math.min(320, 120 + Math.max(data.receipts.length, 1) * 52)}
-          columns={[
-            { key: 'paymentDate', title: 'Payment date', render: row => timestamp(row.paymentDate) },
-            { key: 'receiptNumber', title: 'Receipt #', render: row => dash(row.receiptNumber) },
-            { key: 'paymentMethod', title: 'Method', render: row => formatBillingEnum(row.paymentMethod) },
-            { key: 'payer', title: 'Payer', render: row => dash(row.payer) },
-            {
-              key: 'status',
-              title: 'Status',
-              render: row => <StatusPill value={row.status} />
-            },
-            { key: 'amount', title: 'Amount', render: row => money(row.amount, currency) }
-          ]}
-        />
-      </div>
+      <PagedLedgerTable
+        title="Receipts on this visit"
+        note="Includes wallet top-ups posted on the encounter."
+        data={receiptsQuery.data?.content ?? []}
+        loading={receiptsQuery.isFetching}
+        totalCount={receiptsQuery.data?.totalElements ?? 0}
+        paging={receiptPaging}
+        columns={[
+          { key: 'paymentDate', title: 'Payment date', render: row => timestamp(row.paymentDate) },
+          { key: 'receiptNumber', title: 'Receipt #', render: row => dash(row.receiptNumber) },
+          { key: 'paymentMethod', title: 'Method', render: row => formatBillingEnum(row.paymentMethod) },
+          { key: 'payer', title: 'Payer', render: row => dash(row.payer) },
+          { key: 'status', title: 'Status', render: row => <StatusPill value={row.status} /> },
+          { key: 'amount', title: 'Amount', render: row => money(row.amount, currency) }
+        ]}
+      />
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">
-          Insurance / claim financial
+      <section className="pfs-panel">
+        <div className="pfs-panel__head">
+          <h3>Insurance / claim financial</h3>
           {claimFinancial.claimId != null && (
             <MyButton appearance="ghost" onClick={() => navigate('/billing-claims')}>
               Claim details
@@ -361,7 +432,7 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           )}
         </div>
         {claimFinancial.rejectionReason ? (
-          <div className="pfs-banner">
+          <div className="pfs-alert">
             Rejected amount stays on insurance until a business rule assigns it. Reason:{' '}
             {claimFinancial.rejectionReason}
           </div>
@@ -377,26 +448,29 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           <Field label="Insurance payment received" value={money(claimFinancial.insurancePaymentReceived, currency)} />
           <Field label="Insurance outstanding" value={money(claimFinancial.insuranceOutstanding, currency)} />
         </div>
-      </div>
+      </section>
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">Financial transactions timeline</div>
-        <MyTable
-          data={data.timeline}
-          height={Math.min(380, 120 + Math.max(data.timeline.length, 1) * 52)}
-          columns={[
-            { key: 'transactionDate', title: 'Date', render: row => timestamp(row.transactionDate) },
-            { key: 'transactionType', title: 'Type', render: row => formatBillingEnum(row.transactionType) },
-            { key: 'reference', title: 'Reference', render: row => dash(row.reference) },
-            { key: 'debit', title: 'Debit', render: row => money(row.debit, currency) },
-            { key: 'credit', title: 'Credit', render: row => money(row.credit, currency) },
-            { key: 'runningBalance', title: 'Running balance', render: row => money(row.runningBalance, currency) }
-          ]}
-        />
-      </div>
+      <PagedLedgerTable
+        title="Financial transactions timeline"
+        data={timelineQuery.data?.content ?? []}
+        loading={timelineQuery.isFetching}
+        totalCount={timelineQuery.data?.totalElements ?? 0}
+        paging={timelinePaging}
+        columns={[
+          { key: 'transactionDate', title: 'Date', render: row => timestamp(row.transactionDate) },
+          { key: 'transactionType', title: 'Type', render: row => formatBillingEnum(row.transactionType) },
+          { key: 'reference', title: 'Reference', render: row => dash(row.reference) },
+          { key: 'debit', title: 'Debit', render: row => money(row.debit, currency) },
+          { key: 'credit', title: 'Credit', render: row => money(row.credit, currency) },
+          { key: 'runningBalance', title: 'Running balance', render: row => money(row.runningBalance, currency) }
+        ]}
+      />
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">Final visit financial / Final settlement summary</div>
+      <section className="pfs-panel">
+        <div className="pfs-panel__head">
+          <h3>Final visit financial</h3>
+          <StatusPill value={finalSettlement.overallFinancialStatus} />
+        </div>
         <div className="pfs-fields pfs-fields--dense">
           <Field label="Gross charges" value={money(finalSettlement.grossCharges, currency)} />
           <Field label="Patient billed" value={money(finalSettlement.patientBilled, currency)} />
@@ -407,7 +481,6 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           <Field label="Patient outstanding" value={money(finalSettlement.patientOutstanding, currency)} />
           <Field label="Insurance outstanding" value={money(finalSettlement.insuranceOutstanding, currency)} />
           <Field label="Visit outstanding" value={money(finalSettlement.visitOutstanding, currency)} />
-          <Field label="Overall financial status" value={<StatusPill value={finalSettlement.overallFinancialStatus} />} />
         </div>
         <MyTable
           data={finalSettlement.parties}
@@ -419,26 +492,26 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
             { key: 'outstanding', title: 'Outstanding', render: row => money(row.outstanding, currency) }
           ]}
         />
-      </div>
+      </section>
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">Audit trail</div>
-        <MyTable
-          data={data.auditTrail}
-          height={Math.min(320, 120 + Math.max(data.auditTrail.length, 1) * 52)}
-          columns={[
-            { key: 'eventDate', title: 'Date / Time', render: row => timestamp(row.eventDate) },
-            { key: 'event', title: 'Event', render: row => formatBillingEnum(row.event) },
-            { key: 'reference', title: 'Reference', render: row => dash(row.reference) },
-            { key: 'user', title: 'User', render: row => dash(row.user) },
-            { key: 'previousValue', title: 'Previous', render: row => dash(row.previousValue) },
-            { key: 'newValue', title: 'New', render: row => dash(row.newValue) },
-            { key: 'reason', title: 'Reason', render: row => dash(row.reason) }
-          ]}
-        />
-      </div>
+      <PagedLedgerTable
+        title="Audit trail"
+        data={auditQuery.data?.content ?? []}
+        loading={auditQuery.isFetching}
+        totalCount={auditQuery.data?.totalElements ?? 0}
+        paging={auditPaging}
+        columns={[
+          { key: 'eventDate', title: 'Date / Time', render: row => timestamp(row.eventDate) },
+          { key: 'event', title: 'Event', render: row => formatBillingEnum(row.event) },
+          { key: 'reference', title: 'Reference', render: row => dash(row.reference) },
+          { key: 'user', title: 'User', render: row => dash(row.user) },
+          { key: 'previousValue', title: 'Previous', render: row => dash(row.previousValue) },
+          { key: 'newValue', title: 'New', render: row => dash(row.newValue) },
+          { key: 'reason', title: 'Reason', render: row => dash(row.reason) }
+        ]}
+      />
 
-      <div className="pfs-card pfs-footer">
+      <section className="pfs-panel pfs-footer">
         <div className="pfs-fields pfs-fields--dense">
           <Field label="Prepared by" value={dash(footer.preparedBy)} />
           <Field label="Finalized by" value={dash(footer.finalizedBy)} />
@@ -453,7 +526,7 @@ const PatientFinancialStatementView: React.FC<PatientFinancialStatementViewProps
           This Patient Financial Statement is a financial settlement report. It is not a substitute for an
           electronic tax invoice.
         </div>
-      </div>
+      </section>
     </div>
   );
 };

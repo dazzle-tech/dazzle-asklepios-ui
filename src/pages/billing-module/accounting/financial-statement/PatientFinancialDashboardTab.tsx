@@ -1,38 +1,51 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader, Text } from 'rsuite';
+import { Loader } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileInvoiceDollar, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 
 import MyTable from '@/components/MyTable';
 import { useGetPatientFinancialDashboardQuery } from '@/services/billing/patientFinancialStatementService';
 import { formatBillingEnum, resolvePatientId } from '../utils/billingAccountingUtils';
 import PatientFinancialStatementView from './PatientFinancialStatementView';
 import { dash, money, statusLabel, statusTone, timestamp } from './statementFormatters';
+import useStatementTablePaging from './useStatementTablePaging';
 
 type PatientFinancialDashboardTabProps = {
   patient?: any;
   currency?: string;
 };
 
-const SummaryCard = ({
+const initials = (name?: string | null) =>
+  String(name ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('') || 'PF';
+
+const KpiCard = ({
   label,
   value,
   hint,
-  tone
+  tone,
+  accent
 }: {
   label: string;
   value: string;
   hint: string;
   tone?: 'success' | 'danger';
+  accent: 'primary' | 'purple' | 'info' | 'success' | 'danger' | 'warning';
 }) => (
-  <div className="pfs-metric">
-    <div className="pfs-metric__label">{label}</div>
+  <div className={`pfs-kpi pfs-kpi--${accent}`}>
+    <div className="pfs-kpi__label">{label}</div>
     <div
-      className={`pfs-metric__value${
-        tone === 'success' ? ' pfs-metric__value--success' : tone === 'danger' ? ' pfs-metric__value--danger' : ''
+      className={`pfs-kpi__value${
+        tone === 'success' ? ' is-success' : tone === 'danger' ? ' is-danger' : ''
       }`}
     >
       {value}
     </div>
-    <div className="pfs-metric__hint">{hint}</div>
+    <div className="pfs-kpi__hint">{hint}</div>
   </div>
 );
 
@@ -42,19 +55,37 @@ const PatientFinancialDashboardTab: React.FC<PatientFinancialDashboardTabProps> 
 }) => {
   const patientId = resolvePatientId(patient);
   const [selectedEncounterId, setSelectedEncounterId] = useState<number | null>(null);
+  const paging = useStatementTablePaging(10);
 
-  const { data, isFetching, isError } = useGetPatientFinancialDashboardQuery(patientId as number, {
-    skip: patientId == null,
-    refetchOnMountOrArgChange: true
-  });
+  const { data, isFetching, isError } = useGetPatientFinancialDashboardQuery(
+    {
+      patientId: patientId as number,
+      page: paging.page,
+      size: paging.rowsPerPage
+    },
+    {
+      skip: patientId == null,
+      refetchOnMountOrArgChange: true
+    }
+  );
 
   useEffect(() => {
     setSelectedEncounterId(null);
+    paging.onPageChange(undefined, 0);
   }, [patientId]);
 
   const currency = data?.currency ?? fallbackCurrency;
+  const encounters = data?.encounters?.content ?? [];
+  const totals = data?.totals;
+  const visitCount = data?.encounters?.totalElements ?? 0;
 
-  const encounters = useMemo(() => data?.encounters ?? [], [data]);
+  const collectionRate = useMemo(() => {
+    const billed =
+      Number(totals?.patientResponsibility ?? 0) + Number(totals?.insuranceShare ?? 0);
+    const collected = Number(totals?.totalCollected ?? 0);
+    if (billed <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.round((collected / billed) * 100)));
+  }, [totals]);
 
   if (patientId == null) {
     return (
@@ -83,70 +114,102 @@ const PatientFinancialDashboardTab: React.FC<PatientFinancialDashboardTabProps> 
   }
 
   if (isError) {
-    return (
-      <div className="pfs-empty">Unable to load the patient financial dashboard.</div>
-    );
+    return <div className="pfs-empty">Unable to load the patient financial dashboard.</div>;
   }
-
-  const totals = data?.totals;
 
   return (
     <div className="pfs-dashboard">
-      <div className="pfs-dashboard__header">
-        <div>
-          <Text weight="semibold" size="lg">
-            Accounting dashboard
-          </Text>
-          <div className="pfs-dashboard__subtitle">
-            {dash(data?.patientName)} · MRN {dash(data?.medicalRecordNumber)}
+      <section className="pfs-banner">
+        <div className="pfs-banner__identity">
+          <div className="pfs-avatar">{initials(data?.patientName)}</div>
+          <div>
+            <div className="pfs-banner__kicker">Accounting workspace</div>
+            <h2 className="pfs-banner__title">{dash(data?.patientName)}</h2>
+            <div className="pfs-banner__meta">
+              MRN {dash(data?.medicalRecordNumber)}
+              {data?.nationalId ? ` · ID ${data.nationalId}` : ''}
+              {` · ${visitCount} visit${visitCount === 1 ? '' : 's'}`}
+            </div>
           </div>
         </div>
-      </div>
+        <div className="pfs-banner__score">
+          <div className="pfs-ring" style={{ '--pfs-rate': `${collectionRate}` } as React.CSSProperties}>
+            <strong>{collectionRate}%</strong>
+            <span>Collected</span>
+          </div>
+        </div>
+      </section>
 
-      <div className="pfs-metrics">
-        <SummaryCard
+      <div className="pfs-kpis">
+        <KpiCard
           label="Gross charges"
           value={money(totals?.grossCharges, currency)}
           hint="All visit charges"
+          accent="primary"
         />
-        <SummaryCard
+        <KpiCard
           label="Patient responsibility"
           value={money(totals?.patientResponsibility, currency)}
           hint="Deductible, co-pay and non-covered"
+          accent="purple"
         />
-        <SummaryCard
+        <KpiCard
           label="Insurance share"
           value={money(totals?.insuranceShare, currency)}
           hint="Payer responsibility"
+          accent="info"
         />
-        <SummaryCard
+        <KpiCard
           label="Total collected"
           value={money(totals?.totalCollected, currency)}
           hint="Allocated payments"
           tone={(totals?.totalCollected ?? 0) > 0 ? 'success' : undefined}
+          accent="success"
         />
-        <SummaryCard
+        <KpiCard
           label="Outstanding"
           value={money(totals?.outstanding, currency)}
           hint="Patient + insurance remaining"
           tone={(totals?.outstanding ?? 0) > 0 ? 'danger' : 'success'}
+          accent={(totals?.outstanding ?? 0) > 0 ? 'danger' : 'success'}
         />
       </div>
 
-      <div className="pfs-card">
-        <div className="pfs-card__title">
-          Patient visits
-          <span className="pfs-card__badge">{encounters.length} encounters</span>
+      <section className="pfs-panel">
+        <div className="pfs-panel__head">
+          <div>
+            <h3>Visit ledger</h3>
+            <p>Open a visit to review the full Patient Financial Statement.</p>
+          </div>
+          <span className="pfs-count">{visitCount} encounters</span>
         </div>
         <MyTable
           data={encounters}
-          height={Math.min(520, 160 + Math.max(encounters.length, 1) * 56)}
+          loading={isFetching}
+          height={460}
+          page={paging.page}
+          rowsPerPage={paging.rowsPerPage}
+          totalCount={visitCount}
+          onPageChange={paging.onPageChange}
+          onRowsPerPageChange={paging.onRowsPerPageChange}
           onRowClick={row => setSelectedEncounterId(Number(row.encounterId))}
           rowClassName={() => 'pfs-visit-row'}
           columns={[
-            { key: 'encounterNumber', title: 'Encounter', render: row => dash(row.encounterNumber) },
+            {
+              key: 'encounterNumber',
+              title: 'Encounter',
+              render: row => (
+                <div className="pfs-visit-id">
+                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                  <div>
+                    <strong>{dash(row.encounterNumber)}</strong>
+                    <small>{formatBillingEnum(row.visitType)}</small>
+                  </div>
+                </div>
+              )
+            },
             { key: 'encounterDateTime', title: 'Date', render: row => timestamp(row.encounterDateTime) },
-            { key: 'visitType', title: 'Visit type', render: row => formatBillingEnum(row.visitType) },
+            { key: 'invoiceNumber', title: 'Invoice', render: row => dash(row.invoiceNumber) },
             { key: 'grossCharges', title: 'Gross', render: row => money(row.grossCharges, currency) },
             {
               key: 'patientResponsibility',
@@ -164,10 +227,20 @@ const PatientFinancialDashboardTab: React.FC<PatientFinancialDashboardTabProps> 
                   {statusLabel(row.financialStatus)}
                 </span>
               )
+            },
+            {
+              key: 'open',
+              title: '',
+              align: 'right',
+              render: () => (
+                <span className="pfs-open">
+                  Statement <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+                </span>
+              )
             }
           ]}
         />
-      </div>
+      </section>
     </div>
   );
 };
