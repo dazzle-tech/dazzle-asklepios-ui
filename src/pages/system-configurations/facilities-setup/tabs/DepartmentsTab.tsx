@@ -34,6 +34,7 @@ import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse
 import AddEditDepartmentInline from './AddEditDepartmentInline';
 import { MdHomeRepairService } from "react-icons/md";
 import AddServiceToDepartment from './AddServiceToDepartment';
+import DynamicTranslate from '@/components/DynamicTranslate';
 
 interface DepartmentsTabProps {
   facility: Facility;
@@ -579,10 +580,18 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       flexGrow: 4,
       render: (rowData: Department) => <p>{formatEnumString(rowData?.departmentType)}</p>,
     },
-    {
+    // {
+    //   key: 'name',
+    //   title: <Translate key="DEPARTMENT_NAME">Department Name</Translate>,
+    //   flexGrow: 4,
+      
+    // },
+     {
       key: 'name',
       title: <Translate key="DEPARTMENT_NAME">Department Name</Translate>,
-      flexGrow: 4,
+      render: (rowData: Department) => (
+        <span><DynamicTranslate resourceType='DEPARTMENT' resourceKey={String(rowData?.id)} fieldName="name">{rowData?.name}</DynamicTranslate></span>
+      ),
     },
     {
       key: 'phoneNumber',
