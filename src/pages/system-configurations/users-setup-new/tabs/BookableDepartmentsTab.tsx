@@ -19,6 +19,7 @@ import { useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery }
 import { UserBookableDepartmentResponseVM } from '@/types/model-types-new';
 import { newUserBookableDepartment } from '@/types/model-types-constructor-new';
 import { ApUser } from '@/types/model-types-new';
+import DynamicTranslate from '@/components/DynamicTranslate';
 
 interface BookableDepartmentsTabProps {
   user: ApUser;
@@ -210,7 +211,7 @@ const BookableDepartmentsTab: React.FC<BookableDepartmentsTabProps> = ({ user, w
       title: <Translate>Department Name</Translate>,
       flexGrow: 4,
       render: (rowData: UserBookableDepartmentResponseVM) => (
-        <span>{rowData?.departmentName ?? '-'}</span>
+        <span><DynamicTranslate resourceType='DEPARTMENT' resourceKey={String(rowData?.departmentId)} fieldName="name">{rowData?.departmentName}</DynamicTranslate></span>
       ),
     },
     {

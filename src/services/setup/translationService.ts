@@ -101,31 +101,71 @@ export const translationService = createApi({
     //     return all;
     //   },
     // }),
-    getDictionary: builder.query({
+//     getDictionary: builder.query({
+//   query: langKey => `/api/setup/translations`,
+
+//   transformResponse: (rows: LanguageTranslation[]) => {
+//     const all: Record<string, any> = {};
+
+// for (const r of rows) {
+//   const value = r.translationText?.trim();
+
+//   if (!all[r.langKey]) {
+//     all[r.langKey] = {
+//       static: {},
+//       enums: {},
+//       lovs: {}
+//     };
+//   }
+
+//   if (r.resourceType === 'ENUM') {
+//     all[r.langKey].enums[r.resourceKey] = value;
+//   } else if (r.resourceType === 'LOVVALUE') {
+//     all[r.langKey].lovs[r.resourceKey] = value;
+//   } else {
+//     all[r.langKey].static[r.translationKey] = value;
+//   }
+// }
+
+//     return all;
+//   },
+// }),
+getDictionary: builder.query({
   query: langKey => `/api/setup/translations`,
 
   transformResponse: (rows: LanguageTranslation[]) => {
     const all: Record<string, any> = {};
 
-for (const r of rows) {
-  const value = r.translationText?.trim();
+    for (const r of rows) {
+      const value = r.translationText?.trim();
 
-  if (!all[r.langKey]) {
-    all[r.langKey] = {
-      static: {},
-      enums: {},
-      lovs: {}
-    };
-  }
+      if (!all[r.langKey]) {
+        all[r.langKey] = {
+          static: {},
+          enums: {},
+          lovs: {},
+          dynamic: {},
+        };
+      }
 
-  if (r.resourceType === 'ENUM') {
-    all[r.langKey].enums[r.resourceKey] = value;
-  } else if (r.resourceType === 'LOVVALUE') {
-    all[r.langKey].lovs[r.resourceKey] = value;
-  } else {
-    all[r.langKey].static[r.translationKey] = value;
-  }
-}
+      if (r.resourceType === 'ENUM') {
+        all[r.langKey].enums[r.resourceKey] = value;
+      } else if (r.resourceType === 'LOVVALUE') {
+        all[r.langKey].lovs[r.resourceKey] = value;
+      } else if (!r.resourceType) {
+        all[r.langKey].static[r.translationKey] = value;
+      } else {
+        if (!all[r.langKey].dynamic[r.resourceType]) {
+          all[r.langKey].dynamic[r.resourceType] = {};
+        }
+
+        if (!all[r.langKey].dynamic[r.resourceType][r.resourceKey]) {
+          all[r.langKey].dynamic[r.resourceType][r.resourceKey] = {};
+        }
+
+        all[r.langKey].dynamic[r.resourceType][r.resourceKey][r.fieldName] = value;
+      }
+    }
 
     return all;
   },
