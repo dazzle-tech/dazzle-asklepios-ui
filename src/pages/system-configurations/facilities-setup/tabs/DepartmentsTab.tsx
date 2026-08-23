@@ -27,13 +27,14 @@ import {
 import { MedicalSheets } from '@/config/modules-config';
 import { useBulkSaveMedicalSheetsMutation, useBulkSaveNurseMedicalSheetsMutation } from '@/services/MedicalSheetsService';
 import { useEnumOptions } from '@/services/enumsApi';
-import {  formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import ChooseScreen from '@/pages/setup/departments-setup/ChooseScreen';
 import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse';
 import AddEditDepartmentInline from './AddEditDepartmentInline';
 import { MdHomeRepairService } from "react-icons/md";
 import AddServiceToDepartment from './AddServiceToDepartment';
+import TranslationModal from '@/components/TranslationModal';
 
 interface DepartmentsTabProps {
   facility: Facility;
@@ -93,6 +94,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [isFiltered, setIsFiltered] = useState(false);
   const [addDefaultMedicalSheets, setAddDefaultMedicalSheets] = useState(false);
   const [addDefaultNurseMedicalSheets, setAddDefaultNurseMedicalSheets] = useState(false);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [linksState, setLinksState] = useState<{
     next?: string | null;
     prev?: string | null;
@@ -262,140 +264,144 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   };
 
   const handleAdd = () => {
-  if (!validateRequiredFields()) {
-    return;
-  }
+    if (!validateRequiredFields()) {
+      return;
+    }
 
-  if (!facilityId) {
-    dispatch(notify({ msg: 'Facility is required to add a department', sev: 'warning' }));
-    return;
-  }
+    if (!facilityId) {
+      dispatch(notify({ msg: 'Facility is required to add a department', sev: 'warning' }));
+      return;
+    }
 
-  setOpenForm(false);
-  setLoad(true);
+    setOpenForm(false);
+    setLoad(true);
 
-  const payload = stripUndefined({
-    facilityId: Number(facilityId),
-    name: (department?.name ?? '').trim(),
-    departmentType: department?.departmentType,
-    departmentCode: department?.departmentCode,
-    appointable: Boolean(department?.appointable),
-    encounterType: department?.encounterType || undefined,
-    phoneNumber: department?.phoneNumber || undefined,
-    email: department?.email || undefined,
-    isActive: department?.isActive ?? true,
-    hasMedicalSheets: Boolean(department?.hasMedicalSheets),
-    hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
-    parallelCapacityValue: department.parallelCapacityValue ?? 1,
-    defaultDurationMinutes: department?.defaultDurationMinutes,
-    defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
-    defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
-    parallelCapacityEnabled: department?.parallelCapacityEnabled,
-    requirePractitioner: true,
-    requireBilling: department?.requireBilling,
-    requirePreAssessment: department?.requirePreAssessment,
-    workingDays: buildWorkingDaysPayload(department?.workingDays),
-  });
+    const payload = stripUndefined({
+      facilityId: Number(facilityId),
+      name: (department?.name ?? '').trim(),
+      departmentType: department?.departmentType,
+      departmentCode: department?.departmentCode,
+      appointable: Boolean(department?.appointable),
+      encounterType: department?.encounterType || undefined,
+      phoneNumber: department?.phoneNumber || undefined,
+      email: department?.email || undefined,
+      isActive: department?.isActive ?? true,
+      hasMedicalSheets: Boolean(department?.hasMedicalSheets),
+      hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
+      parallelCapacityValue: department.parallelCapacityValue ?? 1,
+      defaultDurationMinutes: department?.defaultDurationMinutes,
+      defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
+      defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
+      parallelCapacityEnabled: department?.parallelCapacityEnabled,
+      requirePractitioner: true,
+      requireBilling: department?.requireBilling,
+      requirePreAssessment: department?.requirePreAssessment,
+      workingDays: buildWorkingDaysPayload(department?.workingDays),
+    });
 
-  addDepartment(payload)
-    .unwrap()
-    .then(async (addedDepartment) => {
-      dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
+    addDepartment(payload)
+      .unwrap()
+      .then(async (addedDepartment) => {
+        dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
 
-      const departmentId = addedDepartment?.id ?? addedDepartment?.data?.id;
+        const departmentId = addedDepartment?.id ?? addedDepartment?.data?.id;
 
-      if (addDefaultMedicalSheets && departmentId) {
-        const defaultSheetsPayload = MedicalSheets
-          .filter(sheet => sheet.isDefaultMedicalSheet)
-          .map(sheet => ({
-            departmentId: departmentId,
-            medicalSheet: sheet.code.toUpperCase(),
-          }));
+        if (addDefaultMedicalSheets && departmentId) {
+          const defaultSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultMedicalSheet)
+            .map(sheet => ({
+              departmentId: departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
 
-        if (defaultSheetsPayload.length) {
-          await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          if (defaultSheetsPayload.length) {
+            await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          }
         }
-      }
-      if (addDefaultNurseMedicalSheets && departmentId) {
-        const defaultNurseSheetsPayload = MedicalSheets .filter(sheet => sheet.isDefaultNurseMedicalSheet)
-          .map(sheet => ({
-            departmentId: departmentId,
-            medicalSheet: sheet.code.toUpperCase(),
-          }));
-        if (defaultNurseSheetsPayload.length) {
-          await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+        if (addDefaultNurseMedicalSheets && departmentId) {
+          const defaultNurseSheetsPayload = MedicalSheets.filter(sheet => sheet.isDefaultNurseMedicalSheet)
+            .map(sheet => ({
+              departmentId: departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
+          if (defaultNurseSheetsPayload.length) {
+            await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+          }
         }
+
+        const newCode = generateFiveDigitCode();
+        setNextDepartmentCode(newCode);
+        setAddDefaultMedicalSheets(false);
+        setAddDefaultNurseMedicalSheets(false);
+        refetchDepartments();
+        setShowTranslationModal(true)
       }
+    
+      )
+      .catch((err: any) => {
+        const msg = extractApiErrorMessage(err);
+        console.error('addDepartment failed:', { payload, err });
+        dispatch(notify({ msg, sev: 'error' }));
+      })
+      .finally(() => setLoad(false));
+  };
 
-      const newCode = generateFiveDigitCode();
-      setNextDepartmentCode(newCode);
-      setAddDefaultMedicalSheets(false);
-      setAddDefaultNurseMedicalSheets(false);
-      refetchDepartments();
+  const handleUpdate = () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
+    setOpenForm(false);
+    setLoad(true);
+
+    updateDepartment({
+      ...department,
+      encounterType: department?.encounterType || undefined,
+      workingDays: buildWorkingDaysPayload(department?.workingDays),
     })
-    .catch((err: any) => {
-      const msg = extractApiErrorMessage(err);
-      console.error('addDepartment failed:', { payload, err });
-      dispatch(notify({ msg, sev: 'error' }));
-    })
-    .finally(() => setLoad(false));
-};
+      .unwrap()
+      .then(async () => {
+        const departmentId = department?.id;
 
- const handleUpdate = () => {
-  if (!validateRequiredFields()) {
-    return;
-  }
+        if (addDefaultMedicalSheets && departmentId) {
+          const defaultSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultMedicalSheet)
+            .map(sheet => ({
+              departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
 
-  setOpenForm(false);
-  setLoad(true);
-
-  updateDepartment({
-    ...department,
-    encounterType: department?.encounterType || undefined,
-    workingDays: buildWorkingDaysPayload(department?.workingDays),
-  })
-    .unwrap()
-    .then(async () => {
-      const departmentId = department?.id;
-
-      if (addDefaultMedicalSheets && departmentId) {
-        const defaultSheetsPayload = MedicalSheets
-          .filter(sheet => sheet.isDefaultMedicalSheet)
-          .map(sheet => ({
-            departmentId,
-            medicalSheet: sheet.code.toUpperCase(),
-          }));
-
-        if (defaultSheetsPayload.length) {
-          await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          if (defaultSheetsPayload.length) {
+            await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          }
         }
-      }
 
-      if (addDefaultNurseMedicalSheets && departmentId) {
-        const defaultNurseSheetsPayload = MedicalSheets
-          .filter(sheet => sheet.isDefaultNurseMedicalSheet)
-          .map(sheet => ({
-            departmentId,
-            medicalSheet: sheet.code.toUpperCase(),
-          }));
+        if (addDefaultNurseMedicalSheets && departmentId) {
+          const defaultNurseSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultNurseMedicalSheet)
+            .map(sheet => ({
+              departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
 
-        if (defaultNurseSheetsPayload.length) {
-          await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+          if (defaultNurseSheetsPayload.length) {
+            await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+          }
         }
-      }
 
-      dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
 
-      setAddDefaultMedicalSheets(false);
-      setAddDefaultNurseMedicalSheets(false);
-      refetchDepartments();
-    })
-    .catch((err: any) => {
-      const msg = extractApiErrorMessage(err);
-      dispatch(notify({ msg, sev: 'error' }));
-    })
-    .finally(() => setLoad(false));
-};
+        setAddDefaultMedicalSheets(false);
+        setAddDefaultNurseMedicalSheets(false);
+        refetchDepartments();
+        setShowTranslationModal(true)
+      })
+      .catch((err: any) => {
+        const msg = extractApiErrorMessage(err);
+        dispatch(notify({ msg, sev: 'error' }));
+      })
+      .finally(() => setLoad(false));
+  };
   const handleFilterChange = async (fieldName, value, page = 0, size = filterPagination.size) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);
@@ -602,7 +608,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     {
       key: 'appointable',
       title: <Translate key="APPOINTABLE">Appointable</Translate>,
-      render: (rowData: Department) => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>,
+      render: (rowData: Department) => <Translate>{rowData?.appointable ? 'Yes' : 'No'}</Translate>,
     },
     {
       key: 'encounterType',
@@ -614,7 +620,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       key: 'isActive',
       title: <Translate key="STATUS">Status</Translate>,
       flexGrow: 4,
-      render: (rowData: Department) => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>,
+      render: (rowData: Department) => <p>{rowData?.isActive ? <Translate >Active</Translate> : <Translate >Inactive</Translate>}</p>,
     },
     {
       key: 'icons',
@@ -805,6 +811,16 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         itemToDelete="Department"
         actionButtonFunction={handleDeactiveReactivateDepartment}
         actionType={stateOfDeleteDepartmentModal}
+      />
+      <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'name',
+            value: department.name
+          }
+        ]}
       />
     </div>
   );

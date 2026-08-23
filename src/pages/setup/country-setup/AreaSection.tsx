@@ -26,6 +26,7 @@ import {
   useToggleAreaActiveMutation,
   useUpdateAreaMutation
 } from '@/services/setup/country/communityAreaService';
+import TranslationModal from '@/components/TranslationModal';
 
 type Props = {
   communityId: number;
@@ -92,7 +93,10 @@ const AreaSection: React.FC<Props> = ({ communityId }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [deleteMode, setDeleteMode] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [selectedForToggle, setSelectedForToggle] = useState<CommunityArea | null>(null);
-
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+      const [translationFields, setTranslationFields] = useState<
+        { fieldName: string; value: string }[]
+      >([]);
   // Filter state
   const [recordOfAreaFilter, setRecordOfAreaFilter] = useState<{ filter: string; value: any }>({
     filter: '',
@@ -307,9 +311,23 @@ const AreaSection: React.FC<Props> = ({ communityId }) => {
       if (body.id) {
         await updateArea({ districtId: Number(communityId), id: body.id, body }).unwrap();
         dispatch(notify({ msg: 'Area updated successfully', sev: 'success' }));
+         setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: body.name
+                  }
+                ]);
+                setShowTranslationModal(true);
       } else {
         await addArea({ districtId: Number(communityId), ...body }).unwrap();
         dispatch(notify({ msg: 'Area added successfully', sev: 'success' }));
+         setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: body.name
+                  }
+                ]);
+                setShowTranslationModal(true);
       }
 
       setAreaForEdit({ ...newCommunityArea, communityId: Number(communityId) });
@@ -529,7 +547,11 @@ const AreaSection: React.FC<Props> = ({ communityId }) => {
           </>
         }
       />
-
+      <TranslationModal
+                    open={showTranslationModal}
+                    setOpen={setShowTranslationModal}
+                    fields={translationFields}
+                  />
       <DeletionConfirmationModal
         open={openDeleteConfirm}
         setOpen={setOpenDeleteConfirm}

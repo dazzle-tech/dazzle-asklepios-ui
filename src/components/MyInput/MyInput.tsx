@@ -498,8 +498,8 @@ const MyInput = ({
           <Toggle
             name={fieldName}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-            checkedChildren={props.checkedLabel || 'Yes'}
-            unCheckedChildren={props.unCheckedLabel || 'No'}
+            checkedChildren={<Translate>{props.checkedLabel || 'Yes'}</Translate>}
+            unCheckedChildren={<Translate>{props.unCheckedLabel || 'No'}</Translate>}
             disabled={props.disabled}
             checked={record[fieldName] == null ? false : !!record[fieldName]}
             onChange={handleValueChange}
@@ -1262,216 +1262,226 @@ const MyInput = ({
           longestLabel.length * 9 + 120
         );
 
-        return (
-          <div
-            ref={pickerRef}
-          >
-            <Form.Control
-              style={{
-                width: props?.width ?? 145,
-                height: props?.height ?? 30
-              }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
-                }`}
-              block={props?.width === '100%'}
-              disabled={props.disabled}
-              accepter={SelectPicker}
-              searchable={props.searchable ?? false}
+       return (
+  <div ref={pickerRef}>
+    <Form.Control
+      style={{
+        width: props?.width ?? 145,
+        height: props?.height ?? 30
+      }}
+      className={`arrow-number-style my-input ${
+        inputColor ? `input-${inputColor}` : ''
+      }`}
+      block={props?.width === '100%'}
+      disabled={props.disabled}
+      accepter={SelectPicker}
+      searchable={props.searchable ?? false}
+      data={filteredData}
+      labelKey={primaryLabelKey}
+      valueKey={valueKey}
 
-              data={filteredData}
+      value={
+        record?.[fieldName] !== undefined &&
+        record?.[fieldName] !== null
+          ? record[fieldName]
+          : null
+      }
 
-              labelKey={primaryLabelKey}
-              valueKey={valueKey}
+      onChange={value => {
+        handleValueChange(value);
 
-              value={
-                record?.[fieldName] !== undefined &&
-                  record?.[fieldName] !== null
-                  ? record[fieldName]
-                  : null
+        if (props.onSelectItem) {
+          const selectedItem =
+            dataList.find(
+              (x: any) =>
+                String(x?.[valueKey]) === String(value)
+            ) ?? null;
+
+          props.onSelectItem(selectedItem);
+        }
+      }}
+
+      onKeyDown={(event: any) => {
+        const key = event?.key;
+
+        if (!key) return;
+
+        const ignoredKeys = [
+          'Shift',
+          'Tab',
+          'Enter',
+          'Escape',
+          'ArrowUp',
+          'ArrowDown',
+          'ArrowLeft',
+          'ArrowRight',
+          'Control',
+          'Alt',
+          'Meta'
+        ];
+
+        if (ignoredKeys.includes(key)) {
+          return;
+        }
+
+        if (key === 'Backspace') {
+          setLocalSearch(prev => prev.slice(0, -1));
+          return;
+        }
+
+        if (key.length === 1) {
+          setLocalSearch(prev => prev + key);
+        }
+      }}
+
+      renderMenuItem={
+        props.renderMenuItem ??
+        (isArrayLabel
+          ? (
+              label: any,
+              item: any
+            ) => (
+              <Translate>
+                {buildCombinedLabel(
+                  item,
+                  labelKeys,
+                  label
+                )}
+              </Translate>
+            )
+          : props.isEnum
+            ? (label: any) => (
+                <Translate>
+                  {formatEnumString(String(label))}
+                </Translate>
+              )
+            : (label: any) => (
+                <Translate>
+                  {String(label ?? '')}
+                </Translate>
+              ))
+      }
+
+      renderValue={
+        isArrayLabel
+          ? (
+              value,
+              item,
+              selectedElement
+            ) => {
+              if (!item) {
+                return selectedElement;
               }
 
-              onChange={value => {
-                handleValueChange(value);
+              const label = buildCombinedLabel(
+                item,
+                labelKeys,
+                selectedElement
+              );
 
-                if (props.onSelectItem) {
-                  const selectedItem =
-                    dataList.find(
-                      (x: any) =>
-                        String(x?.[valueKey]) ===
-                        String(value)
-                    ) ?? null;
+              return (
+                <span>
+                  <Translate>{label}</Translate>
+                </span>
+              );
+            }
+          : props.isEnum
+            ? (
+                value,
+                item,
+                selectedElement
+              ) => {
+                const base =
+                  (item &&
+                    item[primaryLabelKey]) ||
+                  selectedElement ||
+                  value ||
+                  '';
 
-                  props.onSelectItem(
-                    selectedItem
-                  );
-                }
-              }}
-              onKeyDown={(event: any) => {
-                const key = event?.key;
-
-                if (!key) return;
-
-                const ignoredKeys = [
-                  'Shift',
-                  'Tab',
-                  'Enter',
-                  'Escape',
-                  'ArrowUp',
-                  'ArrowDown',
-                  'ArrowLeft',
-                  'ArrowRight',
-                  'Control',
-                  'Alt',
-                  'Meta'
-                ];
-
-                if (
-                  ignoredKeys.includes(key)
-                ) {
-                  return;
-                }
-
-                if (key === 'Backspace') {
-                  setLocalSearch(prev =>
-                    prev.slice(0, -1)
-                  );
-
-                  return;
-                }
-
-                if (key.length === 1) {
-                  setLocalSearch(
-                    prev => prev + key
-                  );
-                }
-              }}
-
-              renderMenuItem={
-                props.renderMenuItem ??
-                (isArrayLabel
-                  ? (
-                    label: any,
-                    item: any
-                  ) =>
-                    buildCombinedLabel(
-                      item,
-                      labelKeys,
-                      label
-                    )
-                  : props.isEnum
-                    ? (label: any) =>
-                      formatEnumString(
-                        String(label)
-                      )
-                    : undefined)
-              }
-
-              renderValue={
-                isArrayLabel
-                  ? (
-                    value,
-                    item,
-                    selectedElement
-                  ) => {
-                    if (!item)
-                      return selectedElement;
-
-                    return (
-                      <span>
-                        {buildCombinedLabel(
-                          item,
-                          labelKeys,
-                          selectedElement
-                        )}
-                      </span>
-                    );
-                  }
-                  : props.isEnum
-                    ? (
-                      value,
-                      item,
-                      selectedElement
-                    ) => {
-                      const base =
-                        (item &&
-                          item[
-                          primaryLabelKey
-                          ]) ||
-                        selectedElement ||
-                        value ||
-                        '';
-
-                      return (
-                        <span>
-                          {formatEnumString(
-                            String(base)
-                          )}
-                        </span>
-                      );
-                    }
-                    : undefined
-              }
-
-              placeholder={
-                localSearch
-                  ? `Search: ${localSearch}`
-                  : props.placeholder
-              }
-
-              cleanable={
-                props.cleanable !== undefined
-                  ? props.cleanable
-                  : true
-              }
-
-              loading={
-                props?.loading ?? false
-              }
-
-              open={isSelectOpen}
-
-              onOpen={() => {
-                setPlacement(
-                  calculatePlacement()
+                return (
+                  <span>
+                    <Translate>
+                      {formatEnumString(
+                        String(base)
+                      )}
+                    </Translate>
+                  </span>
                 );
-
-                setIsSelectOpen(true);
-              }}
-
-              onClose={() => {
-                setIsSelectOpen(false);
-
-                setLocalSearch('');
-              }}
-
-              placement={placement}
-
-              preventOverflow={
-                pickerPreventOverflow
               }
+            : (
+                value,
+                item,
+                selectedElement
+              ) => {
+                const base =
+                  (item &&
+                    item[primaryLabelKey]) ??
+                  selectedElement ??
+                  value ??
+                  '';
 
-              container={resolveContainer()}
-
-              menuMaxHeight={getDynamicMenuMaxHeight(
-                filteredData
-              )}
-
-              menuStyle={{
-                minWidth: props?.width ??
-                  "12vw",
-                width: 'auto',
-              }}
-
-              menuClassName={props.menuClassName}
-
-              virtualized={
-                props?.virtualized ?? true
+                return (
+                  <span>
+                    <Translate>
+                      {String(base)}
+                    </Translate>
+                  </span>
+                );
               }
+      }
 
-              disabledItemValues={getDisabledValues(dataList, valueKey)}
-            />
-          </div>
-        );
+      placeholder={
+        localSearch
+          ? `Search: ${localSearch}`
+          : props.placeholder
+      }
+
+      cleanable={
+        props.cleanable !== undefined
+          ? props.cleanable
+          : true
+      }
+
+      loading={props?.loading ?? false}
+
+      open={isSelectOpen}
+
+      onOpen={() => {
+        setPlacement(calculatePlacement());
+        setIsSelectOpen(true);
+      }}
+
+      onClose={() => {
+        setIsSelectOpen(false);
+        setLocalSearch('');
+      }}
+
+      placement={placement}
+
+      preventOverflow={pickerPreventOverflow}
+
+      container={resolveContainer()}
+
+      menuMaxHeight={getDynamicMenuMaxHeight(
+        filteredData
+      )}
+
+      menuStyle={{
+        minWidth: props?.width ?? '12vw',
+        width: 'auto'
+      }}
+
+      menuClassName={props.menuClassName}
+
+      virtualized={props?.virtualized ?? true}
+
+      disabledItemValues={getDisabledValues(
+        dataList,
+        valueKey
+      )}
+    />
+  </div>
+);
       }
 
       case 'selectPagination': {
@@ -1614,14 +1624,22 @@ const MyInput = ({
                   }
 
                   if (isArrayLabel) {
-                    return buildCombinedLabel(item, labelKeys, label);
+                    return (
+                      <Translate>
+                        {buildCombinedLabel(item, labelKeys, label)}
+                      </Translate>
+                    );
                   }
 
                   if (props.isEnum) {
-                    return formatEnumString(String(label));
+                    return (
+                      <Translate>
+                        {formatEnumString(String(label))}
+                      </Translate>
+                    );
                   }
 
-                  return label;
+                  return <Translate>{String(label ?? '')}</Translate>;
                 })
               }
               renderValue={
@@ -1631,7 +1649,9 @@ const MyInput = ({
 
                     return (
                       <span>
-                        {buildCombinedLabel(item, labelKeys, selectedElement)}
+                        <Translate>
+                          {buildCombinedLabel(item, labelKeys, selectedElement)}
+                        </Translate>
                       </span>
                     );
                   }
@@ -1643,9 +1663,25 @@ const MyInput = ({
                         value ||
                         '';
 
-                      return <span>{formatEnumString(String(base))}</span>;
+                      return (
+                        <span>
+                          <Translate>{formatEnumString(String(base))}</Translate>
+                        </span>
+                      );
                     }
-                    : undefined
+                    : (value, item, selectedElement) => {
+                      const base =
+                        (item && item[primaryLabelKey]) ??
+                        selectedElement ??
+                        value ??
+                        '';
+
+                      return (
+                        <span>
+                          <Translate>{String(base)}</Translate>
+                        </span>
+                      );
+                    }
               }
               placeholder={searchTerm ? `Search: ${searchTerm}` : props.placeholder}
               cleanable={props.cleanable !== undefined ? props.cleanable : true}
@@ -1708,6 +1744,12 @@ const MyInput = ({
               creatable={props.creatable ?? false}
               groupBy={props.groupBy ?? null}
               searchBy={props.searchBy}
+              renderMenuItem={
+                props.renderMenuItem ??
+                ((label: any) => (
+                  <Translate>{String(label ?? '')}</Translate>
+                ))
+              }
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               onKeyDown={focusNextField}
               open={isMultyPickerOpen}
@@ -1780,6 +1822,28 @@ const MyInput = ({
                 props?.menuClassName
               )}
               value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
+              renderMenuItem={
+                props.renderMenuItem ??
+                ((label: any, item: any) => {
+                  if (isArrayLabel) {
+                    return (
+                      <Translate>
+                        {buildCombinedLabel(item, labelKeys, label)}
+                      </Translate>
+                    );
+                  }
+
+                  if (props.isEnum) {
+                    return (
+                      <Translate>
+                        {formatEnumString(String(label))}
+                      </Translate>
+                    );
+                  }
+
+                  return <Translate>{String(label ?? '')}</Translate>;
+                })
+              }
               onChange={value => {
                 handleValueChange(value);
 
@@ -2567,7 +2631,7 @@ const MyInput = ({
             onChange={(_, checked) => handleValueChange(checked)}
             disabled={props.disabled}
           >
-            {props.label ? props.label : fieldLabel}
+            <Translate>{props.label ? props.label : fieldLabel}</Translate>
           </Checkbox>
         );
 
