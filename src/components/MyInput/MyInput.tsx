@@ -1346,52 +1346,25 @@ const MyInput = ({
                 }
               }}
 
-              // renderMenuItem={
-              //   props.renderMenuItem ??
-              //   (isArrayLabel
-              //     ? (
-              //       label: any,
-              //       item: any
-              //     ) =>
-              //       buildCombinedLabel(
-              //         item,
-              //         labelKeys,
-              //         label
-              //       )
-              //     : props.isEnum
-              //       ? (label: any) =>
-              //         formatEnumString(
-              //           String(label)
-              //         )
-              //       : undefined)
-              // }
               renderMenuItem={
-  props.renderMenuItem ??
-  (isArrayLabel
-    ? (
-      label: any,
-      item: any
-    ) => (
-      <Translate>
-        {buildCombinedLabel(
-          item,
-          labelKeys,
-          label
-        )}
-      </Translate>
-    )
-    : props.isEnum
-      ? (label: any) => (
-        <Translate>
-          {formatEnumString(String(label))}
-        </Translate>
-      )
-      : (label: any) => (
-        <Translate>
-          {String(label ?? '')}
-        </Translate>
-      ))
-}
+                props.renderMenuItem ??
+                (isArrayLabel
+                  ? (
+                    label: any,
+                    item: any
+                  ) =>
+                    buildCombinedLabel(
+                      item,
+                      labelKeys,
+                      label
+                    )
+                  : props.isEnum
+                    ? (label: any) =>
+                      formatEnumString(
+                        String(label)
+                      )
+                    : undefined)
+              }
 
               renderValue={
                 isArrayLabel
