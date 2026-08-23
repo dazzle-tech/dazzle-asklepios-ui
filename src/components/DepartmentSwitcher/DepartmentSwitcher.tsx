@@ -3,6 +3,7 @@ import { Divider, Popover, Whisper } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setSelectedDepartment } from '@/reducers/authSlice';
 import { useGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
+import Translate from '../Translate';
 
 export type SyncedDepartment = {
   departmentId?: string | number | null;
@@ -182,7 +183,7 @@ const DepartmentSwitcher = ({
                   {headerFacilityName}
                 </span>
                 <span style={{ fontSize: '11px', color: isDark ? '#8a8a8a' : '#6c757d' }}>
-                  {headerDepartmentName}
+                  <Translate>{headerDepartmentName}</Translate>
                 </span>
               </div>
             )}
@@ -257,7 +258,7 @@ const DepartmentSwitcher = ({
                             color: isDark ? '#f5f5f5' : '#111827'
                           }}
                         >
-                          {departmentDisplayName}
+                         <Translate>{departmentDisplayName}</Translate>
                         </span>
 
                         {isActive && (
