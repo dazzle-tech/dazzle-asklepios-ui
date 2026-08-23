@@ -74,7 +74,7 @@ const PregnancyFollowup = lazy (() => import ( './pages/encounter/encounter-comp
 const PrescriptionNew = lazy (() => import ( './pages/encounter/encounter-component/prescription-new'));
 const PressureUlcerRiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/pressure-ulce-risk-assessment'));
 const ProcedureNew = lazy (() => import ( './pages/encounter/encounter-component/procedure-new/Procedure'));
-
+const EncounterReport= lazy(()=> import ('./pages/encounter/PatientEncounterReportPage'));
 import { MODULES } from '@/config/modules-config';
 const ApplyTemplateList = lazy (() => import ( './pages/appointments-new/ApplyTemplate/ApplyTemplateList'));
 const ScheduleScreen = lazy (() => import ( './pages/appointments-new/scheduling-screen/ScheduleScreen'));
@@ -639,6 +639,7 @@ const App = () => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
+              <Route path="encounter-report" element={<EncounterReport/>}/>
               <Route
                 path="patient-old/facility-patient-list"
                 element={<PatientOldFacilityPatientList />}

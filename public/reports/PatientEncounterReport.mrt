@@ -1,0 +1,557 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <CalculationMode>Interpretation</CalculationMode>
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <BusinessObjects isList="true" count="0" />
+    <Databases isList="true" count="1">
+      <PostgreSQL Ref="2" type="Stimulsoft.Report.Dictionary.StiPostgreSQLDatabase" isKey="true">
+        <Alias>PostgreSQL</Alias>
+        <ConnectionStringEncrypted>+AbRY9dtWYVrGqUcZPDjZt9o2YlnU8uJZx2cgE4tZWfWeNlDYQ5aweJBbQhjDaI73Hj7iVBcSRV0W9WEYXHhc8NaT8tKVklZQ0ek8ek99i+dXGnCY0tDgUZJ7RBJbC3n1MTNA00MAYnu</ConnectionStringEncrypted>
+        <Key>61a9d1855a184dee882009f59bb3c35b</Key>
+        <Name>PostgreSQL</Name>
+      </PostgreSQL>
+    </Databases>
+    <DataSources isList="true" count="4">
+      <department Ref="3" type="Stimulsoft.Report.Dictionary.StiPostgreSQLSource" isKey="true">
+        <Alias>department</Alias>
+        <Columns isList="true" count="25">
+          <value>id,System.Int64</value>
+          <value>appointable,System.Boolean</value>
+          <value>phone_number,System.String</value>
+          <value>type,System.String</value>
+          <value>working_days,System.String</value>
+          <value>has_nurse_medical_sheets,System.Boolean</value>
+          <value>encounter_type,System.String</value>
+          <value>facility_id,System.Int64</value>
+          <value>last_modified_date,System.DateTime</value>
+          <value>require_pre_assessment,System.Boolean</value>
+          <value>code,System.String</value>
+          <value>require_practitioner,System.Boolean</value>
+          <value>created_date,System.DateTime</value>
+          <value>default_buffer_before_minutes,System.Int32</value>
+          <value>email,System.String</value>
+          <value>has_medical_sheets,System.Boolean</value>
+          <value>default_buffer_after_minutes,System.Int32</value>
+          <value>parallel_capacity_enabled,System.Boolean</value>
+          <value>created_by,System.String</value>
+          <value>name,System.String</value>
+          <value>is_active,System.Boolean</value>
+          <value>default_duration_minutes,System.Int32</value>
+          <value>parallel_capacity_value,System.Int32</value>
+          <value>require_billing,System.Boolean</value>
+          <value>last_modified_by,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Key>c69f96a2a11c45a99faa106275662acb</Key>
+        <Name>department</Name>
+        <NameInSource>PostgreSQL</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>select * from "public"."department"</SqlCommand>
+      </department>
+      <patient_encounters Ref="4" type="Stimulsoft.Report.Dictionary.StiPostgreSQLSource" isKey="true">
+        <Alias>patient_encounters</Alias>
+        <Columns isList="true" count="37">
+          <value>id,System.Int64</value>
+          <value>status,System.String</value>
+          <value>started_by,System.String</value>
+          <value>last_modified_date,System.DateTime</value>
+          <value>chief_complaint,System.String</value>
+          <value>department_id,System.Int64</value>
+          <value>encounter_date,System.DateTime</value>
+          <value>completed_by,System.String</value>
+          <value>origin_type,System.String</value>
+          <value>started_date,System.DateTime</value>
+          <value>completed_at,System.DateTime</value>
+          <value>coverage_type,System.String</value>
+          <value>created_by,System.String</value>
+          <value>financially_closed_by,System.String</value>
+          <value>appointment_id,System.Int64</value>
+          <value>encounter_time,System.TimeSpan</value>
+          <value>discharge_at,System.DateTime</value>
+          <value>discharge_type,System.String</value>
+          <value>facility_id,System.Int64</value>
+          <value>encounter_number,System.String</value>
+          <value>notes,System.String</value>
+          <value>last_modified_by,System.String</value>
+          <value>practitioner_id,System.Int64</value>
+          <value>patient_insurance_id,System.Int64</value>
+          <value>physical_examination_summery,System.String</value>
+          <value>priority,System.String</value>
+          <value>encounter_reason,System.String</value>
+          <value>created_date,System.DateTime</value>
+          <value>billing_status,System.String</value>
+          <value>follow_up_encounter_id,System.Int64</value>
+          <value>encounter_type,System.String</value>
+          <value>encounter_status,System.String</value>
+          <value>history_of_present_illness,System.String</value>
+          <value>origin_name,System.String</value>
+          <value>financially_closed_at,System.DateTime</value>
+          <value>patient_id,System.Int64</value>
+          <value>department_daily_sequence_number,System.Int32</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Key>b04af89ce183495ea7d7de4d2db7c5d2</Key>
+        <Name>patient_encounters</Name>
+        <NameInSource>PostgreSQL</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>select * from "public"."patient_encounters"</SqlCommand>
+      </patient_encounters>
+      <DataSource1 Ref="5" type="Stimulsoft.Report.Dictionary.StiPostgreSQLSource" isKey="true">
+        <Alias>DataSource1</Alias>
+        <Columns isList="true" count="2">
+          <value>department_name,System.String</value>
+          <value>total_encounters,System.Int64</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Key>4cdfd06e85044ac48688edafaaf708a2</Key>
+        <Name>DataSource1</Name>
+        <NameInSource>PostgreSQL</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+    d.name AS department_name,
+    COUNT(pe.id) AS total_encounters
+FROM patient_encounters pe
+JOIN department d
+    ON d.id = pe.department_id
+GROUP BY d.name
+ORDER BY total_encounters DESC;</SqlCommand>
+      </DataSource1>
+      <DataSource3 Ref="6" type="Stimulsoft.Report.Dictionary.StiPostgreSQLSource" isKey="true">
+        <Alias>DataSource3</Alias>
+        <Columns isList="true" count="3">
+          <value>ORIGINAL,encounter_number,encounter_number,encounter_number,System.String,_x0033_a9ca57c8f2f4e4ab0b7c68ab2f66d6d</value>
+          <value>ORIGINAL,status,status,status,System.String,_x0037_e58b3e76b2042bca6c79188557427fe</value>
+          <value>ORIGINAL,department_name,department_name,department_name,System.String,_x0033_ce19acae0464e9989bfd7f264d21749</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Key>ce24fca887be422abc7f50806c361157</Key>
+        <Name>DataSource3</Name>
+        <NameInSource>PostgreSQL</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+    pe.encounter_number,
+    pe.status,
+    d.name AS department_name
+FROM patient_encounters pe
+JOIN department d
+    ON d.id = pe.department_id
+WHERE
+(
+    @StatusFilter = 'ALL'
+    OR pe.status = @StatusFilter
+)
+AND
+(
+    @DepartmentFilter = 'ALL'
+    OR d.name = @DepartmentFilter
+)
+ORDER BY pe.created_date DESC</SqlCommand>
+      </DataSource3>
+    </DataSources>
+    <Relations isList="true" count="1">
+      <Relation Ref="7" type="DataRelation" isKey="true">
+        <Alias>Relation</Alias>
+        <ChildColumns isList="true" count="1">
+          <value>department_id</value>
+        </ChildColumns>
+        <ChildSource isRef="4" />
+        <Dictionary isRef="1" />
+        <Name>Relation</Name>
+        <NameInSource>Relation</NameInSource>
+        <ParentColumns isList="true" count="1">
+          <value>id</value>
+        </ParentColumns>
+        <ParentSource isRef="3" />
+      </Relation>
+    </Relations>
+    <Report isRef="0" />
+    <Resources isList="true" count="0" />
+    <UserFunctions isList="true" count="0" />
+    <Variables isList="true" count="2">
+      <value>,StatusFilter,StatusFilter,,System.String,ALL,False,False,True,False,_x003C__x003F_xml_x0020_version_x003D__x0022_1.0_x0022__x0020_encoding_x003D__x0022_utf-16_x0022__x0020_standalone_x003D__x0022_no_x0022__x003F__x003E__x003C_StiSerializer_x0020_application_x003D__x0022_State_x0022__x003E__x003C_SortDirection_x003E_None_x003C__x002F_SortDirection_x003E__x003C_SortField_x003E_Key_x003C__x002F_SortField_x003E__x003C_BindingVariable_x0020_isNull_x003D__x0022_true_x0022__x0020__x002F__x003E__x003C__x002F_StiSerializer_x003E_,_x0034_0ddbe6086a74a18a09b02b1dd6fe0c1,True</value>
+      <value>,DepartmentFilter,DepartmentFilter,,System.String,ALL,False,False,True,False,_x003C__x003F_xml_x0020_version_x003D__x0022_1.0_x0022__x0020_encoding_x003D__x0022_utf-16_x0022__x0020_standalone_x003D__x0022_no_x0022__x003F__x003E__x003C_StiSerializer_x0020_application_x003D__x0022_State_x0022__x003E__x003C_SortDirection_x003E_None_x003C__x002F_SortDirection_x003E__x003C_SortField_x003E_Key_x003C__x002F_SortField_x003E__x003C_BindingVariable_x0020_isNull_x003D__x0022_true_x0022__x0020__x002F__x003E__x003C__x002F_StiSerializer_x003E_,,True</value>
+    </Variables>
+  </Dictionary>
+  <EngineVersion>EngineV2</EngineVersion>
+  <GlobalizationStrings isList="true" count="0" />
+  <Key>96401114c7e3497faf9967285b4a4d2d</Key>
+  <MetaTags isList="true" count="0" />
+  <Pages isList="true" count="2">
+    <Page1 Ref="8" type="Page" isKey="true">
+      <Border>All;[79:129:189];2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="4">
+        <PageFooterBand2 Ref="9" type="PageFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,9.72,7.72,0.5</ClientRectangle>
+          <Components isList="true" count="1">
+            <Text3 Ref="10" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.5,0.08,2.1,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Expressions isList="true" count="0" />
+              <Font>Arial,8</Font>
+              <Name>Text3</Name>
+              <Page isRef="8" />
+              <Parent isRef="9" />
+              <Text>Confidential - Asklepios HIS Page {PageNumber}
+
+</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text3>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Expressions isList="true" count="0" />
+          <Name>PageFooterBand2</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </PageFooterBand2>
+        <PageHeaderBand1 Ref="11" type="PageHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,0.2,7.72,0.6</ClientRectangle>
+          <Components isList="true" count="2">
+            <Text1 Ref="12" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0,7.7,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Expressions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,8.25</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Name>Text1</Name>
+              <Page isRef="8" />
+              <Parent isRef="11" />
+              <Text>ASKLEPIOS HOSPITAL INFORMATION SYSTEM</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text1>
+            <Text2 Ref="13" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.3,7.7,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Expressions isList="true" count="0" />
+              <Font>Arial,8</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Name>Text2</Name>
+              <Page isRef="8" />
+              <Parent isRef="11" />
+              <Text>Patient Encounter Analytics Report</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text2>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Expressions isList="true" count="0" />
+          <Name>PageHeaderBand1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </PageHeaderBand1>
+        <Panel1 Ref="14" type="Panel" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0.1,1,7.5,8.1</ClientRectangle>
+          <Components isList="true" count="1">
+            <Table1 Ref="15" type="Stimulsoft.Report.Components.Table.StiTable" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.2,7.5,0.3</ClientRectangle>
+              <Components isList="true" count="5">
+                <Table1_Cell1 Ref="16" type="TableCell" isKey="true">
+                  <Border>All;[31:73:125];2;Solid;False;4;Black</Border>
+                  <Brush>Transparent</Brush>
+                  <ClientRectangle>0,0,1.5,0.3</ClientRectangle>
+                  <Conditions isList="true" count="0" />
+                  <Expressions isList="true" count="0" />
+                  <Font>Arial,8</Font>
+                  <ID>0</ID>
+                  <JoinCells isList="true" count="0" />
+                  <Name>Table1_Cell1</Name>
+                  <Page isRef="8" />
+                  <Parent isRef="15" />
+                  <Restrictions>AllowMove, AllowSelect, AllowChange</Restrictions>
+                  <Text>{patient_encounters.Relation.name}</Text>
+                  <TextBrush>Black</TextBrush>
+                  <Type>DataColumn</Type>
+                </Table1_Cell1>
+                <Table1_Cell2 Ref="17" type="TableCell" isKey="true">
+                  <Border>All;[31:73:125];2;Solid;False;4;Black</Border>
+                  <Brush>Transparent</Brush>
+                  <ClientRectangle>1.5,0,1.5,0.3</ClientRectangle>
+                  <Conditions isList="true" count="0" />
+                  <Expressions isList="true" count="0" />
+                  <Font>Arial,8</Font>
+                  <ID>1</ID>
+                  <JoinCells isList="true" count="0" />
+                  <Name>Table1_Cell2</Name>
+                  <Page isRef="8" />
+                  <Parent isRef="15" />
+                  <Restrictions>AllowMove, AllowSelect, AllowChange</Restrictions>
+                  <Text>{patient_encounters.encounter_date}</Text>
+                  <TextBrush>Black</TextBrush>
+                  <Type>DataColumn</Type>
+                </Table1_Cell2>
+                <Table1_Cell3 Ref="18" type="TableCell" isKey="true">
+                  <Border>All;[31:73:125];2;Solid;False;4;Black</Border>
+                  <Brush>Transparent</Brush>
+                  <ClientRectangle>3,0,1.5,0.3</ClientRectangle>
+                  <Conditions isList="true" count="0" />
+                  <Expressions isList="true" count="0" />
+                  <Font>Arial,8</Font>
+                  <ID>2</ID>
+                  <JoinCells isList="true" count="0" />
+                  <Name>Table1_Cell3</Name>
+                  <Page isRef="8" />
+                  <Parent isRef="15" />
+                  <Restrictions>AllowMove, AllowSelect, AllowChange</Restrictions>
+                  <Text>{patient_encounters.encounter_reason}</Text>
+                  <TextBrush>Black</TextBrush>
+                  <Type>DataColumn</Type>
+                </Table1_Cell3>
+                <Table1_Cell4 Ref="19" type="TableCell" isKey="true">
+                  <Border>All;[31:73:125];2;Solid;False;2;Black</Border>
+                  <Brush>Transparent</Brush>
+                  <ClientRectangle>4.5,0,1.5,0.3</ClientRectangle>
+                  <Conditions isList="true" count="0" />
+                  <Expressions isList="true" count="0" />
+                  <Font>Arial,8</Font>
+                  <ID>3</ID>
+                  <JoinCells isList="true" count="0" />
+                  <Name>Table1_Cell4</Name>
+                  <Page isRef="8" />
+                  <Parent isRef="15" />
+                  <Restrictions>AllowMove, AllowSelect, AllowChange</Restrictions>
+                  <Text>{patient_encounters.status}</Text>
+                  <TextBrush>Black</TextBrush>
+                  <Type>DataColumn</Type>
+                </Table1_Cell4>
+                <Table1_Cell5 Ref="20" type="TableCell" isKey="true">
+                  <Border>All;Black;1;Solid;False;4;Black</Border>
+                  <Brush>Transparent</Brush>
+                  <ClientRectangle>6,0,1.5,0.3</ClientRectangle>
+                  <Conditions isList="true" count="0" />
+                  <Expressions isList="true" count="0" />
+                  <Font>Arial,8</Font>
+                  <ID>4</ID>
+                  <JoinCells isList="true" count="0" />
+                  <Name>Table1_Cell5</Name>
+                  <Page isRef="8" />
+                  <Parent isRef="15" />
+                  <Restrictions>AllowMove, AllowSelect, AllowChange</Restrictions>
+                  <Text>{patient_encounters.encounter_type}</Text>
+                  <TextBrush>Black</TextBrush>
+                  <Type>DataColumn</Type>
+                </Table1_Cell5>
+              </Components>
+              <Conditions isList="true" count="0" />
+              <DataRelationName isNull="true" />
+              <DataSourceName>patient_encounters</DataSourceName>
+              <Expressions isList="true" count="0" />
+              <FilterOn>False</FilterOn>
+              <Filters isList="true" count="0" />
+              <Name>Table1</Name>
+              <NumberID>25</NumberID>
+              <Page isRef="8" />
+              <Parent isRef="14" />
+              <RowCount>1</RowCount>
+              <Sort isList="true" count="0" />
+            </Table1>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Expressions isList="true" count="0" />
+          <Name>Panel1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </Panel1>
+        <Text7 Ref="21" type="Text" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>7.5,-0.3,0.6,0.2</ClientRectangle>
+          <Conditions isList="true" count="0" />
+          <Expressions isList="true" count="0" />
+          <Font>Arial,8</Font>
+          <Name>Text7</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+          <Text>    return await self._retry_request(options, cast_to, retries, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1356, in _retry_request
+    return await self._request(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1330, in _request
+    raise APIConnectionError(request=request) from err
+openai.APIConnectionError: Connection error.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/main.py", line 116, in validate_tests
+    result = await test_service.validate(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/medication_tests_validation_service.py", line 276, in validate
+    api_response = await self.call_openai(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/medication_tests_validation_service.py", line 100, in call_openai
+    raise Exception(f"OpenAI API call failed: {str(e)}")
+Exception: OpenAI API call failed: Connection error.</Text>
+          <TextBrush>Black</TextBrush>
+        </Text7>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Expressions isList="true" count="0" />
+      <Guid>8eb47242c7b74838882776f1232f40c9</Guid>
+      <Margins>0.39,0.39,0.39,0.39</Margins>
+      <Name>Page1</Name>
+      <PageHeight>11</PageHeight>
+      <PageWidth>8.5</PageWidth>
+      <PaperSize>Letter</PaperSize>
+      <Report isRef="0" />
+      <TitleBeforeHeader>True</TitleBeforeHeader>
+    </Page1>
+    <Page2 Ref="22" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="2">
+        <PageFooterBand1 Ref="23" type="PageFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,9.72,7.72,0.5</ClientRectangle>
+          <Components isList="true" count="1">
+            <Text4 Ref="24" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.5,0.08,2.1,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Expressions isList="true" count="0" />
+              <Font>Arial,8</Font>
+              <Name>Text4</Name>
+              <Page isRef="22" />
+              <Parent isRef="23" />
+              <Text>Confidential - Asklepios HIS Page {PageNumber}
+
+</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text4>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Expressions isList="true" count="0" />
+          <Name>PageFooterBand1</Name>
+          <Page isRef="22" />
+          <Parent isRef="22" />
+        </PageFooterBand1>
+        <Chart1 Ref="25" type="Stimulsoft.Report.Chart.StiChart" isKey="true">
+          <Area Ref="26" type="Stimulsoft.Report.Chart.StiPie3dArea" isKey="true">
+            <BorderColor>Transparent</BorderColor>
+            <BorderThickness>1</BorderThickness>
+            <Brush>[255:255:255]</Brush>
+            <Chart isRef="25" />
+          </Area>
+          <Brush>[255:255:255]</Brush>
+          <ClientRectangle>1.8,5.8,4.1,2.2</ClientRectangle>
+          <Conditions isList="true" count="0" />
+          <ConstantLines isList="true" count="0" />
+          <CustomStyleName />
+          <EditorType>Simple</EditorType>
+          <Expressions isList="true" count="0" />
+          <Filters isList="true" count="0" />
+          <Name>Chart1</Name>
+          <Page isRef="22" />
+          <Parent isRef="22" />
+          <Series isList="true" count="1">
+            <Item25 Ref="27" type="Stimulsoft.Report.Chart.StiPie3dSeries" isKey="true">
+              <ArgumentDataColumn>DataSource1.department_name</ArgumentDataColumn>
+              <BorderColor>Transparent</BorderColor>
+              <Brush>[52:152:219]</Brush>
+              <Chart isRef="25" />
+              <Conditions isList="true" count="0" />
+              <Filters isList="true" count="0" />
+              <SeriesLabels Ref="28" type="Stimulsoft.Report.Chart.StiCenterAxisLabels" isKey="true">
+                <BorderColor>Transparent</BorderColor>
+                <Brush>[119:255:255:255]</Brush>
+                <Chart isRef="25" />
+                <Font>Arial,10</Font>
+                <LabelColor>50, 58, 69</LabelColor>
+                <MarkerSize>8, 6</MarkerSize>
+                <ValueTypeSeparator>-</ValueTypeSeparator>
+                <Width>0</Width>
+              </SeriesLabels>
+              <ShowShadow>False</ShowShadow>
+              <Title>Series 1</Title>
+              <ValueDataColumn>DataSource1.total_encounters</ValueDataColumn>
+            </Item25>
+          </Series>
+          <SeriesLabels Ref="29" type="Stimulsoft.Report.Chart.StiCenterPie3dLabels" isKey="true">
+            <BorderColor>Transparent</BorderColor>
+            <Brush>[119:255:255:255]</Brush>
+            <Chart isRef="25" />
+            <Font>Arial,10</Font>
+            <LabelColor>50, 58, 69</LabelColor>
+            <MarkerSize>8, 6</MarkerSize>
+            <ValueTypeSeparator>-</ValueTypeSeparator>
+            <Width>0</Width>
+          </SeriesLabels>
+          <SeriesLabelsConditions isList="true" count="0" />
+          <Sort isList="true" count="0" />
+          <Strips isList="true" count="0" />
+          <Style Ref="30" type="Stimulsoft.Report.Chart.StiStyle29" isKey="true">
+            <Conditions isList="true" count="0" />
+            <Name />
+          </Style>
+        </Chart1>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Expressions isList="true" count="0" />
+      <Guid>ad19677f0f0144b5aaf4f6da50f5a983</Guid>
+      <Margins>0.39,0.39,0.39,0.39</Margins>
+      <Name>Page2</Name>
+      <PageHeight>11</PageHeight>
+      <PageWidth>8.5</PageWidth>
+      <PaperSize>Letter</PaperSize>
+      <Report isRef="0" />
+    </Page2>
+  </Pages>
+  <ReferencedAssemblies isList="true" count="8">
+    <value>System.Dll</value>
+    <value>System.Drawing.Dll</value>
+    <value>System.Windows.Forms.Dll</value>
+    <value>System.Data.Dll</value>
+    <value>System.Xml.Dll</value>
+    <value>Stimulsoft.Controls.Dll</value>
+    <value>Stimulsoft.Base.Dll</value>
+    <value>Stimulsoft.Report.Dll</value>
+  </ReferencedAssemblies>
+  <ReportAlias>Report</ReportAlias>
+  <ReportAuthor>Hanan</ReportAuthor>
+  <ReportChanged>8/17/2026 11:14:52 AM</ReportChanged>
+  <ReportCreated>8/16/2026 1:14:16 PM</ReportCreated>
+  <ReportFile>C:\Users\PAL WEB\Documents\Report.mrt</ReportFile>
+  <ReportGuid>8a41bd5cc3834e7aba78dc3350484176</ReportGuid>
+  <ReportName>Report</ReportName>
+  <ReportUnit>Inches</ReportUnit>
+  <ReportVersion>2026.3.2.0</ReportVersion>
+  <Script>using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Data;
+using Stimulsoft.Controls;
+using Stimulsoft.Base.Drawing;
+using Stimulsoft.Report;
+using Stimulsoft.Report.Dialogs;
+using Stimulsoft.Report.Components;
+
+namespace Reports
+{
+    public class Report : Stimulsoft.Report.StiReport
+    {
+        public Report()        {
+            this.InitializeComponent();
+        }
+
+        #region StiReport Designer generated code - do not modify
+		#endregion StiReport Designer generated code - do not modify
+    }
+}
+</Script>
+  <ScriptLanguage>CSharp</ScriptLanguage>
+  <Styles isList="true" count="0" />
+  <UsePlatformDependentScript>False</UsePlatformDependentScript>
+</StiSerializer>

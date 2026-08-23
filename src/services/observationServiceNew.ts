@@ -1,7 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
 import { NurseSummaryReportVM } from '@/types/model-types-new';
-
+export interface PatientEncounterReportDTO {
+  departmentName: string;
+  status: string;
+}
 export const observationServiceNew = createApi({
   reducerPath: 'observationService',
   baseQuery: BaseQuery,
@@ -45,7 +48,21 @@ export const observationServiceNew = createApi({
         },
         responseHandler: response => response.blob(),
       }),
+      
     }),
+   getPatientEncountersReport: builder.query<
+  PatientEncounterReportDTO[],
+  {
+    departmentId?: number;
+    status?: string;
+  }
+>({
+  query: body => ({
+    url: '/api/analytics/patient-encounters',
+    method: 'POST',
+    body,
+  }),
+}),
   })
 });
 
@@ -53,5 +70,7 @@ export const {
   useLazyGetNurseSummaryReportQuery,
   useLazyGetNurseSummaryReportPdfQuery,
   useLazyGetVisitReportQuery,
-  useLazyGetVisitReportPdfQuery
+  useLazyGetVisitReportPdfQuery,
+  useGetPatientEncountersReportQuery,
+  useLazyGetPatientEncountersReportQuery
 } = observationServiceNew;
