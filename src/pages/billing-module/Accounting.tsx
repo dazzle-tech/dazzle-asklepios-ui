@@ -38,7 +38,9 @@ import type { PaymentReceiptData } from '@/pages/patient/patient-profile/Patient
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
+import PatientFinancialDashboardTab from './accounting/financial-statement/PatientFinancialDashboardTab';
 import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
+import './accounting/financial-statement/styles.less';
 import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
@@ -723,6 +725,15 @@ const Accounting: React.FC = () => {
     {
       title: 'Issued Documents',
       content: <Receipt patient={patient} />
+    },
+    {
+      title: 'Accounting Dashboard',
+      content: (
+        <PatientFinancialDashboardTab
+          patient={patient}
+          currency={summary.currency ?? facilityCurrency}
+        />
+      )
     }
   ];
 

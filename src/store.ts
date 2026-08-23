@@ -253,6 +253,7 @@ import { taxService } from './services/billing/taxService';
   import { billingTransactionService } from './services/billing/billingTransactionService';
   import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
   import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+  import { patientFinancialStatementService } from './services/billing/patientFinancialStatementService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -626,6 +627,7 @@ export const store = configureStore({
   [billingTransactionService.reducerPath]:billingTransactionService.reducer,
   [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
   [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+  [patientFinancialStatementService.reducerPath]: patientFinancialStatementService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -849,7 +851,8 @@ export const store = configureStore({
         discountService.middleware,
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
-        financialDocumentAdjustmentService.middleware
+        financialDocumentAdjustmentService.middleware,
+        patientFinancialStatementService.middleware
       ) as any
 });
 
