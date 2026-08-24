@@ -6110,7 +6110,9 @@ export type BillingRefundStatus =
 
 export type BillingRefundSourceType =
   | 'ORIGINAL_PAYMENT'
-  | 'AVAILABLE_WALLET'
+  | 'WALLET_AVAILABLE'
+  | 'OVERPAYMENT'
+  | 'MANUAL_ADJUSTMENT'
   | string;
 
 export type BillingCancellationReason =
@@ -6400,6 +6402,7 @@ export type BillingCancellationResult = {
 export type BillingRefundRequest = {
   patientId: number;
   encounterId?: number | null;
+  facilityId?: number | null;
   originalPaymentId?: number | null;
   originalPaymentTransactionId?: number | null;
   refundSourceType: BillingRefundSourceType;
@@ -6436,6 +6439,8 @@ export type BillingRefundResult = {
   currency: Currency;
   refundSourceType: BillingRefundSourceType;
   status: BillingRefundStatus;
+  financialDocumentId?: number | null;
+  documentNumber?: string | null;
 };
 
 export type BillingRefundReversalRequest = {

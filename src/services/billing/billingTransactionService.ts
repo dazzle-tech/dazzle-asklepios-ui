@@ -405,10 +405,19 @@ export const billingTransactionService =
                 body
               }),
 
-            invalidatesTags: [
+            invalidatesTags: (
+              _result,
+              _error,
+              arg
+            ) => [
               'BillingRefund',
               'BillingPayment',
               'BillingWallet',
+              'PatientFinancialInvoices',
+              {
+                type: 'EncounterBillingSummary',
+                id: String(arg.encounterId ?? '')
+              },
               'EncounterBillingSummary'
             ]
           }),

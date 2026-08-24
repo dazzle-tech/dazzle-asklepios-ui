@@ -28,6 +28,7 @@ export function useFinancialDocumentTypes() {
       invoice: resolve('INVOICE'),
       creditNote: resolve('CREDIT_NOTE'),
       debitNote: resolve('DEBIT_NOTE'),
+      refund: resolve('REFUND'),
       receipt: resolve('RECEIPT'),
       payment: resolve('PAYMENT')
     };

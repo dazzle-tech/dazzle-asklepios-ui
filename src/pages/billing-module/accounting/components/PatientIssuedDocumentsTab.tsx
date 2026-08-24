@@ -44,6 +44,7 @@ import {
 } from '@/pages/billing-module/invoices/invoicePrintVersion';
 import {
   buildBillingPaymentReceipt,
+  buildIssuedRefundReceipt,
   formatBillingEnum,
   formatBillingTimestamp,
   formatMoney,
@@ -309,6 +310,20 @@ const PatientIssuedDocumentsTab: React.FC<PatientIssuedDocumentsTabProps> = ({ p
             facilityName: facilityPrintInfo.name,
             billingSummary,
             paymentDate: formatBillingTimestamp(document.createdDate)
+          })
+        });
+        setLoadingDocumentId(null);
+        return;
+      }
+
+      if (documentType === 'REFUND') {
+        setPaymentReceiptModal({
+          open: true,
+          receipt: buildIssuedRefundReceipt({
+            document,
+            patient,
+            encounterNumber: document.encounterNumber,
+            facilityName: facilityPrintInfo.name
           })
         });
         setLoadingDocumentId(null);

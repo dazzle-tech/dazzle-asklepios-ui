@@ -257,6 +257,36 @@ export const ADJUSTMENT_ERROR_MAP: Record<string, string> = {
     'This adjustment request was already processed. Refresh the adjustments list.'
 };
 
+export const WALLET_REFUND_ERROR_MAP: Record<string, string> = {
+  'refund.exceedsAvailable':
+    'Requested refund exceeds the available wallet balance. Reserved funds cannot be refunded.',
+  'wallet.refund.exceedsAvailable':
+    'Requested refund exceeds the available wallet balance. Reserved funds cannot be refunded.',
+  'wallet.notfound': 'No billing wallet was found for this patient.',
+  'wallet.notActive': 'The patient wallet is not active.',
+  'wallet.balance.invalid': 'The patient wallet balance is inconsistent. Refresh and try again.',
+  'amount.invalid': 'Refund amount must be greater than zero.',
+  'reason.required': 'A refund reason is required.',
+  'refundMethodCode.required': 'Select how the refund should be returned.',
+  'refundMethodId.required': 'Select how the refund should be returned.',
+  'patient.notfound': 'Patient not found.',
+  'patientId.required': 'Patient is required to issue a refund.',
+  'requestId.required': 'Refund request id is missing. Refresh and try again.',
+  'sourceChannel.required': 'Refund source channel is required.',
+  'refundSourceType.required': 'Refund source type is required.',
+  'refund.exceedsRefundable': 'Requested refund exceeds the currently refundable amount.',
+  'payment.refundable.zero': 'No refundable amount remains for this payment.',
+  'numbering.configuration.inactive':
+    'Refund numbering is inactive. Activate REFUND numbering in Financial Document Numbering first.',
+  'numbering.configuration.notfound':
+    'Refund numbering is not configured for this facility. Set it up in Financial Document Numbering like invoices.',
+  'numbering.assign.failed':
+    'Unable to allocate the next refund document number from setup. Try again.',
+  'numbering.facility.required': 'Facility is required to assign a refund document number.',
+  'encounter.required': 'Select a visit to issue a numbered refund document.',
+  'refund.document.create.failed': 'Unable to save the refund financial document.'
+};
+
 export const CHECKOUT_ERROR_MAP: Record<string, string> = {
   'responsibility.unsettled':
     'Checkout could not settle the full patient balance. Enable patient debit or collect the remaining amount first.',

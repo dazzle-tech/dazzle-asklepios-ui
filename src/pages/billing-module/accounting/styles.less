@@ -539,3 +539,187 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+.billing-wallet-refund-dialog {
+  .rs-modal-content {
+    border-radius: 18px;
+  }
+
+  .rs-modal-header {
+    border-bottom: 0;
+    padding-bottom: 4px;
+  }
+
+  .rs-modal-body {
+    padding-top: 4px;
+  }
+}
+
+.billing-wallet-refund {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+  }
+
+  &__hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 18px 16px;
+    border-radius: 16px;
+    background:
+      linear-gradient(135deg, rgba(206, 38, 38, 0.12), var(--one-health-theme-hover)),
+      var(--rs-bg-card);
+    border: 1px solid var(--rs-border-primary);
+  }
+
+  &__hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+
+    strong {
+      font-size: 28px;
+      line-height: 1.1;
+      color: var(--rs-text-heading);
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--rs-text-secondary);
+    }
+  }
+
+  &__kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary-red, #ce2626);
+  }
+
+  &__hero-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: #fff;
+    background: var(--primary-red, #ce2626);
+    font-size: 22px;
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+
+    div {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--rs-bg-well, #f7f7fa);
+      border: 1px solid var(--rs-border-primary);
+    }
+
+    span {
+      display: block;
+      font-size: 11px;
+      color: var(--rs-text-secondary);
+      margin-bottom: 4px;
+    }
+
+    strong {
+      font-size: 15px;
+      color: var(--rs-text-heading);
+    }
+  }
+
+  &__progress {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--rs-bg-well, #f7f7fa);
+    border: 1px solid var(--rs-border-primary);
+  }
+
+  &__progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--primary-red, #ce2626), #f39c12);
+    transition: width 0.22s ease;
+  }
+
+  &__amount {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  &__amount-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--rs-text-secondary);
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__chip {
+    border: 1px solid var(--rs-border-primary);
+    background: var(--rs-bg-card, #fff);
+    color: var(--rs-text-heading);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+
+  &__chip:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+  }
+
+  &__chip--active {
+    border-color: var(--primary-red, #ce2626);
+    background: rgba(206, 38, 38, 0.08);
+    color: var(--primary-red, #ce2626);
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--rs-bg-well, #f7f7fa);
+    color: var(--rs-text-secondary);
+  }
+}
+
+.patient-billing-wallet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}

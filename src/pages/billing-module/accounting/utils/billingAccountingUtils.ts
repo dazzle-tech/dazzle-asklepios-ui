@@ -3,7 +3,8 @@ import type {
   EncounterBillingSummary,
   PatientEncounter,
   PatientServiceAndProduct,
-  BillingPaymentResult
+  BillingPaymentResult,
+  BillingRefundResult
 } from '@/types/model-types-new';
 import type { InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
@@ -1048,6 +1049,134 @@ export const buildWalletDepositReceipt = ({
   };
 };
 
+export const buildWalletRefundReceipt = ({
+  refundResult,
+  patient,
+  encounter,
+  facilityName = 'Healthcare Facility',
+  currency,
+  paymentMethodLabel,
+  notes
+}: {
+  refundResult: BillingRefundResult;
+  patient?: any;
+  encounter?: PatientEncounter | null;
+  facilityName?: string;
+  currency: string;
+  paymentMethodLabel: string;
+  notes?: string;
+}): PaymentReceiptData => {
+  const amount = Number(refundResult.refundedAmount ?? refundResult.requestedAmount ?? 0);
+  const walletAvailable = Number(refundResult.walletAvailableBalance ?? 0);
+
+  const receiptNotes = [
+    notes?.trim(),
+    `Wallet available after refund: ${formatMoney(walletAvailable, currency)}`
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    receiptNumber:
+      refundResult.documentNumber ?? refundResult.refundNumber ?? '-',
+    transactionNumber: refundResult.refundPaymentTransactionNumber ?? '-',
+    paymentDate: new Date().toLocaleString(),
+    patientName: resolvePatientDisplayName(patient),
+    patientMrn: resolvePatientMrn(patient),
+    encounterNumber: resolveEncounterNumber(encounter) ?? 'Wallet refund',
+    facilityName,
+    coverageType: 'Wallet refund',
+    currency,
+    paymentAmount: amount,
+    paymentMethod: paymentMethodLabel,
+    chargeNumber: '-',
+    items: [
+      {
+        name: 'Available wallet refund',
+        type: 'REFUND',
+        quantity: 1,
+        unitPrice: amount,
+        netAmount: amount,
+        patientShare: amount
+      }
+    ],
+    totals: {
+      grossAmount: amount,
+      discountAmount: 0,
+      exemptionAmount: 0,
+      taxAmount: 0,
+      netAmount: amount,
+      patientResponsibilityAmount: amount,
+      insuranceResponsibilityAmount: 0,
+      patientOutstandingAmount: 0,
+      isPreview: false
+    },
+    notes: receiptNotes || undefined
+  };
+};
+
+export const buildIssuedRefundReceipt = ({
+  document,
+  patient,
+  encounterNumber,
+  facilityName = 'Healthcare Facility'
+}: {
+  document: {
+    documentNumber?: string | null;
+    totalAmount?: number | null;
+    currency?: string | null;
+    createdDate?: string | null;
+    adjustmentReason?: string | null;
+    encounterNumber?: string | null;
+  };
+  patient?: any;
+  encounterNumber?: string | null;
+  facilityName?: string;
+}): PaymentReceiptData => {
+  const amount = Number(document.totalAmount ?? 0);
+  const currency = document.currency ?? 'SAR';
+
+  return {
+    receiptNumber: document.documentNumber ?? '-',
+    transactionNumber: document.documentNumber ?? '-',
+    paymentDate: document.createdDate
+      ? formatBillingTimestamp(document.createdDate)
+      : new Date().toLocaleString(),
+    patientName: resolvePatientDisplayName(patient),
+    patientMrn: resolvePatientMrn(patient),
+    encounterNumber:
+      encounterNumber ?? document.encounterNumber ?? 'Wallet refund',
+    facilityName,
+    coverageType: 'Wallet refund',
+    currency,
+    paymentAmount: amount,
+    paymentMethod: 'Refund',
+    chargeNumber: '-',
+    items: [
+      {
+        name: 'Available wallet refund',
+        type: 'REFUND',
+        quantity: 1,
+        unitPrice: amount,
+        netAmount: amount,
+        patientShare: amount
+      }
+    ],
+    totals: {
+      grossAmount: amount,
+      discountAmount: 0,
+      exemptionAmount: 0,
+      taxAmount: 0,
+      netAmount: amount,
+      patientResponsibilityAmount: amount,
+      insuranceResponsibilityAmount: 0,
+      patientOutstandingAmount: 0,
+      isPreview: false
+    },
+    notes: document.adjustmentReason?.trim() || undefined
+  };
+};
+
 export const buildBillingPaymentReceipt = ({
   paymentResult,
   patient,
@@ -1149,6 +1278,9 @@ export const buildBillingPaymentReceipt = ({
 
 /** Primary action label for adding cash/card funds to the patient wallet. */
 export const WALLET_DEPOSIT_BUTTON_LABEL = 'Add to wallet';
+
+/** Primary action label for returning available wallet funds to the patient. */
+export const WALLET_REFUND_BUTTON_LABEL = 'Refund to patient';
 
 export const BILLING_PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Cash',

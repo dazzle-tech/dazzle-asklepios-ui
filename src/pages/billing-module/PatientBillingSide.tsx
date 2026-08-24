@@ -3,6 +3,7 @@ import { Avatar, Divider, Loader, Panel, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faIdCard,
+  faMoneyBillTransfer,
   faScaleBalanced,
   faUser,
   faWallet
@@ -17,13 +18,14 @@ import { calculateAgeFormat, formatEnumString } from '@/utils';
 import { ApAttachment } from '@/types/model-types';
 
 import { usePatientRemainingBalance } from './accounting/hooks/usePatientRemainingBalance';
-import { WALLET_DEPOSIT_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
+import { WALLET_DEPOSIT_BUTTON_LABEL, WALLET_REFUND_BUTTON_LABEL } from './accounting/utils/billingAccountingUtils';
 
 import '../encounter/encounter-main-info-section/styles.less';
 
 interface PatientBillingSideProps {
   patient: any;
   onDeposit?: () => void;
+  onRefund?: () => void;
   onClearPatient?: () => void;
 }
 
@@ -36,6 +38,7 @@ const formatAmount = (amount: number | null | undefined) =>
 const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
   patient,
   onDeposit,
+  onRefund,
   onClearPatient
 }) => {
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -204,16 +207,29 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
             </div>
           )}
 
-          {onDeposit && (
-            <div style={{ marginTop: '14px' }}>
-              <MyButton
-                block
-                appearance="primary"
-                prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
-                onClick={onDeposit}
-              >
-                {WALLET_DEPOSIT_BUTTON_LABEL}
-              </MyButton>
+          {(onDeposit || onRefund) && (
+            <div className="patient-billing-wallet-actions">
+              {onDeposit && (
+                <MyButton
+                  block
+                  appearance="primary"
+                  prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
+                  onClick={onDeposit}
+                >
+                  {WALLET_DEPOSIT_BUTTON_LABEL}
+                </MyButton>
+              )}
+              {onRefund && (
+                <MyButton
+                  block
+                  appearance="ghost"
+                  color="var(--primary-red, #ce2626)"
+                  prefixIcon={() => <FontAwesomeIcon icon={faMoneyBillTransfer} />}
+                  onClick={onRefund}
+                >
+                  {WALLET_REFUND_BUTTON_LABEL}
+                </MyButton>
+              )}
             </div>
           )}
 

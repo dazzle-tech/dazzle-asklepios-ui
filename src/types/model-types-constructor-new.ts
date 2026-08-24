@@ -3769,9 +3769,10 @@ export const newBillingCancellationRequest: modelTypes.BillingCancellationReques
 export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
   patientId: 0,
   encounterId: null,
+  facilityId: null,
   originalPaymentId: null,
   originalPaymentTransactionId: null,
-  refundSourceType: 'AVAILABLE_WALLET',
+  refundSourceType: 'WALLET_AVAILABLE',
   requestedAmount: 0,
   refundMethodCode: '',
   refundMethodId: 0,

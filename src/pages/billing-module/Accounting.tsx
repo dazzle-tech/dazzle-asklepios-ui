@@ -32,6 +32,7 @@ import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
+import WalletRefundModal from './accounting/components/WalletRefundModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
 import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
@@ -57,6 +58,7 @@ const Accounting: React.FC = () => {
   const [coverageType, setCoverageType] = useState<'SELF_PAY' | 'INSURANCE'>('SELF_PAY');
   const [selectedInsuranceId, setSelectedInsuranceId] = useState<number | null>(null);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
   const [selectedChargeRowIds, setSelectedChargeRowIds] = useState<string[]>([]);
   const [paymentReceiptModal, setPaymentReceiptModal] = useState<{
@@ -762,6 +764,7 @@ const Accounting: React.FC = () => {
           <PatientBillingSide
             patient={patient}
             onDeposit={() => setDepositModalOpen(true)}
+            onRefund={() => setRefundModalOpen(true)}
             onClearPatient={handleClosePatient}
           />
           <div className="billing-accounting billing-accounting__sidebar-timeline">
@@ -806,6 +809,26 @@ const Accounting: React.FC = () => {
             facilityId={facilityId != null ? Number(facilityId) : null}
             currency={summary.currency ?? facilityCurrency}
             onDeposited={refreshAll}
+            onReceiptReady={receipt =>
+              setPaymentReceiptModal({
+                open: true,
+                receipt,
+                autoPrint: true
+              })
+            }
+          />
+          <WalletRefundModal
+            open={refundModalOpen}
+            onClose={() => setRefundModalOpen(false)}
+            patientId={patientId}
+            patient={patient}
+            encounter={selectedEncounter}
+            encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
+            currency={summary.currency ?? facilityCurrency}
+            walletAvailable={walletBalance}
+            walletReserved={reservedBalance}
+            onRefunded={refreshAll}
             onReceiptReady={receipt =>
               setPaymentReceiptModal({
                 open: true,
