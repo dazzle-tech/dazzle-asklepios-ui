@@ -229,7 +229,7 @@ const MyTable: React.FC<MyTableProps> = ({
                             }}
                           >
                             {col.render ? (
-                              col.render(row, index)
+                              <Translate>{col.render(row, index)}</Translate>
                             ) : col.isLink ? (
                               <span
                                 className="table-link"
@@ -238,10 +238,10 @@ const MyTable: React.FC<MyTableProps> = ({
                                   col.onLinkClick?.(row);
                                 }}
                               >
-                                {row[col.dataKey || col.key]}
+                                <Translate>{row[col.dataKey || col.key]}</Translate>
                               </span>
                             ) : (
-                              row[col.dataKey || col.key]
+                              <Translate>{row[col.dataKey || col.key]}</Translate>
                             )}
                           </TableCell>
                         ))}
@@ -269,8 +269,8 @@ const MyTable: React.FC<MyTableProps> = ({
                                     {expandableColumns.map(col => (
                                       <TableCell key={col.key} align={col.align}>
                                         {col.render
-                                          ? col.render(row, index)
-                                          : row[col.dataKey || col.key]}
+                                          ? <Translate>{col.render(row, index)}</Translate>
+                                          : <Translate>{row[col.dataKey || col.key]}</Translate>}
                                       </TableCell>
                                     ))}
                                   </TableRow>
