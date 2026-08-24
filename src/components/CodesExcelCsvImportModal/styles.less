@@ -5,47 +5,22 @@
   padding: 4px 4px 16px;
 }
 
-/* Header */
-.codes-import-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.codes-import-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background-color: #eff6ff;
-  border: 2px dashed #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.codes-import-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
 .codes-import-subtitle {
   margin: 0;
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--primary-gray);
 }
 
-/* Cards */
 .codes-import-card {
-  border-radius: 8px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: var(--white, #ffffff);
+  border: 1px solid var(--light-gray, #e5e7eb);
   padding: 12px 14px;
 }
 
 .codes-import-instructions {
-  background-color: #eff6ff;
+  background-color: rgba(65, 91, 231, 0.06);
 }
 
 .codes-import-card-header {
@@ -55,21 +30,9 @@
   margin-bottom: 6px;
 }
 
-.codes-import-card-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background-color: #2563eb;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .codes-import-card-title {
   font-weight: 600;
+  color: var(--deep-blue, #1e3a5f);
 }
 
 .codes-import-steps {
@@ -78,46 +41,12 @@
   font-size: 13px;
 }
 
-/* Badge */
-.codes-import-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  margin-left: 4px;
-  border-radius: 999px;
-  background-color: #dbeafe;
-  color: #1d4ed8;
-  font-size: 11px;
-}
-
-/* Example */
-.codes-import-example-title {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.codes-import-example-table {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 4px;
-  font-size: 12px;
-}
-
-.codes-import-example-table span {
-  background-color: #f3f4f6;
-  padding: 6px 8px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-/* Buttons row */
 .codes-import-buttons {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-/* Upload */
 .codes-import-upload-header {
   display: flex;
   justify-content: space-between;
@@ -130,17 +59,9 @@
   font-size: 14px;
 }
 
-.codes-import-format-badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
 .codes-import-upload-subtext {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--primary-gray);
   margin: 4px 0 10px;
 }
 
@@ -155,90 +76,40 @@
   flex: 1;
   min-height: 32px;
   border-radius: 6px;
-  border: 1px dashed #d1d5db;
+  border: 1px dashed var(--light-gray, #d1d5db);
   display: flex;
   align-items: center;
   padding: 0 8px;
   font-size: 13px;
-  color: #6b7280;
-  background-color: #f9fafb;
+  color: var(--primary-gray);
+  background-color: var(--soft-gray, #f9fafb);
 }
 
-/* Dark Mode */
-
 .codes-import-wrapper.dark {
-  @text-1: #e5e7eb; 
-  @text-2: #cbd5e1; 
-  @text-3: #94a3b8; 
+  color: var(--white);
 
-  @border: #374151;
-
-  @surface-card: var(--dark-black);
-  @surface-soft: #0f172a;
-  @surface-field: #020617;
-
-  @accent-border: #60a5fa;
-
-  @badge-bg: #1e3a8a;
-  @badge-text: #dbeafe;
-
-  color: @text-2; 
-
-  /* Header */
-  .codes-import-title {
-    color: @text-1;
+  .codes-import-subtitle,
+  .codes-import-upload-subtext,
+  .codes-import-file-display {
+    color: var(--primary-gray);
   }
 
-  .codes-import-subtitle {
-    color: @text-3;
-  }
-
-  .codes-import-header-icon {
-    background-color: #1e293b;
-    border-color: @accent-border;
-  }
-
-  /* Cards */
   .codes-import-card {
-    background-color: @surface-card;
-    border-color: @border;
+    background-color: var(--dark-black);
+    border-color: #374151;
   }
 
   .codes-import-instructions {
-    background-color: @surface-soft;
+    background-color: rgba(65, 91, 231, 0.12);
   }
 
-  .codes-import-card-icon {
-    background-color: #3b82f6;
-  }
-
-  .codes-import-card-title {
-    color: @text-1;
-  }
-
-  .codes-import-steps,
-  .codes-import-steps li {
-    color: @text-2;
-  }
-
-  /* Badge */
-  .codes-import-badge {
-    background-color: @badge-bg;
-    color: @badge-text;
-  }
-
-  /* Upload */
+  .codes-import-card-title,
   .codes-import-upload-label {
-    color: @text-1;
-  }
-
-  .codes-import-upload-subtext {
-    color: @text-3;
+    color: var(--white);
   }
 
   .codes-import-file-display {
-    background-color: @surface-field;
-    border-color: @border;
-    color: @text-3;
+    background-color: var(--dark-black);
+    border-color: #374151;
   }
 }
