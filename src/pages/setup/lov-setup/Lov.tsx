@@ -27,6 +27,7 @@ import AddEditLov from './AddEditLOV';
 import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
+import TranslationModal from '@/components/TranslationModal';
 const Lov = () => {
   const dispatch = useAppDispatch();
 
@@ -37,6 +38,8 @@ const Lov = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+   
   // Fetch lov list response
   const { data: lovListResponse, isFetching } = useGetLovsQuery(listRequest);
   // Save lov
@@ -110,6 +113,7 @@ const Lov = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'The LOV has been saved successfully', sev: 'success' }));
+        setShowTranslationModal(true);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to save this LOV', sev: 'error' }));
@@ -308,6 +312,16 @@ const Lov = () => {
           setLov({ ...newApLov });
         }}
         width={width}
+      />
+       <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'name',
+            value: lov.lovName
+          }
+        ]}
       />
     </Carousel>
   );
