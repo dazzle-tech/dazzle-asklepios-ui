@@ -592,6 +592,7 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
               rowClassName={row =>
                 selectedCommunity && row.id === selectedCommunity.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }

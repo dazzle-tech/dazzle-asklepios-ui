@@ -82,6 +82,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
           rowClassName={(rowData: Language) =>
             selectedLanguage?.id === rowData.id ? 'selected-row' : ''
           }
+          dontTranslateData 
         />
       </div>}
     />
