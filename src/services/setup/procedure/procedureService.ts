@@ -139,6 +139,27 @@ export const procedureSetupService = createApi({
       providesTags: ['Procedure']
     }),
 
+        getActiveProceduresByFacilityAndCategorySearch: builder.query<
+      PagedResult<any>,
+      { facilityId: Id; category: Id; name: string } & PagedParams
+    >({
+      query: ({ facilityId, category, name, page, size, sort = 'name,asc' }) => ({
+        url: `/api/setup/procedure/active/by-facility/${encodeURIComponent(
+          String(facilityId)
+        )}/by-category/search`,
+        params: {
+          page,
+          size,
+          sort,
+          category,
+          name
+        }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure']
+    }),
+
+
     getActiveProceduresByFacilityAndCategory: builder.query<
       PagedResult<any>,
       { facilityId: Id; category: Id } & PagedParams
@@ -175,5 +196,7 @@ export const {
   useGetActiveProceduresByFacilityQuery,
   useLazyGetActiveProceduresByFacilityQuery,
   useGetActiveProceduresByFacilityAndCategoryQuery,
-  useLazyGetActiveProceduresByFacilityAndCategoryQuery
+  useLazyGetActiveProceduresByFacilityAndCategoryQuery,
+  useGetActiveProceduresByFacilityAndCategorySearchQuery,
+  useLazyGetActiveProceduresByFacilityAndCategorySearchQuery
 } = procedureSetupService;

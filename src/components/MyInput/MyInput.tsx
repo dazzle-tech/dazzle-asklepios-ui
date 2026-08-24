@@ -358,16 +358,23 @@ const MyInput = ({
   const pickerPlacement = props.placement ?? 'autoVerticalStart';
   const pickerPreventOverflow = props.preventOverflow ?? true;
 
-  const getDynamicMenuMaxHeight = (dataList?: any[]) => {
-    if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
-      return props.menuMaxHeight as number;
-    }
-    const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38;
-    const headerAllowance = 24;
-    const capHeight = 240;
-    return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
-  };
+const getDynamicMenuMaxHeight = (dataList?: any[]) => {
+  if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
+    return props.menuMaxHeight as number;
+  }
+
+  const itemsCount = dataList?.length ?? 0;
+  const estimatedItemHeight = 38;
+  const headerAllowance = 24;
+  const capHeight = 240;
+
+  const visibleItems = Math.max(itemsCount, 3);
+
+  return Math.min(
+    capHeight,
+    visibleItems * estimatedItemHeight + headerAllowance
+  );
+};
 
   const startListening = () => {
     const SpeechRecognition =
