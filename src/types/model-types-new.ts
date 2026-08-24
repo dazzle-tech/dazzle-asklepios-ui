@@ -5546,6 +5546,25 @@ export type SavePriceListSetupRequest = {
   status?: PriceListSetupStatus;
 };
 
+export type ClonePriceListSetupRequest =
+  SavePriceListSetupRequest & {
+    cloneItems: boolean;
+  };
+
+export type PriceListSetupItemImportError = {
+  rowNumber: number;
+  itemCode?: string;
+  message: string;
+};
+
+export type PriceListSetupItemImportResult = {
+  totalRows: number;
+  inserted: number;
+  updated: number;
+  failed: number;
+  errors: PriceListSetupItemImportError[];
+};
+
 export enum BillingTrigger {
   ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
   TREATMENT_STARTED = 'TREATMENT_STARTED',

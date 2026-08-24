@@ -7,10 +7,11 @@ import React, {
 import { Panel } from 'rsuite';
 
 import {
-  MdCheckCircle,
-  MdDelete,
-  MdList,
-  MdModeEdit
+    MdCheckCircle,
+    MdContentCopy,
+    MdDelete,
+    MdList,
+    MdModeEdit
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -97,6 +98,11 @@ const PriceListSetup: React.FC = () => {
     setDeleteConfirmationOpen
   ] = useState(false);
 
+  const [
+    cloneSourceId,
+    setCloneSourceId
+  ] = useState<number | undefined>();
+
   const [width, setWidth] = useState(
     typeof window !== 'undefined'
       ? window.innerWidth
@@ -181,6 +187,8 @@ const PriceListSetup: React.FC = () => {
   }, []);
 
   const handleNew = () => {
+    setCloneSourceId(undefined);
+
     setSelectedPriceList({
       ...newPriceListSetup,
 
@@ -208,8 +216,35 @@ const PriceListSetup: React.FC = () => {
   const handleEdit = (
     row: PriceListSetupModel
   ) => {
+    setCloneSourceId(undefined);
+
     setSelectedPriceList({
       ...row
+    });
+
+    setHeaderModalOpen(true);
+  };
+
+  const handleClone = (
+    row: PriceListSetupModel
+  ) => {
+    if (!row.id) {
+      return;
+    }
+
+    setCloneSourceId(row.id);
+
+    setSelectedPriceList({
+      ...row,
+      id: undefined,
+      name: row.name
+        ? `${row.name} (Copy)`
+        : undefined,
+      versionNumber:
+        (row.versionNumber ?? 1) + 1,
+      effectiveFrom: undefined,
+      effectiveTo: undefined,
+      status: 'DRAFT'
     });
 
     setHeaderModalOpen(true);
@@ -476,7 +511,7 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'actions',
       title: <Translate>Actions</Translate>,
-      width: 190,
+      width: 220,
       align: 'center' as const,
 
       render: (
@@ -489,7 +524,8 @@ const PriceListSetup: React.FC = () => {
               title="Activate for billing"
               size={23}
               fill="var(--primary-green, #28a745)"
-              onClick={() => {
+              onClick={event => {
+                event.stopPropagation();
                 void handleActivate(row);
               }}
             />
@@ -500,9 +536,21 @@ const PriceListSetup: React.FC = () => {
             title="Edit"
             size={23}
             fill="var(--primary-gray)"
-            onClick={() =>
-              handleEdit(row)
-            }
+            onClick={event => {
+              event.stopPropagation();
+              handleEdit(row);
+            }}
+          />
+
+          <MdContentCopy
+            className="icons-style"
+            title="Clone"
+            size={22}
+            fill="var(--deep-blue)"
+            onClick={event => {
+              event.stopPropagation();
+              handleClone(row);
+            }}
           />
 
           <MdList
@@ -510,9 +558,10 @@ const PriceListSetup: React.FC = () => {
             title="Price List Items"
             size={24}
             fill="var(--deep-blue)"
-            onClick={() =>
-              handleOpenItems(row)
-            }
+            onClick={event => {
+              event.stopPropagation();
+              handleOpenItems(row);
+            }}
           />
 
           <MdDelete
@@ -520,9 +569,10 @@ const PriceListSetup: React.FC = () => {
             title="Delete"
             size={23}
             fill="var(--primary-pink)"
-            onClick={() =>
-              handleDeleteRequest(row)
-            }
+            onClick={event => {
+              event.stopPropagation();
+              handleDeleteRequest(row);
+            }}
           />
         </div>
       )
@@ -553,9 +603,13 @@ const PriceListSetup: React.FC = () => {
         loading={isFetching}
         columns={tableColumns}
         rowClassName={selectedRowClass}
-        onRowClick={row =>
-          setSelectedPriceList(row)
-        }
+        onRowClick={row => {
+          if (headerModalOpen || itemsModalOpen) {
+            return;
+          }
+
+          setSelectedPriceList(row);
+        }}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
@@ -581,11 +635,18 @@ const PriceListSetup: React.FC = () => {
 
       <AddEditPriceListSetup
         open={headerModalOpen}
-        setOpen={setHeaderModalOpen}
+        setOpen={value => {
+          setHeaderModalOpen(value);
+
+          if (!value) {
+            setCloneSourceId(undefined);
+          }
+        }}
         width={width}
         priceList={selectedPriceList}
         setPriceList={setSelectedPriceList}
         onSaveSuccess={handleSaveSuccess}
+        cloneSourceId={cloneSourceId}
       />
 
       <PriceListSetupItems

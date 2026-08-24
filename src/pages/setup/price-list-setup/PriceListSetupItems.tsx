@@ -13,8 +13,11 @@ import {
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import FileUploadIcon from '@rsuite/icons/FileUpload';
 
 import ChildModal from '@/components/ChildModal';
+import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 
@@ -49,6 +52,9 @@ import {
   useAddPriceListSetupItemMutation,
   useDeletePriceListSetupItemMutation,
   useGetPriceListSetupItemsQuery,
+  useImportPriceListSetupItemsMutation,
+  useLazyDownloadPriceListSetupItemsTemplateQuery,
+  useLazyExportPriceListSetupItemsQuery,
   useUpdatePriceListSetupItemMutation
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
@@ -244,6 +250,11 @@ const PriceListSetupItems: React.FC<Props> = ({
   const [
     deleteConfirmationOpen,
     setDeleteConfirmationOpen
+  ] = useState(false);
+
+  const [
+    importModalOpen,
+    setImportModalOpen
   ] = useState(false);
 
   const [
@@ -737,9 +748,157 @@ const PriceListSetupItems: React.FC<Props> = ({
   ] =
     useDeletePriceListSetupItemMutation();
 
+  const [
+    downloadItemsTemplate
+  ] =
+    useLazyDownloadPriceListSetupItemsTemplateQuery();
+
+  const [
+    exportItems
+  ] =
+    useLazyExportPriceListSetupItemsQuery();
+
+  const [
+    importItems
+  ] =
+    useImportPriceListSetupItemsMutation();
+
   const actionLoading =
     isAdding ||
     isUpdating;
+
+  const downloadBlob = (
+    blob: Blob,
+    fileName: string
+  ) => {
+    const url =
+      window.URL.createObjectURL(blob);
+    const link =
+      document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadTemplate =
+    async () => {
+      if (!priceListSetupId) {
+        return;
+      }
+
+      try {
+        const blob =
+          await downloadItemsTemplate({
+            priceListSetupId
+          }).unwrap();
+
+        downloadBlob(
+          blob,
+          'price-list-items-template.xlsx'
+        );
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              extractApiErrorMessage(
+                error,
+                PRICE_LIST_SETUP_ERROR_MAP
+              ) ||
+              'Failed to download the template',
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+  const handleExportItems =
+    async () => {
+      if (!priceListSetupId) {
+        return;
+      }
+
+      try {
+        const blob =
+          await exportItems({
+            priceListSetupId
+          }).unwrap();
+
+        downloadBlob(
+          blob,
+          `price-list-items-${priceListSetupId}.xlsx`
+        );
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              extractApiErrorMessage(
+                error,
+                PRICE_LIST_SETUP_ERROR_MAP
+              ) ||
+              'Failed to export price-list items',
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+  const handleImportItems = async (
+    file: File
+  ) => {
+    try {
+    const result =
+      await importItems({
+        priceListSetupId,
+        file
+      }).unwrap();
+
+    const failureSummary =
+      result.errors
+        ?.slice(0, 3)
+        .map(error =>
+          `Row ${error.rowNumber}${
+            error.itemCode
+              ? ` (${error.itemCode})`
+              : ''
+          }: ${error.message}`
+        )
+        .join(' | ');
+
+    dispatch(
+      notify({
+        msg:
+          result.failed > 0
+            ? `Imported ${result.inserted} new and ${result.updated} updated items. ${result.failed} row(s) failed.${
+                failureSummary
+                  ? ` ${failureSummary}`
+                  : ''
+              }`
+            : `Imported successfully. Added ${result.inserted}, updated ${result.updated}.`,
+        sev:
+          result.failed > 0
+            ? 'warning'
+            : 'success'
+      })
+    );
+
+    await refetch();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) ||
+            'Failed to import price-list items',
+          sev: 'error'
+        })
+      );
+
+      throw error;
+    }
+  };
 
   const tableData = useMemo(
     () => itemPage?.data ?? [],
@@ -2115,17 +2274,47 @@ const PriceListSetupItems: React.FC<Props> = ({
           </strong>
         </div>
 
-        <MyButton
-          prefixIcon={() => (
-            <AddOutlineIcon />
-          )}
-          color="var(--deep-blue)"
-          onClick={openCreate}
-          width="135px"
-          disabled={!priceListSetupId}
-        >
-          Add Item
-        </MyButton>
+        <div className="container-of-add-new-button price-list-items-actions">
+          <MyButton
+            prefixIcon={() => (
+              <FileDownloadIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={() => {
+              void handleExportItems();
+            }}
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Export
+          </MyButton>
+
+          <MyButton
+            prefixIcon={() => (
+              <FileUploadIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={() =>
+              setImportModalOpen(true)
+            }
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Import
+          </MyButton>
+
+          <MyButton
+            prefixIcon={() => (
+              <AddOutlineIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={openCreate}
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Add Item
+          </MyButton>
+        </div>
       </div>
 
       <MyTable
@@ -2274,6 +2463,17 @@ const PriceListSetupItems: React.FC<Props> = ({
           handleDelete
         }
         actionType="delete"
+      />
+
+      <CodesExcelCsvImportModal
+        open={importModalOpen}
+        setOpen={setImportModalOpen}
+        title="Price List Items Import"
+        excelTemplateFileName="price-list-items-template.xlsx"
+        onDownloadTemplate={
+          handleDownloadTemplate
+        }
+        onImport={handleImportItems}
       />
     </>
   );

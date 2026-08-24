@@ -4,9 +4,11 @@ import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
+  ClonePriceListSetupRequest,
   PriceListItemType,
   PriceListSetup,
-  PriceListSetupItem
+  PriceListSetupItem,
+  PriceListSetupItemImportResult
 } from '@/types/model-types-new';
 
 export type Id = number | string;
@@ -310,6 +312,29 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    clonePriceListSetup: builder.mutation<
+      PriceListSetup,
+      {
+        id: Id;
+        data: ClonePriceListSetupRequest;
+      }
+    >({
+      query: ({ id, data }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(id)
+        )}/clone`,
+        method: 'POST',
+        body: data
+      }),
+
+      invalidatesTags: [
+        {
+          type: 'PriceListSetup',
+          id: 'LIST'
+        }
+      ]
+    }),
+
     deletePriceListSetup: builder.mutation<
       void,
       { id: Id }
@@ -517,6 +542,72 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    downloadPriceListSetupItemsTemplate: builder.query<
+      Blob,
+      { priceListSetupId: Id }
+    >({
+      query: ({ priceListSetupId }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(priceListSetupId)
+        )}/items/template`,
+        responseHandler: (response: Response) =>
+          response.blob()
+      })
+    }),
+
+    exportPriceListSetupItems: builder.query<
+      Blob,
+      { priceListSetupId: Id }
+    >({
+      query: ({ priceListSetupId }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(priceListSetupId)
+        )}/items/export`,
+        responseHandler: (response: Response) =>
+          response.blob()
+      })
+    }),
+
+    importPriceListSetupItems: builder.mutation<
+      PriceListSetupItemImportResult,
+      {
+        priceListSetupId: Id;
+        file: File;
+      }
+    >({
+      query: ({
+        priceListSetupId,
+        file
+      }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return {
+          url: `/api/setup/price-list-setups/${encodeURIComponent(
+            String(priceListSetupId)
+          )}/items/import`,
+          method: 'POST',
+          body: formData,
+          formData: true
+        };
+      },
+
+      invalidatesTags: (
+        _result,
+        _error,
+        { priceListSetupId }
+      ) => [
+        {
+          type: 'PriceListSetupItem',
+          id: `LIST-${priceListSetupId}`
+        },
+        {
+          type: 'PriceListSetup',
+          id: priceListSetupId
+        }
+      ]
+    }),
+
     deletePriceListSetupItem: builder.mutation<
       void,
       {
@@ -573,6 +664,7 @@ export const {
   useAddPriceListSetupMutation,
   useUpdatePriceListSetupMutation,
   useActivatePriceListSetupMutation,
+  useClonePriceListSetupMutation,
   useDeletePriceListSetupMutation,
 
   useGetPriceListSetupItemsQuery,
@@ -583,5 +675,9 @@ export const {
 
   useAddPriceListSetupItemMutation,
   useUpdatePriceListSetupItemMutation,
-  useDeletePriceListSetupItemMutation
+  useDeletePriceListSetupItemMutation,
+
+  useLazyDownloadPriceListSetupItemsTemplateQuery,
+  useLazyExportPriceListSetupItemsQuery,
+  useImportPriceListSetupItemsMutation
 } = priceListSetupService;

@@ -306,7 +306,21 @@ export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
   'itemCode.duplicate':
     'This item code already exists on the selected price list.',
   'item.idSequenceOutOfSync':
-    'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.'
+    'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.',
+  'item.import.fileRequired':
+    'Please choose an Excel or CSV file to import.',
+  'item.import.badFileType':
+    'Unsupported file type. Upload .xlsx, .xls, or .csv.',
+  'item.import.catalogNotFound':
+    'A catalog item was not found for one or more rows. Use a valid item code or source ID.',
+  'item.import.mappingRequired':
+    'A Waseel item mapping is required for insurance price-list items.',
+  'item.import.missingHeader':
+    'The file is missing required columns. Download the template and try again.',
+  'item.import.empty':
+    'The file has no data rows.',
+  'requiresPreAuthorization.insuranceOnly':
+    'Requires Pre-Authorization is only allowed on insurance price list items.'
 };
 
 export const WASEEL_ELIGIBILITY_ERROR_MAP: Record<string, string> = {

@@ -35,10 +35,13 @@ import {
 
 import {
   useAddPriceListSetupMutation,
+  useClonePriceListSetupMutation,
+  useGetPriceListSetupsQuery,
   useUpdatePriceListSetupMutation
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
 import type {
+  ClonePriceListSetupRequest,
   PriceListSetup,
   PriceListSetupType,
   SavePriceListSetupRequest
@@ -64,6 +67,8 @@ type Props = {
     >;
 
   onSaveSuccess?: () => void;
+
+  cloneSourceId?: number;
 };
 
 type NphiesPayerOption = {
@@ -147,6 +152,35 @@ const normalizePayerOptions = (
     });
 };
 
+const toDateValue = (
+  value?: string | null
+): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  return String(value).slice(0, 10);
+};
+
+const intervalsOverlap = (
+  from1?: string | null,
+  to1?: string | null,
+  from2?: string | null,
+  to2?: string | null
+): boolean => {
+  const start1 = toDateValue(from1);
+  const start2 = toDateValue(from2);
+
+  if (!start1 || !start2) {
+    return false;
+  }
+
+  const end1 = toDateValue(to1) ?? '9999-12-31';
+  const end2 = toDateValue(to2) ?? '9999-12-31';
+
+  return start1 <= end2 && start2 <= end1;
+};
+
 const mergePayerOptions = (
   previous: NphiesPayerOption[],
   incoming: NphiesPayerOption[],
@@ -182,7 +216,8 @@ React.FC<Props> = ({
   width,
   priceList,
   setPriceList,
-  onSaveSuccess
+  onSaveSuccess,
+  cloneSourceId
 }) => {
   const dispatch =
     useAppDispatch();
@@ -324,12 +359,46 @@ React.FC<Props> = ({
   ] =
     useUpdatePriceListSetupMutation();
 
+  const [
+    clonePriceListSetup,
+    {
+      isLoading:
+        isCloning
+    }
+  ] =
+    useClonePriceListSetupMutation();
+
+  const [
+    cloneOptions,
+    setCloneOptions
+  ] = useState({
+    cloneItems: true
+  });
+
   const isEdit =
     Boolean(priceList.id);
 
+  const isClone =
+    Boolean(cloneSourceId) &&
+    !isEdit;
+
   const isLoading =
     isAdding ||
-    isUpdating;
+    isUpdating ||
+    isCloning;
+
+  const {
+    data: existingPriceListsPage
+  } = useGetPriceListSetupsQuery(
+    {
+      page: 0,
+      size: 500,
+      sort: 'id,desc'
+    },
+    {
+      skip: !open
+    }
+  );
 
   /*
    * ============================================================
@@ -553,6 +622,10 @@ React.FC<Props> = ({
 
     setSelectedPayer(null);
 
+    setCloneOptions({
+      cloneItems: true
+    });
+
     setPayerRefreshToken(
       previous =>
         previous + 1
@@ -689,6 +762,61 @@ React.FC<Props> = ({
       return 'Currency is required.';
     }
 
+    const overlappingList =
+      (
+        existingPriceListsPage?.data ??
+        []
+      ).find(list => {
+        if (
+          priceList.id &&
+          Number(list.id) ===
+            Number(priceList.id)
+        ) {
+          return false;
+        }
+
+        if (
+          Number(list.facilityId) !==
+          Number(priceList.facilityId)
+        ) {
+          return false;
+        }
+
+        if (
+          priceList.type ===
+          'INSURANCE'
+        ) {
+          if (
+            Number(list.payerId) !==
+            Number(priceList.payerId)
+          ) {
+            return false;
+          }
+        } else if (
+          list.type !== priceList.type
+        ) {
+          return false;
+        }
+
+        return intervalsOverlap(
+          priceList.effectiveFrom,
+          priceList.effectiveTo,
+          list.effectiveFrom,
+          list.effectiveTo
+        );
+      });
+
+    if (overlappingList) {
+      return priceList.type ===
+        'INSURANCE'
+        ? PRICE_LIST_SETUP_ERROR_MAP[
+            'interval.payer.duplicate'
+          ]
+        : PRICE_LIST_SETUP_ERROR_MAP[
+            'interval.type.duplicate'
+          ];
+    }
+
     return null;
   };
 
@@ -797,6 +925,35 @@ React.FC<Props> = ({
                 'success'
             })
           );
+        } else if (
+          isClone &&
+          cloneSourceId
+        ) {
+          const clonePayload:
+            ClonePriceListSetupRequest = {
+            ...payload,
+            cloneItems:
+              Boolean(
+                cloneOptions.cloneItems
+              )
+          };
+
+          await clonePriceListSetup({
+            id: cloneSourceId,
+            data: clonePayload
+          }).unwrap();
+
+          dispatch(
+            notify({
+              msg:
+                cloneOptions.cloneItems
+                  ? 'Price list and items cloned successfully'
+                  : 'Price list cloned successfully',
+
+              sev:
+                'success'
+            })
+          );
         } else {
           await addPriceListSetup(
             payload
@@ -829,6 +986,8 @@ React.FC<Props> = ({
               (
                 isEdit
                   ? 'Failed to update price list'
+                  : isClone
+                  ? 'Failed to clone price list'
                   : 'Failed to create price list'
               ),
 
@@ -1174,6 +1333,27 @@ React.FC<Props> = ({
           setPriceList
         }
       />
+
+      {isClone && (
+        <>
+          <br />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Also clone items"
+            fieldType="checkbox"
+            fieldName="cloneItems"
+            record={cloneOptions}
+            setRecord={setCloneOptions}
+          />
+
+          <p className="price-list-clone-hint">
+            A price list cannot overlap another
+            list of the same type, or the same
+            payer, in the same period.
+          </p>
+        </>
+      )}
     </Form>
   );
 
@@ -1216,6 +1396,8 @@ React.FC<Props> = ({
       title={
         isEdit
           ? 'Edit Price List'
+          : isClone
+          ? 'Clone Price List'
           : 'New Price List'
       }
       position="right"
@@ -1227,6 +1409,8 @@ React.FC<Props> = ({
       actionButtonLabel={
         isEdit
           ? 'Save'
+          : isClone
+          ? 'Clone'
           : 'Create'
       }
       actionButtonFunction={
