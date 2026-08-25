@@ -121,6 +121,7 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
           rowClassName={(rowData: LanguageTranslation) =>
             selectedTranslation?.id === rowData.id ? 'selected-row' : ''
           }
+          dontTranslateData 
         /></div>
       }
     />

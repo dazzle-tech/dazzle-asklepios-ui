@@ -474,6 +474,7 @@ const handleSave = async () => {
                 </Form>
               </div>
             }
+            dontTranslateData 
           />
           <AddEditFacility
             open={popupOpen}

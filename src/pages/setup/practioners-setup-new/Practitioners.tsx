@@ -669,7 +669,7 @@ if (!backendKey && typeof error === "string") {
             Add New
           </MyButton>
         </div>}
-
+        dontTranslateData 
 
       />
 

@@ -377,6 +377,7 @@ const LovValues = ({ lov, goBack, width }) => {
             totalCount={totalCount}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
+            dontTranslateData 
           />
           <AddEditLovValue
             open={lovValuePopupOpen}

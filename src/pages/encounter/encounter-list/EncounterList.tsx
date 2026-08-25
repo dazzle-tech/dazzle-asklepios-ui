@@ -65,6 +65,7 @@ import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew'
 import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
+import Translate from '@/components/Translate';
 // import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -953,7 +954,7 @@ const handlePatientSearchClick = useCallback(() => {
       title: ' ',
       render: (row: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
-        const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipDoctor = <Tooltip><Translate>Go to Visit</Translate> </Tooltip>;
         const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;

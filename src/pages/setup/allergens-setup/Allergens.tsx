@@ -596,6 +596,7 @@ const Allergens: React.FC = () => {
             </MyButton>
           </div>
         }
+        dontTranslateData 
       />
 
       <AddEditAllergens

@@ -294,6 +294,7 @@ const Lov = () => {
             Add New
           </MyButton>
         </div>}
+        dontTranslateData 
         />
         <AddEditLov
           open={lovPopupOpen}

@@ -566,6 +566,7 @@ const filters = (<div className="inputs-dis-flex">
               rowClassName={row =>
                 selectedCountry && row.id === selectedCountry.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }
