@@ -5,17 +5,27 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import { NphiesPayer } from '@/types/model-types-new';
+import { newNphiesPayer } from '@/types/model-types-constructor-new';
 
 import {
   useGetAllNphiesPayersQuery,
   useGetNphiesPayersByNphiesIdQuery,
   useGetNphiesPayersByNameEnQuery,
-  useGetNphiesPayersByNameArQuery
+  useGetNphiesPayersByNameArQuery,
+  useCreateNphiesPayerMutation,
+  useUpdateNphiesPayerMutation,
+  useToggleNphiesPayerActiveMutation
 } from '@/services/setup/payer/NphiesPayerSetupService';
+import NphiesPayerModal from './NphiesPayerModal';
 
 type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr';
 
@@ -32,10 +42,18 @@ const initialNphiesPayerFilter = {
   nameAr: ''
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WEBSITE_PATTERN = /^https?:\/\/.+$/i;
+
 const NphiesPayerSetup = () => {
   const dispatch = useAppDispatch();
 
-  const [selectedPayer, setSelectedPayer] = useState<NphiesPayer | null>(null);
+  const [selectedPayer, setSelectedPayer] = useState<NphiesPayer>({ ...newNphiesPayer });
+  const [openModal, setOpenModal] = useState(false);
+  const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
+  const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
+    'deactivate'
+  );
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -115,6 +133,10 @@ const NphiesPayerSetup = () => {
       skip: !hasNameArFilter
     }
   );
+
+  const [createNphiesPayer] = useCreateNphiesPayerMutation();
+  const [updateNphiesPayer] = useUpdateNphiesPayerMutation();
+  const [toggleNphiesPayerActive] = useToggleNphiesPayerActiveMutation();
 
   const activePayersResponse = hasNphiesIdFilter
     ? payersByNphiesIdQuery.data
@@ -209,10 +231,161 @@ const NphiesPayerSetup = () => {
     }));
   };
 
+  const handleNew = () => {
+    setSelectedPayer({ ...newNphiesPayer });
+    setOpenModal(true);
+  };
+
+  const handleSave = async () => {
+    const errors: string[] = [];
+    if (!selectedPayer.nphiesId?.trim()) errors.push('Insurance Company Code is required');
+    if (!selectedPayer.nameEn?.trim()) errors.push('Insurance Company Name is required');
+    if (!selectedPayer.facilityId) errors.push('Facility Name is required');
+    if (selectedPayer.isActive === undefined || selectedPayer.isActive === null) {
+      errors.push('Status is required');
+    }
+    if (!selectedPayer.insuranceAuthorityLicenseNo?.trim()) {
+      errors.push('Insurance Authority License No. is required');
+    }
+    if (!selectedPayer.commercialRegistrationNo?.trim()) {
+      errors.push('Commercial Registration No. is required');
+    }
+    if (!selectedPayer.vatRegistrationNo?.trim()) {
+      errors.push('VAT Registration No. is required');
+    }
+    if (!selectedPayer.phone?.trim()) errors.push('Phone is required');
+    if (!selectedPayer.email?.trim()) {
+      errors.push('Email is required');
+    } else if (!EMAIL_PATTERN.test(selectedPayer.email.trim())) {
+      errors.push('Email must be valid');
+    }
+    if (selectedPayer.website?.trim() && !WEBSITE_PATTERN.test(selectedPayer.website.trim())) {
+      errors.push('Website must be a valid URL');
+    }
+
+    if (errors.length > 0) {
+      dispatch(
+        notify({
+          msg: (
+            <>
+              {errors.map((err, i) => (
+                <div key={i}>• {err}</div>
+              ))}
+            </>
+          ),
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      const { createdDate, lastModifiedDate, facilityName, countryName, cityName, ...payload } =
+        selectedPayer;
+
+      if (selectedPayer.id) {
+        await updateNphiesPayer(payload).unwrap();
+        dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
+      } else {
+        await createNphiesPayer(payload).unwrap();
+        dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
+      }
+
+      setOpenModal(false);
+    } catch (err: any) {
+      let serverMessage =
+        err?.data?.properties?.message ||
+        err?.data?.message ||
+        err?.data?.detail ||
+        err?.data?.title ||
+        'Failed to save insurance company';
+
+      serverMessage = String(serverMessage).replace(/^error\./i, '');
+
+      dispatch(
+        notify({
+          msg: serverMessage,
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleToggleActive = async () => {
+    if (!selectedPayer?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      await toggleNphiesPayerActive(selectedPayer.id).unwrap();
+      dispatch(
+        notify({
+          msg:
+            toggleActionType === 'deactivate'
+              ? 'Insurance company deactivated successfully'
+              : 'Insurance company reactivated successfully',
+          sev: 'success'
+        })
+      );
+      setOpenConfirmToggle(false);
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Action failed, please try again',
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const iconsForActions = (rowData: NphiesPayer) => (
+    <div className="container-of-icons">
+      <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setSelectedPayer(rowData);
+          setOpenModal(true);
+        }}
+      />
+      {rowData.isActive ? (
+        <MdDelete
+          className="icons-style"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setSelectedPayer(rowData);
+            setToggleActionType('deactivate');
+            setOpenConfirmToggle(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setSelectedPayer(rowData);
+            setToggleActionType('reactivate');
+            setOpenConfirmToggle(true);
+          }}
+        />
+      )}
+    </div>
+  );
+
   const tableColumns = [
     {
       key: 'nphiesId',
-      title: <Translate>NPHIES ID</Translate>,
+      title: <Translate>Insurance Company Code</Translate>,
       flexGrow: 2
     },
     {
@@ -226,10 +399,21 @@ const NphiesPayerSetup = () => {
       flexGrow: 3
     },
     {
+      key: 'facilityName',
+      title: <Translate>Facility</Translate>,
+      flexGrow: 2
+    },
+    {
       key: 'isActive',
-      title: <Translate>Active</Translate>,
+      title: <Translate>Status</Translate>,
       flexGrow: 1,
-      render: (rowData: NphiesPayer) => <span>{rowData.isActive ? 'Yes' : 'No'}</span>
+      render: (rowData: NphiesPayer) => <span>{rowData.isActive ? 'Active' : 'Inactive'}</span>
+    },
+    {
+      key: 'actions',
+      title: <Translate></Translate>,
+      flexGrow: 1,
+      render: (rowData: NphiesPayer) => iconsForActions(rowData)
     }
   ];
 
@@ -370,6 +554,34 @@ const NphiesPayerSetup = () => {
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={handleSortChange}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
+      />
+
+      <DeletionConfirmationModal
+        open={openConfirmToggle}
+        setOpen={setOpenConfirmToggle}
+        itemToDelete="Insurance Company"
+        actionButtonFunction={handleToggleActive}
+        actionType={toggleActionType}
+      />
+
+      <NphiesPayerModal
+        open={openModal}
+        setOpen={setOpenModal}
+        payer={selectedPayer}
+        setPayer={setSelectedPayer}
+        onSave={handleSave}
       />
     </Panel>
   );

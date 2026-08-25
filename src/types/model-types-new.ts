@@ -1931,6 +1931,27 @@ export interface NphiesPayer {
   nphiesId: string;
   nameEn: string;
   nameAr?: string | null;
+  shortName?: string | null;
+
+  facilityId?: number | null;
+  facilityName?: string | null;
+
+  insuranceAuthorityLicenseNo?: string | null;
+  commercialRegistrationNo?: string | null;
+  vatRegistrationNo?: string | null;
+  unifiedNationalNo?: string | null;
+
+  headOfficeAddress?: string | null;
+  countryId?: number | null;
+  countryName?: string | null;
+  cityId?: number | null;
+  cityName?: string | null;
+  postalCode?: string | null;
+  contactPerson?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  website?: string | null;
 
   isActive: boolean;
 

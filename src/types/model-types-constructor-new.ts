@@ -1456,6 +1456,27 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
   nphiesId: '',
   nameEn: '',
   nameAr: null,
+  shortName: null,
+
+  facilityId: null,
+  facilityName: null,
+
+  insuranceAuthorityLicenseNo: null,
+  commercialRegistrationNo: null,
+  vatRegistrationNo: null,
+  unifiedNationalNo: null,
+
+  headOfficeAddress: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  postalCode: null,
+  contactPerson: null,
+  phone: null,
+  mobile: null,
+  email: null,
+  website: null,
 
   isActive: true,
 

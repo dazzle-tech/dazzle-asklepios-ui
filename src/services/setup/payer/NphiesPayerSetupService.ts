@@ -107,6 +107,40 @@ export const NphiesPayerService = createApi({
         };
       },
       providesTags: ['NphiesPayer']
+    }),
+
+    getNphiesPayerById: builder.query<NphiesPayer, number | string>({
+      query: id => ({
+        url: `/api/setup/nphies-payers/${id}`,
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, id) => [{ type: 'NphiesPayer', id }]
+    }),
+
+    createNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
+      query: body => ({
+        url: '/api/setup/nphies-payers',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['NphiesPayer']
+    }),
+
+    updateNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
+      query: body => ({
+        url: '/api/setup/nphies-payers',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['NphiesPayer']
+    }),
+
+    toggleNphiesPayerActive: builder.mutation<NphiesPayer, number | string>({
+      query: id => ({
+        url: `/api/setup/nphies-payers/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['NphiesPayer']
     })
   })
 });
@@ -122,5 +156,10 @@ export const {
   useLazyGetNphiesPayersByNameEnQuery,
 
   useGetNphiesPayersByNameArQuery,
-  useLazyGetNphiesPayersByNameArQuery
+  useLazyGetNphiesPayersByNameArQuery,
+
+  useGetNphiesPayerByIdQuery,
+  useCreateNphiesPayerMutation,
+  useUpdateNphiesPayerMutation,
+  useToggleNphiesPayerActiveMutation
 } = NphiesPayerService;
