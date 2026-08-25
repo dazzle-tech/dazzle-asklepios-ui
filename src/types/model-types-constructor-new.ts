@@ -176,7 +176,11 @@ export const newEncounterAttachment: modelTypes.EncounterAttachment = {
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined
+  sourceId: undefined,
+  documentDefinitionId: undefined,
+  documentVersionId: undefined,
+  documentDefinition: undefined,
+  documentVersion: undefined
 };
 
 export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
@@ -185,7 +189,9 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined
+  sourceId: undefined,
+  documentDefinitionId: undefined,
+  documentVersionId: undefined
 };
 
 // ------------------- Service -------------------

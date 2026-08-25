@@ -326,6 +326,22 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Document Management",
+      description: "Define documents and manage versions",
+      icon: "FaFileLines",
+      viewOrder: 1.1,
+      screens: [
+        {
+          name: "Document Definitions",
+          code: "DOCUMENT_MANAGEMENT",
+          description: "Define documents and upload versions",
+          icon: "FaUpload",
+          viewOrder: 0,
+          navPath: "document-management"
+        }
+      ]
+    },
+    {
       name: "Notification Management",
       description: "",
       icon: "FaBell",

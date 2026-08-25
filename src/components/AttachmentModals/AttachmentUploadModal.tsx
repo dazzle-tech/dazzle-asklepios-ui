@@ -20,6 +20,8 @@ interface AttachmentUploadModalProps {
   refetchData: () => void;
   source?: string;
   sourceId?: number;
+  documentDefinitionId?: number | null;
+  documentVersionId?: number | null;
 }
 
 const AttachmentUploadModal = ({
@@ -29,7 +31,9 @@ const AttachmentUploadModal = ({
   encounterId,
   refetchData,
   source = 'PATIENT_PROFILE_ATTACHMENT',
-  sourceId
+  sourceId,
+  documentDefinitionId,
+  documentVersionId
 }: AttachmentUploadModalProps) => {
   const dispatch = useAppDispatch();
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +113,9 @@ const AttachmentUploadModal = ({
             type: selectedAttachType.typeLkey || undefined,
             details: attachmentDetails.attachmentDetails || undefined,
             source: source,
-            sourceId: sourceId || 0 // Use 0 as default for general attachments, actual ID for order-specific
+            sourceId: sourceId || 0, // Use 0 as default for general attachments, actual ID for order-specific
+            documentDefinitionId: documentDefinitionId ?? undefined,
+            documentVersionId: documentVersionId ?? undefined
           }).unwrap()
         );
 
