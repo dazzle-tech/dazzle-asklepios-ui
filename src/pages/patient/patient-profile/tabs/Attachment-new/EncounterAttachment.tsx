@@ -16,6 +16,47 @@ import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromL
 import { EncounterAttachment as EncounterAttachmentType } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import {
+    useGetDocumentQuery,
+    useGetDocumentVersionsQuery
+} from '@/services/patients/documentManagementService';
+
+const DocumentDefinitionCell = ({ row }: { row: EncounterAttachmentType }) => {
+    const nested = row.documentDefinition;
+    const definitionId = nested?.id ?? row.documentDefinitionId;
+    const { data: document, isFetching } = useGetDocumentQuery(definitionId ?? 0, {
+        skip: definitionId == null || Boolean(nested?.name || nested?.code)
+    });
+
+    if (nested?.name || nested?.code) {
+        return <>{nested.name || nested.code}</>;
+    }
+
+    if (definitionId == null) return <>-</>;
+    if (isFetching && !document) return <>...</>;
+
+    return <>{document?.name || document?.code || '-'}</>;
+};
+
+const DocumentVersionCell = ({ row }: { row: EncounterAttachmentType }) => {
+    const nested = row.documentVersion;
+    const definitionId = row.documentDefinition?.id ?? row.documentDefinitionId;
+    const versionId = nested?.id ?? row.documentVersionId;
+    const { data: versions = [], isFetching } = useGetDocumentVersionsQuery(definitionId ?? 0, {
+        skip: definitionId == null || nested?.version != null
+    });
+
+    if (nested?.version != null) {
+        return <>{`v${nested.version}`}</>;
+    }
+
+    if (versionId == null) return <>-</>;
+
+    const matched = versions.find(version => Number(version.id) === Number(versionId));
+    if (isFetching && !matched) return <>...</>;
+
+    return <>{matched?.version != null ? `v${matched.version}` : '-'}</>;
+};
 
 const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -215,6 +256,20 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 rowData.type 
                     ? conjureValueBasedOnKeyFromList(attachmentTypesLov, rowData.type, 'lovDisplayVale')
                     : rowData.type ,
+            fullText: true,
+        },
+        {
+            key: 'documentDefinition',
+            title: <Translate>Document Definition</Translate>,
+            flexGrow: 3,
+            render: (row: EncounterAttachmentType) => <DocumentDefinitionCell row={row} />,
+            fullText: true,
+        },
+        {
+            key: 'documentVersion',
+            title: <Translate>Document Version</Translate>,
+            flexGrow: 2,
+            render: (row: EncounterAttachmentType) => <DocumentVersionCell row={row} />,
             fullText: true,
         },
         {

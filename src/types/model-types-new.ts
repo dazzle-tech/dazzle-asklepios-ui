@@ -812,6 +812,18 @@ export interface EncounterAttachment {
   details?: string;
   source?: string;
   sourceId?: number; // Link to specific order/medication within encounter
+  documentDefinitionId?: number | null;
+  documentVersionId?: number | null;
+  documentDefinition?: {
+    id?: number;
+    code?: string;
+    name?: string;
+  } | null;
+  documentVersion?: {
+    id?: number;
+    version?: number;
+    fileName?: string;
+  } | null;
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -872,6 +884,8 @@ export interface UploadEncounterAttachmentParams {
   details?: string;
   source?: string;
   sourceId?: number;
+  documentDefinitionId?: number | null;
+  documentVersionId?: number | null;
 }
 
 export interface UploadInventoryTransferAttachmentParams {

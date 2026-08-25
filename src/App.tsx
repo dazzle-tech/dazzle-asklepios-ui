@@ -231,6 +231,7 @@ const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
 const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
+const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
 const OrganizationDefinition = lazy (() => import ( './pages/system-configurations/organization-definition'));
 const EmailSettings = lazy (() => import ( './pages/system-configurations/email-settings'));
@@ -864,6 +865,7 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
+              <Route path="document-management" element={<DocumentManagement />} />
               {/* <Route path="skill-definition" element={<SkillDefinitions />} /> */}
 
               <Route path="allergens" element={<Allergens />} />
