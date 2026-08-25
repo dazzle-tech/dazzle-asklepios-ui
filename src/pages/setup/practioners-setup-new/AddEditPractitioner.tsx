@@ -17,7 +17,7 @@ import {
   useGetDepartmentsByPractitionerQuery
 } from '@/services/setup/practitioner/PractitionerDepartmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetUserQuery } from '@/services/userService';
+import { useGetUsersBasicQuery } from '@/services/userService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { notify } from '@/utils/uiReducerActions';
 import { faSearch, faUserNurse } from '@fortawesome/free-solid-svg-icons';
@@ -26,6 +26,7 @@ import clsx from 'clsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
+
 const AddEditPractitioner = ({
   open,
   setOpen,
@@ -39,8 +40,16 @@ const AddEditPractitioner = ({
 
   const [searchResultVisible, setSearchResultVisible] = useState(false);
   const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [localSelection, setLocalSelection] = useState({ selectedDepartment: null });
+
+  // User search pagination
+  const [userSearch, setUserSearch] = useState('');
+  const [userPage, setUserPage] = useState(0);
+  const [userRowsPerPage, setUserRowsPerPage] = useState(5);
+
+  const [localSelection, setLocalSelection] = useState({
+    selectedDepartment: null
+  });
+
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   // Facilities
@@ -78,17 +87,25 @@ const AddEditPractitioner = ({
   );
 
   // Practitioner Departments API
-  const { data: linkedDepartments = [], refetch: refetchLinkedDepartments } =
-    useGetDepartmentsByPractitionerQuery(practitioner?.id, {
-      skip: !practitioner?.id
-    });
+  const {
+    data: linkedDepartments = [],
+    refetch: refetchLinkedDepartments
+  } = useGetDepartmentsByPractitionerQuery(practitioner?.id, {
+    skip: !practitioner?.id
+  });
 
-  const [createPractitionerDepartment] = useCreatePractitionerDepartmentMutation();
-  const [deletePractitionerDepartment] = useDeletePractitionerDepartmentMutation();
+  const [createPractitionerDepartment] =
+    useCreatePractitionerDepartmentMutation();
+
+  const [deletePractitionerDepartment] =
+    useDeletePractitionerDepartmentMutation();
 
   // LOV lists
-  const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
-  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
+  const { data: eduLvlLovQueryResponse } =
+    useGetLovValuesByCodeQuery('EDU_LEVEL');
+
+  const { data: subSpecialityLovQueryResponse } =
+    useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
 
   // Enums
   const specility = useEnumOptions('Specialty');
@@ -97,7 +114,21 @@ const AddEditPractitioner = ({
   const dayOfWeekOptions = useEnumOptions('DayOfWeek');
 
   // Users
-  const { data: userListResponse = [], isLoading } = useGetUserQuery();
+  // Search is done by backend using name only
+  const {
+    data: userListResponse,
+    isFetching: isLoadingUsers
+  } = useGetUsersBasicQuery(
+    {
+      page: userPage,
+      size: userRowsPerPage,
+      sort: 'id,asc',
+      name: userSearch
+    },
+    {
+      skip: userSearch.trim().length < 2
+    }
+  );
 
   useEffect(() => {
     if (practitioner?.appointable) {
@@ -111,7 +142,9 @@ const AddEditPractitioner = ({
     } else {
       if (facilityDepartments?.data) {
         setAllDepartments(prev =>
-          deptPage === 0 ? facilityDepartments.data : [...prev, ...facilityDepartments.data]
+          deptPage === 0
+            ? facilityDepartments.data
+            : [...prev, ...facilityDepartments.data]
         );
       }
     }
@@ -131,14 +164,22 @@ const AddEditPractitioner = ({
       specialty: 'Specialty'
     };
 
-    const missingFields = Object.keys(fieldLabels).filter(key => !practitioner[key]);
+    const missingFields = Object.keys(fieldLabels).filter(
+      key => !practitioner[key]
+    );
+
     let messages = [];
+
     if (missingFields.length > 0) {
-      messages = missingFields.map(key => `Field '${fieldLabels[key]}' is required`);
+      messages = missingFields.map(
+        key => `Field '${fieldLabels[key]}' is required`
+      );
     }
 
     const isEmpty = val => val === null || val === undefined || val === '';
-    const isNotEmpty = val => val !== null && val !== undefined && val !== '';
+    const isNotEmpty = val =>
+      val !== null && val !== undefined && val !== '';
+
     if (
       practitioner?.parallelCapacityValue === null ||
       practitioner?.parallelCapacityValue === undefined ||
@@ -148,13 +189,17 @@ const AddEditPractitioner = ({
         'Field Parallel Capacity Value is required and should be greater than or equal to 1'
       );
     }
+
     if (practitioner?.appointable) {
       if (
         isEmpty(practitioner?.defaultDurationMinutes) ||
         practitioner?.defaultDurationMinutes <= 0
       ) {
-        messages.push('Field Default Duration Minutes is required and should be greater than 0');
+        messages.push(
+          'Field Default Duration Minutes is required and should be greater than 0'
+        );
       }
+
       if (
         isEmpty(practitioner?.defaultBufferBeforeMinutes) ||
         practitioner?.defaultBufferBeforeMinutes < 0
@@ -163,6 +208,7 @@ const AddEditPractitioner = ({
           'Field Default Buffer Before Minutes is required and should be greater then or equal 0'
         );
       }
+
       if (
         isEmpty(practitioner?.defaultBufferAfterMinutes) ||
         practitioner?.defaultBufferAfterMinutes < 0
@@ -176,21 +222,30 @@ const AddEditPractitioner = ({
         isNotEmpty(practitioner?.defaultDurationMinutes) &&
         practitioner?.defaultDurationMinutes <= 0
       ) {
-        messages.push('Field Default Duration Minutes should be greater than 0');
+        messages.push(
+          'Field Default Duration Minutes should be greater than 0'
+        );
       }
+
       if (
         isNotEmpty(practitioner?.defaultBufferBeforeMinutes) &&
         practitioner?.defaultBufferBeforeMinutes < 0
       ) {
-        messages.push('Field Default Buffer Before Minutes should be greater then or equal 0');
+        messages.push(
+          'Field Default Buffer Before Minutes should be greater then or equal 0'
+        );
       }
+
       if (
         isNotEmpty(practitioner?.defaultBufferAfterMinutes) &&
         practitioner?.defaultBufferAfterMinutes < 0
       ) {
-        messages.push('Field Default Buffer After Minutes should be greater then or equal 0');
+        messages.push(
+          'Field Default Buffer After Minutes should be greater then or equal 0'
+        );
       }
     }
+
     if (messages.length > 0) {
       dispatch(
         notify({
@@ -210,7 +265,7 @@ const AddEditPractitioner = ({
 
     if (practitioner?.id) {
       await handleUpdate();
-      refetchLinkedDepartments(); // refresh departments after update
+      refetchLinkedDepartments();
     } else {
       await handleAddNew();
     }
@@ -218,29 +273,63 @@ const AddEditPractitioner = ({
 
   // Table columns for user search
   const tableColumns = [
-    { key: 'login', title: <Translate>User Name </Translate>, flexGrow: 2 },
-    { key: 'firstName', title: <Translate>Full Name</Translate>, flexGrow: 3 },
-    { key: 'phoneNumber', title: <Translate>Mobile Number</Translate>, flexGrow: 2 },
-    { key: 'email', title: <Translate>Email</Translate>, flexGrow: 3 }
+    {
+      key: 'login',
+      title: <Translate>User Name </Translate>,
+      flexGrow: 2
+    },
+    {
+      key: 'firstName',
+      title: <Translate>Full Name</Translate>,
+      flexGrow: 3,
+      render: rowData =>
+        `${rowData?.firstName ?? ''} ${rowData?.lastName ?? ''}`
+    },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Mobile Number</Translate>,
+      flexGrow: 2
+    },
+    {
+      key: 'email',
+      title: <Translate>Email</Translate>,
+      flexGrow: 3
+    }
   ];
 
+  // Search users through backend
   const handleSearchUsers = () => {
-    const keyword = recordOfSearch.searchKeyword?.trim()?.toLowerCase() ?? '';
+    const keyword = recordOfSearch.searchKeyword?.trim() ?? '';
+
     if (keyword.length < 2) {
-      dispatch(notify({ msg: 'Please type at least 2 characters', sev: 'warn' }));
+      dispatch(
+        notify({
+          msg: 'Please type at least 2 characters',
+          sev: 'warn'
+        })
+      );
       return;
     }
 
-    const results = userListResponse.filter(
-      user =>
-        user.firstName?.toLowerCase().includes(keyword) ||
-        user.lastName?.toLowerCase().includes(keyword) ||
-        user.login?.toLowerCase().includes(keyword) ||
-        user.email?.toLowerCase().includes(keyword)
-    );
-
-    setFilteredUsers(results);
+    // Start from first page for every new search
+    setUserPage(0);
+    setUserSearch(keyword);
     setSearchResultVisible(true);
+  };
+
+  // User pagination
+  const handleUserPageChange = (
+    _event: unknown,
+    newPage: number
+  ) => {
+    setUserPage(newPage);
+  };
+
+  const handleUserRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setUserRowsPerPage(parseInt(event.target.value, 10));
+    setUserPage(0);
   };
 
   useEffect(() => {
@@ -256,7 +345,10 @@ const AddEditPractitioner = ({
 
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
-    if (!dayOfWeekOptions || dayOfWeekOptions.length === 0) return map;
+
+    if (!dayOfWeekOptions || dayOfWeekOptions.length === 0) {
+      return map;
+    }
 
     dayOfWeekOptions.forEach(day => {
       map[day.value] = false;
@@ -271,7 +363,9 @@ const AddEditPractitioner = ({
     return map;
   }, [dayOfWeekOptions, practitioner?.workingDays]);
 
-  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+  const setWorkingDaysRecord = (
+    nextRecord: Record<string, boolean>
+  ) => {
     if (!dayOfWeekOptions || dayOfWeekOptions.length === 0) return;
 
     const nextWorkingDays = dayOfWeekOptions.map(day => ({
@@ -298,7 +392,12 @@ const AddEditPractitioner = ({
       userLogin: undefined
     }));
 
-    setRecordOfSearch({ searchKeyword: '' });
+    setRecordOfSearch({
+      searchKeyword: ''
+    });
+
+    setUserSearch('');
+    setUserPage(0);
 
     dispatch(
       notify({
@@ -307,21 +406,26 @@ const AddEditPractitioner = ({
       })
     );
   };
+
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
           <Form fluid>
-            {/* User Search */}
             <div className="first-case-modal-container-handle">
               <SectionContainer
                 title="Facility"
                 content={
                   <>
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
-                        width= '15vw'
+                        width="15vw"
                         column
                         fieldLabel="Facility"
                         fieldType="select"
@@ -333,8 +437,9 @@ const AddEditPractitioner = ({
                         setRecord={setPractitioner}
                         required
                       />
+
                       <MyInput
-                        width={'100%'}
+                        width="100%"
                         column
                         fieldLabel="Appointable"
                         fieldType="checkbox"
@@ -367,35 +472,52 @@ const AddEditPractitioner = ({
                         />
                       }
                     />
+
                     {practitioner?.userId > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <MyButton color="red" size="xs" onClick={handleUnlinkUser}>
+                        <MyButton
+                          color="red"
+                          size="xs"
+                          onClick={handleUnlinkUser}
+                        >
                           Unlink User
                         </MyButton>
                       </div>
                     )}
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
                         column
                         fieldName="firstName"
                         required
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
+
                       <MyInput
                         column
                         fieldName="lastName"
                         required
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
 
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
-                        width={'100%'}
+                        width="100%"
                         fieldLabel="Gender"
                         fieldType="select"
                         fieldName="gender"
@@ -406,6 +528,7 @@ const AddEditPractitioner = ({
                         setRecord={setPractitioner}
                         searchable={false}
                       />
+
                       <MyInput
                         column
                         fieldType="date"
@@ -413,34 +536,46 @@ const AddEditPractitioner = ({
                         fieldName="dateOfBirth"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
 
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
                         column
                         fieldName="email"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
+
                       <MyInput
                         column
                         fieldName="phoneNumber"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
                         column
-                        fieldLabel='National ID'
+                        fieldLabel="National ID"
                         fieldName="nationalNumber"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
                   </>
@@ -461,7 +596,7 @@ const AddEditPractitioner = ({
                         selectDataValue="value"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                         required
                         column
                       />
@@ -470,18 +605,19 @@ const AddEditPractitioner = ({
                         fieldLabel="Educational Level"
                         fieldType="select"
                         fieldName="educationalLevel"
-                        selectData={eduLvlLovQueryResponse?.object ?? []}
-                         selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                        selectData={
+                          eduLvlLovQueryResponse?.object ?? []
+                        }
+                        selectDataLabel="lovDisplayVale"
+                        disableByField="isValid"
                         selectDataValue="key"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
 
                       <MyInput
-                        width={'100%'}
+                        width="100%"
                         fieldLabel="Specialty"
                         fieldType="select"
                         fieldName="specialty"
@@ -498,14 +634,15 @@ const AddEditPractitioner = ({
                           fieldLabel="Sub Specialty"
                           fieldType="select"
                           fieldName="subSpecialty"
-                          selectData={subSpecialityLovQueryResponse?.object ?? []}
-                           selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                          selectData={
+                            subSpecialityLovQueryResponse?.object ?? []
+                          }
+                          selectDataLabel="lovDisplayVale"
+                          disableByField="isValid"
                           selectDataValue="key"
                           record={practitioner}
                           setRecord={setPractitioner}
-                          width={'100%'}
+                          width="100%"
                         />
                       )}
                     </div>
@@ -517,16 +654,21 @@ const AddEditPractitioner = ({
                 title="Medical License Information"
                 content={
                   <>
-                    {' '}
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
                         column
                         fieldLabel="Default Medical License"
                         fieldName="defaultMedicalLicense"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
+
                       <MyInput
                         column
                         fieldType="date"
@@ -534,18 +676,25 @@ const AddEditPractitioner = ({
                         fieldName="defaultLicenseValidUntil"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
-                    <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+
+                    <div
+                      className={clsx({
+                        'container-of-two-fields-practitioner':
+                          width > 600
+                      })}
+                    >
                       <MyInput
                         column
                         fieldLabel="Secondary License"
                         fieldName="secondaryMedicalLicense"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
+
                       <MyInput
                         column
                         fieldType="date"
@@ -553,7 +702,7 @@ const AddEditPractitioner = ({
                         fieldName="secondaryLicenseValidUntil"
                         record={practitioner}
                         setRecord={setPractitioner}
-                        width={'100%'}
+                        width="100%"
                       />
                     </div>
                   </>
@@ -566,16 +715,17 @@ const AddEditPractitioner = ({
                   <>
                     <Row>
                       <Col md={12}>
-                      <MyInput
-                        fieldType="number"
-                        fieldName="parallelCapacityValue"
-                        record={practitioner}
-                        setRecord={setPractitioner}
-                        width="100%"
-                        showZero
-                        required
-                      />
+                        <MyInput
+                          fieldType="number"
+                          fieldName="parallelCapacityValue"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width="100%"
+                          showZero
+                          required
+                        />
                       </Col>
+
                       {practitioner?.appointable && (
                         <Col md={12}>
                           <MyInput
@@ -585,11 +735,14 @@ const AddEditPractitioner = ({
                             setRecord={setPractitioner}
                             width="100%"
                             showZero
-                            required={practitioner.appointable}
+                            required={
+                              practitioner.appointable
+                            }
                           />
                         </Col>
                       )}
                     </Row>
+
                     {practitioner?.appointable && (
                       <Row>
                         <Col md={12}>
@@ -600,9 +753,12 @@ const AddEditPractitioner = ({
                             setRecord={setPractitioner}
                             width="100%"
                             showZero
-                            required={practitioner.appointable}
+                            required={
+                              practitioner.appointable
+                            }
                           />
                         </Col>
+
                         <Col md={12}>
                           <MyInput
                             fieldType="number"
@@ -611,7 +767,9 @@ const AddEditPractitioner = ({
                             setRecord={setPractitioner}
                             width="100%"
                             showZero
-                            required={practitioner.appointable}
+                            required={
+                              practitioner.appointable
+                            }
                           />
                         </Col>
                       </Row>
@@ -623,7 +781,12 @@ const AddEditPractitioner = ({
               <SectionContainer
                 title="Working Days"
                 content={
-                  <div style={{ width: '100%', marginTop: '12px' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      marginTop: '12px'
+                    }}
+                  >
                     <div className="facility-working-days">
                       {dayOfWeekOptions?.map(day => (
                         <MyInput
@@ -647,7 +810,6 @@ const AddEditPractitioner = ({
       case 1:
         return (
           <Form fluid>
-            {/* Department Linking */}
             <MyInput
               fieldType="selectPagination"
               fieldLabel="Add Department"
@@ -659,32 +821,59 @@ const AddEditPractitioner = ({
               setRecord={setLocalSelection}
               searchable
               width={520}
-              loading={loadingfacilityAppointableDepartments || loadingFacilityDepartments}
-              hasMore={facilityAppointableDepartments?.links?.next ? true : false}
+              loading={
+                loadingfacilityAppointableDepartments ||
+                loadingFacilityDepartments
+              }
+              hasMore={
+                facilityAppointableDepartments?.links?.next
+                  ? true
+                  : false
+              }
               onFetchMore={() => {
-                if (facilityAppointableDepartments?.links?.next) {
-                  const { page } = extractPaginationFromLink(
-                    facilityAppointableDepartments.links.next
-                  );
+                if (
+                  facilityAppointableDepartments?.links?.next
+                ) {
+                  const { page } =
+                    extractPaginationFromLink(
+                      facilityAppointableDepartments.links
+                        .next
+                    );
+
                   setDeptPage(page);
                 }
               }}
             />
+
             <MyButton
-              disabled={!practitioner?.id || !localSelection.selectedDepartment}
+              disabled={
+                !practitioner?.id ||
+                !localSelection.selectedDepartment
+              }
               onClick={async () => {
                 if (!practitioner?.id) return;
+
                 try {
                   await createPractitionerDepartment({
                     practitionerId: practitioner.id,
-                    departmentId: localSelection.selectedDepartment
+                    departmentId:
+                      localSelection.selectedDepartment
                   }).unwrap();
+
                   refetchLinkedDepartments();
-                  dispatch(notify({ msg: 'Department linked successfully', sev: 'success' }));
+
+                  dispatch(
+                    notify({
+                      msg: 'Department linked successfully',
+                      sev: 'success'
+                    })
+                  );
                 } catch (err) {
                   dispatch(
                     notify({
-                      msg: err?.data?.message || 'Failed to link department',
+                      msg:
+                        err?.data?.message ||
+                        'Failed to link department',
                       sev: 'error'
                     })
                   );
@@ -693,14 +882,24 @@ const AddEditPractitioner = ({
             >
               Link
             </MyButton>
+
             {practitioner?.id && (
               <div style={{ marginTop: 16 }}>
-                <Translate>Linked Departments:</Translate>
+                <Translate>
+                  Linked Departments:
+                </Translate>
+
                 <MyTable
                   data={linkedDepartments ?? []}
                   columns={[
-                    { key: 'departmentName', title: 'Department Name' },
-                    { key: 'practitionerName', title: 'Practitioner Name' },
+                    {
+                      key: 'departmentName',
+                      title: 'Department Name'
+                    },
+                    {
+                      key: 'practitionerName',
+                      title: 'Practitioner Name'
+                    },
                     {
                       key: 'actions',
                       title: 'Actions',
@@ -710,21 +909,30 @@ const AddEditPractitioner = ({
                           size="xs"
                           onClick={async () => {
                             try {
-                              await deletePractitionerDepartment({
-                                practitionerId: practitioner.id,
-                                departmentId: row.departmentId
-                              }).unwrap();
+                              await deletePractitionerDepartment(
+                                {
+                                  practitionerId:
+                                    practitioner.id,
+                                  departmentId:
+                                    row.departmentId
+                                }
+                              ).unwrap();
+
                               refetchLinkedDepartments();
+
                               dispatch(
                                 notify({
-                                  msg: 'Department unlinked successfully',
+                                  msg:
+                                    'Department unlinked successfully',
                                   sev: 'success'
                                 })
                               );
                             } catch (err) {
                               dispatch(
                                 notify({
-                                  msg: err?.data?.message || 'Failed to unlink department',
+                                  msg:
+                                    err?.data?.message ||
+                                    'Failed to unlink department',
                                   sev: 'error'
                                 })
                               );
@@ -741,6 +949,7 @@ const AddEditPractitioner = ({
             )}
           </Form>
         );
+
       default:
         return null;
     }
@@ -752,12 +961,14 @@ const AddEditPractitioner = ({
       <small>
         * <Translate>Click to select User</Translate>
       </small>
+
       <MyTable
         height={450}
-        data={filteredUsers}
+        data={userListResponse?.data ?? []}
         columns={tableColumns}
         onRowClick={rowData => {
           setSearchResultVisible(false);
+
           setPractitioner({
             ...practitioner,
             firstName: rowData?.firstName,
@@ -770,38 +981,69 @@ const AddEditPractitioner = ({
             dateOfBirth: rowData?.birthDate
           });
         }}
-        loading={isLoading}
+        page={userPage}
+        rowsPerPage={userRowsPerPage}
+        totalCount={userListResponse?.totalCount ?? 0}
+        onPageChange={handleUserPageChange}
+        onRowsPerPageChange={handleUserRowsPerPageChange}
+        loading={isLoadingUsers}
       />
     </Form>
   );
 
   // Direction handling for RTL/LTR
-  const direction = localStorage.getItem('direction') || 'LTR';
-  const isRTL = direction === 'RTL';
+  const direction =
+    localStorage.getItem('direction') || 'LTR';
 
+  const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <ChildModal
-      actionButtonLabel={practitioner?.id ? 'Save' : 'Create'}
+      actionButtonLabel={
+        practitioner?.id ? 'Save' : 'Create'
+      }
       open={open}
       setOpen={setOpen}
       showChild={searchResultVisible}
       setShowChild={setSearchResultVisible}
-      title={practitioner?.id ? 'Edit Practitioner' : 'New Practitioner'}
-      mainContent={stepNumber => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
+      title={
+        practitioner?.id
+          ? 'Edit Practitioner'
+          : 'New Practitioner'
+      }
+      mainContent={stepNumber => (
+        <div dir={dir}>
+          {conjureFormContentOfMainModal(stepNumber)}
+        </div>
+      )}
       mainStep={[
         {
           title: 'Practitioner Details',
-          icon: <FontAwesomeIcon icon={faUserNurse} />,
+          icon: (
+            <FontAwesomeIcon icon={faUserNurse} />
+          ),
           disabledNext: !practitioner?.id,
-          footer: <MyButton onClick={handleSaveOrUpdate}>Save</MyButton>
+          footer: (
+            <MyButton onClick={handleSaveOrUpdate}>
+              Save
+            </MyButton>
+          )
         },
-        { title: 'Practitioner Departments', icon: <FontAwesomeIcon icon={faUserNurse} /> }
+        {
+          title: 'Practitioner Departments',
+          icon: (
+            <FontAwesomeIcon icon={faUserNurse} />
+          )
+        }
       ]}
       childTitle="User List - Search Results"
-      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      mainSize={'45vw'}
+      childContent={
+        <div dir={dir}>
+          {conjureFormContentOfChildModal()}
+        </div>
+      }
+      mainSize="45vw"
       childSize="40vw"
     />
   );
