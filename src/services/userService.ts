@@ -263,6 +263,7 @@ export const {
   useValidateCreatePasswordKeyQuery,
   useLazyValidateCreatePasswordKeyQuery,
   useGetUserFullNameByLoginQuery,
+  useLazyGetUserFullNameByLoginQuery,
   useResendCreatePasswordEmailMutation,
   useToggleUserActivationMutation,
 

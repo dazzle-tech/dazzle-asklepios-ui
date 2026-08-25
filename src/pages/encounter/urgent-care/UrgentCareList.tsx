@@ -67,6 +67,7 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
+import { useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
 
 dayjs.extend(duration);
 
@@ -185,6 +186,10 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 const UrgentCareList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useAppSelector(
+      (state: any) => state.auth.user
+    );
+  
 
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -240,6 +245,7 @@ const UrgentCareList = () => {
 
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [getUserFullNameByLogin] = useLazyGetUserFullNameByLoginQuery();
 
    const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
@@ -667,6 +673,13 @@ useEffect(() => {
   };
 
   const handleGoToVisit = async (encounterData: any) => {
+    if(encounterData?.startedBy !== user?.login){
+      const fullName = await getUserFullNameByLogin(
+      encounterData?.startedBy
+    ).unwrap();
+       dispatch(notify({ msg: `This Patient already seen by ${fullName} `, sev: 'warning' }));
+      return;
+    }
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
