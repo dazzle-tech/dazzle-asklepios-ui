@@ -10,7 +10,7 @@ import { useSetDiagnosticTestForRequestMutation } from '@/services/diagnosic-ord
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCreateDiagnosticTestMutation,
-  useGetAllActiveDiagnosticTestsQuery,
+  useGetAllDiagnosticTestsQuery,
   useLazyGetDiagnosticTestsByNameQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
@@ -82,7 +82,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     data: diagnodticsTestList,
     refetch: refetchDiagnostics,
     isFetching
-  } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
+  } = useGetAllDiagnosticTestsQuery(paginationParams);
 
   const testType = useEnumOptions('TestType');
 
@@ -212,6 +212,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       const payload = {
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
+        shortName:diagnosticsTest.name?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -327,11 +328,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         );
         return;
       }
-
+       console.log("Diagnostic test short",diagnosticsTest.shortName)
       const payload = {
         id: diagnosticsTest.id,
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
+        shortName: diagnosticsTest.shortName?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -723,6 +725,11 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       key: 'name',
       title: <Translate>Name</Translate>,
       render: rowData => <p>{rowData?.name}</p>
+    },
+     {
+      key: 'shortName',
+      title: <Translate>Short Name</Translate>,
+      render: rowData => <p>{rowData?.shortName}</p>
     },
     {
       key: 'internalCode',

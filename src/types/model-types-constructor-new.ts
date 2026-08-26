@@ -333,6 +333,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
   type: '',
   name: '',
+  shortName:'',
   internalCode: '',
 
   ageSpecific: false,
