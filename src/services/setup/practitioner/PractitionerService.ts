@@ -120,6 +120,27 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
+    // Get practitioners by specialty and department
+    getPractitionersBySpecialityAndDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string; specialty: string } & PagedParams
+    >({
+      query: ({ departmentId, specialty, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/list-by-speciality-and-department',
+        method: 'GET',
+        params: { departmentId, specialty, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
     // Get practitioners by department
     getPractitionerByDepartment: builder.query<
       PagedResult<any>,
@@ -360,6 +381,8 @@ export const {
   useLazyGetActivePractitionersBySubSpecialtyQuery,
   useGetPractitionerByNameQuery,
   useLazyGetPractitionerByNameQuery,
+  useGetPractitionersBySpecialityAndDepartmentQuery,
+  useLazyGetPractitionersBySpecialityAndDepartmentQuery,
   useGetPractitionerByDepartmentQuery,
   useLazyGetPractitionerByDepartmentQuery,
   useGetSpecialistPractitionersByDepartmentQuery,
