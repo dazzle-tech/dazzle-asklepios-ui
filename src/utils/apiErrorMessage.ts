@@ -324,15 +324,31 @@ export const ENCOUNTER_START_ERROR_MAP: Record<string, string> = {
 
 export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
   'interval.type.duplicate':
-    'An active price list already exists for this type in the selected date range. Change the dates or deactivate the existing list.',
+    'A cash price list already exists in the selected date range.',
   'interval.payer.duplicate':
-    'An active insurance price list already exists for this payer in the selected date range. Change the dates or deactivate the existing list.',
+    'An insurance price list already exists for this company in the selected date range.',
+  'active.cash.duplicate':
+    'Only one active Cash Price List is allowed.',
+  'active.payer.duplicate':
+    'An active price list already exists for this insurance company.',
   'payer.required':
-    'Payer is required for insurance price lists.',
+    'Insurance company is required for insurance price lists.',
   'effectiveDate.invalidRange':
-    'Effective To must be on or after Effective From.',
+    'The end date must be later than the start date.',
+  'effectiveDate.startInPast':
+    'The start date cannot be in the past.',
+  'effectiveDate.required':
+    'Effective start date is required for an active price list.',
+  'tax.notFound':
+    'The selected tax was not found.',
+  'item.duplicateVisitType':
+    'This service is already configured for the selected visit type on this price list.',
   'item.duplicateInPriceList':
-    'This catalog item is already on the selected price list. Use a different price list header to price the same service separately.',
+    'This catalog item is already on the selected price list. Use a different visit type or price list header.',
+  'visitType.locked':
+    'Visit / encounter type cannot be changed after the service has been used for a patient.',
+  'catalog.inactive':
+    'Only active services from Service Definition can be added to a price list.',
   'itemCode.duplicate':
     'This item code already exists on the selected price list.',
   'item.idSequenceOutOfSync':

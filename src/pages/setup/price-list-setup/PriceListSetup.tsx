@@ -244,7 +244,7 @@ const PriceListSetup: React.FC = () => {
         (row.versionNumber ?? 1) + 1,
       effectiveFrom: undefined,
       effectiveTo: undefined,
-      status: 'DRAFT'
+      status: 'INACTIVE'
     });
 
     setHeaderModalOpen(true);
@@ -401,6 +401,13 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
+      key: 'shortName',
+      title: <Translate>Short Name</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.shortName || '-'
+    },
+
+    {
       key: 'type',
       title: <Translate>Type</Translate>,
       flexGrow: 2,
@@ -421,11 +428,15 @@ const PriceListSetup: React.FC = () => {
       render: (
         row: PriceListSetupModel
       ) => {
+        if (row.nphiesPayerName) {
+          return row.nphiesPayerName;
+        }
+
         if (row.payerName) {
           return row.payerName;
         }
 
-        if (!row.payerId) {
+        if (!row.payerId && !row.nphiesPayerId) {
           return '-';
         }
 
@@ -475,10 +486,38 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
+      key: 'taxName',
+      title: <Translate>Tax</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.taxName || '-'
+    },
+
+    {
       key: 'currency',
       title: <Translate>Currency</Translate>,
       width: 100,
       align: 'center' as const
+    },
+
+    {
+      key: 'createdBy',
+      title: <Translate>Created By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.createdBy || '-'
+    },
+
+    {
+      key: 'createdDate',
+      title: <Translate>Created Date</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.createdDate || '-'
+    },
+
+    {
+      key: 'lastModifiedBy',
+      title: <Translate>Updated By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.lastModifiedBy || '-'
     },
 
     {

@@ -86,6 +86,7 @@ import type {
   PriceListItemType,
   PriceListSetupItem,
   PriceListSetupType,
+  PriceListVisitType,
   PricingMethod,
   SavePriceListSetupItemRequest,
   WaseelItemMapping
@@ -153,7 +154,11 @@ const normalizeServiceProductOptions = (
   rows: any[]
 ): ServiceProductOption[] => {
   return rows
-    .filter(row => row?.id !== undefined)
+    .filter(row =>
+      row?.id !== undefined &&
+      row?.isActive !== false &&
+      row?.active !== false
+    )
     .map(row => {
       const name =
         row?.name ??
@@ -228,6 +233,14 @@ const PriceListSetupItems: React.FC<Props> = ({
   const isInsurancePriceList =
     priceListType === 'INSURANCE';
 
+  const encounterTypeOptions = useEnumOptions('EncounterType');
+  const visitTypeOptions = [
+    { label: 'All', value: 'ALL' },
+    ...(encounterTypeOptions ?? [])
+  ];
+
+  const categoryOptions = useEnumOptions('ServiceCategory');
+
   const [
     childModalOpen,
     setChildModalOpen
@@ -239,6 +252,8 @@ const PriceListSetupItems: React.FC<Props> = ({
   ] = useState<PriceListSetupItem>({
     ...newPriceListSetupItem
   });
+
+  const isEditItem = Boolean(selectedItem.id);
 
   const [
     selectedMapping,
@@ -1586,6 +1601,13 @@ const PriceListSetupItems: React.FC<Props> = ({
 
 
     if (
+      !isInsurancePriceList &&
+      !selectedItem.visitType
+    ) {
+      return 'Visit type is required.';
+    }
+
+    if (
       selectedItem.unitPrice ===
       undefined ||
       selectedItem.unitPrice ===
@@ -1683,11 +1705,28 @@ const PriceListSetupItems: React.FC<Props> = ({
           selectedItem.itemName
         ).trim(),
 
+      category:
+        selectedItem.category ||
+        undefined,
+
+      visitType:
+        selectedItem.visitType &&
+        selectedItem.visitType !== 'ALL'
+          ? (selectedItem.visitType as PriceListVisitType)
+          : undefined,
 
       unitPrice:
         Number(
           selectedItem.unitPrice
         ),
+
+      cost:
+        selectedItem.cost ===
+          undefined ||
+        selectedItem.cost ===
+          null
+          ? undefined
+          : Number(selectedItem.cost),
 
       discountPercentage:
         Number(
@@ -1879,12 +1918,36 @@ const PriceListSetupItems: React.FC<Props> = ({
       },
 
       {
+        key: 'category',
+        title: <Translate>Category</Translate>,
+        render: (row: PriceListSetupItem) =>
+          row.category ? formatEnumString(row.category) : '-'
+      },
+
+      {
+        key: 'visitType',
+        title: <Translate>Visit Type</Translate>,
+        render: (row: PriceListSetupItem) =>
+          row.visitType && row.visitType !== 'ALL'
+            ? formatEnumString(row.visitType)
+            : 'All'
+      },
+
+      {
         key: 'unitPrice',
         title:
           <Translate>
-            Unit Price
+            Price
           </Translate>,
         align: 'center'
+      },
+
+      {
+        key: 'cost',
+        title: <Translate>Cost</Translate>,
+        align: 'center',
+        render: (row: PriceListSetupItem) =>
+          row.cost ?? '-'
       },
 
       {
@@ -1929,6 +1992,38 @@ const PriceListSetupItems: React.FC<Props> = ({
               : 'No'
         }]
         : []),
+
+      {
+        key: 'isActive',
+        title: <Translate>Status</Translate>,
+        align: 'center' as const,
+        render: (row: PriceListSetupItem) =>
+          row.isActive === false ? 'Inactive' : 'Active'
+      },
+
+      {
+        key: 'createdBy',
+        title: <Translate>Created By</Translate>,
+        render: (row: PriceListSetupItem) => row.createdBy || '-'
+      },
+
+      {
+        key: 'createdDate',
+        title: <Translate>Created Date</Translate>,
+        render: (row: PriceListSetupItem) => row.createdDate || '-'
+      },
+
+      {
+        key: 'lastModifiedBy',
+        title: <Translate>Updated By</Translate>,
+        render: (row: PriceListSetupItem) => row.lastModifiedBy || '-'
+      },
+
+      {
+        key: 'lastModifiedDate',
+        title: <Translate>Updated Date</Translate>,
+        render: (row: PriceListSetupItem) => row.lastModifiedDate || '-'
+      },
 
       {
         key: 'actions',
@@ -1977,6 +2072,7 @@ const PriceListSetupItems: React.FC<Props> = ({
       <div className="price-list-two-columns">
         <MyInput
           required
+          disabled={isEditItem}
           width="100%"
           fieldLabel="Item Type"
           fieldType="select"
@@ -2172,15 +2268,60 @@ const PriceListSetupItems: React.FC<Props> = ({
 
       <div className="price-list-two-columns">
         <MyInput
+          width="100%"
+          fieldLabel="Category"
+          fieldType="select"
+          fieldName="category"
+          selectData={categoryOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={selectedItem}
+          setRecord={setSelectedItem}
+          searchable={false}
+        />
+
+        <MyInput
+          required={!isInsurancePriceList}
+          disabled={Boolean(selectedItem.visitTypeLocked)}
+          width="100%"
+          fieldLabel="Visit Type"
+          fieldType="select"
+          fieldName="visitType"
+          selectData={visitTypeOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={selectedItem}
+          setRecord={setSelectedItem}
+          searchable={false}
+        />
+      </div>
+
+      <br />
+
+      <div className="price-list-two-columns">
+        <MyInput
           required
           width="100%"
-          fieldLabel="Unit Price"
+          fieldLabel="Price"
           fieldType="number"
           fieldName="unitPrice"
           record={selectedItem}
           setRecord={setSelectedItem}
         />
 
+        <MyInput
+          width="100%"
+          fieldLabel="Cost"
+          fieldType="number"
+          fieldName="cost"
+          record={selectedItem}
+          setRecord={setSelectedItem}
+        />
+      </div>
+
+      <br />
+
+      <div className="price-list-two-columns">
         <MyInput
           required
           width="100%"

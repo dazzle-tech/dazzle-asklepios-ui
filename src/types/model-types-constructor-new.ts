@@ -3481,13 +3481,17 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
 
   facilityId: undefined,
   facilityName: undefined,
+  appliesToAllFacilities: false,
 
   type: undefined,
 
   payerId: undefined,
   payerName: undefined,
+  nphiesPayerId: undefined,
+  nphiesPayerName: undefined,
 
   name: undefined,
+  shortName: undefined,
   description: undefined,
 
   versionNumber: 1,
@@ -3498,6 +3502,9 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
   status: 'DRAFT',
 
   currency: undefined,
+
+  taxId: undefined,
+  taxName: undefined,
 
   isActive: true
 };
@@ -3517,8 +3524,11 @@ export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
   itemCode: undefined,
   itemName: undefined,
 
+  category: undefined,
+  visitType: undefined,
 
   unitPrice: undefined,
+  cost: undefined,
   discountPercentage: 0,
 
   isActive: true,
