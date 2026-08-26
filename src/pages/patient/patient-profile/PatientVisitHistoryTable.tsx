@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dropdown, Popover, Whisper } from 'rsuite';
+import { Dropdown, Form, Popover, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 
 import {
   useGetEncountersByPatientQuery,
   useCancelEncounterMutation,
-  useCompleteEncounterMutation
+  useCompleteEncounterMutation,
+  useReassignPractitionerMutation
 } from '@/services/encounters/patientEncounterService';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,14 +19,20 @@ import {
   faPowerOff,
   faCheckDouble,
   faFileInvoiceDollar,
-  faEllipsisVertical
+  faEllipsisVertical,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 
 import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
+import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
+import {
+  useGetPractitionersBulkMutation,
+  useGetPractitionersBySpecialityAndDepartmentQuery,
+  useLazyGetPractitionerByIdQuery
+} from '@/services/setup/practitioner/PractitionerService';
 import type { Practitioner, Department } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import PatientPaymentInfo, {
@@ -56,6 +64,12 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
+  const [openReassignModal, setOpenReassignModal] = useState(false);
+  const [actionsMenuKey, setActionsMenuKey] = useState(0);
+  const [reassignForm, setReassignForm] = useState<{ practitionerId?: number | null }>({
+    practitionerId: null
+  });
+  const [reassignSpecialtyOverride, setReassignSpecialtyOverride] = useState<string>('');
 
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
@@ -82,6 +96,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
+  const [getPractitionerById] = useLazyGetPractitionerByIdQuery();
   const [getDepartmentById] = useLazyGetDepartmentByIdQuery();
   const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
     useLazyGetDiagnosisFlagsByEncounterIdsQuery();
@@ -104,6 +119,44 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
+  const [reassignPractitioner, { isLoading: isReassigning }] = useReassignPractitionerMutation();
+
+  const reassignDepartmentId = selectedVisit?.departmentId
+    ? Number(selectedVisit.departmentId)
+    : null;
+  const mappedCurrentPractitioner =
+    selectedVisit?.practitionerId != null
+      ? practitionersMap[String(selectedVisit.practitionerId)] ??
+        practitionersMap[selectedVisit.practitionerId]
+      : null;
+  const reassignSpecialty = String(
+    reassignSpecialtyOverride ||
+      selectedVisit?.specialty ||
+      mappedCurrentPractitioner?.specialty ||
+      ''
+  ).trim();
+  const canLoadReassignPractitioners =
+    openReassignModal && reassignDepartmentId != null && !!reassignSpecialty;
+
+  const { data: practitionersBySpecialty, isFetching: isLoadingReassignPractitioners } =
+    useGetPractitionersBySpecialityAndDepartmentQuery(
+      {
+        departmentId: reassignDepartmentId ?? 0,
+        specialty: reassignSpecialty,
+        page: 0,
+        size: 200,
+        sort: 'firstName,asc'
+      },
+      { skip: !canLoadReassignPractitioners }
+    );
+
+  const reassignPractitionerOptions = useMemo(() => {
+    return (practitionersBySpecialty?.data ?? []).filter(
+      (practitioner: Practitioner) =>
+        practitioner?.id != null &&
+        Number(practitioner.id) !== Number(selectedVisit?.practitionerId)
+    );
+  }, [practitionersBySpecialty?.data, selectedVisit?.practitionerId]);
 
   useEffect(() => {
     if (encounterRefetchTrigger > 0) {
@@ -147,6 +200,87 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       const msg = errorMap[backendMessage] || 'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  const closeActionsMenu = useCallback(() => {
+    setActionsMenuKey(prev => prev + 1);
+  }, []);
+
+  const handleOpenReassign = useCallback(
+    async (row: any) => {
+      closeActionsMenu();
+      setSelectedVisit(row);
+      setReassignForm({ practitionerId: null });
+      setReassignSpecialtyOverride('');
+      setOpenReassignModal(true);
+
+      const existingSpecialty = String(
+        row?.specialty ||
+          practitionersMap[String(row?.practitionerId)]?.specialty ||
+          practitionersMap[row?.practitionerId]?.specialty ||
+          ''
+      ).trim();
+
+      if (existingSpecialty || !row?.practitionerId) {
+        if (existingSpecialty) setReassignSpecialtyOverride(existingSpecialty);
+        return;
+      }
+
+      try {
+        const practitioner = await getPractitionerById(row.practitionerId).unwrap();
+        const specialty = String(practitioner?.specialty ?? '').trim();
+        if (specialty) {
+          setReassignSpecialtyOverride(specialty);
+          setSelectedVisit((prev: any) =>
+            prev?.id === row.id ? { ...prev, specialty } : prev
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load practitioner specialty:', err);
+      }
+    },
+    [closeActionsMenu, getPractitionerById, practitionersMap]
+  );
+
+  const handleCloseReassign = useCallback((open: boolean) => {
+    setOpenReassignModal(open);
+    if (!open) {
+      setReassignForm({ practitionerId: null });
+      setReassignSpecialtyOverride('');
+    }
+  }, []);
+
+  const handleReassignPractitioner = async () => {
+    if (!selectedVisit?.id) return;
+
+    const practitionerId = Number(reassignForm.practitionerId);
+    if (!practitionerId) {
+      dispatch(notify({ msg: 'Please select a practitioner', sev: 'warning' }));
+      return;
+    }
+
+    if (Number(selectedVisit.practitionerId) === practitionerId) {
+      dispatch(notify({ msg: 'Please select a different practitioner', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      await reassignPractitioner({
+        encounterId: selectedVisit.id,
+        practitionerId
+      }).unwrap();
+      dispatch(notify({ msg: 'Practitioner reassigned successfully', sev: 'success' }));
+      setOpenReassignModal(false);
+      setReassignForm({ practitionerId: null });
+      refetch();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Failed to reassign practitioner',
+          sev: 'error'
+        })
+      );
     }
   };
 
@@ -329,7 +463,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const renderVisitActionsMenu = (row: any) => {
     const treatmentStatus = getEncounterTreatmentStatus(row);
     const lifecycleStatus = getEncounterLifecycleStatus(row);
-    const isOngoing = treatmentStatus === 'ONGOING';
     const isNew = treatmentStatus === 'NEW';
     const isPendingPayment = treatmentStatus === 'PENDING_PAYMENT';
     const isWaitingTriage = treatmentStatus === 'WAITING_TRIAGE';
@@ -350,7 +483,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const canCancel = (isNew || isPendingPayment || isWaitingTriage) && !row?.isObserved;
     const canComplete = Radiology || Laboratory;
     const canDischarge = false;
-    const hasVisibleActions = canPay || canComplete || canDischarge || canCancel;
+    const canReassignPractitioner = isNew || isPendingPayment;
+    const hasVisibleActions =
+      canPay || canComplete || canDischarge || canCancel || canReassignPractitioner;
 
     if (!hasVisibleActions) return null;
 
@@ -359,7 +494,10 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         <Dropdown.Menu>
           {canPay ? (
             <Dropdown.Item
-              onClick={() => handleOpenPayment(row)}
+              onClick={() => {
+                closeActionsMenu();
+                handleOpenPayment(row);
+              }}
             >
               <div className="visit-history__dropdown-item">
                 <FontAwesomeIcon icon={faFileInvoiceDollar} />
@@ -368,8 +506,26 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
             </Dropdown.Item>
           ) : null}
 
+          {canReassignPractitioner ? (
+            <Dropdown.Item
+              onClick={() => {
+                void handleOpenReassign(row);
+              }}
+            >
+              <div className="visit-history__dropdown-item">
+                <FontAwesomeIcon icon={faUserDoctor} />
+                <Translate>Re-assign Practitioner</Translate>
+              </div>
+            </Dropdown.Item>
+          ) : null}
+
           {canComplete ? (
-            <Dropdown.Item onClick={() => handleComplete(row)}>
+            <Dropdown.Item
+              onClick={() => {
+                closeActionsMenu();
+                handleComplete(row);
+              }}
+            >
               <div className="visit-history__dropdown-item">
                 <FontAwesomeIcon icon={faCheckDouble} />
                 <Translate>Complete</Translate>
@@ -380,6 +536,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           {canDischarge ? (
             <Dropdown.Item
               onClick={() => {
+                closeActionsMenu();
                 setSelectedVisit(row);
                 setOpenDischargeModal(true);
               }}
@@ -394,6 +551,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           {canCancel ? (
             <Dropdown.Item
               onClick={() => {
+                closeActionsMenu();
                 setSelectedVisit(row);
                 setOpenCancelModal(true);
               }}
@@ -410,6 +568,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
     return (
       <Whisper
+        key={`${row.id}-${actionsMenuKey}`}
         placement="leftStart"
         trigger="click"
         speaker={menu}
@@ -496,14 +655,21 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       departmentsMap,
       practitionersMap,
       diagnosisMap,
+      actionsMenuKey,
+      closeActionsMenu,
       handleComplete,
-      handleOpenPayment
+      handleOpenPayment,
+      handleOpenReassign
     ]
   );
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
+  const currentPractitionerName = mappedCurrentPractitioner
+    ? `${mappedCurrentPractitioner.firstName} ${mappedCurrentPractitioner.lastName ?? ''}`.trim()
+    : '-';
+
   return (
     <div dir={dir}>
       <div ref={tooltipContainerRef} className="visit-history__wrapper">
@@ -527,6 +693,52 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           open={openDischargeModal}
           setOpen={setOpenDischargeModal}
           encounter={selectedVisit}
+        />
+
+        <MyModal
+          open={openReassignModal}
+          setOpen={handleCloseReassign}
+          title="Re-assign Practitioner"
+          size="sm"
+          actionButtonLabel="Re-assign"
+          actionButtonFunction={handleReassignPractitioner}
+          actionButtonLoading={isReassigning}
+          isDisabledActionBtn={
+            isReassigning || !reassignForm.practitionerId || isLoadingReassignPractitioners
+          }
+          content={
+            <Form fluid>
+              <p style={{ marginBottom: 12 }}>
+                <Translate>Current Practitioner</Translate>: {currentPractitionerName}
+              </p>
+              <MyInput
+                required
+                column
+                fieldType="select"
+                fieldLabel="New Practitioner"
+                fieldName="practitionerId"
+                selectData={reassignPractitionerOptions}
+                selectDataLabel={['firstName', 'lastName']}
+                selectDataValue="id"
+                record={reassignForm}
+                setRecord={setReassignForm}
+                searchable
+                loading={isLoadingReassignPractitioners}
+                disabled={!canLoadReassignPractitioners || isLoadingReassignPractitioners}
+                placeholder={
+                  !reassignDepartmentId
+                    ? 'Encounter department is missing'
+                    : !reassignSpecialty
+                      ? 'Encounter specialty is missing'
+                      : isLoadingReassignPractitioners
+                        ? 'Loading practitioners...'
+                        : reassignPractitionerOptions.length
+                          ? 'Select practitioner'
+                          : 'No other practitioners found'
+                }
+              />
+            </Form>
+          }
         />
 
         {quickAppointmentModel && (
