@@ -248,11 +248,12 @@ import {billingConfigurationService} from './services/billing/billingConfigurati
 import {financialDocumentNumberingService} from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
-
+import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
 
   import { billingTransactionService } from './services/billing/billingTransactionService';
   import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
   import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+  import {PointOfSaleConfigurationService} from '@/services/point-of-sale/PointOfSaleConfigurationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -626,6 +627,8 @@ export const store = configureStore({
   [billingTransactionService.reducerPath]:billingTransactionService.reducer,
   [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
   [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+  [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
+  [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -849,7 +852,8 @@ export const store = configureStore({
         discountService.middleware,
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
-        financialDocumentAdjustmentService.middleware
+        PointOfSaleCheckInService.middleware,
+        PointOfSaleConfigurationService.middleware
       ) as any
 });
 

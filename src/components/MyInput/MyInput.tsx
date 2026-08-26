@@ -141,6 +141,7 @@ type MyInputProps = {
   allowDecimal?: boolean;
   disabledItemValues?: boolean;
   disableByField?: string;
+  disableByFieldValue?: any;
 };
 
 const MyInput = ({
@@ -450,13 +451,29 @@ const MyInput = ({
     const combined = parts.join(' ').trim();
     return combined || fallback;
   };
-  const getDisabledValues = (dataList: any[], valueKey: string) =>
-    props.disabledItemValues
-      ? dataList.map(item => item[valueKey])
-      : props.disableByField
-        ? dataList
-          .filter(item => item?.[props.disableByField] === false).map(item => item[valueKey])
-        : [];
+  const getDisabledValues = (
+  dataList: any[],
+  valueKey: string
+) => {
+  if (props.disabledItemValues) {
+    return dataList.map(item => item[valueKey]);
+  }
+
+  if (props.disableByField) {
+    const expectedValue =
+      props.disableByFieldValue ?? false;
+
+    return dataList
+      .filter(
+        item =>
+          item?.[props.disableByField] ===
+          expectedValue
+      )
+      .map(item => item[valueKey]);
+  }
+
+  return [];
+};
 
 
   const conjureFormControl = () => {
