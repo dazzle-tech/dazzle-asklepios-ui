@@ -59,7 +59,7 @@ export const observationServiceNew = createApi({
 >({
   query: body => ({
     url: '/api/analytics/patient-encounters',
-    method: 'POST',
+    method: 'GET',
     body,
   }),
 }),
