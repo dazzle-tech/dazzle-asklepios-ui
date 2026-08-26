@@ -944,6 +944,7 @@ export interface DiagnosticTest {
   id?: number;
   type: string;
   name: string;
+  shortName:string;
   internalCode: string;
 
   ageSpecific?: boolean;
