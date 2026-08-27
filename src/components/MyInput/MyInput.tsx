@@ -1767,7 +1767,7 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
-              searchable={false}
+              searchable={props.searchable ?? false}
               container={resolveContainer()}
               placement={placement}
               preventOverflow={pickerPreventOverflow}

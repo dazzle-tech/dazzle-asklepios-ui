@@ -1955,8 +1955,50 @@ export interface NphiesPayer {
 
   isActive: boolean;
 
+  tpaIds?: number[];
+  tpas?: LinkedTpa[];
+
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
+}
+
+export interface LinkedTpa {
+  id: number;
+  tpaCode: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface TpaDefinition {
+  id?: number;
+  tpaCode: string;
+  name: string;
+  guarantorType: string;
+  activationDate: string | null;
+  isActive: boolean;
+  taxRegistrationNo?: string | null;
+  countryId?: number | null;
+  countryName?: string | null;
+  cityId?: number | null;
+  cityName?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  insuranceCompanyIds?: number[];
+  insuranceCompanies?: TpaLinkedInsuranceCompany[];
+  linkedInsuranceCount?: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface TpaLinkedInsuranceCompany {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
 }
 
 export interface PayorPlanItem {
