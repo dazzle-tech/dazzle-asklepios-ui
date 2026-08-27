@@ -10,7 +10,8 @@ import {
   faPrint,
   faFileWaveform,
   faRectangleXmark,
-  faEye
+  faEye,
+  faVialCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -66,6 +67,8 @@ import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practi
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
 import Translate from '@/components/Translate';
+import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
+
 // import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -233,6 +236,8 @@ const EncounterList = () => {
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
+
+  const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
 
   useEffect(() => {
     dispatch(setPageCode('P_Encounters'));
@@ -1375,8 +1380,15 @@ const handlePatientSearchClick = useCallback(() => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
-          <div style={{display: 'flex', justifyContent:'end'}}>
+          <div style={{display: 'flex', justifyContent:'end', gap:'1vw'}}>
           <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+
+          <MyButton
+            onClick={() => setOpenCollectSampleModal(true)}
+          >
+            <FontAwesomeIcon icon={faVialCircleCheck} />
+            <Translate>COLLECT SAMPLE</Translate>
+          </MyButton>
           </div>
 
           <MyTable
@@ -1470,6 +1482,12 @@ const handlePatientSearchClick = useCallback(() => {
          setOpen={setOpenDoctorAppointments}
          facilityId={selectedDepartment?.facilityId}
          departmentId={departmentId}
+        />
+
+        <CollectSambleModal
+          open={openCollectSampleModal}
+          setOpen={setOpenCollectSampleModal}
+          facilityId={selectedDepartment?.facilityId}
         />
       </div>
     </>
