@@ -54,6 +54,46 @@ export type DiagnosticOrderTestResultFilterParams = {
   resultType?: "NUMBER" | "TEXT";
 } & PagedParams;
 
+export type AllDiagnosticOrderTestResultsParams = {
+  resultDateFrom?: string;
+  resultDateTo?: string;
+  showAbnormalOnly?: boolean;
+} & PagedParams;
+
+
+export type DiagnosticOrderTestResultResultsVM = {
+  id: number;
+  orderTestId: number;
+  testId: number;
+  profileTestId: number;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  viewMarker?: string | null;
+  viewNormalRange?: string | null;
+
+  resultDate?: string | null;
+
+  patientName?: string | null;
+  mrn?: string | null;
+
+  orderedBy?: string | null;
+  orderedAt?: string | null;
+
+  encounterId?: number | null;
+
+  hasNote: boolean;
+  isRadiology: boolean;
+};
+
+export type DiagnosticOrderTestResultsPageParams = {
+  resultDateFrom?: string;
+  resultDateTo?: string;
+  showAbnormalOnly?: boolean;
+} & PagedParams;
+
 export type BulkIdsDTO = {
   ids: number[];
 };
@@ -153,6 +193,70 @@ export const diagnosticOrderTestResultService = createApi({
       invalidatesTags: ["DiagnosticOrderTestResult"],
     }),
 
+    /* 🔹 Results Page */
+    getDiagnosticOrderTestResultsPage: builder.query<
+      PagedResult<DiagnosticOrderTestResultResultsVM>,
+      DiagnosticOrderTestResultsPageParams
+    >({
+      query: ({ page, size, sort, ...params }) => ({
+        url: "/api/patient/diagnostic-order-tests-results/results-page",
+        method: "GET",
+        params: {
+          page,
+          size,
+          sort,
+          ...params,
+        },
+      }),
+
+      transformResponse: (
+        response: DiagnosticOrderTestResultResultsVM[],
+        meta
+      ) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+
+      providesTags: ["DiagnosticOrderTestResult"],
+    }),
+
+    /* 🔹 All Test Results */
+    getAllDiagnosticOrderTestResults: builder.query<
+      PagedResult<DiagnosticOrderTestResultResponseVM>,
+      AllDiagnosticOrderTestResultsParams
+    >({
+      query: ({ page, size, sort, ...params }) => ({
+        url: "/api/patient/diagnostic-order-tests-results/all",
+        method: "GET",
+        params: {
+          page,
+          size,
+          sort,
+          ...params,
+        },
+      }),
+
+      transformResponse: (
+        response: DiagnosticOrderTestResultResponseVM[],
+        meta
+      ) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+
+      providesTags: ["DiagnosticOrderTestResult"],
+    }),
+
     /* 🔹 Bulk Approve */
     bulkApproveDiagnosticOrderTestResult: builder.mutation<
       void,
@@ -227,27 +331,28 @@ export const diagnosticOrderTestResultService = createApi({
       invalidatesTags: ["DiagnosticOrderTestResult"],
     }),
     /* 🔹 Bulk Create */
-bulkCreateDiagnosticOrderTestResult: builder.mutation<
-  void,
-  DiagnosticOrderTestResultBulkCreateDTO>({
-  query: (body) => ({
-    url: "/api/patient/diagnostic-order-tests-results/bulk",
-    method: "POST",
-    body,
-  }),
-  invalidatesTags: ["DiagnosticOrderTestResult"],}
-),
- bulkToggleReviewDiagnosticOrderTestResult: builder.mutation<
-  void,
-  BulkIdsDTO>({
-  query: (body) => ({
-    url: "/api/patient/diagnostic-order-tests-results/bulk-toggle-review",
-    method: "POST",
-    body,
-  }),
-  invalidatesTags: ["DiagnosticOrderTestResult"],
-}),   
-    
+    bulkCreateDiagnosticOrderTestResult: builder.mutation<
+      void,
+      DiagnosticOrderTestResultBulkCreateDTO>({
+        query: (body) => ({
+          url: "/api/patient/diagnostic-order-tests-results/bulk",
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: ["DiagnosticOrderTestResult"],
+      }
+      ),
+    bulkToggleReviewDiagnosticOrderTestResult: builder.mutation<
+      void,
+      BulkIdsDTO>({
+        query: (body) => ({
+          url: "/api/patient/diagnostic-order-tests-results/bulk-toggle-review",
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: ["DiagnosticOrderTestResult"],
+      }),
+
   }),
 });
 
@@ -255,7 +360,9 @@ bulkCreateDiagnosticOrderTestResult: builder.mutation<
 
 export const {
   useFilterDiagnosticOrderTestResultsQuery,
+  useGetAllDiagnosticOrderTestResultsQuery,
   useCreateDiagnosticOrderTestResultMutation,
+  useGetDiagnosticOrderTestResultsPageQuery,
   useUpdateDiagnosticOrderTestResultMutation,
   useToggleReviewDiagnosticOrderTestResultMutation,
   useApproveDiagnosticOrderTestResultMutation,
