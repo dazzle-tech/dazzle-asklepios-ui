@@ -249,7 +249,7 @@ import {financialDocumentNumberingService} from './services/billing/financialDoc
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
 import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
-
+import {PointOfSaleTransactionService} from '@/services/point-of-sale/PointOfSaleTransactionService';
   import { billingTransactionService } from './services/billing/billingTransactionService';
   import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
   import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
@@ -628,7 +628,8 @@ export const store = configureStore({
   [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
   [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
   [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
-  [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer
+  [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
+  [PointOfSaleTransactionService.reducerPath]:PointOfSaleTransactionService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -853,7 +854,8 @@ export const store = configureStore({
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
         PointOfSaleCheckInService.middleware,
-        PointOfSaleConfigurationService.middleware
+        PointOfSaleConfigurationService.middleware,
+        PointOfSaleTransactionService.middleware
       ) as any
 });
 
