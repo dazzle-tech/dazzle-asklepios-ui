@@ -6,7 +6,7 @@ import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdModeEdit, MdDelete } from 'react-icons/md';
+import { MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
@@ -26,6 +26,9 @@ import {
   useToggleNphiesPayerActiveMutation
 } from '@/services/setup/payer/NphiesPayerSetupService';
 import NphiesPayerModal from './NphiesPayerModal';
+import PayerLinkTpasModal from './PayerLinkTpasModal';
+import TpaDefinitionSection from './TpaDefinitionSection';
+import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr';
 
@@ -50,6 +53,7 @@ const NphiesPayerSetup = () => {
 
   const [selectedPayer, setSelectedPayer] = useState<NphiesPayer>({ ...newNphiesPayer });
   const [openModal, setOpenModal] = useState(false);
+  const [openLinkTpas, setOpenLinkTpas] = useState(false);
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
     'deactivate'
@@ -154,7 +158,7 @@ const NphiesPayerSetup = () => {
 
   useEffect(() => {
     dispatch(setPageCode('NPHIES_PAYER'));
-    dispatch(setDivContent('NPHIES Payers'));
+    dispatch(setDivContent('TPA & Insurance Companies'));
 
     return () => {
       dispatch(setPageCode(''));
@@ -207,22 +211,22 @@ const NphiesPayerSetup = () => {
     }));
   };
 
-  const handleSearch = () => {
+  const handleSearch = (nextFilter = payerFilter) => {
     if (
-      !payerFilter.criteria ||
-      (payerFilter.criteria === 'nphiesId' && !payerFilter.nphiesId.trim()) ||
-      (payerFilter.criteria === 'nameEn' && !payerFilter.nameEn.trim()) ||
-      (payerFilter.criteria === 'nameAr' && !payerFilter.nameAr.trim())
+      !nextFilter.criteria ||
+      (nextFilter.criteria === 'nphiesId' && !nextFilter.nphiesId.trim()) ||
+      (nextFilter.criteria === 'nameEn' && !nextFilter.nameEn.trim()) ||
+      (nextFilter.criteria === 'nameAr' && !nextFilter.nameAr.trim())
     ) {
       handleResetFilter();
       return;
     }
 
     setAppliedPayerFilter({
-      criteria: payerFilter.criteria,
-      nphiesId: payerFilter.nphiesId,
-      nameEn: payerFilter.nameEn,
-      nameAr: payerFilter.nameAr
+      criteria: nextFilter.criteria,
+      nphiesId: nextFilter.nphiesId,
+      nameEn: nextFilter.nameEn,
+      nameAr: nextFilter.nameAr
     });
 
     setPaginationParams(prev => ({
@@ -231,8 +235,19 @@ const NphiesPayerSetup = () => {
     }));
   };
 
+  const applyHeaderSearch = (criteria: FilterCriteria, value: string) => {
+    const next = {
+      criteria,
+      nphiesId: criteria === 'nphiesId' ? value : '',
+      nameEn: criteria === 'nameEn' ? value : '',
+      nameAr: criteria === 'nameAr' ? value : ''
+    };
+    setPayerFilter(next);
+    handleSearch(next);
+  };
+
   const handleNew = () => {
-    setSelectedPayer({ ...newNphiesPayer });
+    setSelectedPayer({ ...newNphiesPayer, tpaIds: [] });
     setOpenModal(true);
   };
 
@@ -282,17 +297,27 @@ const NphiesPayerSetup = () => {
     try {
       dispatch(showSystemLoader());
 
-      const { createdDate, lastModifiedDate, facilityName, countryName, cityName, ...payload } =
-        selectedPayer;
+      const {
+        createdDate,
+        lastModifiedDate,
+        facilityName,
+        countryName,
+        cityName,
+        tpas,
+        ...payload
+      } = selectedPayer;
+
+      const uniqueTpaIds = [...new Set(payload.tpaIds ?? [])];
 
       if (selectedPayer.id) {
-        await updateNphiesPayer(payload).unwrap();
+        await updateNphiesPayer({ ...payload, tpaIds: uniqueTpaIds }).unwrap();
         dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
       } else {
-        await createNphiesPayer(payload).unwrap();
+        await createNphiesPayer({ ...payload, tpaIds: uniqueTpaIds }).unwrap();
         dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
       }
 
+      dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
       setOpenModal(false);
     } catch (err: any) {
       let serverMessage =
@@ -320,6 +345,7 @@ const NphiesPayerSetup = () => {
     try {
       dispatch(showSystemLoader());
       await toggleNphiesPayerActive(selectedPayer.id).unwrap();
+      dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
       dispatch(
         notify({
           msg:
@@ -350,8 +376,24 @@ const NphiesPayerSetup = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
-          setSelectedPayer(rowData);
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? [])]
+          });
           setOpenModal(true);
+        }}
+      />
+      <MdLink
+        className="icons-style"
+        title="Link TPAs"
+        size={24}
+        fill="var(--deep-blue)"
+        onClick={() => {
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? rowData.tpas?.map(tpa => tpa.id) ?? [])]
+          });
+          setOpenLinkTpas(true);
         }}
       />
       {rowData.isActive ? (
@@ -386,22 +428,66 @@ const NphiesPayerSetup = () => {
     {
       key: 'nphiesId',
       title: <Translate>Insurance Company Code</Translate>,
-      flexGrow: 2
+      flexGrow: 2,
+      searchable: true,
+      searchPlaceholder: 'Search code',
+      searchValue: payerFilter.nphiesId,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nphiesId',
+          nphiesId: value,
+          nameEn: '',
+          nameAr: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nphiesId', value ?? payerFilter.nphiesId)
     },
     {
       key: 'nameEn',
       title: <Translate>Name English</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+      searchable: true,
+      searchPlaceholder: 'Search English name',
+      searchValue: payerFilter.nameEn,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nameEn',
+          nameEn: value,
+          nphiesId: '',
+          nameAr: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nameEn', value ?? payerFilter.nameEn)
     },
     {
       key: 'nameAr',
       title: <Translate>Name Arabic</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+      searchable: true,
+      searchPlaceholder: 'Search Arabic name',
+      searchValue: payerFilter.nameAr,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nameAr',
+          nameAr: value,
+          nphiesId: '',
+          nameEn: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nameAr', value ?? payerFilter.nameAr)
     },
     {
       key: 'facilityName',
       title: <Translate>Facility</Translate>,
       flexGrow: 2
+    },
+    {
+      key: 'tpas',
+      title: <Translate>Linked TPAs</Translate>,
+      flexGrow: 2,
+      render: (rowData: NphiesPayer) => (
+        <span>{(rowData.tpas ?? []).map(tpa => tpa.name).filter(Boolean).join(', ') || '-'}</span>
+      )
     },
     {
       key: 'isActive',
@@ -412,7 +498,7 @@ const NphiesPayerSetup = () => {
     {
       key: 'actions',
       title: <Translate></Translate>,
-      flexGrow: 1,
+      flexGrow: 1.4,
       render: (rowData: NphiesPayer) => iconsForActions(rowData)
     }
   ];
@@ -523,7 +609,7 @@ const NphiesPayerSetup = () => {
         />
       )}
 
-      <MyButton color="var(--deep-blue)" onClick={handleSearch} width="80px">
+      <MyButton color="var(--deep-blue)" onClick={() => handleSearch()} width="80px">
         Search
       </MyButton>
 
@@ -539,34 +625,49 @@ const NphiesPayerSetup = () => {
 
   return (
     <Panel>
-      <MyTable
-        data={activePayersResponse?.data ?? []}
-        totalCount={totalCount}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => setSelectedPayer(rowData)}
-        filters={filters()}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortColumn={sortColumn}
-        sortType={sortType}
-        onSortChange={handleSortChange}
-        tableButtons={
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
+      <div className="payer-tpa-setup-stack">
+        <TpaDefinitionSection />
+
+        <div className="payer-setup-section">
+          <div className="payer-setup-section-title">
+            <Translate>Insurance Companies</Translate>
           </div>
-        }
-      />
+          <MyTable
+            data={activePayersResponse?.data ?? []}
+            totalCount={totalCount}
+            loading={isFetching}
+            columns={tableColumns}
+            height={280}
+            rowClassName={isSelected}
+            onRowClick={rowData =>
+              setSelectedPayer({
+                ...rowData,
+                tpaIds: rowData.tpaIds ?? []
+              })
+            }
+            filters={filters()}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            tableButtons={
+              <div className="container-of-add-new-button">
+                <MyButton
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={handleNew}
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>
+            }
+          />
+        </div>
+      </div>
 
       <DeletionConfirmationModal
         open={openConfirmToggle}
@@ -582,6 +683,12 @@ const NphiesPayerSetup = () => {
         payer={selectedPayer}
         setPayer={setSelectedPayer}
         onSave={handleSave}
+      />
+
+      <PayerLinkTpasModal
+        open={openLinkTpas}
+        setOpen={setOpenLinkTpas}
+        payer={selectedPayer}
       />
     </Panel>
   );

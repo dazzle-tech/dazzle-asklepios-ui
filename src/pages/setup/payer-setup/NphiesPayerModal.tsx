@@ -8,6 +8,7 @@ import './styles.less';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
+import { useGetAllTpaDefinitionsQuery } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type NphiesPayerModalProps = {
   open: boolean;
@@ -45,6 +46,11 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
       sort: 'name,asc'
     },
     { skip: !open || !payer.countryId }
+  );
+
+  const { data: tpaResponse, isFetching: isTpasLoading } = useGetAllTpaDefinitionsQuery(
+    { page: 0, size: 1000, sort: 'id,asc' },
+    { skip: !open }
   );
 
   const facilityOptions = useMemo(() => {
@@ -91,13 +97,34 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
     return list;
   }, [citiesResponse, payer.cityId, payer.cityName]);
 
+  const tpaOptions = useMemo(() => {
+    const raw = Array.isArray(tpaResponse) ? tpaResponse : tpaResponse?.data ?? [];
+    const byId = new Map<number, any>();
+    [...raw, ...(payer.tpas ?? [])].forEach(tpa => {
+      if (tpa?.id == null || byId.has(tpa.id)) {
+        return;
+      }
+      byId.set(tpa.id, tpa);
+    });
+    return [...byId.values()]
+      .filter(tpa => tpa.isActive !== false || (payer.tpaIds ?? []).includes(tpa.id))
+      .map(tpa => ({
+        value: tpa.id,
+        label: [tpa.tpaCode, tpa.name].filter(Boolean).join(' - ') || `TPA #${tpa.id}`,
+        isActive: tpa.isActive !== false
+      }));
+  }, [tpaResponse, payer.tpas, payer.tpaIds]);
+
   const handleSetPayer: React.Dispatch<React.SetStateAction<NphiesPayer>> = updated => {
     const next = typeof updated === 'function' ? updated(payer) : updated;
     if (next.countryId !== payer.countryId) {
       setPayer({ ...next, cityId: null, cityName: null });
       return;
     }
-    setPayer(next);
+    setPayer({
+      ...next,
+      tpaIds: [...new Set(next.tpaIds ?? [])]
+    });
   };
 
   const fieldProps = {
@@ -174,6 +201,20 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
                     searchable={false}
                     required
                   />
+                  <div className="nphies-payer-field-span-2">
+                    <MyInput
+                      {...fieldProps}
+                      fieldName="tpaIds"
+                      fieldType="checkPicker"
+                      fieldLabel="Linked TPAs"
+                      selectData={tpaOptions}
+                      selectDataLabel="displayName"
+                      selectDataValue="id"
+                      loading={isTpasLoading}
+                      disableByField="isActive"
+                      placeholder="Select one or more TPAs"
+                    />
+                  </div>
                 </div>
               }
             />

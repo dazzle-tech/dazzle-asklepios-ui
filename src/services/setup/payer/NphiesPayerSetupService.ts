@@ -26,7 +26,7 @@ type PagedResult<T> = {
 export const NphiesPayerService = createApi({
   reducerPath: 'nphiesPayerApi',
   baseQuery: BaseQuery,
-  tagTypes: ['NphiesPayer'],
+  tagTypes: ['NphiesPayer', 'TpaDefinition'],
   endpoints: builder => ({
     getAllNphiesPayers: builder.query<PagedResult<NphiesPayer>, PagedParams>({
       query: ({ page, size, sort = 'id,desc' }) => ({
@@ -123,7 +123,7 @@ export const NphiesPayerService = createApi({
         method: 'POST',
         body
       }),
-      invalidatesTags: ['NphiesPayer']
+      invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 
     updateNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
@@ -132,7 +132,16 @@ export const NphiesPayerService = createApi({
         method: 'PUT',
         body
       }),
-      invalidatesTags: ['NphiesPayer']
+      invalidatesTags: ['NphiesPayer', 'TpaDefinition']
+    }),
+
+    updateNphiesPayerTpas: builder.mutation<NphiesPayer, { id: number | string; tpaIds: number[] }>({
+      query: ({ id, tpaIds }) => ({
+        url: `/api/setup/nphies-payers/${id}/tpas`,
+        method: 'PATCH',
+        body: { tpaIds }
+      }),
+      invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 
     toggleNphiesPayerActive: builder.mutation<NphiesPayer, number | string>({
@@ -140,7 +149,7 @@ export const NphiesPayerService = createApi({
         url: `/api/setup/nphies-payers/${id}/toggle-active`,
         method: 'PATCH'
       }),
-      invalidatesTags: ['NphiesPayer']
+      invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     })
   })
 });
@@ -161,5 +170,6 @@ export const {
   useGetNphiesPayerByIdQuery,
   useCreateNphiesPayerMutation,
   useUpdateNphiesPayerMutation,
+  useUpdateNphiesPayerTpasMutation,
   useToggleNphiesPayerActiveMutation
 } = NphiesPayerService;

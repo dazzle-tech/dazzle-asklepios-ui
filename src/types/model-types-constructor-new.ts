@@ -1480,7 +1480,34 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
 
   isActive: true,
 
+  tpaIds: [],
+  tpas: [],
+
   createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newTpaDefinition: modelTypes.TpaDefinition = {
+  id: undefined,
+  tpaCode: '',
+  name: '',
+  guarantorType: 'TPA',
+  activationDate: null,
+  isActive: true,
+  taxRegistrationNo: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  address: null,
+  phone: null,
+  email: null,
+  insuranceCompanyIds: [],
+  insuranceCompanies: [],
+  linkedInsuranceCount: 0,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
   lastModifiedDate: null
 };
 
