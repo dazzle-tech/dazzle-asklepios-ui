@@ -30,7 +30,7 @@ import NphiesPayerModal from './NphiesPayerModal';
 type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr';
 
 const filterCriteriaOptions = [
-  { label: 'NPHIES ID', value: 'nphiesId' },
+  { label: 'Payer Company Code', value: 'nphiesId' },
   { label: 'English Name', value: 'nameEn' },
   { label: 'Arabic Name', value: 'nameAr' }
 ];
@@ -154,7 +154,7 @@ const NphiesPayerSetup = () => {
 
   useEffect(() => {
     dispatch(setPageCode('NPHIES_PAYER'));
-    dispatch(setDivContent('NPHIES Payers'));
+    dispatch(setDivContent('Payer Companies'));
 
     return () => {
       dispatch(setPageCode(''));
@@ -238,8 +238,8 @@ const NphiesPayerSetup = () => {
 
   const handleSave = async () => {
     const errors: string[] = [];
-    if (!selectedPayer.nphiesId?.trim()) errors.push('Insurance Company Code is required');
-    if (!selectedPayer.nameEn?.trim()) errors.push('Insurance Company Name is required');
+    if (!selectedPayer.nphiesId?.trim()) errors.push('Payer Company Code is required');
+    if (!selectedPayer.nameEn?.trim()) errors.push('Payer Company Name is required');
     if (!selectedPayer.facilityId) errors.push('Facility Name is required');
     if (selectedPayer.isActive === undefined || selectedPayer.isActive === null) {
       errors.push('Status is required');
@@ -287,10 +287,10 @@ const NphiesPayerSetup = () => {
 
       if (selectedPayer.id) {
         await updateNphiesPayer(payload).unwrap();
-        dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Payer company updated successfully', sev: 'success' }));
       } else {
         await createNphiesPayer(payload).unwrap();
-        dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Payer company created successfully', sev: 'success' }));
       }
 
       setOpenModal(false);
@@ -300,7 +300,7 @@ const NphiesPayerSetup = () => {
         err?.data?.message ||
         err?.data?.detail ||
         err?.data?.title ||
-        'Failed to save insurance company';
+        'Failed to save payer company';
 
       serverMessage = String(serverMessage).replace(/^error\./i, '');
 
@@ -324,8 +324,8 @@ const NphiesPayerSetup = () => {
         notify({
           msg:
             toggleActionType === 'deactivate'
-              ? 'Insurance company deactivated successfully'
-              : 'Insurance company reactivated successfully',
+              ? 'Payer company deactivated successfully'
+              : 'Payer company reactivated successfully',
           sev: 'success'
         })
       );
@@ -385,7 +385,7 @@ const NphiesPayerSetup = () => {
   const tableColumns = [
     {
       key: 'nphiesId',
-      title: <Translate>Insurance Company Code</Translate>,
+      title: <Translate>Payer Company Code</Translate>,
       flexGrow: 2
     },
     {
@@ -469,7 +469,7 @@ const NphiesPayerSetup = () => {
             }));
           }}
           showLabel={false}
-          placeholder="Search NPHIES ID"
+          placeholder="Search Payer Company Code"
         />
       )}
 
@@ -571,7 +571,7 @@ const NphiesPayerSetup = () => {
       <DeletionConfirmationModal
         open={openConfirmToggle}
         setOpen={setOpenConfirmToggle}
-        itemToDelete="Insurance Company"
+        itemToDelete="Payer Company"
         actionButtonFunction={handleToggleActive}
         actionType={toggleActionType}
       />

@@ -258,9 +258,9 @@ export const MODULES: Module[] =
           navPath: 'patient-merge-config'
         },
         {
-          name: "NPHIES Payers",
+          name: "Payer Companies",
           code: "NPHIES_PAYER",
-          description: "NPHIES Payers",
+          description: "Payer Companies",
           icon: "FaBuilding",
           viewOrder: 24,
           navPath: "nphies-payers"

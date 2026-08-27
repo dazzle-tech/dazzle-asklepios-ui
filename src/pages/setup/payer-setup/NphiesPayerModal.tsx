@@ -111,7 +111,7 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={payer.id ? 'Edit Insurance Company' : 'Add Insurance Company'}
+      title={payer.id ? 'Edit Payer Company' : 'Add Payer Company'}
       size="88vw"
       bodyheight="78vh"
       actionButtonLabel="Save"
@@ -129,14 +129,14 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
                     {...fieldProps}
                     fieldName="nphiesId"
                     fieldType="text"
-                    fieldLabel="Insurance Company Code"
+                    fieldLabel="Payer Company Code"
                     required
                   />
                   <MyInput
                     {...fieldProps}
                     fieldName="nameEn"
                     fieldType="text"
-                    fieldLabel="Insurance Company Name"
+                    fieldLabel="Payer Company Name"
                     required
                   />
                   <MyInput

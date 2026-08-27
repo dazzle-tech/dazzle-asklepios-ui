@@ -5497,17 +5497,13 @@ export type PricingMethod =
 
   facilityId?: number;
   facilityName?: string;
-  appliesToAllFacilities?: boolean;
 
   type?: PriceListSetupType;
 
   payerId?: number;
   payerName?: string;
-  nphiesPayerId?: number;
-  nphiesPayerName?: string;
 
   name?: string;
-  shortName?: string;
   description?: string;
 
   versionNumber?: number;
@@ -5519,23 +5515,8 @@ export type PricingMethod =
 
   currency?: string;
 
-  taxId?: number;
-  taxName?: string;
-
   isActive?: boolean;
-
-  createdDate?: string;
-  lastModifiedDate?: string;
-  createdBy?: string;
-  lastModifiedBy?: string;
 };
-
-export type PriceListVisitType =
-  | 'EMERGENCY'
-  | 'INPATIENT'
-  | 'DAYCASE'
-  | 'CLINIC'
-  | 'ALL';
 
 export type PriceListSetupItem = {
   id?: number;
@@ -5552,22 +5533,13 @@ export type PriceListSetupItem = {
   itemCode?: string;
   itemName?: string;
 
-  category?: string;
-  visitType?: PriceListVisitType;
 
   unitPrice?: number;
-  cost?: number;
   discountPercentage?: number;
 
   isActive?: boolean;
 
   requiresPreAuthorization?: boolean;
-  visitTypeLocked?: boolean;
-
-  createdDate?: string;
-  lastModifiedDate?: string;
-  createdBy?: string;
-  lastModifiedBy?: string;
 };
 export type SavePriceListSetupItemRequest = {
   waseelItemMappingId?: number | null;
@@ -5576,30 +5548,23 @@ export type SavePriceListSetupItemRequest = {
   sourceId: number;
   itemCode: string;
   itemName: string;
-  category?: string;
-  visitType?: PriceListVisitType;
-  pricingMethod?: PricingMethod;
+  pricingMethod: PricingMethod;
   unitPrice: number;
-  cost?: number;
   discountPercentage: number;
   isActive?: boolean;
   requiresPreAuthorization?: boolean;
 };
 export type SavePriceListSetupRequest = {
   facilityId: number;
-  appliesToAllFacilities?: boolean;
   type: PriceListSetupType;
   payerId?: number | null;
-  nphiesPayerId?: number | null;
   name: string;
-  shortName?: string | null;
   description?: string | null;
-  versionNumber?: number;
-  effectiveFrom?: string | null;
+  versionNumber: number;
+  effectiveFrom: string;
   effectiveTo?: string | null;
   currency: string;
   status?: PriceListSetupStatus;
-  taxId?: number | null;
 };
 
 export type ClonePriceListSetupRequest =
