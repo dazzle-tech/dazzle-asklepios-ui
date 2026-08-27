@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MODULES } from '@/config/modules-config';
 import Translate from '@/components/Translate';
 import MyNestedTable from '@/components/MyNestedTable';
@@ -26,21 +26,19 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   const Operations: string[] = useEnumByName('Operation') || [];
 
   const { data: initialPermissions = [], isLoading } = useGetRolePermissionsQuery(roleId);
-
+  const lastRoleId = useRef<number | null>(null);
   const [updatePermissions, { isLoading: isSaving }] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
-  const [search, setSearch] = useState({value:""});
+  const [search, setSearch] = useState({ value: "" });
 
-  // Reset selected state when roleId changes
   useEffect(() => {
-    setSelected([]);
-  }, [roleId]);
+    if (lastRoleId.current !== roleId) {
+      lastRoleId.current = roleId;
+      setSelected(initialPermissions || []);
+    }
+  }, [roleId, initialPermissions]);
 
-  // Update selected state when initialPermissions changes
-  useEffect(() => {
-    setSelected(initialPermissions || []);
-  }, [initialPermissions]);
   const filteredModules = React.useMemo(() => {
     if (!search.value.trim()) {
       return MODULES;

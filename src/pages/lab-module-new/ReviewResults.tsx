@@ -355,18 +355,22 @@ const ReviewResults = forwardRef<any, any>(
     }, [results]);
 
     useEffect(() => {
-      if (!patientIds.length) return;
+      if (!patientIds.length) {
+        setPatientsMap({});
+        return;
+      }
 
-      const numericIds = patientIds.map((id) => Number(id));
+      const numericIds = patientIds.map(Number);
 
       getBulkPatientBasicInfo(numericIds)
         .unwrap()
         .then((res: any[]) => {
           const map: Record<string, any> = {};
 
-          res.forEach((p: any, index: number) => {
-            const originalId = numericIds[index];
-            map[String(originalId)] = p;
+          res.forEach((patient: any) => {
+            if (patient?.id != null) {
+              map[String(patient.id)] = patient;
+            }
           });
 
           setPatientsMap(map);
@@ -374,7 +378,8 @@ const ReviewResults = forwardRef<any, any>(
         .catch((err) => {
           console.error('❌ Bulk patient error:', err);
         });
-    }, [patientIds]);
+    }, [patientIds, getBulkPatientBasicInfo]);
+
 
     useEffect(() => {
       Object.values(orderTestsMap).forEach((test: any) => {
