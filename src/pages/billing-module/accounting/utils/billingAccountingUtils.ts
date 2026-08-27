@@ -1246,6 +1246,12 @@ export const resolveBillingPaymentCategory = (paymentMethodCode: string): string
 export const isWalletPaymentMethod = (paymentMethodCode: string): boolean =>
   paymentMethodCode === 'DEDUCT_FROM_FREE_BALANCE';
 
+export const isCreditCardPaymentMethod = (
+  paymentMethodCode?: string | null
+): boolean =>
+  paymentMethodCode === 'CREDIT_CARD' ||
+  paymentMethodCode === 'CREDIT_DEBIT_CARD';
+
 export const computeWalletCollectAmounts = (
   amountDue: number,
   walletAvailable: number,
