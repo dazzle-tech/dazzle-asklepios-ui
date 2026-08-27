@@ -19,6 +19,7 @@ import {
     useGetNotesByResultIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { useGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
 
 const getDefaultDateFilters = () => {
     const today = new Date();
@@ -113,8 +114,6 @@ const Results = props => {
             minWidth: 130,
 
             render: (row: any) => {
-                console.log('RESULT ROW:', row);
-
                 if (row.isRadiology) {
                     return (
                         <MyButton
@@ -178,9 +177,14 @@ const Results = props => {
             )
         },
         {
-            key: 'encounterId',
-            title: 'Encounter ID',
-            minWidth: 130
+            key: 'encounterNumber',
+            title: 'Encounter Number',
+            minWidth: 150,
+            render: (row: any) => {
+                const encounter = encountersMap.get(row.encounterId);
+
+                return encounter?.encounterNumber ?? '-';
+            }
         },
         {
             key: 'comments',
@@ -249,30 +253,30 @@ const Results = props => {
 
             </div>
         </Form>
-        
+
         <AdvancedSearchFilters
             searchOnClick={() => {
-                        setSearchRecord(filterRecord);
-                    }}
-                    clearOnClick={() => {
-                        const defaultDates = getDefaultDateFilters();
+                setSearchRecord(filterRecord);
+            }}
+            clearOnClick={() => {
+                const defaultDates = getDefaultDateFilters();
 
-                        const clearedRecord = {
-                            testName: '',
-                            resultDateFrom: defaultDates.resultDateFrom,
-                            resultDateTo: defaultDates.resultDateTo,
-                            showAbnormalOnly: false
-                        };
+                const clearedRecord = {
+                    testName: '',
+                    resultDateFrom: defaultDates.resultDateFrom,
+                    resultDateTo: defaultDates.resultDateTo,
+                    showAbnormalOnly: false
+                };
 
-                        setFilterRecord(clearedRecord);
-                        setSearchRecord(clearedRecord);
+                setFilterRecord(clearedRecord);
+                setSearchRecord(clearedRecord);
 
-                        setFilterKey(prev => prev + 1);
-                    }}
+                setFilterKey(prev => prev + 1);
+            }}
             hideSearchBtn={false}
         />
-        
-        </>
+
+    </>
     );
 
 
@@ -318,6 +322,37 @@ const Results = props => {
         [results]
     );
 
+    const encounterIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    results
+                        .map((result: any) => result.encounterId)
+                        .filter(Boolean)
+                )
+            ),
+        [results]
+    );
+
+    const { data: encounters = [] } =
+        useGetEncountersByIdsQuery(
+            { ids: encounterIds },
+            {
+                skip: encounterIds.length === 0
+            }
+        );
+
+    const encountersMap = useMemo(() => {
+        const map = new Map<number | string, any>();
+
+        encounters.forEach((encounter: any) => {
+            map.set(encounter.id, encounter);
+        });
+
+        return map;
+    }, [encounters]);
+
+
     const { data: notesResponse } =
         useGetNotesByResultIdQuery(
             openNotesModal && selectedResultId
@@ -332,9 +367,6 @@ const Results = props => {
                 skip: testIds.length === 0
             }
         );
-
-    console.log('TESTS:', tests);
-
 
     const testsMap = useMemo(() => {
         const map = new Map<number, any>();
@@ -367,11 +399,6 @@ const Results = props => {
 
         return map;
     }, [laboratories]);
-
-
-    console.log('================ RESULTS API ================');
-    console.log(results);
-    console.log('==============================================');
 
     const filteredResults = useMemo(() => {
 

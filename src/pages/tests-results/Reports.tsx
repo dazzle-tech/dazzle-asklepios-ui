@@ -23,6 +23,8 @@ import {
 import { skipToken } from '@reduxjs/toolkit/query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { useGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
+
 
 const getDefaultDateFilters = () => {
     const today = new Date();
@@ -37,13 +39,8 @@ const getDefaultDateFilters = () => {
 };
 
 const Reports = props => {
-
-
     const { data: radCategoriesLovQueryResponse } =
         useGetLovValuesByCodeQuery('RAD_CATEGORIES');
-
-
-
 
     const radCategories =
         radCategoriesLovQueryResponse?.object ?? [];
@@ -187,9 +184,14 @@ const Reports = props => {
             )
         },
         {
-            key: 'encounterId',
-            title: 'Encounter ID',
-            minWidth: 130
+            key: 'encounterNumber',
+            title: 'Encounter Number',
+            minWidth: 150,
+            render: (row: any) => {
+                const encounter = encountersMap.get(row.encounterId);
+
+                return encounter?.encounterNumber ?? '-';
+            }
         },
         {
             key: 'comments',
@@ -214,40 +216,6 @@ const Reports = props => {
             )
         }
     ];
-
-    const filters = (<Form fluid key={filterKey}>
-        <div className="results-filters-handle-position">
-
-            <MyInput
-                fieldName="testName"
-                fieldType="text"
-                fieldLabel="Test Name"
-                record={filterRecord}
-                setRecord={setFilterRecord}
-                placeholder="Search Test Name"
-                width="100%"
-            />
-
-            <MyInput
-                fieldName="resultDateFrom"
-                fieldType="date"
-                fieldLabel="Result Date From"
-                record={filterRecord}
-                setRecord={setFilterRecord}
-                width="100%"
-            />
-
-            <MyInput
-                fieldName="resultDateTo"
-                fieldType="date"
-                fieldLabel="Result Date To"
-                record={filterRecord}
-                setRecord={setFilterRecord}
-                width="100%"
-            />
-
-        </div>
-    </Form>);
 
     const tableFilters = (<>
         <Form fluid key={filterKey}>
@@ -346,9 +314,6 @@ const Reports = props => {
     const reports = data?.data ?? [];
     const totalCount = data?.totalCount ?? 0;
 
-
-    console.log("data", data);
-
     const testIds = useMemo(
         () =>
             Array.from(
@@ -360,6 +325,26 @@ const Reports = props => {
             ),
         [reports]
     );
+
+    const encounterIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    reports
+                        .map((report: any) => report.encounterId)
+                        .filter(Boolean)
+                )
+            ),
+        [reports]
+    );
+
+    const { data: encounters = [] } =
+        useGetEncountersByIdsQuery(
+            { ids: encounterIds },
+            {
+                skip: encounterIds.length === 0
+            }
+        );
 
     const {
         data: tests = [],
@@ -373,19 +358,6 @@ const Reports = props => {
         }
     );
 
-
-    console.log('================ REPORTS ================');
-    console.log('REPORTS:', reports);
-    console.log('==========================================');
-
-    console.log('================ TESTS ==================');
-    console.log('TESTS:', tests);
-    console.log('==========================================');
-
-    console.log('================ RADIOLOGIES ===========');
-    console.log('RADIOLOGIES:', radiologies);
-    console.log('==========================================');
-
     const testsMap = useMemo(() => {
         const map = new Map<number, any>();
 
@@ -395,6 +367,16 @@ const Reports = props => {
 
         return map;
     }, [tests]);
+
+    const encountersMap = useMemo(() => {
+        const map = new Map<number | string, any>();
+
+        encounters.forEach((encounter: any) => {
+            map.set(encounter.id, encounter);
+        });
+
+        return map;
+    }, [encounters]);
 
     const filteredReports = useMemo(() => {
         if (!searchRecord.testName?.trim()) {
