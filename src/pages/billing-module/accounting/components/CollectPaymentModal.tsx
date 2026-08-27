@@ -30,6 +30,7 @@ import {
   resolvePaymentReceiptNumber,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
+import { collectCreditCardAmountOrSkip } from '@/services/billing/cardMachinePayment';
 
 const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -223,6 +224,29 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     const paymentAmount = isWalletMethod
       ? walletCollectPreview.applyAmount
       : Number(form.amount);
+
+    const creditCardCollect = await collectCreditCardAmountOrSkip(
+      form.paymentMethodCode,
+      paymentAmount,
+      {
+        currency,
+        patientId,
+        encounterId,
+        facilityId
+      }
+    );
+
+    if (!creditCardCollect.proceed) {
+      dispatch(
+        notify({
+          msg:
+            creditCardCollect.result?.message ??
+            'Credit card payment was not completed.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
     const request: CreateAdvancePaymentRequest = {
       ...newCreateAdvancePaymentRequest,
