@@ -3501,6 +3501,7 @@ export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
   sourceId: undefined,
 
   itemCode: undefined,
+  nonStandardCode: undefined,
   itemName: undefined,
 
 
