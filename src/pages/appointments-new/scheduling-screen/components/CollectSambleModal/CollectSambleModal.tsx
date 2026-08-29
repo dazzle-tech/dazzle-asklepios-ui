@@ -35,6 +35,8 @@ import Translate from '@/components/Translate';
 import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
+import { useGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import '@/pages/appointments-new/scheduling-screen/styles.less';
@@ -232,6 +234,62 @@ const CollectSambleModal = ({
 
     const orderTests = testsResponse?.data ?? [];
 
+
+    const testIds = useMemo(() => {
+        return Array.from(
+            new Set(
+                orderTests
+                    .map((item: any) => item?.testId)
+                    .filter((id: any) => id !== null && id !== undefined)
+                    .map((id: any) => Number(id))
+            )
+        );
+    }, [orderTests]);
+
+    const {
+        data: diagnosticTests = [],
+        isFetching: isDiagnosticTestsFetching,
+    } = useGetDiagnosticTestsByIdsQuery(
+        { ids: testIds },
+        {
+            skip: testIds.length === 0,
+        }
+    );
+
+    const testNameMap = useMemo(() => {
+        const map = new Map<number, string>();
+
+        diagnosticTests.forEach((item: any) => {
+            if (item?.id != null) {
+                map.set(Number(item.id), item.name ?? '');
+            }
+        });
+
+        return map;
+    }, [diagnosticTests]);
+
+    const { data: labCatLovQueryResponse } =
+        useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+
+    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({
+        page: 0,
+        size: 10000
+    });
+
+    const allLabs = allLabsResponse?.data ?? [];
+
+    const labByTestIdMap = useMemo(() => {
+        return new Map(
+            allLabs.map((lab: any) => [Number(lab.testId), lab])
+        );
+    }, [allLabs]);
+
+    const resolveCategoryLabel = (key?: any) =>
+        labCatLovQueryResponse?.object?.find(
+            (c: any) => String(c.key) === String(key)
+        )?.lovDisplayVale ?? key ?? '—';
+
+
     const collectableTests = useMemo(() => {
         return orderTests.filter(
             (item: any) =>
@@ -350,15 +408,18 @@ const CollectSambleModal = ({
             width: 180,
             align: 'center',
             render: (rowData: any) =>
-                rowData.test?.name ?? rowData.testName ?? '—'
+                testNameMap.get(Number(rowData.testId)) ?? '—'
         },
         {
             key: 'category',
             title: <Translate>TEST CATEGORY</Translate>,
             width: 150,
             align: 'center',
-            render: (rowData: any) =>
-                rowData.lab?.category ?? '—'
+            render: (rowData: any) => {
+                const lab = labByTestIdMap.get(Number(rowData.testId));
+
+                return resolveCategoryLabel(lab?.category);
+            }
         },
         {
             key: 'status',

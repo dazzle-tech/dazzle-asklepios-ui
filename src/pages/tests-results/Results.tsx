@@ -13,13 +13,22 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { formatDateWithoutSeconds } from '@/utils';
 import ChatModal from '@/components/ChatModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faArrowUp,
+    faCircleExclamation,
+    faComment,
+    faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
+import { formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
     useGetNotesByResultIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
+import {Tooltip, Whisper } from 'rsuite';
+import Translate from '@/components/Translate';
 
 const getDefaultDateFilters = () => {
     const today = new Date();
@@ -31,6 +40,46 @@ const getDefaultDateFilters = () => {
         resultDateFrom: weekAgo,
         resultDateTo: today
     };
+};
+
+
+const renderMarker = (marker?: string) => {
+  const isCritical =
+    marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+
+  if (isCritical) {
+    return (
+      <Whisper
+        placement="top"
+        speaker={<Tooltip>Critical</Tooltip>}
+      >
+        <span
+          style={{
+            color: 'red',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <FontAwesomeIcon
+            icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+          />
+        </span>
+      </Whisper>
+    );
+  }
+
+  switch (marker) {
+    case 'ABNORMAL_MARKER':
+      return <FontAwesomeIcon icon={faCircleExclamation} />;
+    case 'UPPER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowUp} />;
+    case 'LOWER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowDown} />;
+    default:
+      return formatEnumString(marker);
+  }
 };
 
 const Results = props => {
@@ -69,6 +118,7 @@ const Results = props => {
     const [filterKey, setFilterKey] = useState(0);
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(15);
+
 
     const testColumns = [
         {
@@ -148,11 +198,9 @@ const Results = props => {
         },
         {
             key: 'marker',
-            title: 'Marker',
-            minWidth: 100,
-
-            render: (row: any) =>
-                row.marker || '-'
+            title: <Translate>MARKER</Translate>,
+            align: 'center',
+            render: (row: any) => renderMarker(row.marker)
         },
         {
             key: 'orderedByAt',
