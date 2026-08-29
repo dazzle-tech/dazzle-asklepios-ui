@@ -1147,6 +1147,9 @@ const PriceListSetupItems: React.FC<Props> = ({
       itemCode:
         undefined,
 
+      nonStandardCode:
+        undefined,
+
       itemName:
         undefined,
 
@@ -1519,6 +1522,12 @@ const PriceListSetupItems: React.FC<Props> = ({
           selectedItem.itemCode
         ).trim(),
 
+      nonStandardCode:
+        selectedItem.nonStandardCode == null
+          || String(selectedItem.nonStandardCode).trim() === ''
+          ? null
+          : String(selectedItem.nonStandardCode).trim(),
+
       itemName:
         String(
           selectedItem.itemName
@@ -1691,6 +1700,19 @@ const PriceListSetupItems: React.FC<Props> = ({
           <Translate>
             Item Code
           </Translate>
+      },
+
+      {
+        key: 'nonStandardCode',
+        title:
+          <Translate>
+            Non Standard Code
+          </Translate>,
+        render: (
+          row:
+            PriceListSetupItem
+        ) =>
+          row.nonStandardCode || '-'
       },
 
       {
@@ -1952,6 +1974,18 @@ const PriceListSetupItems: React.FC<Props> = ({
           width="100%"
           fieldLabel="Item Name"
           fieldName="itemName"
+          record={selectedItem}
+          setRecord={setSelectedItem}
+        />
+      </div>
+
+      <br />
+
+      <div className="price-list-two-columns">
+        <MyInput
+          width="100%"
+          fieldLabel="Non Standard Code"
+          fieldName="nonStandardCode"
           record={selectedItem}
           setRecord={setSelectedItem}
         />

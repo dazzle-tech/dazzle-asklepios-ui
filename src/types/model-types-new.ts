@@ -5525,6 +5525,7 @@ export type PriceListSetupItem = {
   sourceId?: number;
 
   itemCode?: string;
+  nonStandardCode?: string | null;
   itemName?: string;
 
 
@@ -5541,6 +5542,7 @@ export type SavePriceListSetupItemRequest = {
   itemType: PriceListItemType;
   sourceId: number;
   itemCode: string;
+  nonStandardCode?: string | null;
   itemName: string;
   pricingMethod: PricingMethod;
   unitPrice: number;
