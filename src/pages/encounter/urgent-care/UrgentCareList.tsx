@@ -673,7 +673,7 @@ useEffect(() => {
   };
 
   const handleGoToVisit = async (encounterData: any) => {
-    if(encounterData?.startedBy !== user?.login){
+    if(encounterData?.startedBy != null && encounterData?.startedBy !== user?.login){
       const fullName = await getUserFullNameByLogin(
       encounterData?.startedBy
     ).unwrap();
