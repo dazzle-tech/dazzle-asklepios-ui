@@ -1,5 +1,6 @@
 import { isCreditCardPaymentMethod } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
+import { usePurchaseMutation } from '@/services/point-of-sale/PointOfSaleTransactionService';
 export type CreditCardMachinePaymentRequest = {
   amount: number;
   paymentMethodCode: string;
@@ -30,21 +31,85 @@ export const getEnteredPaymentAmount = (enteredAmount: unknown): number => {
  * Plug the Visa / POS machine backend API in here and use `request.amount`.
  * Return `{ ok: false }` (or throw) to stop the billing confirm.
  */
+const [purchaseCard]=usePurchaseMutation();
 export async function processCreditCardMachinePayment(
   request: CreditCardMachinePaymentRequest
 ): Promise<CreditCardMachinePaymentResult> {
-  const amount = getEnteredPaymentAmount(request.amount);
+
+  const amount =
+    getEnteredPaymentAmount(
+      request.amount
+    );
+
+  console.log(
+    'processCreditCardMachinePayment'
+  );
 
   if (amount <= 0) {
+
     return {
       ok: false,
       amount: 0,
-      message: 'Enter a credit card payment amount greater than zero.'
+      message:
+        'Enter a credit card payment amount greater than zero.'
     };
   }
 
-  // TODO: call Visa / POS machine API with `amount`.
-  return { ok: true, amount };
+  try {
+
+    console.log(
+      'POS PURCHASE REQUEST',
+      {
+        patientId:
+          request.patientId,
+        encounterId:
+          request.encounterId,
+        amount
+      }
+    );
+
+    const posResponse =
+      await purchaseCard({
+
+            patientId:
+              request.patientId,
+
+            sourceType:
+              'ENCOUNTER',
+
+            sourceReferenceId:
+              request.encounterId,
+
+            amount
+
+          }).unwrap();
+
+    console.log(
+      'POS PURCHASE RESPONSE',
+      posResponse
+    );
+
+    return {
+      ok: true,
+      amount,
+      message:
+        'POS purchase request submitted successfully.'
+    };
+
+  } catch (error) {
+
+    console.error(
+      'POS PURCHASE ERROR',
+      error
+    );
+
+    return {
+      ok: false,
+      amount: 0,
+      message:
+        'Failed to initiate POS transaction.'
+    };
+  }
 }
 
 export async function collectCreditCardAmountOrSkip(
