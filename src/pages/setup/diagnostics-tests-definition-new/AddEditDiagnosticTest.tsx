@@ -497,6 +497,14 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
+                 <MyInput
+                  
+                  width="100%"
+                  fieldLabel='Integration Code'
+                  fieldName="hl7IntegrationCode"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                />
               </div>
               <div className="container-of-field-diagnostic">
                 

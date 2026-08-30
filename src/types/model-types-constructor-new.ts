@@ -335,7 +335,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   name: '',
   shortName:'',
   internalCode: '',
-
+ hl7IntegrationCode:'',
   ageSpecific: false,
   ageGroupList: [],
 

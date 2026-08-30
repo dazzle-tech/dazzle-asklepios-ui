@@ -213,6 +213,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
         shortName:diagnosticsTest.name?.trim(),
+        hl7IntegrationCode:diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -328,12 +329,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         );
         return;
       }
-       console.log("Diagnostic test short",diagnosticsTest.shortName)
       const payload = {
         id: diagnosticsTest.id,
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
         shortName: diagnosticsTest.shortName?.trim(),
+        hl7IntegrationCode:diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
