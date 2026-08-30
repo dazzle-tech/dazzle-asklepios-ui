@@ -145,6 +145,7 @@ type DefaultServiceRow = {
   previewNetAmount?: number | null;
   requiresCashConfirmation?: boolean;
   cashUnitPrice?: number | null;
+  notCoveredReason?: string | null;
 };
 
 type BillingFormState = {
@@ -1128,7 +1129,8 @@ const PatientPaymentInfo =
                 patientShare: null,
                 insuranceShare: null,
                 requiresCashConfirmation: false,
-                cashUnitPrice: null
+                cashUnitPrice: null,
+                notCoveredReason: null
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -1729,7 +1731,8 @@ const PatientPaymentInfo =
                 row.calculatedPrice ??
                 row.setupPrice ??
                 null,
-              currency: activeCurrency
+              currency: activeCurrency,
+              notCoveredReason: row.notCoveredReason ?? null
             }));
         }, [
           isInsurance,
@@ -2138,6 +2141,8 @@ const PatientPaymentInfo =
                             requiresCashConfirmation:
                               false,
                             cashUnitPrice:
+                              null,
+                            notCoveredReason:
                               null
                           };
                         }
@@ -2173,6 +2178,9 @@ const PatientPaymentInfo =
                             ),
                           cashUnitPrice:
                             priced.cashUnitPrice ??
+                            null,
+                          notCoveredReason:
+                            priced.notCoveredReason ??
                             null
                         };
                       }
