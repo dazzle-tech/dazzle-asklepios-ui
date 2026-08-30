@@ -2345,6 +2345,14 @@ export interface PatientEncounter {
   encounterReason: string;
 
   followUpEncounterId?: number | null;
+  followUpEncounter?: {
+    id: number;
+    encounterNumber?: string | null;
+    createdDate?: Date | string | null;
+    createdAt?: Date | string | null;
+  } | null;
+  createdDate?: Date | string | null;
+  createdAt?: Date | string | null;
 
   priorityLevel: string;
 
@@ -2545,6 +2553,8 @@ export interface PatientEncounter {
   followUpEncounter?: {
     id: number;
     encounterNumber?: string | null;
+    createdDate?: string | null;
+    createdAt?: string | null;
   } | null;
 
   originType?: string | null;
