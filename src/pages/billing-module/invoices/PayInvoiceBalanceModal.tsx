@@ -23,7 +23,7 @@ import {
   mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
-import { collectCreditCardAmountOrSkip } from '@/services/billing/cardMachinePayment';
+import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
 
 export type InvoicePaymentCompletedContext = {
   paymentMethodLabel: string;

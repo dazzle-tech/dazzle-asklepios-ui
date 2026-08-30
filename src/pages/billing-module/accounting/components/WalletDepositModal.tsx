@@ -23,7 +23,7 @@ import {
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber
 } from '../utils/billingAccountingUtils';
-import { collectCreditCardAmountOrSkip } from '@/services/billing/cardMachinePayment';
+import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
 
 const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);

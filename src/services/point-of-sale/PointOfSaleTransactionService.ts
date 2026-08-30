@@ -86,7 +86,7 @@ export const PointOfSaleTransactionService = createApi({
       CreatePointOfSaleTransactionDTO
     >({
       query: body => ({
-        url: "/api/point-of-sale-transactions/purchase",
+        url: "/api/patient/point-of-sale-transactions/purchase",
         method: "POST",
         body,
       }),
@@ -102,7 +102,7 @@ export const PointOfSaleTransactionService = createApi({
     >({
       query: id => ({
         url:
-          `/api/point-of-sale-transactions/transactions/${id}/refresh-status`,
+          `/api/patient/point-of-sale-transactions/transactions/${id}/refresh-status`,
         method: "POST",
       }),
 

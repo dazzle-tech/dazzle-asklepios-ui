@@ -45,7 +45,6 @@ const AddEditPointOfSaleConfiguration = ({
           required
           fieldName="clientId"
           fieldLabel="Client Id"
-          fieldType="number"
           record={configuration}
           setRecord={setConfiguration}
         />
@@ -54,7 +53,6 @@ const AddEditPointOfSaleConfiguration = ({
           required
           fieldName="terminalId"
           fieldLabel="Terminal Id"
-          fieldType="number"
           record={configuration}
           setRecord={setConfiguration}
         />

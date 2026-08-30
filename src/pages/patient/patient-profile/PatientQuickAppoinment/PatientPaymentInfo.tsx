@@ -44,8 +44,9 @@ import {
 
 import {
   collectCreditCardAmountOrSkip,
-  getEnteredPaymentAmount
-} from '@/services/billing/cardMachinePayment';
+  getEnteredPaymentAmount,
+  useCreditCardMachinePayment
+} from '@/utils/cardMachinePayment';
 
 import {
   useGetFacilityByIdQuery
@@ -602,6 +603,9 @@ const PatientPaymentInfo =
               !practitionerId
           }
         );
+        const {
+  collectCreditCardAmountOrSkip,
+} = useCreditCardMachinePayment();
 
       const encounterSpecialty =
         useMemo(() => {
