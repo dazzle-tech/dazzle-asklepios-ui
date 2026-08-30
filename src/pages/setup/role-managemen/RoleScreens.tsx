@@ -22,22 +22,19 @@ interface Permission {
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
+  console.log("roleId",roleId)
   const dispatch = useAppDispatch();
   const Operations: string[] = useEnumByName('Operation') || [];
 
-  const { data: initialPermissions = [], isLoading } = useGetRolePermissionsQuery(roleId);
-  const lastRoleId = useRef<number | null>(null);
+  const { data: initialPermissions = [], isLoading ,refetch } = useGetRolePermissionsQuery(roleId);
   const [updatePermissions, { isLoading: isSaving }] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
   const [search, setSearch] = useState({ value: "" });
 
-  useEffect(() => {
-    if (lastRoleId.current !== roleId) {
-      lastRoleId.current = roleId;
-      setSelected(initialPermissions || []);
-    }
-  }, [roleId, initialPermissions]);
+ useEffect(() => {
+  setSelected(initialPermissions || []);
+}, [initialPermissions,roleId]);
 
   const filteredModules = React.useMemo(() => {
     if (!search.value.trim()) {
@@ -250,6 +247,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     try {
       await updatePermissions({ roleId, permissions: selected }).unwrap();
       dispatch(notify({ sev: 'success', msg: 'Permissions updated successfully' }));
+      await refetch();
     } catch {
       dispatch(notify({ sev: 'error', msg: 'Failed to update permissions' }));
     }

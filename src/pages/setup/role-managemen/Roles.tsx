@@ -14,8 +14,9 @@ import { useAppDispatch } from "@/hooks";
 import MyInput from "@/components/MyInput";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-
+import './styles.less';
 const Roles = ({ selected, setSelected, facilityId }) => {
+
   const dispatch = useAppDispatch();
 
   const { data: rolesData, refetch: refetchRoles } =
