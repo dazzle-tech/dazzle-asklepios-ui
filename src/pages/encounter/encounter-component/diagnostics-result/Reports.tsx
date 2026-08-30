@@ -18,7 +18,10 @@ import {
   useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
-  useFilterRadiologyReportsQuery
+  useFilterRadiologyReportsQuery,
+  PacsStudyDTO,
+  useFilterRadiologyReportsQuery,
+  useLazyGetStudyImageLinkByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import {
   useLazyGetDiagnosticTestByIdQuery
@@ -235,33 +238,24 @@ const handleSelectReport = (
           ? new Date(rowData.createdDate).toLocaleString()
           : ''
     },
-    {
-      key: 'report',
-      title: <Translate>Report</Translate>,
-      render: (rowData: any) => {
-        const isSelected = selectedReport?.id === rowData.id;
-
-        return (
-          <HStack spacing={10}>
-            <FontAwesomeIcon
-              icon={faFileLines}
-              style={{
-                cursor: 'pointer',
-                color: isSelected ? '#1675e0' : '#666'
-              }}
-              onClick={() => {
-                setSelectedReport(rowData);
-              }}
-            />
-            {isSelected && (
-              <span style={{ color: '#1675e0', fontSize: 12 }}>
-                Selected
-              </span>
-            )}
-          </HStack>
-        );
-      }
-    },
+     {
+          key: 'report',
+          title: <Translate>REPORT</Translate>,
+          render: (rowData: any) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    
+              <FontAwesomeIcon
+                icon={faFileLines}
+                style={{ cursor: 'pointer', color: '#a4a4a4' }}
+                onClick={() => {
+                  setSelectedReport(rowData);
+                  setOpenReportModal(true);
+                }}
+              />
+            </div>
+          )
+        },
+    
     {
       key: 'comment',
       title: 'COMMENTS',
@@ -457,18 +451,18 @@ const handleSelectReport = (
         disabled
       />
 
-      {openReportModal && selectedReport && (
-        <AddReportModal
-          key={selectedReport.id}
-          open={openReportModal}
-          setOpen={closeModal}
-          report={selectedReport}
-          setReport={setSelectedReport}
-          disableEdit
-          disableDefaultTemplate
-        />
-      )}
 
+ {openReportModal && selectedReport && (
+    <AddReportModal
+      key={selectedReport.id}
+      open={openReportModal}
+      setOpen={setOpenReportModal}
+      report={selectedReport}
+      setReport={setSelectedReport}
+      disableEdit
+      disableDefaultTemplate
+    />
+  )}
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
