@@ -2,7 +2,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6';
-import { MdAttachFile, MdModeEdit } from 'react-icons/md';
+import { MdAttachFile, MdDescription, MdModeEdit } from 'react-icons/md';
 import { Checkbox, Loader } from 'rsuite';
 import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
@@ -35,6 +35,7 @@ import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import ProcedureAssignedDocumentsModal from './ProcedureAssignedDocumentsModal';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -75,6 +76,12 @@ const Referrals = (props: any) => {
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [selectedProcedureForDocuments, setSelectedProcedureForDocuments] = useState<{
+    procedureId: number;
+    procedureName: string;
+    procedureRequestId: number;
+  } | null>(null);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
@@ -416,6 +423,37 @@ const Referrals = (props: any) => {
         }
       },
       {
+        key: 'assignedDocuments',
+        dataKey: '',
+        title: <Translate>DOCUMENTS</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const hasProcedureId = rowData?.procedureId != null;
+          const hasRequestId = rowData?.id != null;
+          const canOpenDocuments = hasProcedureId && hasRequestId;
+          const proc = hasProcedureId ? proceduresMap.get(Number(rowData.procedureId)) : null;
+          const procedureName = proc?.name ?? rowData?.procedureName ?? '';
+
+          return (
+            <MdDescription
+              size={20}
+              fill={canOpenDocuments ? 'var(--primary-gray)' : '#ccc'}
+              onClick={e => {
+                e.stopPropagation();
+                if (!canOpenDocuments) return;
+                setSelectedProcedureForDocuments({
+                  procedureId: Number(rowData.procedureId),
+                  procedureName,
+                  procedureRequestId: Number(rowData.id)
+                });
+                setDocumentsModalOpen(true);
+              }}
+              className={canOpenDocuments ? 'attachment-icon active' : 'attachment-icon disabled'}
+            />
+          );
+        }
+      },
+      {
         key: 'status',
         dataKey: 'status',
         title: <Translate>STATUS</Translate>,
@@ -713,6 +751,16 @@ const Referrals = (props: any) => {
             />
           </div>
         }
+      />
+
+      <ProcedureAssignedDocumentsModal
+        open={documentsModalOpen}
+        setOpen={setDocumentsModalOpen}
+        procedureId={selectedProcedureForDocuments?.procedureId}
+        procedureName={selectedProcedureForDocuments?.procedureName}
+        procedureRequestId={selectedProcedureForDocuments?.procedureRequestId}
+        encounterId={encounter?.id ? Number(encounter.id) : null}
+        dir={dir}
       />
     </div>
   );

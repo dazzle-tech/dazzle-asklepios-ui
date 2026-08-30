@@ -1,3 +1,4 @@
+import { store } from '@/store';
 import { ListRequest } from '@/types/types';
 
 export { extractErrorMessage } from './extractErrorMessage';
@@ -329,9 +330,25 @@ export function formatDateWithoutSeconds(dateString) {
 export const formatEnumString = (input: string): string => {
   if (!input) return '';
 
+  const state = store.getState();
+
+  const lang = state.ui.lang;
+  const translations = state.ui.translations;
+
+  const translated =
+    lang && translations?.[lang]?.[input];
+
+  if (translated) {
+    return translated;
+  }
+
   return input
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(
+      word =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
     .join(' ');
 };
 

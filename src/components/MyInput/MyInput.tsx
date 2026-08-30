@@ -362,11 +362,18 @@ const MyInput = ({
     if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
       return props.menuMaxHeight as number;
     }
+
     const itemsCount = dataList?.length ?? 0;
     const estimatedItemHeight = 38;
     const headerAllowance = 24;
     const capHeight = 240;
-    return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
+
+    const visibleItems = Math.max(itemsCount, 3);
+
+    return Math.min(
+      capHeight,
+      visibleItems * estimatedItemHeight + headerAllowance
+    );
   };
 
   const startListening = () => {
@@ -498,8 +505,8 @@ const MyInput = ({
           <Toggle
             name={fieldName}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-            checkedChildren={props.checkedLabel || 'Yes'}
-            unCheckedChildren={props.unCheckedLabel || 'No'}
+            checkedChildren={<Translate>{props.checkedLabel || 'Yes'}</Translate>}
+            unCheckedChildren={<Translate>{props.unCheckedLabel || 'No'}</Translate>}
             disabled={props.disabled}
             checked={record[fieldName] == null ? false : !!record[fieldName]}
             onChange={handleValueChange}
@@ -1263,9 +1270,7 @@ const MyInput = ({
         );
 
         return (
-          <div
-            ref={pickerRef}
-          >
+          <div ref={pickerRef}>
             <Form.Control
               style={{
                 width: props?.width ?? 145,
@@ -1277,9 +1282,7 @@ const MyInput = ({
               disabled={props.disabled}
               accepter={SelectPicker}
               searchable={props.searchable ?? false}
-
               data={filteredData}
-
               labelKey={primaryLabelKey}
               valueKey={valueKey}
 
@@ -1297,15 +1300,13 @@ const MyInput = ({
                   const selectedItem =
                     dataList.find(
                       (x: any) =>
-                        String(x?.[valueKey]) ===
-                        String(value)
+                        String(x?.[valueKey]) === String(value)
                     ) ?? null;
 
-                  props.onSelectItem(
-                    selectedItem
-                  );
+                  props.onSelectItem(selectedItem);
                 }
               }}
+
               onKeyDown={(event: any) => {
                 const key = event?.key;
 
@@ -1325,24 +1326,17 @@ const MyInput = ({
                   'Meta'
                 ];
 
-                if (
-                  ignoredKeys.includes(key)
-                ) {
+                if (ignoredKeys.includes(key)) {
                   return;
                 }
 
                 if (key === 'Backspace') {
-                  setLocalSearch(prev =>
-                    prev.slice(0, -1)
-                  );
-
+                  setLocalSearch(prev => prev.slice(0, -1));
                   return;
                 }
 
                 if (key.length === 1) {
-                  setLocalSearch(
-                    prev => prev + key
-                  );
+                  setLocalSearch(prev => prev + key);
                 }
               }}
 
@@ -1352,18 +1346,26 @@ const MyInput = ({
                   ? (
                     label: any,
                     item: any
-                  ) =>
-                    buildCombinedLabel(
-                      item,
-                      labelKeys,
-                      label
-                    )
+                  ) => (
+                    <Translate>
+                      {buildCombinedLabel(
+                        item,
+                        labelKeys,
+                        label
+                      )}
+                    </Translate>
+                  )
                   : props.isEnum
-                    ? (label: any) =>
-                      formatEnumString(
-                        String(label)
-                      )
-                    : undefined)
+                    ? (label: any) => (
+                      <Translate>
+                        {formatEnumString(String(label))}
+                      </Translate>
+                    )
+                    : (label: any) => (
+                      <Translate>
+                        {String(label ?? '')}
+                      </Translate>
+                    ))
               }
 
               renderValue={
@@ -1373,16 +1375,19 @@ const MyInput = ({
                     item,
                     selectedElement
                   ) => {
-                    if (!item)
+                    if (!item) {
                       return selectedElement;
+                    }
+
+                    const label = buildCombinedLabel(
+                      item,
+                      labelKeys,
+                      selectedElement
+                    );
 
                     return (
                       <span>
-                        {buildCombinedLabel(
-                          item,
-                          labelKeys,
-                          selectedElement
-                        )}
+                        <Translate>{label}</Translate>
                       </span>
                     );
                   }
@@ -1394,22 +1399,41 @@ const MyInput = ({
                     ) => {
                       const base =
                         (item &&
-                          item[
-                          primaryLabelKey
-                          ]) ||
+                          item[primaryLabelKey]) ||
                         selectedElement ||
                         value ||
                         '';
 
                       return (
                         <span>
-                          {formatEnumString(
-                            String(base)
-                          )}
+                          <Translate>
+                            {formatEnumString(
+                              String(base)
+                            )}
+                          </Translate>
                         </span>
                       );
                     }
-                    : undefined
+                    : (
+                      value,
+                      item,
+                      selectedElement
+                    ) => {
+                      const base =
+                        (item &&
+                          item[primaryLabelKey]) ??
+                        selectedElement ??
+                        value ??
+                        '';
+
+                      return (
+                        <span>
+                          <Translate>
+                            {String(base)}
+                          </Translate>
+                        </span>
+                      );
+                    }
               }
 
               placeholder={
@@ -1424,31 +1448,23 @@ const MyInput = ({
                   : true
               }
 
-              loading={
-                props?.loading ?? false
-              }
+              loading={props?.loading ?? false}
 
               open={isSelectOpen}
 
               onOpen={() => {
-                setPlacement(
-                  calculatePlacement()
-                );
-
+                setPlacement(calculatePlacement());
                 setIsSelectOpen(true);
               }}
 
               onClose={() => {
                 setIsSelectOpen(false);
-
                 setLocalSearch('');
               }}
 
               placement={placement}
 
-              preventOverflow={
-                pickerPreventOverflow
-              }
+              preventOverflow={pickerPreventOverflow}
 
               container={resolveContainer()}
 
@@ -1457,18 +1473,18 @@ const MyInput = ({
               )}
 
               menuStyle={{
-                minWidth: props?.width ??
-                  "12vw",
-                width: 'auto',
+                minWidth: props?.width ?? '12vw',
+                width: 'auto'
               }}
 
               menuClassName={props.menuClassName}
 
-              virtualized={
-                props?.virtualized ?? true
-              }
+              virtualized={props?.virtualized ?? true}
 
-              disabledItemValues={getDisabledValues(dataList, valueKey)}
+              disabledItemValues={getDisabledValues(
+                dataList,
+                valueKey
+              )}
             />
           </div>
         );
@@ -1614,14 +1630,22 @@ const MyInput = ({
                   }
 
                   if (isArrayLabel) {
-                    return buildCombinedLabel(item, labelKeys, label);
+                    return (
+                      <Translate>
+                        {buildCombinedLabel(item, labelKeys, label)}
+                      </Translate>
+                    );
                   }
 
                   if (props.isEnum) {
-                    return formatEnumString(String(label));
+                    return (
+                      <Translate>
+                        {formatEnumString(String(label))}
+                      </Translate>
+                    );
                   }
 
-                  return label;
+                  return <Translate>{String(label ?? '')}</Translate>;
                 })
               }
               renderValue={
@@ -1631,7 +1655,9 @@ const MyInput = ({
 
                     return (
                       <span>
-                        {buildCombinedLabel(item, labelKeys, selectedElement)}
+                        <Translate>
+                          {buildCombinedLabel(item, labelKeys, selectedElement)}
+                        </Translate>
                       </span>
                     );
                   }
@@ -1643,9 +1669,25 @@ const MyInput = ({
                         value ||
                         '';
 
-                      return <span>{formatEnumString(String(base))}</span>;
+                      return (
+                        <span>
+                          <Translate>{formatEnumString(String(base))}</Translate>
+                        </span>
+                      );
                     }
-                    : undefined
+                    : (value, item, selectedElement) => {
+                      const base =
+                        (item && item[primaryLabelKey]) ??
+                        selectedElement ??
+                        value ??
+                        '';
+
+                      return (
+                        <span>
+                          <Translate>{String(base)}</Translate>
+                        </span>
+                      );
+                    }
               }
               placeholder={searchTerm ? `Search: ${searchTerm}` : props.placeholder}
               cleanable={props.cleanable !== undefined ? props.cleanable : true}
@@ -1708,6 +1750,12 @@ const MyInput = ({
               creatable={props.creatable ?? false}
               groupBy={props.groupBy ?? null}
               searchBy={props.searchBy}
+              renderMenuItem={
+                props.renderMenuItem ??
+                ((label: any) => (
+                  <Translate>{String(label ?? '')}</Translate>
+                ))
+              }
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               onKeyDown={focusNextField}
               open={isMultyPickerOpen}
@@ -1780,6 +1828,28 @@ const MyInput = ({
                 props?.menuClassName
               )}
               value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
+              renderMenuItem={
+                props.renderMenuItem ??
+                ((label: any, item: any) => {
+                  if (isArrayLabel) {
+                    return (
+                      <Translate>
+                        {buildCombinedLabel(item, labelKeys, label)}
+                      </Translate>
+                    );
+                  }
+
+                  if (props.isEnum) {
+                    return (
+                      <Translate>
+                        {formatEnumString(String(label))}
+                      </Translate>
+                    );
+                  }
+
+                  return <Translate>{String(label ?? '')}</Translate>;
+                })
+              }
               onChange={value => {
                 handleValueChange(value);
 
@@ -2567,7 +2637,7 @@ const MyInput = ({
             onChange={(_, checked) => handleValueChange(checked)}
             disabled={props.disabled}
           >
-            {props.label ? props.label : fieldLabel}
+            <Translate>{props.label ? props.label : fieldLabel}</Translate>
           </Checkbox>
         );
 

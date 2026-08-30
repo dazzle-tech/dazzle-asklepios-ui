@@ -116,11 +116,11 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     const mapLabel = (value: PatientSearchCriterion) => {
       switch (value) {
         case 'patientMrn':
-          return <Translate>MRN</Translate>;
+          return "MRN";
         case 'documentNo':
-          return <Translate>Document Number</Translate>;
+          return "Document Number";
         case 'fullName':
-          return <Translate>Full Name</Translate>;
+          return "Full Name";
         // case 'archivingNumber':
         //   return <Translate>Archiving Number</Translate>;
         // case 'phoneNumber':
@@ -134,7 +134,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       .map(v => ({ label: mapLabel(v), value: v }))
       .map(option => ({
         ...option,
-        label: <span style={{ textTransform: 'capitalize' }}>{option.label}</span>
+        label:option.label
       }));
   }, [effectiveCriteriaOptions]);
 

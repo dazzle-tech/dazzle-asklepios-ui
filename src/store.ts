@@ -22,6 +22,7 @@ import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
+import { documentManagementService } from './services/patients/documentManagementService';
 import { patientMergeService } from './services/patients/patientMergeService';
 
 import { setupService } from '@/services/setupService';
@@ -302,6 +303,7 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [documentManagementService.reducerPath]: documentManagementService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
@@ -652,6 +654,7 @@ export const store = configureStore({
         hipaaService.middleware,
         patientPreferredHealthProfessionalService.middleware,
         patientDocumentsService.middleware,
+        documentManagementService.middleware,
         patientMergeService.middleware,
         inventoryService.middleware,
         inventoryProductsService.middleware,

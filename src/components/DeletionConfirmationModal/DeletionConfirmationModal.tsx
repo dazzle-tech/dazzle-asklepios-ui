@@ -3,7 +3,7 @@ import MyButton from '../MyButton/MyButton';
 import { Modal } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faArrowRotateLeft, faBoxArchive } from '@fortawesome/free-solid-svg-icons';
 import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
 
@@ -38,6 +38,11 @@ const actionConfig = {
     text: 'Reactivate',
     color: 'var(--primary-blue)',
     icon: faArrowRotateLeft
+  },
+  archive: {
+    text: 'Archive',
+    color: 'var(--primary-gray)',
+    icon: faBoxArchive
   },
   confirm: {
     text: 'Confirm',

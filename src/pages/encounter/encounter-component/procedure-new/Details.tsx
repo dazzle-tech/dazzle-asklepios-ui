@@ -24,12 +24,16 @@ import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCove
 import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
-import { useLazyGetActiveProceduresByFacilityAndCategoryQuery } from '@/services/setup/procedure/procedureService';
+import {
+  useLazyGetActiveProceduresByFacilityAndCategoryQuery,
+  useLazyGetActiveProceduresByFacilityAndCategorySearchQuery
+} from '@/services/setup/procedure/procedureService';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+
 const FIELD_ORDER = [
   'categoryId',
   'procedureId',
@@ -164,6 +168,9 @@ const Details = ({
   const [editing, setEditing] = useState(false);
   const [procedurePage, setProcedurePage] = useState(0);
   const [procedureOptions, setProcedureOptions] = useState<any[]>([]);
+  const [procedureSearch, setProcedureSearch] = useState('');
+  const [procedureSearchPage, setProcedureSearchPage] = useState(0);
+  const [procedureSearchOptions, setProcedureSearchOptions] = useState<any[]>([]);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const deptSize = 20;
   const [deptPage, setDeptPage] = useState(0);
@@ -190,6 +197,14 @@ const Details = ({
     getProcedureByFacility,
     { data: procedureByFacility, isLoading: procedureByFacilityLoading }
   ] = useLazyGetActiveProceduresByFacilityAndCategoryQuery();
+
+  const [
+    searchProceduresByFacilityAndCategory,
+    {
+      data: searchedProcedureByFacility,
+      isLoading: searchedProcedureLoading
+    }
+  ] = useLazyGetActiveProceduresByFacilityAndCategorySearchQuery();
 
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
 
@@ -229,6 +244,56 @@ const Details = ({
       setAllDepartments([]);
     }
   };
+
+  useEffect(() => {
+    if (!searchedProcedureByFacility?.data) return;
+
+    const apiData = searchedProcedureByFacility.data;
+
+    console.log('🔎 PROCEDURE SEARCH', {
+      search: procedureSearch,
+      page: procedureSearchPage,
+      returned: apiData.length,
+      totalCount: searchedProcedureByFacility.totalCount,
+      next: searchedProcedureByFacility.links?.next,
+      names: apiData.map((p: any) => p.name)
+    });
+
+    setProcedureSearchOptions(prev => {
+      // New search → replace old results
+      if (procedureSearchPage === 0) {
+        const selectedInApi = apiData.some(
+          (p: any) => p.id === procedure?.procedureId
+        );
+
+        if (procedure?.procedureObj && !selectedInApi) {
+          return [
+            procedure.procedureObj,
+            ...apiData
+          ];
+        }
+
+        return apiData;
+      }
+
+      // Load More → append only new results
+      const existingIds = new Set(
+        prev.map((p: any) => p.id)
+      );
+
+      return [
+        ...prev,
+        ...apiData.filter(
+          (p: any) => !existingIds.has(p.id)
+        )
+      ];
+    });
+  }, [
+    searchedProcedureByFacility?.data,
+    procedureSearchPage,
+    procedure?.procedureId,
+    procedure?.procedureObj
+  ]);
 
   useEffect(() => {
     const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
@@ -309,7 +374,13 @@ const Details = ({
 
   useEffect(() => {
     setProcedurePage(0);
-    setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
+    setProcedureOptions(
+      procedure?.procedureObj ? [procedure.procedureObj] : []
+    );
+
+    setProcedureSearch('');
+    setProcedureSearchPage(0);
+    setProcedureSearchOptions([]);
   }, [procedure?.categoryId, procedure?.toFacilityId]);
 
   useEffect(() => {
@@ -324,11 +395,40 @@ const Details = ({
     });
   }, [openDetailsModal, procedure?.procedureId, checkItem, clearUncoveredItems]);
 
-  const hasMoreProcedures = procedureByFacility?.links?.next != null;
+  const handleProcedureSearch = (value: string) => {
+    setProcedureSearch(value);
+    setProcedureSearchPage(0);
+    setProcedureSearchOptions([]);
+  };
+
+  const hasMoreProcedures =
+    procedureByFacility?.links?.next != null;
+
+  const hasMoreSearchedProcedures =
+    searchedProcedureByFacility?.links?.next != null;
+
+  console.log('🚀 PROCEDURE PAGINATION STATE', {
+    procedureSearch,
+    procedureSearchPage,
+    hasMoreSearchedProcedures,
+    searchedTotalCount: searchedProcedureByFacility?.totalCount,
+    searchedNext: searchedProcedureByFacility?.links?.next,
+    searchedDataLength: searchedProcedureByFacility?.data?.length,
+  });
+
 
   const handleLoadMoreProcedures = () => {
     if (hasMoreProcedures && !procedureByFacilityLoading) {
       setProcedurePage(prev => prev + 1);
+    }
+  };
+
+  const handleLoadMoreSearchedProcedures = () => {
+    if (
+      hasMoreSearchedProcedures &&
+      !searchedProcedureLoading
+    ) {
+      setProcedureSearchPage(prev => prev + 1);
     }
   };
 
@@ -478,6 +578,39 @@ const Details = ({
     }
   };
 
+  useEffect(() => {
+    const search = procedureSearch.trim();
+
+    if (!search || !procedure?.categoryId) {
+      return;
+    }
+
+    const facilityId =
+      procedure?.toFacilityId ||
+      authSlice?.selectedDepartment?.facilityId;
+
+    if (!facilityId) {
+      return;
+    }
+
+    searchProceduresByFacilityAndCategory({
+      facilityId,
+      category: procedure.categoryId,
+      name: search,
+      page: procedureSearchPage,
+      size: 20,
+      sort: 'name,asc'
+    });
+  }, [
+    procedureSearch,
+    procedureSearchPage,
+    procedure?.categoryId,
+    procedure?.toFacilityId,
+    authSlice?.selectedDepartment?.facilityId,
+    searchProceduresByFacilityAndCategory
+  ]);
+
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
@@ -563,17 +696,23 @@ const Details = ({
                           fieldLabel="Procedure Name"
                           fieldType="selectPagination"
                           fieldName="procedureId"
-                          selectData={procedureOptions}
+                          selectData={procedureSearch ? procedureSearchOptions : procedureOptions}
                           selectDataLabel="name"
                           selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
                           disabled={editing}
                           searchable={true}
-                          loading={procedureByFacilityLoading}
-                          hasMore={hasMoreProcedures}
-                          onFetchMore={handleLoadMoreProcedures}
-                          placeholder="Select Procedure..."
+                          loading={procedureSearch ? searchedProcedureLoading : procedureByFacilityLoading}
+                          hasMore={procedureSearch ? hasMoreSearchedProcedures : hasMoreProcedures}
+                          onFetchMore={
+                            procedureSearch
+                              ? handleLoadMoreSearchedProcedures
+                              : handleLoadMoreProcedures
+                          }
+                          searchKeyWard={procedureSearch}
+                          setSearchKeyWard={handleProcedureSearch}
+                          placeholder="Select Procedure"
                           required
                         />
                       )}
@@ -673,8 +812,8 @@ const Details = ({
                               fieldType="select"
                               fieldLabel="Body Part"
                               selectData={bodypartLovQueryResponse?.object ?? []}
-                               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                              selectDataLabel="lovDisplayVale"
+                              disableByField='isValid'
 
                               selectDataValue="lovDisplayVale"
                               fieldName="bodyPart"
@@ -688,8 +827,8 @@ const Details = ({
                               fieldType="select"
                               fieldLabel="Side"
                               selectData={sideLovQueryResponse?.object ?? []}
-                               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+                              selectDataLabel="lovDisplayVale"
+                              disableByField='isValid'
 
                               selectDataValue="lovDisplayVale"
                               fieldName="side"
@@ -785,7 +924,7 @@ const Details = ({
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
         encounterId={encounter?.id}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.id ? Number(procedure.id) : 0}
       />

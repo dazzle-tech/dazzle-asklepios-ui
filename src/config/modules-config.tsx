@@ -326,6 +326,22 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Document Management",
+      description: "Define documents and manage versions",
+      icon: "FaFileLines",
+      viewOrder: 1.1,
+      screens: [
+        {
+          name: "Document Definitions",
+          code: "DOCUMENT_MANAGEMENT",
+          description: "Define documents and upload versions",
+          icon: "FaUpload",
+          viewOrder: 0,
+          navPath: "document-management"
+        }
+      ]
+    },
+    {
       name: "Notification Management",
       description: "",
       icon: "FaBell",
@@ -449,6 +465,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "encounter-list"
         },
         { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "Tests Results", code: "TESTS_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "tests-results" },
 
       ],
     },

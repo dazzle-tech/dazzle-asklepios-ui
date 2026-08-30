@@ -219,9 +219,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         fieldType="select"
                         fieldName="searchCriteria"
                         selectData={[
-                          { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-                          { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-                          { label: <Translate>Full Name</Translate>, value: 'fullName' }
+                          { label: "MRN", value: 'patientMrn' },
+                          { label:" Document Number", value: 'documentNo' },
+                          { label: "Full Name", value: 'fullName' }
                         ]}
                         selectDataLabel="label"
                         selectDataValue="value"

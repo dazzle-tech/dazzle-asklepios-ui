@@ -31,6 +31,7 @@ import RolesTab from './tabs/RolesTab';
 import UsersTab from './tabs/UsersTab';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
+import TranslationModal from '@/components/TranslationModal';
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
@@ -44,6 +45,10 @@ const Facilities = () => {
   const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ name: '' });
   // Initialize list request with default filters
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+   const [translationFields, setTranslationFields] = useState<
+        { fieldName: string; value: string }[]
+      >([]);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   // Fetch Facilities list response
   const {
     data: facilityListResponse,
@@ -222,8 +227,14 @@ const handleSave = async () => {
         msg: 'The Facility has been saved successfully',
         sev: 'success'
       })
-    );
-
+    ); 
+      setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: createFacility.name
+                  }
+                ]);
+   setShowTranslationModal(true)
     refetchFacility();
   } catch(error) {
     const errorMsg = extractErrorMessage(error) || 'Failed to save this Facility';
@@ -268,7 +279,13 @@ const handleSave = async () => {
         sev: 'success'
         })
       );
-
+        setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: facility.name
+                  }
+                ]);
+      setShowTranslationModal(true)
       refetchFacility();
     } catch(error) {
      const errorMsg = extractErrorMessage(error) || 'Failed to updateu this Facility';
@@ -457,6 +474,7 @@ const handleSave = async () => {
                 </Form>
               </div>
             }
+            dontTranslateData 
           />
           <AddEditFacility
             open={popupOpen}
@@ -474,6 +492,11 @@ const handleSave = async () => {
             itemToDelete="Facility"
             actionButtonFunction={handleRemove}
           />
+          <TranslationModal
+                  open={showTranslationModal}
+                  setOpen={setShowTranslationModal}
+                  fields={translationFields}
+                />
         </Panel>
       </div>
 

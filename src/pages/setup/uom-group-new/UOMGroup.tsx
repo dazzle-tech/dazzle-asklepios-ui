@@ -235,6 +235,7 @@ const handleDeleteUomGroup = async () => {
             </MyButton>
           </div>
         }
+        dontTranslateData 
       />
 
       <AddEditUom

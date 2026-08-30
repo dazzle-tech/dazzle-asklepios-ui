@@ -57,6 +57,7 @@ interface MyTableProps {
   totalCount?: number;
   onPageChange?: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  dontTranslateData?: boolean
 }
 
 const MyTable: React.FC<MyTableProps> = ({
@@ -76,7 +77,9 @@ const MyTable: React.FC<MyTableProps> = ({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  dontTranslateData,
+  ...props
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
@@ -95,6 +98,9 @@ const MyTable: React.FC<MyTableProps> = ({
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
   };
+
+  const renderCellContent = (content: ReactNode) =>
+    dontTranslateData ? content : <Translate>{content}</Translate>;
 
   const emptyTable = () => (
     <TableRow>
@@ -256,7 +262,7 @@ const MyTable: React.FC<MyTableProps> = ({
                             }}
                           >
                             {col.render ? (
-                              col.render(row, index)
+                              renderCellContent(col.render(row, index))
                             ) : col.isLink ? (
                               <span
                                 className="table-link"
@@ -265,10 +271,10 @@ const MyTable: React.FC<MyTableProps> = ({
                                   col.onLinkClick?.(row);
                                 }}
                               >
-                                {row[col.dataKey || col.key]}
+                                {renderCellContent(row[col.dataKey || col.key])}
                               </span>
                             ) : (
-                              row[col.dataKey || col.key]
+                              renderCellContent(row[col.dataKey || col.key])
                             )}
                           </TableCell>
                         ))}
@@ -296,8 +302,8 @@ const MyTable: React.FC<MyTableProps> = ({
                                     {expandableColumns.map(col => (
                                       <TableCell key={col.key} align={col.align}>
                                         {col.render
-                                          ? col.render(row, index)
-                                          : row[col.dataKey || col.key]}
+                                          ? renderCellContent(col.render(row, index))
+                                          : renderCellContent(row[col.dataKey || col.key])}
                                       </TableCell>
                                     ))}
                                   </TableRow>
