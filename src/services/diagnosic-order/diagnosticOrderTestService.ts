@@ -10,6 +10,7 @@ import {
   BulkRejectDTO,
   PatientArrivedCreateRequestDTO,
   PatientArrivedResponseVM,
+  BulkCancelDTO,
 } from '@/types/model-types-new';
 
 
@@ -203,7 +204,17 @@ export const diagnosticOrderTestService = createApi({
       }),
       invalidatesTags: ['DiagnosticOrderTest'],
     }),
-
+     bulkCancelDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkCancelDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-cancel',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
     undoAcceptDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
       { id: number; undoAcceptReason: string }
@@ -279,6 +290,7 @@ export const {
   useCancelDiagnosticOrderTestMutation,
   useBulkAcceptDiagnosticOrderTestsMutation,
   useBulkRejectDiagnosticOrderTestsMutation,
+  useBulkCancelDiagnosticOrderTestsMutation,
   useUndoAcceptDiagnosticOrderTestMutation,
   useLazyGetDiagnosticOrderTestByIdQuery,
   usePatientArrivedRadiologyMutation,
