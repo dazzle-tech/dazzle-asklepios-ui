@@ -63,7 +63,7 @@ import {
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 // NEW: same practitioner-by-department hook used in AddResourceModal
-import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetPractitionerByUserIdQuery, useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
 import Translate from '@/components/Translate';
@@ -236,7 +236,6 @@ const EncounterList = () => {
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
-
   const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
 
   useEffect(() => {
@@ -300,7 +299,10 @@ const EncounterList = () => {
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
-  const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
+  const [
+    statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
+    const [
+    showOnlyMyPatients, setShowOnlyMyPatients] = useState({showOnlyMyPatients: true});
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
@@ -345,7 +347,14 @@ const handlePatientSearchClick = useCallback(() => {
     size: 50,
     sort: 'id,desc'
   });
-
+   const currentUserId = useMemo(() => {
+       const rawUser = authSlice?.user;
+       const id = Number(rawUser?.id ?? rawUser?.userId ?? rawUser?.key ?? NaN);
+       return Number.isFinite(id) ? id : null;
+     }, [authSlice?.user]);
+   const { data: practitionerByUserResponse } = useGetPractitionerByUserIdQuery(currentUserId as number, {
+      skip:  !currentUserId
+    });
   const appointmentsMap = useMemo(() => {
     const map: any = {};
     (appointmentsData?.data ?? []).forEach((appt: any) => {
@@ -731,10 +740,10 @@ const handlePatientSearchClick = useCallback(() => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
-      practitionerId: undefined,
+      practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
       page: 0,
       size: pageSize,
-      sort: DEFAULT_SORT
+      sort: DEFAULT_SORT,
     });
     setFiltersKey(prev => prev + 1);
   };
@@ -1168,6 +1177,16 @@ const handlePatientSearchClick = useCallback(() => {
               setPage(0);
             }}
           />
+           <MyInput
+            column
+            width={260}
+            fieldType="check"
+            fieldLabel="Show Only My Paients"
+            fieldName="showOnlyMyPatients"
+            record={showOnlyMyPatients}
+            setRecord={setShowOnlyMyPatients}
+            showLabel={false}
+          />
         </Form>
       </div>
 
@@ -1206,7 +1225,7 @@ const handlePatientSearchClick = useCallback(() => {
             hasPrescription,
             hasOrder,
             isObserved,
-            practitionerId: normalizedPractitionerId,  
+            practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
             page: 0,
             size: pageSize,
             sort: DEFAULT_SORT
@@ -1257,23 +1276,7 @@ const handlePatientSearchClick = useCallback(() => {
                 fieldLabel="Priority"
                 searchable={true}
               />
-              <MyInput
-               width={200}
-               fieldName="practitionerId"
-               fieldType="select"
-               record={{ practitionerId }}
-               setRecord={(v: any) => {
-                const next = v?.practitionerId;
-                setPractitionerId(next === null || next === undefined || next === '' ? undefined : next);
-                setPage(0);
-              }}
-               selectData={practitionerOptions}
-               selectDataLabel="label"
-               selectDataValue="value"
-               placeholder="Select Practitioner"
-               fieldLabel="Practitioner"
-               searchable={true}
-               />
+             
             </Form>
           </div>
         }
@@ -1293,6 +1296,7 @@ const handlePatientSearchClick = useCallback(() => {
 
   useEffect(() => {
     if (!departmentId || appliedFilters) return;
+    if (showOnlyMyPatients.showOnlyMyPatients && currentUserId && !practitionerByUserResponse) return;
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
@@ -1310,20 +1314,23 @@ const handlePatientSearchClick = useCallback(() => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
+      practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
       page: 0,
       size: pageSize,
-      sort: DEFAULT_SORT
+      sort: DEFAULT_SORT,
     });
-  }, [
+}, [
     departmentId,
     appliedFilters,
     dateFilter.fromDate,
     dateFilter.toDate,
     todayStr,
     DEFAULT_STATUS,
-    pageSize
-  ]);
-
+    pageSize,
+    showOnlyMyPatients,         
+    practitionerByUserResponse, 
+    currentUserId                
+]);
   useEffect(() => {
     if (appliedFilters) {
       refetchEncounters();
