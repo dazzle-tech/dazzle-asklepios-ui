@@ -1495,6 +1495,7 @@ const handlePatientSearchClick = useCallback(() => {
           open={openCollectSampleModal}
           setOpen={setOpenCollectSampleModal}
           facilityId={selectedDepartment?.facilityId}
+          fromDepartmentId={departmentId}
         />
       </div>
     </>
