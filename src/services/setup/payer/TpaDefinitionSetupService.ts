@@ -94,6 +94,16 @@ export const TpaDefinitionService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'TpaDefinition', id }]
     }),
 
+    getLinkableInsuranceCompanies: builder.query<TpaLinkedInsuranceCompany[], void>({
+      query: () => ({
+        url: '/api/setup/tpa-definitions/linkable-insurance-companies',
+        method: 'GET'
+      }),
+      transformResponse: (res: any) =>
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
+      providesTags: ['TpaDefinition', 'NphiesPayer']
+    }),
+
     createTpaDefinition: builder.mutation<TpaDefinition, Partial<TpaDefinition>>({
       query: body => ({
         url: '/api/setup/tpa-definitions',
@@ -129,6 +139,7 @@ export const {
   useGetTpaDefinitionsByNameQuery,
   useGetTpaDefinitionByIdQuery,
   useGetTpaLinkedInsuranceCompaniesQuery,
+  useGetLinkableInsuranceCompaniesQuery,
   useCreateTpaDefinitionMutation,
   useUpdateTpaDefinitionMutation,
   useToggleTpaDefinitionActiveMutation

@@ -10,7 +10,7 @@ import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { TpaDefinition } from '@/types/model-types-new';
+import { NphiesPayer, TpaDefinition } from '@/types/model-types-new';
 import { newTpaDefinition } from '@/types/model-types-constructor-new';
 import {
   TpaDefinitionService,
@@ -41,7 +41,11 @@ const initialTpaFilter = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const TpaDefinitionSection = () => {
+type TpaDefinitionSectionProps = {
+  insuranceCompanies?: NphiesPayer[];
+};
+
+const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionProps) => {
   const dispatch = useAppDispatch();
 
   const [selectedTpa, setSelectedTpa] = useState<TpaDefinition>({ ...newTpaDefinition });
@@ -199,22 +203,35 @@ const TpaDefinitionSection = () => {
     try {
       dispatch(showSystemLoader());
 
-      const {
-        id,
-        createdDate,
-        lastModifiedDate,
-        createdBy,
-        lastModifiedBy,
-        countryName,
-        cityName,
-        insuranceCompanies,
-        linkedInsuranceCount,
-        ...rest
-      } = selectedTpa;
+      const toId = (value: unknown): number | null => {
+        if (value == null || value === '') {
+          return null;
+        }
+        if (typeof value === 'object') {
+          const nested = Number((value as { id?: unknown; value?: unknown }).id
+            ?? (value as { value?: unknown }).value);
+          return Number.isFinite(nested) ? nested : null;
+        }
+        const id = Number(value);
+        return Number.isFinite(id) ? id : null;
+      };
+
+      const toIdList = (values?: unknown[]) =>
+        [...new Set((values ?? []).map(toId).filter((id): id is number => id != null))];
 
       const payload = {
-        ...rest,
-        insuranceCompanyIds: [...new Set(selectedTpa.insuranceCompanyIds ?? [])]
+        tpaCode: selectedTpa.tpaCode.trim(),
+        name: selectedTpa.name.trim(),
+        guarantorType: selectedTpa.guarantorType,
+        activationDate: selectedTpa.activationDate,
+        isActive: selectedTpa.isActive,
+        taxRegistrationNo: selectedTpa.taxRegistrationNo || null,
+        countryId: toId(selectedTpa.countryId),
+        cityId: toId(selectedTpa.cityId),
+        address: selectedTpa.address || null,
+        phone: selectedTpa.phone || null,
+        email: selectedTpa.email || null,
+        insuranceCompanyIds: toIdList(selectedTpa.insuranceCompanyIds)
       };
 
       if (selectedTpa.id) {
@@ -530,6 +547,7 @@ const TpaDefinitionSection = () => {
         tpa={selectedTpa}
         setTpa={setSelectedTpa}
         onSave={handleSave}
+        insuranceCompanies={insuranceCompanies}
       />
 
       <TpaLinkedCompaniesModal

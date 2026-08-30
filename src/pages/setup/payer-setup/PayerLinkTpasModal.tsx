@@ -3,12 +3,10 @@ import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { NphiesPayer } from '@/types/model-types-new';
-import {
-  useGetAllTpaDefinitionsQuery,
-  TpaDefinitionService
-} from '@/services/setup/payer/TpaDefinitionSetupService';
+import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
 import {
   useGetNphiesPayerByIdQuery,
+  useGetAvailableTpasForPayerQuery,
   useUpdateNphiesPayerTpasMutation,
   NphiesPayerService
 } from '@/services/setup/payer/NphiesPayerSetupService';
@@ -23,24 +21,53 @@ type PayerLinkTpasModalProps = {
 };
 
 const uniqueIds = (ids?: Array<number | null | undefined>) =>
-  [...new Set((ids ?? []).filter((id): id is number => id != null))];
+  [...new Set((ids ?? []).filter((id): id is number => Number.isFinite(Number(id))))].map(Number);
 
-const tpaListFromResponse = (response: any) =>
-  Array.isArray(response) ? response : response?.data ?? [];
+const listFromResponse = (response: any): any[] => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+  if (Array.isArray(response?.content)) {
+    return response.content;
+  }
+  return [];
+};
 
-const toTpaPickerOptions = (list: any[], extra: any[] = []) => {
-  const byId = new Map<number, any>();
-  [...list, ...extra].forEach(tpa => {
-    if (tpa?.id == null || byId.has(tpa.id)) {
+const normalizeTpa = (tpa: any) => {
+  const id = Number(tpa?.id ?? tpa?.tpaId ?? tpa?.value);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  const tpaCode = String(tpa?.tpaCode ?? tpa?.code ?? '').trim();
+  const name = String(tpa?.name ?? tpa?.tpaName ?? tpa?.label ?? '').trim();
+
+  return {
+    id,
+    tpaCode,
+    name,
+    isActive: tpa?.isActive !== false,
+    label: [tpaCode, name].filter(Boolean).join(' - ') || `TPA #${id}`
+  };
+};
+
+const toTpaPickerOptions = (...groups: any[][]) => {
+  const byId = new Map<number, ReturnType<typeof normalizeTpa>>();
+  groups.flat().forEach(item => {
+    const tpa = normalizeTpa(item);
+    if (!tpa || byId.has(tpa.id)) {
       return;
     }
     byId.set(tpa.id, tpa);
   });
 
   return [...byId.values()].map(tpa => ({
-    value: tpa.id,
-    label: [tpa.tpaCode, tpa.name].filter(Boolean).join(' - ') || `TPA #${tpa.id}`,
-    isActive: tpa.isActive !== false
+    value: tpa!.id,
+    label: tpa!.label,
+    isActive: tpa!.isActive
   }));
 };
 
@@ -54,9 +81,9 @@ const PayerLinkTpasModal: React.FC<PayerLinkTpasModalProps> = ({ open, setOpen, 
     { skip: !open || !payer?.id }
   );
 
-  const { data: tpaResponse, isFetching: isTpasLoading } = useGetAllTpaDefinitionsQuery(
-    { page: 0, size: 1000, sort: 'id,asc' },
-    { skip: !open }
+  const { data: availableTpas, isFetching: isTpasLoading } = useGetAvailableTpasForPayerQuery(
+    payer?.id as number,
+    { skip: !open || !payer?.id }
   );
 
   const currentPayer = payerDetails ?? payer;
@@ -71,12 +98,15 @@ const PayerLinkTpasModal: React.FC<PayerLinkTpasModalProps> = ({ open, setOpen, 
   }, [open, payer?.id, payerDetails]);
 
   const tpaOptions = useMemo(() => {
-    const linkedIds = new Set(uniqueIds(currentPayer?.tpas?.map(tpa => tpa.id)));
-    const allTpas = tpaListFromResponse(tpaResponse).filter(
-      (tpa: any) => tpa?.isActive !== false || linkedIds.has(tpa?.id)
-    );
-    return toTpaPickerOptions(allTpas, currentPayer?.tpas ?? []);
-  }, [tpaResponse, currentPayer]);
+    const options = toTpaPickerOptions(listFromResponse(availableTpas), currentPayer?.tpas ?? []);
+    const existing = new Set(options.map(option => option.value));
+    tpaIds.forEach(id => {
+      if (!existing.has(id)) {
+        options.push({ value: id, label: `TPA #${id}`, isActive: true });
+      }
+    });
+    return options;
+  }, [availableTpas, currentPayer, tpaIds]);
 
   const handleSave = async () => {
     if (!payer?.id) {

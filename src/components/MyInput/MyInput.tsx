@@ -1791,7 +1791,43 @@ const MyInput = ({
 
         const primaryLabelKey = labelKeys[0] ?? 'label';
         const valueKey = props?.selectDataValue ?? 'value';
-        const dataList = props?.selectData ?? [];
+        const selectedValues = Array.isArray(record?.[fieldName]) ? record[fieldName] : [];
+
+        const dataList = (props?.selectData ?? [])
+          .filter((item: any) => item != null && typeof item === 'object')
+          .map((item: any) => {
+            const value = item[valueKey] ?? item.value ?? item.id;
+            const label =
+              item[primaryLabelKey] ??
+              item.label ??
+              item.displayName ??
+              item.name ??
+              item.nameEn ??
+              (value != null ? String(value) : '');
+            return {
+              ...item,
+              [valueKey]: value,
+              [primaryLabelKey]: label
+            };
+          })
+          .filter((item: any) => item[valueKey] != null && item[primaryLabelKey] !== '');
+
+        selectedValues.forEach((selected: any) => {
+          const selectedId =
+            selected != null && typeof selected === 'object'
+              ? selected[valueKey] ?? selected.value ?? selected.id
+              : selected;
+          if (
+            selectedId == null ||
+            dataList.some((item: any) => String(item[valueKey]) === String(selectedId))
+          ) {
+            return;
+          }
+          dataList.push({
+            [valueKey]: selectedId,
+            [primaryLabelKey]: String(selectedId)
+          });
+        });
 
         const filteredData = !localSearch
           ? dataList
@@ -1827,7 +1863,13 @@ const MyInput = ({
                 'my-input-picker-popup',
                 props?.menuClassName
               )}
-              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
+              value={selectedValues
+                .map((selected: any) =>
+                  selected != null && typeof selected === 'object'
+                    ? selected[valueKey] ?? selected.value ?? selected.id
+                    : selected
+                )
+                .filter((selected: any) => selected != null)}
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => {

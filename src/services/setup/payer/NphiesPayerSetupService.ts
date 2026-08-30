@@ -34,12 +34,13 @@ export const NphiesPayerService = createApi({
         method: 'GET',
         params: { page, size, sort }
       }),
-      transformResponse: (res: NphiesPayer[], meta) => {
+      transformResponse: (res: any, meta) => {
         const h = meta?.response?.headers;
+        const data = Array.isArray(res) ? res : res?.data ?? res?.content ?? [];
 
         return {
-          data: res,
-          totalCount: Number(h?.get('X-Total-Count') ?? 0),
+          data,
+          totalCount: Number(h?.get('X-Total-Count') ?? data.length),
           links: parseLinkHeader(h?.get('Link'))
         };
       },
@@ -117,6 +118,29 @@ export const NphiesPayerService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'NphiesPayer', id }]
     }),
 
+    getActiveNphiesPayers: builder.query<NphiesPayer[], void>({
+      query: () => ({
+        url: '/api/setup/nphies-payers/active',
+        method: 'GET'
+      }),
+      transformResponse: (res: any) =>
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
+      providesTags: ['NphiesPayer']
+    }),
+
+    getAvailableTpasForPayer: builder.query<
+      Array<{ id: number; tpaCode: string; name: string; isActive: boolean }>,
+      number | string
+    >({
+      query: id => ({
+        url: `/api/setup/nphies-payers/${id}/available-tpas`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) =>
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
+      providesTags: ['NphiesPayer', 'TpaDefinition']
+    }),
+
     createNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
       query: body => ({
         url: '/api/setup/nphies-payers',
@@ -157,6 +181,7 @@ export const NphiesPayerService = createApi({
 export const {
   useGetAllNphiesPayersQuery,
   useLazyGetAllNphiesPayersQuery,
+  useGetActiveNphiesPayersQuery,
 
   useGetNphiesPayersByNphiesIdQuery,
   useLazyGetNphiesPayersByNphiesIdQuery,
@@ -168,6 +193,7 @@ export const {
   useLazyGetNphiesPayersByNameArQuery,
 
   useGetNphiesPayerByIdQuery,
+  useGetAvailableTpasForPayerQuery,
   useCreateNphiesPayerMutation,
   useUpdateNphiesPayerMutation,
   useUpdateNphiesPayerTpasMutation,

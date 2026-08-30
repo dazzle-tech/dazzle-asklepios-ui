@@ -2,12 +2,16 @@ import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { TpaDefinition } from '@/types/model-types-new';
+import { NphiesPayer, TpaDefinition } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import {
+  useGetLinkableInsuranceCompaniesQuery,
+  useGetTpaLinkedInsuranceCompaniesQuery
+} from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type TpaDefinitionModalProps = {
   open: boolean;
@@ -15,6 +19,7 @@ type TpaDefinitionModalProps = {
   tpa: TpaDefinition;
   setTpa: React.Dispatch<React.SetStateAction<TpaDefinition>>;
   onSave: () => void;
+  insuranceCompanies?: NphiesPayer[];
 };
 
 const statusOptions = [
@@ -29,7 +34,8 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
   setOpen,
   tpa,
   setTpa,
-  onSave
+  onSave,
+  insuranceCompanies = []
 }) => {
   const { data: countriesResponse, isFetching: isCountriesLoading } = useGetActiveCountriesQuery(
     { page: 0, size: 500, sort: 'id,asc' },
@@ -47,9 +53,16 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
   );
 
   const { data: payersResponse, isFetching: isPayersLoading } = useGetAllNphiesPayersQuery(
-    { page: 0, size: 2000, sort: 'nameEn,asc' },
-    { skip: !open }
+    { page: 0, size: 100, sort: 'id,asc' },
+    { skip: !open, refetchOnMountOrArgChange: true }
   );
+
+  const { data: linkedCompanies = [] } = useGetTpaLinkedInsuranceCompaniesQuery(tpa.id as number, {
+    skip: !open || !tpa.id
+  });
+
+  const { data: linkableCompanies = [], isFetching: isLinkableLoading } =
+    useGetLinkableInsuranceCompaniesQuery(undefined, { skip: !open });
 
   const countryOptions = useMemo(() => {
     const list = (countriesResponse?.data ?? []).map((country: any) => ({
@@ -79,27 +92,80 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
   }, [citiesResponse, tpa.cityId, tpa.cityName]);
 
   const insuranceOptions = useMemo(() => {
+    const toList = (value: unknown) => (Array.isArray(value) ? value : []);
+    const fetched = Array.isArray(payersResponse)
+      ? payersResponse
+      : toList((payersResponse as any)?.data ?? (payersResponse as any)?.content);
     const byId = new Map<number, any>();
-    [...(payersResponse?.data ?? []), ...(tpa.insuranceCompanies ?? [])].forEach(company => {
-      if (company?.id != null && !byId.has(company.id)) {
-        byId.set(company.id, company);
+    [
+      ...toList(insuranceCompanies),
+      ...fetched,
+      ...toList(linkableCompanies),
+      ...toList(linkedCompanies),
+      ...toList(tpa.insuranceCompanies)
+    ].forEach(
+      company => {
+        const id = Number(company?.id ?? company?.nphiesPayerId ?? company?.value);
+        if (!Number.isFinite(id) || byId.has(id)) {
+          return;
+        }
+        byId.set(id, { ...company, id });
       }
-    });
-    return [...byId.values()].map(company => ({
-      ...company,
-      displayName: `${company.nphiesId ?? ''} - ${company.nameEn ?? ''}`.trim()
-    }));
-  }, [payersResponse, tpa.insuranceCompanies]);
+    );
+    return [...byId.values()]
+      .filter(
+        company =>
+          company.isActive !== false || (tpa.insuranceCompanyIds ?? []).includes(company.id)
+      )
+      .map(company => {
+        const code = String(company.nphiesId ?? company.code ?? '').trim();
+        const name = String(
+          company.nameEn ?? company.name ?? company.nameAr ?? company.shortName ?? ''
+        ).trim();
+        const displayName = [code, name].filter(Boolean).join(' - ') || `Company #${company.id}`;
+        return {
+          id: company.id,
+          displayName,
+          isActive: company.isActive !== false
+        };
+      });
+  }, [
+    insuranceCompanies,
+    payersResponse,
+    linkableCompanies,
+    linkedCompanies,
+    tpa.insuranceCompanies,
+    tpa.insuranceCompanyIds
+  ]);
+
+  const toId = (value: unknown): number | null => {
+    if (value == null || value === '') {
+      return null;
+    }
+    if (typeof value === 'object') {
+      const nested = Number(
+        (value as { id?: unknown; value?: unknown }).id ??
+          (value as { value?: unknown }).value
+      );
+      return Number.isFinite(nested) ? nested : null;
+    }
+    const id = Number(value);
+    return Number.isFinite(id) ? id : null;
+  };
 
   const handleSetTpa: React.Dispatch<React.SetStateAction<TpaDefinition>> = updated => {
     const next = typeof updated === 'function' ? updated(tpa) : updated;
-    if (next.countryId !== tpa.countryId) {
-      setTpa({ ...next, cityId: null, cityName: null });
-      return;
-    }
+    const countryId = toId(next.countryId);
+    const previousCountryId = toId(tpa.countryId);
+    const cityId = countryId !== previousCountryId ? null : toId(next.cityId);
     setTpa({
       ...next,
-      insuranceCompanyIds: [...new Set(next.insuranceCompanyIds ?? [])]
+      countryId,
+      cityId,
+      cityName: countryId !== previousCountryId ? null : next.cityName,
+      insuranceCompanyIds: [
+        ...new Set((next.insuranceCompanyIds ?? []).map(toId).filter((id): id is number => id != null))
+      ]
     });
   };
 
@@ -241,7 +307,9 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
                       selectData={insuranceOptions}
                       selectDataLabel="displayName"
                       selectDataValue="id"
-                      loading={isPayersLoading}
+                      searchable
+                      virtualized={false}
+                      loading={isPayersLoading || isLinkableLoading}
                       disableByField="isActive"
                       disabled={!tpa.isActive}
                       placeholder={

@@ -626,7 +626,7 @@ const NphiesPayerSetup = () => {
   return (
     <Panel>
       <div className="payer-tpa-setup-stack">
-        <TpaDefinitionSection />
+        <TpaDefinitionSection insuranceCompanies={activePayersResponse?.data ?? []} />
 
         <div className="payer-setup-section">
           <div className="payer-setup-section-title">
