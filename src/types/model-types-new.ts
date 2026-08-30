@@ -946,7 +946,7 @@ export interface DiagnosticTest {
   name: string;
   shortName:string;
   internalCode: string;
-
+  hl7IntegrationCode:string;
   ageSpecific?: boolean;
   ageGroupList?: string[];
   genderSpecific?: boolean;
