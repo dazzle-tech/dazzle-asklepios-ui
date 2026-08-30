@@ -3740,7 +3740,10 @@ export interface BulkRejectDTO {
   ids: number[];
   rejectedReason: string;
 }
-
+export interface BulkCancelDTO {
+  ids: number[];
+  cancellationReason: string;
+}
 export interface DiagnosticOrderTestResultCreateDTO {
   orderTestId: number;
   profileTestId?: number | null;
