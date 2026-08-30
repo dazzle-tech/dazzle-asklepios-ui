@@ -50,12 +50,14 @@ type CollectSambleModalProps = {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     facilityId?: number | string;
+    fromDepartmentId?: number | string;
 };
 
 const CollectSambleModal = ({
     open,
     setOpen,
-    facilityId
+    facilityId,
+    fromDepartmentId
 }: CollectSambleModalProps) => {
 
     const dispatch = useAppDispatch();
@@ -83,7 +85,8 @@ const CollectSambleModal = ({
     const [openCollectSample, setOpenCollectSample] = useState(false);
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [orderNumberFilter, setOrderNumberFilter] = useState('');
-    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+    const [selectedDepartmentId, setSelectedDepartmentId] =
+        useState<number | null>(null);
 
     const today = new Date();
 
@@ -219,18 +222,19 @@ const CollectSambleModal = ({
         isFetching: isTestsFetching,
         refetch: refetchTests
     } = useFilterDiagnosticOrderTestsQuery(
-        order?.id && selectedDepartmentId
-            ? {
-                orderId: order.id,
-                status: 'SUBMITTED',
-                receivedDepartmentId: selectedDepartmentId,
-                page: paginationParams.page,
-                size: paginationParams.size,
-                sort: paginationParams.sort,
-                orderType: 'LABORATORY'
-            }
-            : skipToken
-    );
+    order?.id && selectedDepartmentId && fromDepartmentId
+        ? {
+            orderId: order.id,
+            status: 'SUBMITTED',
+            fromDepartmentId: fromDepartmentId,
+            receivedDepartmentId: selectedDepartmentId,
+            page: paginationParams.page,
+            size: paginationParams.size,
+            sort: paginationParams.sort,
+            orderType: 'LABORATORY'
+        }
+        : skipToken
+);
 
     const orderTests = testsResponse?.data ?? [];
 
@@ -532,6 +536,7 @@ const CollectSambleModal = ({
                                 selectedPatient={selectedPatient}
                                 filters={tablefilters}
                                 departmentId={selectedDepartmentId}
+                                fromDepartmentId={fromDepartmentId}
                             />
 
                             <div className="laboratory-table-size-container">

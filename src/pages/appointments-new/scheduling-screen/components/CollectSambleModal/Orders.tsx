@@ -25,6 +25,7 @@ type OrdersProps = {
   selectedPatient?: any;
   filters?: React.ReactNode;
   departmentId?: number | string;
+  fromDepartmentId?: number | string;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
@@ -37,7 +38,8 @@ const Orders = forwardRef<any, OrdersProps>(
     selectedPatient,
     departmentFilter,
     filters,
-    departmentId: departmentIdProp
+departmentId: departmentIdProp,
+fromDepartmentId
   }, ref) => {
 
     const [sortColumn, setSortColumn] = useState('id');
@@ -85,40 +87,50 @@ const diagnosisMap = useMemo(() => {
 
 const departmentId = departmentIdProp;
 
-        useEffect(() => {
-          setPaginationParams(prev => ({ ...prev, page: 0 }));
-        }, [
-          orderNumberFilter,
-          selectedPatient?.id,
-          departmentFilter?.fromDepartmentIdIn
-        ]);
+useEffect(() => {
+  setPaginationParams(prev => ({
+    ...prev,
+    page: 0
+  }));
+}, [
+  orderNumberFilter,
+  selectedPatient?.id,
+  departmentId,
+  fromDepartmentId,
+  dateFilter?.fromDate,
+  dateFilter?.toDate
+]);
 
     const {
       data: ordersResponse,
       isFetching,
       refetch: refetchOrders
     } = useFilterDiagnosticOrdersQuery(
-      departmentId
-        ? {
-            page: paginationParams.page,
-            size: paginationParams.size,
-            sort: paginationParams.sort,
-            status: 'SUBMITTED',
-            testType: 'LABORATORY',
-            departmentId: Number(departmentId),
-            submittedDateFrom: fromDateParam,
-            submittedDateTo: toDateParam,
+  departmentId && fromDepartmentId
+    ? {
+        page: paginationParams.page,
+        size: paginationParams.size,
+        sort: paginationParams.sort,
 
-            ...(selectedPatient?.id
-              ? { patientIdIn: [selectedPatient.id] }
-              : {}),
+        status: 'SUBMITTED',
+        testType: 'LABORATORY',
 
-            ...(orderNumberFilter?.trim()
-              ? { orderNumber: orderNumberFilter.trim() }
-              : {})
-          }
-        : skipToken
-    );
+        departmentId: Number(departmentId),
+        fromDepartmentIdIn: [Number(fromDepartmentId)],
+
+        submittedDateFrom: fromDateParam,
+        submittedDateTo: toDateParam,
+
+        ...(selectedPatient?.id
+          ? { patientIdIn: [selectedPatient.id] }
+          : {}),
+
+        ...(orderNumberFilter?.trim()
+          ? { orderNumber: orderNumberFilter.trim() }
+          : {})
+      }
+    : skipToken
+);
 
     useImperativeHandle(ref, () => ({
       refetchOrders

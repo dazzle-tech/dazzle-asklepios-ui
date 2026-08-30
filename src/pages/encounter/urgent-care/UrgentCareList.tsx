@@ -11,7 +11,8 @@ import {
   faUserDoctor,
   faCommentMedical,
   faUserNurse,
-  faEye
+  faEye,
+  faVialCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -68,6 +69,8 @@ import { Patient } from '@/types/model-types-new';
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
 import { useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
+import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
+import Translate from '@/components/Translate';
 
 dayjs.extend(duration);
 
@@ -288,6 +291,7 @@ const [dateFilter, setDateFilter] = useState({
   const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
   const [hasOrder, setHasOrder] = useState<boolean | undefined>(undefined);
   const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
+  const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
 
   const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
     searchByField: 'fullName',
@@ -1387,6 +1391,14 @@ const tableLoading =
         >
           Bed Management
         </MyButton>
+
+          <MyButton
+            onClick={() => setOpenCollectSampleModal(true)}
+          >
+            <FontAwesomeIcon icon={faVialCircleCheck} />
+            <Translate>COLLECT SAMPLE</Translate>
+          </MyButton>
+
       </div>
 
       <div className="count-div-on-top-of-page-visit-list">
@@ -1547,6 +1559,13 @@ const tableLoading =
         confirmationQuestion="Do you want to start Nurse Assessment?"
         actionButtonLabel="Start"
         cancelButtonLabel="Close"
+      />
+
+      <CollectSambleModal
+        open={openCollectSampleModal}
+        setOpen={setOpenCollectSampleModal}
+        facilityId={selectedDepartment?.facilityId}
+        fromDepartmentId={departmentId}
       />
     </Panel>
   );
