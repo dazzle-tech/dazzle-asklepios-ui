@@ -52,7 +52,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
-  const [searchKeyword, setSearchKeyword] = useState<string | Date | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [patients, setPatients] = useState<any[]>([]);
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
@@ -188,12 +188,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     }
   }, [search, searchKeyword, searchRef]);
 
-  useEffect(() => {
-    setPatients([]);
-    setLinks({});
-    setSearchKeyword(null);
-  }, [selectedCriterion]);
-
   return (
     <div
       className={clsx(`profile-sidebar-container ${mode === 'light' ? 'light' : 'dark'}`, {
@@ -227,7 +221,16 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         selectDataValue="value"
                         showLabel={false}
                         record={{ searchCriteria: selectedCriterion }}
-                        setRecord={r => setSelectedCriterion(r.searchCriteria)}
+                        setRecord={r => {
+                          const newCriterion = r.searchCriteria;
+
+                          if (newCriterion === selectedCriterion) return;
+
+                          setSelectedCriterion(newCriterion);
+                          setSearchKeyword('');
+                          setPatients([]);
+                          setLinks({});
+                        }}
                         width={300}
                       />
                     </Form>
@@ -256,12 +259,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                       </Form>
                     ) : (
                       <InputGroup inside>
-                        <Input
-                          placeholder="Search Patients"
-                          value={searchKeyword}
-                          onChange={val => setSearchKeyword(val)}
-                          onKeyDown={e => e.key === 'Enter' && search(0)}
-                        />
+                          <Input
+                            placeholder="Search Patients"
+                            value={searchKeyword}
+                            onChange={val => setSearchKeyword(val)}
+                            onKeyDown={e => e.key === 'Enter' && search(0)}
+                          />
                         <InputGroup.Button onClick={() => search(0)}>
                           <SearchIcon />
                         </InputGroup.Button>
