@@ -7,6 +7,7 @@ const SIZE_WIDTH_MAP = {
   sm: 600,
   md: 800,
   lg: 970,
+  sl: 500,
 };
 const GAP = 20;
 

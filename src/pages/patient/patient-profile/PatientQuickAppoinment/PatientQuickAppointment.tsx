@@ -134,9 +134,9 @@ const PatientQuickAppointment = ({
 
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({
     ...newPatientEncounter,
-    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-    facilityId: Number(localReferral?.toFacilityId ?? 0),
-    departmentId: Number(localReferral?.toDepartmentId ?? 0),
+    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0) || null,
+    facilityId: Number(localReferral?.toFacilityId ?? 0) || null,
+    departmentId: Number(localReferral?.toDepartmentId ?? 0) || null,
     encounterDate: new Date()
   });
 
