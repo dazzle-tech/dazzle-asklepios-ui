@@ -20,7 +20,7 @@ import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
-import Perform from '../encounter/encounter-component/procedure-new/Perform';
+import Perform from '../encounter/encounter-component/procedure/Perform';
 import MyButton from '@/components/MyButton/MyButton';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -102,7 +102,7 @@ const ProcedureModule: React.FC = () => {
     refetch: proRefetch,
     isLoading: procedureLoding
   } = useGetProceduresQuery(listRequest);
-
+  console.log("PROCEDURES",procedures)
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -224,38 +224,38 @@ const ProcedureModule: React.FC = () => {
   }, [record]);
 
   // Date filter logic (clone dates to avoid mutating state refs)
-  useEffect(() => {
-    let updatedFilters = [...listRequest.filters];
+  // useEffect(() => {
+  //   let updatedFilters = [...listRequest.filters];
 
-    const from = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
-    const to = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
+  //   const from = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+  //   const to = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
 
-    if (from && to) {
-      from.setHours(0, 0, 0, 0);
-      to.setHours(23, 59, 59, 999);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'between',
-        value: `${from.getTime()}-${to.getTime()}`
-      });
-    } else if (from) {
-      from.setHours(0, 0, 0, 0);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'gte',
-        value: from.getTime()
-      });
-    } else if (to) {
-      to.setHours(23, 59, 59, 999);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'lte',
-        value: to.getTime()
-      });
-    }
+  //   if (from && to) {
+  //     from.setHours(0, 0, 0, 0);
+  //     to.setHours(23, 59, 59, 999);
+  //     updatedFilters = addOrUpdateFilter(updatedFilters, {
+  //       fieldName: 'scheduled_date_time',
+  //       operator: 'between',
+  //       value: `${from.getTime()}-${to.getTime()}`
+  //     });
+  //   } else if (from) {
+  //     from.setHours(0, 0, 0, 0);
+  //     updatedFilters = addOrUpdateFilter(updatedFilters, {
+  //       fieldName: 'scheduled_date_time',
+  //       operator: 'gte',
+  //       value: from.getTime()
+  //     });
+  //   } else if (to) {
+  //     to.setHours(23, 59, 59, 999);
+  //     updatedFilters = addOrUpdateFilter(updatedFilters, {
+  //       fieldName: 'scheduled_date_time',
+  //       operator: 'lte',
+  //       value: to.getTime()
+  //     });
+  //   }
 
-    setListRequest(prev => ({ ...prev, filters: updatedFilters }));
-  }, [dateFilter]);
+  //   setListRequest(prev => ({ ...prev, filters: updatedFilters }));
+  // }, [dateFilter]);
 
   useEffect(() => {
     const divContent = (

@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import {
     Divider,
-    Form,
+    Form
 } from 'rsuite';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import ProcedureRegistration from './ProcedureRegistration';
