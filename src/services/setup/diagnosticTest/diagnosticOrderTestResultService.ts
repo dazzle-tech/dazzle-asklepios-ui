@@ -105,6 +105,11 @@ export type BulkRejectDTO = {
 export type DiagnosticOrderTestResultBulkCreateDTO = {
   results: DiagnosticOrderTestResultCreateDTO[];
 };
+export type DiagnosticOrderTestResultIdsFilterParams = Omit<
+  DiagnosticOrderTestResultFilterParams,
+  "page" | "size" | "sort"
+>;
+
 /* ================= Service ================= */
 
 export const diagnosticOrderTestResultService = createApi({
@@ -352,8 +357,19 @@ export const diagnosticOrderTestResultService = createApi({
         }),
         invalidatesTags: ["DiagnosticOrderTestResult"],
       }),
+    getDiagnosticOrderTestResultIds: builder.query<
+      number[],
+      DiagnosticOrderTestResultIdsFilterParams
+    >({
+      query: (params) => ({
+        url: "/api/patient/diagnostic-order-tests-results/ids",
+        method: "GET",
+        params,
+      }),
+    }),
 
   }),
+
 });
 
 /* ================= Hooks ================= */
@@ -374,4 +390,7 @@ export const {
   useGetLabResultLogsByResultIdQuery,
   useBulkCreateDiagnosticOrderTestResultMutation,
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
+  useGetDiagnosticOrderTestResultIdsQuery,
+  useLazyFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } = diagnosticOrderTestResultService;
