@@ -3456,8 +3456,10 @@ export type WaseelItemMappingSearchParams = {
   page: number;
   size: number;
   sort?: string;
-  search?: string;
   itemType?: string;
+  itemName?: string;
+  itemCode?: string;
+  sbsCode?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };

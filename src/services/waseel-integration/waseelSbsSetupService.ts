@@ -129,8 +129,10 @@ export const waseelSbsSetupService = createApi({
         page,
         size,
         sort = 'itemName,asc',
-        search,
-        itemType
+        itemType,
+        itemName,
+        itemCode,
+        sbsCode
       }) => ({
         url: '/api/setup/waseel/item-mapping',
         method: 'GET',
@@ -138,8 +140,10 @@ export const waseelSbsSetupService = createApi({
           page,
           size,
           sort,
-          ...(search ? { search } : {}),
-          ...(itemType ? { itemType } : {})
+          ...(itemType ? { itemType } : {}),
+          ...(itemName ? { itemName } : {}),
+          ...(itemCode ? { itemCode } : {}),
+          ...(sbsCode ? { sbsCode } : {})
         }
       }),
       transformResponse: (
