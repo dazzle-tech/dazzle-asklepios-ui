@@ -304,16 +304,11 @@ const ProcedureModule: React.FC = () => {
       {
         key: 'procedureId',
         dataKey: 'procedureId',
-        title: <Translate>PROCEDURE ID</Translate>,
+        title: <Translate>PROCEDURE Name</Translate>,
         flexGrow: 1,
         render: (rowData: any) => rowData.procedureId
       },
-      {
-        key: 'procedureName',
-        dataKey: 'procedureName',
-        title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1
-      },
+      
       {
         key: 'scheduledDateTime',
         dataKey: 'scheduledDateTime',
