@@ -233,6 +233,7 @@ import { appointmentPolicyAssignmentService } from './services/appointment/appoi
 import { systemConfigService } from '@/services/systemConfigService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
 import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 
@@ -284,6 +285,7 @@ export const store = configureStore({
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
@@ -792,6 +794,7 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
+        patientTimelineService.middleware,
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,

@@ -13,6 +13,7 @@ import {
   faBarsProgress,
   faBed,
   faCalendar,
+  faClockRotateLeft,
   faConciergeBell,
   faFileInvoice,
   faHouseChimneyMedical,
@@ -54,6 +55,7 @@ import './styles.less';
 import DiagnosisTable from './emr-tables/DiagnosisTable';
 import PreviousMeasurementsMain from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
 import DentalProcedures from './emr-tables/DentalProcedures';
+import PatientTimelineModal from '@/components/PatientTimelineModal/PatientTimelineModal';
 
 const { getHeight } = DOMHelper;
 
@@ -95,6 +97,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const [activeSectionCard, setActiveSectionCard] = useState<string | null>(null);
+  const [timelineModalOpen, setTimelineModalOpen] = useState(false);
 
   useEffect(() => {
     if (localPatient) {
@@ -254,6 +257,18 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               active={activeSectionCard === 'services'}
             />
           </div> */}
+
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={0}
+                footerText="Timeline"
+                icon={faClockRotateLeft}
+                backgroundColor="var(--card-purple)"
+                width={170}
+                height={100}
+                onClick={() => setTimelineModalOpen(true)}
+              />
+            </div>
 
             <div className="animation-emr-card-patient-emr">
               <EMRCard
@@ -828,6 +843,12 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           )}
         </div>
       </div>
+
+      <PatientTimelineModal
+        open={timelineModalOpen}
+        setOpen={setTimelineModalOpen}
+        patientId={localPatient?.id ?? null}
+      />
     </div>
   );
 };
