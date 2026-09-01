@@ -5,7 +5,6 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { useGetClaimSettlementsQuery } from '@/services/billing/claimSettlementService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import type { ClaimSettlementRowResponse } from '@/types/model-types-new';
@@ -13,6 +12,11 @@ import { notify } from '@/utils/uiReducerActions';
 
 import { getSettlementColumns } from './settlementColumns';
 import './styles.less';
+import {
+  useGetClaimSettlementsQuery,
+  useLazyGetClaimSettlementsQuery,
+  useGenerateSettlementPdfMutation
+} from '@/services/billing/claimSettlementService';
 
 type AppliedFilters = {
   payerNphiesId: string;
@@ -38,7 +42,10 @@ const SettlementReportPanel: React.FC = () => {
 
   const { data: nphiesPayerListResponse, isFetching: isPayersLoading } =
     useGetAllNphiesPayersQuery({ page: 0, size: 2000, sort: 'nameEn,asc' });
+  const [loadAllRows] = useLazyGetClaimSettlementsQuery();
 
+  const [generateSettlementPdf] =
+    useGenerateSettlementPdfMutation();
   const insuranceCompanyOptions = useMemo(
     () =>
       (nphiesPayerListResponse?.data ?? [])
@@ -94,7 +101,89 @@ const SettlementReportPanel: React.FC = () => {
     setAppliedFilters(null);
     setPage(0);
   };
+  const handlePrintReport = async () => {
+    if (!appliedFilters) {
+      return;
+    }
 
+    try {
+
+      const allRowsResponse = await loadAllRows({
+        payerNphiesId: appliedFilters.payerNphiesId,
+        encounterType: appliedFilters.encounterType,
+        fromDate: appliedFilters.fromDate,
+        toDate: appliedFilters.toDate,
+        page: 0,
+        size: 100000,
+        sort: 'id,desc'
+      }).unwrap();
+
+      const pdfBlob = await generateSettlementPdf({
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        lang: 'en',
+
+        body: {
+          criteria: {
+            insuranceCompanyId: null,
+            settlementDateFrom:
+              appliedFilters.fromDate.substring(0, 10),
+            settlementDateTo:
+              appliedFilters.toDate.substring(0, 10),
+            encounterType:
+              appliedFilters.encounterType
+          },
+          rows: allRowsResponse.content.map(row => ({
+            patientName: '',
+            patientId: '',
+
+            invoiceNumber: '',
+
+            settlementNumber: row.settlementNo,
+
+            settlementDate:
+              row.settlementDate
+                ? row.settlementDate.substring(0, 10)
+                : null,
+
+            insuranceCompany: row.insuranceCompany,
+
+            claimNumber: row.claimNo,
+
+            claimDate:
+              row.claimDate
+                ? row.claimDate.substring(0, 10)
+                : null,
+
+            billedAmount: row.billedAmount,
+            approvedAmount: row.approvedAmount,
+            rejectedAmount: row.rejectedAmount,
+
+            patientShare: row.patientShare,
+            insuranceAmount: row.insuranceAmount,
+
+            paidAmount: row.paidAmount,
+            outstandingAmount: row.outstandingAmount,
+
+            settlementStatus: row.settlementStatus
+          }))
+
+        }
+      }).unwrap();
+
+      const url = window.URL.createObjectURL(pdfBlob);
+
+      window.open(url, '_blank');
+
+    } catch {
+
+      dispatch(
+        notify({
+          msg: 'Failed to generate settlement report.',
+          sev: 'error'
+        })
+      );
+    }
+  };
   return (
     <div className="bc-body">
       <main className="bc-main">
@@ -176,6 +265,13 @@ const SettlementReportPanel: React.FC = () => {
                 </MyButton>
                 <MyButton appearance="ghost" onClick={handleReset}>
                   Reset
+                </MyButton>
+                <MyButton
+                  appearance="primary"
+                  onClick={handlePrintReport}
+                  disabled={!hasAppliedFilters}
+                >
+                  Print Report
                 </MyButton>
               </div>
             </div>

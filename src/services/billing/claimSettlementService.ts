@@ -18,7 +18,44 @@ export type ClaimSettlementPage = {
   content: ClaimSettlementRowResponse[];
   totalElements: number;
 };
+export interface SettlementReportCriteriaDTO {
+  insuranceCompanyId?: number | null;
+  settlementDateFrom?: string | null;
+  settlementDateTo?: string | null;
+  encounterType?: string | null;
+}
 
+export interface SettlementReportRowDTO {
+  patientName?: string | null;
+  patientId?: string | null;
+
+  invoiceNumber?: string | null;
+
+  settlementNumber?: string | null;
+  settlementDate?: string | null;
+
+  insuranceCompany?: string | null;
+
+  claimNumber?: string | null;
+  claimDate?: string | null;
+
+  billedAmount?: number | null;
+  approvedAmount?: number | null;
+  rejectedAmount?: number | null;
+
+  patientShare?: number | null;
+  insuranceAmount?: number | null;
+
+  paidAmount?: number | null;
+  outstandingAmount?: number | null;
+
+  settlementStatus?: string | null;
+}
+
+export interface SettlementReportRequestDTO {
+  criteria: SettlementReportCriteriaDTO;
+  rows: SettlementReportRowDTO[];
+}
 export const claimSettlementApi = createApi({
   reducerPath: 'claimSettlementApi',
   baseQuery: BaseQuery,
@@ -70,8 +107,29 @@ export const claimSettlementApi = createApi({
         return { content: [], totalElements: 0 };
       },
       providesTags: ['ClaimSettlements']
+    }),
+  
+    generateSettlementPdf: builder.mutation<
+      Blob,
+      {
+        timezone: string;
+        lang: string;
+        body: SettlementReportRequestDTO;
+      }
+    >({
+      query: ({ timezone, lang, body }) => ({
+        url: `/api/analytics/settlement/pdf`,
+        method: 'POST',
+        params: {
+          timezone,
+          lang
+        },
+        body,
+        responseHandler: response => response.blob()
+      })
     })
   })
 });
-
-export const { useGetClaimSettlementsQuery } = claimSettlementApi;
+export const { useGetClaimSettlementsQuery ,useLazyGetClaimSettlementsQuery
+,useGenerateSettlementPdfMutation} = claimSettlementApi;
+  
