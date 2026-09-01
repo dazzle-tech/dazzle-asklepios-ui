@@ -643,6 +643,7 @@ const EncounterList = () => {
 
     } catch (error) {
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+
     }
   };
   

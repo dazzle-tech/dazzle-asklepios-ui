@@ -44,6 +44,12 @@ import AllergiesModal from './AllergiesModal';
 import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
+import {
+  useLazyGetPatientPrescriptionMedicationsQuery
+} from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+import {
+  useLazyGetTestsByOrderIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
 import WarningiesModal from './WarningiesModal';
 export type CompletionValidationItemType =
   | 'PRESCRIPTION'
@@ -88,6 +94,10 @@ const Encounter = ({
 
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
+  const [fetchPrescriptionMedications] =
+    useLazyGetPatientPrescriptionMedicationsQuery();
+  const [fetchDiagnosticOrderTests] =
+    useLazyGetTestsByOrderIdQuery();
   const encounterId = propsData?.encounter?.id;
   const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
     useLazyExistsPatientDiagnosisByEncounterIdQuery();
@@ -338,43 +348,87 @@ const Encounter = ({
       dispatch(notify({ msg, sev: 'error' }));
     }
   };
- const handleSubmitEncounter = async () => {
-  const items: CompletionValidationItem[] = [];
 
-  const orders = await fetchOrdersEncounterDraft({
-    patientId: patientIdForPrescriptions,
-    encounterId: encounterIdForPrescriptions,
-    saveDraft: true
-  }).unwrap();
+    
+    const handleSubmitEncounter = async (): Promise<boolean> => {
+      const items: CompletionValidationItem[] = [];
 
-  draftPrescriptions.forEach((prescription: any) => {
-    items.push({
-      id: Number(prescription.id),
-      type: 'PRESCRIPTION',
-      referenceNumber:
-        prescription.prescriptionNum?.toString() ??
-        prescription.id?.toString(),
-      status: prescription.status
-    });
-  });
+      const orders = await fetchOrdersEncounterDraft({
+        patientId: patientIdForPrescriptions,
+        encounterId: encounterIdForPrescriptions,
+        saveDraft: true
+      }).unwrap();
 
-  (orders?.data ?? []).forEach((order: any) => {
-  items.push({
-    id: Number(order.id),
-    type: 'DIAGNOSTIC_ORDER',
-    referenceNumber: order.orderNumber,
-    status: order.status,
-  });
-});
+      // Check prescriptions
+      for (const prescription of draftPrescriptions) {
+        const prescriptionId = Number(prescription?.id);
 
-  if (items.length > 0) {
-    setValidationItems(items);
-    setShowValidationModal(true);
-    return;
-  }
+        if (!prescriptionId) {
+          continue;
+        }
 
-  await completeEncounterNow();
-};
+        items.push({
+          id: prescriptionId,
+          type: 'PRESCRIPTION',
+          referenceNumber:
+            prescription.prescriptionNum?.toString() ??
+            prescriptionId.toString(),
+          status: prescription.status
+        });
+      }
+
+      // Check diagnostic orders
+      for (const order of orders?.data ?? []) {
+        const orderId = Number(order?.id);
+
+        if (!orderId) {
+          continue;
+        }
+
+        const testsResponse = await fetchDiagnosticOrderTests({
+          orderId,
+          page: 0,
+          size: 500,
+          sort: 'id,desc'
+        }).unwrap();
+
+        const tests = testsResponse?.data ?? [];
+
+        // Empty order -> ignore
+        if (tests.length === 0) {
+          continue;
+        }
+
+        // At least one test is not cancelled
+        const hasActiveTest = tests.some((test: any) => {
+          const testStatus = String(test?.status ?? '').toUpperCase();
+
+          return !testStatus.includes('CANCEL');
+        });
+
+        // All tests are cancelled -> ignore
+        if (!hasActiveTest) {
+          continue;
+        }
+
+        items.push({
+          id: orderId,
+          type: 'DIAGNOSTIC_ORDER',
+          referenceNumber: order.orderNumber,
+          status: order.status
+        });
+      }
+
+      // Pending items found
+      if (items.length > 0) {
+        setValidationItems(items);
+        setShowValidationModal(true);
+        return false;
+      }
+
+      // Nothing pending
+      return true;
+    };
 
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);

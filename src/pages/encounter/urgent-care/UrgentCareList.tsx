@@ -598,6 +598,7 @@ const UrgentCareList = () => {
 
     } catch (error) {
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+
     }
   };
   const handleRefreshAfterBedChange = useCallback(async () => {

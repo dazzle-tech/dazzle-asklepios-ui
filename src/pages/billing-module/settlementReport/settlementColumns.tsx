@@ -1,16 +1,23 @@
 import React from 'react';
+import { Tooltip, Whisper } from 'rsuite';
 
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import type { ColumnConfig } from '@/components/MyTable/MyTable';
 import type { ClaimSettlementRowResponse } from '@/types/model-types-new';
-import { formatDateWithoutSeconds } from '@/utils';
+import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import {
   formatMoney,
   formatSettlementStatus,
   getSettlementStatusColor
 } from './utils';
+
+const textOrDash = (value?: string | number | null) => {
+  if (value == null) return '-';
+  const text = String(value).trim();
+  return text ? text : '-';
+};
 
 export const getSettlementColumns = (): ColumnConfig[] => [
   {
@@ -25,6 +32,72 @@ export const getSettlementColumns = (): ColumnConfig[] => [
     width: 160,
     render: (row: ClaimSettlementRowResponse) =>
       row.settlementDate ? formatDateWithoutSeconds(row.settlementDate) : '-'
+  },
+  {
+    key: 'patientName',
+    title: <Translate>Patient Name</Translate>,
+    width: 220,
+    fullText: true,
+    render: (row: ClaimSettlementRowResponse) => {
+      const name = textOrDash(row.patientName);
+      const mrn = textOrDash(row.medicalRecordNumber);
+      return (
+        <div className="sr-patient">
+          <span>{name}</span>
+          {mrn !== '-' && <small>{mrn}</small>}
+        </div>
+      );
+    }
+  },
+  {
+    key: 'patientInfo',
+    title: <Translate>Patient Info</Translate>,
+    width: 200,
+    render: (row: ClaimSettlementRowResponse) => {
+      const mrn = textOrDash(row.medicalRecordNumber);
+      const gender = row.sexAtBirth
+        ? formatEnumString(String(row.sexAtBirth)) || String(row.sexAtBirth)
+        : '-';
+      const age = row.dateOfBirth ? calculateAgeFormat(row.dateOfBirth) : '-';
+      const speaker = (
+        <Tooltip>
+          <div>MRN: {mrn}</div>
+          <div>Age: {age}</div>
+          <div>Gender: {gender}</div>
+          <div>Patient ID: {row.patientId ?? '-'}</div>
+        </Tooltip>
+      );
+
+      return (
+        <Whisper trigger="hover" placement="top" speaker={speaker}>
+          <div className="sr-patient-info">
+            <span>MRN {mrn}</span>
+            <small>
+              {gender} · {age}
+            </small>
+          </div>
+        </Whisper>
+      );
+    }
+  },
+  {
+    key: 'invoiceNumber',
+    title: <Translate>Invoice No.</Translate>,
+    width: 150,
+    render: (row: ClaimSettlementRowResponse) => textOrDash(row.invoiceNumber)
+  },
+  {
+    key: 'visitNumber',
+    title: <Translate>Visit No.</Translate>,
+    width: 140,
+    render: (row: ClaimSettlementRowResponse) => textOrDash(row.visitNumber)
+  },
+  {
+    key: 'visitType',
+    title: <Translate>Visit Type</Translate>,
+    width: 140,
+    render: (row: ClaimSettlementRowResponse) =>
+      row.visitType ? formatEnumString(String(row.visitType)) || row.visitType : '-'
   },
   {
     key: 'insuranceCompany',
