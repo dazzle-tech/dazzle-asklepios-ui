@@ -344,7 +344,6 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
             setRecord={(value: { payorId: number | string | null }) =>
               setPayorId(toNullableNumber(value.payorId))
             }
-            searchable
             cleanable
             loading={isNphiesPayersLoading}
             placeholder={
