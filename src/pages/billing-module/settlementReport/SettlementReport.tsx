@@ -133,39 +133,48 @@ const SettlementReportPanel: React.FC = () => {
               appliedFilters.encounterType
           },
           rows: allRowsResponse.content.map(row => ({
-            patientName: row.patientName || '',
-            patientId: row.medicalRecordNumber || (row.patientId != null ? String(row.patientId) : ''),
-            invoiceNumber: row.invoiceNumber || '',
-            visitNumber: row.visitNumber || '',
-            visitType: row.visitType || '',
-            settlementNumber: row.settlementNo,
+  patientName: row.patientName || '',
 
-            settlementDate:
-              row.settlementDate
-                ? row.settlementDate.substring(0, 10)
-                : null,
+  patientId:
+    row.medicalRecordNumber ||
+    (row.patientId != null
+      ? String(row.patientId)
+      : ''),
 
-            insuranceCompany: row.insuranceCompany,
+  invoiceNumber: row.invoiceNumber || '',
 
-            claimNumber: row.claimNo,
+  settlementNumber: row.settlementNo || '',
 
-            claimDate:
-              row.claimDate
-                ? row.claimDate.substring(0, 10)
-                : null,
+  settlementDate:
+    row.settlementDate
+      ? row.settlementDate.substring(0, 10)
+      : null,
 
-            billedAmount: row.billedAmount,
-            approvedAmount: row.approvedAmount,
-            rejectedAmount: row.rejectedAmount,
+  insuranceCompany: row.insuranceCompany || '',
 
-            patientShare: row.patientShare,
-            insuranceAmount: row.insuranceAmount,
+  claimNumber: row.claimNo || '',
 
-            paidAmount: row.paidAmount,
-            outstandingAmount: row.outstandingAmount,
+  claimDate:
+    row.claimDate
+      ? row.claimDate.substring(0, 10)
+      : null,
 
-            settlementStatus: row.settlementStatus
-          }))
+  billedAmount: row.billedAmount,
+
+  approvedAmount: row.approvedAmount,
+
+  rejectedAmount: row.rejectedAmount,
+
+  patientShare: row.patientShare,
+
+  insuranceAmount: row.insuranceAmount,
+
+  paidAmount: row.paidAmount,
+
+  outstandingAmount: row.outstandingAmount,
+
+  settlementStatus: row.settlementStatus
+}))
 
         }
       }).unwrap();
