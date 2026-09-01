@@ -597,7 +597,7 @@ const UrgentCareList = () => {
       dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
 
     } catch (error) {
-      dispatch(notify({ msg: "Failed to reopen encounter", sev: "error" }))
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
 
     }
   };
