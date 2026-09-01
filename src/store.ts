@@ -237,6 +237,7 @@ import { eligibilityApi } from './services/waseel-integration/eligibilityService
 import { preAuthorizationApi } from './services/waseel-integration/preAuthorizationService';
 import { claimApi } from './services/waseel-integration/claimService';
 import { insuranceReceivablesApi } from './services/billing/insuranceReceivablesService';
+import { claimSettlementApi } from './services/billing/claimSettlementService';
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
@@ -612,6 +613,7 @@ export const store = configureStore({
     [preAuthorizationApi.reducerPath]: preAuthorizationApi.reducer,
     [claimApi.reducerPath]: claimApi.reducer,
     [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
+    [claimSettlementApi.reducerPath]: claimSettlementApi.reducer,
     [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
@@ -837,6 +839,7 @@ export const store = configureStore({
         preAuthorizationApi.middleware,
         claimApi.middleware,
         insuranceReceivablesApi.middleware,
+        claimSettlementApi.middleware,
         PayorPlanCoverageClassService.middleware,
         waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,

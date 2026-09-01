@@ -6993,6 +6993,24 @@ export interface WaseelClaimUploadResponse {
   ratioOfNotAccepted?: number | null;
 }
 
+export interface ClaimSettlementRowResponse {
+  claimId?: number | null;
+  settlementNo?: string | null;
+  settlementDate?: string | null;
+  insuranceCompany?: string | null;
+  tpa?: string | null;
+  claimNo?: string | null;
+  claimDate?: string | null;
+  billedAmount?: number | null;
+  approvedAmount?: number | null;
+  rejectedAmount?: number | null;
+  patientShare?: number | null;
+  insuranceAmount?: number | null;
+  paidAmount?: number | null;
+  outstandingAmount?: number | null;
+  settlementStatus?: string | null;
+}
+
 export interface InsurancePayerReceivablesSummaryResponse {
   payerId?: number | null;
   payerName?: string | null;
