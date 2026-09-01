@@ -247,8 +247,8 @@ const Encounter = ({
     },
     { skip: !patientIdForPrescriptions || !encounterIdForPrescriptions }
   );
-      const [fetchOrdersEncounterDraft] = useLazyFilterDiagnosticOrdersQuery();
-  
+  const [fetchOrdersEncounterDraft] = useLazyFilterDiagnosticOrdersQuery();
+
 
   const draftPrescriptions = useMemo(() => {
     const list = patientPrescriptionsResponse?.data ?? [];
@@ -349,87 +349,120 @@ const Encounter = ({
     }
   };
 
-    
-    const handleSubmitEncounter = async (): Promise<boolean> => {
-      const items: CompletionValidationItem[] = [];
 
-      const orders = await fetchOrdersEncounterDraft({
-        patientId: patientIdForPrescriptions,
-        encounterId: encounterIdForPrescriptions,
-        saveDraft: true
-      }).unwrap();
+  // const handleSubmitEncounter = async (): Promise<boolean> => {
+  //   const items: CompletionValidationItem[] = [];
 
-      // Check prescriptions
-      for (const prescription of draftPrescriptions) {
-        const prescriptionId = Number(prescription?.id);
+  //   const orders = await fetchOrdersEncounterDraft({
+  //     patientId: patientIdForPrescriptions,
+  //     encounterId: encounterIdForPrescriptions,
+  //     saveDraft: true
+  //   }).unwrap();
 
-        if (!prescriptionId) {
-          continue;
-        }
+  //   // Check prescriptions
+  //    draftPrescriptions.forEach((prescription: any) => {
+  //     items.push({
+  //       id: Number(prescription.id),
+  //       type: 'PRESCRIPTION',
+  //       referenceNumber:
+  //         prescription.prescriptionNum?.toString() ??
+  //         prescription.id?.toString(),
+  //       status: prescription.status
+  //     });
+  //   });
 
-        items.push({
-          id: prescriptionId,
-          type: 'PRESCRIPTION',
-          referenceNumber:
-            prescription.prescriptionNum?.toString() ??
-            prescriptionId.toString(),
-          status: prescription.status
-        });
-      }
+  //   // Check diagnostic orders
+  //   for (const order of orders?.data ?? []) {
+  //     const orderId = Number(order?.id);
 
-      // Check diagnostic orders
-      for (const order of orders?.data ?? []) {
-        const orderId = Number(order?.id);
+  //     if (!orderId) {
+  //       continue;
+  //     }
 
-        if (!orderId) {
-          continue;
-        }
+  //     const testsResponse = await fetchDiagnosticOrderTests({
+  //       orderId,
+  //       page: 0,
+  //       size: 500,
+  //       sort: 'id,desc'
+  //     }).unwrap();
 
-        const testsResponse = await fetchDiagnosticOrderTests({
-          orderId,
-          page: 0,
-          size: 500,
-          sort: 'id,desc'
-        }).unwrap();
+  //     const tests = testsResponse?.data ?? [];
 
-        const tests = testsResponse?.data ?? [];
+  //     // Empty order -> ignore
+  //     if (tests.length === 0) {
+  //       continue;
+  //     }
 
-        // Empty order -> ignore
-        if (tests.length === 0) {
-          continue;
-        }
+  //     // At least one test is not cancelled
+  //     const hasActiveTest = tests.some((test: any) => {
+  //       const testStatus = String(test?.status ?? '').toUpperCase();
 
-        // At least one test is not cancelled
-        const hasActiveTest = tests.some((test: any) => {
-          const testStatus = String(test?.status ?? '').toUpperCase();
+  //       return !testStatus.includes('CANCEL');
+  //     });
 
-          return !testStatus.includes('CANCEL');
-        });
+  //     // All tests are cancelled -> ignore
+  //     if (!hasActiveTest) {
+  //       continue;
+  //     }
 
-        // All tests are cancelled -> ignore
-        if (!hasActiveTest) {
-          continue;
-        }
+  //     items.push({
+  //       id: orderId,
+  //       type: 'DIAGNOSTIC_ORDER',
+  //       referenceNumber: order.orderNumber,
+  //       status: order.status
+  //     });
+  //   }
 
-        items.push({
-          id: orderId,
-          type: 'DIAGNOSTIC_ORDER',
-          referenceNumber: order.orderNumber,
-          status: order.status
-        });
-      }
 
-      // Pending items found
-      if (items.length > 0) {
-        setValidationItems(items);
-        setShowValidationModal(true);
-        return false;
-      }
+  //   if (items.length > 0) {
 
-      // Nothing pending
-      return true;
-    };
+  //     setValidationItems(items);
+  //     setShowValidationModal(true);
 
+  //     return false;
+  //   }
+  //   await completeEncounterNow();
+
+  // };
+  const handleSubmitEncounter = async () => {
+    const items: CompletionValidationItem[] = [];
+
+    const orders = await fetchOrdersEncounterDraft({
+      patientId: patientIdForPrescriptions,
+      encounterId: encounterIdForPrescriptions,
+      saveDraft: true
+    }).unwrap();
+
+    draftPrescriptions.forEach((prescription: any) => {
+      items.push({
+        id: Number(prescription.id),
+        type: 'PRESCRIPTION',
+        referenceNumber:
+          prescription.prescriptionNum?.toString() ??
+          prescription.id?.toString(),
+        status: prescription.status
+      });
+    });
+
+    (orders?.data ?? []).forEach((order: any) => {
+    items.push({
+      id: Number(order.id),
+      type: 'DIAGNOSTIC_ORDER',
+      referenceNumber: order.orderNumber,
+      status: order.status,
+    });
+  })
+
+    if (items.length > 0) {
+      setValidationItems(items);
+      setShowValidationModal(true);
+      return;
+    }
+    await completeEncounterNow();
+  };  
+ 
+ 
+ 
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
     setAiHasMoved(false);
@@ -899,7 +932,7 @@ const Encounter = ({
             state: sharedNavigationState
           });
         }}
-       onGoToDiagnosticOrders={() => {
+        onGoToDiagnosticOrders={() => {
           navigate('/encounter/diagnostics-order', {
             state: sharedNavigationState
           });
