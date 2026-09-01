@@ -27,6 +27,8 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/s
 import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
+import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
+import AutoPopulationResults from './AutoPopulationResults';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -38,6 +40,12 @@ const SOAP = props => {
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
 
   const viewMode = props.viewMode ?? location.state?.viewMode ?? outletContext?.viewMode;
+
+  const [caseSummary, setCaseSummary] = useState({ "caseSummary": null })
+  const [showAutoPopulationResults, setShowAutoPopulationResults] = useState(false);
+  const [autoPopulate, { data: autoPopulationResult, isLoading: isAutoPopulating, isError: isAutoPopulationError }] =
+    useAutoPopulateMutation();
+
 
   const edit =
     viewMode === 'readOnly' || (props.edit ?? location.state?.edit ?? outletContext?.edit ?? false);
@@ -234,6 +242,53 @@ const SOAP = props => {
     }
   };
 
+  const handleCaseSummary = async () => {
+    try {
+      if (!caseSummary.caseSummary?.trim()) {
+        dispatch(
+          notify({
+            msg: 'Please enter case summary text',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patient?.id) {
+        dispatch(
+          notify({
+            msg: 'Patient id is missing',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      setShowAutoPopulationResults(true);
+
+      await autoPopulate({
+        userText: caseSummary.caseSummary,
+        patientId: patient.id
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Auto population completed successfully',
+          sev: 'success'
+        })
+      );
+
+    } catch (error) {
+      console.log("error: ", error)
+      dispatch(
+        notify({
+          msg: 'Auto population failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const tabData = [
     {
       title: 'Visit Details',
@@ -242,23 +297,47 @@ const SOAP = props => {
           className={clsx('column-container', { 'disabled-panel': edit })}
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
-             <div className="top-section">
-                <div style={{ marginBottom: '16px' }}>
-                  <SectionContainer
-                    title={<Translate>Chief Complaint </Translate>}
-                    content={
-                      <Form fluid>
-                        <MyInput
-                          width="100%"
-                          height="95px"
-                          showLabel={false}
-                          fieldType="textarea"
-                          fieldName="chiefComplaint"
-                          record={localEncounter}
-                          setRecord={setLocalEncounter}
-                        />
+          <div className="top-section">
+            <div style={{ marginBottom: '16px' }}>
+              <SectionContainer
+                title={<Translate>Case Summary</Translate>}
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="95px"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="caseSummary"
+                      record={caseSummary}
+                      setRecord={setCaseSummary}
+                    />
+                  </Form>
+                }
+                action={
+                  <MyButton size="small" onClick={handleCaseSummary} loading={isAutoPopulating}>
+                    Auto Populate
+                  </MyButton>
+                }
+              />
+            </div>
 
-                        {/* <MyInput
+            <div style={{ marginBottom: '16px' }}>
+              <SectionContainer
+                title={<Translate>Chief Complaint </Translate>}
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="95px"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="chiefComplaint"
+                      record={localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+
+                    {/* <MyInput
                           width="100%"
                           height="120px"
                           fieldLabel="Physical Examination Summary"
@@ -271,48 +350,48 @@ const SOAP = props => {
                           setRecord={() => { }}
                           disabled
                         /> */}
-                      </Form>
-                    }
-                    action={
-                      <MyButton size="small" onClick={saveChanges}>
-                        Save
-                      </MyButton>
-                    }
-                  />
-                </div>
+                  </Form>
+                }
+                action={
+                  <MyButton size="small" onClick={saveChanges}>
+                    Save
+                  </MyButton>
+                }
+              />
+            </div>
 
-                <div style={{ marginBottom: '16px' }}>
-                  <HistoryOfPresentIllnessSection
-                    encounter={localEncounter}
-                    setEncounter={setLocalEncounter}
-                    disabled={edit}
-                  />
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <SectionContainer
-                    title={<Translate>Physical Examination Summary </Translate>}
-                    content={
-                      <Form fluid>
-                        <MyInput
-                          width="100%"
-                          height="120px"
-                          fieldLabel="Physical Examination Summary"
-                          showLabel={false}
-                          fieldType="textarea"
-                          fieldName="physicalExaminationSummery"
-                          record={localEncounter}
-                          setRecord={setLocalEncounter}
-                        />
-                      </Form>
-                    }
-                    action={
-                      <MyButton size="small" onClick={savePhysicalExamination}>
-                        Save
-                      </MyButton>
-                    }
-                  />
-                </div>
-             </div>
+            <div style={{ marginBottom: '16px' }}>
+              <HistoryOfPresentIllnessSection
+                encounter={localEncounter}
+                setEncounter={setLocalEncounter}
+                disabled={edit}
+              />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <SectionContainer
+                title={<Translate>Physical Examination Summary </Translate>}
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="120px"
+                      fieldLabel="Physical Examination Summary"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="physicalExaminationSummery"
+                      record={localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                  </Form>
+                }
+                action={
+                  <MyButton size="small" onClick={savePhysicalExamination}>
+                    Save
+                  </MyButton>
+                }
+              />
+            </div>
+          </div>
 
           <div style={{ marginBottom: '16px' }}>
             <SectionContainer
@@ -378,6 +457,13 @@ const SOAP = props => {
   return (
     <div className="patient-summary-container">
       <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
+      <AutoPopulationResults
+        open={showAutoPopulationResults}
+        setOpen={setShowAutoPopulationResults}
+        result={autoPopulationResult}
+        isLoading={isAutoPopulating}
+        isError={isAutoPopulationError}
+      />
     </div>
   );
 };

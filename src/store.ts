@@ -231,6 +231,7 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -551,6 +552,8 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    [autoPopulationService.reducerPath]: autoPopulationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -798,6 +801,7 @@ export const store = configureStore({
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
+        autoPopulationService.middleware
         labInterpretationService.middleware,
         ocrParsingService.middleware,
          medicationValidationService.middleware,
