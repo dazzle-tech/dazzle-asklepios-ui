@@ -7009,6 +7009,14 @@ export interface ClaimSettlementRowResponse {
   paidAmount?: number | null;
   outstandingAmount?: number | null;
   settlementStatus?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  medicalRecordNumber?: string | null;
+  sexAtBirth?: string | null;
+  dateOfBirth?: string | null;
+  invoiceNumber?: string | null;
+  visitNumber?: string | null;
+  visitType?: string | null;
 }
 
 export interface InsurancePayerReceivablesSummaryResponse {

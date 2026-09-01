@@ -30,6 +30,8 @@ export interface SettlementReportRowDTO {
   patientId?: string | null;
 
   invoiceNumber?: string | null;
+  visitNumber?: string | null;
+  visitType?: string | null;
 
   settlementNumber?: string | null;
   settlementDate?: string | null;

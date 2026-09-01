@@ -88,6 +88,30 @@
   font-size: 13px;
 }
 
+.sr-patient,
+.sr-patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sr-patient span,
+.sr-patient-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.sr-patient small,
+.sr-patient-info small {
+  color: #64748b;
+  font-size: 11px;
+}
+
 @media (max-width: 1100px) {
   .sr-filters__grid {
     grid-template-columns: 1fr 1fr;
