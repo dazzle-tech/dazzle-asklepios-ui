@@ -12,7 +12,12 @@ import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSe
 import type { PendingClaimInvoiceResponse } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import {
+  WASEEL_CLAIM_TYPE_OPTIONS,
+  isProfessionalClaimType,
+  subTypeOptionsForClaimType
+} from './types';
 
 type ClaimBatchPanelProps = {
   onSubmitted?: () => void;
@@ -21,9 +26,13 @@ type ClaimBatchPanelProps = {
 const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const dispatch = useAppDispatch();
   const [payorId, setPayorId] = useState<number | null>(null);
+  const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
+  const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
   const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
   const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
+  const [appliedClaimType, setAppliedClaimType] = useState<string | null>(null);
+  const [appliedClaimSubType, setAppliedClaimSubType] = useState<string | null>(null);
   const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
@@ -33,10 +42,12 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       payorId: appliedPayorId,
       payerNphiesId: appliedPayerNphiesId,
       fromDate: appliedFromDate,
-      toDate: appliedToDate
+      toDate: appliedToDate,
+      claimType: appliedClaimType,
+      claimSubType: appliedClaimSubType
     },
     {
-      skip: appliedPayorId == null
+      skip: appliedPayorId == null || !appliedClaimType || !appliedClaimSubType
     }
   );
 
@@ -56,6 +67,19 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
         })),
     [nphiesPayerListResponse]
   );
+
+  const subTypeOptions = useMemo(
+    () => subTypeOptionsForClaimType(claimType),
+    [claimType]
+  );
+
+  const handleClaimTypeChange = (value: { claimType: string | null }) => {
+    const nextType = value.claimType;
+    setClaimType(nextType);
+    if (!isProfessionalClaimType(nextType)) {
+      setClaimSubType('OUTPATIENT');
+    }
+  };
 
   const rows = useMemo(() => pendingInvoices ?? [], [pendingInvoices]);
 
@@ -86,10 +110,22 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       return;
     }
 
+    if (!claimType) {
+      dispatch(notify({ msg: 'Select a claim type before searching invoices.', sev: 'warning' }));
+      return;
+    }
+
+    if (!claimSubType) {
+      dispatch(notify({ msg: 'Select a claim sub type before searching invoices.', sev: 'warning' }));
+      return;
+    }
+
     setAppliedPayorId(payorId);
     setAppliedPayerNphiesId(
       payorOptions.find(option => option.id === payorId)?.nphiesId?.trim() || null
     );
+    setAppliedClaimType(claimType);
+    setAppliedClaimSubType(claimSubType);
     setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
     setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
     setSelectedInvoiceIds([]);
@@ -101,9 +137,18 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       return;
     }
 
+    if (!appliedClaimType || !appliedClaimSubType) {
+      dispatch(notify({ msg: 'Search invoices with a claim type and sub type first.', sev: 'warning' }));
+      return;
+    }
+
     try {
       dispatch(showSystemLoader());
-      const result = await submitBatch({ financialDocumentIds: selectedInvoiceIds }).unwrap();
+      const result = await submitBatch({
+        financialDocumentIds: selectedInvoiceIds,
+        claimType: appliedClaimType,
+        claimSubType: appliedClaimSubType
+      }).unwrap();
       dispatch(
         notify({
           msg:
@@ -168,6 +213,19 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) => row.encounterId ?? '-'
     },
     {
+      key: 'encounterType',
+      title: 'Visit type',
+      width: 120,
+      render: (row: PendingClaimInvoiceResponse) =>
+        formatEnumString(row.encounterType ?? row.encounter?.encounterType) || '-'
+    },
+    {
+      key: 'matchingItemCount',
+      title: 'Claim items',
+      width: 110,
+      render: (row: PendingClaimInvoiceResponse) => row.matchingItemCount ?? '-'
+    },
+    {
       key: 'patientId',
       title: 'Patient',
       width: 100,
@@ -181,10 +239,17 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     },
     {
       key: 'totalAmount',
-      title: 'Amount',
-      width: 120,
+      title: 'Invoice amount',
+      width: 130,
       render: (row: PendingClaimInvoiceResponse) =>
         `${Number(row.totalAmount ?? 0).toFixed(2)} ${row.currency ?? 'SAR'}`
+    },
+    {
+      key: 'matchingNetAmount',
+      title: 'Claim amount',
+      width: 130,
+      render: (row: PendingClaimInvoiceResponse) =>
+        `${Number(row.matchingNetAmount ?? 0).toFixed(2)} ${row.currency ?? 'SAR'}`
     },
     {
       key: 'createdDate',
@@ -201,8 +266,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
         <div>
           <h2 className="bc-card__head-title">Monthly claim batch</h2>
           <div className="bc-card__head-meta">
-            Filter insurance invoices by payor and period, then submit one Waseel upload for the
-            selected invoices.
+            Filter insurance invoices by payor, claim type, sub type, and period. Matching invoice
+            lines are submitted as one Waseel claim type; remaining lines stay for another type.
           </div>
         </div>
       </div>
@@ -231,6 +296,39 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
                   : 'Select payor'
             }
             width="280px"
+          />
+
+          <MyInput
+            fieldLabel="Type"
+            fieldName="claimType"
+            fieldType="select"
+            selectData={WASEEL_CLAIM_TYPE_OPTIONS}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ claimType }}
+            setRecord={handleClaimTypeChange}
+            searchable={false}
+            cleanable={false}
+            placeholder="Select type"
+            width="180px"
+          />
+
+          <MyInput
+            fieldLabel="Sub Type"
+            fieldName="claimSubType"
+            fieldType="select"
+            selectData={subTypeOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ claimSubType }}
+            setRecord={(value: { claimSubType: string | null }) =>
+              setClaimSubType(value.claimSubType)
+            }
+            searchable={false}
+            cleanable={false}
+            disabled={!isProfessionalClaimType(claimType)}
+            placeholder="Select sub type"
+            width="180px"
           />
 
           <div className="claims-batch-filters__dates">

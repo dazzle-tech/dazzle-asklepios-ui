@@ -37,6 +37,15 @@ export const filterClaimRows = (
     if (filters.status && String(row.status ?? '').toUpperCase() !== filters.status.toUpperCase()) {
       return false;
     }
+    if (filters.claimType && String(row.claimType ?? '').toUpperCase() !== filters.claimType.toUpperCase()) {
+      return false;
+    }
+    if (
+      filters.claimSubType &&
+      String(row.claimSubType ?? '').toUpperCase() !== filters.claimSubType.toUpperCase()
+    ) {
+      return false;
+    }
     if (filters.claimReference && !contains(row.claimReference, filters.claimReference)) {
       return false;
     }

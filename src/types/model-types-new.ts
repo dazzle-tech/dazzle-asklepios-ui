@@ -6912,6 +6912,8 @@ export interface ClaimTrackingResponse {
   financialDocumentId?: number | null;
   preAuthorizationId?: number | null;
   patientInsuranceId?: number | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
   uploadName?: string | null;
   uploadId?: number | null;
   provClaimNo?: string | null;
@@ -6939,6 +6941,8 @@ export interface ClaimSubmissionResponse {
   encounterId?: number | null;
   financialDocumentId?: number | null;
   preAuthorizationId?: number | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
   uploadName?: string | null;
   uploadId?: number | null;
   provClaimNo?: string | null;
@@ -6956,6 +6960,7 @@ export interface PendingClaimInvoiceResponse {
   documentNumber?: string | null;
   encounterId?: number | null;
   encounter?: PatientEncounter | null;
+  encounterType?: string | null;
   patientId?: number | null;
   patient?: Patient | null;
   payorId?: number | null;
@@ -6963,6 +6968,10 @@ export interface PendingClaimInvoiceResponse {
   totalAmount?: number | null;
   currency?: string | null;
   createdDate?: string | Date | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
+  matchingItemCount?: number | null;
+  matchingNetAmount?: number | null;
 }
 
 export interface ClaimBatchSubmitResponse {
