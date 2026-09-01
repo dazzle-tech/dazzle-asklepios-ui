@@ -24,6 +24,7 @@ export const userService = createApi({
       }),
     }),
 
+    
     getUserByLogin: builder.query({ query: (login: string) => ({ url: `/api/admin/users/${encodeURIComponent(login)}`, method: 'GET', }), }),
 
 
