@@ -88,12 +88,23 @@ export const claimApi = createApi({
       providesTags: ['ClaimTracking']
     }),
 
-    submitClaimForInvoice: builder.mutation<ClaimSubmissionResponse, number>({
-      query: financialDocumentId => ({
+    submitClaimForInvoice: builder.mutation<
+      ClaimSubmissionResponse,
+      {
+        financialDocumentId: number;
+        claimType?: string | null;
+        claimSubType?: string | null;
+      }
+    >({
+      query: ({ financialDocumentId, claimType, claimSubType }) => ({
         url: `/api/patient/internal/waseel/invoices/${financialDocumentId}/claims/submit`,
-        method: 'POST'
+        method: 'POST',
+        params: {
+          ...(claimType ? { claimType } : {}),
+          ...(claimSubType ? { claimSubType } : {})
+        }
       }),
-      invalidatesTags: (_res, _err, financialDocumentId) => [
+      invalidatesTags: (_res, _err, { financialDocumentId }) => [
         'ClaimTracking',
         { type: 'ClaimTracking', id: `invoice-${financialDocumentId}` }
       ],
@@ -140,16 +151,20 @@ export const claimApi = createApi({
         payerNphiesId?: string | null;
         fromDate?: string | null;
         toDate?: string | null;
+        claimType?: string | null;
+        claimSubType?: string | null;
       }
     >({
-      query: ({ payorId, payerNphiesId, fromDate, toDate }) => ({
+      query: ({ payorId, payerNphiesId, fromDate, toDate, claimType, claimSubType }) => ({
         url: '/api/patient/internal/waseel/claims/pending-invoices',
         method: 'GET',
         params: {
           ...(payorId != null ? { payorId } : {}),
           ...(payerNphiesId ? { payerNphiesId } : {}),
           ...(fromDate ? { fromDate } : {}),
-          ...(toDate ? { toDate } : {})
+          ...(toDate ? { toDate } : {}),
+          ...(claimType ? { claimType } : {}),
+          ...(claimSubType ? { claimSubType } : {})
         }
       }),
       providesTags: ['ClaimTracking']
@@ -157,7 +172,11 @@ export const claimApi = createApi({
 
     submitClaimBatch: builder.mutation<
       ClaimBatchSubmitResponse,
-      { financialDocumentIds: number[] }
+      {
+        financialDocumentIds: number[];
+        claimType: string;
+        claimSubType: string;
+      }
     >({
       query: body => ({
         url: '/api/patient/internal/waseel/claims/submit-batch',
