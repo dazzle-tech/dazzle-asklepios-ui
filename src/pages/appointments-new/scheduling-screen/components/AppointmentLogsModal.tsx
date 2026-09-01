@@ -71,7 +71,7 @@ const AppointmentLogsModal: React.FC<Props> = ({ open, setOpen, appointment }) =
       { key: 'appointmentId', title: 'APPOINTMENT ID', render: (row: any) => formatValue(row?.appointmentId) },
       { key: 'operationType', title: 'ACTION', render: (row: any) => formatEnumString(row?.operationType) },
       { key: 'logDate', title: 'LOG DATE', render: (row: any) => formatDateWithoutSeconds(row?.logDate) },
-      { key: 'logBy', title: 'LOG BY', render: (row: any) => getUserName(row?.createdBy) },
+      { key: 'logBy', title: 'LOG BY', render: (row: any) => getUserName(row?.logBy) },
       { key: 'facilityName', title: 'NAME', render: (row: any) => formatValue(row?.facilityName) },
       { key: 'departmentName', title: 'DEPARTMENT NAME', render: (row: any) => formatValue(row?.departmentName) },
       {

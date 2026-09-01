@@ -5,7 +5,7 @@ import Translate from '@/components/Translate';
 import { useGetUsersQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Col, Input, Panel, Row, Text } from 'rsuite';
+import { Col, Form, Input, Panel, Row, Text } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
@@ -116,6 +116,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
       width: 420,
       render: rowData =>
         activeRowKey === rowData.key ? (
+          <Form>
           <Input
             style={{ width: '200px' }}
             onChange={value => setStaff({ ...staff, responsibility: value })}
@@ -129,7 +130,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
                 dispatch(notify({ msg: 'Save failed', sev: 'error' }));
               }
             }}
-          />
+          /></Form>
         ) : (
           <>
             <FontAwesomeIcon
@@ -179,6 +180,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
         <Row className="rows-gap">
           <Col md={10}>
             <div>
+              <Form>
               <MyInput
                 width="100%"
                 menuMaxHeight={200}
@@ -192,7 +194,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
                 record={selectedUserList}
                 setRecord={setSelectedUserList}
                 disabled={!parentKey || disabled}
-              />
+              /></Form>
             </div>
           </Col>
           <Col md={2}>
@@ -235,70 +237,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   };
 
   return (
-    // <Panel
-    //   header={label}
-    //   collapsible
-    //   defaultExpanded
-    //   className={clsx("panel-border", {
-    //     "disabled-panel": disabled,
-    //   })}
-    // >
-    // <div>
-    //   <Row className="rows-gap">
-    //     <Col md={10}>
-    //       <Form fluid>
-    //         <MyInput
-    //           width="100%"
-    //           menuMaxHeight={200}
-    //           placeholder="Staff"
-    //           showLabel={false}
-    //           selectData={availableUsers}
-    //           fieldType="multyPicker"
-    //           selectDataLabel="username"
-    //           selectDataValue="key"
-    //           fieldName="key"
-    //           record={selectedUserList}
-    //           setRecord={setSelectedUserList}
-    //           disabled={!parentKey || disabled}
-    //         />
-    //       </Form>
-    //     </Col>
-    //     <Col md={2}>
-    //       <MyButton onClick={handleSave} disabled={!parentKey || disabled}>
-    //         Save
-    //       </MyButton>
-    //     </Col>
-    //   </Row>
-    //   <Row>
-    //     <Col md={24}>
-    //       <MyTable
-    //         data={staffList?.object || []}
-    //         columns={columns}
-    //         onRowClick={(rowData) => setStaff(rowData)}
-    //         rowClassName={isSelected}
-    //         height={300}
-    //       />
-    //     </Col>
-    //   </Row>
-
-    //   <DeletionConfirmationModal
-    //     open={confirmDeleteOpen}
-    //     setOpen={setConfirmDeleteOpen}
-    //     itemToDelete="Staff"
-    //     actionButtonFunction={async () => {
-    //       try {
-    //         await deleteStaff(staff.key).unwrap();
-    //         dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
-    //         refetch();
-    //         setConfirmDeleteOpen(false);
-    //       } catch (error) {
-    //         dispatch(notify({ msg: "Delete failed", sev: "error" }));
-    //       }
-    //     }}
-    //     actionType="delete"
-    //   />
-    //   </div>
-    // </Panel>
+  
     <SectionContainer title={<Text>{label}</Text>} content={content()} />
   );
 };

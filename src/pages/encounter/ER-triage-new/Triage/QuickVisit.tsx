@@ -216,6 +216,7 @@ const QuickVisit = () => {
             open={openDischargeModal}
             setOpen={setOpenDischargeModal}
             encounter={propsData.encounter}
+            onSuccess={() => navigate('/ER-department')}
           />
         </div>
       )}

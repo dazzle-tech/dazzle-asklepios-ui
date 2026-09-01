@@ -29,10 +29,15 @@ const EmergencyLevelAssessment = ({
   const avpuScaleEnumOptions = useEnumOptions("AVPUScale");
   const painLevelEnumOptions = useEnumOptions("PainLevel");
 
-  const isYes = (v: any) => String(v ?? "").toUpperCase().startsWith("Y");
-  const isNo = (v: any) => String(v ?? "").toUpperCase().startsWith("N");
-  const isBlank = (v: any) => v == null || String(v).trim() === "";
+  const isYes = (v: any) =>
+    String(v ?? "").toUpperCase() === "YES";
 
+  const isNo = (v: any) => {
+    const value = String(v ?? "").toUpperCase();
+    return value === "NO" || value === "NOT_YET_DETERMINED";
+  };
+
+  const isBlank = (v: any) => v == null || String(v).trim() === "";
   const handleSave = () => {
     if (readOnly) return;
     if (isBlank(triage?.lifeSaving)) {
@@ -59,11 +64,11 @@ const EmergencyLevelAssessment = ({
 
       // For non-critical paths, wait until prerequisites are answered before deriving a level
       const prerequisitesAnswered =
-        triage?.lifeSaving != null &&
-        triage?.unresponsive != null &&
-        triage?.highRisk != null &&
-        triage?.avpuScale != null &&
-        triage?.painScore != null;
+        !isBlank(triage?.lifeSaving) &&
+        !isBlank(triage?.unresponsive) &&
+        !isBlank(triage?.highRisk) &&
+        !isBlank(triage?.avpuScale) &&
+        !isBlank(triage?.painScore);
 
       if (!prerequisitesAnswered) return null;
 
@@ -91,11 +96,11 @@ const EmergencyLevelAssessment = ({
     };
 
     const prerequisitesAnswered =
-      triage?.lifeSaving != null &&
-      triage?.unresponsive != null &&
-      triage?.highRisk != null &&
-      triage?.avpuScale != null &&
-      triage?.painScore != null;
+      !isBlank(triage?.lifeSaving) &&
+      !isBlank(triage?.unresponsive) &&
+      !isBlank(triage?.highRisk) &&
+      !isBlank(triage?.avpuScale) &&
+      !isBlank(triage?.painScore);
 
     const critical = isYes(triage?.lifeSaving) || isYes(triage?.unresponsive);
     const serious =
@@ -105,7 +110,7 @@ const EmergencyLevelAssessment = ({
 
     setShowServices(Boolean(prerequisitesAnswered && !critical && !serious));
 
-  
+
     const nextLevel = computeEmergencyLevel();
     if (!readOnly && nextLevel && String(triage?.emergencyLevel ?? "") !== String(nextLevel)) {
       setTriage((prev: any) => ({ ...prev, emergencyLevel: nextLevel }));
@@ -305,7 +310,7 @@ const EmergencyLevelAssessment = ({
 
           {!readOnly && (
             <MyButton onClick={handleSave} appearance="primary">
-             <Translate> Save </Translate>
+              <Translate> Save </Translate>
             </MyButton>
           )}
         </Form>

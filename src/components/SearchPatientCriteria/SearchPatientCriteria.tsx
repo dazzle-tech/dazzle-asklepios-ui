@@ -8,14 +8,19 @@ interface SearchPatientCriteriaProps {
   setRecord: (value: any) => void;
   onSearchClick?: () => void;
   searchMarginTop?: string | number;
+  searchOnIconClickOnly?: boolean;
+  liveSearchMinLength?: number;
 }
 
 const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   record,
   setRecord,
   onSearchClick,
-  searchMarginTop = '0.9vw'
+  searchMarginTop = '0.9vw',
+  searchOnIconClickOnly = false,
+  liveSearchMinLength = 3
 }) => {
+
   const commit = useCallback(
     (patch: any) => {
       setRecord((prev: any) => ({
@@ -75,16 +80,32 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
     onSearchClick?.();
   }, [onSearchClick]);
 
-  const handleSearchEnter = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        applySearch();
-      }
-    },
-    [applySearch]
-  );
+const handleSearchEnter = useCallback(
+  (e: React.KeyboardEvent) => {
+    if (searchOnIconClickOnly) return;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      applySearch();
+    }
+  },
+  [applySearch, searchOnIconClickOnly]
+);
+
+useEffect(() => {
+  if (!liveSearchMinLength) return;
+
+  const value = String(patientName ?? '').trim();
+
+  if (value.length >= liveSearchMinLength || value.length === 0) {
+    const timer = setTimeout(() => {
+      onSearchClick?.();
+    }, 300); // debounce
+
+    return () => clearTimeout(timer);
+  }
+}, [patientName, liveSearchMinLength, onSearchClick]);
 
   return (
     <div className="search-patient-criteria-handle-position-row">

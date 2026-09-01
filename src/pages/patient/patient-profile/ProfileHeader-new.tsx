@@ -234,7 +234,8 @@ const handleScanDocumentClick = () => {
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item
+        {/* Don`t remove this commented code please */}
+        {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
             setOpenBulkRegistrationModal(true);
@@ -244,7 +245,7 @@ const handleScanDocumentClick = () => {
             <FontAwesomeIcon icon={faUsersLine} />
             <Translate>Bulk Registration</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
 
         {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">

@@ -231,8 +231,12 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
+import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
+
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -373,6 +377,8 @@ export const store = configureStore({
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
     [departmentServicesService.reducerPath]: departmentServicesService.reducer,
+
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -581,12 +587,13 @@ export const store = configureStore({
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
+    [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
   
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
-
+  [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -788,9 +795,12 @@ export const store = configureStore({
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
         patientTimelineService.middleware,
+        patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
-        ocrParsingService.middleware
+        labInterpretationService.middleware,
+        ocrParsingService.middleware,
+         medicationValidationService.middleware,
       ) as any
 });
 

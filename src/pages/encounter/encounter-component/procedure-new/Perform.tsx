@@ -25,6 +25,7 @@ import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
 import EquipmentAndLogistics from './EquipmentAndLogistics/EquipmentAndLogistics';
 import MyTab from '@/components/MyTab';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
+    console.log("COnfirm Modal")
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const categoryOptions = useEnumOptions('ProcedureCategory');

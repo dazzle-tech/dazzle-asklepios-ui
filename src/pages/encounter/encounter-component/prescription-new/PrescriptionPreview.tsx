@@ -198,7 +198,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
     <div className="prescription-preview-container" dir={dir}>
       <SectionContainer
         title={<Text className="font-style">Active Ingredients</Text>}
-        content={<ActiveIngrediantList selectedGeneric={medId ? { id: medId } : null} />}
+        content={<ActiveIngrediantList selectedGeneric={medId ?  medId : null} activeIngredientId={orderMedication.activeIngredientId} />}
       />
 
       <SectionContainer

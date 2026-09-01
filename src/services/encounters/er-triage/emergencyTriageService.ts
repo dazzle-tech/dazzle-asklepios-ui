@@ -5,7 +5,8 @@ import type {
   EmergencyTriageCreate,
   EmergencyTriageDestinationUpdate,
   EmergencyTriageEyeAssessmentUpdate,
-  EmergencyTriageLevelAssessmentUpdate
+  EmergencyTriageLevelAssessmentUpdate,
+  EmergencyTriageCompleteUpdate
 } from '@/types/model-types-new';
 
 type EmergencyTriageId = number | string;
@@ -82,6 +83,17 @@ export const emergencyTriageService = createApi({
           : ['EmergencyTriageLatest']
     }),
 
+    completeEmergencyTriage: builder.mutation<EmergencyTriage>({
+      query: ({ id }) => ({
+        url: `/api/patient/emergency-triage/${id}/complete`,
+        method: 'PUT'
+      }),
+      invalidatesTags: (result) =>
+        result?.encounterId != null
+          ? [{ type: 'EmergencyTriageLatest', id: result.encounterId }]
+          : ['EmergencyTriageLatest']
+    }),
+
     hardDeleteEmergencyTriage: builder.mutation<void, EmergencyTriageId>({
       query: id => ({
         url: `/api/patient/emergency-triage/${id}`,
@@ -102,9 +114,11 @@ export const emergencyTriageService = createApi({
 export const {
   useCreateOrGetEmergencyTriageMutation,
   useGetLatestEmergencyTriageByEncounterQuery,
+  useLazyGetLatestEmergencyTriageByEncounterQuery,
   useUpdateEmergencyTriageEyeAssessmentMutation,
   useUpdateEmergencyTriageLevelAssessmentMutation,
   useUpdateEmergencyTriageDestinationMutation,
+  useCompleteEmergencyTriageMutation,
   useHardDeleteEmergencyTriageMutation,
   useGetEmergencyTriageBulkByEncounterIdsQuery,
   useLazyGetEmergencyTriageBulkByEncounterIdsQuery,

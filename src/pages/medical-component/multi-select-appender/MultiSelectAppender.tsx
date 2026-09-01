@@ -41,8 +41,7 @@ const MultiSelectAppender = ({
   };
 
   useEffect(() => {
-    if (!object) return;
-    setValues(parseCsv(object));
+    setValues(parseCsv(object ?? ''));
   }, [object]);
 
   useEffect(() => {

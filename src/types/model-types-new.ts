@@ -2565,6 +2565,7 @@ export type PatientProcedure = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 
   status?: ProcStatus;
 
@@ -3436,6 +3437,7 @@ export type PatientProcedureCreateVM = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 };
 
 // UPDATE
@@ -3455,6 +3457,7 @@ export type PatientProcedureUpdateVM = {
 
   notes?: string | null;
   extraDocumentation?: string | null;
+  result?: string | null;
 };
 
 export type PatientProcedureCancelVM = {
@@ -5247,4 +5250,71 @@ export interface NotificationEventResponseVM {
   errorMessage?: string | null;
   eventPayload?: Record<string, unknown> | null;
   createdDate?: string | Date | null;
+}
+
+export interface MedicationTestValidationPatient {
+  mrn: string;
+  fullName?: string;
+  gender?: string;
+  dob?: string;
+  [k: string]: any;
+}
+
+export interface MedicationTestValidationEncounter {
+  visitId?: string;
+  visitType?: string;
+  plannedStartDate?: string;
+  chiefComplaint?: string;
+  patientAge?: string;
+  diagnosis?: string;
+  [k: string]: any;
+}
+
+export interface MedicationTestValidationDiagnosis {
+  type?: string;
+  value?: string;
+  [k: string]: any;
+}
+
+export interface MedicationValidationRequestDTO {
+  patientId: number;
+  encounterId: number;
+  // [k: string]: any;
+}
+
+export interface TestValidationRequestDTO {
+  patientId: number;
+  encounterId: number;
+  // [k: string]: any;
+}
+
+export interface ValidationQuickSummaryDTO {
+  overall_status?: string;
+  top_priority?: string;
+  [k: string]: any;
+}
+
+export interface DetailedValidationDTO {
+  item?: string;
+  severity?: string;
+  issue?: string;
+  recommendation?: string;
+  evidence?: string;
+  [k: string]: any;
+}
+
+export interface RecommendedAlternativeDTO {
+  original_item?: string;
+  alternative?: string;
+  rationale?: string;
+  [k: string]: any;
+}
+
+export interface ValidationResponseDTO {
+  quick_summary?: ValidationQuickSummaryDTO;
+  detailed_validations?: DetailedValidationDTO[];
+  recommended_alternatives?: RecommendedAlternativeDTO[];
+  confidence_score?: number;
+  timestamp?: string;
+  [k: string]: any;
 }

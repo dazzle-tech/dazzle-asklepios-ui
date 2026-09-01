@@ -225,9 +225,9 @@ const AddResultModal = ({
                 fieldName={String(profile.id)}
                 fieldType={isLov ? 'select' : 'number'}
                 selectData={isLov ? resolveLovOptions(profile) : undefined}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                selectDataLabel="lovDisplayVale"
+                disableByField='isValid'
+                allowDecimal
                 selectDataValue="key"
                 showLabel={false}
                 record={rowRecord}
@@ -307,80 +307,80 @@ const AddResultModal = ({
     return profiles.length > 0;
   });
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Add Results"
-      size="40vw"
-      hideActionBtn
-      steps={[
-        { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
-      ]}
-      content={
-        <div dir={dir}>
-          {!hasAnyProfiles ? (
-            <div
-              style={{
-                height: '40vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                color: '#888'
-              }}
-            >
-              <FontAwesomeIcon
-                icon={faFlask}
-                style={{ fontSize: 40, marginBottom: 12, opacity: 0.6 }}
-              />
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Add Results"
+        size="50vw"
+        hideActionBtn
+        steps={[
+          { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
+        ]}
+        content={
+          <div dir={dir}>
+            {!hasAnyProfiles ? (
+              <div
+                style={{
+                  height: '40vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: '#888'
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faFlask}
+                  style={{ fontSize: 40, marginBottom: 12, opacity: 0.6 }}
+                />
 
-              <div style={{ fontSize: 16, fontWeight: 500 }}>
-                No Pending Results to Add
-              </div>
+                <div style={{ fontSize: 16, fontWeight: 500 }}>
+                  No Pending Results to Add
+                </div>
 
-              <div style={{ fontSize: 13, marginTop: 6 }}>
-                There are no remaining profiles to fill
+                <div style={{ fontSize: 13, marginTop: 6 }}>
+                  There are no remaining profiles to fill
+                </div>
               </div>
-            </div>
-          ) : (
-            <Form fluid>
-              {acceptedTests.map(orderTest => {
-                const profiles =
-                  (profilesByTestId[orderTest.testId] ?? []).filter(
-                    profile => !filledProfileTestIds.includes(profile.id)
+            ) : (
+              <Form fluid>
+                {acceptedTests.map(orderTest => {
+                  const profiles =
+                    (profilesByTestId[orderTest.testId] ?? []).filter(
+                      profile => !filledProfileTestIds.includes(profile.id)
+                    );
+
+                  if (profiles.length === 0) return null;
+
+                  return (
+                    <Panel
+                      key={orderTest.id}
+                      bordered
+                      header={<strong>{orderTest.test?.name}</strong>}
+                      style={{ marginBottom: 16 }}
+                    >
+                      <MyTable
+                        height={260}
+                        data={profiles}
+                        columns={buildColumns(orderTest)}
+                      />
+                    </Panel>
                   );
-
-                if (profiles.length === 0) return null;
-
-                return (
-                  <Panel
-                    key={orderTest.id}
-                    bordered
-                    header={<strong>{orderTest.test?.name}</strong>}
-                    style={{ marginBottom: 16 }}
-                  >
-                    <MyTable
-                      height={260}
-                      data={profiles}
-                      columns={buildColumns(orderTest)}
-                    />
-                  </Panel>
-                );
-              })}
-            </Form>
-          )}
-        </div>
-      }
-    />
-  </div>
+                })}
+              </Form>
+            )}
+          </div>
+        }
+      />
+    </div>
   );
 };
 
