@@ -3,5 +3,6 @@ window.APP_CONFIG = {
   //  backendBaseURL: "http://asklepiosapi.nereuscloud.de",
 
   tenantId: "1",
-  tenantSecurityToken: "4994"
+  tenantSecurityToken: "4994",
+  stimulsoftProxyUrl: ""
 }; 

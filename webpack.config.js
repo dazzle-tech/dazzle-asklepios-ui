@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
  
+const express = require('express');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
  
@@ -36,7 +37,40 @@ function copyStimulsoftAssets() {
   }
 }
 copyStimulsoftAssets();
- 
+
+/**
+ * Same-origin Stimulsoft / HIS API proxy for local `webpack serve`.
+ * Designer JSON sources call /api/... ; SQL adapter calls /proxy.
+ * Webpack forwards both to Spring Boot with the browser JWT.
+ *
+ * Spring Boot: STIMULSOFT_PROXY_TARGET=http://localhost:8080
+ * Node adapter: STIMULSOFT_PROXY_TARGET=http://localhost:9615
+ *               STIMULSOFT_PROXY_STRIP_PATH=true
+ */
+const stimulsoftProxyTarget =
+  process.env.STIMULSOFT_PROXY_TARGET || 'http://localhost:8080';
+const stimulsoftProxyStripPath =
+  process.env.STIMULSOFT_PROXY_STRIP_PATH === 'true';
+
+const forwardHisAuthHeaders = (proxyReq, req) => {
+  const authorization = req.headers.authorization;
+  if (authorization) {
+    proxyReq.setHeader('Authorization', authorization);
+  }
+  const idToken = req.headers.id_token;
+  if (idToken) {
+    proxyReq.setHeader('id_token', idToken);
+  }
+};
+
+const hisApiProxyOptions = {
+  target: stimulsoftProxyTarget,
+  changeOrigin: true,
+  secure: false,
+  logLevel: 'warn',
+  onProxyReq: forwardHisAuthHeaders,
+};
+
 // Check environment variable to determine if source maps should be generated
 // In Docker, we set this to 'false' to save memory.
 const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
@@ -54,13 +88,37 @@ module.exports = {
     hot: true,
     liveReload: false,
     allowedHosts: 'all',
-    historyApiFallback: { disableDotRule: true },
+    // HashRouter does not need SPA fallback. The CLI --history-api-fallback flag
+    // was serving index.html for /api, which Stimulsoft then parsed as JSON.
+    historyApiFallback: false,
     static: {
       directory: path.resolve(__dirname, 'public'),
       publicPath: '/',
     },
     devMiddleware: {
       publicPath: '/',
+    },
+    proxy: [
+      {
+        context: ['/api', '/proxy'],
+        ...hisApiProxyOptions,
+        ...(stimulsoftProxyStripPath
+          ? { pathRewrite: { '^/proxy': '/' } }
+          : {}),
+      },
+    ],
+    setupMiddlewares: middlewares => {
+      // Serve public/ (including Stimulsoft pack scripts) before
+      // webpack-dev-middleware. Otherwise /stimulsoft/*.pack.js waits for the
+      // ~100MB app bundle and the designer <script> tag times out.
+      middlewares.unshift({
+        name: 'public-static-first',
+        middleware: express.static(path.resolve(__dirname, 'public'), {
+          index: false,
+          fallthrough: true,
+        }),
+      });
+      return middlewares;
     },
   },
   output: {

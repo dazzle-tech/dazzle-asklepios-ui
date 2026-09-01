@@ -1,4 +1,4 @@
-import config from '../../../app-config';
+﻿import config from '../../../app-config';
 
 const SCRIPT_FILES = [
   '/stimulsoft/stimulsoft.reports.pack.js',
@@ -48,12 +48,65 @@ const applyLicense = (Stimulsoft: any) => {
 };
 
 /**
+ * Point SQL / remote-data adapter calls at a same-origin /proxy.
+ * Webpack-dev-server (or Spring Boot / nginx in production) must host that path.
+ */
+export const applyStimulsoftWebServer = (Stimulsoft: any) => {
+  const webServer = Stimulsoft?.StiOptions?.WebServer;
+  if (!webServer) return;
+  webServer.url = config.stimulsoftProxyUrl || '';
+  if (typeof config.stimulsoftEncryptData === 'boolean') {
+    webServer.encryptData = config.stimulsoftEncryptData;
+  }
+  if (Stimulsoft.StiOptions?.Dictionary) {
+    Stimulsoft.StiOptions.Dictionary.allowRestConnections = true;
+  }
+};
+
+export const getStimulsoftAuthHeaders = (): { key: string; value: string }[] => {
+  const raw =
+    localStorage.getItem('id_token') || localStorage.getItem('token') || '';
+  const jwt = raw.replace(/^Bearer\s+/i, '').trim();
+  if (!jwt) return [];
+  return [
+    { key: 'Authorization', value: `Bearer ${jwt}` },
+    { key: 'id_token', value: jwt },
+  ];
+};
+
+const getAuthorizationHeader = () => getStimulsoftAuthHeaders()[0] ?? null;
+
+/** Forward the HIS JWT on Stimulsoft adapter POSTs through /proxy. */
+export const attachStimulsoftProxyHeaders = (report: any) => {
+  const header = getAuthorizationHeader();
+  if (!report || !header) return;
+
+  const existing = report.httpHeadersContainer;
+  if (existing && typeof existing.add === 'function') {
+    existing.add(header);
+    return;
+  }
+  if (Array.isArray(existing)) {
+    report.httpHeadersContainer = [
+      ...existing.filter(
+        (item: { key?: string }) =>
+          String(item?.key).toLowerCase() !== 'authorization'
+      ),
+      header,
+    ];
+    return;
+  }
+  report.httpHeadersContainer = [header];
+};
+
+/**
  * Loads Stimulsoft designer scripts only when called (Edit Report click).
  * The result is cached so later opens reuse the already-downloaded files.
  */
 export const loadStimulsoftDesigner = (): Promise<any> => {
   if (window.Stimulsoft?.Designer?.StiDesigner) {
     applyLicense(window.Stimulsoft);
+    applyStimulsoftWebServer(window.Stimulsoft);
     return Promise.resolve(window.Stimulsoft);
   }
 
@@ -73,6 +126,7 @@ export const loadStimulsoftDesigner = (): Promise<any> => {
           );
         }
         applyLicense(Stimulsoft);
+        applyStimulsoftWebServer(Stimulsoft);
         return Stimulsoft;
       })
       .catch(error => {

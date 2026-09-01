@@ -5,6 +5,8 @@ declare global {
       tenantId?: string;
       tenantSecurityToken?: string;
       stimulsoftLicenseKey?: string;
+      stimulsoftProxyUrl?: string;
+      stimulsoftEncryptData?: boolean;
     };
     Stimulsoft?: any;
   }
@@ -18,6 +20,12 @@ const config = {
   tenantSecurityToken:
     window.APP_CONFIG?.tenantSecurityToken || '4994',
   stimulsoftLicenseKey: window.APP_CONFIG?.stimulsoftLicenseKey || '',
+  /**
+   * Same-origin path in webpack dev. JSON REST sources use /api via the
+   * webpack proxy; keep this empty unless you use Stimulsoft SQL adapter.
+   */
+  stimulsoftProxyUrl: window.APP_CONFIG?.stimulsoftProxyUrl || '',
+  stimulsoftEncryptData: window.APP_CONFIG?.stimulsoftEncryptData,
 };
 
 console.log('APP_CONFIG', window.APP_CONFIG);
