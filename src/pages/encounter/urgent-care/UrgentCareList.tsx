@@ -12,7 +12,8 @@ import {
   faCommentMedical,
   faUserNurse,
   faEye,
-  faVialCircleCheck
+  faVialCircleCheck,
+  faRotateLeft
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -46,7 +47,8 @@ import {
   useCountDepartmentTotalByDateRangeQuery,
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
-  useCountDepartmentDischargedByDateRangeQuery
+  useCountDepartmentDischargedByDateRangeQuery,
+  useReopenEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 import {
   useGetBulkPatientBasicInfoMutation,
@@ -188,6 +190,10 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 const UrgentCareList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useAppSelector(
+    (state: any) => state.auth.user
+  );
+
   const currentUser = useAppSelector(
     (state: any) => state.auth.user
   );
@@ -242,8 +248,8 @@ const UrgentCareList = () => {
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
-  
-  
+
+
   const [filtersKey, setFiltersKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
 
@@ -258,7 +264,7 @@ const UrgentCareList = () => {
   const [cancelEncounter] = useCancelEncounterMutation();
   const [getUserFullNameByLogin] = useLazyGetUserFullNameByLoginQuery();
 
-   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -278,21 +284,21 @@ const UrgentCareList = () => {
   const DEFAULT_SORT = 'id,desc';
 
   const getDefaultDates = () => {
-  const now = new Date();
-  const lastWeek = new Date(now);
-  lastWeek.setDate(lastWeek.getDate() - 7);
+    const now = new Date();
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
 
-  return { now, lastWeek };
-};
+    return { now, lastWeek };
+  };
 
-const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
+  const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
 
-const [dateFilter, setDateFilter] = useState({
-  fromDate: initialLastWeek,
-  toDate: initialNow
-});
+  const [dateFilter, setDateFilter] = useState({
+    fromDate: initialLastWeek,
+    toDate: initialNow
+  });
 
-  const DEFAULT_STATUS = useMemo(() => [ 'ONGOING','ASSIGNED_TO_BED'], []);
+  const DEFAULT_STATUS = useMemo(() => ['ONGOING', 'ASSIGNED_TO_BED'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
@@ -337,29 +343,29 @@ const [dateFilter, setDateFilter] = useState({
     skip: !appliedFilters
   });
 
-useEffect(() => {
-  if (!isFetching && isSearchTriggered) {
-    setIsSearchTriggered(false);
-  }
-}, [isFetching, isSearchTriggered]);
+  useEffect(() => {
+    if (!isFetching && isSearchTriggered) {
+      setIsSearchTriggered(false);
+    }
+  }, [isFetching, isSearchTriggered]);
 
-useEffect(() => {
-  if (!filterParams && departmentId && isEmergencyDepartment) {
-    const fromDate = toISODate(dateFilter.fromDate);
-    const toDate = toISODate(dateFilter.toDate);
+  useEffect(() => {
+    if (!filterParams && departmentId && isEmergencyDepartment) {
+      const fromDate = toISODate(dateFilter.fromDate);
+      const toDate = toISODate(dateFilter.toDate);
 
-    setAppliedFilters({
-      departmentId: String(departmentId),
-      fromDate,
-      toDate,
-      statusIn: DEFAULT_STATUS,
-      practitionerId: undefined,
-      page: 0,
-      size: pageSize,
-      sort: DEFAULT_SORT
-    });
-  }
-}, [departmentId, isEmergencyDepartment]);
+      setAppliedFilters({
+        departmentId: String(departmentId),
+        fromDate,
+        toDate,
+        statusIn: DEFAULT_STATUS,
+        practitionerId: undefined,
+        page: 0,
+        size: pageSize,
+        sort: DEFAULT_SORT
+      });
+    }
+  }, [departmentId, isEmergencyDepartment]);
 
   const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
 
@@ -474,7 +480,8 @@ useEffect(() => {
       )
     );
   }, [normalizedTableData]);
-
+  const [reopenEncounter, { isLoadingReopen }] =
+    useReopenEncounterMutation();
   const {
     data: activeAssignments = [],
     isLoading: isAssignmentsLoading,
@@ -584,7 +591,16 @@ useEffect(() => {
       };
     });
   }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
+  const handleReopen = async (encounterId: number) => {
+    try {
+      await reopenEncounter({ id: encounterId }).unwrap();
+      dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
 
+    } catch (error) {
+      dispatch(notify({ msg: "Failed to reopen encounter", sev: "error" }))
+
+    }
+  };
   const handleRefreshAfterBedChange = useCallback(async () => {
     await refetch();
 
@@ -684,7 +700,7 @@ useEffect(() => {
     }
   };
 
-const handleGoToVisit = async (encounterData: any) => {
+ const handleGoToVisit = async (encounterData: any) => {
 
   if (
     !userByLogin?.allowOngoingVisit &&
@@ -1079,7 +1095,7 @@ const handleGoToVisit = async (encounterData: any) => {
         );
       }
     },
-       
+
     {
       key: 'actions',
       title: ' ',
@@ -1091,10 +1107,14 @@ const handleGoToVisit = async (encounterData: any) => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
+        const tooltipReopen = <Tooltip>Reopen Encounter</Tooltip>;
+
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
-
+        const canReopen =
+          statusUpper === 'COMPLETED' ||
+          statusUpper === 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -1205,7 +1225,24 @@ const handleGoToVisit = async (encounterData: any) => {
                 </MyButton>
               </div>
             </Whisper>
-
+            {canReopen && (
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={tooltipReopen}
+              >
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="#0d6efd"
+                    loading={isLoadingReopen}
+                    onClick={() => { handleReopen(row.id) }}
+                  >
+                    <FontAwesomeIcon icon={faRotateLeft} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
             {isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
@@ -1231,7 +1268,7 @@ const handleGoToVisit = async (encounterData: any) => {
   const filters = () => (
     <>
       <div key={filtersKey}>
-        
+
         <Form layout="inline" fluid className="date-filter-form">
 
           <MyInput
@@ -1369,16 +1406,16 @@ const handleGoToVisit = async (encounterData: any) => {
     </>
   );
 
-const tableLoading =
-  isDepartmentFetching ||
-  isLoading ||
-  isFetching ||
-  patientsBulkLoading ||
-  isAssignmentsLoading ||
-  isAssignmentsFetching ||
-  isRoomsByIdsLoading ||
-  isBedsByIdsLoading;
-  
+  const tableLoading =
+    isDepartmentFetching ||
+    isLoading ||
+    isFetching ||
+    patientsBulkLoading ||
+    isAssignmentsLoading ||
+    isAssignmentsFetching ||
+    isRoomsByIdsLoading ||
+    isBedsByIdsLoading;
+
   if (!departmentId) {
     return (
       <Panel>
@@ -1417,12 +1454,12 @@ const tableLoading =
           Bed Management
         </MyButton>
 
-          <MyButton
-            onClick={() => setOpenCollectSampleModal(true)}
-          >
-            <FontAwesomeIcon icon={faVialCircleCheck} />
-            <Translate>COLLECT SAMPLE</Translate>
-          </MyButton>
+        <MyButton
+          onClick={() => setOpenCollectSampleModal(true)}
+        >
+          <FontAwesomeIcon icon={faVialCircleCheck} />
+          <Translate>COLLECT SAMPLE</Translate>
+        </MyButton>
 
       </div>
 
