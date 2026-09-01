@@ -350,42 +350,20 @@ const Encounter = ({
   };
 
     
-  const handleSubmitEncounter = async () => {
-    const items: CompletionValidationItem[] = [];
+    const handleSubmitEncounter = async (): Promise<boolean> => {
+      const items: CompletionValidationItem[] = [];
 
-    const orders = await fetchOrdersEncounterDraft({
-      patientId: patientIdForPrescriptions,
-      encounterId: encounterIdForPrescriptions,
-      saveDraft: true
-    }).unwrap();
+      const orders = await fetchOrdersEncounterDraft({
+        patientId: patientIdForPrescriptions,
+        encounterId: encounterIdForPrescriptions,
+        saveDraft: true
+      }).unwrap();
 
+      // Check prescriptions
       for (const prescription of draftPrescriptions) {
         const prescriptionId = Number(prescription?.id);
 
         if (!prescriptionId) {
-          continue;
-        }
-
-        const medicationsResponse = await fetchPrescriptionMedications({
-          prescriptionHeaderId: prescriptionId,
-          page: 0,
-          size: 500,
-          sort: 'id,desc'
-        }).unwrap();
-
-        const medications = medicationsResponse?.data ?? [];
-
-        if (medications.length === 0) {
-          continue;
-        }
-
-        const hasActiveMedication = medications.some((medication: any) => {
-          const status = String(medication?.status ?? '').toUpperCase();
-
-          return !status.includes('CANCEL');
-        });
-
-        if (!hasActiveMedication) {
           continue;
         }
 
@@ -399,6 +377,7 @@ const Encounter = ({
         });
       }
 
+      // Check diagnostic orders
       for (const order of orders?.data ?? []) {
         const orderId = Number(order?.id);
 
@@ -415,24 +394,23 @@ const Encounter = ({
 
         const tests = testsResponse?.data ?? [];
 
-        // Order has no tests -> allow completing visit
+        // Empty order -> ignore
         if (tests.length === 0) {
           continue;
         }
 
-        // Check if there is at least one test that is NOT cancelled
+        // At least one test is not cancelled
         const hasActiveTest = tests.some((test: any) => {
           const testStatus = String(test?.status ?? '').toUpperCase();
 
           return !testStatus.includes('CANCEL');
         });
 
-        // All tests are cancelled -> allow completing visit
+        // All tests are cancelled -> ignore
         if (!hasActiveTest) {
           continue;
         }
 
-        // At least one test is still active/pending
         items.push({
           id: orderId,
           type: 'DIAGNOSTIC_ORDER',
@@ -441,14 +419,16 @@ const Encounter = ({
         });
       }
 
-    if (items.length > 0) {
-      setValidationItems(items);
-      setShowValidationModal(true);
-      return;
-    }
+      // Pending items found
+      if (items.length > 0) {
+        setValidationItems(items);
+        setShowValidationModal(true);
+        return false;
+      }
 
-    await completeEncounterNow();
-  };
+      // Nothing pending
+      return true;
+    };
 
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
