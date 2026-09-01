@@ -801,7 +801,7 @@ export const store = configureStore({
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
-        autoPopulationService.middleware
+        autoPopulationService.middleware,
         labInterpretationService.middleware,
         ocrParsingService.middleware,
          medicationValidationService.middleware,
