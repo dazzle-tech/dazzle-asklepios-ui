@@ -135,13 +135,19 @@ export const claimApi = createApi({
 
     getPendingClaimInvoices: builder.query<
       PendingClaimInvoiceResponse[],
-      { payorId?: number | null; fromDate?: string | null; toDate?: string | null }
+      {
+        payorId?: number | null;
+        payerNphiesId?: string | null;
+        fromDate?: string | null;
+        toDate?: string | null;
+      }
     >({
-      query: ({ payorId, fromDate, toDate }) => ({
+      query: ({ payorId, payerNphiesId, fromDate, toDate }) => ({
         url: '/api/patient/internal/waseel/claims/pending-invoices',
         method: 'GET',
         params: {
           ...(payorId != null ? { payorId } : {}),
+          ...(payerNphiesId ? { payerNphiesId } : {}),
           ...(fromDate ? { fromDate } : {}),
           ...(toDate ? { toDate } : {})
         }
