@@ -350,85 +350,45 @@ const Encounter = ({
   };
 
     
-    const handleSubmitEncounter = async (): Promise<boolean> => {
-      const items: CompletionValidationItem[] = [];
+const handleSubmitEncounter = async () => {
+  const items: CompletionValidationItem[] = [];
 
-      const orders = await fetchOrdersEncounterDraft({
-        patientId: patientIdForPrescriptions,
-        encounterId: encounterIdForPrescriptions,
-        saveDraft: true
-      }).unwrap();
+  const orders = await fetchOrdersEncounterDraft({
+    patientId: patientIdForPrescriptions,
+    encounterId: encounterIdForPrescriptions,
+    saveDraft: true
+  }).unwrap();
 
-      // Check prescriptions
-      for (const prescription of draftPrescriptions) {
-        const prescriptionId = Number(prescription?.id);
+  draftPrescriptions.forEach((prescription: any) => {
+    items.push({
+      id: Number(prescription.id),
+      type: 'PRESCRIPTION',
+      referenceNumber:
+        prescription.prescriptionNum?.toString() ??
+        prescription.id?.toString(),
+      status: prescription.status
+    });
+  });
 
-        if (!prescriptionId) {
-          continue;
-        }
+  (orders?.data ?? []).forEach((order: any) => {
+  items.push({
+    id: Number(order.id),
+    type: 'DIAGNOSTIC_ORDER',
+    referenceNumber: order.orderNumber,
+    status: order.status,
+  });
+});
 
-        items.push({
-          id: prescriptionId,
-          type: 'PRESCRIPTION',
-          referenceNumber:
-            prescription.prescriptionNum?.toString() ??
-            prescriptionId.toString(),
-          status: prescription.status
-        });
-      }
+  if (items.length > 0) {
+    setValidationItems(items);
+    setShowValidationModal(true);
+    return;
+  }
+  await completeEncounterNow();
+};
 
-      // Check diagnostic orders
-      for (const order of orders?.data ?? []) {
-        const orderId = Number(order?.id);
 
-        if (!orderId) {
-          continue;
-        }
 
-        const testsResponse = await fetchDiagnosticOrderTests({
-          orderId,
-          page: 0,
-          size: 500,
-          sort: 'id,desc'
-        }).unwrap();
-
-        const tests = testsResponse?.data ?? [];
-
-        // Empty order -> ignore
-        if (tests.length === 0) {
-          continue;
-        }
-
-        // At least one test is not cancelled
-        const hasActiveTest = tests.some((test: any) => {
-          const testStatus = String(test?.status ?? '').toUpperCase();
-
-          return !testStatus.includes('CANCEL');
-        });
-
-        // All tests are cancelled -> ignore
-        if (!hasActiveTest) {
-          continue;
-        }
-
-        items.push({
-          id: orderId,
-          type: 'DIAGNOSTIC_ORDER',
-          referenceNumber: order.orderNumber,
-          status: order.status
-        });
-      }
-
-      // Pending items found
-      if (items.length > 0) {
-        setValidationItems(items);
-        setShowValidationModal(true);
-        return false;
-      }
-
-      // Nothing pending
-      return true;
-    };
 
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
@@ -675,7 +635,10 @@ const Encounter = ({
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={async () => {
+                  onClick={
+                    
+                    async () => {
+
                     try {
                       if (localEncounter?.encounterType === 'EMERGENCY') {
                         setOpenDischargeModal(true);
