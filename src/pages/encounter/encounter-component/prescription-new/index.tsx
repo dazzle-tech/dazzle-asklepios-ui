@@ -473,25 +473,12 @@ const Prescription = (props: Props) => {
   }, [patientPrescriptionMedications]);
 
   const payload = useMemo(() => {
-    return buildPrescriptionSummaryPayload(
-      patient,
-      encounter,
-      patientPrescriptionMedications ?? [],
-      genericMedicationListResponse?.data ?? [],
-      predefinedInstructionsListResponse?.data ?? [],
-      customeInstructions?.object ?? []
-    );
-  }, [
-    patient,
-    encounter,
-    patientPrescriptionMedications,
-    genericMedicationListResponse,
-    predefinedInstructionsListResponse,
-    customeInstructions,
-    brandActivesCache,
-    unitLovQueryResponse,
-    frequencyLov
-  ]);
+      return {
+        patientId: Number(patient?.id ?? patient?.key),
+        encounterId: Number(encounter?.id ?? encounter?.key),
+        prescriptionId: currentPrescription?.id
+      };
+    }, [patient, encounter]);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;

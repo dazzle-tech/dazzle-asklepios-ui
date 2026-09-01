@@ -2,41 +2,76 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
-
-// ✅ AI validation mutations
-import { useValidateMedicationMutation } from '@/services/ai-services/medicationTestOrdersValidationService';
+import type { MedicationValidationRequestDTO, ValidationResponseDTO } from '@/types/model-types-new';
+import { useValidateMedicationMutation } from '@/services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 import './styles.less';
 
 type Props = {
   title?: any;
   button?: any;
-
-  // ✅ aggregated payload (your buildPrescriptionSummaryPayload output)
   aiPayload?: any;
 };
 
 const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, aiPayload = null }) => {
-  // ======================
-  // AI Validation
-  // ======================
   const [validateMedication, medsState] = useValidateMedicationMutation();
   const lastCallKeyRef = useRef<string | null>(null);
 
-  // ======================
-  // helpers
-  // ======================
-  const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
+  const validationRequest = useMemo<MedicationValidationRequestDTO | null>(() => {
+    const patientId = Number(aiPayload?.patientId ?? aiPayload?.patient?.id ?? aiPayload?.patient?.key);
+    const encounterId = Number(aiPayload?.encounterId ?? aiPayload?.encounter?.id ?? aiPayload?.encounter?.key);
 
-  const normalizeGender = (g: any) => {
-    const s = toStr(g).trim().toLowerCase();
-    if (['male', 'm', 'man', 'ذكر'].includes(s)) return 'Male';
-    if (['female', 'f', 'woman', 'أنثى', 'انثى'].includes(s)) return 'Female';
-    if (['other'].includes(s)) return 'Other';
-    return 'Unknown';
-  };
+    if (!patientId || !encounterId) return null;
+    return { patientId, encounterId };
+  }, [aiPayload]);
+
+  useEffect(() => {
+    if (!validationRequest) return;
+    const callKey = JSON.stringify(validationRequest);
+    if (lastCallKeyRef.current === callKey) return;
+    lastCallKeyRef.current = callKey;
+    validateMedication(validationRequest as any);
+  }, [validationRequest, validateMedication]);
+
+  const uiLoading = medsState.isLoading;
+  const uiError = medsState.error;
+
+  const uiModel = useMemo(() => {
+    if (!medsState?.data) return null;
+    const r = medsState.data as ValidationResponseDTO;
+    const header = {
+      status: r?.quick_summary?.overall_status ?? '',
+      topPriority: r?.quick_summary?.top_priority ?? '',
+      confidence:
+        r?.confidence_score !== undefined && r?.confidence_score !== null
+          ? Number(r.confidence_score)
+          : null
+    };
+
+    const findings = Array.isArray(r?.detailed_validations)
+      ? r.detailed_validations.map((d: any) => ({
+          item: d?.item ?? '',
+          severity: d?.severity ?? '',
+          issue: d?.issue ?? '',
+          recommendation: d?.recommendation ?? '',
+          evidence: d?.evidence ?? ''
+        }))
+      : [];
+
+    const alternatives = Array.isArray(r?.recommended_alternatives)
+      ? r.recommended_alternatives.map((a: any) => ({
+          original: a?.original_item ?? '',
+          alternative: a?.alternative ?? '',
+          rationale: a?.rationale ?? ''
+        }))
+      : [];
+
+    return { header, findings, alternatives };
+  }, [medsState.data]);
+
+  const canValidate = !!validationRequest;
 
   const normalizeSeverity = (sev: any) => {
-    const s = toStr(sev).trim().toLowerCase();
+    const s = String(sev ?? '').trim().toLowerCase();
     if (s === 'critical') return 'critical';
     if (s === 'high') return 'high';
     if (s === 'moderate' || s === 'medium') return 'moderate';
@@ -59,113 +94,11 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
     }
   };
 
-  // ======================
-  // ✅ Build MedicationValidationRequest (Pydantic-safe)
-  // ======================
-  const validationRequest = useMemo(() => {
-    if (!aiPayload) return null;
-
-    // your aggregated payload shape: { patient, encounter, complain, diagnosis, medications }
-    const patient = {
-      mrn: toStr(aiPayload?.patient?.mrn),
-      fullName: toStr(aiPayload?.patient?.fullName),
-      gender: normalizeGender(aiPayload?.patient?.gender),
-      dob: toStr(aiPayload?.patient?.dob)
-    };
-
-    const encounter = {
-      visitId: toStr(aiPayload?.encounter?.visitId),
-      visitType: toStr(aiPayload?.encounter?.visitType),
-      plannedStartDate: toStr(aiPayload?.encounter?.plannedStartDate),
-      chiefComplaint: toStr(aiPayload?.encounter?.chiefComplaint),
-      patientAge: toStr(aiPayload?.encounter?.patientAge),
-      diagnosis: toStr(aiPayload?.encounter?.diagnosis || aiPayload?.diagnosis?.value)
-    };
-
-    const diagnosis = {
-      type: toStr(aiPayload?.diagnosis?.type || 'Encounter Diagnosis'),
-      value: toStr(aiPayload?.diagnosis?.value)
-    };
-
-    const complain = toStr(aiPayload?.complain || aiPayload?.encounter?.chiefComplaint);
-
-    const medications = Array.isArray(aiPayload?.medications)
-      ? aiPayload.medications.map((m: any) => toStr(m)).filter(Boolean)
-      : [];
-
-    return { patient, encounter, complain, diagnosis, medications };
-  }, [aiPayload]);
-
-  useEffect(() => {
-    if (!validationRequest) return;
-    if (!Array.isArray(validationRequest.medications) || validationRequest.medications.length === 0)
-      return;
-
-    const callKey = JSON.stringify(validationRequest);
-    if (lastCallKeyRef.current === callKey) return;
-
-    lastCallKeyRef.current = callKey;
-
-
-    validateMedication(validationRequest as any);
-  }, [validationRequest, validateMedication]);
-
-  const uiLoading = medsState.isLoading;
-  const uiError = medsState.error;
-
-  const uiModel = useMemo(() => {
-    if (!medsState?.data) return null;
-    const r: any = medsState.data;
-    const header = {
-      status: r?.quick_summary?.overall_status ?? '',
-      topPriority: r?.quick_summary?.top_priority ?? '',
-      confidence:
-        r?.confidence_score !== undefined && r?.confidence_score !== null
-          ? Number(r.confidence_score)
-          : null
-    };
-
-    const findings: Array<{
-      item: string;
-      severity: string;
-      issue: string;
-      recommendation: string;
-      evidence?: string;
-    }> = Array.isArray(r?.detailed_validations)
-      ? r.detailed_validations.map((d: any) => ({
-          item: toStr(d?.item),
-          severity: toStr(d?.severity),
-          issue: toStr(d?.issue),
-          recommendation: toStr(d?.recommendation),
-          evidence: toStr(d?.evidence)
-        }))
-      : [];
-
-    const alternatives: Array<{
-      original: string;
-      alternative: string;
-      rationale: string;
-    }> = Array.isArray(r?.recommended_alternatives)
-      ? r.recommended_alternatives.map((a: any) => ({
-          original: toStr(a?.original_item),
-          alternative: toStr(a?.alternative),
-          rationale: toStr(a?.rationale)
-        }))
-      : [];
-
-    return { header, findings, alternatives };
-  }, [medsState.data]);
-
-  const canValidate = !!validationRequest && (validationRequest.medications?.length ?? 0) > 0;
-
   return (
     <div className="medical-container-div">
       <SectionContainer
         title={
-          <div
-            className="patient-history-title"
-            style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-          >
+          <div className="patient-history-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FontAwesomeIcon icon={faClipboardList} className="patient-history-icon" />
             <span>{title || 'Medication Validation'}</span>
           </div>
@@ -177,7 +110,7 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
               <div className="patient-history-content">
                 <div className="patient-history-text">
                   {!canValidate && (
-                    <div className="ai-empty">Validation payload not ready (no medications).</div>
+                    <div className="ai-empty">Validation payload not ready.</div>
                   )}
 
                   {uiLoading && (
@@ -230,7 +163,6 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
                                         <div className="ai-item-title">
                                           {i + 1}. {d.item || '-'}
                                         </div>
-
                                         {d.severity && (
                                           <div
                                             className="ai-item-pill"
@@ -244,21 +176,18 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
                                           </div>
                                         )}
                                       </div>
-
                                       {d.issue && (
                                         <div className="ai-item-row">
                                           <span className="ai-item-label">Issue:</span>
                                           <span className="ai-item-text">{d.issue}</span>
                                         </div>
                                       )}
-
                                       {d.recommendation && (
                                         <div className="ai-item-row">
                                           <span className="ai-item-label">Recommendation:</span>
                                           <span className="ai-item-text">{d.recommendation}</span>
                                         </div>
                                       )}
-
                                       {d.evidence && (
                                         <div className="ai-item-row">
                                           <span className="ai-item-label">Evidence:</span>
@@ -283,14 +212,12 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
                                         {i + 1}. {a.original || '-'}
                                       </div>
                                     </div>
-
                                     {a.alternative && (
                                       <div className="ai-item-row">
                                         <span className="ai-item-label">Alternative:</span>
                                         <span className="ai-item-text">{a.alternative}</span>
                                       </div>
                                     )}
-
                                     {a.rationale && (
                                       <div className="ai-item-row">
                                         <span className="ai-item-label">Rationale:</span>
@@ -317,3 +244,4 @@ const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, a
 };
 
 export default PatientHistorySummary;
+  
