@@ -8,6 +8,7 @@ import {
   useGetPendingClaimInvoicesQuery,
   useSubmitClaimBatchMutation
 } from '@/services/waseel-integration/claimService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import type { PendingClaimInvoiceResponse } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
@@ -22,6 +23,7 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const [payorId, setPayorId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
   const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
+  const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
   const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
@@ -29,6 +31,7 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const { data: pendingInvoices = [], isFetching, refetch } = useGetPendingClaimInvoicesQuery(
     {
       payorId: appliedPayorId,
+      payerNphiesId: appliedPayerNphiesId,
       fromDate: appliedFromDate,
       toDate: appliedToDate
     },
@@ -38,6 +41,21 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   );
 
   const [submitBatch, { isLoading: submitting }] = useSubmitClaimBatchMutation();
+
+  const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
+    useGetAllNphiesPayersQuery({ page: 0, size: 2000, sort: 'nameEn,asc' });
+
+  const payorOptions = useMemo(
+    () =>
+      (nphiesPayerListResponse?.data ?? [])
+        .filter(payer => payer?.id != null && payer.isActive !== false)
+        .map(payer => ({
+          id: Number(payer.id),
+          nphiesId: payer.nphiesId,
+          label: formatPayorOptionLabel(payer.nameEn, payer.nphiesId)
+        })),
+    [nphiesPayerListResponse]
+  );
 
   const rows = useMemo(() => pendingInvoices ?? [], [pendingInvoices]);
 
@@ -69,8 +87,11 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     }
 
     setAppliedPayorId(payorId);
-    setAppliedFromDate(dateRange?.[0]?.toISOString() ?? null);
-    setAppliedToDate(dateRange?.[1]?.toISOString() ?? null);
+    setAppliedPayerNphiesId(
+      payorOptions.find(option => option.id === payorId)?.nphiesId?.trim() || null
+    );
+    setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
+    setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
     setSelectedInvoiceIds([]);
   };
 
@@ -189,12 +210,27 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       <Form fluid className="claims-batch-filters-form">
         <div className="claims-batch-filters">
           <MyInput
-            fieldLabel="Payor ID"
+            fieldLabel="Payor"
             fieldName="payorId"
-            fieldType="number"
+            fieldType="select"
+            selectData={payorOptions}
+            selectDataLabel="label"
+            selectDataValue="id"
             record={{ payorId }}
-            setRecord={(value: { payorId: number | null }) => setPayorId(value.payorId)}
-            width="180px"
+            setRecord={(value: { payorId: number | string | null }) =>
+              setPayorId(toNullableNumber(value.payorId))
+            }
+            searchable
+            cleanable
+            loading={isNphiesPayersLoading}
+            placeholder={
+              isNphiesPayersLoading
+                ? 'Loading payors...'
+                : payorOptions.length === 0
+                  ? 'No payors found'
+                  : 'Select payor'
+            }
+            width="280px"
           />
 
           <div className="claims-batch-filters__dates">
@@ -233,6 +269,47 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       </div>
     </div>
   );
+};
+
+const formatPayorOptionLabel = (nameEn?: string | null, nphiesId?: string | null) => {
+  const name = nameEn?.trim();
+  const code = nphiesId?.trim();
+
+  if (name && code) {
+    return `${name} (${code})`;
+  }
+
+  return name || code || '-';
+};
+
+const toNullableNumber = (value: number | string | null | undefined) => {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+const toStartOfDayIso = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start.toISOString();
+};
+
+const toExclusiveEndIso = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const end = new Date(date);
+  end.setHours(0, 0, 0, 0);
+  end.setDate(end.getDate() + 1);
+  return end.toISOString();
 };
 
 export default ClaimBatchPanel;

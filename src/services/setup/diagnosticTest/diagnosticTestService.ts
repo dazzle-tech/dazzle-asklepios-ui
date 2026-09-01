@@ -107,7 +107,6 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    // ✅ new: get active diagnostic tests by type
     getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
       query: ({ type, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/diagnostic-test/active/by-type/${type}`,
@@ -116,6 +115,24 @@ export const diagnosticTestService = createApi({
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
+    getDiagnosticTestsByInternalCode: builder.query({
+      query: ({ internalCode, ...params }) => ({
+        url: `/api/setup/diagnostic-test/by-internal-code/${internalCode}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+
         return {
           data: response,
           totalCount: Number(headers?.get("X-Total-Count") ?? 0),
@@ -203,6 +220,8 @@ export const {
   useLazyGetDiagnosticTestsByTypeQuery,
   useLazyGetDiagnosticTestsByNameQuery,
   useGetDiagnosticTestsByNameQuery,
+  useGetDiagnosticTestsByInternalCodeQuery,
+  useLazyGetDiagnosticTestsByInternalCodeQuery,
   useGetDiagnosticTestByIdQuery,
   useCreateDiagnosticTestMutation,
   useUpdateDiagnosticTestMutation,
