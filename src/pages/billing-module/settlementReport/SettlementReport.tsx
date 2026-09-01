@@ -133,11 +133,11 @@ const SettlementReportPanel: React.FC = () => {
               appliedFilters.encounterType
           },
           rows: allRowsResponse.content.map(row => ({
-            patientName: '',
-            patientId: '',
-
-            invoiceNumber: '',
-
+            patientName: row.patientName || '',
+            patientId: row.medicalRecordNumber || (row.patientId != null ? String(row.patientId) : ''),
+            invoiceNumber: row.invoiceNumber || '',
+            visitNumber: row.visitNumber || '',
+            visitType: row.visitType || '',
             settlementNumber: row.settlementNo,
 
             settlementDate:
