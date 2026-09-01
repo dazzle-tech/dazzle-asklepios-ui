@@ -33,7 +33,6 @@ import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -677,13 +676,27 @@ useEffect(() => {
   };
 
   const handleGoToVisit = async (encounterData: any) => {
-    if(encounterData?.startedBy != null && encounterData?.startedBy !== user?.login){
+console.log('user', user);
+
+      if (
+        !user?.allowOngoingVisit &&
+        encounterData?.startedBy != null &&
+        encounterData?.startedBy !== user?.login
+      ) {
       const fullName = await getUserFullNameByLogin(
-      encounterData?.startedBy
-    ).unwrap();
-       dispatch(notify({ msg: `This Patient already seen by ${fullName} `, sev: 'warning' }));
+        encounterData?.startedBy
+      ).unwrap();
+
+      dispatch(
+        notify({
+          msg: `This Patient already seen by ${fullName} `,
+          sev: 'warning'
+        })
+      );
+
       return;
     }
+
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
@@ -707,7 +720,7 @@ useEffect(() => {
         encounter: encounterData
       }
     });
-
+    
   };
 
   const handleViewVisit = async (encounterData: any) => {
