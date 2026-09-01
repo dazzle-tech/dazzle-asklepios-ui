@@ -23,6 +23,7 @@ export interface SettlementReportCriteriaDTO {
   settlementDateFrom?: string | null;
   settlementDateTo?: string | null;
   encounterType?: string | null;
+  insuranceCompanyName:string|null;
 }
 
 export interface SettlementReportRowDTO {

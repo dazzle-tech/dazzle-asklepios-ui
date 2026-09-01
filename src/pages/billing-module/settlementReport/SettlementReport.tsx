@@ -101,6 +101,10 @@ const SettlementReportPanel: React.FC = () => {
     setAppliedFilters(null);
     setPage(0);
   };
+  const selectedInsuranceCompany =
+    insuranceCompanyOptions.find(
+      x => x.value === payerNphiesId
+    );
   const handlePrintReport = async () => {
     if (!appliedFilters) {
       return;
@@ -125,6 +129,9 @@ const SettlementReportPanel: React.FC = () => {
         body: {
           criteria: {
             insuranceCompanyId: null,
+
+            insuranceCompanyName:
+              selectedInsuranceCompany?.label ?? '',
             settlementDateFrom:
               appliedFilters.fromDate.substring(0, 10),
             settlementDateTo:
@@ -133,48 +140,48 @@ const SettlementReportPanel: React.FC = () => {
               appliedFilters.encounterType
           },
           rows: allRowsResponse.content.map(row => ({
-  patientName: row.patientName || '',
+            patientName: row.patientName || '',
 
-  patientId:
-    row.medicalRecordNumber ||
-    (row.patientId != null
-      ? String(row.patientId)
-      : ''),
+            patientId:
+              row.medicalRecordNumber ||
+              (row.patientId != null
+                ? String(row.patientId)
+                : ''),
 
-  invoiceNumber: row.invoiceNumber || '',
+            invoiceNumber: row.invoiceNumber || '',
 
-  settlementNumber: row.settlementNo || '',
+            settlementNumber: row.settlementNo || '',
 
-  settlementDate:
-    row.settlementDate
-      ? row.settlementDate.substring(0, 10)
-      : null,
+            settlementDate:
+              row.settlementDate
+                ? row.settlementDate.substring(0, 10)
+                : null,
 
-  insuranceCompany: row.insuranceCompany || '',
+            insuranceCompany: row.insuranceCompany || '',
 
-  claimNumber: row.claimNo || '',
+            claimNumber: row.claimNo || '',
 
-  claimDate:
-    row.claimDate
-      ? row.claimDate.substring(0, 10)
-      : null,
+            claimDate:
+              row.claimDate
+                ? row.claimDate.substring(0, 10)
+                : null,
 
-  billedAmount: row.billedAmount,
+            billedAmount: row.billedAmount,
 
-  approvedAmount: row.approvedAmount,
+            approvedAmount: row.approvedAmount,
 
-  rejectedAmount: row.rejectedAmount,
+            rejectedAmount: row.rejectedAmount,
 
-  patientShare: row.patientShare,
+            patientShare: row.patientShare,
 
-  insuranceAmount: row.insuranceAmount,
+            insuranceAmount: row.insuranceAmount,
 
-  paidAmount: row.paidAmount,
+            paidAmount: row.paidAmount,
 
-  outstandingAmount: row.outstandingAmount,
+            outstandingAmount: row.outstandingAmount,
 
-  settlementStatus: row.settlementStatus
-}))
+            settlementStatus: row.settlementStatus
+          }))
 
         }
       }).unwrap();
