@@ -343,6 +343,16 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+   reopenEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+  query: ({ id }) => ({
+    url: `/api/patient/encounter/${id}/reopen`,
+    method: 'POST'
+  }),
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'PatientEncounter', id },
+    'PatientEncounter'
+  ]
+}),
 
     closeEncounterForBilling: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
@@ -537,5 +547,6 @@ export const {
   useGetEncountersByIdsQuery
   ,useLazyGetEncountersByIdsQuery,
   useUpdateHistoryOfPresentIllnessMutation,
-  useStartTriageEncounterMutation
+  useStartTriageEncounterMutation,
+  useReopenEncounterMutation
 } = patientEncounterService;
