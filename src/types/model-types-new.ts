@@ -6951,7 +6951,9 @@ export interface PendingClaimInvoiceResponse {
   financialDocumentId?: number | null;
   documentNumber?: string | null;
   encounterId?: number | null;
+  encounter?: PatientEncounter | null;
   patientId?: number | null;
+  patient?: Patient | null;
   payorId?: number | null;
   claimReference?: string | null;
   totalAmount?: number | null;
