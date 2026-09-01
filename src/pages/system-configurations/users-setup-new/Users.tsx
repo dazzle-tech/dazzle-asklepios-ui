@@ -35,6 +35,7 @@ import ResetPasswordTab from './tabs/ResetPasswordTab';
 import './styles.less';
 import { formatEnumString } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
+import EncountersAccess from './tabs/EncountersAccess';
 
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -64,19 +65,19 @@ const Users = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-const {
-  data: usersResponse,
-  isLoading,
-  refetch,
-} = useGetUsersBasicQuery({
-  page: pageIndex,
-  size: rowsPerPage,
-  sort: 'id,asc',
-  name: filters.name,
-  email: filters.email,
-  login: filters.login,
-  jobRole: filters.jobRole,
-});
+  const {
+    data: usersResponse,
+    isLoading,
+    refetch,
+  } = useGetUsersBasicQuery({
+    page: pageIndex,
+    size: rowsPerPage,
+    sort: 'id,asc',
+    name: filters.name,
+    email: filters.email,
+    login: filters.login,
+    jobRole: filters.jobRole,
+  });
 
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -176,39 +177,39 @@ const {
     setPopupOpen(true);
   };
 
- const handleDactivateUser = async data => {
-  const isCurrentlyActive = data?.activated === true;
-  const process = isCurrentlyActive ? 'Deactivated' : 'Activated';
+  const handleDactivateUser = async data => {
+    const isCurrentlyActive = data?.activated === true;
+    const process = isCurrentlyActive ? 'Deactivated' : 'Activated';
 
-  try {
-    await toggleUserActivation(data.login).unwrap();
+    try {
+      await toggleUserActivation(data.login).unwrap();
 
-    const updatedUser = {
-      ...data,
-      activated: !isCurrentlyActive,
-      hasResetKey: isCurrentlyActive ? false : data?.hasResetKey,
-    };
+      const updatedUser = {
+        ...data,
+        activated: !isCurrentlyActive,
+        hasResetKey: isCurrentlyActive ? false : data?.hasResetKey,
+      };
 
-    setUser(updatedUser);
-    setOpenConfirmDeleteUserModal(false);
+      setUser(updatedUser);
+      setOpenConfirmDeleteUserModal(false);
 
-    dispatch(
-      notify({
-        msg: 'The User was successfully ' + process,
-        sev: 'success',
-      })
-    );
+      dispatch(
+        notify({
+          msg: 'The User was successfully ' + process,
+          sev: 'success',
+        })
+      );
 
-    refetch();
-  } catch (error) {
-    dispatch(
-      notify({
-        msg: 'Failed to ' + process + ' this User',
-        sev: 'error',
-      })
-    );
-  }
-};
+      refetch();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Failed to ' + process + ' this User',
+          sev: 'error',
+        })
+      );
+    }
+  };
   const handleResendCreatePassword = async (login: string) => {
     try {
       await resendCreatePasswordEmail(login).unwrap();
@@ -501,6 +502,11 @@ const {
       content: <BookableDepartmentsTab user={user} width={width} />,
       disabled: !user?.id,
     },
+    {
+      title: 'Encounters Access',
+      content: <EncountersAccess user={user} />,
+      disabled: !user?.id,
+    },
   ];
 
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -559,7 +565,7 @@ const {
 
       {user?.id && (
         <Box mt={3}>
-          <MyTab data={tabData} lazy/>
+          <MyTab data={tabData} lazy />
         </Box>
       )}
 

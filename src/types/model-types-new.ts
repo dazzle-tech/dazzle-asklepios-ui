@@ -24,8 +24,12 @@ export interface ApUser {
   jobDescription?: string | null;
   jobRole?: string | null;
   admin?: boolean;
-  hasResetKey?: boolean; // Transient field to indicate if resetKey exists (for UI logic)
+  hasResetKey?: boolean;
+  allowOngoingVisit: boolean;
+  canUnDischargeUrgentCare: boolean;
+  canUnCompleteEncounter: boolean;
 }
+
 
 export interface Candidate {
   id?: number;
@@ -6951,7 +6955,9 @@ export interface PendingClaimInvoiceResponse {
   financialDocumentId?: number | null;
   documentNumber?: string | null;
   encounterId?: number | null;
+  encounter?: PatientEncounter | null;
   patientId?: number | null;
+  patient?: Patient | null;
   payorId?: number | null;
   claimReference?: string | null;
   totalAmount?: number | null;
@@ -6985,6 +6991,24 @@ export interface WaseelClaimUploadResponse {
   lastModifiedDate?: string | null;
   ratioOfAccepted?: number | null;
   ratioOfNotAccepted?: number | null;
+}
+
+export interface ClaimSettlementRowResponse {
+  claimId?: number | null;
+  settlementNo?: string | null;
+  settlementDate?: string | null;
+  insuranceCompany?: string | null;
+  tpa?: string | null;
+  claimNo?: string | null;
+  claimDate?: string | null;
+  billedAmount?: number | null;
+  approvedAmount?: number | null;
+  rejectedAmount?: number | null;
+  patientShare?: number | null;
+  insuranceAmount?: number | null;
+  paidAmount?: number | null;
+  outstandingAmount?: number | null;
+  settlementStatus?: string | null;
 }
 
 export interface InsurancePayerReceivablesSummaryResponse {
