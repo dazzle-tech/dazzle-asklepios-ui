@@ -151,7 +151,11 @@ const ClaimsWorkspace: React.FC = () => {
       }
       try {
         dispatch(showSystemLoader());
-        const result = await submitClaim(row.financialDocumentId).unwrap();
+        const result = await submitClaim({
+          financialDocumentId: row.financialDocumentId,
+          claimType: row.claimType,
+          claimSubType: row.claimSubType
+        }).unwrap();
         dispatch(
           notify({
             msg:
