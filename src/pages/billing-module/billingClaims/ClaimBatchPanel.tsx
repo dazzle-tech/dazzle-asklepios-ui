@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Checkbox, DateRangePicker, Form } from 'rsuite';
+import { Checkbox, DateRangePicker, Form, Tooltip, Whisper } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -18,6 +18,13 @@ import {
   isProfessionalClaimType,
   subTypeOptionsForClaimType
 } from './types';
+import Translate from '@/components/Translate';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faFileWaveform
+} from '@fortawesome/free-solid-svg-icons';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 
 type ClaimBatchPanelProps = {
   onSubmitted?: () => void;
@@ -36,6 +43,9 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [openEMRModal, setOpenEMRModal] = useState(false);
 
   const { data: pendingInvoices = [], isFetching, refetch } = useGetPendingClaimInvoicesQuery(
     {
@@ -207,10 +217,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) => row.documentNumber ?? '-'
     },
     {
-      key: 'encounterId',
+      key: 'encounter',
       title: 'Encounter',
       width: 100,
-      render: (row: PendingClaimInvoiceResponse) => row.encounterId ?? '-'
+      render: (row: PendingClaimInvoiceResponse) => row?.encounter?.encounterNumber ?? '-'
     },
     {
       key: 'encounterType',
@@ -226,10 +236,23 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) => row.matchingItemCount ?? '-'
     },
     {
-      key: 'patientId',
-      title: 'Patient',
-      width: 100,
-      render: (row: PendingClaimInvoiceResponse) => row.patientId ?? '-'
+      key: 'patientFullName',
+      title: 'PATIENT',
+      render: (row: PendingClaimInvoiceResponse) => {
+        const speaker = (
+          <Tooltip>
+            <div>MRN: {row?.patient?.medicalRecordNumber ?? '-'}</div>
+            <div>Age: {calculateAge(row?.patient?.dateOfBirth)}</div>
+            <div>Gender: {row?.patient?.sexAtBirth ?? '-'}</div>
+          </Tooltip>
+        );
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            {row?.patient?.firstName + " " + row?.patient?.secondName + " " + row?.patient?.lastName}
+
+          </Whisper>
+        );
+      }
     },
     {
       key: 'claimReference',
@@ -257,6 +280,42 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       width: 150,
       render: (row: PendingClaimInvoiceResponse) =>
         row.createdDate ? formatDateWithoutSeconds(String(row.createdDate)) : '-'
+    },
+     {
+      key: 'actions',
+      title: ' ',
+      render: (row: PendingClaimInvoiceResponse) => {
+        const tooltipEMR = (
+          <Tooltip>
+            <Translate>Go to EMR</Translate>
+          </Tooltip>
+        );
+
+        return (
+          <Form layout="inline" fluid className="nurse-doctor-form">
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={tooltipEMR}
+            >
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={ () => {
+                      setEmrEncounter(row?.encounter);
+                      setEmrPatient(row?.patient);
+                      setOpenEMRModal(true);
+                   
+                  }}
+                >
+                  <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </Form>
+        );
+      },
     }
   ];
 
@@ -285,7 +344,6 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
             setRecord={(value: { payorId: number | string | null }) =>
               setPayorId(toNullableNumber(value.payorId))
             }
-            searchable
             cleanable
             loading={isNphiesPayersLoading}
             placeholder={
@@ -364,6 +422,22 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           height={280}
           totalCount={rows.length}
         />
+         <MyModal
+          open={openEMRModal}
+          setOpen={setOpenEMRModal}
+          title="Electronic Medical Record"
+          size="90vw"
+          content={
+            emrPatient && emrEncounter ? (
+              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+            ) : (
+              <div className="encounter-list__no-patient">No patient selected.</div>
+            )
+          }
+          actionButtonLabel="Close"
+          actionButtonFunction={() => setOpenEMRModal(false)}
+          cancelButtonLabel="Cancel"
+        />
       </div>
     </div>
   );
@@ -408,6 +482,43 @@ const toExclusiveEndIso = (date?: Date | null) => {
   end.setHours(0, 0, 0, 0);
   end.setDate(end.getDate() + 1);
   return end.toISOString();
+
+};
+
+const calculateAge = (dateOfBirth?: string | Date | null) => {
+  if (!dateOfBirth) {
+    return '-';
+  }
+
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return '-';
+  }
+
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+  let days = today.getDate() - birthDate.getDate();
+
+  if (days < 0) {
+    months--;
+
+    const previousMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      0
+    );
+
+    days += previousMonth.getDate();
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return `${years}y ${months}m ${days}d`;
 };
 
 export default ClaimBatchPanel;
