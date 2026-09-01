@@ -161,6 +161,16 @@ export const diagnosticOrderTestReportService = createApi({
       }),
       invalidatesTags: ["RadiologyImage", "RadiologyReport"],
     }),
+
+  getRadiologyImageLinks: builder.query<any[], number>({
+  query: (reportId) => ({
+    url: `/api/patient/radiology/reports/${reportId}/image-links`,
+    method: "GET",
+  }),
+  providesTags: (result, error, reportId) => [
+    { type: "RadiologyImage", id: reportId },
+  ],
+}),
   }),
 });
 
@@ -181,4 +191,5 @@ export const {
   useSecondApproveRadiologyReportMutation,
   useGetRadiologyImageStatusLogQuery,
   useLazyGetRadiologyImageStatusLogQuery,
+  useLazyGetRadiologyImageLinksQuery
 } = diagnosticOrderTestReportService;

@@ -150,6 +150,10 @@ const {  patientLabelMenuItem,
     }
   };
 
+const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -230,7 +234,8 @@ const {  patientLabelMenuItem,
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item
+        {/* Don`t remove this commented code please */}
+        {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
             setOpenBulkRegistrationModal(true);
@@ -240,7 +245,7 @@ const {  patientLabelMenuItem,
             <FontAwesomeIcon icon={faUsersLine} />
             <Translate>Bulk Registration</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
 
         {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -509,9 +514,9 @@ const {  patientLabelMenuItem,
                 justifyContent: 'flex-end'
               }}
             >
-              {/* <MyButton onClick={handleScanDocumentClick}>
+              <MyButton onClick={handleScanDocumentClick}>
                 <Translate>Scan Document</Translate>
-              </MyButton> */}
+              </MyButton>
 
               <MyButton
                 disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
@@ -626,6 +631,8 @@ const {  patientLabelMenuItem,
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
       {patientInformationModal}
       {patientLabelModal}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import './styles.less';
@@ -8,6 +8,7 @@ import DiagnosticsOrderModals from './DiagnosticsOrderModals';
 import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
 import clsx from 'clsx';
 
 const DiagnosticsOrder = (props: any) => {
@@ -22,6 +23,7 @@ const DiagnosticsOrder = (props: any) => {
     viewMode === 'readOnly' ||
     (props.edit ?? location.state?.edit ?? false);
 
+    const [openValidationSummaryModal, setOpenValidationSummaryModal] = useState(false);
     const vm = useDiagnosticsOrder({
         patient,
         encounter,
@@ -103,6 +105,7 @@ const DiagnosticsOrder = (props: any) => {
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
         setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenValidationSummaryModal={setOpenValidationSummaryModal}
         OpenConfirmDeleteModel={vm.OpenConfirmDeleteModel}
         setBulkDepartmentModalOpen={vm.setBulkDepartmentModalOpen}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
@@ -187,7 +190,21 @@ const DiagnosticsOrder = (props: any) => {
         edit={vm.edit}
         handleLoadMore={vm.handleLoadMore}
       />
-
+      
+      <PatientHistorySummaryModal
+        open={openValidationSummaryModal}
+        setOpen={setOpenValidationSummaryModal}
+        handleSave={async () => {
+          const ok = await vm.handleSubmitPres();
+          if (ok) setOpenValidationSummaryModal(false);
+        }}
+        payload={{
+          patientId: patient?.id ?? patient?.key,
+          encounterId: encounter?.id ?? encounter?.key,
+          orderNumber: vm.orders?.orderNumber
+        }}
+      />
+      
       <RescheduleAppointmentsLookupModal
         open={vm.rescheduleAppointmentsModalOpen}
         setOpen={vm.setRescheduleAppointmentsModalOpen}

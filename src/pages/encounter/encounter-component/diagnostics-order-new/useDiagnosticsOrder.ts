@@ -715,18 +715,18 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     const _orderId = orders?.id;
     if (!_orderId) {
       dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!orderTestList.length) {
       dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
-      return;
+      return false;
     }
 
     const hasMissingReceivedLab = orderTestList.some((t: any) => !t.receivedDepartmentId);
     if (hasMissingReceivedLab) {
       dispatch(notify({ msg: 'Please select Received Lab for Your Test', sev: 'warning' }));
-      return;
+      return false;
     }
 
     try {
@@ -750,9 +750,11 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       patientPrevTestsRef?.current?.refetchPrevTests();
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
+      return true;
     } catch (error) {
       console.error('Submit failed', error);
       dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
+      return false;
     }
   };
 

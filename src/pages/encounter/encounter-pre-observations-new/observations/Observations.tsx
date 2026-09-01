@@ -34,7 +34,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({ ...(encounter as any) });
 console.log(localPatient);
   useEffect(() => {
-    if (localEncounter?.status === 'CLOSED') {
+    if (localEncounter?.status === 'COMPLETED') {
       setIsEncounterStatusClosed(true);
     } else {
       setIsEncounterStatusClosed(false);

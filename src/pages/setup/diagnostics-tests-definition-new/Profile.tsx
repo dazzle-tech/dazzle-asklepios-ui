@@ -527,6 +527,22 @@ const Profile = ({
                 loading={isFetching}
                 columns={tableColumns}
                 rowClassName={isSelected}
+                page={paginationParams.page}
+                rowsPerPage={paginationParams.size}
+                totalCount={allDiagnosticTestProfiles?.totalCount ?? 0}
+                onPageChange={(_, newPage) =>
+                  setPaginationParams(prev => ({
+                    ...prev,
+                    page: newPage
+                  }))
+                }
+                onRowsPerPageChange={event =>
+                  setPaginationParams(prev => ({
+                    ...prev,
+                    page: 0,
+                    size: Number(event.target.value)
+                  }))
+                }
                 onRowClick={rowData => {
                   if (diagnosticsTestProfile?.id === rowData.id) {
                     setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });

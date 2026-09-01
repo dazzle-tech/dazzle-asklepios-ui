@@ -6,9 +6,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import CancellationModal from '@/components/CancellationModal';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { Panel, Checkbox } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks';
@@ -135,8 +134,8 @@ const GlasgowComaScale = ({
   const encounter = encounterProp ?? state?.encounter;
   const viewMode = viewModeProp ?? state?.viewMode;
 
+  const isReadOnly = viewMode === 'readOnly' || viewMode === 'View';
   const edit = viewMode === 'readOnly';
-  const viewOnly = viewMode === 'View';
 
   const [openCancellationReasonModal, setOpenCancellationReasonModal] =
     useState(false);
@@ -494,7 +493,10 @@ const GlasgowComaScale = ({
       flexGrow: 1,
       align: 'center',
 
-      render: (rowData: any) => (
+      render: (rowData: any) => {
+        if (isReadOnly) return null;
+
+        return (
         <div
           style={{
             display: 'flex',
@@ -529,16 +531,14 @@ const GlasgowComaScale = ({
             }}
           />
 
-          <CloseOutlineIcon
-            className="icons-style"
+          <MdDelete
+            size={22}
+            fill="var(--rs-red-500, #f44336)"
             title="Cancel"
             style={{
-              fontSize: 24,
-              color: 'var(--primary-pink)',
               cursor: rowData?.cancelledAt
                 ? 'not-allowed'
                 : 'pointer',
-
               opacity: rowData?.cancelledAt
                 ? 0.5
                 : 1
@@ -554,9 +554,10 @@ const GlasgowComaScale = ({
             }}
           />
         </div>
-      )
+        );
+      }
     }
-  ];
+  ].filter(column => !isReadOnly || column.key !== 'actions');
 
   const handlePageChange = (
     _event: any,
@@ -609,7 +610,7 @@ return (
                 timestamp: Date.now()
               }));
             }}
-            disabled={edit}
+            disabled={isReadOnly}
           >
             <Translate>Show Cancelled</Translate>
           </Checkbox>
@@ -625,7 +626,7 @@ return (
               setOpenPopup(true);
             }}
             width="109px"
-            disabled={edit || viewOnly}
+            disabled={isReadOnly}
           >
             Add New
           </MyButton>
@@ -675,6 +676,7 @@ return (
           gcsAssessment={gcsAssessment}
           setGcsAssessment={setGcsAssessment}
           handleSave={handleSave}
+          readOnly={isReadOnly}
         />
       </Panel>
     </div>

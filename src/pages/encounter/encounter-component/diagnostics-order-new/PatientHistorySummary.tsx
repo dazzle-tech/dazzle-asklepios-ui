@@ -1,51 +1,76 @@
-import SectionContainer from '@/components/SectionsoContainer';
-import {
-  useValidateMedicationMutation,
-  useValidateTestsMutation
-} from '@/services/ai-services/medicationTestOrdersValidationService';
-import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import SectionContainer from '@/components/SectionsoContainer';
+import { useValidateTestsMutation } from '@/services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
+import type { TestValidationRequestDTO, ValidationResponseDTO } from '@/types/model-types-new';
 import './styles.less';
 
 type Props = {
   title?: any;
   button?: any;
-  aiPayload?: any;
-  mode?: 'tests' | 'medications';
+  aiPayload?: {
+    patientId?: number;
+    encounterId?: number;
+  } | null;
 };
 
-const PatientHistorySummary: React.FC<Props> = ({
-  title = null,
-  button = null,
-  aiPayload = null,
-  mode = 'tests'
-}) => {
-  
-  // ======================
-  // AI Validation
-  // ======================
+const PatientHistorySummary: React.FC<Props> = ({ title = null, button = null, aiPayload = null }) => {
   const [validateTests, testsState] = useValidateTestsMutation();
-  const [validateMedication, medsState] = useValidateMedicationMutation();
-
   const lastCallKeyRef = useRef<string | null>(null);
 
-  // ======================
-  // helpers
-  // ======================
-  const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
+  const validationRequest = useMemo<TestValidationRequestDTO | null>(() => {
+    const patientId = Number(aiPayload?.patientId);
+    const encounterId = Number(aiPayload?.encounterId);
+    if (!patientId || !encounterId) return null;
+    return { patientId, encounterId };
+  }, [aiPayload]);
 
-  const normalizeGender = (g: any) => {
-    const s = toStr(g).trim().toLowerCase();
-    if (['male', 'm', 'man', 'ذكر'].includes(s)) return 'Male';
-    if (['female', 'f', 'woman', 'أنثى', 'انثى'].includes(s)) return 'Female';
-    if (['other'].includes(s)) return 'Other';
-    return 'Unknown';
-  };
+  useEffect(() => {
+    if (!validationRequest) return;
+    const callKey = JSON.stringify(validationRequest);
+    if (lastCallKeyRef.current === callKey) return;
+    lastCallKeyRef.current = callKey;
+    validateTests(validationRequest as any);
+  }, [validationRequest, validateTests]);
 
-  // ✅ NEW: normalize severity to match your enum and return color
+  const aiState = testsState;
+  const uiLoading = aiState.isLoading;
+  const uiError = aiState.error;
+
+  const uiModel = useMemo(() => {
+    if (!aiState?.data) return null;
+    const r = aiState.data as ValidationResponseDTO;
+
+    return {
+      header: {
+        status: r?.quick_summary?.overall_status ?? '',
+        topPriority: r?.quick_summary?.top_priority ?? '',
+        confidence:
+          r?.confidence_score !== undefined && r?.confidence_score !== null
+            ? Number(r.confidence_score)
+            : null
+      },
+      findings: Array.isArray(r?.detailed_validations)
+        ? r.detailed_validations.map((d: any) => ({
+            item: d?.item ?? '',
+            severity: d?.severity ?? '',
+            issue: d?.issue ?? '',
+            recommendation: d?.recommendation ?? ''
+          }))
+        : [],
+      alternatives: Array.isArray(r?.recommended_alternatives)
+        ? r.recommended_alternatives.map((a: any) => ({
+            original: a?.original_item ?? '',
+            alternative: a?.alternative ?? '',
+            rationale: a?.rationale ?? ''
+          }))
+        : []
+    };
+  }, [aiState.data]);
+
   const normalizeSeverity = (sev: any) => {
-    const s = toStr(sev).trim().toLowerCase();
+    const s = String(sev ?? '').trim().toLowerCase();
     if (s === 'critical') return 'critical';
     if (s === 'high') return 'high';
     if (s === 'moderate' || s === 'medium') return 'moderate';
@@ -56,292 +81,157 @@ const PatientHistorySummary: React.FC<Props> = ({
   const getSeverityStyle = (sev: any) => {
     switch (normalizeSeverity(sev)) {
       case 'critical':
-        return { background: '#FEE2E2', color: '#B91C1C' }; // red
+        return { background: '#FEE2E2', color: '#B91C1C' };
       case 'high':
-        return { background: '#FFEDD5', color: '#C2410C' }; // orange
+        return { background: '#FFEDD5', color: '#C2410C' };
       case 'moderate':
-        return { background: '#FEF9C3', color: '#A16207' }; // yellow
+        return { background: '#FEF9C3', color: '#A16207' };
       case 'low':
-        return { background: '#DBEAFE', color: '#1D4ED8' }; // blue
+        return { background: '#DBEAFE', color: '#1D4ED8' };
       default:
-        return { background: '#E5E7EB', color: '#374151' }; // gray
+        return { background: '#E5E7EB', color: '#374151' };
     }
   };
 
-  const validationRequest = useMemo(() => {
-    if (!aiPayload) return null;
-
-    const patient = {
-      mrn: toStr(aiPayload?.patient?.mrn),
-      fullName: toStr(aiPayload?.patient?.fullName),
-      gender: normalizeGender(aiPayload?.patient?.gender),
-      dob: toStr(aiPayload?.patient?.dob)
-    };
-
-    const encounter = {
-      visitId: toStr(aiPayload?.visit?.visitId),
-      visitType: toStr(aiPayload?.visit?.visitType),
-      plannedStartDate: toStr(aiPayload?.visit?.plannedStartDate),
-      chiefComplaint: toStr(aiPayload?.visit?.chiefComplaint),
-      patientAge: toStr(aiPayload?.visit?.patientAge),
-      diagnosis: toStr(aiPayload?.diagnosis?.value)
-    };
-
-    const diagnosis = {
-      type: toStr(aiPayload?.diagnosis?.type || 'Encounter Diagnosis'),
-      value: toStr(aiPayload?.diagnosis?.value)
-    };
-
-    const complain = toStr(aiPayload?.complain || aiPayload?.visit?.chiefComplaint);
-
-    if (mode === 'tests') {
-      return {
-        patient,
-        encounter,
-        complain,
-        diagnosis,
-        tests: Array.isArray(aiPayload?.tests)
-          ? aiPayload.tests.map((t: any) => toStr(t)).filter(Boolean)
-          : []
-      };
-    }
-
-    return {
-      patient,
-      encounter,
-      complain,
-      diagnosis,
-      medications: Array.isArray(aiPayload?.medications)
-        ? aiPayload.medications.map((m: any) => toStr(m)).filter(Boolean)
-        : []
-    };
-  }, [aiPayload, mode]);
-
-  // ======================
-  // ✅ Call AI once
-  // ======================
-  useEffect(() => {
-    if (!validationRequest) return;
-
-    const callKey = JSON.stringify({ mode, validationRequest });
-    if (lastCallKeyRef.current === callKey) return;
-
-    lastCallKeyRef.current = callKey;
-
-    if (mode === 'tests') validateTests(validationRequest as any);
-    else validateMedication(validationRequest as any);
-  }, [validationRequest, mode, validateTests, validateMedication]);
-
-  // ======================
-  // UI state
-  // ======================
-  const aiState = mode === 'tests' ? testsState : medsState;
-  const uiLoading = aiState.isLoading;
-  const uiError = aiState.error;
-
-  // ======================
-  // ✅ compact formatted view models
-  // ======================
-  const uiModel = useMemo(() => {
-    if (!aiState?.data) return null;
-    const r: any = aiState.data;
-
-    const header = {
-      status: r?.quick_summary?.overall_status ?? '',
-      topPriority: r?.quick_summary?.top_priority ?? '',
-      confidence:
-        r?.confidence_score !== undefined && r?.confidence_score !== null
-          ? Number(r.confidence_score)
-          : null
-    };
-
-    const findings: Array<{
-      item: string;
-      severity: string;
-      issue: string;
-      recommendation: string;
-    }> = Array.isArray(r?.detailed_validations)
-      ? r.detailed_validations.map((d: any) => ({
-          item: toStr(d?.item),
-          severity: toStr(d?.severity),
-          issue: toStr(d?.issue),
-          recommendation: toStr(d?.recommendation)
-        }))
-      : [];
-
-    const alternatives: Array<{
-      original: string;
-      alternative: string;
-      rationale: string;
-    }> = Array.isArray(r?.recommended_alternatives)
-      ? r.recommended_alternatives.map((a: any) => ({
-          original: toStr(a?.original_item),
-          alternative: toStr(a?.alternative),
-          rationale: toStr(a?.rationale)
-        }))
-      : [];
-
-    return { header, findings, alternatives };
-  }, [aiState.data]);
-
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <div className="medical-container-div">
-      <SectionContainer
-        title={
-          <div
-            className="patient-history-title"
-            style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-          >
-            <FontAwesomeIcon icon={faClipboardList} className="patient-history-icon" />
-            <span>{title || (mode === 'tests' ? 'Tests Validation' : 'Medication Validation')}</span>
-          </div>
-        }
-        action={<div>{button && <div>{button}</div>}</div>}
-        content={
-          <div className="medical-table-div2">
-            <div className="patient-history-card">
-              <div className="patient-history-content">
-                <div className="patient-history-text">
-                  {/* ✅ Circular loader */}
-                  {uiLoading && (
-                    <div className="ai-loading-wrap">
-                      <span className="ai-spinner" />
-                      <span className="ai-loading-text">Validating...</span>
-                    </div>
-                  )}
+    <div dir={dir}>
+      <div className="medical-container-div">
+        <SectionContainer
+          title={
+            <div className="patient-history-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FontAwesomeIcon icon={faClipboardList} className="patient-history-icon" />
+              <span>{title || 'Tests Validation'}</span>
+            </div>
+          }
+          action={<div>{button && <div>{button}</div>}</div>}
+          content={
+            <div className="medical-table-div2">
+              <div className="patient-history-card">
+                <div className="patient-history-content">
+                  <div className="patient-history-text">
+                    {!validationRequest && <div className="ai-empty">Validation payload not ready.</div>}
 
-                  {uiError && !uiLoading && <div className="ai-error">Validation failed</div>}
+                    {uiLoading && (
+                      <div className="ai-loading-wrap">
+                        <span className="ai-spinner" />
+                        <span className="ai-loading-text">Validating tests...</span>
+                      </div>
+                    )}
 
-                  {!uiLoading && !uiError && (
-                    <div className="ai-result">
-                      {!uiModel ? (
-                        <div className="ai-empty">No validation result available</div>
-                      ) : (
-                        <>
-                          {/* ✅ compact header */}
-                          <div className="ai-summary-header">
-                            {!!uiModel.header.status && (
-                              <div className="ai-kv">
-                                <span className="ai-k">Status</span>
-                                <span className="ai-v">{uiModel.header.status}</span>
-                              </div>
-                            )}
-                            {!!uiModel.header.topPriority && (
-                              <div className="ai-kv">
-                                <span className="ai-k">Top Priority</span>
-                                <span className="ai-v">{uiModel.header.topPriority}</span>
-                              </div>
-                            )}
-                            {uiModel.header.confidence !== null && (
-                              <div className="ai-kv">
-                                <span className="ai-k">Confidence</span>
-                                <span className="ai-v">{uiModel.header.confidence.toFixed(2)}</span>
-                              </div>
-                            )}
-                          </div>
+                    {uiError && !uiLoading && <div className="ai-error">Validation failed</div>}
 
-                          {/* ✅ Findings */}
-                          {uiModel.findings.length > 0 && (
-                            <div className="ai-section">
-                              <div className="ai-section-title">Findings</div>
-                              <div className="ai-list">
-                                {uiModel.findings.map((d, i) => {
-                                  const sev = normalizeSeverity(d.severity);
-                                  const sevStyle = getSeverityStyle(sev);
+                    {!uiLoading && !uiError && (
+                      <div className="ai-result">
+                        {!uiModel ? (
+                          <div className="ai-empty">No validation result available</div>
+                        ) : (
+                          <>
+                            <div className="ai-summary-header">
+                              {!!uiModel.header.status && (
+                                <div className="ai-kv">
+                                  <span className="ai-k">Status</span>
+                                  <span className="ai-v">{uiModel.header.status}</span>
+                                </div>
+                              )}
+                              {!!uiModel.header.topPriority && (
+                                <div className="ai-kv">
+                                  <span className="ai-k">Top Priority</span>
+                                  <span className="ai-v">{uiModel.header.topPriority}</span>
+                                </div>
+                              )}
+                              {uiModel.header.confidence !== null && (
+                                <div className="ai-kv">
+                                  <span className="ai-k">Confidence</span>
+                                  <span className="ai-v">{uiModel.header.confidence.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
 
-                                  return (
-                                    <div className="ai-item" key={`${d.item}-${i}`}>
-                                      <div className="ai-item-top">
-                                        <div className="ai-item-title">
-                                          {i + 1}. {d.item || '-'}
+                            {uiModel.findings.length > 0 && (
+                              <div className="ai-section">
+                                <div className="ai-section-title">Findings</div>
+                                <div className="ai-list">
+                                  {uiModel.findings.map((d, i) => {
+                                    const sev = normalizeSeverity(d.severity);
+                                    const sevStyle = getSeverityStyle(sev);
+                                    return (
+                                      <div className="ai-item" key={`${d.item}-${i}`}>
+                                        <div className="ai-item-top">
+                                          <div className="ai-item-title">{i + 1}. {d.item || '-'}</div>
+                                          {d.severity && (
+                                            <div
+                                              className="ai-item-pill"
+                                              style={{
+                                                backgroundColor: sevStyle.background,
+                                                color: sevStyle.color,
+                                                border: `1px solid ${sevStyle.background}`
+                                              }}
+                                            >
+                                              {sev}
+                                            </div>
+                                          )}
                                         </div>
-
-                                        {/* ✅ ONLY CHANGE: color by severity */}
-                                        {d.severity && (
-                                          <div
-                                            className="ai-item-pill"
-                                            style={{
-                                              backgroundColor: sevStyle.background,
-                                              color: sevStyle.color,
-                                              border: `1px solid ${sevStyle.background}`
-                                            }}
-                                          >
-                                            {sev}
+                                        {d.issue && (
+                                          <div className="ai-item-row">
+                                            <span className="ai-item-label">Issue:</span>
+                                            <span className="ai-item-text">{d.issue}</span>
+                                          </div>
+                                        )}
+                                        {d.recommendation && (
+                                          <div className="ai-item-row">
+                                            <span className="ai-item-label">Recommendation:</span>
+                                            <span className="ai-item-text">{d.recommendation}</span>
                                           </div>
                                         )}
                                       </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
 
-                                      {d.issue && (
+                            {uiModel.alternatives.length > 0 && (
+                              <div className="ai-section">
+                                <div className="ai-section-title">Recommended Alternatives</div>
+                                <div className="ai-list">
+                                  {uiModel.alternatives.map((a, i) => (
+                                    <div className="ai-item" key={`${a.original}-${i}`}>
+                                      <div className="ai-item-top">
+                                        <div className="ai-item-title">{i + 1}. {a.original || '-'}</div>
+                                      </div>
+                                      {a.alternative && (
                                         <div className="ai-item-row">
-                                          <span className="ai-item-label">Issue:</span>
-                                          <span className="ai-item-text">{d.issue}</span>
+                                          <span className="ai-item-label">Alternative:</span>
+                                          <span className="ai-item-text">{a.alternative}</span>
                                         </div>
                                       )}
-
-                                      {d.recommendation && (
+                                      {a.rationale && (
                                         <div className="ai-item-row">
-                                          <span className="ai-item-label">Recommendation:</span>
-                                          <span className="ai-item-text">{d.recommendation}</span>
+                                          <span className="ai-item-label">Rationale:</span>
+                                          <span className="ai-item-text">{a.rationale}</span>
                                         </div>
                                       )}
                                     </div>
-                                  );
-                                })}
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
-
-                          {/* ✅ Alternatives */}
-                          {uiModel.alternatives.length > 0 && (
-                            <div className="ai-section">
-                              <div className="ai-section-title">Recommended Alternatives</div>
-                              <div className="ai-list">
-                                {uiModel.alternatives.map((a, i) => (
-                                  <div className="ai-item" key={`${a.original}-${i}`}>
-                                    <div className="ai-item-top">
-                                      <div className="ai-item-title">
-                                        {i + 1}. {a.original || '-'}
-                                      </div>
-                                    </div>
-
-                                    {a.alternative && (
-                                      <div className="ai-item-row">
-                                        <span className="ai-item-label">Alternative:</span>
-                                        <span className="ai-item-text">{a.alternative}</span>
-                                      </div>
-                                    )}
-
-                                    {a.rationale && (
-                                      <div className="ai-item-row">
-                                        <span className="ai-item-label">Rationale:</span>
-                                        <span className="ai-item-text">{a.rationale}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        }
-      />
+          }
+        />
+      </div>
     </div>
-  </div>
   );
 };
 

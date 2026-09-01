@@ -544,30 +544,28 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           {previewRow.substanceUse && (
                             <>
                               <MyInput
-                                width={180}
+                                width={"15vw"}
                                 column
                                 fieldLabel="Route"
                                 fieldName="route"
                                 fieldType="select"
                                 selectData={routeLov?.object ?? []}
-                                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
                               />
 
                               <MyInput
-                                width={180}
+                                width={"15vw"}
                                 column
                                 fieldLabel="Frequency"
                                 fieldName="frequency"
                                 fieldType="select"
                                 selectData={freqLov?.object ?? []}
-                                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
                                 selectDataValue="key"
                                 record={previewRow}
                                 disabled
@@ -576,7 +574,7 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           )}
 
                           <MyInput
-                            width={180}
+                            width={"10vw"}
                             column
                             fieldLabel="Physical limitations"
                             fieldName="physicalLimitation"
@@ -591,7 +589,7 @@ const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
                           />
 
                           <MyInput
-                            width={180}
+                            width={"10vw"}
                             column
                             fieldLabel="Diagnosed eating disorders"
                             fieldName="diagnosedEatingDisorders"

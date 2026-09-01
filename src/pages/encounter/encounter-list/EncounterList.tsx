@@ -254,7 +254,7 @@ const EncounterList = () => {
   const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
   const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -264,7 +264,8 @@ const EncounterList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -297,10 +298,15 @@ const EncounterList = () => {
   });
   const [record, setRecord] = useState<any>({});
 
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+const handlePatientSearchClick = useCallback(() => {
+    setPatientSearchApplied(prev => ({
+        ...prev,
+        ...(patientSearchDraft ?? {})
+    }));
+
     setPage(0);
-  }, [patientSearchDraft]);
+}, [patientSearchDraft]);
+
 
   const {
     data: encountersPaged,
@@ -536,7 +542,7 @@ const EncounterList = () => {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        edit: encounterData?.status?.toUpperCase() === 'COMPLETED',
         fromPage: 'EncounterList'
       }
     });
@@ -808,7 +814,7 @@ const EncounterList = () => {
     },
     {
       key: 'status',
-      title: 'STATUS',
+      title: 'TREATMENT STATUS',
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const statusColorMap: Record<string, string> = {
@@ -816,7 +822,7 @@ const EncounterList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -828,6 +834,7 @@ const EncounterList = () => {
         );
       }
     },
+    
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
@@ -1014,18 +1021,19 @@ const EncounterList = () => {
           />
 
           <SearchPatientCriteria
-            record={patientSearchDraft}
-            setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
+              record={patientSearchDraft}
+              setRecord={setPatientSearchDraft}
+              onSearchClick={handlePatientSearchClick}
+              liveSearchMinLength={3}
           />
 
           <MyInput
             column
             width={260}
             fieldType="checkPicker"
-            fieldLabel="Encounter Status"
+            fieldLabel="Treatment Status"
             fieldName="statusIn"
-            selectData={EncounterStatusEnum}
+            selectData={TreatmentStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}

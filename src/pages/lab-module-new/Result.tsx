@@ -65,6 +65,7 @@ import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
 import MyButton from '@/components/MyButton/MyButton';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -385,7 +386,7 @@ const Result = forwardRef<any, Props>(
         .filter(
           row =>
             selectedResultIds.includes(row.id) &&
-            row.processingStatus === 'EXAM_DONE'
+            row.processingStatus === 'RESULT_READY'
         )
         .map(row => row.id);
 
@@ -501,7 +502,7 @@ const Result = forwardRef<any, Props>(
     };
 
     const toggleSelectRow = (row: any, checked: boolean) => {
-      if (row.processingStatus !== 'EXAM_DONE') return;
+  
 
       setSelectedResultIds(prev =>
         checked
@@ -533,11 +534,10 @@ const Result = forwardRef<any, Props>(
         align: 'center',
         width: 60,
         render: (row: any) => {
-          const disabled = row.processingStatus !== 'EXAM_DONE';
+        
           return (
             <Checkbox
               checked={selectedResultIds.includes(row.id)}
-              disabled={disabled}
               onChange={(_, checked) => toggleSelectRow(row, checked)}
               onClick={(e) => e.stopPropagation()}
             />
@@ -737,9 +737,9 @@ const Result = forwardRef<any, Props>(
         title: <Translate>ACTION</Translate>,
         align: 'center',
         render: (row: any) => {
-          const canEdit = row.processingStatus === 'EXAM_DONE';
-          const canApprove = row.processingStatus === 'EXAM_DONE';
-          const canReject = row.processingStatus === 'EXAM_DONE';
+          const canEdit = row.processingStatus === 'RESULT_READY';
+          const canApprove = row.processingStatus === 'RESULT_READY';
+          const canReject = row.processingStatus === 'RESULT_READY';
           const canPrint = row.processingStatus === 'RESULT_APPROVED';
 
           return (
@@ -973,7 +973,7 @@ const Result = forwardRef<any, Props>(
                     <MyButton
                       prefixIcon={() => <WarningRoundIcon />}
                       appearance="ghost"
-                      disabled={!selectedResultIds.length}
+                      disabled={!selectedResultIds.length }
                       onClick={() => {
                         setIsBulkRejectMode(true);
                         setOpenResultRejectModal(true);
@@ -982,6 +982,11 @@ const Result = forwardRef<any, Props>(
                       Reject Selected
                     </MyButton>
                   </span>
+                </Whisper>
+                <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
+                <span style={{display:'inline-block'}}>
+                  <LaboratoryReportButton resultIds={selectedResultIds}/>
+                </span>
                 </Whisper>
               </HStack>
             </div>

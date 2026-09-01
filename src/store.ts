@@ -63,6 +63,7 @@ import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { emailSettingsService } from './services/system-configurations/emailSettingsService';
+import { whatsappSettingsService } from './services/system-configurations/whatsappSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -231,6 +232,11 @@ import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncou
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
+import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
+import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
@@ -279,6 +285,8 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
@@ -355,6 +363,7 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
     [emailSettingsService.reducerPath]: emailSettingsService.reducer,
+    [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
@@ -369,6 +378,8 @@ export const store = configureStore({
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
     [departmentServicesService.reducerPath]: departmentServicesService.reducer,
+
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -579,12 +590,13 @@ export const store = configureStore({
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
+    [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
 
     [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
   
   [systemConfigService.reducerPath]: systemConfigService.reducer,
 
-
+  [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -640,6 +652,7 @@ export const store = configureStore({
         departmentService.middleware,
         organizationDefinitionService.middleware,
         emailSettingsService.middleware,
+        whatsappSettingsService.middleware,
         roleService.middleware,
         userRoleService.middleware,
         enumService.middleware,
@@ -784,9 +797,14 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
+        patientTimelineService.middleware,
+        patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
         autoPopulationService.middleware
+        labInterpretationService.middleware,
+        ocrParsingService.middleware,
+         medicationValidationService.middleware,
       ) as any
 });
 

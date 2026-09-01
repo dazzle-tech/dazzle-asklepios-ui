@@ -418,13 +418,9 @@ const SOAP = props => {
             </div>
             <div className="half-width-section">
               <PatientHistorySummary
-                button={
-                  <MyButton size="small" onClick={saveChanges}>
-                    Get Summary
-                  </MyButton>
-                }
-                patient={patient}
-                encounter={localEncounter}
+              
+                patientId={patient?.id}
+                encounterId={localEncounter?.id}
                 edit={edit}
               />
             </div>

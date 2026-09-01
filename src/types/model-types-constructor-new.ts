@@ -1954,6 +1954,19 @@ export const newEmailSettings: modelTypes.EmailSettings = {
   emailFooter: '',
 };
 
+export const newWhatsAppSettings: modelTypes.WhatsAppSettings = {
+  id: undefined,
+  name: '',
+  description: '',
+  apiVersion: 'v21.0',
+  phoneNumberId: '',
+  whatsappBusinessAccountId: '',
+  accessToken: '',
+  verifyToken: '',
+  webhookUrl: '',
+  enabled: false,
+};
+
 export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
   id: undefined,
   organizationDefinitionId: 0,
@@ -3152,6 +3165,29 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   lastModifiedDate: null
 };
 
+export const newOCRParsingResponseDTO: modelTypes.OCRParsingResponseDTO = {
+  type: '',
+   documentNumber: undefined,
+   familyName: '',
+   givenNames: '',
+   nationality: '',
+   dateOfBirth: null, // change it later
+   sex : '',// change it later
+   placeOfBirth: ''
+}
+
+export const newTimelineResponse: modelTypes.TimelineResponse = {
+  request_id: '',
+  timeline: [],
+  summary: '',
+  processing_metadata: {
+    model: '',
+    timestamp: '',
+    input_fields_count: 0,
+    timeline_event_count: 0
+  }
+}
+
 export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
   code: '',
   name: '',
@@ -3185,6 +3221,20 @@ export const newNotificationHeaderUpdateDTO: modelTypes.NotificationHeaderUpdate
   isActive: true,
 };
 
+export const newWhatsAppButton: modelTypes.WhatsAppButton = {
+  type: '',
+  text: '',
+  url: '',
+  phoneNumber: '',
+  couponCode: '',
+  flowId: '',
+};
+
+export const newWhatsAppTemplateParameter: modelTypes.WhatsAppTemplateParameter = {
+  parameterName: '',
+  exampleValue: '',
+};
+
 export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateResponseVM = {
   notificationHeaderId: 0,
   channel: 'EMAIL',
@@ -3196,6 +3246,16 @@ export const newNotificationTemplateResponseVM: modelTypes.NotificationTemplateR
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappMetaTemplateId: '',
+  whatsappTemplateStatus: '',
+  whatsappTemplateCategory: '',
+  whatsappTemplateVersion: undefined,
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
   isActive: true,
 };
 
@@ -3210,6 +3270,13 @@ export const newNotificationTemplateCreateDTO: modelTypes.NotificationTemplateCr
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappTemplateCategory: '',
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
   isActive: true,
 };
 
@@ -3224,6 +3291,13 @@ export const newNotificationTemplateUpdateDTO: modelTypes.NotificationTemplateUp
   ccRecipientRule: '',
   bccRecipientRule: '',
   phoneRecipientRule: '',
+  whatsappTemplateName: '',
+  whatsappLanguageCode: '',
+  whatsappParameters: [],
+  whatsappTemplateCategory: '',
+  whatsappMetaTemplateFooter: '',
+  whatsappMetaTemplateButtons: [],
+  whatsappHeaderType: '',
 };
 
 export const newNotificationResponseVM: modelTypes.NotificationResponseVM = {
@@ -3275,4 +3349,54 @@ export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
   relatedEntityId: null,
   dateFrom: null,
   dateTo: null,
+};
+
+export const newMedicationTestValidationPatient: modelTypes.MedicationTestValidationPatient = {
+  mrn: '',
+  fullName: '',
+  gender: 'Unknown',
+  dob: ''
+};
+
+export const newMedicationTestValidationEncounter: modelTypes.MedicationTestValidationEncounter = {
+  visitId: '',
+  visitType: '',
+  plannedStartDate: '',
+  chiefComplaint: '',
+  patientAge: '',
+  diagnosis: ''
+};
+
+export const newMedicationTestValidationDiagnosis: modelTypes.MedicationTestValidationDiagnosis = {
+  type: 'Encounter Diagnosis',
+  value: ''
+};
+
+export const newMedicationValidationRequestDTO: modelTypes.MedicationValidationRequestDTO = {
+  patient: newMedicationTestValidationPatient,
+  encounter: newMedicationTestValidationEncounter,
+  complain: '',
+  diagnosis: newMedicationTestValidationDiagnosis,
+  medications: []
+};
+
+export const newTestValidationRequestDTO: modelTypes.TestValidationRequestDTO = {
+  patient: newMedicationTestValidationPatient,
+  encounter: newMedicationTestValidationEncounter,
+  complain: '',
+  diagnosis: newMedicationTestValidationDiagnosis,
+  tests: []
+};
+
+export const newValidationQuickSummaryDTO: modelTypes.ValidationQuickSummaryDTO = {
+  overall_status: '',
+  top_priority: ''
+};
+
+export const newValidationResponseDTO: modelTypes.ValidationResponseDTO = {
+  quick_summary: newValidationQuickSummaryDTO,
+  detailed_validations: [],
+  recommended_alternatives: [],
+  confidence_score: 0,
+  timestamp: ''
 };

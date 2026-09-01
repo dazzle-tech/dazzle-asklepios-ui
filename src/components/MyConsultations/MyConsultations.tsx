@@ -276,18 +276,19 @@ const MyConsultations = () => {
     (patientsBasicInfo ?? []).forEach((patient: any, idx: number) => {
       const id = patient?.id ?? ids[idx];
       if (id == null) return;
-      map.set(String(id), {
-        id,
-        firstName: patient?.firstName,
-        lastName: patient?.lastName,
-        dateOfBirth: patient?.dateOfBirth,
-        sexAtBirth: patient?.sexAtBirth,
-        medicalRecordNumber: patient?.medicalRecordNumber
-      });
+        map.set(String(id), {
+          id,
+          firstName: patient?.firstName,
+          secondName: patient?.secondName,
+          thirdName: patient?.thirdName,
+          lastName: patient?.lastName,
+          dateOfBirth: patient?.dateOfBirth,
+          sexAtBirth: patient?.sexAtBirth,
+          medicalRecordNumber: patient?.medicalRecordNumber
+        });
     });
     return map;
   }, [patientsBasicInfo]);
-
   const departmentIdsForBulk = useMemo(
     () =>
       Array.from(
@@ -693,13 +694,17 @@ const MyConsultations = () => {
         flexGrow: 4,
         render: (row: any) => {
           const patientKey = row.patient?.id;
-
           const patient: any =
             patientKey != null ? patientMap.get(String(patientKey)) ?? row.patient : null;
 
-          const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
-            patient?.lastName ?? ''
-          ).trim()}`.trim();
+            const patientName = [
+              patient?.firstName,
+              patient?.secondName,
+              patient?.thirdName,
+              patient?.lastName,
+            ]
+              .filter(Boolean)
+              .join(' ');
 
           const patientMedicalRecordNumber = patient?.medicalRecordNumber;
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';

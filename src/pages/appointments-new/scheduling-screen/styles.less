@@ -828,12 +828,18 @@
   min-height: 0;
   min-width: 0;
   overflow: visible;
+  position: relative;
+  z-index: 4;
 
   .rs-form-group,
   .my-input-container {
     margin-bottom: 0 !important;
     overflow: visible;
   }
+}
+
+.waiting-list-picker-popup {
+  z-index: 1400 !important;
 }
 
 .waiting-list-panel__filters {
@@ -862,6 +868,8 @@
     gap: 6px;
     margin-bottom: 6px;
     overflow: visible;
+    position: relative;
+    z-index: 3;
 
     .my-input-container .rs-form-control-label,
     .my-input-container .my-label {
@@ -870,10 +878,6 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    .rs-picker-popup {
-      z-index: 1200;
     }
   }
 

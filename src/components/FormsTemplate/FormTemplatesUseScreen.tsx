@@ -29,6 +29,7 @@ import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
 import UserDateCell from '../UserDateCell/UserDateCell';
+import { formatDateWithoutSeconds } from '@/utils';
 
 const EMPTY_PAGED_RESULT: PagedResult<FormEntry> = {
   data: [],
@@ -407,7 +408,7 @@ const FormTemplatesUseScreen = () => {
       const contentWidth = pageWidth - marginX * 2;
 
       const templateName = selectedTemplate?.name || 'Form Name';
-      const generatedAt = formatDateTime(new Date().toISOString());
+      const generatedAt = formatDateWithoutSeconds(new Date().toISOString());
       const patientName = getPatientDisplayName(patient);
       const authAny = authSlice as any;
       const facilityName =
@@ -532,12 +533,14 @@ const FormTemplatesUseScreen = () => {
       });
 
       const pdfUrl = doc.output('bloburl');
-      const popup = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-
+      const popup = window.open(pdfUrl, '_blank');
+      console.log(popup);
       if (!popup) {
         dispatch(notify({ msg: 'Popup blocked. Please allow popups to preview PDF.', sev: 'warning' }));
+        console.log('popup=', popup);
       }
-    } catch {
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
       dispatch(notify({ msg: 'Failed to generate PDF', sev: 'error' }));
     }
   };

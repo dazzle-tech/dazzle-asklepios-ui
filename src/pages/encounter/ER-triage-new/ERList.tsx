@@ -225,7 +225,7 @@ const ERList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -234,7 +234,8 @@ const ERList = () => {
       'SENT_TO_ER',
       'WAITING_TRIAGE',
       'WAITING_LIST',
-      'PENDING_PAYMENT'
+      'PENDING_PAYMENT',
+      'ASSIGNED_TO_BED'
     ]
   });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
@@ -826,7 +827,7 @@ const ERList = () => {
           return <span className="location-table-style">Discharged</span>;
         }
 
-        if (statusUpper === 'CLOSED') {
+        if (statusUpper === 'COMPLETED') {
           return <span className="location-table-style">Closed</span>;
         }
 
@@ -925,7 +926,7 @@ const ERList = () => {
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d',
+          COMPLETED: '#6c757d',
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
@@ -938,6 +939,7 @@ const ERList = () => {
         );
       }
     },
+      
     {
       key: 'duration',
       title: 'DURATION',
@@ -973,7 +975,7 @@ const ERList = () => {
               </div>
             </Whisper>
 
-            {statusUpper != 'CLOSED' &&
+            {statusUpper != 'COMPLETED' &&
               statusUpper != 'DISCHARGED' &&
               statusUpper != 'CANCELLED' && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
@@ -1075,9 +1077,9 @@ const ERList = () => {
           column
           width={260}
           fieldType="checkPicker"
-          fieldLabel="Encounter Status"
+          fieldLabel="Treatment Status"
           fieldName="statusIn"
-          selectData={EncounterStatusEnum}
+          selectData={TreatmentStatusEnum}
           selectDataLabel="label"
           selectDataValue="value"
           record={{ statusIn }}
