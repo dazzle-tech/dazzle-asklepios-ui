@@ -24,7 +24,11 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
-  admin: false
+  admin: false,
+
+  allowOngoingVisit: false,
+  canUnDischargeUrgentCare: false,
+  canUnCompleteEncounter: false,
 };
 
 // ------------------- Candidate -------------------
@@ -3456,8 +3460,10 @@ export type WaseelItemMappingSearchParams = {
   page: number;
   size: number;
   sort?: string;
-  search?: string;
   itemType?: string;
+  itemName?: string;
+  itemCode?: string;
+  sbsCode?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };

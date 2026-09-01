@@ -33,7 +33,6 @@ import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -68,7 +67,7 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
-import { useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
+import { useLazyGetUserByLoginQuery, useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
 import Translate from '@/components/Translate';
 
@@ -189,10 +188,19 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 const UrgentCareList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const user = useAppSelector(
-      (state: any) => state.auth.user
-    );
-  
+  const currentUser = useAppSelector(
+    (state: any) => state.auth.user
+  );
+
+  const [getUserByLogin, { data: userByLogin }] =
+    useLazyGetUserByLoginQuery();
+
+  useEffect(() => {
+    if (currentUser?.login) {
+      getUserByLogin(currentUser.login);
+    }
+  }, [currentUser?.login, getUserByLogin]);
+    
 
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -676,39 +684,56 @@ useEffect(() => {
     }
   };
 
-  const handleGoToVisit = async (encounterData: any) => {
-    if(encounterData?.startedBy != null && encounterData?.startedBy !== user?.login){
-      const fullName = await getUserFullNameByLogin(
-      encounterData?.startedBy
+const handleGoToVisit = async (encounterData: any) => {
+
+  if (
+    !userByLogin?.allowOngoingVisit &&
+    encounterData?.startedBy != null &&
+    encounterData?.startedBy !== userByLogin?.login
+  ) {
+    const fullName = await getUserFullNameByLogin(
+      encounterData.startedBy
     ).unwrap();
-       dispatch(notify({ msg: `This Patient already seen by ${fullName} `, sev: 'warning' }));
-      return;
-    }
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
 
-    dispatch(showSystemLoader());
-    const fullPatient = await fetchPatientForEncounter(encounterData);
-    dispatch(hideSystemLoader());
+    dispatch(
+      notify({
+        msg: `This Patient already seen by ${fullName}`,
+        sev: 'warning',
+      })
+    );
 
-    if (!fullPatient) {
-      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-      return;
-    }
+    return;
+  }
 
-    dispatch(setEncounter(encounterData));
-    dispatch(setPatient(fullPatient));
+  const isStarted = await startEncounterSafe(encounterData);
+  if (!isStarted) return;
 
-    navigate('/encounter', {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'Urgent_Care_List',
-        patient: fullPatient,
-        encounter: encounterData
-      }
-    });
+  dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
 
-  };
+  if (!fullPatient) {
+    dispatch(
+      notify({
+        msg: 'Failed to load patient data.',
+        sev: 'error',
+      })
+    );
+    return;
+  }
+
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+
+  navigate('/encounter', {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'Urgent_Care_List',
+      patient: fullPatient,
+      encounter: encounterData,
+    },
+  });
+};
 
   const handleViewVisit = async (encounterData: any) => {
     dispatch(showSystemLoader());

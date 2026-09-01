@@ -24,8 +24,12 @@ export interface ApUser {
   jobDescription?: string | null;
   jobRole?: string | null;
   admin?: boolean;
-  hasResetKey?: boolean; // Transient field to indicate if resetKey exists (for UI logic)
+  hasResetKey?: boolean;
+  allowOngoingVisit: boolean;
+  canUnDischargeUrgentCare: boolean;
+  canUnCompleteEncounter: boolean;
 }
+
 
 export interface Candidate {
   id?: number;
@@ -6951,7 +6955,9 @@ export interface PendingClaimInvoiceResponse {
   financialDocumentId?: number | null;
   documentNumber?: string | null;
   encounterId?: number | null;
+  encounter?: PatientEncounter | null;
   patientId?: number | null;
+  patient?: Patient | null;
   payorId?: number | null;
   claimReference?: string | null;
   totalAmount?: number | null;
