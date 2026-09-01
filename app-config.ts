@@ -4,7 +4,9 @@ declare global {
       backendBaseURL?: string;
       tenantId?: string;
       tenantSecurityToken?: string;
+      stimulsoftLicenseKey?: string;
     };
+    Stimulsoft?: any;
   }
 }
 
@@ -14,7 +16,8 @@ const config = {
   tenantId:
     window.APP_CONFIG?.tenantId || '1',
   tenantSecurityToken:
-    window.APP_CONFIG?.tenantSecurityToken || '4994'
+    window.APP_CONFIG?.tenantSecurityToken || '4994',
+  stimulsoftLicenseKey: window.APP_CONFIG?.stimulsoftLicenseKey || '',
 };
 
 console.log('APP_CONFIG', window.APP_CONFIG);

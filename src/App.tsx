@@ -75,6 +75,20 @@ const PrescriptionNew = lazy (() => import ( './pages/encounter/encounter-compon
 const PressureUlcerRiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/pressure-ulce-risk-assessment'));
 const ProcedureNew = lazy (() => import ( './pages/encounter/encounter-component/procedure-new/Procedure'));
 const EncounterReport= lazy(()=> import ('./pages/encounter/PatientEncounterReportPage'));
+const StimulsoftReportTemplateList = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-report-list" */
+      './pages/setup/stimulsoft-report-designer'
+    )
+);
+const StimulsoftReportDesignerPage = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-designer" */
+      './pages/setup/stimulsoft-report-designer/StimulsoftReportDesignerPage'
+    )
+);
 import { MODULES } from '@/config/modules-config';
 const ApplyTemplateList = lazy (() => import ( './pages/appointments-new/ApplyTemplate/ApplyTemplateList'));
 const ScheduleScreen = lazy (() => import ( './pages/appointments-new/scheduling-screen/ScheduleScreen'));
@@ -640,6 +654,9 @@ const App = () => {
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
               <Route path="encounter-report" element={<EncounterReport/>}/>
+              <Route path="report-designer" element={<StimulsoftReportTemplateList />} />
+              <Route path="report-designer/new" element={<StimulsoftReportDesignerPage />} />
+              <Route path="report-designer/:id" element={<StimulsoftReportDesignerPage />} />
               <Route
                 path="patient-old/facility-patient-list"
                 element={<PatientOldFacilityPatientList />}

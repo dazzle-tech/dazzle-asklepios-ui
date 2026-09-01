@@ -373,7 +373,8 @@ export const MODULES: Module[] =
       icon: "FaRegIdBadge",
       viewOrder: 2,
       screens: [
-        { name: "Encounter Report", code: "PATIENT_ENCOUNTER_REPORT", description: "", icon: "FaList", viewOrder: 4, navPath: "encounter-report" }
+        { name: "Encounter Report", code: "PATIENT_ENCOUNTER_REPORT", description: "", icon: "FaList", viewOrder: 4, navPath: "encounter-report" },
+        { name: "Report Designer", code: "STIMULSOFT_REPORT_DESIGNER", description: "Design Stimulsoft report templates", icon: "FaFilePen", viewOrder: 5, navPath: "report-designer" }
 
       ]
     }
