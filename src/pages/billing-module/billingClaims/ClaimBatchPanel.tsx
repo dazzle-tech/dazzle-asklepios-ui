@@ -9,6 +9,7 @@ import {
   useSubmitClaimBatchMutation
 } from '@/services/waseel-integration/claimService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { useGetAllActivePayorsQuery } from '@/services/setup/payer/PayorService';
 import type { PendingClaimInvoiceResponse } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
@@ -32,10 +33,10 @@ type ClaimBatchPanelProps = {
 
 const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const dispatch = useAppDispatch();
-  const [payorId, setPayorId] = useState<number | null>(null);
+  const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
   const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
   const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
-  const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
+  const [dateRange, setDateRange] = useState<[Date, Date] | null>(currentMonthToTodayRange);
   const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
   const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
   const [appliedClaimType, setAppliedClaimType] = useState<string | null>(null);
@@ -57,7 +58,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       claimSubType: appliedClaimSubType
     },
     {
-      skip: appliedPayorId == null || !appliedClaimType || !appliedClaimSubType
+      skip:
+        (appliedPayorId == null && !appliedPayerNphiesId) ||
+        !appliedClaimType ||
+        !appliedClaimSubType
     }
   );
 
@@ -65,14 +69,18 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
 
   const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
     useGetAllNphiesPayersQuery({ page: 0, size: 2000, sort: 'nameEn,asc' });
+  const { data: localPayorListResponse } = useGetAllActivePayorsQuery({
+    page: 0,
+    size: 2000,
+    sort: 'id,asc'
+  });
 
   const payorOptions = useMemo(
     () =>
       (nphiesPayerListResponse?.data ?? [])
-        .filter(payer => payer?.id != null && payer.isActive !== false)
+        .filter(payer => payer?.nphiesId && payer.isActive !== false)
         .map(payer => ({
-          id: Number(payer.id),
-          nphiesId: payer.nphiesId,
+          nphiesId: String(payer.nphiesId).trim(),
           label: formatPayorOptionLabel(payer.nameEn, payer.nphiesId)
         })),
     [nphiesPayerListResponse]
@@ -115,7 +123,9 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   };
 
   const handleSearch = () => {
-    if (payorId == null) {
+    const selectedNphiesId = payerNphiesId?.trim() || null;
+
+    if (!selectedNphiesId) {
       dispatch(notify({ msg: 'Select a payor before searching invoices.', sev: 'warning' }));
       return;
     }
@@ -130,10 +140,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       return;
     }
 
-    setAppliedPayorId(payorId);
-    setAppliedPayerNphiesId(
-      payorOptions.find(option => option.id === payorId)?.nphiesId?.trim() || null
-    );
+    setAppliedPayorId(resolveLocalPayorId(selectedNphiesId, localPayorListResponse?.data));
+    setAppliedPayerNphiesId(selectedNphiesId);
     setAppliedClaimType(claimType);
     setAppliedClaimSubType(claimSubType);
     setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
@@ -335,14 +343,18 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
         <div className="claims-batch-filters">
           <MyInput
             fieldLabel="Payor"
-            fieldName="payorId"
+            fieldName="payerNphiesId"
             fieldType="select"
             selectData={payorOptions}
             selectDataLabel="label"
-            selectDataValue="id"
-            record={{ payorId }}
-            setRecord={(value: { payorId: number | string | null }) =>
-              setPayorId(toNullableNumber(value.payorId))
+            selectDataValue="nphiesId"
+            record={{ payerNphiesId }}
+            setRecord={(value: { payerNphiesId: number | string | null }) =>
+              setPayerNphiesId(
+                value.payerNphiesId == null || value.payerNphiesId === ''
+                  ? null
+                  : String(value.payerNphiesId).trim()
+              )
             }
             cleanable
             loading={isNphiesPayersLoading}
@@ -454,13 +466,25 @@ const formatPayorOptionLabel = (nameEn?: string | null, nphiesId?: string | null
   return name || code || '-';
 };
 
-const toNullableNumber = (value: number | string | null | undefined) => {
-  if (value == null || value === '') {
-    return null;
-  }
+const resolveLocalPayorId = (
+  nphiesId: string,
+  localPayors?: Array<{ id?: number | null; nphiesId?: string | null }> | null
+) => {
+  const normalized = nphiesId.trim().toLowerCase();
+  const match = (localPayors ?? []).find(
+    payor => String(payor?.nphiesId ?? '').trim().toLowerCase() === normalized
+  );
 
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
+  return match?.id != null ? Number(match.id) : null;
+};
+
+const currentMonthToTodayRange = (): [Date, Date] => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(0, 0, 0, 0);
+  return [start, end];
 };
 
 const toStartOfDayIso = (date?: Date | null) => {
