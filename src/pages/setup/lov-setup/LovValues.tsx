@@ -24,6 +24,7 @@ import MyTable from '@/components/MyTable';
 import AddEditLovValue from './AddEditLovValue';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import TranslationModal from '@/components/TranslationModal';
 const LovValues = ({ lov, goBack, width }) => {
   const dispatch = useAppDispatch();
   const [lovValue, setLovValue] = useState<ApLovValues>({
@@ -33,6 +34,7 @@ const LovValues = ({ lov, goBack, width }) => {
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
   const [isdefault, setIsDefault] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
@@ -131,6 +133,7 @@ const LovValues = ({ lov, goBack, width }) => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'The LOV value has been saved successfully', sev: 'success' }));
+        setShowTranslationModal(true);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to save this LOV value', sev: 'error' }));
@@ -201,8 +204,8 @@ const LovValues = ({ lov, goBack, width }) => {
          setOpenConfirmModal(false);
   };
   // Filter table
-  const filters = () => (
-    <Form layout="inline" fluid>
+  const filters = () => (<>
+    <Form fluid className="lov-setup-forms-filters-handle-position">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -230,7 +233,7 @@ const LovValues = ({ lov, goBack, width }) => {
         placeholder="Search"
       />
     </Form>
-  );
+</> );
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApLovValues) => (
@@ -332,28 +335,30 @@ const LovValues = ({ lov, goBack, width }) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-
   return (
     <div dir={dir}>
       {lov && lov.key && (
         <Panel
-          header={
+          header={<>
             <p className="title-lov-values">
               <Translate> List of Values for </Translate> <i>{lov?.lovName ?? ''}</i>
             </p>
-          }
+          </>}
         >
           <div className="container-of-header-actions-lov-values">
             <BackButton onClick={goBack} appearance="ghost" />
-            <MyButton
+
+          <MyButton
+              
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
               onClick={handleLovValueNew}
               width="109px"
             >
               Add New
-            </MyButton>
+          </MyButton>
           </div>
+
           <MyTable
             height={450}
             data={lovValueListResponse?.object ?? []}
@@ -374,6 +379,7 @@ const LovValues = ({ lov, goBack, width }) => {
             totalCount={totalCount}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
+            dontTranslateData 
           />
           <AddEditLovValue
             open={lovValuePopupOpen}
@@ -401,6 +407,16 @@ const LovValues = ({ lov, goBack, width }) => {
         itemToDelete="Price List"
         actionButtonFunction={handleToggleActive}
         actionType={stateOfDeleteModal}
+      />
+       <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'Display Value',
+            value: lovValue.lovDisplayVale
+          }
+        ]}
       />
     </div>
 

@@ -5,6 +5,7 @@ import { Button, ButtonGroup, Calendar as RsCalendar, Panel, Text } from 'rsuite
 import { notify } from '@/utils/uiReducerActions';
 import TodayAppointmentsList from './TodayAppointmentsList';
 import WaitingListPanel from './WaitingListPanel';
+import Translate from '@/components/Translate';
 
 type Props = {
   calendarKey: string;
@@ -95,7 +96,7 @@ const ScheduleContentGrid = ({
         ...resource,
         key,
         resourceId: key,
-        resourceName: String(resource?.resourceName ?? resource?.name ?? `Resource ${key}`)
+        resourceName:<Translate>{String(resource?.resourceName ?? resource?.name ?? `Resource ${key}`)}</Translate> 
       });
     });
 

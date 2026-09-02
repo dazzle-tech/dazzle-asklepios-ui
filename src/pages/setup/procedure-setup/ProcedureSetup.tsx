@@ -30,6 +30,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
+import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -51,6 +52,9 @@ const ProcedureSetup: React.FC = () => {
 
   const [linkPriceOpen, setLinkPriceOpen] = useState(false);
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
+
+  const [linkDocumentOpen, setLinkDocumentOpen] = useState(false);
+  const [linkDocumentProcedureId, setLinkDocumentProcedureId] = useState<number | null>(null);
 
   // Filter state
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
@@ -139,6 +143,11 @@ const ProcedureSetup: React.FC = () => {
   const handleNew = () => {
     setProcedure({ ...newProcedure, facilityId });
     setPopupOpen(true);
+  };
+
+  const handleLinkAssignment = () => {
+    setLinkDocumentProcedureId(procedure?.id ? Number(procedure.id) : null);
+    setLinkDocumentOpen(true);
   };
 
   /**
@@ -591,6 +600,13 @@ const ProcedureSetup: React.FC = () => {
         tableButtons={
           <div className="container-of-add-new-button">
             <MyButton
+              color="var(--deep-blue)"
+              onClick={handleLinkAssignment}
+              width="160px"
+            >
+              Link Assignment
+            </MyButton>
+            <MyButton
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
               onClick={handleNew}
@@ -631,6 +647,12 @@ const ProcedureSetup: React.FC = () => {
         open={linkPriceOpen}
         setOpen={setLinkPriceOpen}
         procedureId={linkPriceProcedureId ?? 0}
+      />
+
+      <LinkProcedureDocumentAssignment
+        open={linkDocumentOpen}
+        setOpen={setLinkDocumentOpen}
+        defaultProcedureId={linkDocumentProcedureId}
       />
     </Panel>
   );

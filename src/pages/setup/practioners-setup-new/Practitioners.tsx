@@ -33,6 +33,7 @@ import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import AddEditPractitioner from "./AddEditPractitioner";
 import "./styles.less";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import TranslationModal from "@/components/TranslationModal";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -52,6 +53,7 @@ const Practitioners = () => {
   const [stateOfDeleteModal, setStateOfDeleteModal] =
     useState<string>("deactivate");
   const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [selectedPractitionerForPolicyAssignment, setSelectedPractitionerForPolicyAssignment] =
     useState<Practitioner | null>(null);
   const [recordOfFilter, setRecordOfFilter] = useState({
@@ -206,7 +208,7 @@ const Practitioners = () => {
         secondaryLicenseValidUntil: practitioner.secondaryLicenseValidUntil,
         dateOfBirth: practitioner.dateOfBirth,
         jobRole: practitioner.jobRole,
-        gender: practitioner.gender,
+        gender: practitioner.gender?.toUpperCase(),
         isActive: practitioner.isActive,
         parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
@@ -222,7 +224,7 @@ const Practitioners = () => {
       dispatch(
         notify({ msg: "Practitioner added successfully", sev: "success" })
       );
-
+      setShowTranslationModal(true)
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setPractitioner({ ...Response });
 
@@ -304,7 +306,7 @@ if (!backendKey && typeof error === "string") {
           practitioner.secondaryLicenseValidUntil || null,
         dateOfBirth: practitioner.dateOfBirth || null,
         jobRole: practitioner.jobRole || null,
-        gender: practitioner.gender || null,
+        gender: practitioner.gender?.toUpperCase() || null,
         isActive: practitioner.isActive,
         parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
@@ -319,7 +321,7 @@ if (!backendKey && typeof error === "string") {
       dispatch(
         notify({ msg: "Practitioner updated successfully", sev: "success" })
       );
-
+      setShowTranslationModal(true)
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
 
     } catch (error: any) {
@@ -667,7 +669,7 @@ if (!backendKey && typeof error === "string") {
             Add New
           </MyButton>
         </div>}
-
+        dontTranslateData 
 
       />
 
@@ -708,6 +710,16 @@ if (!backendKey && typeof error === "string") {
         actionButtonFunction={handleDeactiveReactivatePractitioner}
         actionType={stateOfDeleteModal}
       />
+      <TranslationModal
+                    open={showTranslationModal}
+                    setOpen={setShowTranslationModal}
+                    fields={[
+                      {
+                        fieldName: 'Full Name',
+                        value: practitioner.firstName + " " + practitioner.lastName
+                      }
+                    ]}
+                  />
     </Panel>
   );
 };

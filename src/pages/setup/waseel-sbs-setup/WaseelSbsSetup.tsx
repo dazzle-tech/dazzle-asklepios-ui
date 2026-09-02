@@ -108,6 +108,20 @@ const WaseelSbsSetup = () => {
   const [searchFilters, setSearchFilters] = useState({ search: '' });
   const [appliedSearch, setAppliedSearch] = useState('');
 
+  const [mappingFilters, setMappingFilters] = useState({
+    itemType: '',
+    itemName: '',
+    itemCode: '',
+    sbsCode: ''
+  });
+
+  const [appliedMappingFilters, setAppliedMappingFilters] = useState({
+    itemType: '',
+    itemName: '',
+    itemCode: '',
+    sbsCode: ''
+  });
+
   const [openMappingModal, setOpenMappingModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedMapping, setSelectedMapping] = useState<WaseelItemMapping | null>(null);
@@ -161,7 +175,11 @@ const WaseelSbsSetup = () => {
     useSearchItemMappingsQuery({
       page: mappingPaginationParams.page,
       size: mappingPaginationParams.size,
-      sort: mappingPaginationParams.sort
+      sort: mappingPaginationParams.sort,
+      itemType: appliedMappingFilters.itemType || undefined,
+      itemName: appliedMappingFilters.itemName || undefined,
+      itemCode: appliedMappingFilters.itemCode || undefined,
+      sbsCode: appliedMappingFilters.sbsCode || undefined
     });
 
   const { data: sbsDropdownResponse, isFetching: isFetchingSbsDropdown } =
@@ -867,35 +885,35 @@ const WaseelSbsSetup = () => {
         )
       )}
 
-<MyInput
-  required
-  fieldLabel="SBS Code"
-  fieldType="selectPagination"
-  fieldName="sbsCatalogId"
-  selectData={sbsDropdownOptions}
-  selectDataLabel="sbsDisplay"
-  selectDataValue="id"
-  record={mappingForm}
-  setRecord={setMappingForm}
-  width="100%"
-  searchable
-  searchKeyWard={sbsDropdownSearch}
-  setSearchKeyWard={setSbsDropdownSearch}
-  loading={isFetchingSbsDropdown}
-  hasMore={hasMoreSbsDropdown}
-  onFetchMore={() => {
-    if (!isFetchingSbsDropdown && hasMoreSbsDropdown) {
-      setSbsDropdownPage(prev => prev + 1);
-    }
-  }}
-  placeholder="Search SBS Code / Type / Description"
-  onSelectItem={(selectedSbs: WaseelSbsCatalog) => {
-    setMappingForm(prev => ({
-      ...prev,
-      sbsCatalogId: selectedSbs?.id ?? null,
-    }));
-  }}
-/>
+      <MyInput
+        required
+        fieldLabel="SBS Code"
+        fieldType="selectPagination"
+        fieldName="sbsCatalogId"
+        selectData={sbsDropdownOptions}
+        selectDataLabel="sbsDisplay"
+        selectDataValue="id"
+        record={mappingForm}
+        setRecord={setMappingForm}
+        width="100%"
+        searchable
+        searchKeyWard={sbsDropdownSearch}
+        setSearchKeyWard={setSbsDropdownSearch}
+        loading={isFetchingSbsDropdown}
+        hasMore={hasMoreSbsDropdown}
+        onFetchMore={() => {
+          if (!isFetchingSbsDropdown && hasMoreSbsDropdown) {
+            setSbsDropdownPage(prev => prev + 1);
+          }
+        }}
+        placeholder="Search SBS Code / Type / Description"
+        onSelectItem={(selectedSbs: WaseelSbsCatalog) => {
+          setMappingForm(prev => ({
+            ...prev,
+            sbsCatalogId: selectedSbs?.id ?? null,
+          }));
+        }}
+      />
 
       <MyInput
         fieldType="checkbox"
@@ -913,6 +931,96 @@ const WaseelSbsSetup = () => {
         record={mappingForm}
         setRecord={setMappingForm}
         width="100%"
+      />
+    </Form>
+  );
+
+
+  const mappingFiltersContent = () => (
+    <Form fluid className="form-of-filters-set-up waseel-sbs-filters">
+      <MyInput
+        fieldName="itemType"
+        fieldLabel="Category"
+        fieldType="select"
+        selectData={itemTypeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={mappingFilters}
+        setRecord={setMappingFilters}
+        width="18vw"
+        showLabel={false}
+        placeholder="Search Category"
+        searchable={false}
+      />
+
+      <MyInput
+        fieldName="itemName"
+        fieldLabel="Item Name"
+        fieldType="text"
+        record={mappingFilters}
+        setRecord={setMappingFilters}
+        width="18vw"
+        showLabel={false}
+        placeholder="Search Item Name"
+      />
+
+      <MyInput
+        fieldName="itemCode"
+        fieldLabel="Item Code"
+        fieldType="text"
+        record={mappingFilters}
+        setRecord={setMappingFilters}
+        width="18vw"
+        showLabel={false}
+        placeholder="Search Item Code"
+      />
+
+      <MyInput
+        fieldName="sbsCode"
+        fieldLabel="SBS Code"
+        fieldType="text"
+        record={mappingFilters}
+        setRecord={setMappingFilters}
+        width="18vw"
+        showLabel={false}
+        placeholder="Search SBS Code"
+      />
+
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={() => {
+          setAppliedMappingFilters({
+            itemType: mappingFilters.itemType,
+            itemName: mappingFilters.itemName.trim(),
+            itemCode: mappingFilters.itemCode.trim(),
+            sbsCode: mappingFilters.sbsCode.trim()
+          });
+
+          setMappingPaginationParams(prev => ({
+            ...prev,
+            page: 0
+          }));
+        }}
+        clearOnClick={() => {
+          setMappingFilters({
+            itemType: '',
+            itemName: '',
+            itemCode: '',
+            sbsCode: ''
+          });
+
+          setAppliedMappingFilters({
+            itemType: '',
+            itemName: '',
+            itemCode: '',
+            sbsCode: ''
+          });
+
+          setMappingPaginationParams(prev => ({
+            ...prev,
+            page: 0
+          }));
+        }}
       />
     </Form>
   );
@@ -963,10 +1071,14 @@ const WaseelSbsSetup = () => {
           totalCount={mappingResponse?.totalCount ?? 0}
           loading={isMappingFetching}
           columns={mappingColumns}
+          filters={mappingFiltersContent()}
           page={mappingPaginationParams.page}
           rowsPerPage={mappingPaginationParams.size}
           onPageChange={(_event, newPage) =>
-            setMappingPaginationParams(prev => ({ ...prev, page: newPage }))
+            setMappingPaginationParams(prev => ({
+              ...prev,
+              page: newPage
+            }))
           }
           onRowsPerPageChange={e =>
             setMappingPaginationParams(prev => ({

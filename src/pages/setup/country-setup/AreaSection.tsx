@@ -543,6 +543,7 @@ const AreaSection: React.FC<Props> = ({ communityId }) => {
               rowClassName={row =>
                 selectedArea && row.id === selectedArea.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }

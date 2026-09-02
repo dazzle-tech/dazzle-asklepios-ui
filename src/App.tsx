@@ -231,6 +231,7 @@ const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
 const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
+const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
 const OrganizationDefinition = lazy (() => import ( './pages/system-configurations/organization-definition'));
 const EmailSettings = lazy (() => import ( './pages/system-configurations/email-settings'));
@@ -258,6 +259,9 @@ import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
+const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
+
+
 const PUBLIC_PATHS = PUBLIC_PERMISSION_BYPASS_PATHS;
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
@@ -807,6 +811,7 @@ const App = () => {
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
+                <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
                 <Route path="pediatric" element={<Pediatric />} />
                 <Route
                   path="multidisciplinary-team-notes"
@@ -836,6 +841,7 @@ const App = () => {
               </Route>
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
               <Route path="review-results" element={<FavoriteTests />} />
+              <Route path="tests-results" element={<TestsResults />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
@@ -866,6 +872,7 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />
+              <Route path="document-management" element={<DocumentManagement />} />
               {/* <Route path="skill-definition" element={<SkillDefinitions />} /> */}
 
               <Route path="allergens" element={<Allergens />} />

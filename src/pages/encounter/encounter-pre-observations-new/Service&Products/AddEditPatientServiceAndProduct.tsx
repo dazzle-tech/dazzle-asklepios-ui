@@ -84,6 +84,7 @@ const AddEditPatientServiceAndProduct = ({
       itemCode?: string | null;
       cashUnitPrice?: number | null;
       currency?: string | null;
+      notCoveredReason?: string | null;
     } | null>(null);
 
     useEffect(() => {
@@ -475,7 +476,8 @@ const AddEditPatientServiceAndProduct = ({
           itemName: selectedSelectItem?.name ?? selectedSelectItem?.testName,
           itemCode: preview.priceListItemCode,
           cashUnitPrice: preview.cashUnitPrice ?? preview.unitPrice,
-          currency: preview.currency ?? nextRecord.currency
+          currency: preview.currency ?? nextRecord.currency,
+          notCoveredReason: preview.notCoveredReason ?? null
         });
       } else {
         setCoverageWarning(null);

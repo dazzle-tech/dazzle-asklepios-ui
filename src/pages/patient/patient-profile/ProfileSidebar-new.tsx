@@ -18,7 +18,7 @@ import clsx from 'clsx';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
+import { Button, Form, Input, InputGroup, Panel, Sidebar, Sidenav } from 'rsuite';
 
 import { Patient } from '@/types/model-types-new';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
@@ -52,7 +52,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
-  const [searchKeyword, setSearchKeyword] = useState<string | Date | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [patients, setPatients] = useState<any[]>([]);
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
@@ -188,12 +188,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     }
   }, [search, searchKeyword, searchRef]);
 
-  useEffect(() => {
-    setPatients([]);
-    setLinks({});
-    setSearchKeyword(null);
-  }, [selectedCriterion]);
-
   return (
     <div
       className={clsx(`profile-sidebar-container ${mode === 'light' ? 'light' : 'dark'}`, {
@@ -204,8 +198,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       <Sidebar width={expand ? 300 : 56} collapsible className="profile-sidebar">
         <Sidenav expanded={expand} appearance="subtle" className="profile-sidenav">
           <Sidenav.Body>
-            <Nav>
-              {expand ? (
+            {expand ? (
                 <Panel header={title} className="sidebar-panel">
                   {showButton && (
                     <Button onClick={() => setExpand(false)} className="expand-sidebar">
@@ -219,16 +212,31 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         fieldType="select"
                         fieldName="searchCriteria"
                         selectData={[
-                          { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-                          { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-                          { label: <Translate>Full Name</Translate>, value: 'fullName' }
+                          { label: 'Full Name', value: 'fullName' },
+                          { label: 'MRN', value: 'patientMrn' },
+                          { label: 'Document Number', value: 'documentNo' }
                         ]}
                         selectDataLabel="label"
                         selectDataValue="value"
                         showLabel={false}
                         record={{ searchCriteria: selectedCriterion }}
-                        setRecord={r => setSelectedCriterion(r.searchCriteria)}
-                        width={300}
+                        setRecord={r => {
+                          const newCriterion = r?.searchCriteria;
+                          if (!newCriterion) return;
+                          if (newCriterion === selectedCriterion) return;
+
+                          setSelectedCriterion(newCriterion);
+                          setSearchKeyword('');
+                          setPatients([]);
+                          setLinks({});
+                        }}
+                        width="100%"
+                        searchable={false}
+                        cleanable={false}
+                        virtualized={false}
+                        preventOverflow={false}
+                        container={() => document.body}
+                        menuClassName="profile-sidebar-search-criteria-menu"
                       />
                     </Form>
 
@@ -255,13 +263,13 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         </Button>
                       </Form>
                     ) : (
-                      <InputGroup inside>
-                        <Input
-                          placeholder="Search Patients"
-                          value={searchKeyword}
-                          onChange={val => setSearchKeyword(val)}
-                          onKeyDown={e => e.key === 'Enter' && search(0)}
-                        />
+                      <InputGroup inside style={{ width: '100%' }}>
+                          <Input
+                            placeholder="Search Patients"
+                            value={searchKeyword}
+                            onChange={val => setSearchKeyword(val)}
+                            onKeyDown={e => e.key === 'Enter' && search(0)}
+                          />
                         <InputGroup.Button onClick={() => search(0)}>
                           <SearchIcon />
                         </InputGroup.Button>
@@ -272,7 +280,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   <Box className="patient-list">
                     {isLoadingPatients ? (
                       Array.from({ length: 4 }).map((_, index) => (
-                        <Box width={250} key={index} className="patient-list-loader">
+                        <Box width="100%" key={index} className="patient-list-loader">
                           <div className="patient-list-loader-circle">
                             <Skeleton
                               variant="circular"
@@ -348,7 +356,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   <UserSearch />
                 </Button>
               )}
-            </Nav>
           </Sidenav.Body>
         </Sidenav>
       </Sidebar>

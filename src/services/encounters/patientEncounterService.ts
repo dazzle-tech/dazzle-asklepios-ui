@@ -343,6 +343,16 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+   reopenEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+  query: ({ id }) => ({
+    url: `/api/patient/encounter/${id}/reopen`,
+    method: 'POST'
+  }),
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'PatientEncounter', id },
+    'PatientEncounter'
+  ]
+}),
 
     closeEncounterForBilling: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
@@ -354,6 +364,22 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+
+    reassignPractitioner: builder.mutation<
+      PatientEncounter,
+      { encounterId: Id; practitionerId: Id }
+    >({
+      query: ({ encounterId, practitionerId }) => ({
+        url: `/api/patient/encounter/${encounterId}/reassign-practitioner`,
+        method: 'PUT',
+        body: { practitionerId }
+      }),
+      invalidatesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId },
+        'PatientEncounter'
+      ]
+    }),
+
     countTodayDepartmentCancelled: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/cancelled`,
@@ -495,6 +521,7 @@ export const {
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
   useCloseEncounterForBillingMutation,
+  useReassignPractitionerMutation,
 
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
@@ -520,5 +547,6 @@ export const {
   useGetEncountersByIdsQuery
   ,useLazyGetEncountersByIdsQuery,
   useUpdateHistoryOfPresentIllnessMutation,
-  useStartTriageEncounterMutation
+  useStartTriageEncounterMutation,
+  useReopenEncounterMutation
 } = patientEncounterService;

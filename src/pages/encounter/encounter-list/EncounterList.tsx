@@ -10,7 +10,9 @@ import {
   faPrint,
   faFileWaveform,
   faRectangleXmark,
-  faEye
+  faEye,
+  faVialCircleCheck,
+  faRotateLeft
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -46,7 +48,8 @@ import {
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
   useStartEncounterMutation,
-  useCancelEncounterMutation
+  useCancelEncounterMutation,
+  useReopenEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 
 import { useAppSelector } from '@/hooks';
@@ -62,9 +65,12 @@ import {
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
 // NEW: same practitioner-by-department hook used in AddResourceModal
-import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetPractitionerByUserIdQuery, useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
 import DoctorAppoitmentsView from './appointments';
+import Translate from '@/components/Translate';
+import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
+
 // import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -232,6 +238,7 @@ const EncounterList = () => {
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
+  const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
 
   useEffect(() => {
     dispatch(setPageCode('P_Encounters'));
@@ -249,7 +256,7 @@ const EncounterList = () => {
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
-  const[openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
+  const [openDoctorAppointments, setOpenDoctorAppointments] = useState<boolean>(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -264,10 +271,11 @@ const EncounterList = () => {
 
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
-  const [triggerVisitReportPdf] = useLazyGetVisitReportPdfQuery();
-  const [printingVisitReportId, setPrintingVisitReportId] = useState<number | null>(null);
+  const [reopenEncounter, { isLoading }] =
+    useReopenEncounterMutation();
 
-   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
+
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'DISCHARGED',
       'IN_OPERATION',
@@ -294,7 +302,10 @@ const EncounterList = () => {
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
-  const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
+  const [
+    statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
+  const [
+    showOnlyMyPatients, setShowOnlyMyPatients] = useState({ showOnlyMyPatients: true });
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
@@ -311,14 +322,14 @@ const EncounterList = () => {
   });
   const [record, setRecord] = useState<any>({});
 
-const handlePatientSearchClick = useCallback(() => {
+  const handlePatientSearchClick = useCallback(() => {
     setPatientSearchApplied(prev => ({
-        ...prev,
-        ...(patientSearchDraft ?? {})
+      ...prev,
+      ...(patientSearchDraft ?? {})
     }));
 
     setPage(0);
-}, [patientSearchDraft]);
+  }, [patientSearchDraft]);
 
 
   const {
@@ -339,7 +350,14 @@ const handlePatientSearchClick = useCallback(() => {
     size: 50,
     sort: 'id,desc'
   });
-
+  const currentUserId = useMemo(() => {
+    const rawUser = authSlice?.user;
+    const id = Number(rawUser?.id ?? rawUser?.userId ?? rawUser?.key ?? NaN);
+    return Number.isFinite(id) ? id : null;
+  }, [authSlice?.user]);
+  const { data: practitionerByUserResponse } = useGetPractitionerByUserIdQuery(currentUserId as number, {
+    skip: !currentUserId
+  });
   const appointmentsMap = useMemo(() => {
     const map: any = {};
     (appointmentsData?.data ?? []).forEach((appt: any) => {
@@ -404,13 +422,13 @@ const handlePatientSearchClick = useCallback(() => {
   }, [departmentPractitioners]);
 
   const practitionerOptions = useMemo(
-  () =>
-    (departmentPractitioners ?? []).map((p: any) => ({
-      label: `${p?.firstName ?? ''} ${p?.lastName ?? ''}`.trim(),
-      value: p?.id
-    })),
-  [departmentPractitioners]
-);
+    () =>
+      (departmentPractitioners ?? []).map((p: any) => ({
+        label: `${p?.firstName ?? ''} ${p?.lastName ?? ''}`.trim(),
+        value: p?.id
+      })),
+    [departmentPractitioners]
+  );
   // ─────────────────────────────────────────────────────────────────────────────────
 
   const patientIdsForBulk = useMemo(() => {
@@ -618,7 +636,17 @@ const handlePatientSearchClick = useCallback(() => {
       }
     });
   };
+  const handleReopen = async (encounterId: number) => {
+    try {
+      await reopenEncounter({ id: encounterId }).unwrap();
+      dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
 
+    } catch (error) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+
+    }
+  };
+  
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -725,10 +753,10 @@ const handlePatientSearchClick = useCallback(() => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
-      practitionerId: undefined,
+      practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
       page: 0,
       size: pageSize,
-      sort: DEFAULT_SORT
+      sort: DEFAULT_SORT,
     });
     setFiltersKey(prev => prev + 1);
   };
@@ -953,16 +981,18 @@ const handlePatientSearchClick = useCallback(() => {
       title: ' ',
       render: (row: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
-        const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipDoctor = <Tooltip><Translate>Go to Visit</Translate> </Tooltip>;
         const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
-
+        const tooltipReopen = <Tooltip>Reopen Encounter</Tooltip>;
         const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
-
+        const canReopen =
+          statusUpper === 'COMPLETED' ||
+          statusUpper === 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             {canSeeNurseStation && !isViewOnlyStatus && (
@@ -1055,13 +1085,30 @@ const handlePatientSearchClick = useCallback(() => {
                 </div>
               </Whisper>
             )}
-
+            {canReopen && (
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={tooltipReopen}
+              >
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="#0d6efd"
+                    loading={isLoading}
+                    onClick={() => { handleReopen(row.id) }}
+                  >
+                    <FontAwesomeIcon icon={faRotateLeft} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
             {canSeePrint && (
               <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                 <div>
-                 <VisitReportPrintButton
-                        row={row}
-                      />
+                  <VisitReportPrintButton
+                    row={row}
+                  />
                 </div>
               </Whisper>
             )}
@@ -1140,12 +1187,12 @@ const handlePatientSearchClick = useCallback(() => {
             setRecord={setDateFilter}
           />
 
-<SearchPatientCriteria
-    record={patientSearchDraft}
-    setRecord={setPatientSearchDraft}
-    onSearchClick={handlePatientSearchClick}
-    liveSearchMinLength={3}
- />
+          <SearchPatientCriteria
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
+            liveSearchMinLength={3}
+          />
 
           <MyInput
             column
@@ -1161,6 +1208,16 @@ const handlePatientSearchClick = useCallback(() => {
               setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
               setPage(0);
             }}
+          />
+          <MyInput
+            column
+            width={260}
+            fieldType="check"
+            fieldLabel="Show Only My Paients"
+            fieldName="showOnlyMyPatients"
+            record={showOnlyMyPatients}
+            setRecord={setShowOnlyMyPatients}
+            showLabel={false}
           />
         </Form>
       </div>
@@ -1181,9 +1238,9 @@ const handlePatientSearchClick = useCallback(() => {
             uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
           const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
           const normalizedPractitionerId =
-          practitionerId === null || practitionerId === undefined || practitionerId === ''
-          ? undefined
-          : practitionerId;
+            practitionerId === null || practitionerId === undefined || practitionerId === ''
+              ? undefined
+              : practitionerId;
 
           setPage(0);
 
@@ -1200,7 +1257,7 @@ const handlePatientSearchClick = useCallback(() => {
             hasPrescription,
             hasOrder,
             isObserved,
-            practitionerId: normalizedPractitionerId,  
+            practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
             page: 0,
             size: pageSize,
             sort: DEFAULT_SORT
@@ -1251,23 +1308,7 @@ const handlePatientSearchClick = useCallback(() => {
                 fieldLabel="Priority"
                 searchable={true}
               />
-              <MyInput
-               width={200}
-               fieldName="practitionerId"
-               fieldType="select"
-               record={{ practitionerId }}
-               setRecord={(v: any) => {
-                const next = v?.practitionerId;
-                setPractitionerId(next === null || next === undefined || next === '' ? undefined : next);
-                setPage(0);
-              }}
-               selectData={practitionerOptions}
-               selectDataLabel="label"
-               selectDataValue="value"
-               placeholder="Select Practitioner"
-               fieldLabel="Practitioner"
-               searchable={true}
-               />
+
             </Form>
           </div>
         }
@@ -1287,6 +1328,7 @@ const handlePatientSearchClick = useCallback(() => {
 
   useEffect(() => {
     if (!departmentId || appliedFilters) return;
+    if (showOnlyMyPatients.showOnlyMyPatients && currentUserId && !practitionerByUserResponse) return;
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
@@ -1304,9 +1346,10 @@ const handlePatientSearchClick = useCallback(() => {
       hasPrescription: undefined,
       hasOrder: undefined,
       isObserved: undefined,
+      practitionerId: showOnlyMyPatients.showOnlyMyPatients ? practitionerByUserResponse?.id : undefined,
       page: 0,
       size: pageSize,
-      sort: DEFAULT_SORT
+      sort: DEFAULT_SORT,
     });
   }, [
     departmentId,
@@ -1315,9 +1358,11 @@ const handlePatientSearchClick = useCallback(() => {
     dateFilter.toDate,
     todayStr,
     DEFAULT_STATUS,
-    pageSize
+    pageSize,
+    showOnlyMyPatients,
+    practitionerByUserResponse,
+    currentUserId
   ]);
-
   useEffect(() => {
     if (appliedFilters) {
       refetchEncounters();
@@ -1374,8 +1419,15 @@ const handlePatientSearchClick = useCallback(() => {
       </div>
       <div dir={isRTL ? 'rtl' : 'ltr'}>
         <Panel>
-          <div style={{display: 'flex', justifyContent:'end'}}>
-          <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+          <div style={{ display: 'flex', justifyContent: 'end', gap: '1vw' }}>
+            <MyButton onClick={() => setOpenDoctorAppointments(true)}>Appointments</MyButton>
+
+            <MyButton
+              onClick={() => setOpenCollectSampleModal(true)}
+            >
+              <FontAwesomeIcon icon={faVialCircleCheck} />
+              <Translate>COLLECT SAMPLE</Translate>
+            </MyButton>
           </div>
 
           <MyTable
@@ -1465,10 +1517,17 @@ const handlePatientSearchClick = useCallback(() => {
           />
         </Panel>
         <DoctorAppoitmentsView
-         open={openDoctorAppointments}
-         setOpen={setOpenDoctorAppointments}
-         facilityId={selectedDepartment?.facilityId}
-         departmentId={departmentId}
+          open={openDoctorAppointments}
+          setOpen={setOpenDoctorAppointments}
+          facilityId={selectedDepartment?.facilityId}
+          departmentId={departmentId}
+        />
+
+        <CollectSambleModal
+          open={openCollectSampleModal}
+          setOpen={setOpenCollectSampleModal}
+          facilityId={selectedDepartment?.facilityId}
+          fromDepartmentId={departmentId}
         />
       </div>
     </>

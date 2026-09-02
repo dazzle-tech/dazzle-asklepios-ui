@@ -3,7 +3,7 @@ import { Table } from 'rsuite';
 
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import type { ClaimTrackingResponse } from '@/types/model-types-new';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import { formatMoney, getClaimItems, getStatusColor } from './utils';
 import ClaimErrorsPanel from './ClaimErrorsPanel';
@@ -97,6 +97,11 @@ const ClaimPreview: React.FC<ClaimPreviewProps> = ({ claim, patient, encounter, 
           <Field label="Upload Name" value={claim.uploadName} />
           <Field label="Upload ID" value={claim.uploadId} mono />
           <Field label="Invoice Document ID" value={claim.financialDocumentId} mono />
+          <Field label="Type" value={formatEnumString(claim.claimType) || claim.claimType} />
+          <Field
+            label="Sub Type"
+            value={formatEnumString(claim.claimSubType) || claim.claimSubType}
+          />
         </Block>
 
         <Block title="Patient & Encounter">

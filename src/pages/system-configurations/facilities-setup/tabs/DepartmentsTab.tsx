@@ -759,6 +759,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
+        dontTranslateData 
       />
 
       {/* Modals */}
