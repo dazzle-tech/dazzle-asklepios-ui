@@ -1,5 +1,6 @@
 import { camelCaseToLabel, fromCamelCaseToDBName, formatEnumString } from '@/utils';
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
   Checkbox,
@@ -168,6 +169,10 @@ const MyInput = ({
   const [validationResult, setValidationResult] = useState<any[] | undefined>(undefined);
 
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [portaledSelectOpen, setPortaledSelectOpen] = useState(false);
+  const [portaledSelectBox, setPortaledSelectBox] = useState({ top: 0, left: 0, width: 0 });
+  const portaledSelectMenuRef = useRef<HTMLDivElement | null>(null);
+  const selectOpenGuardRef = useRef(0);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
   const dateOpenGuardRef = useRef(0);
@@ -215,6 +220,12 @@ const MyInput = ({
   };
 
   useEffect(() => {
+    if (isSelectOpen) {
+      selectOpenGuardRef.current = Date.now();
+    }
+  }, [isSelectOpen]);
+
+  useEffect(() => {
     if (isDateOpen) {
       dateOpenGuardRef.current = Date.now();
     }
@@ -222,6 +233,12 @@ const MyInput = ({
 
   useEffect(() => {
     const handleScroll = event => {
+      if (document.querySelector('.rs-picker-popup')) {
+        return;
+      }
+      if (Date.now() - selectOpenGuardRef.current < 300) {
+        return;
+      }
       if (isDateOpen && Date.now() - dateOpenGuardRef.current < 200) {
         return;
       }
@@ -420,8 +437,27 @@ const MyInput = ({
     }
   };
 
-  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
+  useEffect(() => {
+    if (!portaledSelectOpen) return;
 
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (pickerRef.current?.contains(target)) return;
+      if (portaledSelectMenuRef.current?.contains(target)) return;
+      setPortaledSelectOpen(false);
+    };
+
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onMouseDown, true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onMouseDown, true);
+    };
+  }, [portaledSelectOpen]);
+
+  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
   const pickerRef = useRef<any>(null);
 
   const calculatePlacement = () => {
@@ -437,6 +473,14 @@ const MyInput = ({
     }
 
     const pickerElement = pickerRef.current as HTMLElement | null;
+
+    if (
+      pickerElement?.closest(
+        '.profile-sidebar-container, .book-patient-sidebar-overlay, .rs-modal-wrapper, .rs-drawer'
+      )
+    ) {
+      return document.body;
+    }
 
     return (
       pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
@@ -1269,9 +1313,172 @@ const MyInput = ({
           longestLabel.length * 9 + 120
         );
 
+        const dataForPicker =
+          props.searchable && localSearch ? filteredData : dataList;
+
+        const selectedSelectItem = dataList.find(
+          (item: any) => String(item?.[valueKey]) === String(record?.[fieldName] ?? '')
+        );
+        const selectedSelectLabel =
+          (selectedSelectItem &&
+            (isArrayLabel
+              ? buildCombinedLabel(selectedSelectItem, labelKeys, '')
+              : selectedSelectItem?.[primaryLabelKey])) ||
+          props.placeholder ||
+          '';
+        const disabledSelectValues = getDisabledValues(dataList, valueKey);
+
+        const renderSelectLabel = (item: any, fallback: any) => {
+          if (props.renderMenuItem) {
+            return props.renderMenuItem(
+              item?.[primaryLabelKey],
+              item
+            );
+          }
+          if (isArrayLabel) {
+            return (
+              <Translate>
+                {buildCombinedLabel(item, labelKeys, fallback)}
+              </Translate>
+            );
+          }
+          if (props.isEnum) {
+            return (
+              <Translate>
+                {formatEnumString(String(item?.[primaryLabelKey] ?? fallback ?? ''))}
+              </Translate>
+            );
+          }
+          return (
+            <Translate>
+              {String(item?.[primaryLabelKey] ?? fallback ?? '')}
+            </Translate>
+          );
+        };
+
+        if (props.container) {
+          return (
+            <div
+              ref={pickerRef}
+              className={clsx(
+                'my-input-portaled-select',
+                inputColor ? `input-${inputColor}` : ''
+              )}
+              style={{ width: props?.width ?? '100%', maxWidth: '100%' }}
+              onMouseDown={event => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className={clsx('my-input-portaled-select-toggle', {
+                  open: portaledSelectOpen
+                })}
+                disabled={props.disabled}
+                aria-haspopup="listbox"
+                aria-expanded={portaledSelectOpen}
+                onMouseDown={event => {
+                  event.stopPropagation();
+                }}
+                onClick={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const toggle =
+                    (pickerRef.current?.querySelector(
+                      '.my-input-portaled-select-toggle'
+                    ) as HTMLElement | null) ?? pickerRef.current;
+                  const rect = toggle?.getBoundingClientRect();
+                  if (!rect) return;
+                  const menuHeight = Math.min(
+                    240,
+                    Math.max(dataForPicker.length, 1) * 36 + 8
+                  );
+                  const openUpward = window.innerHeight - rect.bottom < menuHeight + 8;
+                  setPortaledSelectBox({
+                    top: openUpward ? Math.max(8, rect.top - menuHeight - 4) : rect.bottom + 4,
+                    left: rect.left,
+                    width: rect.width
+                  });
+                  setPortaledSelectOpen(open => !open);
+                }}
+              >
+                <span className="my-input-portaled-select-value">
+                  {selectedSelectItem
+                    ? renderSelectLabel(selectedSelectItem, selectedSelectLabel)
+                    : selectedSelectLabel}
+                </span>
+                <span className="my-input-portaled-select-caret" aria-hidden>
+                  ▾
+                </span>
+              </button>
+              {portaledSelectOpen &&
+                createPortal(
+                  <div
+                    ref={portaledSelectMenuRef}
+                    className={clsx(
+                      'my-input-portaled-select-menu',
+                      props.menuClassName
+                    )}
+                    role="listbox"
+                    style={{
+                      top: portaledSelectBox.top,
+                      left: portaledSelectBox.left,
+                      width: portaledSelectBox.width,
+                      minWidth: portaledSelectBox.width,
+                      maxWidth: portaledSelectBox.width,
+                      boxSizing: 'border-box',
+                      maxHeight: getDynamicMenuMaxHeight(dataForPicker)
+                    }}
+                    onMouseDown={event => event.stopPropagation()}
+                  >
+                    {dataForPicker.length ? (
+                      dataForPicker.map((item: any) => {
+                        const itemValue = item?.[valueKey];
+                        const selected =
+                          String(itemValue) === String(record?.[fieldName] ?? '');
+                        const disabled = disabledSelectValues.includes(itemValue);
+
+                        return (
+                          <button
+                            key={String(itemValue)}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            disabled={disabled}
+                            className={clsx('my-input-portaled-select-option', {
+                              selected,
+                              disabled
+                            })}
+                            onMouseDown={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                            }}
+                            onClick={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (disabled) return;
+                              handleValueChange(itemValue);
+                              if (props.onSelectItem) {
+                                props.onSelectItem(item);
+                              }
+                              setPortaledSelectOpen(false);
+                            }}
+                          >
+                            {renderSelectLabel(item, item?.[primaryLabelKey])}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="my-input-portaled-select-empty">No options</div>
+                    )}
+                  </div>,
+                  document.body
+                )}
+            </div>
+          );
+        }
+
         return (
           <div ref={pickerRef}>
-            <Form.Control
+            <SelectPicker
               style={{
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
@@ -1280,19 +1487,16 @@ const MyInput = ({
                 }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
-              accepter={SelectPicker}
               searchable={props.searchable ?? false}
-              data={filteredData}
+              data={dataForPicker}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-
               value={
                 record?.[fieldName] !== undefined &&
                   record?.[fieldName] !== null
                   ? record[fieldName]
                   : null
               }
-
               onChange={value => {
                 handleValueChange(value);
 
@@ -1306,40 +1510,41 @@ const MyInput = ({
                   props.onSelectItem(selectedItem);
                 }
               }}
+              onKeyDown={
+                props.searchable
+                  ? (event: any) => {
+                    const key = event?.key;
+                    if (!key) return;
 
-              onKeyDown={(event: any) => {
-                const key = event?.key;
+                    const ignoredKeys = [
+                      'Shift',
+                      'Tab',
+                      'Enter',
+                      'Escape',
+                      'ArrowUp',
+                      'ArrowDown',
+                      'ArrowLeft',
+                      'ArrowRight',
+                      'Control',
+                      'Alt',
+                      'Meta'
+                    ];
 
-                if (!key) return;
+                    if (ignoredKeys.includes(key)) {
+                      return;
+                    }
 
-                const ignoredKeys = [
-                  'Shift',
-                  'Tab',
-                  'Enter',
-                  'Escape',
-                  'ArrowUp',
-                  'ArrowDown',
-                  'ArrowLeft',
-                  'ArrowRight',
-                  'Control',
-                  'Alt',
-                  'Meta'
-                ];
+                    if (key === 'Backspace') {
+                      setLocalSearch(prev => prev.slice(0, -1));
+                      return;
+                    }
 
-                if (ignoredKeys.includes(key)) {
-                  return;
-                }
-
-                if (key === 'Backspace') {
-                  setLocalSearch(prev => prev.slice(0, -1));
-                  return;
-                }
-
-                if (key.length === 1) {
-                  setLocalSearch(prev => prev + key);
-                }
-              }}
-
+                    if (key.length === 1) {
+                      setLocalSearch(prev => prev + key);
+                    }
+                  }
+                  : undefined
+              }
               renderMenuItem={
                 props.renderMenuItem ??
                 (isArrayLabel
@@ -1371,7 +1576,6 @@ const MyInput = ({
                       </Translate>
                     ))
               }
-
               renderValue={
                 isArrayLabel
                   ? (
@@ -1439,52 +1643,41 @@ const MyInput = ({
                       );
                     }
               }
-
               placeholder={
-                localSearch
+                localSearch && props.searchable
                   ? `Search: ${localSearch}`
                   : props.placeholder
               }
-
               cleanable={
                 props.cleanable !== undefined
                   ? props.cleanable
                   : true
               }
-
               loading={props?.loading ?? false}
-
-              open={isSelectOpen}
-
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsSelectOpen(true);
+                selectOpenGuardRef.current = Date.now();
               }}
-
               onClose={() => {
-                setIsSelectOpen(false);
                 setLocalSearch('');
               }}
-
-              placement={placement}
-
-              preventOverflow={pickerPreventOverflow}
-
-              container={resolveContainer()}
-
+              placement={props.placement ?? 'bottomStart'}
+              preventOverflow={false}
+              container={() => document.body}
               menuMaxHeight={getDynamicMenuMaxHeight(
-                filteredData
+                dataForPicker
               )}
-
               menuStyle={{
                 minWidth: props?.width ?? '12vw',
-                width: 'auto'
+                width: 'auto',
+                zIndex: 100050
               }}
-
-              menuClassName={props.menuClassName}
-
-              virtualized={props?.virtualized ?? true}
-
+              menuClassName={clsx(
+                'my-input-select-menu',
+                props.menuClassName
+              )}
+              virtualized={
+                props?.virtualized ?? dataForPicker.length > 20
+              }
               disabledItemValues={getDisabledValues(
                 dataList,
                 valueKey
@@ -1702,6 +1895,7 @@ const MyInput = ({
               loading={props.loading ?? false}
               open={isSelectOpen}
               onOpen={() => {
+                selectOpenGuardRef.current = Date.now();
                 setPlacement(calculatePlacement());
                 setIsSelectOpen(true);
               }}
