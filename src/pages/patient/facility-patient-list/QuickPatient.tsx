@@ -6,6 +6,7 @@ import { useAppDispatch } from '@/hooks';
 import { RootState } from '@/store';
 
 import MyInput from '@/components/MyInput';
+import MyLabel from '@/components/MyLabel';
 import MyModal from '@/components/MyModal/MyModal';
 
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
@@ -679,7 +680,9 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         />
 
         <Form.Group className="my-input-container">
-          <Form.ControlLabel>Unknown Patient</Form.ControlLabel>
+          <Form.ControlLabel>
+            <MyLabel label="Unknown Patient" />
+          </Form.ControlLabel>
           <div style={{ marginBottom: 5 }} />
           <Toggle onChange={setIsUnknown} checked={isUnknown} />
         </Form.Group>
