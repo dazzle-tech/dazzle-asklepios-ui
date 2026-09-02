@@ -808,6 +808,7 @@ const App = () => {
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
+                <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
                 <Route path="pediatric" element={<Pediatric />} />
                 <Route
                   path="multidisciplinary-team-notes"
