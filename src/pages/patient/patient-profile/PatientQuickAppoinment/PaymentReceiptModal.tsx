@@ -6,7 +6,7 @@ import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import type { PaymentReceiptData } from './paymentPreviewUtils';
 import { markInvoiceAsPrinted } from '@/pages/billing-module/invoices/invoicePrintVersion';
-
+import JsBarcode from 'jsbarcode';
 type PaymentReceiptModalProps = {
   open: boolean;
   onClose: () => void;
@@ -19,7 +19,6 @@ const formatMoney = (amount: number, currency: string) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })} ${currency}`;
-
 const RECEIPT_PRINT_STYLES = `
   body { font-family: Arial, sans-serif; color: #1c1c1e; margin: 24px; }
   .payment-receipt { max-width: 760px; margin: 0 auto; }
@@ -112,7 +111,7 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
 
     window.setTimeout(cleanup, 2000);
   }, [receipt?.receiptNumber]);
-
+const barcodeRef = useRef<SVGSVGElement>(null);
   useEffect(() => {
     if (!open) {
       hasAutoPrintedRef.current = false;
@@ -134,7 +133,19 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
 
     return () => window.clearTimeout(timer);
   }, [open, autoPrint, receipt, handlePrint]);
+  useEffect(() => {
+    if (!receipt?.receiptNumber || !barcodeRef.current) {
+      return;
+    }
 
+    JsBarcode(barcodeRef.current, receipt.receiptNumber, {
+      format: 'CODE128',
+      width: 2,
+      height: 50,
+      displayValue: false,
+      margin: 5
+    });
+  }, [receipt]);
   if (!receipt) {
     return null;
   }
@@ -164,6 +175,9 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
               <div>
                 Receipt No.{' '}
                 <span className="payment-receipt__sequence">{receipt.receiptNumber}</span>
+              </div>
+              <div className="payment-receipt__barcode">
+                <svg ref={barcodeRef} />
               </div>
               {receipt.transactionNumber && receipt.transactionNumber !== '-' ? (
                 <div>
