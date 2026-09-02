@@ -8,7 +8,8 @@ import {
   useCancelAppointmentMutation,
   useCheckInAppointmentMutation,
   useConfirmAppointmentMutation,
-  useNoShowAppointmentMutation
+  useNoShowAppointmentMutation,
+  useUndoConfirmAppointmentMutation
 } from "@/services/appointment/appointmentService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch, useAppSelector } from "@/hooks";
@@ -56,6 +57,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [cancelAppointment] = useCancelAppointmentMutation();
     const [noShowAppointment] = useNoShowAppointmentMutation();
     const [confirmAppointment] = useConfirmAppointmentMutation();
+    const [undoConfirmAppointment] = useUndoConfirmAppointmentMutation();
     const [checkInAppointment] = useCheckInAppointmentMutation();
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
@@ -559,6 +561,37 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
              dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
+
+    const handleUndoConfirm = async () => {
+        try {
+            const id = getAppointmentId();
+            if (!id) {
+              dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+              return;
+            }
+            if (currentStatus !== 'CONFIRMED') {
+              dispatch(notify({ msg: 'Only confirmed appointments can undo confirmation', sev: 'warning' }));
+              return;
+            }
+
+            const result = await undoConfirmAppointment({ id }).unwrap();
+            const nextStatus =
+              String(result?.status ?? result?.appointmentStatus ?? 'BOOKED').trim() || 'BOOKED';
+
+            setLocalAppoitmentData(prev => ({
+                ...prev,
+                appointmentStatus: nextStatus,
+                status: nextStatus
+            }));
+
+            dispatch(notify({ msg: 'Appointment confirmation undone successfully', sev: 'success' }));
+            onActionsModalClose();
+            await onStatusChange?.();
+        } catch (error: any) {
+             const errorMsg = extractErrorMessage(error) || 'Save Failed';
+             dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+        }
+    }
     const normalizeEncounterStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     const isEncounterPendingPayment = normalizeEncounterStatus((createdEncounter as any)?.status) === 'PENDINGPAYMENT';
     const canOpenAddPayment = currentStatus === 'CHECKEDIN' && isEncounterPendingPayment;
@@ -701,6 +734,15 @@ const handleCancel = async () => {
               appearance="primary"
             >
                 Confirm
+            </MyButton>
+            <MyButton
+              width="250px"
+              disabled={currentStatus !== "CONFIRMED"}
+              onClick={handleUndoConfirm}
+              color="orange"
+              appearance="primary"
+            >
+                Undo Confirm
             </MyButton>
             <MyButton
               width="250px"
