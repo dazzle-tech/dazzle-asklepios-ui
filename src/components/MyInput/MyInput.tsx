@@ -1356,14 +1356,18 @@ const MyInput = ({
                     </Translate>
                   )
                   : props.isEnum
-                    ? (label: any) => (
+                    ? (label: any, item: any) => (
+                      // NOTE: don't use `label` here — RSuite swaps it for a
+                      // highlighted React node while the search box has text,
+                      // which is what produced "[object Object]" during search.
+                      // Always read the raw string straight from `item`.
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     )
-                    : (label: any) => (
+                    : (label: any, item: any) => (
                       <Translate>
-                        {String(label ?? '')}
+                        {String(item?.[primaryLabelKey] ?? '')}
                       </Translate>
                     ))
               }
@@ -1638,14 +1642,18 @@ const MyInput = ({
                   }
 
                   if (props.isEnum) {
+                    // NOTE: don't use `label` here — RSuite swaps it for a
+                    // highlighted React node while the search box has text,
+                    // which is what produced "[object Object]" during search.
+                    // Always read the raw string straight from `item`.
                     return (
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(label ?? '')}</Translate>;
+                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
                 })
               }
               renderValue={
@@ -1752,8 +1760,8 @@ const MyInput = ({
               searchBy={props.searchBy}
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any) => (
-                  <Translate>{String(label ?? '')}</Translate>
+                ((label: any, item: any) => (
+                  <Translate>{String(item?.[props?.selectDataLabel ?? ''] ?? '')}</Translate>
                 ))
               }
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
@@ -1840,14 +1848,18 @@ const MyInput = ({
                   }
 
                   if (props.isEnum) {
+                    // NOTE: don't use `label` here — RSuite swaps it for a
+                    // highlighted React node while the search box has text,
+                    // which is what produced "[object Object]" during search.
+                    // Always read the raw string straight from `item`.
                     return (
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(label ?? '')}</Translate>;
+                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
                 })
               }
               onChange={value => {
