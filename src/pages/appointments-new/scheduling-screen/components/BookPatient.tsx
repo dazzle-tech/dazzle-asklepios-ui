@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Avatar, Divider, Form, Panel } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -62,6 +63,53 @@ const isRebookableSlotStatus = (rawStatus: unknown): boolean => {
     status === 'CANCELLED' ||
     status === 'CANCELED'
   );
+};
+
+const PATIENT_SIDEBAR_WIDTH = 320;
+const PATIENT_SIDEBAR_Z_INDEX = 99999;
+
+const isPatientSearchPickerOpen = () =>
+  Boolean(
+    document.querySelector(
+      '.rs-picker-popup, .rs-picker-menu, .profile-sidebar-search-criteria-menu'
+    )
+  );
+
+const buildPatientSidebarStyle = (): React.CSSProperties => {
+  const dialog =
+    (document.querySelector('.rs-modal-dialog.book-patient-modal') as HTMLElement | null) ??
+    (document.querySelector('.book-patient-modal') as HTMLElement | null);
+
+  const base: React.CSSProperties = {
+    position: 'fixed',
+    width: PATIENT_SIDEBAR_WIDTH,
+    zIndex: PATIENT_SIDEBAR_Z_INDEX,
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.18)',
+    borderRadius: 10,
+    overflow: 'visible',
+    background: 'var(--rs-bg-card, #fff)'
+  };
+
+  if (!dialog) {
+    return {
+      ...base,
+      top: '8vh',
+      right: 16,
+      height: '84vh'
+    };
+  }
+
+  const rect = dialog.getBoundingClientRect();
+  const height = rect.height > 0 ? rect.height : window.innerHeight * 0.84;
+  const top = rect.top > 0 ? rect.top : window.innerHeight * 0.08;
+  const right = Math.max(8, window.innerWidth - rect.right);
+
+  return {
+    ...base,
+    top,
+    right,
+    height
+  };
 };
 
 const BookPatient = ({
@@ -740,32 +788,16 @@ const BookPatient = ({
     if (!open || !patientSidebarOpen) return;
 
     const compute = () => {
-      const dialog =
-        (document.querySelector('.rs-modal-dialog.book-patient-modal') as HTMLElement | null) ??
-        (document.querySelector('.book-patient-modal') as HTMLElement | null);
-
-      if (!dialog) return;
-
-      const rect = dialog.getBoundingClientRect();
-      const right = Math.max(0, window.innerWidth - rect.right);
-
-      setPatientSidebarStyle({
-        position: 'fixed',
-        top: rect.top,
-        right,
-        height: rect.height,
-        zIndex: 5000,
-        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.18)',
-        borderRadius: 10
-      });
+      if (isPatientSearchPickerOpen()) return;
+      setPatientSidebarStyle(buildPatientSidebarStyle());
     };
 
-    compute();
-
+    const timer = window.setTimeout(compute, 0);
     window.addEventListener('resize', compute);
     window.addEventListener('scroll', compute, true);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener('resize', compute);
       window.removeEventListener('scroll', compute, true);
     };
@@ -1064,24 +1096,36 @@ const BookPatient = ({
     />
   );
 
+  const sidebarWindowHeight = useMemo(() => {
+    const h = patientSidebarStyle?.height;
+    if (typeof h === 'number' && h > 0) return Math.floor(h);
+    return Math.floor(window.innerHeight * 0.84);
+  }, [patientSidebarStyle?.height]);
+
+  const patientSearchSidebar =
+    open && patientSidebarOpen
+      ? createPortal(
+          <div
+            className="book-patient-sidebar-overlay"
+            style={patientSidebarStyle ?? buildPatientSidebarStyle()}
+          >
+            <ProfileSidebar
+              expand={true}
+              setExpand={setPatientSidebarOpen}
+              windowHeight={sidebarWindowHeight}
+              setLocalPatient={handlePatientSelect}
+              title={<Translate>Search Patient</Translate>}
+              direction="right"
+              showButton={true}
+            />
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <>
-      {open && patientSidebarOpen && (
-        <div className="book-patient-sidebar-overlay" style={patientSidebarStyle ?? undefined}>
-          <ProfileSidebar
-            expand={true}
-            setExpand={setPatientSidebarOpen}
-            windowHeight={Math.max(
-              0,
-              Math.floor((patientSidebarStyle?.height as number) || window.innerHeight)
-            )}
-            setLocalPatient={handlePatientSelect}
-            title={<Translate>Search Patient</Translate>}
-            direction="right"
-            showButton={true}
-          />
-        </div>
-      )}
+      {patientSearchSidebar}
 
       <MyModal
         open={open}
@@ -1105,6 +1149,7 @@ const BookPatient = ({
                         disabled={readOnly}
                         onClick={() => {
                           setPatientAction('select');
+                          setPatientSidebarStyle(buildPatientSidebarStyle());
                           setPatientSidebarOpen(true);
                         }}
                         prefixIcon={() => <FontAwesomeIcon icon={faUser} />}

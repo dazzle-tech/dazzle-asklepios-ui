@@ -63,13 +63,14 @@
   &.expanded {
     width: 300px;
   }
-  .sidebar-panel {
+    .sidebar-panel {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     padding: 15px 10px;
     width: 100%;
+    overflow: visible;
 
     .rs-panel-header {
       text-align: left;
@@ -79,6 +80,7 @@
     }
     .rs-panel-body {
       width: 100%;
+      overflow: visible;
     }
 
     .expand-sidebar {
@@ -125,7 +127,17 @@
     flex-direction: column;
     gap: 10px;
     width: 100%;
+    position: relative;
+    overflow: visible;
+    z-index: 2;
   }
+}
+
+.profile-sidebar-search-criteria-menu.rs-picker-popup,
+.profile-sidebar-search-criteria-menu.rs-picker-menu,
+.profile-sidebar-search-criteria-menu,
+.my-input-select-menu.rs-picker-popup {
+  z-index: 100050 !important;
 }
 
 .patient-profile-info {
