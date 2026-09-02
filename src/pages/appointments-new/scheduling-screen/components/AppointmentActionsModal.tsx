@@ -716,9 +716,17 @@ const handleCancel = async () => {
 };
     // Appoinment Actions Modal Content
     const actionsModalContent = (
-        <Form fluid layout="inline">
+        <Form fluid>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 8,
+                width: '100%'
+              }}
+            >
             <MyButton
-              width="250px"
+              width="100%"
               disabled={!canCheckIn}
               onClick={handleCheckIn}
               color="cyan"
@@ -727,7 +735,7 @@ const handleCancel = async () => {
                 Check-In
             </MyButton>
             <MyButton
-              width="250px"
+              width="100%"
               disabled={currentStatus === "CONFIRMED" || isViewOnlyActionsStatus}
               onClick={handleConfirm}
               color="violet"
@@ -736,7 +744,7 @@ const handleCancel = async () => {
                 Confirm
             </MyButton>
             <MyButton
-              width="250px"
+              width="100%"
               disabled={currentStatus !== "CONFIRMED"}
               onClick={handleUndoConfirm}
               color="orange"
@@ -745,7 +753,7 @@ const handleCancel = async () => {
                 Undo Confirm
             </MyButton>
             <MyButton
-              width="250px"
+              width="100%"
               disabled={!(currentStatus === 'BOOKED' || currentStatus === 'CONFIRMED')}
               onClick={() => editAppointment(appointment?.appointmentData || localAppointmentData)}
               color="violet"
@@ -753,21 +761,11 @@ const handleCancel = async () => {
             >
                 Reschedule
             </MyButton>
-            <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
+            <MyButton width="100%" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
             <MyButton
-              width="250px"
-              onClick={() => { setOpenAppointmentLogsModal(true) }}
-              color="blue"
-              // disabled={true}
-              appearance="primary"
-            >
-                {/* No-show */}
-                Show log
-            </MyButton>
-            <MyButton
-              width="250px"
+              width="100%"
               disabled={["CANCELLED", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
               onClick={() => { setResonType('Cancel') }}
               color="blue"
@@ -775,6 +773,16 @@ const handleCancel = async () => {
             >
                 Cancel
             </MyButton>
+            <MyButton
+              width="100%"
+              style={{ gridColumn: '1 / -1' }}
+              onClick={() => { setOpenAppointmentLogsModal(true) }}
+              color="blue"
+              appearance="primary"
+            >
+                Show log
+            </MyButton>
+            </div>
         </Form>
     );
     // Cancel/No-Show Modal Content
