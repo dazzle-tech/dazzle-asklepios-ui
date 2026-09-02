@@ -1364,7 +1364,7 @@ const MyInput = ({
                 'my-input-portaled-select',
                 inputColor ? `input-${inputColor}` : ''
               )}
-              style={{ width: props?.width ?? 145 }}
+              style={{ width: props?.width ?? '100%', maxWidth: '100%' }}
               onMouseDown={event => event.stopPropagation()}
             >
               <button
@@ -1381,7 +1381,11 @@ const MyInput = ({
                 onClick={event => {
                   event.preventDefault();
                   event.stopPropagation();
-                  const rect = pickerRef.current?.getBoundingClientRect();
+                  const toggle =
+                    (pickerRef.current?.querySelector(
+                      '.my-input-portaled-select-toggle'
+                    ) as HTMLElement | null) ?? pickerRef.current;
+                  const rect = toggle?.getBoundingClientRect();
                   if (!rect) return;
                   const menuHeight = Math.min(
                     240,
@@ -1418,6 +1422,9 @@ const MyInput = ({
                       top: portaledSelectBox.top,
                       left: portaledSelectBox.left,
                       width: portaledSelectBox.width,
+                      minWidth: portaledSelectBox.width,
+                      maxWidth: portaledSelectBox.width,
+                      boxSizing: 'border-box',
                       maxHeight: getDynamicMenuMaxHeight(dataForPicker)
                     }}
                     onMouseDown={event => event.stopPropagation()}

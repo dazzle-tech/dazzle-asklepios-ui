@@ -230,7 +230,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                           setPatients([]);
                           setLinks({});
                         }}
-                        width={300}
+                        width="100%"
                         searchable={false}
                         cleanable={false}
                         virtualized={false}
@@ -263,7 +263,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         </Button>
                       </Form>
                     ) : (
-                      <InputGroup inside>
+                      <InputGroup inside style={{ width: '100%' }}>
                           <Input
                             placeholder="Search Patients"
                             value={searchKeyword}
@@ -280,7 +280,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   <Box className="patient-list">
                     {isLoadingPatients ? (
                       Array.from({ length: 4 }).map((_, index) => (
-                        <Box width={250} key={index} className="patient-list-loader">
+                        <Box width="100%" key={index} className="patient-list-loader">
                           <div className="patient-list-loader-circle">
                             <Skeleton
                               variant="circular"

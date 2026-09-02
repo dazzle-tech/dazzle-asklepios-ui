@@ -66,8 +66,8 @@
     .sidebar-panel {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: stretch;
     padding: 15px 10px;
     width: 100%;
     overflow: visible;
@@ -130,6 +130,15 @@
     position: relative;
     overflow: visible;
     z-index: 2;
+
+    .my-input-container,
+    .rs-form-group,
+    .my-input-portaled-select,
+    .rs-input-group {
+      width: 100% !important;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
   }
 }
 

@@ -427,11 +427,15 @@
 .my-input-portaled-select {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .my-input-portaled-select-toggle {
   width: 100%;
-  min-height: 30px;
+  box-sizing: border-box;
+  min-height: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -472,9 +476,11 @@
   margin: 0;
   padding: 4px 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
   background: var(--rs-bg-overlay, #fff);
   border: 1px solid var(--rs-border-primary, #d6dde8);
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
 }
 
