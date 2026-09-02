@@ -17,6 +17,7 @@ import {
   useLazyGetClaimSettlementsQuery,
   useGenerateSettlementPdfMutation
 } from '@/services/billing/claimSettlementService';
+import SettlementReportButton from './SettlementReportButton';
 
 type AppliedFilters = {
   payerNphiesId: string;
@@ -42,10 +43,7 @@ const SettlementReportPanel: React.FC = () => {
 
   const { data: nphiesPayerListResponse, isFetching: isPayersLoading } =
     useGetAllNphiesPayersQuery({ page: 0, size: 2000, sort: 'nameEn,asc' });
-  const [loadAllRows] = useLazyGetClaimSettlementsQuery();
 
-  const [generateSettlementPdf] =
-    useGenerateSettlementPdfMutation();
   const insuranceCompanyOptions = useMemo(
     () =>
       (nphiesPayerListResponse?.data ?? [])
@@ -105,101 +103,7 @@ const SettlementReportPanel: React.FC = () => {
     insuranceCompanyOptions.find(
       x => x.value === payerNphiesId
     );
-  const handlePrintReport = async () => {
-    if (!appliedFilters) {
-      return;
-    }
 
-    try {
-
-      const allRowsResponse = await loadAllRows({
-        payerNphiesId: appliedFilters.payerNphiesId,
-        encounterType: appliedFilters.encounterType,
-        fromDate: appliedFilters.fromDate,
-        toDate: appliedFilters.toDate,
-        page: 0,
-        size: 100000,
-        sort: 'id,desc'
-      }).unwrap();
-
-      const pdfBlob = await generateSettlementPdf({
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        lang: 'en',
-
-        body: {
-          criteria: {
-            insuranceCompanyId: null,
-
-            insuranceCompanyName:
-              selectedInsuranceCompany?.label ?? '',
-            settlementDateFrom:
-              appliedFilters.fromDate.substring(0, 10),
-            settlementDateTo:
-              appliedFilters.toDate.substring(0, 10),
-            encounterType:
-              appliedFilters.encounterType
-          },
-          rows: allRowsResponse.content.map(row => ({
-            patientName: row.patientName || '',
-
-            patientId:
-              row.medicalRecordNumber ||
-              (row.patientId != null
-                ? String(row.patientId)
-                : ''),
-
-            invoiceNumber: row.invoiceNumber || '',
-
-            settlementNumber: row.settlementNo || '',
-
-            settlementDate:
-              row.settlementDate
-                ? row.settlementDate.substring(0, 10)
-                : null,
-
-            insuranceCompany: row.insuranceCompany || '',
-
-            claimNumber: row.claimNo || '',
-
-            claimDate:
-              row.claimDate
-                ? row.claimDate.substring(0, 10)
-                : null,
-
-            billedAmount: row.billedAmount,
-
-            approvedAmount: row.approvedAmount,
-
-            rejectedAmount: row.rejectedAmount,
-
-            patientShare: row.patientShare,
-
-            insuranceAmount: row.insuranceAmount,
-
-            paidAmount: row.paidAmount,
-
-            outstandingAmount: row.outstandingAmount,
-
-            settlementStatus: row.settlementStatus
-          }))
-
-        }
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(pdfBlob);
-
-      window.open(url, '_blank');
-
-    } catch {
-
-      dispatch(
-        notify({
-          msg: 'Failed to generate settlement report.',
-          sev: 'error'
-        })
-      );
-    }
-  };
   return (
     <div className="bc-body">
       <main className="bc-main">
@@ -282,13 +186,12 @@ const SettlementReportPanel: React.FC = () => {
                 <MyButton appearance="ghost" onClick={handleReset}>
                   Reset
                 </MyButton>
-                <MyButton
-                  appearance="primary"
-                  onClick={handlePrintReport}
-                  disabled={!hasAppliedFilters}
-                >
-                  Print Report
-                </MyButton>
+                <SettlementReportButton
+                  appliedFilters={appliedFilters}
+                  insuranceCompanyName={
+                    selectedInsuranceCompany?.label ?? ''
+                  }
+                />
               </div>
             </div>
           </div>
