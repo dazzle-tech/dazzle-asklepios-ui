@@ -5,7 +5,7 @@ import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdBusiness, MdDelete, MdHistory, MdModeEdit } from 'react-icons/md';
+import { MdBusiness, MdDelete, MdHistory, MdLink, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
@@ -24,6 +24,7 @@ import {
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import TpaDefinitionModal from './TpaDefinitionModal';
 import TpaLinkedCompaniesModal from './TpaLinkedCompaniesModal';
+import TpaLinkCompaniesModal from './TpaLinkCompaniesModal';
 import TpaAuditLogModal from './TpaAuditLogModal';
 
 type FilterCriteria = '' | 'tpaCode' | 'name';
@@ -51,6 +52,7 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
   const [selectedTpa, setSelectedTpa] = useState<TpaDefinition>({ ...newTpaDefinition });
   const [openModal, setOpenModal] = useState(false);
   const [openLinkedCompanies, setOpenLinkedCompanies] = useState(false);
+  const [openLinkCompanies, setOpenLinkCompanies] = useState(false);
   const [openLog, setOpenLog] = useState(false);
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
@@ -306,6 +308,22 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
           setOpenModal(true);
         }}
       />
+      <MdLink
+        className="icons-style"
+        title="Link insurance companies"
+        size={24}
+        fill="var(--deep-blue)"
+        onClick={() => {
+          setSelectedTpa({
+            ...rowData,
+            insuranceCompanyIds:
+              rowData.insuranceCompanyIds ??
+              rowData.insuranceCompanies?.map(company => company.id) ??
+              []
+          });
+          setOpenLinkCompanies(true);
+        }}
+      />
       <MdBusiness
         className="icons-style"
         title="Linked insurance companies"
@@ -412,7 +430,7 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
     {
       key: 'actions',
       title: <Translate></Translate>,
-      flexGrow: 2,
+      flexGrow: 2.4,
       render: (rowData: TpaDefinition) => iconsForActions(rowData)
     }
   ];
@@ -548,6 +566,12 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
         setTpa={setSelectedTpa}
         onSave={handleSave}
         insuranceCompanies={insuranceCompanies}
+      />
+
+      <TpaLinkCompaniesModal
+        open={openLinkCompanies}
+        setOpen={setOpenLinkCompanies}
+        tpa={selectedTpa}
       />
 
       <TpaLinkedCompaniesModal
