@@ -385,6 +385,14 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
+    undoConfirmAppointment: builder.mutation<AppointmentFromTemplate, { id: Id }>({
+      query: ({ id }) => ({
+        url: `${APPOINTMENT_BASE_URL}/${id}/undo-confirm`,
+        method: 'PUT'
+      }),
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
     checkInAppointment: builder.mutation<AppointmentFromTemplate, { id: Id }>({
       query: ({ id }) => ({
         url: `${APPOINTMENT_BASE_URL}/${id}/check-in`,
@@ -489,6 +497,7 @@ export const {
   useCancelAppointmentMutation,
   useNoShowAppointmentMutation,
   useConfirmAppointmentMutation,
+  useUndoConfirmAppointmentMutation,
   useCheckInAppointmentMutation,
   useGetBulkReschedulePreviewQuery,
   useLazyGetBulkReschedulePreviewQuery,
