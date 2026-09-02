@@ -258,6 +258,8 @@ import FinancialDocumentNumberingSetup from './pages/setup/financial-document-nu
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
+const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
+
 
 const PUBLIC_PATHS = PUBLIC_PERMISSION_BYPASS_PATHS;
 
@@ -835,6 +837,7 @@ const App = () => {
               </Route>
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
               <Route path="review-results" element={<FavoriteTests />} />
+              <Route path="tests-results" element={<TestsResults />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />

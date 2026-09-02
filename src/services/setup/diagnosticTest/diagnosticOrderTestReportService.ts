@@ -2,11 +2,50 @@ import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
-type PagedParams = {
-  page: number;
-  size: number;
-  sort?: string;
+export type RadiologyReportIdsFilterParams = {
+  id?: number;
+
+  orderIdIn?: number[];
+  orderTestId?: number;
+
+  severity?: string;
+
+  approvedBy?: string;
+  rejectedBy?: string;
+  reviewBy?: string;
+  reviewed?: boolean;
+
+  approvedDateFrom?: string;
+  approvedDateTo?: string;
+
+  rejectedDateFrom?: string;
+  rejectedDateTo?: string;
+
+  reviewDateFrom?: string;
+  reviewDateTo?: string;
+
+  processingStatusIn?: string[];
+  processingStatusNotIn?: string[];
+
+  imageStatusIn?: string[];
+  imageStatusNotIn?: string[];
+
+  createdDateFrom?: string;
+  createdDateTo?: string;
+
+  lastModifiedDateFrom?: string;
+  lastModifiedDateTo?: string;
+
+  fromDepartmentIn?: number[];
+
+  patientName?: string;
+  mrn?: string;
+
+  patientIdIn?: number[];
+
+  orderNumber?: string;
 };
+
 
 type LinkMap = {
   next?: string | null;
@@ -69,6 +108,53 @@ export const diagnosticOrderTestReportService = createApi({
           links: parseLinkHeader(headers?.get("Link")),
         };
       },
+      providesTags: ["RadiologyReport"],
+    }),
+
+    filterRadiologyReportResults: builder.query<
+      PagedResult<any>,
+      {
+        page: number;
+        size: number;
+        sort?: string;
+        params?: {
+          patientId?: number;
+          fromDate?: string;
+          toDate?: string;
+        };
+      }
+    >({
+      query: ({
+        page,
+        size,
+        sort = "createdDate,desc",
+        params,
+      }) => ({
+        url: "/api/patient/radiology/reports/results",
+        method: "GET",
+        params: {
+          page,
+          size,
+          sort,
+          ...params,
+        },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+
+        const totalCountHeader = headers?.get("X-Total-Count");
+
+        console.log("X-Total-Count HEADER:", totalCountHeader);
+
+        return {
+          data: response,
+          totalCount: Number(totalCountHeader),
+          links: parseLinkHeader(
+            headers?.get("Link")
+          ),
+        };
+      },
+
       providesTags: ["RadiologyReport"],
     }),
 
@@ -153,7 +239,7 @@ export const diagnosticOrderTestReportService = createApi({
       invalidatesTags: ["RadiologyReport"],
     }),
 
-      
+
     secondApproveRadiologyReport: builder.mutation<any, number>({
       query: (reportId) => ({
         url: `/api/patient/radiology/reports/${reportId}/second-approve`,
@@ -182,24 +268,33 @@ export const diagnosticOrderTestReportService = createApi({
       invalidatesTags: ["RadiologyImage", "RadiologyReport"],
     }),
     getStudyImageLinkByReportId: builder.query<PacsStudyDTO[], number>({
-  query: reportId => ({
-    url: `/api/patient/radiology/reports/${reportId}/image-links`,
-    method: 'GET'
-  }),
-  providesTags: (result, error, reportId) => [
-    { type: 'RadiologyImage', id: reportId }
-  ]
-}),
+      query: reportId => ({
+        url: `/api/patient/radiology/reports/${reportId}/image-links`,
+        method: 'GET'
+      }),
+      providesTags: (result, error, reportId) => [
+        { type: 'RadiologyImage', id: reportId }
+      ]
+    }),
 
- bulkToggleReviewDiagnosticOrderTestReport: builder.mutation<
-  void,BulkIdsDTO>({
-  query: (body) => ({
-    url: "/api/patient/radiology/reports/bulk-toggle-review",
-    method: "POST",
-    body,
-  }),
-  invalidatesTags: ["RadiologyReport"],
-}),
+    bulkToggleReviewDiagnosticOrderTestReport: builder.mutation<
+      void, BulkIdsDTO>({
+        query: (body) => ({
+          url: "/api/patient/radiology/reports/bulk-toggle-review",
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: ["RadiologyReport"],
+      }),
+
+    getDiagnosticOrderTestReportsIds: builder.query<
+      number[],RadiologyReportIdsFilterParams >({
+      query: (params) => ({
+        url: "/api/patient/radiology/reports/ids",
+        method: "GET",
+        params,
+      }),
+    }),
   }),
 });
 
@@ -222,5 +317,8 @@ export const {
   useLazyGetRadiologyImageStatusLogQuery,
   useGetStudyImageLinkByReportIdQuery,
   useLazyGetStudyImageLinkByReportIdQuery,
-  useBulkToggleReviewDiagnosticOrderTestReportMutation
+  useFilterRadiologyReportResultsQuery,
+  useLazyFilterRadiologyReportResultsQuery,
+  useBulkToggleReviewDiagnosticOrderTestReportMutation,
+  useLazyGetDiagnosticOrderTestReportsIdsQuery
 } = diagnosticOrderTestReportService;

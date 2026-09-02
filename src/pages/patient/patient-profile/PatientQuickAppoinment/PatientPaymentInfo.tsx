@@ -75,6 +75,13 @@ import {
 } from '@/services/billing/billingTransactionService';
 
 import { useGetPatientLedgerSummaryQuery } from '@/services/encounters/patientPaymentsService';
+import { useGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import {
+  isFollowUpEncounterReason,
+  resolveEncounterCreatedDate,
+  resolveFollowUpEncounterId,
+  shouldSkipDefaultServicesForFollowUpReview
+} from '@/utils/followUpReviewDefaultServices';
 
 import {
   resolvePatientWalletAvailable,
@@ -145,6 +152,7 @@ type DefaultServiceRow = {
   previewNetAmount?: number | null;
   requiresCashConfirmation?: boolean;
   cashUnitPrice?: number | null;
+  notCoveredReason?: string | null;
 };
 
 type BillingFormState = {
@@ -616,6 +624,61 @@ const PatientPaymentInfo =
           practitionerResponse
         ]);
 
+      const followUpEncounterId =
+        resolveFollowUpEncounterId(
+          localEncounter
+        );
+
+      const nestedPreviousCreatedDate =
+        resolveEncounterCreatedDate(
+          localEncounter?.followUpEncounter
+        );
+
+      const isFollowUpVisit =
+        isFollowUpEncounterReason(
+          localEncounter
+        );
+
+      const {
+        data: previousFollowUpEncounter,
+        isFetching: isFetchingPreviousFollowUp
+      } =
+        useGetEncounterByIdQuery(
+          {
+            id:
+              followUpEncounterId as number
+          },
+          {
+            skip:
+              !isFollowUpVisit ||
+              !followUpEncounterId ||
+              nestedPreviousCreatedDate !=
+                null
+          }
+        );
+
+      const previousVisitForReview =
+        previousFollowUpEncounter ??
+        localEncounter?.followUpEncounter;
+
+      const skipDefaultServicesForReview =
+        shouldSkipDefaultServicesForFollowUpReview(
+          localEncounter,
+          previousVisitForReview
+        );
+
+      const followUpReviewDecisionPending =
+        isFollowUpVisit &&
+        Boolean(followUpEncounterId) &&
+        resolveEncounterCreatedDate(
+          previousVisitForReview
+        ) == null &&
+        isFetchingPreviousFollowUp;
+
+      const suppressDefaultServices =
+        skipDefaultServicesForReview ||
+        followUpReviewDecisionPending;
+
       const {
         data:
           facilityResponse
@@ -943,6 +1006,7 @@ const PatientPaymentInfo =
           },
           {
             skip:
+              suppressDefaultServices ||
               !departmentId ||
               !encounterSpecialty,
             refetchOnMountOrArgChange:
@@ -1128,7 +1192,8 @@ const PatientPaymentInfo =
                 patientShare: null,
                 insuranceShare: null,
                 requiresCashConfirmation: false,
-                cashUnitPrice: null
+                cashUnitPrice: null,
+                notCoveredReason: null
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -1400,6 +1465,7 @@ const PatientPaymentInfo =
 
       useEffect(() => {
         if (
+          suppressDefaultServices ||
           !departmentId ||
           !encounterSpecialty
         ) {
@@ -1408,12 +1474,14 @@ const PatientPaymentInfo =
           );
         }
       }, [
+        suppressDefaultServices,
         departmentId,
         encounterSpecialty
       ]);
 
       useEffect(() => {
         if (
+          suppressDefaultServices ||
           !servicesResponse.data
         ) {
           return;
@@ -1535,6 +1603,7 @@ const PatientPaymentInfo =
           }
         );
       }, [
+        suppressDefaultServices,
         servicesResponse.data
       ]);
 
@@ -1729,7 +1798,8 @@ const PatientPaymentInfo =
                 row.calculatedPrice ??
                 row.setupPrice ??
                 null,
-              currency: activeCurrency
+              currency: activeCurrency,
+              notCoveredReason: row.notCoveredReason ?? null
             }));
         }, [
           isInsurance,
@@ -2138,6 +2208,8 @@ const PatientPaymentInfo =
                             requiresCashConfirmation:
                               false,
                             cashUnitPrice:
+                              null,
+                            notCoveredReason:
                               null
                           };
                         }
@@ -2173,6 +2245,9 @@ const PatientPaymentInfo =
                             ),
                           cashUnitPrice:
                             priced.cashUnitPrice ??
+                            null,
+                          notCoveredReason:
+                            priced.notCoveredReason ??
                             null
                         };
                       }
@@ -2285,8 +2360,10 @@ const PatientPaymentInfo =
           0;
 
       const defaultServicesLoaded =
-        !servicesResponse.isFetching &&
-        departmentId != null;
+        skipDefaultServicesForReview ||
+        (!followUpReviewDecisionPending &&
+          !servicesResponse.isFetching &&
+          departmentId != null);
 
       const hasNoDefaultServices =
         defaultServicesLoaded &&
@@ -5220,6 +5297,10 @@ const PatientPaymentInfo =
                     >
                       Prepared
                     </Tag>
+                  ) : skipDefaultServicesForReview ? (
+                    <Tag size="sm" color="blue">
+                      Follow-up review
+                    </Tag>
                   ) : (
                     <Tag size="sm">
                       Select services to prepare
@@ -5229,6 +5310,12 @@ const PatientPaymentInfo =
               </div>
             }
           >
+          {skipDefaultServicesForReview ? (
+            <Message type="info" showIcon>
+              This follow-up is within 14 days of the previous visit, so it is
+              treated as a review and default services are not billed.
+            </Message>
+          ) : null}
           <div className="payment-info__table-wrapper">
             <MyTable
               data={
@@ -5238,7 +5325,8 @@ const PatientPaymentInfo =
                 defaultServiceColumns
               }
               loading={
-                servicesResponse.isFetching
+                servicesResponse.isFetching ||
+                followUpReviewDecisionPending
               }
               height={
                 260

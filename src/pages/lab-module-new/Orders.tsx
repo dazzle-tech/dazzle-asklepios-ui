@@ -13,6 +13,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
 import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
+import PrintOrderSampleLabelAction from './PrintOrderSampleLabelAction';
 
 type OrdersProps = {
   order: any;
@@ -23,7 +24,7 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
-    departmentFilter?: any;
+  departmentFilter?: any;
   selectedPatient?: any;
   filters?: React.ReactNode;
 };
@@ -55,21 +56,21 @@ const Orders = forwardRef<any, OrdersProps>(
       sort: ['isUrgent,desc', 'submittedDate,desc']
     });
 
-const { data: diagnosesList } = useGetPatientDiagnosesByEncounterIdQuery(
-  order?.encounterId ? { encounterId: order.encounterId } : skipToken
-);
+    const { data: diagnosesList } = useGetPatientDiagnosesByEncounterIdQuery(
+      order?.encounterId ? { encounterId: order.encounterId } : skipToken
+    );
 
-const diagnosisMap = useMemo(() => {
-  const map: Record<number, any> = {};
+    const diagnosisMap = useMemo(() => {
+      const map: Record<number, any> = {};
 
-  (diagnosesList ?? []).forEach((d: any) => {
-    if (d?.id != null) {
-      map[d.id] = d;
-    }
-  });
+      (diagnosesList ?? []).forEach((d: any) => {
+        if (d?.id != null) {
+          map[d.id] = d;
+        }
+      });
 
-  return map;
-}, [diagnosesList]);
+      return map;
+    }, [diagnosesList]);
 
     const fromDateParam = useMemo(() => {
       if (!dateFilter?.fromDate) return undefined;
@@ -88,13 +89,13 @@ const diagnosisMap = useMemo(() => {
     const departmentId =
       selectedDepartment?.id ?? selectedDepartment?.departmentId ?? selectedDepartment?.key;
 
-        useEffect(() => {
-          setPaginationParams(prev => ({ ...prev, page: 0 }));
-        }, [
-          orderNumberFilter,
-          selectedPatient?.id,
-          departmentFilter?.fromDepartmentIdIn
-        ]);
+    useEffect(() => {
+      setPaginationParams(prev => ({ ...prev, page: 0 }));
+    }, [
+      orderNumberFilter,
+      selectedPatient?.id,
+      departmentFilter?.fromDepartmentIdIn
+    ]);
 
     const {
       data: ordersResponse,
@@ -103,31 +104,31 @@ const diagnosisMap = useMemo(() => {
     } = useFilterDiagnosticOrdersQuery(
       departmentId
         ? {
-  page: paginationParams.page,
-  size: paginationParams.size,
-  sort: paginationParams.sort,
-  status: 'SUBMITTED',
-  testType: 'LABORATORY',
-  departmentId: selectedDepartment?.departmentId,
-  submittedDateFrom: fromDateParam,
-  submittedDateTo: toDateParam,
+          page: paginationParams.page,
+          size: paginationParams.size,
+          sort: paginationParams.sort,
+          status: 'SUBMITTED',
+          testType: 'LABORATORY',
+          departmentId: selectedDepartment?.departmentId,
+          submittedDateFrom: fromDateParam,
+          submittedDateTo: toDateParam,
 
-  ...(selectedPatient?.id
-    ? { patientIdIn: [selectedPatient.id] }
-    : {}),
+          ...(selectedPatient?.id
+            ? { patientIdIn: [selectedPatient.id] }
+            : {}),
 
-    ...(departmentFilter?.fromDepartmentIdIn
-  ? {
-      fromDepartmentIdIn: [
-        Number(departmentFilter.fromDepartmentIdIn)
-      ]
-    }
-  : {}),
+          ...(departmentFilter?.fromDepartmentIdIn
+            ? {
+              fromDepartmentIdIn: [
+                Number(departmentFilter.fromDepartmentIdIn)
+              ]
+            }
+            : {}),
 
-  ...(orderNumberFilter?.trim()
-    ? { orderNumber: orderNumberFilter.trim() }
-    : {})
-          }
+          ...(orderNumberFilter?.trim()
+            ? { orderNumber: orderNumberFilter.trim() }
+            : {})
+        }
         : skipToken
     );
 
@@ -274,7 +275,14 @@ const diagnosisMap = useMemo(() => {
               <FontAwesomeIcon icon={faLandMineOn} className="urgent-icon-style" />
             </Whisper>
           ) : null
-      }
+      },
+      {
+        key: 'print',
+        title: <Translate>PRINT</Translate>,
+        width: 30,
+        render: (rowData: any) => <PrintOrderSampleLabelAction rowData={rowData} />
+      },
+
     ];
 
     // Direction handling for RTL/LTR

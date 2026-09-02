@@ -465,6 +465,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "encounter-list"
         },
         { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "Tests Results", code: "TESTS_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "tests-results" },
 
       ],
     },

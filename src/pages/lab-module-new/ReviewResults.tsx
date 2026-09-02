@@ -12,6 +12,8 @@ import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-ord
 import {
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useToggleReviewDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
@@ -180,6 +182,7 @@ const ReviewResults = forwardRef<any, any>(
       useToggleReviewDiagnosticOrderTestResultMutation();
     const [bulkToggleReviewDiagnosticOrderTestResult] =
       useBulkToggleReviewDiagnosticOrderTestResultMutation();
+      const [getAllIds] =useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
     const { data: allLovValues } = useGetLovAllValuesQuery({
@@ -355,18 +358,22 @@ const ReviewResults = forwardRef<any, any>(
     }, [results]);
 
     useEffect(() => {
-      if (!patientIds.length) return;
+      if (!patientIds.length) {
+        setPatientsMap({});
+        return;
+      }
 
-      const numericIds = patientIds.map((id) => Number(id));
+      const numericIds = patientIds.map(Number);
 
       getBulkPatientBasicInfo(numericIds)
         .unwrap()
         .then((res: any[]) => {
           const map: Record<string, any> = {};
 
-          res.forEach((p: any, index: number) => {
-            const originalId = numericIds[index];
-            map[String(originalId)] = p;
+          res.forEach((patient: any) => {
+            if (patient?.id != null) {
+              map[String(patient.id)] = patient;
+            }
           });
 
           setPatientsMap(map);
@@ -374,7 +381,8 @@ const ReviewResults = forwardRef<any, any>(
         .catch((err) => {
           console.error('❌ Bulk patient error:', err);
         });
-    }, [patientIds]);
+    }, [patientIds, getBulkPatientBasicInfo]);
+
 
     useEffect(() => {
       Object.values(orderTestsMap).forEach((test: any) => {
@@ -498,14 +506,33 @@ const ReviewResults = forwardRef<any, any>(
 
       setFiltersKey(prev => prev + 1);
     };
-    const handleSelectAll = (checked: boolean) => {
-      if (checked) {
-        setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
-      } else {
-        setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
-      }
-    };
+    // const handleSelectAll = (checked: boolean) => {
+    //   if (checked) {
+    //     setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
+    //   } else {
+    //     setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
+    //   }
+    // };
+const handleSelectAll = async (checked: boolean) => {
 
+  if (!checked) {
+    setSelectedRows([]);
+    return;
+  }
+
+  try {
+
+    const ids = await getAllIds({
+      ...filterParams
+    }).unwrap();
+     console.log("IDS",ids)
+    setSelectedRows(ids);
+
+  } catch (e) {
+    console.error(e);
+  }
+};
+``
     const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
         prev.includes(rowId) ? prev.filter(id => id !== rowId) : [...prev, rowId]

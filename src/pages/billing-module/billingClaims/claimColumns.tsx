@@ -97,6 +97,18 @@ export const getClaimColumns = ({
     render: (row: ClaimTrackingResponse) => row.preAuthRefNo || row.approvalResponseId || '-'
   },
   {
+    key: 'claimType',
+    title: <Translate>Type</Translate>,
+    flexGrow: 2,
+    render: (row: ClaimTrackingResponse) => formatEnumString(row.claimType) || '-'
+  },
+  {
+    key: 'claimSubType',
+    title: <Translate>Sub Type</Translate>,
+    flexGrow: 2,
+    render: (row: ClaimTrackingResponse) => formatEnumString(row.claimSubType) || '-'
+  },
+  {
     key: 'items',
     title: <Translate>Items</Translate>,
     flexGrow: 2,

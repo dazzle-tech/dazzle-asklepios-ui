@@ -17,6 +17,7 @@ import {
 import type { PatientServiceAndProduct } from '@/types/model-types-new';
 import type { InvoiceLineAdjustmentRequest, InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
 import { inferInvoiceScopeAdjustments } from './invoiceLinePricingUtils';
+import { uncoveredInsuranceWarningText } from '@/components/UncoveredInsuranceWarning';
 
 export type PendingNewServiceLine = InvoiceLineAdjustmentRequest & {
   tempId: string;
@@ -93,6 +94,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
     patientShareAmount: number;
     insuranceShareAmount: number;
     requiresCashConfirmation?: boolean;
+    notCoveredReason?: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -127,6 +129,7 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
       patientShareAmount?: number;
       insuranceShareAmount?: number;
       requiresCashConfirmation?: boolean;
+      notCoveredReason?: string | null;
     }) => {
       setLinePricingPreview({
         grossAmount: pricingPreview.grossAmount,
@@ -139,7 +142,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
           pricingPreview.patientShareAmount ?? pricingPreview.netAmount ?? 0
         ),
         insuranceShareAmount: Number(pricingPreview.insuranceShareAmount ?? 0),
-        requiresCashConfirmation: Boolean(pricingPreview.requiresCashConfirmation)
+        requiresCashConfirmation: Boolean(pricingPreview.requiresCashConfirmation),
+        notCoveredReason: pricingPreview.notCoveredReason ?? null
       });
       setRecord(current => ({
         ...current,
@@ -409,7 +413,8 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
             netAmount: lineNet,
             patientShareAmount,
             insuranceShareAmount,
-            requiresCashConfirmation: Boolean(preview.requiresCashConfirmation)
+            requiresCashConfirmation: Boolean(preview.requiresCashConfirmation),
+            notCoveredReason: preview.notCoveredReason ?? null
           },
           lineGross
         );
@@ -623,7 +628,9 @@ const AddBillingServiceProductModal: React.FC<AddBillingServiceProductModalProps
 
       {linePricingPreview?.requiresCashConfirmation ? (
         <Message type="warning" showIcon style={{ marginBottom: 12 }}>
-          This item is not on the insurance price list. Adding it will bill it as cash to the patient.
+          {uncoveredInsuranceWarningText([
+            { notCoveredReason: linePricingPreview.notCoveredReason }
+          ])}
         </Message>
       ) : null}
       {linePricingPreview ? (
