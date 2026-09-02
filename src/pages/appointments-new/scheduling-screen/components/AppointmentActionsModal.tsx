@@ -724,12 +724,12 @@ const handleCancel = async () => {
                 gap: 8,
                 width: '100%'
               }}
+              className="appointment-logs-actions-grid"
             >
             <MyButton
               width="100%"
               disabled={!canCheckIn}
               onClick={handleCheckIn}
-              color="cyan"
               appearance="primary"
             >
                 Check-In
@@ -738,7 +738,6 @@ const handleCancel = async () => {
               width="100%"
               disabled={currentStatus === "CONFIRMED" || isViewOnlyActionsStatus}
               onClick={handleConfirm}
-              color="violet"
               appearance="primary"
             >
                 Confirm
@@ -747,7 +746,6 @@ const handleCancel = async () => {
               width="100%"
               disabled={currentStatus !== "CONFIRMED"}
               onClick={handleUndoConfirm}
-              color="orange"
               appearance="primary"
             >
                 Undo Confirm
@@ -756,7 +754,6 @@ const handleCancel = async () => {
               width="100%"
               disabled={!(currentStatus === 'BOOKED' || currentStatus === 'CONFIRMED')}
               onClick={() => editAppointment(appointment?.appointmentData || localAppointmentData)}
-              color="violet"
               appearance="primary"
             >
                 Reschedule
@@ -768,16 +765,13 @@ const handleCancel = async () => {
               width="100%"
               disabled={["CANCELLED", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
               onClick={() => { setResonType('Cancel') }}
-              color="blue"
               appearance="primary"
             >
                 Cancel
             </MyButton>
             <MyButton
               width="100%"
-              style={{ gridColumn: '1 / -1' }}
               onClick={() => { setOpenAppointmentLogsModal(true) }}
-              color="blue"
               appearance="primary"
             >
                 Show log
