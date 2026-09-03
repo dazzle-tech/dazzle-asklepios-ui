@@ -896,7 +896,6 @@ const WaseelSbsSetup = () => {
         record={mappingForm}
         setRecord={setMappingForm}
         width="100%"
-        searchable
         searchKeyWard={sbsDropdownSearch}
         setSearchKeyWard={setSbsDropdownSearch}
         loading={isFetchingSbsDropdown}
