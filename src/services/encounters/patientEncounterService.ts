@@ -410,6 +410,7 @@ export const patientEncounterService = createApi({
       providesTags: (_res, _err, { encounterId }) => [
         { type: 'PatientEncounter', id: encounterId }
       ]
+    }),
     getEncounterAudit: builder.query<PatientEncounterFieldAudit[], { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/audit`,
@@ -568,8 +569,8 @@ export const {
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
   useCountDepartmentDischargedByDateRangeQuery,
-  useGetEncountersByIdsQuery
-  , useLazyGetEncountersByIdsQuery,
+  useGetEncountersByIdsQuery,
+  useLazyGetEncountersByIdsQuery,
   useUpdateHistoryOfPresentIllnessMutation,
   useStartTriageEncounterMutation,
   useReopenEncounterMutation,
