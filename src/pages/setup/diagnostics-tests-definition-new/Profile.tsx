@@ -627,7 +627,7 @@ const Profile = ({
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
       mainSize="xs"
-      childSize="40vw"
+      childSize="sm"
     />
   );
 };

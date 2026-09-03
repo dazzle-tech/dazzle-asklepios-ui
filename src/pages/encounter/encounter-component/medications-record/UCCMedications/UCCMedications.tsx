@@ -18,7 +18,6 @@ import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients
 
 import {
   useFilterUccMedicationOrdersQuery,
-  useAdministerUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
@@ -29,6 +28,8 @@ import { useEnumOptions } from '@/services/enumsApi';
 import CancellationModal from '@/components/CancellationModal';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { skipToken } from '@reduxjs/toolkit/query';
+import MedicationAdministrationModal from '@/pages/encounter/urgent-care/MedicationAdministrationModal';
+import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
 
 type Props = {
   patient: any;
@@ -119,7 +120,11 @@ const formatDate = (date: any) => {
 
 const UCCMedications = ({ patient }: Props) => {
   const dispatch = useAppDispatch();
+  const [administrationModalOpen, setAdministrationModalOpen] =
+    useState(false);
 
+  const [selectedOrderId, setSelectedOrderId] =
+    useState<number | null>(null);
   const user = useAppSelector(
     (state: any) => state.auth.user
   );
@@ -180,7 +185,7 @@ const UCCMedications = ({ patient }: Props) => {
 
   const orderedRows = orderedResponse?.data || [];
   const administeredRows = adminResponse?.data || [];
-    const { data: activeIngredientsRes } = useGetActiveIngredientsQuery({
+  const { data: activeIngredientsRes } = useGetActiveIngredientsQuery({
     page: 0,
     size: 1000
   });
@@ -236,10 +241,7 @@ const UCCMedications = ({ patient }: Props) => {
     return map;
   }, [roaOptions]);
 
-  const [
-    administerOrder,
-    { isLoading: administering }
-  ] = useAdministerUccMedicationOrderMutation();
+
 
   const [
     discardOrder,
@@ -262,32 +264,6 @@ const UCCMedications = ({ patient }: Props) => {
       discardReason: ''
     });
 
-  const handleAdminister = async (
-    row: MedicationOrderRow
-  ) => {
-    try {
-      await administerOrder(row.id).unwrap();
-
-      dispatch(
-        notify({
-          msg: 'Medication administered successfully',
-          sev: 'success'
-        })
-      );
-
-      refetchOrdered();
-      refetchAdmin();
-    } catch (e: any) {
-      dispatch(
-        notify({
-          msg:
-            e?.data?.detail ||
-            'Administer failed',
-          sev: 'error'
-        })
-      );
-    }
-  };
 
   const handleDiscard = async () => {
     if (!selectedRow) return;
@@ -420,27 +396,33 @@ const UCCMedications = ({ patient }: Props) => {
       minWidth: 140,
       render: (row: MedicationOrderRow) =>
         formatEnumString(row.status)
-    },    {
-      key: 'actions',
-      title: <Translate>ACTIONS</Translate>,
-      width: 120,
-      align: 'center',
-      render: (row: MedicationOrderRow) => {
-        if (row.status === 'SUBMITTED') {
-          return (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 12
-              }}
-            >
+    }, 
+      {
+            key: 'actions',
+            title: <Translate>ACTIONS</Translate>,
+            width: 120,
+            align: 'center',
+         render: (row: MedicationOrderRow) => {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 12
+          }}
+        >
+          {row.status === 'SUBMITTED' && (
+            <>
               <CheckRoundIcon
                 className="medication-record-order-icons-size"
                 style={{ cursor: 'pointer' }}
-                onClick={() => handleAdminister(row)}
+                onClick={() => {
+                  setSelectedOrderId(row.id);
+                  setAdministrationModalOpen(true);
+                }}
               />
-
+    
               <FontAwesomeIcon
                 icon={faXmark}
                 className="medication-record-order-icons-size"
@@ -453,51 +435,27 @@ const UCCMedications = ({ patient }: Props) => {
                   setOpenDiscardModal(true);
                 }}
               />
-            </div>
-          );
-        }
-
-        if (row.status === 'WAITING_DOUBLE_CHECK') {
-          const currentUser =
-            user?.login || user?.username;
-
-          const isSameUser =
-            row.administeredBy &&
-            currentUser &&
-            row.administeredBy.toLowerCase() ===
-              currentUser.toLowerCase();
-
-          return (
+            </>
+          )}
+    
+          {row.status === 'WAITING_DOUBLE_CHECK' && (
             <FontAwesomeIcon
               icon={faCheckDouble}
               className="medication-record-order-icons-size"
               style={{
-                cursor: isSameUser
-                  ? 'not-allowed'
-                  : 'pointer',
-                opacity: isSameUser ? 0.4 : 1
+                cursor: 'pointer'
               }}
-              onClick={() => {
-                if (isSameUser) {
-                  dispatch(
-                    notify({
-                      msg:
-                        'Double check must be done by another user',
-                      sev: 'warning'
-                    })
-                  );
-                  return;
-                }
-
-                handleDoubleCheck(row);
-              }}
+              onClick={() => handleDoubleCheck(row)}
             />
-          );
-        }
-
-        return null;
-      }
+          )}
+    
+          <MedicationAdministrationLogs
+            order={row}
+          />
+        </div>
+      );
     }
+          }
   ];
 
   const tableLoading =
@@ -505,7 +463,7 @@ const UCCMedications = ({ patient }: Props) => {
     orderedFetching ||
     adminLoading ||
     adminFetching ||
-    administering ||
+     
     discarding ||
     doubleChecking;
 
@@ -575,7 +533,15 @@ const UCCMedications = ({ patient }: Props) => {
           />
         }
       />
-
+<MedicationAdministrationModal
+  orderId={selectedOrderId}
+  open={administrationModalOpen}
+  setOpen={setAdministrationModalOpen}
+  onSuccess={async () => {
+    await refetchOrdered();
+    await refetchAdmin();
+  }}
+/>
       <CancellationModal
         open={openDiscardModal}
         setOpen={setOpenDiscardModal}

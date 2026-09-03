@@ -314,6 +314,7 @@ const Details = ({
         encounterId: encounter?.id,
         fromFacilityId: resolvedFromFacilityId,
         fromDepartmentId: resolvedFromDepartmentId,
+        toFacilityId: resolvedFromFacilityId,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
@@ -404,22 +405,23 @@ const Details = ({
     }
   }, [open, formData?.destinationType, formData?.consultantSpeciality, formData?.toFacilityId]);
 
-  const handleClear = () => {
-    setFormData({
-      ...newConsultation,
-      patientId: patient?.id,
-      encounterId: encounter?.id,
-      fromFacilityId: resolvedFromFacilityId,
-      fromDepartmentId: resolvedFromDepartmentId,
-      destinationType: 'DEPARTMENT',
-      toFacilityId: null,
-      toDepartmentId: null,
-      consultantSpeciality: null,
-      practitionerId: null
-    });
-    setAllPractitioners([]);
-    setPractitionerPage(0);
-  };
+const handleClear = () => {
+  setFormData({
+    ...newConsultation,
+    patientId: patient?.id,
+    encounterId: encounter?.id,
+    fromFacilityId: resolvedFromFacilityId,
+    fromDepartmentId: resolvedFromDepartmentId,
+    destinationType: 'DEPARTMENT',
+    toFacilityId: resolvedFromFacilityId,
+    toDepartmentId: null,
+    consultantSpeciality: null,
+    practitionerId: null
+  });
+
+  setAllPractitioners([]);
+  setPractitionerPage(0);
+};
 
   const buildValidationError = () => {
     const fieldErrors = [];
@@ -617,7 +619,7 @@ const Details = ({
                       fieldName={'toFacilityId'}
                       record={{
                         ...formData,
-                        toFacilityId: formData?.toFacilityId ?? null
+                        toFacilityId: formData?.toFacilityId || null
                       }}
                       setRecord={value => {
                         setFormData({

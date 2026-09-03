@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 
 import {
+  useGetEncounterAuditQuery,
   useGetEncounterByIdQuery,
   useUpdateEncounterMutation
 } from '@/services/encounters/patientEncounterService';
@@ -27,12 +28,15 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/s
 import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
+import FieldAuditHistoryModal from './FieldAuditHistory';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('1');
   const outletContext = useOutletContext<any>();
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedAuditField, setSelectedAuditField] = useState('');
 
   const patient = props.patient || location.state?.patient || outletContext?.patient;
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
@@ -60,6 +64,13 @@ const SOAP = props => {
       refetchOnFocus: true
     }
   );
+
+  const {
+  data: encounterAudit = []
+} = useGetEncounterAuditQuery(
+  { id: encounterId },
+  { skip: !encounterId }
+);
 
   const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
@@ -179,6 +190,11 @@ const SOAP = props => {
     }
   };
 
+  const openAuditHistory = (fieldName: string) => {
+   setSelectedAuditField(fieldName);
+   setAuditModalOpen(true);
+  };
+
   const savePhysicalExamination = async () => {
     try {
       const idToUpdate = localEncounter?.id ?? encounterId;
@@ -274,9 +290,17 @@ const SOAP = props => {
                       </Form>
                     }
                     action={
+                      <>
+                      <MyButton
+                        size="small"
+                        onClick={() => openAuditHistory('chiefComplaint')}
+                      >
+                         History
+                      </MyButton>
                       <MyButton size="small" onClick={saveChanges}>
                         Save
                       </MyButton>
+                      </>
                     }
                   />
                 </div>
@@ -286,6 +310,8 @@ const SOAP = props => {
                     encounter={localEncounter}
                     setEncounter={setLocalEncounter}
                     disabled={edit}
+                    onShowHistory={() => openAuditHistory('historyOfPresentIllness')}
+
                   />
                 </div>
                 <div style={{ marginBottom: '16px' }}>
@@ -306,9 +332,17 @@ const SOAP = props => {
                       </Form>
                     }
                     action={
+                      <>
+                      <MyButton
+                        size="small"
+                        onClick={() => openAuditHistory('physicalExaminationSummery')}
+                      >
+                        History
+                      </MyButton>
                       <MyButton size="small" onClick={savePhysicalExamination}>
                         Save
                       </MyButton>
+                      </>
                     }
                   />
                 </div>
@@ -378,6 +412,12 @@ const SOAP = props => {
   return (
     <div className="patient-summary-container">
       <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
+      <FieldAuditHistoryModal
+        open={auditModalOpen}
+        setOpen={setAuditModalOpen}
+        audit={encounterAudit}
+        fieldName={selectedAuditField}
+/>
     </div>
   );
 };
