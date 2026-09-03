@@ -40,6 +40,7 @@ const ConfigurationTab: React.FC<ConfigurationTabProps> = ({
           appearance="primary"
           onClick={() => {
             const updatedFacility = {
+
               ...facility
             };
 
