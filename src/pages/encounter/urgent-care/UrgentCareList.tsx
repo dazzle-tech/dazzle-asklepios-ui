@@ -654,9 +654,34 @@ const UrgentCareList = () => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
-      if (isEncounterAlreadyOngoingError(error)) {
-        return true;
+      const backendMessage = String(
+        error?.data?.detail ||
+        error?.data?.message ||
+        ''
+      ).toLowerCase();
+
+      const errorKey = String(
+        error?.data?.messageKey ||
+        error?.data?.errorKey ||
+        ''
+      ).toLowerCase();
+
+      const isOpenVisitError =
+        isEncounterAlreadyOngoingError(error) ||
+        backendMessage.includes('already has an ongoing emergency encounter') ||
+        errorKey === 'error.db.constraint';
+
+      if (isOpenVisitError) {
+        dispatch(
+          notify({
+            msg: 'This Patient already has open visit',
+            sev: 'warning'
+          })
+        );
+
+        return false;
       }
+
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {

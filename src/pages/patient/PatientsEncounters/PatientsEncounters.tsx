@@ -18,6 +18,13 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import UserDateCell from '@/components/UserDateCell';
+import {
+    useLazyGetEncounterBillingSummaryQuery
+} from '@/services/billing/billingTransactionService';
+
+import {
+    useLazyGetInsurancesByPatientQuery
+} from '@/services/patients/patientInsurancesService';
 
 const today = new Date();
 
@@ -45,8 +52,23 @@ const PatientsEncounters = () => {
     }, [dispatch]);
 
 
-const [page, setPage] = useState(0);
-const [rowsPerPage, setRowsPerPage] = useState(15);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
+
+
+    const [getEncounterBillingSummary] =
+        useLazyGetEncounterBillingSummaryQuery();
+
+    const [getInsurancesByPatient] =
+        useLazyGetInsurancesByPatientQuery();
+
+    const [billingData, setBillingData] = useState<
+        Record<number, any>
+    >({});
+
+    const [insuranceData, setInsuranceData] = useState<
+        Record<number, any>
+    >({});
 
     const [appliedFilters, setAppliedFilters] = useState<any>({
         fromDate: todayDate,
@@ -132,7 +154,7 @@ const [rowsPerPage, setRowsPerPage] = useState(15);
     }, [departments]);
 
 
-const [dateKey, setDateKey] = useState(0);
+    const [dateKey, setDateKey] = useState(0);
     const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
     const TreatmentStatusEnum = useEnumOptions('TreatmentStatus');
@@ -280,82 +302,240 @@ const [dateKey, setDateKey] = useState(0);
         return '-';
     };
 
+    const getBillingSummary = (row: any) => {
+        return billingData?.[row?.id] ?? null;
+    };
+
+    const getAmount = (row: any) => {
+        const billing = getBillingSummary(row);
+
+        return (
+            billing?.netAmount ??
+            billing?.grossAmount ??
+            billing?.items?.reduce(
+                (total: number, item: any) =>
+                    total + Number(item?.netAmount ?? 0),
+                0
+            ) ??
+            '-'
+        );
+    };
+
+    const getPaymentStatus = (row: any) => {
+        const billing = getBillingSummary(row);
+
+        if (!billing) {
+            return '-';
+        }
+
+        if (
+            billing?.items?.every(
+                (item: any) =>
+                    ['CLOSED', 'FULLY_ALLOCATED'].includes(
+                        String(item?.status ?? '').toUpperCase()
+                    )
+            )
+        ) {
+            return 'Paid';
+        }
+
+        if (
+            billing?.items?.some(
+                (item: any) =>
+                    Number(item?.outstandingAmount ?? 0) > 0
+            )
+        ) {
+            return 'Remaining To Pay';
+        }
+
+        return billing?.status
+            ? formatEnumString(billing.status)
+            : '-';
+    };
+
+    const getInsuranceName = (row: any) => {
+        const insurance = getPatientInsurance(row);
+
+        return (
+            insurance?.payerName ??
+            insurance?.insuranceName ??
+            insurance?.payorName ??
+            insurance?.payerNphiesId ??
+            '-'
+        );
+    };
+
+    const getPatientInsurance = (row: any) => {
+        const patientId =
+            row?.patient?.id ??
+            row?.patient?.key ??
+            row?.patientId;
+
+        if (!patientId) {
+            return null;
+        }
+
+        const insurances = insuranceData?.[patientId] ?? [];
+
+        return insurances[0] ?? null;
+    };
+
+    const getCoverageType = (row: any) => {
+        // 1. لو الـEncounter نفسه عنده coverageType استخدمه
+        const encounterCoverageType =
+            row?.coverageType ??
+            row?.coverage?.type;
+
+        if (encounterCoverageType) {
+            return encounterCoverageType;
+        }
+
+        // 2. وإلا نجيبها من Insurance
+        const insurance = getPatientInsurance(row);
+
+        if (insurance?.coverageType) {
+            return insurance.coverageType;
+        }
+
+        // 3. ما في Insurance => Self Pay
+        return 'SELF_PAY';
+    };
+
+    const getPaymentType = (row: any) => {
+        const encounterCoverageType =
+            row?.coverageType ??
+            row?.coverage?.type;
+        if (encounterCoverageType) {
+            return String(encounterCoverageType).toUpperCase() === 'INSURANCE'
+                ? 'Insurance'
+                : 'Self Pay';
+        }
+        const insurance = getPatientInsurance(row);
+
+        return insurance ? 'Insurance' : 'Self Pay';
+    };
+
+    const triageStartedStatuses = new Set([
+        'TRIAGE_STARTED',
+        'ASSIGNED_TO_BED',
+        'ONGOING',
+        'IN_OPERATION',
+        'CONFIRM_RETURN',
+        'TEMP_DC',
+        'COMPLETED',
+        'CLOSED',
+        'DISCHARGED',
+    ]);
 
     const columns = useMemo(
         () => [
             {
                 key: 'encounterId',
                 title: 'Encounter Id',
-                render: (row: any) => {
-                    return row.encounterNumber ?? '-';
-                },
+                render: (row: any) =>
+                    row?.encounterNumber ?? '-',
             },
             {
                 key: 'patientName',
                 title: 'Patient Name',
-                render: (row: any) => getPatientName(row),
+                render: (row: any) =>
+                    getPatientName(row),
             },
-
             {
                 key: 'mrn',
                 title: 'MRN',
-                render: (row: any) => getMRN(row),
+                render: (row: any) =>
+                    getMRN(row),
             },
-
+            {
+                key: 'encounterType',
+                title: 'Encounter Type',
+                render: (row: any) =>
+                    formatEnumString(
+                        row?.encounterType
+                    ) || '-',
+            },
             {
                 key: 'department',
                 title: 'Department',
-                render: (row: any) => getDepartmentName(row),
+                render: (row: any) =>
+                    getDepartmentName(row),
             },
-
             {
                 key: 'practitioner',
                 title: 'Practitioner',
-                render: (row: any) => getPractitionerName(row),
+                render: (row: any) =>
+                    getPractitionerName(row),
             },
+            {
+                key: 'defaultService',
+                title: 'Default Service',
+                render: (row: any) => {
+                    const billing = getBillingSummary(row);
 
-            {
-                key: 'encounterReason',
-                title: 'Reason',
-                render: (row: any) =>
-                    formatEnumString(
-                        row?.encounterReason
-                    ) || '-',
+                    return (
+                        billing?.items?.[0]?.serviceName ??
+                        billing?.items?.[0]?.itemName ??
+                        row?.appointment?.defaultServiceName ??
+                        row?.appointment?.defaultServiceId ??
+                        '-'
+                    );
+                },
             },
+            {
+                key: 'amount',
+                title: 'Amount',
+                render: (row: any) =>
+                    getAmount(row),
+            },
+            {
+                key: 'paymentStatus',
+                title: 'Payment Status',
+                render: (row: any) =>
+                    getPaymentStatus(row),
+            },
+            {
+                key: 'coverageType',
+                title: 'Coverage Type',
+                render: (row: any) =>
+                    formatEnumString(getCoverageType(row)) || '-',
+            },
+            {
+                key: 'paymentType',
+                title: 'Self Pay / Insurance',
+                render: (row: any) =>
+                    getPaymentType(row),
+            },
+            {
+                key: 'insuranceName',
+                title: 'Insurance Name',
+                render: (row: any) =>
+                    getInsuranceName(row),
+            },
+            {
+                key: 'triageStarted',
+                title: 'Triage Started',
+                render: (row: any) => {
+                    const status = String(row?.status ?? '').toUpperCase();
 
-            {
-                key: 'treatmentStatus',
-                title: 'Treatment Status',
-                render: (row: any) =>
-                    formatEnumString(
-                        row?.treatmentStatus ??
-                        row?.status
-                    ) || '-',
-            },
-
-            {
-                key: 'encounterStatus',
-                title: 'Encounter Status',
-                render: (row: any) =>
-                    formatEnumString(
-                        row?.encounterStatus ??
-                        row?.status
-                    ) || '-',
+                    return triageStartedStatuses.has(status) ? 'True' : 'False';
+                },
             },
             {
-                key: 'createdAt',
-                title: 'Created At',
+                key: 'doctorStartDateTime',
+                title: 'Doctor Start Date/Time',
                 render: (row: any) =>
-                    formatDateWithoutSeconds(row?.createdAt)
+                    row?.startedDate
+                        ? formatDateWithoutSeconds(row.startedDate)
+                        : '-',
             },
-            {
-                key: 'encounterEnd',
-                title: 'Encounter End Date / Time',
-                render: (row: any) =>
-                    formatDateWithoutSeconds(row?.completedAt)
-            }
         ],
-        [departmentMap, practitionerMap]
+        [
+            departmentMap,
+            practitionerMap,
+            insuranceData,
+            billingData,
+        ]
     );
 
     const handleSearch = () => {
@@ -370,19 +550,19 @@ const [dateKey, setDateKey] = useState(0);
 
         const encounterReasons =
             Array.isArray(filterRecord.encounterReasons) &&
-            filterRecord.encounterReasons.length > 0
+                filterRecord.encounterReasons.length > 0
                 ? filterRecord.encounterReasons
                 : undefined;
 
         const treatmentStatuses =
             Array.isArray(filterRecord.treatmentStatuses) &&
-            filterRecord.treatmentStatuses.length > 0
+                filterRecord.treatmentStatuses.length > 0
                 ? filterRecord.treatmentStatuses
                 : undefined;
 
         const encounterStatuses =
             Array.isArray(filterRecord.encounterStatuses) &&
-            filterRecord.encounterStatuses.length > 0
+                filterRecord.encounterStatuses.length > 0
                 ? filterRecord.encounterStatuses
                 : undefined;
 
@@ -445,26 +625,26 @@ const [dateKey, setDateKey] = useState(0);
 
         setPage(0);
 
-            setAppliedFilters({
-                fromDate: todayDate,
-                toDate: todayDate,
+        setAppliedFilters({
+            fromDate: todayDate,
+            toDate: todayDate,
 
-                patientName: undefined,
-                mrn: undefined,
-                encounterNumber: undefined,
+            patientName: undefined,
+            mrn: undefined,
+            encounterNumber: undefined,
 
-                facilityId: currentFacility?.id ?? undefined,
-                departmentId: undefined,
-                practitionerId: undefined,
+            facilityId: currentFacility?.id ?? undefined,
+            departmentId: undefined,
+            practitionerId: undefined,
 
-                encounterReasons: undefined,
-                statusIn: undefined,
-                encounterStatuses: undefined,
+            encounterReasons: undefined,
+            statusIn: undefined,
+            encounterStatuses: undefined,
 
-                page: 0,
-                size: rowsPerPage,
-                sort: 'id,desc',
-            });
+            page: 0,
+            size: rowsPerPage,
+            sort: 'id,desc',
+        });
 
         setDateKey(prev => prev + 1);
     };
@@ -495,6 +675,110 @@ const [dateKey, setDateKey] = useState(0);
             size: newSize,
         }));
     };
+
+    useEffect(() => {
+        if (!tableData.length) {
+            setBillingData({});
+            setInsuranceData({});
+            return;
+        }
+
+        const loadExtraData = async () => {
+            const billingResults = await Promise.all(
+                tableData.map(async (row: any) => {
+                    if (!row?.id) {
+                        return null;
+                    }
+
+                    try {
+                        const result =
+                            await getEncounterBillingSummary({
+                                encounterId: row.id
+                            }).unwrap();
+
+                        return {
+                            id: row.id,
+                            data: result
+                        };
+                    } catch (error) {
+                        console.error(
+                            `Failed to load billing summary for encounter ${row.id}`,
+                            error
+                        );
+
+                        return null;
+                    }
+                })
+            );
+
+            const nextBillingData: Record<number, any> = {};
+
+            billingResults.forEach(result => {
+                if (result?.id) {
+                    nextBillingData[result.id] = result.data;
+                }
+            });
+
+            const patientIds: number[] = Array.from(
+                new Set<number>(
+                    tableData
+                        .map(
+                            (row: any) =>
+                                row?.patient?.id ??
+                                row?.patient?.key ??
+                                row?.patientId
+                        )
+                        .filter(Boolean)
+                )
+            );
+
+            const insuranceResults = await Promise.all(
+                patientIds.map(async (patientId: number) => {
+                    try {
+                        const result =
+                            await getInsurancesByPatient({
+                                patientId,
+                                page: 0,
+                                size: 200,
+                                sort: 'id,desc'
+                            }).unwrap();
+
+                        return {
+                            patientId,
+                            data: result?.data ?? []
+                        };
+                    } catch (error) {
+                        console.log('=== INSURANCE ERROR ===', {
+                            patientId,
+                            error
+                        });
+
+                        return null;
+                    }
+                })
+            );
+
+            const nextInsuranceData: Record<number, any[]> = {};
+
+            insuranceResults.forEach(result => {
+                if (result?.patientId) {
+                    nextInsuranceData[result.patientId] =
+                        result.data;
+                }
+            });
+
+            setBillingData(nextBillingData);
+            setInsuranceData(nextInsuranceData);
+        };
+
+        loadExtraData();
+    }, [
+        tableData,
+        getEncounterBillingSummary,
+        getInsurancesByPatient
+    ]);
+
+
 
     return (
         <SectionContainer

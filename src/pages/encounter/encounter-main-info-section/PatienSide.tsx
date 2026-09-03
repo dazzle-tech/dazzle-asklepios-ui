@@ -403,21 +403,29 @@ const patientConditionItems =
     if (patient?.key) profileImageFileInputRef.current?.click();
   };
 
-  const getAllergenName = (allergenId: number, medicationClassId: number) => {
-    if (allergenId && allergensListResponse?.data) {
-      const allergen = allergensListResponse.data.find((item: any) => item.id === allergenId);
-      return <p>{allergen?.name ?? '-'}</p>;
-    }
+const getAllergenName = (allergy: any) => {
+  if (allergy?.allergenType === 'OTHER') {
+    return <p>{allergy?.allergenName || '-'}</p>;
+  }
 
-    if (medicationClassId && medicationClassesListResponse) {
-      const medicationClass = medicationClassesListResponse.find(
-        (item: any) => item.id === medicationClassId
-      );
-      return <p>{medicationClass?.name ?? '-'}</p>;
-    }
+  if (allergy?.allergenId && allergensListResponse?.data) {
+    const allergen = allergensListResponse.data.find(
+      (item: any) => item.id === allergy.allergenId
+    );
 
-    return <p>-</p>;
-  };
+    return <p>{allergen?.name ?? '-'}</p>;
+  }
+
+  if (allergy?.medicationClassId && medicationClassesListResponse) {
+    const medicationClass = medicationClassesListResponse.find(
+      (item: any) => item.id === allergy.medicationClassId
+    );
+
+    return <p>{medicationClass?.name ?? '-'}</p>;
+  }
+
+  return <p>-</p>;
+};
 
   const activeAllergies =
     allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
@@ -983,9 +991,9 @@ const patientConditionItems =
                   contant={
                     <div className="diagnosis-badge-content">
                       <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />
-                      <Translate>
-                        {getAllergenName(allergy?.allergenId, allergy?.medicationClassId)}
-                      </Translate>
+                        <Translate>
+                          {getAllergenName(allergy)}
+                        </Translate>
                     </div>
                   }
                 />

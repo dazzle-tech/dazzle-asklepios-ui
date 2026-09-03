@@ -809,6 +809,7 @@ const WaseelSbsSetup = () => {
 
   const isEditMode = Boolean(editingMapping?.id);
 
+
   const mappingModalContent = (
     <Form fluid className="waseel-mapping-form">
       <MyInput
