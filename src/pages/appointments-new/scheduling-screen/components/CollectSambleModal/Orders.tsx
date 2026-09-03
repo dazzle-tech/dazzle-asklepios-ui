@@ -5,12 +5,14 @@ import Translate from '@/components/Translate';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { formatEnumString } from '@/utils';
-
+import MyInput from '@/components/MyInput';
+import { Form } from 'rsuite';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
 import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import './style.less';
 
 type OrdersProps = {
   order: any;
@@ -29,22 +31,21 @@ type OrdersProps = {
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({
-    order,
-    setOrder,
-    dateFilter,
-    loading,
-    orderNumberFilter,
-    selectedPatient,
-    departmentFilter,
-    filters,
-departmentId: departmentIdProp,
-fromDepartmentId
-  }, ref) => {
+({
+  order,
+  setOrder,
+  dateFilter,
+  loading,
+  orderNumberFilter,
+  selectedPatient,
+  departmentFilter,
+  filters,
+  departmentId: departmentIdProp,
+  fromDepartmentId
+}, ref) => {
 
     const [sortColumn, setSortColumn] = useState('id');
     const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-
     const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
     const [patientsMap, setPatientsMap] = useState<Record<number, any>>({});
@@ -101,11 +102,11 @@ useEffect(() => {
   dateFilter?.toDate
 ]);
 
-    const {
-      data: ordersResponse,
-      isFetching,
-      refetch: refetchOrders
-    } = useFilterDiagnosticOrdersQuery(
+const {
+  data: ordersResponse,
+  isFetching,
+  refetch: refetchOrders
+} = useFilterDiagnosticOrdersQuery(
   departmentId && fromDepartmentId
     ? {
         page: paginationParams.page,
@@ -114,6 +115,11 @@ useEffect(() => {
 
         status: 'SUBMITTED',
         testType: 'LABORATORY',
+        labStatusIn: [
+          'NEW',
+          'PARTIALLY',
+          'SAMPLE_COLLECTED',
+        ],
 
         departmentId: Number(departmentId),
         fromDepartmentIdIn: [Number(fromDepartmentId)],
@@ -127,17 +133,38 @@ useEffect(() => {
 
         ...(orderNumberFilter?.trim()
           ? { orderNumber: orderNumberFilter.trim() }
-          : {})
+          : {}),
       }
     : skipToken
 );
 
-    useImperativeHandle(ref, () => ({
-      refetchOrders
-    }));
+useImperativeHandle(ref, () => ({
+  refetchOrders
+}));
 
-    const ordersList = ordersResponse?.data ?? [];
-    const totalCount = ordersResponse?.totalCount ?? 0;
+
+const allOrdersList = ordersResponse?.data ?? [];
+
+
+console.log('ORDERS RESPONSE:', ordersResponse);
+
+console.log('ORDERS TOTAL COUNT:', ordersResponse?.totalCount);
+
+console.log(
+  'ORDERS:',
+  allOrdersList.map((o: any) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    status: o.status,
+    labStatus: o.labStatus,
+    departmentId: o.departmentId,
+    fromDepartmentId: o.fromDepartmentId,
+    patientId: o.patientId
+  }))
+);
+
+const ordersList = allOrdersList;
+const totalCount = ordersResponse?.totalCount ?? 0;
 
     const patientIds = useMemo(() => {
       return ordersList
@@ -200,7 +227,7 @@ useEffect(() => {
     const tableColumns = [
       {
         key: 'orderNumber',
-        title: <Translate>ORDER ID</Translate>,
+        title: (<Translate>ORDER ID</Translate>),
         flexGrow: 1,
         render: (r: any) => r.orderNumber ?? ' '
       },
