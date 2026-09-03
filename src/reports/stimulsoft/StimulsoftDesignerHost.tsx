@@ -106,12 +106,20 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
         }
       }
 
-      const previousBeginProcessData = report.onBeginProcessData;
-      report.onBeginProcessData = (args: any, callback?: any) => {
-        prepareStimulsoftDataRequest(report, args);
-        previousBeginProcessData?.call(report, args, callback);
-        tryFulfillStimulsoftApiRequest(args, callback);
+      const bindDataRequest = (targetReport: any) => {
+        if (!targetReport || targetReport.__stiBeginBound) return;
+        targetReport.__stiBeginBound = true;
+        const previousBegin = targetReport.onBeginProcessData;
+        targetReport.onBeginProcessData = (args: any, callback?: any) => {
+          prepareStimulsoftDataRequest(targetReport, args);
+          if (tryFulfillStimulsoftApiRequest(args, callback)) {
+            return;
+          }
+          previousBegin?.call(targetReport, args, callback);
+        };
       };
+
+      bindDataRequest(report);
 
       registerSchemaOnReport(Stimulsoft, report, schemaRef.current);
       enableDynamicStimulsoftApis(Stimulsoft, report);
@@ -133,16 +141,27 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
       designer.onSaveReport = takeSavedJson;
       designer.onSaveAsReport = takeSavedJson;
 
+      const bindPreviewReport = (previewReport: any) => {
+        if (!previewReport || previewReport.__stiPreviewBound) return;
+        previewReport.__stiPreviewBound = true;
+        attachStimulsoftProxyHeaders(previewReport);
+        bindDataRequest(previewReport);
+        enableDynamicStimulsoftApis(Stimulsoft, previewReport);
+      };
+
+      if (typeof designer.onPreviewReport !== 'undefined') {
+        const previousPreviewReport = designer.onPreviewReport;
+        designer.onPreviewReport = (args: any) => {
+          bindPreviewReport(args?.report);
+          return previousPreviewReport?.call(designer, args);
+        };
+      }
+
       designer.onCreateReport = (args: any) => {
         if (args?.report) {
           const created = args.report;
           attachStimulsoftProxyHeaders(created);
-          const previousCreatedBegin = created.onBeginProcessData;
-          created.onBeginProcessData = (processArgs: any, callback?: any) => {
-            prepareStimulsoftDataRequest(created, processArgs);
-            previousCreatedBegin?.call(created, processArgs, callback);
-            tryFulfillStimulsoftApiRequest(processArgs, callback);
-          };
+          bindDataRequest(created);
           registerSchemaOnReport(Stimulsoft, created, schemaRef.current);
           enableDynamicStimulsoftApis(Stimulsoft, created);
           reportRef.current = created;

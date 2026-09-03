@@ -1,5 +1,5 @@
 ﻿import config from '../../../app-config';
-import { getStimulsoftAuthHeaders } from './loadStimulsoftDesigner';
+import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const PATH_FIELDS = ['pathData', 'path', 'url', 'connectionString'] as const;
 
@@ -67,6 +67,61 @@ const defaultForVariable = (name: string): string | null => {
   return null;
 };
 
+const normalizeVarName = (name: string) =>
+  String(name || '')
+    .replace(/[\s_-]/g, '')
+    .toLowerCase();
+
+const coerceVariableValue = (raw: unknown): string | null => {
+  if (raw == null || raw === '') return null;
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+    return toIsoDate(raw);
+  }
+  if (typeof raw === 'object') {
+    const obj = raw as {
+      year?: number;
+      month?: number;
+      day?: number;
+      getFullYear?: () => number;
+      getMonth?: () => number;
+      getDate?: () => number;
+    };
+    if (typeof obj.getFullYear === 'function') {
+      return toIsoDate(
+        new Date(obj.getFullYear(), obj.getMonth?.() ?? 0, obj.getDate?.() ?? 1)
+      );
+    }
+    if (obj.year && obj.month) {
+      return `${obj.year}-${String(obj.month).padStart(2, '0')}-${String(
+        obj.day ?? 1
+      ).padStart(2, '0')}`;
+    }
+  }
+  const text = String(raw).trim();
+  if (!text) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+  const us = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (us) {
+    return `${us[3]}-${us[1].padStart(2, '0')}-${us[2].padStart(2, '0')}`;
+  }
+  return text;
+};
+
+/** Values from Preview → Parameters → Submit (onPrepareVariables). */
+const previewVariableCache = new Map<string, string>();
+
+export const cachePreviewVariables = (
+  variables?: { name?: string; alias?: string; value?: unknown }[]
+) => {
+  if (!Array.isArray(variables)) return;
+  variables.forEach(item => {
+    const coerced = coerceVariableValue(item?.value);
+    if (coerced == null) return;
+    if (item?.name) previewVariableCache.set(normalizeVarName(item.name), coerced);
+    if (item?.alias) previewVariableCache.set(normalizeVarName(item.alias), coerced);
+  });
+};
+
 const AUTH_HEADER_NAMES = new Set(['authorization', 'id_token']);
 
 const mergeAuthHeaders = (headers?: unknown) => {
@@ -81,23 +136,42 @@ const mergeAuthHeaders = (headers?: unknown) => {
   ];
 };
 
-const getVariableValue = (report: any, name: string): string | null => {
+const listReportVariables = (report: any): any[] => {
   const variables = report?.dictionary?.variables;
-  const variable =
-    (typeof variables?.getByName === 'function'
-      ? variables.getByName(name)
-      : null) ??
-    (Array.isArray(variables?.list)
-      ? variables.list.find((item: { name?: string }) => item?.name === name)
-      : null);
-  const raw = variable?.value ?? variable?.val ?? report?.getVariable?.(name);
-  if (raw == null || raw === '') return null;
-  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
-    return toIsoDate(raw);
+  if (!variables) return [];
+  if (Array.isArray(variables.list)) return variables.list;
+  if (Array.isArray(variables)) return variables;
+  return [];
+};
+
+const findVariable = (report: any, name: string): any => {
+  const variables = report?.dictionary?.variables;
+  if (typeof variables?.getByName === 'function') {
+    const exact = variables.getByName(name);
+    if (exact) return exact;
   }
-  const text = String(raw);
-  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
-  return text;
+  const want = normalizeVarName(name);
+  return (
+    listReportVariables(report).find((item: { name?: string; alias?: string }) => {
+      const itemName = normalizeVarName(item?.name || '');
+      const itemAlias = normalizeVarName(item?.alias || '');
+      return itemName === want || itemAlias === want;
+    }) ?? null
+  );
+};
+
+const getVariableValue = (report: any, name: string): string | null => {
+  const cached = previewVariableCache.get(normalizeVarName(name));
+  if (cached) return cached;
+
+  const variable = findVariable(report, name);
+  const raw =
+    (typeof variable?.eval === 'function' ? variable.eval(report) : null) ??
+    variable?.valueObject ??
+    variable?.value ??
+    variable?.val ??
+    (typeof report?.getVariable === 'function' ? report.getVariable(name) : null);
+  return coerceVariableValue(raw);
 };
 
 /** Expand {variableName} placeholders Stimulsoft skipped on relative URLs. */
@@ -126,6 +200,23 @@ export const toDesignerApiUrl = (value?: string | null): string => {
 
 export const toBackendApiUrl = toDesignerApiUrl;
 export const toSameOriginApiUrl = toDesignerApiUrl;
+
+/** Overwrite ?startDate=… query values with live Preview parameter values. */
+const applyLiveQueryParams = (url: string, report: any): string => {
+  const parsed = tryUrl(url);
+  if (!parsed || !parsed.search) return url;
+  let changed = false;
+  parsed.searchParams.forEach((_value, key) => {
+    const live = getVariableValue(report, key);
+    if (live == null) return;
+    if (parsed.searchParams.get(key) !== live) {
+      parsed.searchParams.set(key, live);
+      changed = true;
+    }
+  });
+  if (!changed) return url;
+  return `${parsed.origin}${parsed.pathname}?${parsed.searchParams.toString()}${parsed.hash}`;
+};
 
 /** Store portable /api/... paths in the .mrt so templates are not bound to one host. */
 export const toPortableApiPath = (value?: string | null): string => {
@@ -173,11 +264,13 @@ export const attachStimulsoftRequestAuth = (args: any) => {
 
 export const setActiveStimulsoftReport = (report: any) => {
   activeReport = report;
+  if (!report) previewVariableCache.clear();
 };
 
 const resolveHisApiRequestUrl = (url: string): string => {
   if (!url || !isHisApiPath(url)) return url;
-  return toDesignerApiUrl(expandReportVariables(activeReport, url));
+  const expanded = toDesignerApiUrl(expandReportVariables(activeReport, url));
+  return applyLiveQueryParams(expanded, activeReport);
 };
 
 type OriginalXhr = {
@@ -226,7 +319,13 @@ export const tryFulfillStimulsoftApiRequest = (
   args: any,
   callback?: (data: string) => void
 ) => {
-  if (typeof callback !== 'function') return false;
+  const done =
+    typeof callback === 'function'
+      ? callback
+      : typeof args?.callback === 'function'
+        ? args.callback
+        : null;
+  if (typeof done !== 'function') return false;
   const command = args?.command;
   if (command !== 'GetSchema' && command !== 'GetData') return false;
   const path = args?.pathData || args?.path || args?.url;
@@ -234,7 +333,8 @@ export const tryFulfillStimulsoftApiRequest = (
   const text = fetchHisApiSync(path);
   if (text == null) return false;
   args.preventDefault = true;
-  callback(text);
+  args.async = true;
+  done(text);
   return true;
 };
 
@@ -249,14 +349,16 @@ const applyAuthHeadersToXhr = (xhr: XMLHttpRequest) => {
 };
 
 /**
- * Designer Retrieve Columns uses Stimulsoft's own GET XHR.
- * Do not wrap window.fetch or rewrite POST/PUT — template CRUD uses RTK Query fetch
- * to backendBaseURL /api/analytics/reports/templates.
+ * Attach JWT on Stimulsoft JSON GETs (XHR and fetch).
+ * Always rebind from the native originals so HMR cannot leave a stale wrap.
+ * Do not rewrite POST/PUT — template CRUD uses RTK Query fetch to backendBaseURL.
  */
 export const installStimulsoftApiInterceptor = () => {
-  if (typeof window === 'undefined' || interceptorInstalled) return;
+  if (typeof window === 'undefined') return;
   const originals = originalHttp();
   interceptorInstalled = true;
+
+  const isGet = (method: string) => String(method || 'GET').toUpperCase() === 'GET';
 
   XMLHttpRequest.prototype.open = function (
     method: string,
@@ -264,11 +366,15 @@ export const installStimulsoftApiInterceptor = () => {
     ...rest: unknown[]
   ) {
     const raw = String(url);
-    const isGet = String(method).toUpperCase() === 'GET';
-    const rewrite = isGet && isHisApiPath(raw);
+    const rewrite = isGet(method) && isHisApiPath(raw);
     const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
-    (this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi = rewrite;
-    return originals.open.call(this, method, resolved, ...(rest as []));
+    (this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi =
+      rewrite || (isGet(method) && isHisApiPath(resolved));
+    const result = originals.open.call(this, method, resolved, ...(rest as []));
+    if ((this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi) {
+      applyAuthHeadersToXhr(this);
+    }
+    return result;
   };
 
   XMLHttpRequest.prototype.send = function (
@@ -279,6 +385,42 @@ export const installStimulsoftApiInterceptor = () => {
       applyAuthHeadersToXhr(xhr);
     }
     return originals.send.call(this, body);
+  };
+
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const originalUrl =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+    const method = (
+      init?.method ||
+      (input instanceof Request ? input.method : 'GET')
+    ).toUpperCase();
+
+    if (method !== 'GET' || !isHisApiPath(originalUrl)) {
+      return originals.fetch(input as RequestInfo, init);
+    }
+
+    const resolved = resolveHisApiRequestUrl(originalUrl);
+    const headers = new Headers(
+      input instanceof Request ? input.headers : init?.headers
+    );
+    getStimulsoftAuthHeaders().forEach(header => {
+      headers.set(header.key, header.value);
+    });
+    if (input instanceof Request) {
+      return originals.fetch(resolved, {
+        headers,
+        credentials: input.credentials,
+        cache: input.cache,
+        redirect: input.redirect,
+        referrer: input.referrer,
+        signal: input.signal,
+      });
+    }
+    return originals.fetch(resolved, { ...init, headers });
   };
 };
 
@@ -294,13 +436,7 @@ const placeholdersIn = (value: string): string[] => {
 };
 
 const hasVariable = (report: any, name: string): boolean => {
-  const variables = report?.dictionary?.variables;
-  if (!variables) return false;
-  if (typeof variables.contains === 'function') {
-    return Boolean(variables.contains(name));
-  }
-  const list = variables.list ?? variables;
-  return Array.isArray(list) && list.some((item: { name?: string }) => item?.name === name);
+  return Boolean(findVariable(report, name));
 };
 
 const ensureVariablesFromApiPaths = (Stimulsoft: any, report: any) => {
@@ -339,10 +475,15 @@ export const patchStimulsoftParsePath = (Stimulsoft: any) => {
   FileDatabase.parsePath = function (path: string, report: any) {
     const source = String(path || '');
     const processReport = report || activeReport;
-    const expanded = expandReportVariables(processReport, source);
+    const expanded = applyLiveQueryParams(
+      expandReportVariables(processReport, source),
+      processReport
+    );
     if (isHisApiPath(source) || isHisApiPath(expanded)) {
       const withoutBraces = expanded.replace(PLACEHOLDER_RE, (_match, name: string) =>
-        encodeURIComponent(defaultForVariable(name) || '')
+        encodeURIComponent(
+          getVariableValue(processReport, name) || defaultForVariable(name) || ''
+        )
       );
       return toDesignerApiUrl(withoutBraces);
     }
@@ -355,9 +496,24 @@ export const patchStimulsoftParsePath = (Stimulsoft: any) => {
   FileDatabase.parsePath.__stiPatched = true;
 };
 
+const attachPrepareVariables = (report: any) => {
+  if (!report || report.__stiPreparePatched) return;
+  report.__stiPreparePatched = true;
+  const previous = report.onPrepareVariables;
+  report.onPrepareVariables = (args: any, callback?: any) => {
+    cachePreviewVariables(args?.variables);
+    setActiveStimulsoftReport(args?.report ?? report);
+    if (typeof previous === 'function') {
+      previous.call(report, args, callback);
+      return;
+    }
+    callback?.(args?.variables ?? args);
+  };
+};
+
 /**
  * Enable any JSON/REST endpoint added in the designer.
- * No per-API registration ΓÇö JWT + same-origin proxy apply to every HIS /api URL.
+ * No per-API registration — JWT + same-origin proxy apply to every HIS /api URL.
  */
 export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
   if (!Stimulsoft || !report) return;
@@ -365,6 +521,7 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
     Stimulsoft.StiOptions.Dictionary.allowRestConnections = true;
   }
   setActiveStimulsoftReport(report);
+  attachPrepareVariables(report);
   patchStimulsoftParsePath(Stimulsoft);
   installStimulsoftApiInterceptor();
   ensureVariablesFromApiPaths(Stimulsoft, report);
@@ -374,10 +531,15 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
 export const prepareStimulsoftDataRequest = (report: any, args: any) => {
   if (!args) return;
   const processReport = args.report ?? report;
+  cachePreviewVariables(args?.variables);
   setActiveStimulsoftReport(processReport);
+  attachPrepareVariables(processReport);
   listDatabases(processReport).forEach(applyAuthHeadersToDatabase);
   rewritePathFields(args, value =>
-    toDesignerApiUrl(expandReportVariables(processReport, value))
+    applyLiveQueryParams(
+      toDesignerApiUrl(expandReportVariables(processReport, value)),
+      processReport
+    )
   );
   attachStimulsoftRequestAuth(args);
 };

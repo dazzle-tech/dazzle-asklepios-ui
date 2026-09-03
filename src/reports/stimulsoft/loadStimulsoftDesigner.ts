@@ -1,4 +1,8 @@
 ﻿import config from '../../../app-config';
+import { installStimulsoftApiInterceptor } from './stimulsoftApiProxy';
+import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
+
+export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const SCRIPT_FILES = [
   '/stimulsoft/stimulsoft.reports.pack.js',
@@ -63,40 +67,23 @@ export const applyStimulsoftWebServer = (Stimulsoft: any) => {
   }
 };
 
-export const getStimulsoftAuthHeaders = (): { key: string; value: string }[] => {
-  const raw =
-    localStorage.getItem('id_token') || localStorage.getItem('token') || '';
-  const jwt = raw.replace(/^Bearer\s+/i, '').trim();
-  if (!jwt) return [];
-  return [
-    { key: 'Authorization', value: `Bearer ${jwt}` },
-    { key: 'id_token', value: jwt },
-  ];
-};
-
-const getAuthorizationHeader = () => getStimulsoftAuthHeaders()[0] ?? null;
-
 /** Forward the HIS JWT on Stimulsoft adapter POSTs through /proxy. */
 export const attachStimulsoftProxyHeaders = (report: any) => {
-  const header = getAuthorizationHeader();
-  if (!report || !header) return;
+  const headers = getStimulsoftAuthHeaders();
+  if (!report || headers.length === 0) return;
 
   const existing = report.httpHeadersContainer;
   if (existing && typeof existing.add === 'function') {
-    existing.add(header);
+    headers.forEach(header => existing.add(header));
     return;
   }
-  if (Array.isArray(existing)) {
-    report.httpHeadersContainer = [
-      ...existing.filter(
+  const withoutAuth = Array.isArray(existing)
+    ? existing.filter(
         (item: { key?: string }) =>
-          String(item?.key).toLowerCase() !== 'authorization'
-      ),
-      header,
-    ];
-    return;
-  }
-  report.httpHeadersContainer = [header];
+          !['authorization', 'id_token'].includes(String(item?.key).toLowerCase())
+      )
+    : [];
+  report.httpHeadersContainer = [...withoutAuth, ...headers];
 };
 
 /**
@@ -104,6 +91,9 @@ export const attachStimulsoftProxyHeaders = (report: any) => {
  * The result is cached so later opens reuse the already-downloaded files.
  */
 export const loadStimulsoftDesigner = (): Promise<any> => {
+  // Patch fetch/XHR before Stimulsoft scripts capture the native functions.
+  installStimulsoftApiInterceptor();
+
   if (window.Stimulsoft?.Designer?.StiDesigner) {
     applyLicense(window.Stimulsoft);
     applyStimulsoftWebServer(window.Stimulsoft);

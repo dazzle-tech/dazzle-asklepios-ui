@@ -60,9 +60,15 @@ export type StimulsoftPdfParams = {
   patientId?: number;
   encounterId?: number;
   departmentId?: number;
+  facilityId?: number;
   status?: string;
   timezone?: string;
   lang?: string;
+  startDate?: string;
+  endDate?: string;
+  fromDate?: string;
+  toDate?: string;
+  [key: string]: string | number | boolean | null | undefined;
 };
 
 const compactParams = (params: Record<string, unknown>) =>
@@ -224,6 +230,54 @@ export const stimulsoftReportService = createApi({
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
+
+    getPrintableStimulsoftReports: builder.query<
+      StimulsoftReportTemplate[],
+      { module: string; facilityId?: number | null; departmentId?: number | null }
+    >({
+      query: ({ module, facilityId, departmentId }) => ({
+        url: '/api/analytics/reports/templates',
+        method: 'GET',
+        params: compactParams({
+          module,
+          facilityId,
+          departmentId,
+          isActive: true,
+          page: 0,
+          size: 200,
+          sort: 'name,asc',
+        }),
+      }),
+      transformResponse: (response: unknown, meta: any, arg) => {
+        const mapped = mapPagedTemplates(response, meta);
+        return mapped.data.filter(template => {
+          if (template.isActive === false) return false;
+          if (
+            arg.module &&
+            template.module &&
+            String(template.module).toUpperCase() !== String(arg.module).toUpperCase()
+          ) {
+            return false;
+          }
+          if (!template.module) return false;
+          if (
+            arg.facilityId &&
+            template.facilityId &&
+            Number(template.facilityId) !== Number(arg.facilityId)
+          ) {
+            return false;
+          }
+          if (arg.departmentId && template.departmentIds) {
+            const ids = parseDepartmentIds(template.departmentIds);
+            if (ids.length > 0 && !ids.includes(Number(arg.departmentId))) {
+              return false;
+            }
+          }
+          return true;
+        });
+      },
+      providesTags: ['StimulsoftReportTemplate'],
+    }),
   }),
 });
 
@@ -236,4 +290,6 @@ export const {
   useUpdateStimulsoftReportTemplateMutation,
   useToggleStimulsoftReportTemplateActiveMutation,
   useLazyPrintStimulsoftReportPdfQuery,
+  useGetPrintableStimulsoftReportsQuery,
+  useLazyGetPrintableStimulsoftReportsQuery,
 } = stimulsoftReportService;
