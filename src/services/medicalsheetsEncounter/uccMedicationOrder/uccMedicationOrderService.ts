@@ -151,36 +151,41 @@ export const uccMedicationOrderService = createApi({
       providesTags: ['UccMedicationOrder'],
     }),
 
-submitUccMedicationOrder: builder.mutation<
+    submitUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      { id: Id; isHighAlert: boolean }
+    >({
+      query: ({ id, isHighAlert }) => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
+        method: 'POST',
+        body: { isHighAlert },
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+
+    // ================= ADMINISTER =================
+  administerUccMedicationOrder: builder.mutation<
   modelTypes.PatientUccMedicationOrder,
-  { id: Id; isHighAlert: boolean }
+  {
+    id: Id;
+    actualAdministerTime: Date;
+  }
 >({
-  query: ({ id, isHighAlert }) => ({
-    url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
+  query: ({ id, actualAdministerTime }) => ({
+    url: `/api/patient/urgent-care-medication-orders/${id}/administer`,
     method: 'POST',
-    body: { isHighAlert },
+    body: {
+      actualAdministerTime,
+    },
   }),
   invalidatesTags: (_res, _err, { id }) => [
     { type: 'UccMedicationOrder', id },
     'UccMedicationOrder',
   ],
 }),
-
-    // ================= ADMINISTER =================
-    administerUccMedicationOrder: builder.mutation<
-      modelTypes.PatientUccMedicationOrder,
-      Id
-    >({
-      query: id => ({
-        url: `/api/patient/urgent-care-medication-orders/${id}/administer`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_res, _err, id) => [
-        { type: 'UccMedicationOrder', id },
-        'UccMedicationOrder',
-      ],
-    }),
-
     // ================= DOUBLE CHECK =================
     doubleCheckUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
@@ -227,6 +232,8 @@ submitUccMedicationOrder: builder.mutation<
         'UccMedicationOrder',
       ],
     }),
+   
+   
 
   }),
 });
@@ -242,6 +249,6 @@ export const {
   useAdministerUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,
-  useCancelUccMedicationOrderMutation,
+  useCancelUccMedicationOrderMutation
 
 } = uccMedicationOrderService;
