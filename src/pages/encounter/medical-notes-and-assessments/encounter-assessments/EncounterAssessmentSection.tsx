@@ -9,9 +9,11 @@ import {
   useCreateEncounterAssessmentMutation,
   useUpdateEncounterAssessmentMutation,
   useGetLatestEncounterAssessmentQuery,
+  useGetAssessmentAuditQuery,
 } from '@/services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
 import type { EncounterAssessment, Patient } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
+import FieldAuditHistoryModal from '../../encounter-component/s.o.a.p/FieldAuditHistory';
 type EncounterAssessmentSectionProps = {
   patient: Patient;
   encounterId: number | string;
@@ -26,13 +28,14 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   disabled = false,
   title = <Translate>Assessment</Translate>,
   width = '100%',
+  
 }) => {
   const dispatch = useAppDispatch();
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
   const encounterIdNumber: number | null = encounterId ? Number(encounterId) : null;
-
-  const {
+   const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const { 
     data: latestAssessment,
     isFetching: isFetchingLatest,
     refetch,
@@ -42,6 +45,12 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
     { skip: !encounterIdNumber }
   );
 
+   const {
+    data: assessmentAudit = []
+  } = useGetAssessmentAuditQuery(
+    { id: latestAssessment?.id },
+    { skip: !latestAssessment?.id }
+  );
   const [createEncounterAssessment, { isLoading: isSavingCreate }] =
     useCreateEncounterAssessmentMutation();
 
@@ -146,6 +155,7 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   };
 
   return (
+    <>
     <SectionContainer
       title={title}
       content={
@@ -160,10 +170,18 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
               setRecord={(r: any) => setAssessmentText(r?.assessment ?? '')}
               disabled={disabled}
             />
+           
           </Form>
         </div>
       }
       action={
+        <>
+        <MyButton
+                  size="small"
+                 onClick={() => setAuditModalOpen(true)}
+                >
+                   History
+                </MyButton>
         <MyButton
           size="small"
           onClick={handleSave}
@@ -171,8 +189,16 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
         >
           Save
         </MyButton>
+        </>
       }
     />
+    <FieldAuditHistoryModal
+            open={auditModalOpen}
+            setOpen={setAuditModalOpen}
+            audit={assessmentAudit}
+            fieldName={'assessment'}
+    />
+    </>
   );
 };
 

@@ -8,10 +8,12 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   useCreateEncounterPlanMutation,
   useUpdateEncounterPlanMutation,
-  useGetLatestEncounterPlanQuery
+  useGetLatestEncounterPlanQuery,
+  useGetPlanAuditQuery
 } from '@/services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import type { EncounterPlan, Patient, PatientEncounter } from '@/types/model-types-new';
 import './styles.less';
+import FieldAuditHistoryModal from '../../encounter-component/s.o.a.p/FieldAuditHistory';
 
 type PatientPlanProps = {
   patient: Patient;
@@ -32,7 +34,8 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
   const encounterIdNumber: number | null = localEncounter?.id ? Number(localEncounter?.id) : null;
-
+   const [auditModalOpen, setAuditModalOpen] = useState(false);
+   const [selectedAuditField, setSelectedAuditField] = useState('');
   const {
     data: latestPlan,
     isFetching: isFetchingLatest,
@@ -42,6 +45,14 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     { encounterId: encounterIdNumber as any },
     { skip: !encounterIdNumber }
   );
+
+  const {
+      data: planAudit = []
+    } = useGetPlanAuditQuery(
+      { id: latestPlan?.id },
+      { skip: !latestPlan?.id }
+    );
+    console.log("planAudit: ", planAudit)
 
   const [createEncounterPlan, { isLoading: isSavingCreate }] = useCreateEncounterPlanMutation();
   const [updateEncounterPlan, { isLoading: isSavingUpdate }] = useUpdateEncounterPlanMutation();
@@ -173,14 +184,26 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       showApiError(error);
     }
   };
-
+ const openAuditHistory = (fieldName: string) => {
+   setSelectedAuditField(fieldName);
+   setAuditModalOpen(true);
+  };
   return (
+    <>
     <SectionContainer
       title={title}
       action={
+        <>
+        <MyButton onClick={() => openAuditHistory('treatmentPlan')} disabled={disabled || isFetchingLatest || isSaving}>
+          Plan History
+           </MyButton>
+           <MyButton onClick={() => openAuditHistory('goals')} disabled={disabled || isFetchingLatest || isSaving}>
+          Goal History
+           </MyButton>
         <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
           Save
         </MyButton>
+        </>
       }
       content={
         <div style={width ? { width } : {}}>
@@ -209,6 +232,13 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
         </div>
       }
     />
+    <FieldAuditHistoryModal
+                open={auditModalOpen}
+                setOpen={setAuditModalOpen}
+                audit={planAudit}
+                fieldName={selectedAuditField}
+        />
+    </>
   );
 };
 

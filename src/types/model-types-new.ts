@@ -7069,3 +7069,25 @@ export interface PatientEncounterFieldAudit {
   logDate: string;
   logBy: string | null;
 }
+
+export interface EncounterAssessmentLog {
+  id: number;
+  encounterAssessment: EncounterAssessment;
+  fieldName: string;
+  operationType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  logDate: string;
+  logBy: string | null;
+}
+
+export interface EncounterPlanFieldAudit {
+  id: number;
+  encounterPlanId: number;
+  fieldName: string;
+  operationType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  logDate: string;
+  logBy: string;
+}
