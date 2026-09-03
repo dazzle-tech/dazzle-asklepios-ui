@@ -4488,18 +4488,31 @@ export interface PatientObservationsComplaints {
   id?: number;
 
   patientId: number;
+
   encounterId: number;
 
   reasonOfVisit?: string | null;
+
+  byPatient?: boolean;
+
+  sourceOfInformation?: string | null;
+
   latestFunctionalStatus?: string | null;
+
   latestCognitiveCheck?: string | null;
 
   patientConditions?: string | null;
+
   isActive: boolean;
+
   functionalStatus?: string | null;
+
   cognitiveCheck?: string | null;
+
   bloodGroup?: string | null;
+
   createdDate?: Date | string | null;
+
   lastModifiedDate?: Date | string | null;
 }
 
@@ -7046,3 +7059,13 @@ export interface InsurancePayerReceivablesSummaryResponse {
   overallStatus?: string | null;
 }
 
+export interface PatientEncounterFieldAudit {
+  id: number;
+  patientEncounter: PatientEncounter;
+  fieldName: string;
+  operationType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  logDate: string;
+  logBy: string | null;
+}

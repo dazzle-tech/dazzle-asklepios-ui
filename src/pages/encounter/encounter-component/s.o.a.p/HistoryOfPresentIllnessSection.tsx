@@ -14,6 +14,7 @@ type HistoryOfPresentIllnessSectionProps = {
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
+  onShowHistory?: () => void;
 };
 
 const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionProps> = ({
@@ -22,6 +23,7 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   disabled = false,
   title = <Translate>History Of Present Illness</Translate>,
   width = '100%',
+  onShowHistory
 }) => {
   const dispatch = useAppDispatch();
 
@@ -97,6 +99,13 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
         </div>
       }
       action={
+        <>
+        <MyButton
+          size="small"
+          onClick={onShowHistory}
+        >
+           History
+        </MyButton>
         <MyButton
           size="small"
           onClick={handleSave}
@@ -104,6 +113,7 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
         >
           Save
         </MyButton>
+        </>
       }
     />
   );

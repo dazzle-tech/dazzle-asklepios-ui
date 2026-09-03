@@ -13,7 +13,7 @@ import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medi
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import {
-  useGetPatientPrescriptionQuery
+  useGetPatientPrescriptionQuery, useLazyGetPatientPrescriptionQuery
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -85,6 +85,7 @@ const Encounter = ({
   const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,6 +95,9 @@ const Encounter = ({
 
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
+
+  const [fetchPrescriptions] =
+    useLazyGetPatientPrescriptionQuery();
   const [fetchPrescriptionMedications] =
     useLazyGetPatientPrescriptionMedicationsQuery();
   const [fetchDiagnosticOrderTests] =
@@ -133,6 +137,7 @@ const Encounter = ({
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
+
 
   const [validationItems, setValidationItems] = useState<
     CompletionValidationItem[]
@@ -252,9 +257,12 @@ const Encounter = ({
 
   const draftPrescriptions = useMemo(() => {
     const list = patientPrescriptionsResponse?.data ?? [];
-    return list.filter((item: any) => String(item?.status ?? '').toUpperCase() === 'DRAFT');
-  }, [patientPrescriptionsResponse]);
 
+    return list.filter(
+      (item: any) =>
+        String(item?.status ?? '').toUpperCase() === 'DRAFT'
+    );
+  }, [patientPrescriptionsResponse]);
 
   useEffect(() => {
     if (location.state?.fromPage) {
@@ -424,45 +432,307 @@ const Encounter = ({
   //   await completeEncounterNow();
 
   // };
+
+
   const handleSubmitEncounter = async () => {
     const items: CompletionValidationItem[] = [];
 
+    console.log('========== COMPLETE VALIDATION ==========');
+    console.log('patientId:', patientIdForPrescriptions);
+    console.log('encounterId:', encounterIdForPrescriptions);
+
+// =====================================================
+// PRESCRIPTION VALIDATION
+// =====================================================
+if (patientIdForPrescriptions && encounterIdForPrescriptions) {
+  try {
+    // Get the same prescription list used by Prescription screen
+    const prescriptionsResponse = await fetchPrescriptions({
+      patientId: Number(patientIdForPrescriptions),
+      includeCanceled: true,
+      page: 0,
+      size: 500,
+      sort: 'prescriptionNum,desc'
+    }).unwrap();
+
+    const prescriptions = prescriptionsResponse?.data ?? [];
+
+    console.log('VALIDATION - ALL PRESCRIPTIONS:', prescriptions);
+    console.log(
+      'VALIDATION - PATIENT ID:',
+      patientIdForPrescriptions
+    );
+    console.log(
+      'VALIDATION - ENCOUNTER ID:',
+      encounterIdForPrescriptions
+    );
+
+    // Same patient matching logic as Prescription screen
+    const patientPrescriptions = prescriptions.filter(
+      (prescription: any) => {
+        const targetPatientId =
+          Number(patientIdForPrescriptions);
+
+        // 1. prescription.patientId
+        if (prescription?.patientId != null) {
+          const pPatientId =
+            Number(prescription.patientId);
+
+          if (
+            !Number.isNaN(pPatientId) &&
+            pPatientId === targetPatientId
+          ) {
+            return true;
+          }
+        }
+
+        // 2. prescription.patient.id
+        if (prescription?.patient?.id != null) {
+          const pPatientId =
+            Number(prescription.patient.id);
+
+          if (
+            !Number.isNaN(pPatientId) &&
+            pPatientId === targetPatientId
+          ) {
+            return true;
+          }
+        }
+
+        // 3. prescription.patient.key
+        if (prescription?.patient?.key != null) {
+          const pPatientKey =
+            Number(prescription.patient.key);
+
+          if (
+            !Number.isNaN(pPatientKey) &&
+            pPatientKey === targetPatientId
+          ) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+    );
+
+    console.log(
+      'VALIDATION - PATIENT PRESCRIPTIONS:',
+      patientPrescriptions
+    );
+
+    // Prefer exact encounter match
+    let encounterPrescriptions =
+      patientPrescriptions.filter(
+        (prescription: any) =>
+          prescription?.encounterId != null &&
+          Number(prescription.encounterId) ===
+            Number(encounterIdForPrescriptions)
+      );
+
+    // Fallback:
+    // If backend does not return encounterId,
+    // use the current DRAFT prescription for this patient.
+    if (encounterPrescriptions.length === 0) {
+      encounterPrescriptions =
+        patientPrescriptions.filter(
+          (prescription: any) =>
+            String(
+              prescription?.status ?? ''
+            ).toUpperCase() === 'DRAFT'
+        );
+    }
+
+    console.log(
+      'VALIDATION - FINAL PRESCRIPTIONS:',
+      encounterPrescriptions
+    );
+
+    for (const prescription of encounterPrescriptions) {
+      const prescriptionId = Number(
+        prescription?.id
+      );
+
+      if (!prescriptionId) {
+        continue;
+      }
+
+      const medicationsResponse =
+        await fetchPrescriptionMedications({
+          prescriptionHeaderId: prescriptionId,
+          page: 0,
+          size: 500,
+          sort: 'id,desc'
+        }).unwrap();
+
+      const medications =
+        medicationsResponse?.data ?? [];
+
+      console.log(
+        'VALIDATION - PRESCRIPTION:',
+        prescription?.prescriptionNum,
+        'ID:',
+        prescriptionId,
+        'MEDICATIONS:',
+        medications
+      );
+
+      // Empty prescription does not block completion
+      if (medications.length === 0) {
+        continue;
+      }
+
+      const isCancelledMedication = (medication: any) => {
+        const status = String(
+          medication?.status ??
+          medication?.medicationStatus ??
+          medication?.medication?.status ??
+          ''
+        )
+          .trim()
+          .toUpperCase();
+
+        return (
+          status === 'CANCELLED' ||
+          status === 'CANCELED' ||
+          status.includes('CANCEL')
+        );
+      };
+
+      const hasActiveMedication = medications.some(
+        (medication: any) => {
+          const status = String(
+            medication?.status ??
+            medication?.medicationStatus ??
+            ''
+          ).toUpperCase();
+
+          return !status.includes('CANCEL');
+        }
+      );
+
+      if (hasActiveMedication) {
+        items.push({
+          id: prescriptionId,
+          type: 'PRESCRIPTION',
+          referenceNumber:
+            prescription?.prescriptionNum?.toString() ??
+            prescriptionId.toString(),
+          status: prescription?.status
+        });
+      }
+
+      if (!hasActiveMedication) {
+        continue;
+      }
+
+      items.push({
+        id: prescriptionId,
+        type: 'PRESCRIPTION',
+        referenceNumber:
+          prescription?.prescriptionNum?.toString() ??
+          prescriptionId.toString(),
+        status: prescription?.status
+      });
+    }
+  } catch (error) {
+    console.error(
+      'Failed to validate prescriptions:',
+      error
+    );
+  }
+}
+
+    // =====================================================
+    // DIAGNOSTIC ORDER VALIDATION
+    // =====================================================
     const orders = await fetchOrdersEncounterDraft({
       patientId: patientIdForPrescriptions,
       encounterId: encounterIdForPrescriptions,
       saveDraft: true
     }).unwrap();
 
-    draftPrescriptions.forEach((prescription: any) => {
-      items.push({
-        id: Number(prescription.id),
-        type: 'PRESCRIPTION',
-        referenceNumber:
-          prescription.prescriptionNum?.toString() ??
-          prescription.id?.toString(),
-        status: prescription.status
-      });
-    });
+    console.log(
+      'VALIDATION DIAGNOSTIC ORDERS:',
+      orders
+    );
 
-    (orders?.data ?? []).forEach((order: any) => {
-    items.push({
-      id: Number(order.id),
-      type: 'DIAGNOSTIC_ORDER',
-      referenceNumber: order.orderNumber,
-      status: order.status,
-    });
-  })
+    for (const order of orders?.data ?? []) {
+      const orderId = Number(order?.id);
+
+      if (!orderId) {
+        continue;
+      }
+
+      const testsResponse =
+        await fetchDiagnosticOrderTests({
+          orderId,
+          page: 0,
+          size: 500,
+          sort: 'id,desc'
+        }).unwrap();
+
+      const tests =
+        testsResponse?.data ?? [];
+
+      console.log(
+        'DIAGNOSTIC ORDER:',
+        order,
+        'TESTS:',
+        tests
+      );
+
+      // Empty order -> ignore
+      if (tests.length === 0) {
+        continue;
+      }
+
+      // At least one test is not cancelled
+      const hasActiveTest = tests.some(
+        (test: any) => {
+          const status = String(
+            test?.status ?? ''
+          ).toUpperCase();
+
+          return !status.includes('CANCEL');
+        }
+      );
+
+      // All tests cancelled -> ignore
+      if (!hasActiveTest) {
+        continue;
+      }
+
+      // Block completion
+      items.push({
+        id: orderId,
+        type: 'DIAGNOSTIC_ORDER',
+        referenceNumber: order.orderNumber,
+        status: order.status
+      });
+    }
+
+    console.log(
+      'FINAL VALIDATION ITEMS:',
+      items
+    );
 
     if (items.length > 0) {
       setValidationItems(items);
       setShowValidationModal(true);
       return;
     }
+
+    if (localEncounter?.encounterType === 'EMERGENCY') {
+      setOpenDischargeModal(true);
+      return;
+    }
+
     await completeEncounterNow();
-  };  
- 
- 
- 
+  };
+
+
+
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
     setAiHasMoved(false);
@@ -710,11 +980,6 @@ const Encounter = ({
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
-                      if (localEncounter?.encounterType === 'EMERGENCY') {
-                        setOpenDischargeModal(true);
-                        return;
-                      }
-
                       if (!encounterId) {
                         dispatch(
                           notify({
@@ -725,7 +990,9 @@ const Encounter = ({
                         return;
                       }
 
-                      const exists = await checkDiagnosisExists({ encounterId }).unwrap();
+                      const exists = await checkDiagnosisExists({
+                        encounterId
+                      }).unwrap();
 
                       if (!exists) {
                         dispatch(
@@ -737,9 +1004,10 @@ const Encounter = ({
                         return;
                       }
 
-                      handleSubmitEncounter();
+                      await handleSubmitEncounter();
                     } catch (error) {
-                      console.error('Diagnosis check error:', error);
+                      console.error('Completion validation error:', error);
+
                       dispatch(
                         notify({
                           msg: 'Failed to validate patient diagnosis',

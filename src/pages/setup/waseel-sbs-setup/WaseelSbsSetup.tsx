@@ -809,6 +809,7 @@ const WaseelSbsSetup = () => {
 
   const isEditMode = Boolean(editingMapping?.id);
 
+
   const mappingModalContent = (
     <Form fluid className="waseel-mapping-form">
       <MyInput
@@ -896,7 +897,6 @@ const WaseelSbsSetup = () => {
         record={mappingForm}
         setRecord={setMappingForm}
         width="100%"
-        searchable
         searchKeyWard={sbsDropdownSearch}
         setSearchKeyWard={setSbsDropdownSearch}
         loading={isFetchingSbsDropdown}

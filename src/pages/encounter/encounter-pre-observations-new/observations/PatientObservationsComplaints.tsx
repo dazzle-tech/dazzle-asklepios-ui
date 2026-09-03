@@ -6,7 +6,7 @@ import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import './styles.less';
-
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import type {
   PatientEncounter,
   PatientObservationsComplaints as PatientObservationsComplaintsModel
@@ -40,13 +40,13 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   setEncounter,
   disabled = false,
   width = '100%',
-  title = 'Patient Observations & Complaints'
+  title = 'Nursing Assessment'
 }) => {
   const dispatch = useAppDispatch();
 
   const patientConditions = useEnumOptions('Condition');
   const encounterPriority = useEnumOptions('EncounterPriority');
-
+  const modeOfArrivalOptions = useEnumOptions('ModeOfArrival');
   const bloodGroupOptions = useEnumOptions('BloodGroup', {
     labelOverrides: {
       A_POSITIVE: 'A+',
@@ -80,28 +80,51 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     encounterId
   });
 
+
+const { data: sourceOfInformationLovQueryResponse } =
+  useGetLovValuesByCodeQuery('RELATION');
+
+const sourceOfInformationOptions = useMemo(
+  () =>
+    (sourceOfInformationLovQueryResponse?.object ?? []).map((item: any) => ({
+      ...item,
+      key: String(item.key)
+    })),
+  [sourceOfInformationLovQueryResponse]
+);
+
+
+
+
+  const [byPatient, setByPatient] = useState(true);
   const [clearKey, setClearKey] = useState(0);
 
   // Populate form from latest encounter observations.
   // Blood group and patient conditions are intentionally excluded — they are
   // patient-level data managed by the effects below.
-  useEffect(() => {
-    if (!latestByEncounter) return;
+useEffect(() => {
+  if (!latestByEncounter) return;
 
-    setRecord(prev => ({
-      ...prev,
-      ...latestByEncounter,
-      bloodGroup: prev.bloodGroup,
-      patientConditions: prev.patientConditions,
-      id: undefined,
-      patientId,
-      encounterId,
-      isActive:
-        typeof (latestByEncounter as any)?.isActive === 'boolean'
-          ? (latestByEncounter as any).isActive
-          : true
-    }));
-  }, [latestByEncounter, patientId, encounterId]);
+  setByPatient(latestByEncounter.byPatient ?? true);
+
+  setRecord(prev => ({
+    ...prev,
+    ...latestByEncounter,
+    bloodGroup: prev.bloodGroup,
+    patientConditions: prev.patientConditions,
+    id: undefined,
+    patientId,
+    encounterId,
+    sourceOfInformation:
+      latestByEncounter.sourceOfInformation != null
+        ? String(latestByEncounter.sourceOfInformation)
+        : null,
+    isActive:
+      typeof latestByEncounter.isActive === 'boolean'
+        ? latestByEncounter.isActive
+        : true
+  }));
+}, [latestByEncounter, patientId, encounterId]);
 
   // Blood group and patient conditions are always driven by the patient record.
   // Both run on initial load and after every save (refetchPatient updates patientData).
@@ -128,13 +151,22 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       patientId,
       encounterId,
       reasonOfVisit: record.reasonOfVisit ?? null,
+      modeOfArrival: record.modeOfArrival ?? null,
+
+      byPatient,
+      sourceOfInformation: byPatient
+        ? null
+        : record.sourceOfInformation ?? null,
       functionalStatus: record.functionalStatus ?? null,
-      patientConditions: (record as any).patientConditions ?? null,
+      patientConditions: record.patientConditions ?? null,
       cognitiveCheck: record.cognitiveCheck ?? null,
       bloodGroup: record.bloodGroup ?? null,
-      isActive: typeof record.isActive === 'boolean' ? record.isActive : true
+      isActive:
+        typeof record.isActive === 'boolean'
+          ? record.isActive
+          : true
     };
-  }, [record, patientId, encounterId]);
+  }, [record, patientId, encounterId, byPatient]);
 
   const toEncounterPayload = (enc: any): PatientEncounter => ({
     id: Number(enc?.id),
@@ -283,8 +315,11 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       ...newPatientObservationsComplaints,
       patientId,
       encounterId,
-      patientConditions: '' as any
+      patientConditions: '' as any,
+      sourceOfInformation: null
     });
+
+    setByPatient(true);
 
     setEncounter({
       ...encounter,
@@ -318,6 +353,63 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
             setRecord={setRecord}
             disabled={disabled}
           />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Mode of Arrival"
+            fieldType="select"
+            fieldName="modeOfArrival"
+            record={record}
+            setRecord={setRecord}
+            selectData={modeOfArrivalOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            disabled={disabled}
+            searchable={false}
+          />
+
+
+          
+            <div className="source-information-row">
+          <div className="source-information-col">
+<MyInput
+  width="100%"
+  fieldType="select"
+  fieldLabel="Source Of Information"
+  selectData={sourceOfInformationOptions}
+  selectDataLabel="lovDisplayVale"
+  selectDataValue="key"
+  fieldName="sourceOfInformation"
+  record={record}
+  setRecord={setRecord}
+  disabled={disabled || byPatient}
+  searchable={false}
+/>
+          </div>
+
+          <div className="source-information-col">
+            <MyInput
+              width="100%"
+              fieldLabel="By Patient"
+              fieldType="checkbox"
+              fieldName="byPatient"
+              record={{ byPatient }}
+              setRecord={(value: any) => {
+                const nextValue = value?.byPatient ?? true;
+
+                setByPatient(nextValue);
+
+                if (nextValue) {
+                  setRecord(prev => ({
+                    ...prev,
+                    sourceOfInformation: null
+                  }));
+                }
+              }}
+              disabled={disabled}
+            />
+          </div>
+            </div>
 
           <div className="functional-cognitive-row">
             <div className="functional-cognitive-col">

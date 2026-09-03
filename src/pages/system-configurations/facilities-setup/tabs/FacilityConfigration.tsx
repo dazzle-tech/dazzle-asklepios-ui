@@ -40,8 +40,8 @@ const ConfigurationTab: React.FC<ConfigurationTabProps> = ({
           appearance="primary"
           onClick={() => {
             const updatedFacility = {
-              ...facility,
-              name: facility.name + ' (Updated)'
+
+              ...facility
             };
 
             updateFacility(updatedFacility);
