@@ -7059,3 +7059,13 @@ export interface InsurancePayerReceivablesSummaryResponse {
   overallStatus?: string | null;
 }
 
+export interface PatientEncounterFieldAudit {
+  id: number;
+  patientEncounter: PatientEncounter;
+  fieldName: string;
+  operationType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  logDate: string;
+  logBy: string | null;
+}
