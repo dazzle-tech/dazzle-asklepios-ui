@@ -23,7 +23,7 @@ const Dental = () => {
   const [progressNotes, setProgressNotes] = useState([]);
   const [treatmentPlanTrigger, setTreatmentPlanTrigger] = useState(-1);
   // Fetch dental charts
-  const dentalChartsResponse = useGetDentalChartsByEncounterQuery(encounter?.id ?? '');
+  const dentalChartsResponse = useGetDentalChartsByEncounterQuery('19169518387123430');
 
   useEffect(() => {
     if (dentalChartsResponse && dentalChartsResponse.isSuccess) {
