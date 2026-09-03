@@ -2377,6 +2377,8 @@ export interface PatientEncounter {
   startedBy?: string | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 
 }
 
@@ -2578,6 +2580,8 @@ export interface PatientEncounter {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 }
 
 
@@ -2877,6 +2881,8 @@ export interface PatientEncounter {
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 }
 
 export interface PatientPaymentServiceItemDTO {
@@ -6321,6 +6327,8 @@ export type EncounterBillingSummary = {
   invoicePaidAmount?: number;
   invoiceOutstandingAmount?: number;
   items: EncounterBillingItemSummary[];
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 };
 
 export type CreateAdvancePaymentRequest = {

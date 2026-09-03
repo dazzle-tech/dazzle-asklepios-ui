@@ -3730,7 +3730,9 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   invoiceTotalAmount: 0,
   invoicePaidAmount: 0,
   invoiceOutstandingAmount: 0,
-  items: []
+  items: [],
+  coverageType: null,
+  patientInsuranceId: null
 };
 
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {

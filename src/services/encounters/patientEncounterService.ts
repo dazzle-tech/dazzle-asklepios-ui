@@ -394,6 +394,22 @@ export const patientEncounterService = createApi({
       }),
       providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
     }),
+    getEncounterCoverage: builder.query<
+      {
+        encounterId: number;
+        coverageType: 'SELF_PAY' | 'INSURANCE' | null;
+        patientInsuranceId: number | null;
+        insuranceVisit?: boolean;
+      },
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter/${encounterId}/coverage`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId }
+      ]
     getEncounterAudit: builder.query<PatientEncounterFieldAudit[], { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/audit`,
@@ -541,6 +557,7 @@ export const {
   useCountTodayDepartmentCancelledQuery,
   useGetEncounterByIdQuery,
   useLazyGetEncounterByIdQuery,
+  useGetEncounterCoverageQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery,
