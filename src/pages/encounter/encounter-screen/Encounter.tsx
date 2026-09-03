@@ -437,10 +437,6 @@ const Encounter = ({
   const handleSubmitEncounter = async () => {
     const items: CompletionValidationItem[] = [];
 
-    console.log('========== COMPLETE VALIDATION ==========');
-    console.log('patientId:', patientIdForPrescriptions);
-    console.log('encounterId:', encounterIdForPrescriptions);
-
 // =====================================================
 // PRESCRIPTION VALIDATION
 // =====================================================
@@ -456,16 +452,6 @@ if (patientIdForPrescriptions && encounterIdForPrescriptions) {
     }).unwrap();
 
     const prescriptions = prescriptionsResponse?.data ?? [];
-
-    console.log('VALIDATION - ALL PRESCRIPTIONS:', prescriptions);
-    console.log(
-      'VALIDATION - PATIENT ID:',
-      patientIdForPrescriptions
-    );
-    console.log(
-      'VALIDATION - ENCOUNTER ID:',
-      encounterIdForPrescriptions
-    );
 
     // Same patient matching logic as Prescription screen
     const patientPrescriptions = prescriptions.filter(
@@ -499,26 +485,11 @@ if (patientIdForPrescriptions && encounterIdForPrescriptions) {
           }
         }
 
-        // 3. prescription.patient.key
-        if (prescription?.patient?.key != null) {
-          const pPatientKey =
-            Number(prescription.patient.key);
-
-          if (
-            !Number.isNaN(pPatientKey) &&
-            pPatientKey === targetPatientId
-          ) {
-            return true;
-          }
-        }
+      
+    
 
         return false;
       }
-    );
-
-    console.log(
-      'VALIDATION - PATIENT PRESCRIPTIONS:',
-      patientPrescriptions
     );
 
     // Prefer exact encounter match
@@ -543,98 +514,68 @@ if (patientIdForPrescriptions && encounterIdForPrescriptions) {
         );
     }
 
-    console.log(
-      'VALIDATION - FINAL PRESCRIPTIONS:',
-      encounterPrescriptions
-    );
+  
 
-    for (const prescription of encounterPrescriptions) {
-      const prescriptionId = Number(
-        prescription?.id
-      );
+   for (const prescription of encounterPrescriptions) {
+  const prescriptionId = Number(
+    prescription?.id
+  );
 
-      if (!prescriptionId) {
-        continue;
-      }
+  if (!prescriptionId) {
+    continue;
+  }
 
-      const medicationsResponse =
-        await fetchPrescriptionMedications({
-          prescriptionHeaderId: prescriptionId,
-          page: 0,
-          size: 500,
-          sort: 'id,desc'
-        }).unwrap();
+  // فقط Draft Prescriptions
+  if (
+    String(
+      prescription?.status ?? ''
+    ).toUpperCase() !== 'DRAFT'
+  ) {
+    continue;
+  }
 
-      const medications =
-        medicationsResponse?.data ?? [];
+  const medicationsResponse =
+    await fetchPrescriptionMedications({
+      prescriptionHeaderId: prescriptionId,
+      page: 0,
+      size: 500,
+      sort: 'id,desc'
+    }).unwrap();
 
-      console.log(
-        'VALIDATION - PRESCRIPTION:',
-        prescription?.prescriptionNum,
-        'ID:',
-        prescriptionId,
-        'MEDICATIONS:',
-        medications
-      );
+  const medications =
+    medicationsResponse?.data ?? [];
 
-      // Empty prescription does not block completion
-      if (medications.length === 0) {
-        continue;
-      }
+  // إذا ما فيه أدوية
+  if (medications.length === 0) {
+    continue;
+  }
 
-      const isCancelledMedication = (medication: any) => {
-        const status = String(
-          medication?.status ??
-          medication?.medicationStatus ??
-          medication?.medication?.status ??
-          ''
-        )
-          .trim()
-          .toUpperCase();
+  const hasActiveMedication = medications.some(
+    (medication: any) => {
+      const status = String(
+        medication?.status ??
+        medication?.medicationStatus ??
+        ''
+      ).toUpperCase();
 
-        return (
-          status === 'CANCELLED' ||
-          status === 'CANCELED' ||
-          status.includes('CANCEL')
-        );
-      };
-
-      const hasActiveMedication = medications.some(
-        (medication: any) => {
-          const status = String(
-            medication?.status ??
-            medication?.medicationStatus ??
-            ''
-          ).toUpperCase();
-
-          return !status.includes('CANCEL');
-        }
-      );
-
-      if (hasActiveMedication) {
-        items.push({
-          id: prescriptionId,
-          type: 'PRESCRIPTION',
-          referenceNumber:
-            prescription?.prescriptionNum?.toString() ??
-            prescriptionId.toString(),
-          status: prescription?.status
-        });
-      }
-
-      if (!hasActiveMedication) {
-        continue;
-      }
-
-      items.push({
-        id: prescriptionId,
-        type: 'PRESCRIPTION',
-        referenceNumber:
-          prescription?.prescriptionNum?.toString() ??
-          prescriptionId.toString(),
-        status: prescription?.status
-      });
+      return !status.includes('CANCEL');
     }
+  );
+
+  // كل الأدوية ملغية
+  if (!hasActiveMedication) {
+    continue;
+  }
+
+  items.push({
+    id: prescriptionId,
+    type: 'PRESCRIPTION',
+    referenceNumber:
+      prescription?.prescriptionNum?.toString() ??
+      prescriptionId.toString(),
+    status: prescription?.status
+  });
+}
   } catch (error) {
     console.error(
       'Failed to validate prescriptions:',
