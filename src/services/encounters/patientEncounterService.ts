@@ -663,7 +663,6 @@ export const {
   useSearchBillingPendingQueueQuery,
   useLazySearchBillingPendingQueueQuery,
   useReopenEncounterMutation,
-  useReopenEncounterMutation,
   useGetEncounterAuditQuery,
   useLazyGetEncounterAuditQuery
 } = patientEncounterService;
