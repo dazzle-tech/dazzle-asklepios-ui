@@ -263,7 +263,7 @@ const handleClearSection = async () => {
               </div>
             )}
           <div className="system-container">
-            <div className="system-style">
+            <div className="system-style" className="filter-form-disable-fix">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}

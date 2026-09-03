@@ -167,8 +167,10 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         </div>
 
         {/* Row 2 - Filters */}
-        <div className="header-second-row filter-form-disable-fix">
-          <Form fluid layout="inline">
+        <div
+         className="header-second-row filter-form-disable-fix"
+         >
+          <Form fluid layout="inline"  className="filter-form-disable-fix">
             <MyInput
               column
               width={160}
@@ -251,7 +253,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
       <Row>
         <div className="top-container">
           <div className="buttons-sect">
-            <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)}>
+            <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)} className="show-cancelled">
             <Translate>Show Canceled</Translate>
             </Checkbox>
 
