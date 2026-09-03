@@ -32,6 +32,7 @@ import UsersTab from './tabs/UsersTab';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import TranslationModal from '@/components/TranslationModal';
+import ConfigurationTab from './tabs/FacilityConfigration';
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
@@ -519,6 +520,11 @@ const handleSave = async () => {
               {
                 title: 'Users',
                 content: <UsersTab facility={facility} />,
+                disabled: !facility?.id
+              },
+              {
+                title: 'Configuration',
+                content: <ConfigurationTab facility={facility} setFacility={setFacility} updateFacility={updateFacility} />,
                 disabled: !facility?.id
               }
             ]}

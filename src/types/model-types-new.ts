@@ -117,6 +117,8 @@ export interface Facility {
   defaultRadDepartmentId?: number | null;
   defaultLabDepartmentName?: string | null;
   defaultRadDepartmentName?: string | null;
+  approvingDiagnosticTestSettlePayment?: boolean;
+  
 }
 
 export interface CreateFacility {
@@ -134,6 +136,7 @@ export interface CreateFacility {
   timeZone?: string;
   defaultLabDepartmentId?: number | null;
   defaultRadDepartmentId?: number | null;
+  approvingDiagnosticTestSettlePayment?: boolean;
 }
 
 export interface Role {
