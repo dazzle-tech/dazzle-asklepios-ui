@@ -231,9 +231,13 @@ import { sickLeaveReportService } from './services/reports/sickLeaveReportServic
 import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
+
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -282,6 +286,7 @@ export const store = configureStore({
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
 
     // setup
@@ -373,6 +378,8 @@ export const store = configureStore({
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
     [departmentServicesService.reducerPath]: departmentServicesService.reducer,
+
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -544,6 +551,8 @@ export const store = configureStore({
       patientDiagnosticResultHistoryService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+
+    [autoPopulationService.reducerPath]: autoPopulationService.reducer,
 
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
@@ -788,11 +797,14 @@ export const store = configureStore({
         dentalProcedureService.middleware,
         laboratoryReportsService.middleware,
         sickLeaveReportService.middleware,
+        patientTimelineService.middleware,
         patientSickLeaveService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
+        autoPopulationService.middleware,
         labInterpretationService.middleware,
-        ocrParsingService.middleware
+        ocrParsingService.middleware,
+         medicationValidationService.middleware,
       ) as any
 });
 

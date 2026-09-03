@@ -3176,6 +3176,18 @@ export const newOCRParsingResponseDTO: modelTypes.OCRParsingResponseDTO = {
    placeOfBirth: ''
 }
 
+export const newTimelineResponse: modelTypes.TimelineResponse = {
+  request_id: '',
+  timeline: [],
+  summary: '',
+  processing_metadata: {
+    model: '',
+    timestamp: '',
+    input_fields_count: 0,
+    timeline_event_count: 0
+  }
+}
+
 export const newNotificationHeaderResponseVM: modelTypes.NotificationHeaderResponseVM = {
   code: '',
   name: '',
@@ -3337,4 +3349,54 @@ export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
   relatedEntityId: null,
   dateFrom: null,
   dateTo: null,
+};
+
+export const newMedicationTestValidationPatient: modelTypes.MedicationTestValidationPatient = {
+  mrn: '',
+  fullName: '',
+  gender: 'Unknown',
+  dob: ''
+};
+
+export const newMedicationTestValidationEncounter: modelTypes.MedicationTestValidationEncounter = {
+  visitId: '',
+  visitType: '',
+  plannedStartDate: '',
+  chiefComplaint: '',
+  patientAge: '',
+  diagnosis: ''
+};
+
+export const newMedicationTestValidationDiagnosis: modelTypes.MedicationTestValidationDiagnosis = {
+  type: 'Encounter Diagnosis',
+  value: ''
+};
+
+export const newMedicationValidationRequestDTO: modelTypes.MedicationValidationRequestDTO = {
+  patient: newMedicationTestValidationPatient,
+  encounter: newMedicationTestValidationEncounter,
+  complain: '',
+  diagnosis: newMedicationTestValidationDiagnosis,
+  medications: []
+};
+
+export const newTestValidationRequestDTO: modelTypes.TestValidationRequestDTO = {
+  patient: newMedicationTestValidationPatient,
+  encounter: newMedicationTestValidationEncounter,
+  complain: '',
+  diagnosis: newMedicationTestValidationDiagnosis,
+  tests: []
+};
+
+export const newValidationQuickSummaryDTO: modelTypes.ValidationQuickSummaryDTO = {
+  overall_status: '',
+  top_priority: ''
+};
+
+export const newValidationResponseDTO: modelTypes.ValidationResponseDTO = {
+  quick_summary: newValidationQuickSummaryDTO,
+  detailed_validations: [],
+  recommended_alternatives: [],
+  confidence_score: 0,
+  timestamp: ''
 };

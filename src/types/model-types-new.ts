@@ -4977,6 +4977,29 @@ export interface OCRParsingResponseDTO {
    sex : string | null, // change it later
    placeOfBirth: string;
 }
+
+export interface TimelineEvent {
+  date: string;
+  event_type: string;
+  title: string;
+  description: string;
+  clinical_importance: string;
+  source: string;
+}
+
+export interface ProcessingMetadata {
+  model: string;
+  timestamp: string;
+  input_fields_count: number;
+  timeline_event_count: number;
+}
+
+export interface TimelineResponse {
+  request_id: string;
+  timeline: TimelineEvent[];
+  summary: string;
+  processing_metadata: ProcessingMetadata;
+}
 export type NotificationTemplateChannel = 'EMAIL' | 'IN_APP' | 'SMS' | 'WHATSAPP';
 
 export type WhatsAppLanguageCode = string;
@@ -5227,4 +5250,123 @@ export interface NotificationEventResponseVM {
   errorMessage?: string | null;
   eventPayload?: Record<string, unknown> | null;
   createdDate?: string | Date | null;
+}
+
+export interface AutoPopulateRequest {
+  userText: string;
+  patientId: number;
+}
+
+export interface AutoPopulationStructuredFields {
+  chief_complaint?: string | null;
+  history_of_present_illness?: string | null;
+  diagnosis?: string[] | null;
+  medications?: Record<string, any>[] | null;
+  vitals?: Record<string, any> | null;
+  procedures?: string[] | null;
+  allergies?: string[] | null;
+  assessment?: string | null;
+  plan?: string | null;
+  past_medical_history?: string | null;
+  family_history?: string | null;
+  social_history?: string | null;
+  review_of_systems?: Record<string, string> | null;
+}
+
+export interface AutoPopulationUncertaintyFlag {
+  field_name: string;
+  reason: string;
+  confidence?: string | null;
+}
+
+export interface AutoPopulationContradictionFlag {
+  field_name: string;
+  user_text_value: any;
+  patient_record_value: any;
+  recommendation: string;
+  severity: string;
+}
+
+export interface AutoPopulationWarning {
+  level: string;
+  message: string;
+  field_name?: string | null;
+}
+
+export interface AutoPopulationResponse {
+  request_id: string;
+  task_type: string;
+  output_language: string;
+  structured_fields: AutoPopulationStructuredFields;
+  uncertainty_flags: AutoPopulationUncertaintyFlag[];
+  contradictions: AutoPopulationContradictionFlag[];
+  source_trace: any[];
+  warnings: AutoPopulationWarning[];
+  processing_metadata?: Record<string, any>;
+}
+export interface MedicationTestValidationPatient {
+  mrn: string;
+  fullName?: string;
+  gender?: string;
+  dob?: string;
+  [k: string]: any;
+}
+
+export interface MedicationTestValidationEncounter {
+  visitId?: string;
+  visitType?: string;
+  plannedStartDate?: string;
+  chiefComplaint?: string;
+  patientAge?: string;
+  diagnosis?: string;
+  [k: string]: any;
+}
+
+export interface MedicationTestValidationDiagnosis {
+  type?: string;
+  value?: string;
+  [k: string]: any;
+}
+
+export interface MedicationValidationRequestDTO {
+  patientId: number;
+  encounterId: number;
+  // [k: string]: any;
+}
+
+export interface TestValidationRequestDTO {
+  patientId: number;
+  encounterId: number;
+  // [k: string]: any;
+}
+
+export interface ValidationQuickSummaryDTO {
+  overall_status?: string;
+  top_priority?: string;
+  [k: string]: any;
+}
+
+export interface DetailedValidationDTO {
+  item?: string;
+  severity?: string;
+  issue?: string;
+  recommendation?: string;
+  evidence?: string;
+  [k: string]: any;
+}
+
+export interface RecommendedAlternativeDTO {
+  original_item?: string;
+  alternative?: string;
+  rationale?: string;
+  [k: string]: any;
+}
+
+export interface ValidationResponseDTO {
+  quick_summary?: ValidationQuickSummaryDTO;
+  detailed_validations?: DetailedValidationDTO[];
+  recommended_alternatives?: RecommendedAlternativeDTO[];
+  confidence_score?: number;
+  timestamp?: string;
+  [k: string]: any;
 }
