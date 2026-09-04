@@ -181,18 +181,30 @@ const FullViewTable = ({
       }
 
     },
-      {
-        key: 'medicationsId',
-        dataKey: 'medicationsId',
-        title: <Translate>Medication Name</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-          return genericMedicationListResponse?.data?.find(
-            (item: any) => String(item.id) === String(medId)
-          )?.name;
+    {
+      key: 'medicationName',
+      dataKey: 'medicationsId',
+      title: <Translate>Medication Name</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => {
+        if (rowData?.otherMedicationName?.trim()) {
+          return rowData.otherMedicationName.trim();
         }
-      },
+        const medId =
+          rowData?.medicationsId ??
+          rowData?.genericMedicationsId;
+
+        if (!medId) {
+          return '-';
+        }
+
+        return (
+          genericMedicationListResponse?.data?.find(
+            (item: any) => String(item.id) === String(medId)
+          )?.name ?? '-'
+        );
+      }
+    },
       {
         key: 'instructions',
         dataKey: '',
