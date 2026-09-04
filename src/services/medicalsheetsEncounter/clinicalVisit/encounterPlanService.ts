@@ -97,6 +97,20 @@ export const encounterPlanService = createApi({
     'EncounterPlan',
   ],
 }),
+
+getPlanAudit: builder.query<
+  modelTypes.EncounterPlanFieldAudit[],
+  { id: Id }
+>({
+  query: ({ id }) => ({
+    url: `/api/patient/encounter-plans/${id}/audit`,
+  }),
+  providesTags: (_res, _err, { id }) => [
+    { type: 'EncounterPlan', id },
+    'EncounterPlan',
+  ],
+}),
+
   }),
 });
 
@@ -105,5 +119,6 @@ export const {
   useUpdateEncounterPlanMutation,
   useGetLatestEncounterPlanQuery,
   useLazyGetLatestEncounterPlanQuery,
-  useGetEncounterPlansByPatientQuery
+  useGetEncounterPlansByPatientQuery,
+  useGetPlanAuditQuery
 } = encounterPlanService;

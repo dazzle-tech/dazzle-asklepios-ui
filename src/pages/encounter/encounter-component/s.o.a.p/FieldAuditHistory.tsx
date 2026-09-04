@@ -1,14 +1,14 @@
 
 import React from 'react';
 // import MyTable, { ColumnConfig } from '@/components/MyTable';
-import type { PatientEncounterFieldAudit } from '@/types/model-types-new';
+import type { EncounterAssessmentLog, EncounterPlanFieldAudit, PatientEncounterFieldAudit } from '@/types/model-types-new';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 
 interface FieldAuditHistoryModalProps {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    audit: PatientEncounterFieldAudit[];
+    audit: PatientEncounterFieldAudit[] | EncounterAssessmentLog[] | EncounterPlanFieldAudit[];
     fieldName: string;
 }
 

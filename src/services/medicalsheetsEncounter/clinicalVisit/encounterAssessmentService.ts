@@ -50,6 +50,16 @@ export const encounterAssessmentService = createApi({
         'EncounterAssessment',
       ],
     }),
+
+    getAssessmentAudit: builder.query<modelTypes.EncounterAssessmentLog[], { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/assessment/${id}/audit`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { id }) => [
+        { type: 'EncounterAssessment', id }
+      ]
+    }),
   }),
 });
 
@@ -58,4 +68,5 @@ export const {
   useUpdateEncounterAssessmentMutation,
   useGetLatestEncounterAssessmentQuery,
   useLazyGetLatestEncounterAssessmentQuery,
+  useGetAssessmentAuditQuery
 } = encounterAssessmentService;
