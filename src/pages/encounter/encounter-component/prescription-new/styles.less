@@ -980,3 +980,97 @@ form.margin-left-3 .rs-form-control-label {
   gap: 1vw;
   flex-wrap: wrap;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.prescription-medication-selection-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.prescription-medication-field,
+.prescription-medication-name-field {
+  min-width: 0;
+  width: 100%;
+}
+
+.prescription-other-medication-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.prescription-other-medication-action .rs-btn {
+  height: 40px;
+  min-width: 145px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.prescription-medication-selection-row
+  .prescription-search-wrapper {
+  width: 100%;
+}
+
+.prescription-medication-selection-row
+  .rs-input-group {
+  width: 100%;
+}
+
+.prescription-medication-selection-row
+  .rs-input {
+  width: 100%;
+}
+
+
+
+
+@media (max-width: 900px) {
+  .prescription-medication-selection-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .prescription-other-medication-action {
+    justify-content: flex-start;
+  }
+
+  .prescription-medication-name-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .prescription-medication-selection-row {
+    grid-template-columns: 1fr;
+  }
+
+  .prescription-other-medication-action {
+    justify-content: flex-start;
+  }
+
+  .prescription-medication-name-field {
+    grid-column: auto;
+  }
+
+  .prescription-other-medication-action .rs-btn {
+    width: 100%;
+  }
+}

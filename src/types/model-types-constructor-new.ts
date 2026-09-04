@@ -2277,6 +2277,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
   activeIngredientId: null,
+  otherMedicationName: null,
   instructionsType: null,
   instructions: null,
   dose: null,

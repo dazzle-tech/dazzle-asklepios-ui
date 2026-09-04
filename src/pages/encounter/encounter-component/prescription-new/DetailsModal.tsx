@@ -67,7 +67,7 @@ const DetailsModal = ({
 
   const [selectedGeneric, setSelectedGeneric] = useState<any>(null);
   const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
-
+  const [otherMedicationName, setOtherMedicationName] = useState('');
   const [tags, setTags] = React.useState<any[]>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -224,7 +224,7 @@ const DetailsModal = ({
     if (!open) {
       loadedMedicationIdRef.current = null;
       setTagsLoaded(false);
-      userClearedBrandRef.current = false; 
+      userClearedBrandRef.current = false;
       resetMedicationSelectionState();
       return;
     }
@@ -248,11 +248,13 @@ const DetailsModal = ({
     const loadKey = String(prescriptionMedication.id);
     if (editAiLoadedRef.current === loadKey) return;
 
-    const aiId = prescriptionMedication.activeIngredientId;
-    if (!aiId) {
-      editAiLoadedRef.current = loadKey;
-      return;
-    }
+const aiId = prescriptionMedication.activeIngredientId;
+const otherName = prescriptionMedication.otherMedicationName;
+
+if (!aiId) {
+  editAiLoadedRef.current = loadKey;
+  return;
+}
 
     let cancelled = false;
 
@@ -266,6 +268,12 @@ const DetailsModal = ({
         if (ai && String(ai.id) === String(aiId)) {
           setSelectedActiveIngredient(ai);
           setActiveIngredientKeyword(ai.name ?? '');
+
+          if (String(ai.name ?? '').trim().toLowerCase() === 'other') {
+              setOtherMedicationName(String(otherName ?? '').trim());
+            } else {
+              setOtherMedicationName('');
+            }
           try {
             await getBrandsByActive([ai.id]).unwrap();
           } catch (e) {
@@ -587,6 +595,18 @@ const DetailsModal = ({
       dispatch(notify({ msg: 'Please select active ingredient', sev: 'warning' }));
       return;
     }
+    const isOtherActiveIngredient =
+      String(selectedActiveIngredient?.name ?? '').trim().toLowerCase() === 'other';
+
+    if (isOtherActiveIngredient && !otherMedicationName.trim()) {
+      dispatch(
+        notify({
+          msg: 'Please enter Other Medication Name',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
     if (selectedActiveIngredient?.isLookAlikeSoundAlike && !selectedGeneric) {
       dispatch(
         notify({ msg: 'This active ingredient is LASA, please select brand', sev: 'warning' })
@@ -709,10 +729,13 @@ const DetailsModal = ({
       return;
     }
 
-    const createPayload: any = {
-      prescriptionHeaderId: preKey,
-      activeIngredientId: selectedActiveIngredient?.id ?? null,
-      medicationsId: selectedMedicationId,
+const createPayload: any = {
+  prescriptionHeaderId: preKey,
+  activeIngredientId: selectedActiveIngredient?.id ?? null,
+  medicationsId: selectedMedicationId,
+  otherMedicationName: isOtherActiveIngredient
+    ? otherMedicationName.trim()
+    : null,
       instructionsType: String(selectedOption ?? prescriptionMedication?.instructionsType ?? ''),
       instructions:
         selectedOption === OPTION_MANUAL
@@ -770,6 +793,7 @@ const DetailsModal = ({
           body: {
             activeIngredientId: createPayload.activeIngredientId,
             medicationsId: createPayload.medicationsId,
+            otherMedicationName: createPayload.otherMedicationName,
             instructionsType: createPayload.instructionsType,
             instructions: createPayload.instructions,
             dose: createPayload.dose,
@@ -871,6 +895,14 @@ const DetailsModal = ({
     setSelectedGeneric(null);
     setSearchKeyword('');
     setShowMedicationDropdown(false);
+
+    const isOther =
+      String(activeIngredient?.name ?? '').trim().toLowerCase() === 'other';
+
+    if (!isOther) {
+      setOtherMedicationName('');
+    }
+
     userClearedBrandRef.current = true;
     blockAutoBrandLoad();
     setInst(null);
@@ -879,7 +911,7 @@ const DetailsModal = ({
       ...prev,
       activeIngredientId: activeIngredient?.id ?? null,
       medicationsId: null,
-      genericMedicationsId: null
+      genericMedicationsId: null,
     }));
 
     if (activeIngredient?.id) {
@@ -894,7 +926,7 @@ const DetailsModal = ({
       dispatch(
         notify({
           msg: 'This active ingredient is high alert',
-          sev: 'warning'
+          sev: 'warning',
         })
       );
     }
@@ -935,6 +967,7 @@ const DetailsModal = ({
     setSelectedGeneric(null);
     setSelectedActiveIngredient(null);
     setSelectedOption(null);
+    setOtherMedicationName('');
     setInstruc(null);
     setAdminInstructions({ administrationInstructions: [] });
     setCustomeinst({ dose: null, unit: null, frequency: null, roa: null });
@@ -951,7 +984,7 @@ const DetailsModal = ({
     loadedMedicationIdRef.current = null;
     editAiLoadedRef.current = null;
     editBrandLoadedRef.current = null;
-    userClearedBrandRef.current = false; 
+    userClearedBrandRef.current = false;
   };
 
   const preRequestedTests = Object.values(testsByAiId ?? {})
@@ -987,7 +1020,7 @@ const DetailsModal = ({
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
-  
+
   return (
     <div dir={dir}>
       <AdvancedModal
@@ -1098,6 +1131,18 @@ const DetailsModal = ({
                             )}
                           </div>
 
+                            {String(selectedActiveIngredient?.name ?? '').trim().toLowerCase() === 'other' && (
+                              <div
+                                className="prescription-search-wrapper"
+                                style={{ flex: 1 }}
+                              >
+                                <Input
+                                  placeholder="Other Medication Name"
+                                  value={otherMedicationName}
+                                  onChange={value => setOtherMedicationName(value)}
+                                />
+                              </div>
+                            )}
                           <div
                             className="prescription-search-wrapper"
                             ref={searchWrapperRef}
@@ -1177,7 +1222,7 @@ const DetailsModal = ({
                                 <Radio key={index} value={instruction.value}>
                                   <Translate>{instruction.label}</Translate>
                                 </Radio>
-                            ))}
+                              ))}
                           </RadioGroup>
                         </div>
                       </div>

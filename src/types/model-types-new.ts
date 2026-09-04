@@ -3378,8 +3378,9 @@ export interface PatientPrescription {
 export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
-  medicationsId: number;
-  activeIngredientId: number;
+  medicationsId: number | null;
+  activeIngredientId: number | null;
+  otherMedicationName?: string | null;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;

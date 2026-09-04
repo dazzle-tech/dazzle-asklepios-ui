@@ -105,17 +105,29 @@ const activeIngredientsMap = useMemo(() => {
           return ingredient?.name ? String(ingredient.name) : '-';
         }
   
-      },
+    },
     {
-      key: 'medicationsId',
+      key: 'medicationName',
       dataKey: 'medicationsId',
       title: <Translate>Medication Name</Translate>,
-      flexGrow: 1,
+      flexGrow: 2,
       render: (rowData: any) => {
-        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        return genericMedicationListResponse?.data?.find(
-          (item: any) => String(item.id) === String(medId)
-        )?.name;
+        if (rowData?.otherMedicationName?.trim()) {
+          return rowData.otherMedicationName.trim();
+        }
+        const medId =
+          rowData?.medicationsId ??
+          rowData?.genericMedicationsId;
+
+        if (!medId) {
+          return '-';
+        }
+
+        return (
+          genericMedicationListResponse?.data?.find(
+            (item: any) => String(item.id) === String(medId)
+          )?.name ?? '-'
+        );
       }
     },
     {
