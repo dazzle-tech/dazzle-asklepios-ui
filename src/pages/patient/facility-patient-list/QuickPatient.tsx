@@ -6,6 +6,7 @@ import { useAppDispatch } from '@/hooks';
 import { RootState } from '@/store';
 
 import MyInput from '@/components/MyInput';
+import MyLabel from '@/components/MyLabel';
 import MyModal from '@/components/MyModal/MyModal';
 
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
@@ -601,7 +602,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={"14vw"}
+          width="100%"
         />
 
         <MyInput
@@ -612,7 +613,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={"14vw"}
+          width="100%"
         />
 
         <MyInput
@@ -623,7 +624,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
-          width={"14vw"}
+          width="100%"
         />
 
         <MyInput
@@ -640,7 +641,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           setRecord={setLocalPatient}
           disabled={isUnknown}
           searchable={false}
-          width={"14vw"}
+          width="100%"
         />
 
        <PhoneNumberInput
@@ -651,7 +652,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           setRecord={setLocalPatient}
           fieldLabel="Primary Mobile Number" 
           disabled={isUnknown}
-          width={"14vw"}
+          width="100%"
         />
 
         <MyInput
@@ -660,7 +661,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           fieldName="email"
           record={localPatient}
           setRecord={setLocalPatient}
-          width={"14vw"}
+          width="100%"
         />
 
         <MyInput
@@ -675,18 +676,22 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           disableFutureDates
           showWarningIfBeforeYear1900
           disabled={isUnknown}
-          width={"14vw"}
+          width="100%"
         />
 
-          <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
-            Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
-          </div>
+        <Form.Group className="my-input-container">
+          <Form.ControlLabel>
+            <MyLabel label="Unknown Patient" />
+          </Form.ControlLabel>
+          <div style={{ marginBottom: 5 }} />
+          <Toggle onChange={setIsUnknown} checked={isUnknown} />
+        </Form.Group>
 
         {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
           <>
             <MyInput
               column
-              width={"14vw"}
+              width="100%"
               required
               fieldLabel="Encounter Type"
               fieldType="select"
@@ -709,7 +714,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
 
             <MyInput
-              width={"14vw"}
+              width="100%"
               required
               column
               fieldType="selectPagination"
@@ -737,7 +742,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
             />
 
             <MyInput
-              width={"14vw"}
+              width="100%"
               required
               column
               fieldType="selectPagination"

@@ -136,6 +136,7 @@ export const patientPrescriptionMedicationService = createApi({
 // Export hooks for usage in functional components
 export const {
   useGetPatientPrescriptionMedicationsQuery,
+  useLazyGetPatientPrescriptionMedicationsQuery,
   useGetPatientPrescriptionMedicationByIdQuery,
   useCreatePatientPrescriptionMedicationMutation,
   useUpdatePatientPrescriptionMedicationMutation,

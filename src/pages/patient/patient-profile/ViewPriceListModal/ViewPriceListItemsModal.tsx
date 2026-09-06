@@ -200,6 +200,19 @@ const ViewPriceListItemsModal: React.FC<Props> = ({
       },
 
       {
+        key: 'nonStandardCode',
+        title:
+          <Translate>
+            Non Standard Code
+          </Translate>,
+        render: (
+          row:
+            PriceListSetupItem
+        ) =>
+          row.nonStandardCode || '-'
+      },
+
+      {
         key: 'itemName',
         title:
           <Translate>

@@ -11,7 +11,9 @@ import {
   faUserDoctor,
   faCommentMedical,
   faUserNurse,
-  faEye
+  faEye,
+  faVialCircleCheck,
+  faRotateLeft
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -32,7 +34,6 @@ import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -46,7 +47,8 @@ import {
   useCountDepartmentTotalByDateRangeQuery,
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
-  useCountDepartmentDischargedByDateRangeQuery
+  useCountDepartmentDischargedByDateRangeQuery,
+  useReopenEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 import {
   useGetBulkPatientBasicInfoMutation,
@@ -67,6 +69,9 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
+import { useLazyGetUserByLoginQuery, useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
+import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
+import Translate from '@/components/Translate';
 
 dayjs.extend(duration);
 
@@ -185,6 +190,23 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 const UrgentCareList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useAppSelector(
+    (state: any) => state.auth.user
+  );
+
+  const currentUser = useAppSelector(
+    (state: any) => state.auth.user
+  );
+
+  const [getUserByLogin, { data: userByLogin }] =
+    useLazyGetUserByLoginQuery();
+
+  useEffect(() => {
+    if (currentUser?.login) {
+      getUserByLogin(currentUser.login);
+    }
+  }, [currentUser?.login, getUserByLogin]);
+    
 
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -226,8 +248,8 @@ const UrgentCareList = () => {
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
-  
-  
+
+
   const [filtersKey, setFiltersKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
 
@@ -240,8 +262,9 @@ const UrgentCareList = () => {
 
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [getUserFullNameByLogin] = useLazyGetUserFullNameByLoginQuery();
 
-   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
+  const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
     exclude: [
       'IN_OPERATION',
       'CONFIRM_RETURN',
@@ -261,27 +284,28 @@ const UrgentCareList = () => {
   const DEFAULT_SORT = 'id,desc';
 
   const getDefaultDates = () => {
-  const now = new Date();
-  const lastWeek = new Date(now);
-  lastWeek.setDate(lastWeek.getDate() - 7);
+    const now = new Date();
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
 
-  return { now, lastWeek };
-};
+    return { now, lastWeek };
+  };
 
-const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
+  const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
 
-const [dateFilter, setDateFilter] = useState({
-  fromDate: initialLastWeek,
-  toDate: initialNow
-});
+  const [dateFilter, setDateFilter] = useState({
+    fromDate: initialLastWeek,
+    toDate: initialNow
+  });
 
-  const DEFAULT_STATUS = useMemo(() => [ 'ONGOING','ASSIGNED_TO_BED'], []);
+  const DEFAULT_STATUS = useMemo(() => ['ONGOING', 'ASSIGNED_TO_BED'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
   const [hasOrder, setHasOrder] = useState<boolean | undefined>(undefined);
   const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
+  const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
 
   const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
     searchByField: 'fullName',
@@ -319,29 +343,29 @@ const [dateFilter, setDateFilter] = useState({
     skip: !appliedFilters
   });
 
-useEffect(() => {
-  if (!isFetching && isSearchTriggered) {
-    setIsSearchTriggered(false);
-  }
-}, [isFetching, isSearchTriggered]);
+  useEffect(() => {
+    if (!isFetching && isSearchTriggered) {
+      setIsSearchTriggered(false);
+    }
+  }, [isFetching, isSearchTriggered]);
 
-useEffect(() => {
-  if (!filterParams && departmentId && isEmergencyDepartment) {
-    const fromDate = toISODate(dateFilter.fromDate);
-    const toDate = toISODate(dateFilter.toDate);
+  useEffect(() => {
+    if (!filterParams && departmentId && isEmergencyDepartment) {
+      const fromDate = toISODate(dateFilter.fromDate);
+      const toDate = toISODate(dateFilter.toDate);
 
-    setAppliedFilters({
-      departmentId: String(departmentId),
-      fromDate,
-      toDate,
-      statusIn: DEFAULT_STATUS,
-      practitionerId: undefined,
-      page: 0,
-      size: pageSize,
-      sort: DEFAULT_SORT
-    });
-  }
-}, [departmentId, isEmergencyDepartment]);
+      setAppliedFilters({
+        departmentId: String(departmentId),
+        fromDate,
+        toDate,
+        statusIn: DEFAULT_STATUS,
+        practitionerId: undefined,
+        page: 0,
+        size: pageSize,
+        sort: DEFAULT_SORT
+      });
+    }
+  }, [departmentId, isEmergencyDepartment]);
 
   const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
 
@@ -456,7 +480,8 @@ useEffect(() => {
       )
     );
   }, [normalizedTableData]);
-
+  const [reopenEncounter, { isLoadingReopen }] =
+    useReopenEncounterMutation();
   const {
     data: activeAssignments = [],
     isLoading: isAssignmentsLoading,
@@ -566,7 +591,16 @@ useEffect(() => {
       };
     });
   }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
+  const handleReopen = async (encounterId: number) => {
+    try {
+      await reopenEncounter({ id: encounterId }).unwrap();
+      dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
 
+    } catch (error) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+
+    }
+  };
   const handleRefreshAfterBedChange = useCallback(async () => {
     await refetch();
 
@@ -620,9 +654,34 @@ useEffect(() => {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
     } catch (error: any) {
-      if (isEncounterAlreadyOngoingError(error)) {
-        return true;
+      const backendMessage = String(
+        error?.data?.detail ||
+        error?.data?.message ||
+        ''
+      ).toLowerCase();
+
+      const errorKey = String(
+        error?.data?.messageKey ||
+        error?.data?.errorKey ||
+        ''
+      ).toLowerCase();
+
+      const isOpenVisitError =
+        isEncounterAlreadyOngoingError(error) ||
+        backendMessage.includes('already has an ongoing emergency encounter') ||
+        errorKey === 'error.db.constraint';
+
+      if (isOpenVisitError) {
+        dispatch(
+          notify({
+            msg: 'This Patient already has open visit',
+            sev: 'warning'
+          })
+        );
+
+        return false;
       }
+
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     } finally {
@@ -666,32 +725,56 @@ useEffect(() => {
     }
   };
 
-  const handleGoToVisit = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
+ const handleGoToVisit = async (encounterData: any) => {
 
-    dispatch(showSystemLoader());
-    const fullPatient = await fetchPatientForEncounter(encounterData);
-    dispatch(hideSystemLoader());
+  if (
+    !userByLogin?.allowOngoingVisit &&
+    encounterData?.startedBy != null &&
+    encounterData?.startedBy !== userByLogin?.login
+  ) {
+    const fullName = await getUserFullNameByLogin(
+      encounterData.startedBy
+    ).unwrap();
 
-    if (!fullPatient) {
-      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-      return;
-    }
+    dispatch(
+      notify({
+        msg: `This Patient already seen by ${fullName}`,
+        sev: 'warning',
+      })
+    );
 
-    dispatch(setEncounter(encounterData));
-    dispatch(setPatient(fullPatient));
+    return;
+  }
 
-    navigate('/encounter', {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'Urgent_Care_List',
-        patient: fullPatient,
-        encounter: encounterData
-      }
-    });
+  const isStarted = await startEncounterSafe(encounterData);
+  if (!isStarted) return;
 
-  };
+  dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
+
+  if (!fullPatient) {
+    dispatch(
+      notify({
+        msg: 'Failed to load patient data.',
+        sev: 'error',
+      })
+    );
+    return;
+  }
+
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+
+  navigate('/encounter', {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'Urgent_Care_List',
+      patient: fullPatient,
+      encounter: encounterData,
+    },
+  });
+};
 
   const handleViewVisit = async (encounterData: any) => {
     dispatch(showSystemLoader());
@@ -1037,7 +1120,7 @@ useEffect(() => {
         );
       }
     },
-       
+
     {
       key: 'actions',
       title: ' ',
@@ -1049,10 +1132,14 @@ useEffect(() => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
+        const tooltipReopen = <Tooltip>Reopen Encounter</Tooltip>;
+
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
-
+        const canReopen =
+          statusUpper === 'COMPLETED' ||
+          statusUpper === 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -1163,7 +1250,24 @@ useEffect(() => {
                 </MyButton>
               </div>
             </Whisper>
-
+            {canReopen && (
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={tooltipReopen}
+              >
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="#0d6efd"
+                    loading={isLoadingReopen}
+                    onClick={() => { handleReopen(row.id) }}
+                  >
+                    <FontAwesomeIcon icon={faRotateLeft} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
             {isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
@@ -1189,7 +1293,7 @@ useEffect(() => {
   const filters = () => (
     <>
       <div key={filtersKey}>
-        
+
         <Form layout="inline" fluid className="date-filter-form">
 
           <MyInput
@@ -1327,16 +1431,16 @@ useEffect(() => {
     </>
   );
 
-const tableLoading =
-  isDepartmentFetching ||
-  isLoading ||
-  isFetching ||
-  patientsBulkLoading ||
-  isAssignmentsLoading ||
-  isAssignmentsFetching ||
-  isRoomsByIdsLoading ||
-  isBedsByIdsLoading;
-  
+  const tableLoading =
+    isDepartmentFetching ||
+    isLoading ||
+    isFetching ||
+    patientsBulkLoading ||
+    isAssignmentsLoading ||
+    isAssignmentsFetching ||
+    isRoomsByIdsLoading ||
+    isBedsByIdsLoading;
+
   if (!departmentId) {
     return (
       <Panel>
@@ -1374,6 +1478,14 @@ const tableLoading =
         >
           Bed Management
         </MyButton>
+
+        <MyButton
+          onClick={() => setOpenCollectSampleModal(true)}
+        >
+          <FontAwesomeIcon icon={faVialCircleCheck} />
+          <Translate>COLLECT SAMPLE</Translate>
+        </MyButton>
+
       </div>
 
       <div className="count-div-on-top-of-page-visit-list">
@@ -1534,6 +1646,13 @@ const tableLoading =
         confirmationQuestion="Do you want to start Nurse Assessment?"
         actionButtonLabel="Start"
         cancelButtonLabel="Close"
+      />
+
+      <CollectSambleModal
+        open={openCollectSampleModal}
+        setOpen={setOpenCollectSampleModal}
+        facilityId={selectedDepartment?.facilityId}
+        fromDepartmentId={departmentId}
       />
     </Panel>
   );

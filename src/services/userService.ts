@@ -23,6 +23,11 @@ export const userService = createApi({
         body: user,
       }),
     }),
+
+    
+    getUserByLogin: builder.query({ query: (login: string) => ({ url: `/api/admin/users/${encodeURIComponent(login)}`, method: 'GET', }), }),
+
+
     getActiveAdmins: builder.query({
       query: (pageable?: { page?: number; size?: number; sort?: string }) => {
         const params = new URLSearchParams();
@@ -77,7 +82,21 @@ export const userService = createApi({
       },
     }),
 
-    
+
+    getUserEncountersAccess: builder.query({
+      query: (userId: number) =>
+        `/api/admin/users/${userId}/encounters-access`,
+    }),
+
+    updateUserEncountersAccess: builder.mutation({
+      query: ({ userId, data }) => ({
+        url: `/api/admin/users/${userId}/encounters-access`,
+        method: 'PUT',
+        body: data,
+      }),
+    }),
+
+
     addUser: builder.mutation({
       query: user => ({
         url: '/api/admin/users',
@@ -263,7 +282,12 @@ export const {
   useValidateCreatePasswordKeyQuery,
   useLazyValidateCreatePasswordKeyQuery,
   useGetUserFullNameByLoginQuery,
+  useLazyGetUserFullNameByLoginQuery,
   useResendCreatePasswordEmailMutation,
   useToggleUserActivationMutation,
-
+  useGetUserEncountersAccessQuery,
+  useLazyGetUserEncountersAccessQuery,
+  useUpdateUserEncountersAccessMutation,
+  useGetUserByLoginQuery,
+  useLazyGetUserByLoginQuery,
 } = userService;

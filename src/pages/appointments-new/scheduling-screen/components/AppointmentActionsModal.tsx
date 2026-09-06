@@ -8,7 +8,8 @@ import {
   useCancelAppointmentMutation,
   useCheckInAppointmentMutation,
   useConfirmAppointmentMutation,
-  useNoShowAppointmentMutation
+  useNoShowAppointmentMutation,
+  useUndoConfirmAppointmentMutation
 } from "@/services/appointment/appointmentService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch, useAppSelector } from "@/hooks";
@@ -56,6 +57,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [cancelAppointment] = useCancelAppointmentMutation();
     const [noShowAppointment] = useNoShowAppointmentMutation();
     const [confirmAppointment] = useConfirmAppointmentMutation();
+    const [undoConfirmAppointment] = useUndoConfirmAppointmentMutation();
     const [checkInAppointment] = useCheckInAppointmentMutation();
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
@@ -559,6 +561,37 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
              dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
+
+    const handleUndoConfirm = async () => {
+        try {
+            const id = getAppointmentId();
+            if (!id) {
+              dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+              return;
+            }
+            if (currentStatus !== 'CONFIRMED') {
+              dispatch(notify({ msg: 'Only confirmed appointments can undo confirmation', sev: 'warning' }));
+              return;
+            }
+
+            const result = await undoConfirmAppointment({ id }).unwrap();
+            const nextStatus =
+              String(result?.status ?? result?.appointmentStatus ?? 'BOOKED').trim() || 'BOOKED';
+
+            setLocalAppoitmentData(prev => ({
+                ...prev,
+                appointmentStatus: nextStatus,
+                status: nextStatus
+            }));
+
+            dispatch(notify({ msg: 'Appointment confirmation undone successfully', sev: 'success' }));
+            onActionsModalClose();
+            await onStatusChange?.();
+        } catch (error: any) {
+             const errorMsg = extractErrorMessage(error) || 'Save Failed';
+             dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+        }
+    }
     const normalizeEncounterStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
     const isEncounterPendingPayment = normalizeEncounterStatus((createdEncounter as any)?.status) === 'PENDINGPAYMENT';
     const canOpenAddPayment = currentStatus === 'CHECKEDIN' && isEncounterPendingPayment;
@@ -683,56 +716,67 @@ const handleCancel = async () => {
 };
     // Appoinment Actions Modal Content
     const actionsModalContent = (
-        <Form fluid layout="inline">
+        <Form fluid>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 8,
+                width: '100%'
+              }}
+              className="appointment-logs-actions-grid"
+            >
             <MyButton
-              width="250px"
+              width="100%"
               disabled={!canCheckIn}
               onClick={handleCheckIn}
-              color="cyan"
               appearance="primary"
             >
                 Check-In
             </MyButton>
             <MyButton
-              width="250px"
+              width="100%"
               disabled={currentStatus === "CONFIRMED" || isViewOnlyActionsStatus}
               onClick={handleConfirm}
-              color="violet"
               appearance="primary"
             >
                 Confirm
             </MyButton>
             <MyButton
-              width="250px"
+              width="100%"
+              disabled={currentStatus !== "CONFIRMED"}
+              onClick={handleUndoConfirm}
+              appearance="primary"
+            >
+                Undo Confirm
+            </MyButton>
+            <MyButton
+              width="100%"
               disabled={!(currentStatus === 'BOOKED' || currentStatus === 'CONFIRMED')}
               onClick={() => editAppointment(appointment?.appointmentData || localAppointmentData)}
-              color="violet"
               appearance="primary"
             >
                 Reschedule
             </MyButton>
-            <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
+            <MyButton width="100%" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
             <MyButton
-              width="250px"
-              onClick={() => { setOpenAppointmentLogsModal(true) }}
-              color="blue"
-              // disabled={true}
-              appearance="primary"
-            >
-                {/* No-show */}
-                Show log
-            </MyButton>
-            <MyButton
-              width="250px"
+              width="100%"
               disabled={["CANCELLED", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
               onClick={() => { setResonType('Cancel') }}
-              color="blue"
               appearance="primary"
             >
                 Cancel
             </MyButton>
+            <MyButton
+              width="100%"
+              onClick={() => { setOpenAppointmentLogsModal(true) }}
+              appearance="primary"
+            >
+                Show log
+            </MyButton>
+            </div>
         </Form>
     );
     // Cancel/No-Show Modal Content

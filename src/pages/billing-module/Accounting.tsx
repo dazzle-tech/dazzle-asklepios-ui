@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getHeight } from 'rsuite/esm/DOMHelper';
 import { Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,7 +17,7 @@ import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
 import PatientBillingSide from './PatientBillingSide';
 import Invoices from './Invoices';
 import Receipt from './Receipt';
-
+import { useLocation } from 'react-router-dom';
 import {
   useCloneRejectedPreAuthorizationItemMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
@@ -42,9 +42,14 @@ import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverag
 import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
+import BillingPendingQueueModal from './BillingPendingQueueModal';
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
+
+  const location = useLocation();
+
+  const navigationTargetPatientIdRef = useRef<number | null>(null);
 
   const [patient, setPatient] = useState<any>({ ...newApPatient });
   const [expand, setExpand] = useState(false);
@@ -55,6 +60,7 @@ const Accounting: React.FC = () => {
   const [coverageType, setCoverageType] = useState<'SELF_PAY' | 'INSURANCE'>('SELF_PAY');
   const [selectedInsuranceId, setSelectedInsuranceId] = useState<number | null>(null);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [billingPendingQueueModalOpen, setBillingPendingQueueModalOpen] = useState(false);
   const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
   const [selectedChargeRowIds, setSelectedChargeRowIds] = useState<string[]>([]);
   const [paymentReceiptModal, setPaymentReceiptModal] = useState<{
@@ -140,16 +146,66 @@ const Accounting: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    setSelectedEncounterId(null);
-    setCoverageType('SELF_PAY');
-    setSelectedInsuranceId(null);
-    setSelectedChargeRowIds([]);
-    setDepositModalOpen(false);
-    setCollectPaymentModalOpen(false);
-    setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
-    setPreAuthActionLoadingId(null);
-    setCanCloseCalculation(true);
-    setBillingRefreshPending(false);
+      const navigationState = location.state as {
+          fromPage?: string;
+          patient?: any;
+          encounterId?: number;
+      } | null;
+
+      if (
+          navigationState?.fromPage !== 'BillingPendingQueue' ||
+          !navigationState.patient ||
+          navigationState.encounterId == null
+      ) {
+          return;
+      }
+
+      const targetPatientId = resolvePatientId(navigationState.patient);
+
+      navigationTargetPatientIdRef.current = targetPatientId;
+
+      setPatient(navigationState.patient);
+      setSelectedEncounterId(Number(navigationState.encounterId));
+  }, [location.state]);
+
+  useEffect(() => {
+      const isNavigationPatient =
+          navigationTargetPatientIdRef.current === patientId;
+
+      if (isNavigationPatient) {
+          navigationTargetPatientIdRef.current = null;
+
+          setCoverageType('SELF_PAY');
+          setSelectedInsuranceId(null);
+          setSelectedChargeRowIds([]);
+          setDepositModalOpen(false);
+          setCollectPaymentModalOpen(false);
+          setPaymentReceiptModal({
+              open: false,
+              receipt: null,
+              autoPrint: false
+          });
+          setPreAuthActionLoadingId(null);
+          setCanCloseCalculation(true);
+          setBillingRefreshPending(false);
+
+          return;
+      }
+
+      setSelectedEncounterId(null);
+      setCoverageType('SELF_PAY');
+      setSelectedInsuranceId(null);
+      setSelectedChargeRowIds([]);
+      setDepositModalOpen(false);
+      setCollectPaymentModalOpen(false);
+      setPaymentReceiptModal({
+          open: false,
+          receipt: null,
+          autoPrint: false
+      });
+      setPreAuthActionLoadingId(null);
+      setCanCloseCalculation(true);
+      setBillingRefreshPending(false);
   }, [patientId]);
 
   useEffect(() => {
@@ -499,11 +555,18 @@ const Accounting: React.FC = () => {
           <div className="billing-accounting__actions">
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
+              onClick={() => setBillingPendingQueueModalOpen(true)}>
+              Billing Pending Queue
+            </MyButton>
+
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faWallet} />}
               onClick={() => setDepositModalOpen(true)}
               disabled={patientId == null}
             >
               {WALLET_DEPOSIT_BUTTON_LABEL}
             </MyButton>
+
             <MyButton onClick={() => refreshAll()} disabled={patientId == null}>
               Refresh
             </MyButton>
@@ -833,8 +896,16 @@ const Accounting: React.FC = () => {
               })
             }
           />
+
+
         </>
       )}
+
+
+                <BillingPendingQueueModal
+            open={billingPendingQueueModalOpen}
+            setOpen={setBillingPendingQueueModalOpen}
+            />
     </div>
   );
 };

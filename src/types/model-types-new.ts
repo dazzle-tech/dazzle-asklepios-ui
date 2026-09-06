@@ -24,8 +24,12 @@ export interface ApUser {
   jobDescription?: string | null;
   jobRole?: string | null;
   admin?: boolean;
-  hasResetKey?: boolean; // Transient field to indicate if resetKey exists (for UI logic)
+  hasResetKey?: boolean;
+  allowOngoingVisit: boolean;
+  canUnDischargeUrgentCare: boolean;
+  canUnCompleteEncounter: boolean;
 }
+
 
 export interface Candidate {
   id?: number;
@@ -113,6 +117,8 @@ export interface Facility {
   defaultRadDepartmentId?: number | null;
   defaultLabDepartmentName?: string | null;
   defaultRadDepartmentName?: string | null;
+  approvingDiagnosticTestSettlePayment?: boolean;
+  
 }
 
 export interface CreateFacility {
@@ -130,6 +136,7 @@ export interface CreateFacility {
   timeZone?: string;
   defaultLabDepartmentId?: number | null;
   defaultRadDepartmentId?: number | null;
+  approvingDiagnosticTestSettlePayment?: boolean;
 }
 
 export interface Role {
@@ -812,6 +819,18 @@ export interface EncounterAttachment {
   details?: string;
   source?: string;
   sourceId?: number; // Link to specific order/medication within encounter
+  documentDefinitionId?: number | null;
+  documentVersionId?: number | null;
+  documentDefinition?: {
+    id?: number;
+    code?: string;
+    name?: string;
+  } | null;
+  documentVersion?: {
+    id?: number;
+    version?: number;
+    fileName?: string;
+  } | null;
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -872,6 +891,8 @@ export interface UploadEncounterAttachmentParams {
   details?: string;
   source?: string;
   sourceId?: number;
+  documentDefinitionId?: number | null;
+  documentVersionId?: number | null;
 }
 
 export interface UploadInventoryTransferAttachmentParams {
@@ -930,8 +951,9 @@ export interface DiagnosticTest {
   id?: number;
   type: string;
   name: string;
+  shortName:string;
   internalCode: string;
-
+  hl7IntegrationCode:string;
   ageSpecific?: boolean;
   ageGroupList?: string[];
   genderSpecific?: boolean;
@@ -2330,6 +2352,14 @@ export interface PatientEncounter {
   encounterReason: string;
 
   followUpEncounterId?: number | null;
+  followUpEncounter?: {
+    id: number;
+    encounterNumber?: string | null;
+    createdDate?: Date | string | null;
+    createdAt?: Date | string | null;
+  } | null;
+  createdDate?: Date | string | null;
+  createdAt?: Date | string | null;
 
   priorityLevel: string;
 
@@ -2347,6 +2377,8 @@ export interface PatientEncounter {
   startedBy?: string | null;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 
 }
 
@@ -2530,6 +2562,8 @@ export interface PatientEncounter {
   followUpEncounter?: {
     id: number;
     encounterNumber?: string | null;
+    createdDate?: string | null;
+    createdAt?: string | null;
   } | null;
 
   originType?: string | null;
@@ -2546,6 +2580,8 @@ export interface PatientEncounter {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 }
 
 
@@ -2845,6 +2881,8 @@ export interface PatientEncounter {
   isObserved: boolean;
   physicalExaminationSummery?: string | null;
   historyOfPresentIllness?: string | null;
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 }
 
 export interface PatientPaymentServiceItemDTO {
@@ -3340,8 +3378,9 @@ export interface PatientPrescription {
 export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
-  medicationsId: number;
-  activeIngredientId: number;
+  medicationsId: number | null;
+  activeIngredientId: number | null;
+  otherMedicationName?: string | null;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -3725,7 +3764,10 @@ export interface BulkRejectDTO {
   ids: number[];
   rejectedReason: string;
 }
-
+export interface BulkCancelDTO {
+  ids: number[];
+  cancellationReason: string;
+}
 export interface DiagnosticOrderTestResultCreateDTO {
   orderTestId: number;
   profileTestId?: number | null;
@@ -4453,18 +4495,31 @@ export interface PatientObservationsComplaints {
   id?: number;
 
   patientId: number;
+
   encounterId: number;
 
   reasonOfVisit?: string | null;
+
+  byPatient?: boolean;
+
+  sourceOfInformation?: string | null;
+
   latestFunctionalStatus?: string | null;
+
   latestCognitiveCheck?: string | null;
 
   patientConditions?: string | null;
+
   isActive: boolean;
+
   functionalStatus?: string | null;
+
   cognitiveCheck?: string | null;
+
   bloodGroup?: string | null;
+
   createdDate?: Date | string | null;
+
   lastModifiedDate?: Date | string | null;
 }
 
@@ -5510,6 +5565,7 @@ export type PriceListSetupItem = {
   sourceId?: number;
 
   itemCode?: string;
+  nonStandardCode?: string | null;
   itemName?: string;
 
 
@@ -5526,6 +5582,7 @@ export type SavePriceListSetupItemRequest = {
   itemType: PriceListItemType;
   sourceId: number;
   itemCode: string;
+  nonStandardCode?: string | null;
   itemName: string;
   pricingMethod: PricingMethod;
   unitPrice: number;
@@ -6271,6 +6328,8 @@ export type EncounterBillingSummary = {
   invoicePaidAmount?: number;
   invoiceOutstandingAmount?: number;
   items: EncounterBillingItemSummary[];
+  coverageType?: string | null;
+  patientInsuranceId?: number | null;
 };
 
 export type CreateAdvancePaymentRequest = {
@@ -6878,6 +6937,8 @@ export interface ClaimTrackingResponse {
   financialDocumentId?: number | null;
   preAuthorizationId?: number | null;
   patientInsuranceId?: number | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
   uploadName?: string | null;
   uploadId?: number | null;
   provClaimNo?: string | null;
@@ -6905,6 +6966,8 @@ export interface ClaimSubmissionResponse {
   encounterId?: number | null;
   financialDocumentId?: number | null;
   preAuthorizationId?: number | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
   uploadName?: string | null;
   uploadId?: number | null;
   provClaimNo?: string | null;
@@ -6921,12 +6984,19 @@ export interface PendingClaimInvoiceResponse {
   financialDocumentId?: number | null;
   documentNumber?: string | null;
   encounterId?: number | null;
+  encounter?: PatientEncounter | null;
+  encounterType?: string | null;
   patientId?: number | null;
+  patient?: Patient | null;
   payorId?: number | null;
   claimReference?: string | null;
   totalAmount?: number | null;
   currency?: string | null;
   createdDate?: string | Date | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
+  matchingItemCount?: number | null;
+  matchingNetAmount?: number | null;
 }
 
 export interface ClaimBatchSubmitResponse {
@@ -6957,6 +7027,32 @@ export interface WaseelClaimUploadResponse {
   ratioOfNotAccepted?: number | null;
 }
 
+export interface ClaimSettlementRowResponse {
+  claimId?: number | null;
+  settlementNo?: string | null;
+  settlementDate?: string | null;
+  insuranceCompany?: string | null;
+  tpa?: string | null;
+  claimNo?: string | null;
+  claimDate?: string | null;
+  billedAmount?: number | null;
+  approvedAmount?: number | null;
+  rejectedAmount?: number | null;
+  patientShare?: number | null;
+  insuranceAmount?: number | null;
+  paidAmount?: number | null;
+  outstandingAmount?: number | null;
+  settlementStatus?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  medicalRecordNumber?: string | null;
+  sexAtBirth?: string | null;
+  dateOfBirth?: string | null;
+  invoiceNumber?: string | null;
+  visitNumber?: string | null;
+  visitType?: string | null;
+}
+
 export interface InsurancePayerReceivablesSummaryResponse {
   payerId?: number | null;
   payerName?: string | null;
@@ -6972,3 +7068,35 @@ export interface InsurancePayerReceivablesSummaryResponse {
   overallStatus?: string | null;
 }
 
+export interface PatientEncounterFieldAudit {
+  id: number;
+  patientEncounter: PatientEncounter;
+  fieldName: string;
+  operationType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  logDate: string;
+  logBy: string | null;
+}
+
+export interface EncounterAssessmentLog {
+  id: number;
+  encounterAssessment: EncounterAssessment;
+  fieldName: string;
+  operationType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  logDate: string;
+  logBy: string | null;
+}
+
+export interface EncounterPlanFieldAudit {
+  id: number;
+  encounterPlanId: number;
+  fieldName: string;
+  operationType: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  logDate: string;
+  logBy: string;
+}

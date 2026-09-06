@@ -4,7 +4,9 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 
 import {
-  useFilterRadiologyReportsQuery
+  PacsStudyDTO,
+  useFilterRadiologyReportsQuery,
+  useLazyGetStudyImageLinkByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 
 import {
@@ -28,19 +30,48 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faImage } from '@fortawesome/free-solid-svg-icons';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 import UserDateCell from '@/components/UserDateCell';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import StudyImageViewerModal from '@/pages/rad-module/radiologist-worklist/StudyImageViewrModal';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+  const status = e?.status || e?.originalStatus || e?.data?.status;
+
+  const message = e?.data?.message || e?.data?.detail || e?.error || fallbackMsg;
+
+  if (status === 400 || status === 409 || status === 422) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
+};
 const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
 
     const [page, setPage] = useState(0);
+    const dispatch = useAppDispatch();
   
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+ const [openStudiesModal, setOpenStudiesModal] = useState(false);
  
+ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -51,6 +82,8 @@ const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+    const [fetchStudyImageLinkByReportId] =
+      useLazyGetStudyImageLinkByReportIdQuery();
    const ordersQueryParams = useMemo(() => {
       if (!patient?.id) return skipToken;
   
@@ -69,7 +102,41 @@ const resolveCategoryLabel = (key?: any) =>
   radCategoriesLovQueryResponse?.object?.find(
     c => String(c.key) === String(key)
   )?.lovDisplayVale ?? key;
+const handleViewImage = async (reportId: number) => {
+  try {
+    const response =
+      await fetchStudyImageLinkByReportId(reportId).unwrap();
 
+    if (!response?.length) {
+      dispatch(
+        notify({
+          msg: 'No study found for this report',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (response.length === 1) {
+      window.open(
+        response[0].link,
+        '_blank',
+        'noopener,noreferrer'
+      );
+      return;
+    }
+
+    setStudies(response);
+    setOpenStudiesModal(true);
+
+  } catch (e) {
+    notifyFromApiError(
+      dispatch,
+      e,
+      'Failed to load radiology image'
+    );
+  }
+};
 
       const {
         data: ordersResponse,
@@ -351,7 +418,26 @@ const resolveCategoryLabel = (key?: any) =>
           />
         </div>
       )
-    }
+    },
+     {
+          key :'image',
+          title:<Translate>Image</Translate>,
+    
+         render:(rowData: any) => {
+         return <Whisper speaker={<Tooltip>View X-Ray Image</Tooltip>}>
+                        <span>
+                          <FontAwesomeIcon
+                            icon={faImage}
+                            className="icon-radiologist-worklist-size"
+                            style={{
+                              cursor: 'pointer',
+                              opacity: 1,
+                              color: '#1675e0'
+                            }}
+                            onClick={() => handleViewImage(rowData.id)}
+                          />
+                        </span>
+                      </Whisper>}},
 
   ];
 
@@ -382,6 +468,11 @@ const resolveCategoryLabel = (key?: any) =>
       disableDefaultTemplate
     />
   )}
+  <StudyImageViewerModal
+          open={openStudiesModal}
+          onClose={() => setOpenStudiesModal(false)}
+          studies={studies}
+        />
 
   </>);
 };

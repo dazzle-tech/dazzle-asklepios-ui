@@ -7,18 +7,15 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
-import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import {
-  useCancelPatientPrescriptionMutation,
-  useGetPatientPrescriptionQuery,
-  useSubmitPatientPrescriptionMutation
+  useGetPatientPrescriptionQuery, useLazyGetPatientPrescriptionQuery
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import { notify } from '@/utils/uiReducerActions';
-import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   faChartLine,
   faCheckDouble,
@@ -44,11 +41,32 @@ import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
 import AiAssistantPopup from './AiAssistantPopup';
 import AllergiesModal from './AllergiesModal';
-import IncompletePrescriptionModal from './components/IncompletePrescriptionModal';
+import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
+import {
+  useLazyGetPatientPrescriptionMedicationsQuery
+} from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+import {
+  useLazyGetTestsByOrderIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
 import WarningiesModal from './WarningiesModal';
+export type CompletionValidationItemType =
+  | 'PRESCRIPTION'
+  | 'DIAGNOSTIC_ORDER';
 
+export interface CompletionValidationItem {
+  id: number;
+
+  type: CompletionValidationItemType;
+
+  referenceNumber: string;
+
+  status?: string;
+
+  details?: string;
+}
+``
 type EncounterModalProps = {
   patient?: any;
   encounter?: any;
@@ -67,6 +85,7 @@ const Encounter = ({
   const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,6 +95,13 @@ const Encounter = ({
 
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
+
+  const [fetchPrescriptions] =
+    useLazyGetPatientPrescriptionQuery();
+  const [fetchPrescriptionMedications] =
+    useLazyGetPatientPrescriptionMedicationsQuery();
+  const [fetchDiagnosticOrderTests] =
+    useLazyGetTestsByOrderIdQuery();
   const encounterId = propsData?.encounter?.id;
   const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
     useLazyExistsPatientDiagnosisByEncounterIdQuery();
@@ -110,6 +136,13 @@ const Encounter = ({
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+
+
+  const [validationItems, setValidationItems] = useState<
+    CompletionValidationItem[]
+  >([]);
+
   const [edit, setEdit] = useState(() => {
     return propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
   });
@@ -206,13 +239,6 @@ const Encounter = ({
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
-  const [showDraftPrescriptionModal, setShowDraftPrescriptionModal] = useState(false);
-  const [pendingDraftPrescription, setPendingDraftPrescription] = useState<any>(null);
-  const [isDraftPrescriptionActionInProgress, setIsDraftPrescriptionActionInProgress] = useState(false);
-
-  const [submitPrescription] = useSubmitPatientPrescriptionMutation();
-  const [cancelPrescription] = useCancelPatientPrescriptionMutation();
-
   const patientIdForPrescriptions = patientToSend?.id ?? patientToSend?.key ?? null;
   const encounterIdForPrescriptions = propsData?.encounter?.id ?? localEncounter?.id ?? null;
 
@@ -226,25 +252,17 @@ const Encounter = ({
     },
     { skip: !patientIdForPrescriptions || !encounterIdForPrescriptions }
   );
+  const [fetchOrdersEncounterDraft] = useLazyFilterDiagnosticOrdersQuery();
+
 
   const draftPrescriptions = useMemo(() => {
     const list = patientPrescriptionsResponse?.data ?? [];
-    return list.filter((item: any) => String(item?.status ?? '').toUpperCase() === 'DRAFT');
+
+    return list.filter(
+      (item: any) =>
+        String(item?.status ?? '').toUpperCase() === 'DRAFT'
+    );
   }, [patientPrescriptionsResponse]);
-
-  const selectedDraftPrescription = draftPrescriptions?.[0] ?? pendingDraftPrescription;
-
-  const { data: draftMedicationResponse } = useGetPatientPrescriptionMedicationsQuery(
-    selectedDraftPrescription?.id
-      ? { prescriptionHeaderId: Number(selectedDraftPrescription.id), page: 0, size: 200, sort: 'id,desc' }
-      : (undefined as any),
-    { skip: !selectedDraftPrescription?.id }
-  );
-
-  const draftPrescriptionMedications = useMemo(() => {
-    const list = (draftMedicationResponse as any)?.data ?? [];
-    return Array.isArray(list) ? list : [];
-  }, [draftMedicationResponse]);
 
   useEffect(() => {
     if (location.state?.fromPage) {
@@ -252,19 +270,19 @@ const Encounter = ({
     }
   }, [location.state]);
 
-// useEffect(() => {
-//   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
-// }, [propsData?.viewMode, propsData?.readOnly]);
-useEffect(() => {
+  // useEffect(() => {
+  //   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
+  // }, [propsData?.viewMode, propsData?.readOnly]);
+  useEffect(() => {
 
-  const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
-  const isReadOnly = propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
-  const isMerged = patientToSend?.patientStatus === 'MERGED';
-  const isCompleted = encounterStatus === 'COMPLETED';
-  const isCancelled = encounterStatus === 'CANCELLED';
+    const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
+    const isReadOnly = propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
+    const isMerged = patientToSend?.patientStatus === 'MERGED';
+    const isCompleted = encounterStatus === 'COMPLETED';
+    const isCancelled = encounterStatus === 'CANCELLED';
 
-  setEdit(isReadOnly || isMerged || isCompleted || isCancelled);
-}, [propsData?.viewMode, propsData?.readOnly, propsData?.encounter?.status, localEncounter?.status, patientToSend?.patientStatus]);
+    setEdit(isReadOnly || isMerged || isCompleted || isCancelled);
+  }, [propsData?.viewMode, propsData?.readOnly, propsData?.encounter?.status, localEncounter?.status, patientToSend?.patientStatus]);
 
   useEffect(() => {
     if (
@@ -339,51 +357,322 @@ useEffect(() => {
     }
   };
 
-  const handleSubmitEncounter = async () => {
-    const draftPrescription = draftPrescriptions?.[0];
 
-    if (draftPrescription?.id) {
-      setPendingDraftPrescription(draftPrescription);
-      setShowDraftPrescriptionModal(true);
+  // const handleSubmitEncounter = async (): Promise<boolean> => {
+  //   const items: CompletionValidationItem[] = [];
+
+  //   const orders = await fetchOrdersEncounterDraft({
+  //     patientId: patientIdForPrescriptions,
+  //     encounterId: encounterIdForPrescriptions,
+  //     saveDraft: true
+  //   }).unwrap();
+
+  //   // Check prescriptions
+  //    draftPrescriptions.forEach((prescription: any) => {
+  //     items.push({
+  //       id: Number(prescription.id),
+  //       type: 'PRESCRIPTION',
+  //       referenceNumber:
+  //         prescription.prescriptionNum?.toString() ??
+  //         prescription.id?.toString(),
+  //       status: prescription.status
+  //     });
+  //   });
+
+  //   // Check diagnostic orders
+  //   for (const order of orders?.data ?? []) {
+  //     const orderId = Number(order?.id);
+
+  //     if (!orderId) {
+  //       continue;
+  //     }
+
+  //     const testsResponse = await fetchDiagnosticOrderTests({
+  //       orderId,
+  //       page: 0,
+  //       size: 500,
+  //       sort: 'id,desc'
+  //     }).unwrap();
+
+  //     const tests = testsResponse?.data ?? [];
+
+  //     // Empty order -> ignore
+  //     if (tests.length === 0) {
+  //       continue;
+  //     }
+
+  //     // At least one test is not cancelled
+  //     const hasActiveTest = tests.some((test: any) => {
+  //       const testStatus = String(test?.status ?? '').toUpperCase();
+
+  //       return !testStatus.includes('CANCEL');
+  //     });
+
+  //     // All tests are cancelled -> ignore
+  //     if (!hasActiveTest) {
+  //       continue;
+  //     }
+
+  //     items.push({
+  //       id: orderId,
+  //       type: 'DIAGNOSTIC_ORDER',
+  //       referenceNumber: order.orderNumber,
+  //       status: order.status
+  //     });
+  //   }
+
+
+  //   if (items.length > 0) {
+
+  //     setValidationItems(items);
+  //     setShowValidationModal(true);
+
+  //     return false;
+  //   }
+  //   await completeEncounterNow();
+
+  // };
+
+
+  const handleSubmitEncounter = async () => {
+    const items: CompletionValidationItem[] = [];
+
+// =====================================================
+// PRESCRIPTION VALIDATION
+// =====================================================
+if (patientIdForPrescriptions && encounterIdForPrescriptions) {
+  try {
+    // Get the same prescription list used by Prescription screen
+    const prescriptionsResponse = await fetchPrescriptions({
+      patientId: Number(patientIdForPrescriptions),
+      includeCanceled: true,
+      page: 0,
+      size: 500,
+      sort: 'prescriptionNum,desc'
+    }).unwrap();
+
+    const prescriptions = prescriptionsResponse?.data ?? [];
+
+    // Same patient matching logic as Prescription screen
+    const patientPrescriptions = prescriptions.filter(
+      (prescription: any) => {
+        const targetPatientId =
+          Number(patientIdForPrescriptions);
+
+        // 1. prescription.patientId
+        if (prescription?.patientId != null) {
+          const pPatientId =
+            Number(prescription.patientId);
+
+          if (
+            !Number.isNaN(pPatientId) &&
+            pPatientId === targetPatientId
+          ) {
+            return true;
+          }
+        }
+
+        // 2. prescription.patient.id
+        if (prescription?.patient?.id != null) {
+          const pPatientId =
+            Number(prescription.patient.id);
+
+          if (
+            !Number.isNaN(pPatientId) &&
+            pPatientId === targetPatientId
+          ) {
+            return true;
+          }
+        }
+
+      
+    
+
+        return false;
+      }
+    );
+
+    // Prefer exact encounter match
+    let encounterPrescriptions =
+      patientPrescriptions.filter(
+        (prescription: any) =>
+          prescription?.encounterId != null &&
+          Number(prescription.encounterId) ===
+            Number(encounterIdForPrescriptions)
+      );
+
+    // Fallback:
+    // If backend does not return encounterId,
+    // use the current DRAFT prescription for this patient.
+    if (encounterPrescriptions.length === 0) {
+      encounterPrescriptions =
+        patientPrescriptions.filter(
+          (prescription: any) =>
+            String(
+              prescription?.status ?? ''
+            ).toUpperCase() === 'DRAFT'
+        );
+    }
+
+  
+
+   for (const prescription of encounterPrescriptions) {
+  const prescriptionId = Number(
+    prescription?.id
+  );
+
+  if (!prescriptionId) {
+    continue;
+  }
+
+  // فقط Draft Prescriptions
+  if (
+    String(
+      prescription?.status ?? ''
+    ).toUpperCase() !== 'DRAFT'
+  ) {
+    continue;
+  }
+
+  const medicationsResponse =
+    await fetchPrescriptionMedications({
+      prescriptionHeaderId: prescriptionId,
+      page: 0,
+      size: 500,
+      sort: 'id,desc'
+    }).unwrap();
+
+  const medications =
+    medicationsResponse?.data ?? [];
+
+  // إذا ما فيه أدوية
+  if (medications.length === 0) {
+    continue;
+  }
+
+  const hasActiveMedication = medications.some(
+    (medication: any) => {
+      const status = String(
+        medication?.status ??
+        medication?.medicationStatus ??
+        ''
+      ).toUpperCase();
+
+      return !status.includes('CANCEL');
+    }
+  );
+
+  // كل الأدوية ملغية
+  if (!hasActiveMedication) {
+    continue;
+  }
+
+  items.push({
+    id: prescriptionId,
+    type: 'PRESCRIPTION',
+    referenceNumber:
+      prescription?.prescriptionNum?.toString() ??
+      prescriptionId.toString(),
+    status: prescription?.status
+  });
+}
+  } catch (error) {
+    console.error(
+      'Failed to validate prescriptions:',
+      error
+    );
+  }
+}
+
+    // =====================================================
+    // DIAGNOSTIC ORDER VALIDATION
+    // =====================================================
+    const orders = await fetchOrdersEncounterDraft({
+      patientId: patientIdForPrescriptions,
+      encounterId: encounterIdForPrescriptions,
+      saveDraft: true
+    }).unwrap();
+
+    console.log(
+      'VALIDATION DIAGNOSTIC ORDERS:',
+      orders
+    );
+
+    for (const order of orders?.data ?? []) {
+      const orderId = Number(order?.id);
+
+      if (!orderId) {
+        continue;
+      }
+
+      const testsResponse =
+        await fetchDiagnosticOrderTests({
+          orderId,
+          page: 0,
+          size: 500,
+          sort: 'id,desc'
+        }).unwrap();
+
+      const tests =
+        testsResponse?.data ?? [];
+
+      console.log(
+        'DIAGNOSTIC ORDER:',
+        order,
+        'TESTS:',
+        tests
+      );
+
+      // Empty order -> ignore
+      if (tests.length === 0) {
+        continue;
+      }
+
+      // At least one test is not cancelled
+      const hasActiveTest = tests.some(
+        (test: any) => {
+          const status = String(
+            test?.status ?? ''
+          ).toUpperCase();
+
+          return !status.includes('CANCEL');
+        }
+      );
+
+      // All tests cancelled -> ignore
+      if (!hasActiveTest) {
+        continue;
+      }
+
+      // Block completion
+      items.push({
+        id: orderId,
+        type: 'DIAGNOSTIC_ORDER',
+        referenceNumber: order.orderNumber,
+        status: order.status
+      });
+    }
+
+    console.log(
+      'FINAL VALIDATION ITEMS:',
+      items
+    );
+
+    if (items.length > 0) {
+      setValidationItems(items);
+      setShowValidationModal(true);
+      return;
+    }
+
+    if (localEncounter?.encounterType === 'EMERGENCY') {
+      setOpenDischargeModal(true);
       return;
     }
 
     await completeEncounterNow();
   };
 
-  const handleDraftPrescriptionAction = async (action: 'submit' | 'cancel') => {
-    if (!pendingDraftPrescription?.id) {
-      await completeEncounterNow();
-      return;
-    }
 
-    setIsDraftPrescriptionActionInProgress(true);
-
-    try {
-      if (action === 'submit') {
-        await submitPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
-        dispatch(notify({ msg: 'Prescription submitted successfully', sev: 'success' }));
-      } else {
-        await cancelPrescription({ id: Number(pendingDraftPrescription.id) }).unwrap();
-        dispatch(notify({ msg: 'Prescription cancelled', sev: 'info' }));
-      }
-
-      setShowDraftPrescriptionModal(false);
-      setPendingDraftPrescription(null);
-      await completeEncounterNow();
-    } catch (error: any) {
-      if (isUncoveredCashCancelled(error)) {
-        return;
-      }
-      const message =
-        action === 'submit'
-          ? 'Failed to submit prescription draft'
-          : 'Failed to cancel prescription draft';
-      dispatch(notify({ msg: error?.message || message, sev: 'error' }));
-    } finally {
-      setIsDraftPrescriptionActionInProgress(false);
-    }
-  };
 
   const handleAiMouseDown = (e: any) => {
     setIsAiDragging(true);
@@ -622,7 +911,7 @@ useEffect(() => {
                 >
                   Sick Leave
                 </MyButton>
-                
+
                 <VisitReportPrintButton
                   row={localEncounter}
                   systemColor={true}
@@ -632,11 +921,6 @@ useEffect(() => {
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
-                      if (localEncounter?.encounterType === 'EMERGENCY') {
-                        setOpenDischargeModal(true);
-                        return;
-                      }
-
                       if (!encounterId) {
                         dispatch(
                           notify({
@@ -647,7 +931,9 @@ useEffect(() => {
                         return;
                       }
 
-                      const exists = await checkDiagnosisExists({ encounterId }).unwrap();
+                      const exists = await checkDiagnosisExists({
+                        encounterId
+                      }).unwrap();
 
                       if (!exists) {
                         dispatch(
@@ -659,9 +945,10 @@ useEffect(() => {
                         return;
                       }
 
-                      handleSubmitEncounter();
+                      await handleSubmitEncounter();
                     } catch (error) {
-                      console.error('Diagnosis check error:', error);
+                      console.error('Completion validation error:', error);
+
                       dispatch(
                         notify({
                           msg: 'Failed to validate patient diagnosis',
@@ -714,48 +1001,48 @@ useEffect(() => {
             </div>
 
             <Divider />
-<div className="medical-sheets-tabs">
-  <MyButton
-    className={`medical-sheet-tab ${location.pathname === '/encounter' ? 'active' : ''}`}
-    onClick={() => {
-      if (onSheetNavigate) {
-        onSheetNavigate('');
-      } else {
-        navigate('/encounter', { state: sharedNavigationState });
-      }
-    }}
-  >
-    <FontAwesomeIcon icon={faClockRotateLeft} />
-    <Translate>Dashboard</Translate>
-  </MyButton>
+            <div className="medical-sheets-tabs">
+              <MyButton
+                className={`medical-sheet-tab ${location.pathname === '/encounter' ? 'active' : ''}`}
+                onClick={() => {
+                  if (onSheetNavigate) {
+                    onSheetNavigate('');
+                  } else {
+                    navigate('/encounter', { state: sharedNavigationState });
+                  }
+                }}
+              >
+                <FontAwesomeIcon icon={faClockRotateLeft} />
+                <Translate>Dashboard</Translate>
+              </MyButton>
 
-  {visibleSheets.map(({ code, name, icon, path }) => {
-    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
-    const isActive = location.pathname === fullPath;
+              {visibleSheets.map(({ code, name, icon, path }) => {
+                const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
+                const isActive = location.pathname === fullPath;
 
-    return (
-      <MyButton
-        key={code}
-        className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
-        onClick={() => {
-          if (onSheetNavigate) {
-            const relativePath = path.startsWith('/') ? path.slice(1) : path;
-            onSheetNavigate(relativePath);
-          } else {
-            navigate(fullPath, { state: sharedNavigationState });
-          }
-        }}
-       
-      >
-        {icon}
-        <span>
-          <Translate>{name}</Translate>
-        </span>
-      </MyButton>
-    );
-  })}
-</div>
-           
+                return (
+                  <MyButton
+                    key={code}
+                    className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      if (onSheetNavigate) {
+                        const relativePath = path.startsWith('/') ? path.slice(1) : path;
+                        onSheetNavigate(relativePath);
+                      } else {
+                        navigate(fullPath, { state: sharedNavigationState });
+                      }
+                    }}
+
+                  >
+                    {icon}
+                    <span>
+                      <Translate>{name}</Translate>
+                    </span>
+                  </MyButton>
+                );
+              })}
+            </div>
+
             <div className="content-with-sticky">
               <div className="main-content-area">
                 {outletContent !== undefined ? outletContent : (
@@ -844,17 +1131,22 @@ useEffect(() => {
         encounterId={encounterId ?? localEncounter?.id ?? null}
       />
 
-      <IncompletePrescriptionModal
-        open={showDraftPrescriptionModal}
-        setOpen={setShowDraftPrescriptionModal}
-        prescription={selectedDraftPrescription}
-        medications={draftPrescriptionMedications}
-        loading={isDraftPrescriptionActionInProgress}
-        onSubmit={() => handleDraftPrescriptionAction('submit')}
-        onCancel={() => handleDraftPrescriptionAction('cancel')}
-        onClose={() => setPendingDraftPrescription(null)}
-      />
 
+      <EncounterCompletionValidationModal
+        open={showValidationModal}
+        setOpen={setShowValidationModal}
+        items={validationItems}
+        onGoToPrescription={() => {
+          navigate('/encounter/prescription', {
+            state: sharedNavigationState
+          });
+        }}
+        onGoToDiagnosticOrders={() => {
+          navigate('/encounter/diagnostics-order', {
+            state: sharedNavigationState
+          });
+        }}
+      />
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}

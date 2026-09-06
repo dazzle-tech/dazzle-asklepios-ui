@@ -379,6 +379,15 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   setRecord={setDiagnosticsTest}
                 />
               </div>
+               <div className="container-of-field-diagnostic">
+                <MyInput
+               
+                  width="100%"
+                  fieldName="shortName"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                />
+              </div>
             </div>
 
             {diagnosticsTest.type === 'LABORATORY' && (
@@ -485,6 +494,14 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   required
                   width="100%"
                   fieldName="internalCode"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                />
+                 <MyInput
+                  
+                  width="100%"
+                  fieldLabel='Integration Code'
+                  fieldName="hl7IntegrationCode"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />

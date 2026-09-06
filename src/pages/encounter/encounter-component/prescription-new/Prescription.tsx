@@ -763,6 +763,7 @@ const Prescription = (props: Props) => {
       title: 'Instructions',
       flexGrow: 3,
       render: (rowData: any) => {
+
         const cleanJoin = (vals: any[], sep = ', ') =>
           vals
             .map(v => (v == null ? '' : String(v).trim()))

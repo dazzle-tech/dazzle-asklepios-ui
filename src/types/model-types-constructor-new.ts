@@ -24,7 +24,11 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
-  admin: false
+  admin: false,
+
+  allowOngoingVisit: false,
+  canUnDischargeUrgentCare: false,
+  canUnCompleteEncounter: false,
 };
 
 // ------------------- Candidate -------------------
@@ -176,7 +180,11 @@ export const newEncounterAttachment: modelTypes.EncounterAttachment = {
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined
+  sourceId: undefined,
+  documentDefinitionId: undefined,
+  documentVersionId: undefined,
+  documentDefinition: undefined,
+  documentVersion: undefined
 };
 
 export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
@@ -185,7 +193,9 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined
+  sourceId: undefined,
+  documentDefinitionId: undefined,
+  documentVersionId: undefined
 };
 
 // ------------------- Service -------------------
@@ -327,8 +337,9 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
   type: '',
   name: '',
+  shortName:'',
   internalCode: '',
-
+ hl7IntegrationCode:'',
   ageSpecific: false,
   ageGroupList: [],
 
@@ -2266,6 +2277,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
   activeIngredientId: null,
+  otherMedicationName: null,
   instructionsType: null,
   instructions: null,
   dose: null,
@@ -3449,8 +3461,10 @@ export type WaseelItemMappingSearchParams = {
   page: number;
   size: number;
   sort?: string;
-  search?: string;
   itemType?: string;
+  itemName?: string;
+  itemCode?: string;
+  sbsCode?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };
@@ -3494,6 +3508,7 @@ export const newPriceListSetupItem: modelTypes.PriceListSetupItem = {
   sourceId: undefined,
 
   itemCode: undefined,
+  nonStandardCode: undefined,
   itemName: undefined,
 
 
@@ -3716,7 +3731,9 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   invoiceTotalAmount: 0,
   invoicePaidAmount: 0,
   invoiceOutstandingAmount: 0,
-  items: []
+  items: [],
+  coverageType: null,
+  patientInsuranceId: null
 };
 
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {

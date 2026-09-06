@@ -19,9 +19,9 @@ type PatientSearchCriterion =
   | 'patientMrn'
   | 'documentNo'
   | 'fullName'
-  // | 'archivingNumber'
-  // | 'phoneNumber'
-  // | 'dob';
+// | 'archivingNumber'
+// | 'phoneNumber'
+// | 'dob';
 
 type PatientSearchCriterionOrEmpty = PatientSearchCriterion | '';
 
@@ -116,11 +116,11 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     const mapLabel = (value: PatientSearchCriterion) => {
       switch (value) {
         case 'patientMrn':
-          return <Translate>MRN</Translate>;
+          return "MRN";
         case 'documentNo':
-          return <Translate>Document Number</Translate>;
+          return "Document Number";
         case 'fullName':
-          return <Translate>Full Name</Translate>;
+          return "Full Name";
         // case 'archivingNumber':
         //   return <Translate>Archiving Number</Translate>;
         // case 'phoneNumber':
@@ -134,7 +134,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       .map(v => ({ label: mapLabel(v), value: v }))
       .map(option => ({
         ...option,
-        label: <span style={{ textTransform: 'capitalize' }}>{option.label}</span>
+        label: option.label
       }));
   }, [effectiveCriteriaOptions]);
 
@@ -145,15 +145,6 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       return effectiveCriteriaOptions[0] ?? '';
     });
   }, [effectiveCriteriaOptions]);
-
-  useEffect(() => {
-    // reset local inputs when criterion changes; also clear selection in parent
-    setSearchKeyword('');
-    setDobValue(null);
-    onChange(null);
-    setResults([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCriterion]);
 
   useEffect(() => {
     // external reset (e.g. page-level Clear button)
@@ -307,8 +298,14 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
             record={{ searchCriteria: selectedCriterion }}
             setRecord={r => {
               const newValue = r?.searchCriteria;
-              if (!newValue) return;
+
+              if (!newValue || newValue === selectedCriterion) return;
+
               setSelectedCriterion(newValue);
+              setSearchKeyword('');
+              setDobValue(null);
+              setResults([]);
+              onChange(null);
             }}
             placeholder="Select Search Criteria"
           />
@@ -339,7 +336,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                   textOverflow: 'ellipsis'
                 }}
               >
-                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {value?.fullName ?? ''}
                 </strong>
                 <span style={{ marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -385,30 +382,31 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
               </span>
             )}
           </div>
-        ) 
-        // : selectedCriterion === 'dob' ? (
-        //   <div style={{ flex: 1, minWidth: 0 }}>
-        //     <DatePicker
-        //       format="yyyy-MM-dd"
-        //       placeholder="DOB"
-        //       value={dobValue}
-        //       onChange={v => setDobValue(v)}
-        //       oneTap
-        //       style={{ width: '100%', height: inputHeightPx }}
-        //     />
-        //   </div>
-        // )
-         : (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Input
-              placeholder="Search Patients"
-              value={searchKeyword}
-              onChange={v => setSearchKeyword(v)}
-              disabled={!selectedCriterion}
-              style={{ width: '100%', height: inputHeightPx }}
-            />
-          </div>
-        )}
+        )
+          // : selectedCriterion === 'dob' ? (
+          //   <div style={{ flex: 1, minWidth: 0 }}>
+          //     <DatePicker
+          //       format="yyyy-MM-dd"
+          //       placeholder="DOB"
+          //       value={dobValue}
+          //       onChange={v => setDobValue(v)}
+          //       oneTap
+          //       style={{ width: '100%', height: inputHeightPx }}
+          //     />
+          //   </div>
+          // )
+          : (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Input
+                key={selectedCriterion}
+                placeholder="Search Patients"
+                value={searchKeyword}
+                onChange={v => setSearchKeyword(v)}
+                disabled={!selectedCriterion}
+                style={{ width: '100%', height: inputHeightPx }}
+              />
+            </div>
+          )}
       </div>
 
       {showPatientResults && (

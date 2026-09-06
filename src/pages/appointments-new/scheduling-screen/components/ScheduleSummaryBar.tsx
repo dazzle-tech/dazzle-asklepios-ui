@@ -1,6 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 
 type Props = {
   slotSummaryBarStats: any;
@@ -40,7 +41,7 @@ const ScheduleSummaryBar = ({
           <div className="appointments-slot-summary-scope">
             <span className="appointments-slot-summary-scope-date">{slotSummaryBarStats.rangeLabel}</span>
             <span className="appointments-slot-summary-scope-meta">
-              {departmentScopeLabel}
+             <Translate>{departmentScopeLabel}</Translate> 
               {selectedResources?.resourceKey != null && String(selectedResources.resourceKey).trim() !== ''
                 ? ` · ${resourceNameById.get(String(selectedResources.resourceKey))?.trim() || 'Resource'}`
                 : selectedResourceTypeValue?.value

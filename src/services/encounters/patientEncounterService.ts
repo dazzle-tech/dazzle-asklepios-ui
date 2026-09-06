@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
-import { PatientEncounter, PatientEncounterDischarge } from '@/types/model-types-new';
+import { PatientEncounter, PatientEncounterDischarge, PatientEncounterFieldAudit } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -62,23 +62,23 @@ export const patientEncounterService = createApi({
         method: 'PUT',
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
-    }), 
-     updateHistoryOfPresentIllness: builder.mutation<
-  PatientEncounter,
-  { id: Id; historyOfPresentIllness: string }
->({
-  query: ({ id, historyOfPresentIllness }) => ({
-    url: `/api/patient/encounter/${id}/history-of-present-illness`,
-    method: 'PATCH',
-    body: {
-      historyOfPresentIllness
-    }
-  }),
-  invalidatesTags: (_res, _err, { id }) => [
-    { type: 'PatientEncounter', id },
-    'PatientEncounter'
-  ]
-}),
+    }),
+    updateHistoryOfPresentIllness: builder.mutation<
+      PatientEncounter,
+      { id: Id; historyOfPresentIllness: string }
+    >({
+      query: ({ id, historyOfPresentIllness }) => ({
+        url: `/api/patient/encounter/${id}/history-of-present-illness`,
+        method: 'PATCH',
+        body: {
+          historyOfPresentIllness
+        }
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
+    }),
     countTodayEncountersByFacility: builder.query<number, { facilityId: Id }>({
       query: ({ facilityId }) => ({
         url: `/api/patient/encounter/facility/${facilityId}/count/today`,
@@ -103,7 +103,7 @@ export const patientEncounterService = createApi({
         hasPrescription?: boolean;
         hasOrder?: boolean;
         isObserved?: boolean;
-         practitionerId?: Id;  
+        practitionerId?: Id;
       } & PagedParams
     >({
       query: ({
@@ -120,7 +120,7 @@ export const patientEncounterService = createApi({
         hasPrescription,
         hasOrder,
         isObserved,
-         practitionerId,
+        practitionerId,
         page,
         size,
         sort = 'id,desc'
@@ -144,7 +144,7 @@ export const patientEncounterService = createApi({
             hasPrescription,
             hasOrder,
             isObserved,
-             practitionerId, 
+            practitionerId,
             page,
             size,
             sort
@@ -243,6 +243,92 @@ export const patientEncounterService = createApi({
       providesTags: res =>
         res
           ? [
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id,
+            })),
+            'PatientEncounter',
+          ]
+          : ['PatientEncounter'],
+    }),
+
+
+    searchBillingPendingQueue: builder.query<
+      PagedResult<PatientEncounter>,
+      {
+        facilityId?: Id;
+        departmentId?: Id;
+        fromDate?: string;
+        toDate?: string;
+        statuses?: string | string[];
+        statusIn?: string[];
+        patientName?: string;
+        mrn?: string;
+        encounterNumber?: string;
+        encounterReasons?: string[];
+        chiefComplaint?: string;
+        priorities?: string[];
+        practitionerId?: Id;
+      } & PagedParams
+    >({
+      query: ({
+        facilityId,
+        departmentId,
+        fromDate,
+        toDate,
+        statuses,
+        statusIn,
+        patientName,
+        mrn,
+        encounterNumber,
+        encounterReasons,
+        chiefComplaint,
+        priorities,
+        practitionerId,
+        page,
+        size,
+        sort = 'id,desc',
+      }) => {
+        const src = statuses ?? statusIn;
+
+        const statusesCsv = Array.isArray(src)
+          ? src.join(',')
+          : src;
+
+        return {
+          url: `/api/patient/encounter/billing-pending-queue`,
+          method: 'GET',
+          params: {
+            facilityId,
+            departmentId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterNumber,
+            encounterReasons,
+            chiefComplaint,
+            priorities,
+            practitionerId,
+            page,
+            size,
+            sort,
+          },
+        };
+      },
+
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : response?.content ?? [];
+
+        return mapPaged(rows, meta);
+      },
+
+      providesTags: res =>
+        res
+          ? [
               ...res.data.map(e => ({
                 type: 'PatientEncounter' as const,
                 id: e.id,
@@ -251,6 +337,7 @@ export const patientEncounterService = createApi({
             ]
           : ['PatientEncounter'],
     }),
+
 
     getPreviousEncountersSameDepartment: builder.query<
       PagedResult<PatientEncounter>,
@@ -343,6 +430,16 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+    reopenEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/reopen`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
+    }),
 
     closeEncounterForBilling: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
@@ -354,6 +451,22 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+
+    reassignPractitioner: builder.mutation<
+      PatientEncounter,
+      { encounterId: Id; practitionerId: Id }
+    >({
+      query: ({ encounterId, practitionerId }) => ({
+        url: `/api/patient/encounter/${encounterId}/reassign-practitioner`,
+        method: 'PUT',
+        body: { practitionerId }
+      }),
+      invalidatesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId },
+        'PatientEncounter'
+      ]
+    }),
+
     countTodayDepartmentCancelled: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/cancelled`,
@@ -364,6 +477,30 @@ export const patientEncounterService = createApi({
     getEncounterById: builder.query<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
+    }),
+    getEncounterCoverage: builder.query<
+      {
+        encounterId: number;
+        coverageType: 'SELF_PAY' | 'INSURANCE' | null;
+        patientInsuranceId: number | null;
+        insuranceVisit?: boolean;
+      },
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter/${encounterId}/coverage`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId }
+      ]
+    }),
+    getEncounterAudit: builder.query<PatientEncounterFieldAudit[], { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/audit`,
         method: 'GET'
       }),
       providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
@@ -468,16 +605,16 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
     getEncountersByIds: builder.query<PatientEncounter[], { ids: Id[] }>({
-  query: ({ ids }) => ({
-    url: `/api/patient/encounter/by-ids`,
-    method: 'POST',
-    body: ids
-  }),
-  providesTags: res =>
-    res
-      ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
-      : ['PatientEncounter']
-}),
+      query: ({ ids }) => ({
+        url: `/api/patient/encounter/by-ids`,
+        method: 'POST',
+        body: ids
+      }),
+      providesTags: res =>
+        res
+          ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
+          : ['PatientEncounter']
+    }),
   }),
 
 });
@@ -495,6 +632,7 @@ export const {
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
   useCloseEncounterForBillingMutation,
+  useReassignPractitionerMutation,
 
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
@@ -507,6 +645,7 @@ export const {
   useCountTodayDepartmentCancelledQuery,
   useGetEncounterByIdQuery,
   useLazyGetEncounterByIdQuery,
+  useGetEncounterCoverageQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery,
@@ -517,8 +656,13 @@ export const {
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
   useCountDepartmentDischargedByDateRangeQuery,
-  useGetEncountersByIdsQuery
-  ,useLazyGetEncountersByIdsQuery,
+  useGetEncountersByIdsQuery,
+  useLazyGetEncountersByIdsQuery,
   useUpdateHistoryOfPresentIllnessMutation,
-  useStartTriageEncounterMutation
+  useStartTriageEncounterMutation,
+  useSearchBillingPendingQueueQuery,
+  useLazySearchBillingPendingQueueQuery,
+  useReopenEncounterMutation,
+  useGetEncounterAuditQuery,
+  useLazyGetEncounterAuditQuery
 } = patientEncounterService;
