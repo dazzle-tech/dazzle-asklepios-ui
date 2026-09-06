@@ -7,14 +7,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CompletionValidationItem } from './Encounter';
 
-type EncounterCompletionValidationModalProps = {
+interface EncounterCompletionValidationModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   items: CompletionValidationItem[];
 
-  onGoToPrescription?: () => void;
-  onGoToDiagnosticOrders?: () => void;
-};
+  onGoToMedicalSheet: (path: string) => void;
+  onGoToPrescription: () => void;
+  onGoToDiagnosticOrders: () => void;
+}
 
 const sectionCardStyle: React.CSSProperties = {
   padding: '12px',
@@ -35,13 +36,44 @@ const referenceStyle: React.CSSProperties = {
   fontSize: '14px'
 };
 
+const sectionTitleStyle: React.CSSProperties = {
+  marginBottom: '12px',
+  fontWeight: 600
+};
+
+const missingItemStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  fontSize: '13px',
+  marginBottom: '6px'
+};
+
+const goButtonStyle: React.CSSProperties = {
+  marginTop: '8px',
+  backgroundColor: 'var(--primary-color)',
+  color: '#FFFFFF',
+  borderColor: 'var(--primary-color)'
+};
+
 const EncounterCompletionValidationModal = ({
   open,
   setOpen,
   items,
+  onGoToMedicalSheet,
   onGoToPrescription,
   onGoToDiagnosticOrders
 }: EncounterCompletionValidationModalProps) => {
+  const medicalSheets = useMemo(
+    () => items.filter(item => item.type === 'MEDICAL_SHEET'),
+    [items]
+  );
+
+  const insuranceItems = useMemo(
+    () => items.filter(item => item.type === 'INSURANCE'),
+    [items]
+  );
+
   const prescriptions = useMemo(
     () => items.filter(item => item.type === 'PRESCRIPTION'),
     [items]
@@ -51,6 +83,12 @@ const EncounterCompletionValidationModal = ({
     () => items.filter(item => item.type === 'DIAGNOSTIC_ORDER'),
     [items]
   );
+
+  const totalItems =
+    medicalSheets.length +
+    insuranceItems.length +
+    prescriptions.length +
+    diagnosticOrders.length;
 
   return (
     <MyModal
@@ -67,6 +105,9 @@ const EncounterCompletionValidationModal = ({
       hideActionBtn
       content={
         <>
+          {/* =====================================================
+              HEADER
+          ===================================================== */}
           <div
             style={{
               backgroundColor: '#FFF7E6',
@@ -91,21 +132,168 @@ const EncounterCompletionValidationModal = ({
               }}
             >
               <Translate>
-                Please review the following pending items before completing the
-                visit.
+                Please review the following incomplete or pending items before
+                completing the visit.
               </Translate>
             </div>
+
+            {totalItems > 0 && (
+              <div
+                style={{
+                  marginTop: '8px',
+                  fontSize: '12px',
+                  color: '#8C5A00',
+                  fontWeight: 500
+                }}
+              >
+                {totalItems}{' '}
+                <Translate>
+                  validation item(s) require attention.
+                </Translate>
+              </div>
+            )}
           </div>
 
+          {/* =====================================================
+              MEDICAL SHEETS
+          ===================================================== */}
+          {medicalSheets.length > 0 &&
+            medicalSheets.map(item => {
+              const missingItems = item.missingItems ?? [];
+
+              return (
+                <React.Fragment
+                  key={`medical-sheet-${item.id}-${item.medicalSheetCode}`}
+                >
+                  <Divider />
+
+                  <h5 style={sectionTitleStyle}>
+                    <Translate>
+                      {item.medicalSheetName ?? item.referenceNumber}
+                    </Translate>
+                  </h5>
+
+                  <div style={sectionCardStyle}>
+                    {missingItems.length > 0 ? (
+                      <div>
+                        {missingItems.map((missingItem, index) => (
+                          <div
+                            key={`${item.id}-missing-${index}`}
+                            style={missingItemStyle}
+                          >
+                            <FontAwesomeIcon
+                              icon={faTriangleExclamation}
+                            />
+
+                            <span>{missingItem}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      item.details && (
+                        <div
+                          style={{
+                            fontSize: '13px',
+                            lineHeight: 1.5
+                          }}
+                        >
+                          {item.details}
+                        </div>
+                      )
+                    )}
+
+                    {item.status && (
+                      <div style={statusStyle}>
+                        <Translate>Status</Translate>: {item.status}
+                      </div>
+                    )}
+                  </div>
+
+                  {item.medicalSheetPath && (
+                    <MyButton
+                      style={goButtonStyle}
+                      onClick={() => {
+                        setOpen(false);
+                        onGoToMedicalSheet(item.medicalSheetPath as string);
+                      }}
+                    >
+                      <Translate>
+                        Go To {item.medicalSheetName ?? 'Medical Sheet'}
+                      </Translate>
+                    </MyButton>
+                  )}
+                </React.Fragment>
+              );
+            })}
+
+          {/* =====================================================
+              INSURANCE
+          ===================================================== */}
+          {insuranceItems.length > 0 && (
+            <>
+              <Divider />
+
+              <h5 style={sectionTitleStyle}>
+                <Translate>Insurance Validation</Translate>
+              </h5>
+
+              {insuranceItems.map(item => (
+                <div
+                  key={`insurance-${item.id}`}
+                  style={{
+                    ...sectionCardStyle,
+                    borderColor: '#FFD591',
+                    backgroundColor: '#FFFBE6'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: 600,
+                      fontSize: '14px'
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={faTriangleExclamation}
+                    />
+
+                    <Translate>
+                      Insurance requirements are incomplete
+                    </Translate>
+                  </div>
+
+                  {item.details && (
+                    <div
+                      style={{
+                        marginTop: '8px',
+                        fontSize: '13px',
+                        lineHeight: 1.5
+                      }}
+                    >
+                      {item.details}
+                    </div>
+                  )}
+
+                  {item.status && (
+                    <div style={statusStyle}>
+                      <Translate>Status</Translate>: {item.status}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* =====================================================
+              PRESCRIPTIONS
+          ===================================================== */}
           {prescriptions.length > 0 && (
             <>
               <Divider />
 
-              <h5
-                style={{
-                  marginBottom: '12px'
-                }}
-              >
+              <h5 style={sectionTitleStyle}>
                 <Translate>
                   Pending Prescriptions ({prescriptions.length})
                 </Translate>
@@ -113,50 +301,7 @@ const EncounterCompletionValidationModal = ({
 
               {prescriptions.map(item => (
                 <div
-                  key={item.id}
-                  style={sectionCardStyle}
-                >
-                  <div style={referenceStyle}>
-                    {item.referenceNumber}
-                  </div>
-
-                  {item.status && (
-                    <div style={statusStyle}>
-                      Status: {item.status}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              <MyButton
-                style={{ marginTop: '8px' }}
-                onClick={() => {
-                  setOpen(false);
-                  onGoToPrescription?.();
-                }}
-              >
-                <Translate>Go To Prescription</Translate>
-              </MyButton>
-            </>
-          )}
-
-          {diagnosticOrders.length > 0 && (
-            <>
-              <Divider />
-
-              <h5
-                style={{
-                  marginBottom: '12px'
-                }}
-              >
-                <Translate>
-                  Pending Diagnostic Orders ({diagnosticOrders.length})
-                </Translate>
-              </h5>
-
-              {diagnosticOrders.map(item => (
-                <div
-                  key={item.id}
+                  key={`prescription-${item.id}`}
                   style={sectionCardStyle}
                 >
                   <div style={referenceStyle}>
@@ -167,7 +312,8 @@ const EncounterCompletionValidationModal = ({
                     <div
                       style={{
                         marginTop: '4px',
-                        fontSize: '13px'
+                        fontSize: '13px',
+                        lineHeight: 1.5
                       }}
                     >
                       {item.details}
@@ -176,17 +322,71 @@ const EncounterCompletionValidationModal = ({
 
                   {item.status && (
                     <div style={statusStyle}>
-                      Status: {item.status}
+                      <Translate>Status</Translate>: {item.status}
                     </div>
                   )}
                 </div>
               ))}
 
               <MyButton
-                style={{ marginTop: '8px' }}
+                style={goButtonStyle}
                 onClick={() => {
                   setOpen(false);
-                  onGoToDiagnosticOrders?.();
+                  onGoToPrescription();
+                }}
+              >
+                <Translate>Go To Prescription</Translate>
+              </MyButton>
+            </>
+          )}
+
+          {/* =====================================================
+              DIAGNOSTIC ORDERS
+          ===================================================== */}
+          {diagnosticOrders.length > 0 && (
+            <>
+              <Divider />
+
+              <h5 style={sectionTitleStyle}>
+                <Translate>
+                  Pending Diagnostic Orders ({diagnosticOrders.length})
+                </Translate>
+              </h5>
+
+              {diagnosticOrders.map(item => (
+                <div
+                  key={`diagnostic-${item.id}`}
+                  style={sectionCardStyle}
+                >
+                  <div style={referenceStyle}>
+                    {item.referenceNumber}
+                  </div>
+
+                  {item.details && (
+                    <div
+                      style={{
+                        marginTop: '4px',
+                        fontSize: '13px',
+                        lineHeight: 1.5
+                      }}
+                    >
+                      {item.details}
+                    </div>
+                  )}
+
+                  {item.status && (
+                    <div style={statusStyle}>
+                      <Translate>Status</Translate>: {item.status}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <MyButton
+                style={goButtonStyle}
+                onClick={() => {
+                  setOpen(false);
+                  onGoToDiagnosticOrders();
                 }}
               >
                 <Translate>Go To Diagnostic Orders</Translate>
@@ -194,15 +394,25 @@ const EncounterCompletionValidationModal = ({
             </>
           )}
 
+          {/* =====================================================
+              FOOTER
+          ===================================================== */}
           <Divider />
 
           <div
             style={{
               display: 'flex',
-              justifyContent: 'flex-end'
+              justifyContent: 'flex-end',
+              alignItems: 'center'
             }}
           >
-        
+            <MyButton
+              style={goButtonStyle}
+              appearance="ghost"
+              onClick={() => setOpen(false)}
+            >
+              <Translate>Close</Translate>
+            </MyButton>
           </div>
         </>
       }

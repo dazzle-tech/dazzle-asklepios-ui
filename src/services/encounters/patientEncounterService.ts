@@ -5,6 +5,30 @@ import { PatientEncounter, PatientEncounterDischarge, PatientEncounterFieldAudit
 
 type Id = number | string;
 
+type PatientEncounterCompletionValidation = {
+  encounterId: number;
+  coverageType: 'SELF_PAY' | 'INSURANCE' | null;
+  patientInsuranceId: number | null;
+  insuranceVisit: boolean;
+
+  chiefComplaint: boolean;
+  historyOfPresentIllness: boolean;
+  physicalExaminationSummary: boolean;
+  primaryDiagnosis: boolean;
+  assessment: boolean;
+  treatmentPlan: boolean;
+
+  medicalHistory: boolean;
+  surgicalHistory: boolean;
+  socialHistory: boolean;
+
+  progressNotes: boolean;
+  vitalSigns: boolean;
+  bodyMeasurements: boolean;
+  canComplete: boolean;
+  missing: string[];
+};
+
 type PagedParams = {
   page: number;
   size: number;
@@ -498,6 +522,21 @@ export const patientEncounterService = createApi({
         { type: 'PatientEncounter', id: encounterId }
       ]
     }),
+
+    getEncounterCompletionValidation: builder.query<
+      PatientEncounterCompletionValidation,
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter/${encounterId}/completion-validation`,
+        method: 'GET',
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId },
+      ],
+    }),
+
+    
     getEncounterAudit: builder.query<PatientEncounterFieldAudit[], { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/audit`,
@@ -646,6 +685,8 @@ export const {
   useGetEncounterByIdQuery,
   useLazyGetEncounterByIdQuery,
   useGetEncounterCoverageQuery,
+  useGetEncounterCompletionValidationQuery,
+  useLazyGetEncounterCompletionValidationQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery,
