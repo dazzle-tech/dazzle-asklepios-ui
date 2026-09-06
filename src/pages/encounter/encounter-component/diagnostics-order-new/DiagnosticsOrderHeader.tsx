@@ -140,7 +140,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               loading={isFetching}
               onClick={handleSaveOrders}
               prefixIcon={() => <PlusIcon />}
-              disabled={hasOpenOrder || isNurse}
+              disabled={hasOpenOrder || isNurse || edit}
             >
               New Order
             </MyButton>
@@ -232,13 +232,13 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <FontAwesomeIcon icon={faVial} /> Request New TestSetup
           </MyButton> */}
 
-          <MyButton disabled={isSubmitDisabled} onClick={() => setRecallFavoriteModal(true)}>
+          <MyButton disabled={isSubmitDisabled || edit} onClick={() => setRecallFavoriteModal(true)}>
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
           </MyButton>
 
           <MyButton
             onClick={() => setOpenValidationSummaryModal(true)}
-            disabled={isSubmitDisabled || isNurse}
+            disabled={isSubmitDisabled || isNurse || edit}
             prefixIcon={() => <CheckIcon />}
           >
             Sign &amp; Submit
@@ -257,19 +257,19 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <Translate>Show Canceled</Translate>
             </Checkbox>
 
-            <MyButton disabled={isSubmitDisabled || isNurse} onClick={() => setOpenTestsModal(true)}>
+            <MyButton disabled={isSubmitDisabled || isNurse || edit} onClick={() => setOpenTestsModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> <Translate>Add Test</Translate>
             </MyButton>
 
             <MyButton
-              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)}
+              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)  || edit}
               prefixIcon={() => <CloseOutlineIcon />}
               onClick={OpenConfirmDeleteModel}
             >
               Cancel
             </MyButton>
 
-            <MyButton disabled={isNurse || selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
+            <MyButton disabled={isNurse || selectedRows.length === 0 || edit} onClick={() => setBulkDepartmentModalOpen(true)}>
               Assign Department
             </MyButton>
           </div>

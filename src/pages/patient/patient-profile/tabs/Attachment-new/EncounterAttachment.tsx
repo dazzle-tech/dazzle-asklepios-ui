@@ -20,6 +20,7 @@ import {
     useGetDocumentQuery,
     useGetDocumentVersionsQuery
 } from '@/services/patients/documentManagementService';
+import { useLocation } from 'react-router-dom';
 
 const DocumentDefinitionCell = ({ row }: { row: EncounterAttachmentType }) => {
     const nested = row.documentDefinition;
@@ -58,7 +59,8 @@ const DocumentVersionCell = ({ row }: { row: EncounterAttachmentType }) => {
     return <>{matched?.version != null ? `v${matched.version}` : '-'}</>;
 };
 
-const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
+const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId, ...props }) => {
+    const location = useLocation();
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<EncounterAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -67,6 +69,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     const [previewFileName, setPreviewFileName] = useState<string>('');
     const [previewFileType, setPreviewFileType] = useState<string>('');
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const edit = props.edit ?? location.state?.edit ?? false;
     const dispatch = useAppDispatch();
 
     // Pagination state
@@ -351,7 +354,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={!localEncounter?.id && !localEncounter?.key}
+                    disabled={(!localEncounter?.id && !localEncounter?.key) || edit}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>

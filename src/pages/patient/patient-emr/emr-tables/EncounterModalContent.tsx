@@ -146,8 +146,8 @@ const EncounterModalContent: React.FC<Props> = ({ patient, encounter }) => {
       pathname: activeSheet ? `/encounter/${activeSheet}` : '/encounter',
       search: '',
       hash: '',
-      state: { patient, encounter, fromPage: 'PatientEMR', viewMode: 'readOnly' },
-      key: 'modal'
+      state: { patient, encounter, fromPage: 'PatientEMR', viewMode: 'readOnly', edit: true, },
+      key: 'modal',
     },
     navigationType: 'POP' as const
   };
