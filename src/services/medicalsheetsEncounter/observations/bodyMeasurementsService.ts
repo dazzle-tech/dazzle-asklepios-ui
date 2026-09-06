@@ -21,6 +21,9 @@ export type SpringPage<T> = {
 export type BodyMeasurementsResponseVM = {
   weight: number | null;
   height: number | null;
+  encounterId: number | null;
+  encounterNumber: string | null;
+  isActive: boolean |null;
 };
 
 export type WeightResponseVM = {
