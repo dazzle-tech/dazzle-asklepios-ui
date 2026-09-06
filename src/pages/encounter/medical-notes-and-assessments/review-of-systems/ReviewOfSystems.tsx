@@ -234,7 +234,7 @@ const handleClearSection = async () => {
           <div className="top-div">
             <div className="bt-right">
               <MyButton
-                disabled={!selectedSystem?.key}
+                disabled={!selectedSystem?.key || edit}
                 onClick={handleClearSection}
               >
                 Clear
@@ -244,6 +244,7 @@ const handleClearSection = async () => {
               onClick={() => {
                 setOpenModel(!openModel);
               }}
+              disabled={edit}
               prefixIcon={() => <icons.List />}
             >
               Findings
@@ -263,7 +264,7 @@ const handleClearSection = async () => {
               </div>
             )}
           <div className="system-container">
-            <div className="system-style">
+            <div className="system-style filter-form-disable-fix">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}

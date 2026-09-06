@@ -186,7 +186,7 @@ const queryParams =
       useGetLovValuesByCodeQuery('RAD_CATEGORIES');
 
     const tableFilters = (
-      <Form fluid layout="inline">
+      <Form fluid layout="inline" className="filter-form-disable-fix">
         <MyInput
           column
           width={140}

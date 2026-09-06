@@ -318,7 +318,7 @@ const PrescriptionTable = ({
   const tableButtons = (
     <div className="bt-div">
       <div className="bt-right">
-        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
+        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)} className="show-cancelled">
           Show cancelled
         </Checkbox>
       </div>
