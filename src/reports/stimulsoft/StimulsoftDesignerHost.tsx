@@ -119,6 +119,15 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
         };
       };
 
+      const bindActiveReport = (targetReport?: any) => {
+        const next = targetReport || designer.report || reportRef.current;
+        if (!next) return;
+        attachStimulsoftProxyHeaders(next);
+        bindDataRequest(next);
+        enableDynamicStimulsoftApis(Stimulsoft, next);
+        reportRef.current = next;
+      };
+
       bindDataRequest(report);
 
       registerSchemaOnReport(Stimulsoft, report, schemaRef.current);
@@ -140,6 +149,17 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
 
       designer.onSaveReport = takeSavedJson;
       designer.onSaveAsReport = takeSavedJson;
+
+      if (typeof designer.onBeginProcessData !== 'undefined') {
+        designer.onBeginProcessData = (args: any, callback?: any) => {
+          const target = args?.report || designer.report || reportRef.current;
+          bindActiveReport(target);
+          prepareStimulsoftDataRequest(target, args);
+          if (tryFulfillStimulsoftApiRequest(args, callback)) {
+            return;
+          }
+        };
+      }
 
       const bindPreviewReport = (previewReport: any) => {
         if (!previewReport || previewReport.__stiPreviewBound) return;
@@ -179,6 +199,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
       if (jsObject && originalReceive) {
         jsObject.receveFromServer = (...args: any[]) => {
           const result = originalReceive(...args);
+          bindActiveReport(designer.report);
           if (cacheTimerRef.current) window.clearTimeout(cacheTimerRef.current);
           cacheTimerRef.current = window.setTimeout(() => {
             readLiveJson();

@@ -100,6 +100,17 @@ export const attachStimulsoftProxyHeaders = (report: any) => {
   report.httpHeadersContainer = [...withoutAuth, ...headers];
 };
 
+const ensureViewer = async (Stimulsoft: any) => {
+  if (Stimulsoft?.Viewer?.StiViewer) return Stimulsoft;
+  await loadScript('/stimulsoft/stimulsoft.viewer.pack.js');
+  if (!window.Stimulsoft?.Viewer?.StiViewer) {
+    throw new Error(
+      'Stimulsoft viewer is missing. Ensure stimulsoft.viewer.pack.js is in public/stimulsoft.'
+    );
+  }
+  return finishEngine(window.Stimulsoft);
+};
+
 /**
  * Reports + viewer only — used for print. Designer pack is not required.
  */
@@ -128,6 +139,10 @@ export const loadStimulsoftEngine = (): Promise<any> => {
 
   return enginePromise;
 };
+
+/** Reports engine plus viewer pack (Save / export toolbar). */
+export const loadStimulsoftViewer = async (): Promise<any> =>
+  ensureViewer(await loadStimulsoftEngine());
 
 /**
  * Loads Stimulsoft designer scripts only when called (Edit Report click).

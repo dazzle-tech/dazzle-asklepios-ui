@@ -19,6 +19,8 @@ import {
   useUpdateStimulsoftReportTemplateMutation,
 } from '@/services/reports/stimulsoftReportService';
 
+import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
+
 const StimulsoftDesignerHost = React.lazy(
   () =>
     import(
@@ -38,15 +40,22 @@ const StimulsoftReportDesignerPage = () => {
     name: '',
     code: '',
     description: '',
+    facilityId: null as number | null,
+    departmentIds: '' as string,
+    module: '' as string | null,
   });
   const [templateJson, setTemplateJson] = useState<string | null>(null);
   const [schema, setSchema] = useState<DesignerSchema>(getLocalDesignerSchema());
   const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [phase, setPhase] = useState(
     isNew ? 'Loading Stimulsoft designer…' : 'Loading Stimulsoft designer and template…'
   );
   const [error, setError] = useState<string | null>(null);
   const savedIdRef = useRef<number | null>(templateId);
+  const designerRef = useRef<StimulsoftDesignerHostHandle | null>(null);
+  const metaRef = useRef(meta);
+  metaRef.current = meta;
 
   const [loadTemplate] = useLazyGetStimulsoftReportTemplateByIdQuery();
   const [loadSchema] = useLazyGetStimulsoftDesignerSchemaQuery();
@@ -105,6 +114,9 @@ const StimulsoftReportDesignerPage = () => {
             name: template.name ?? '',
             code: nextCode,
             description: template.description ?? '',
+            facilityId: template.facilityId ?? null,
+            departmentIds: template.departmentIds ?? '',
+            module: template.module ?? '',
           });
           setTemplateJson(template.templateJson ?? null);
         }
@@ -130,7 +142,8 @@ const StimulsoftReportDesignerPage = () => {
 
   const handleSave = useCallback(
     async (json: string) => {
-      if (!meta.name?.trim() || !meta.code?.trim()) {
+      const current = metaRef.current;
+      if (!current.name?.trim() || !current.code?.trim()) {
         dispatch(
           notify({
             msg: 'Please enter a template name and code before saving.',
@@ -141,12 +154,16 @@ const StimulsoftReportDesignerPage = () => {
       }
 
       try {
+        setSaving(true);
         const body = {
-          code: meta.code.trim(),
-          name: meta.name.trim(),
-          description: meta.description,
+          code: current.code.trim(),
+          name: current.name.trim(),
+          description: current.description,
           templateJson: json,
           isActive: true,
+          facilityId: current.facilityId,
+          departmentIds: current.departmentIds,
+          module: current.module || null,
         };
 
         if (savedIdRef.current) {
@@ -165,14 +182,37 @@ const StimulsoftReportDesignerPage = () => {
       } catch (err: any) {
         dispatch(
           notify({
-            msg: err?.data?.message || 'Failed to save report template',
+            msg:
+              err?.data?.message ||
+              err?.data?.detail ||
+              err?.error?.data?.message ||
+              err?.error?.data?.detail ||
+              err?.message ||
+              'Failed to save report template',
             sev: 'error',
           })
         );
+      } finally {
+        setSaving(false);
       }
     },
-    [createTemplate, dispatch, meta, navigate, updateTemplate]
+    [createTemplate, dispatch, navigate, updateTemplate]
   );
+
+  const handleToolbarSave = useCallback(async () => {
+    const json =
+      designerRef.current?.getTemplateJson() ?? templateJson;
+    if (!json) {
+      dispatch(
+        notify({
+          msg: 'Please wait for the designer to finish loading, then save.',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+    await handleSave(json);
+  }, [dispatch, handleSave, templateJson]);
 
   return (
     <div className="stimulsoft-designer-page" style={{ padding: 16 }}>
@@ -180,6 +220,14 @@ const StimulsoftReportDesignerPage = () => {
         <Stack spacing={12} alignItems="flex-end" wrap>
           <Button appearance="subtle" onClick={() => navigate('/report-designer')}>
             <Translate>Back</Translate>
+          </Button>
+          <Button
+            appearance="primary"
+            loading={saving}
+            disabled={!ready || saving}
+            onClick={handleToolbarSave}
+          >
+            <Translate>Save</Translate>
           </Button>
           <Form layout="inline">
             <MyInput
@@ -229,6 +277,7 @@ const StimulsoftReportDesignerPage = () => {
             }
           >
             <StimulsoftDesignerHost
+              ref={designerRef}
               templateJson={templateJson}
               schema={schema}
               onSave={handleSave}

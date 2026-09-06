@@ -8,7 +8,7 @@ import {
   StimulsoftReportTemplate,
   useGetPrintableStimulsoftReportsQuery,
 } from '@/services/reports/stimulsoftReportService';
-import PrintReportDialog from './PrintReportDialog';
+import PrintReportDialog, { type ReportDialogMode } from './PrintReportDialog';
 import type { ModuleReportContext } from './types';
 
 export type { ModuleReportContext };
@@ -31,12 +31,19 @@ const ModuleReportsMenu = ({ module, context, disabled }: Props) => {
   );
 
   const [open, setOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<ReportDialogMode>('print');
   const [selected, setSelected] = useState<StimulsoftReportTemplate | null>(null);
 
   const visibleReports = useMemo(
     () => reports.filter(item => item.isActive !== false && item.code),
     [reports]
   );
+
+  const openReport = (report: StimulsoftReportTemplate, mode: ReportDialogMode) => {
+    setSelected(report);
+    setDialogMode(mode);
+    setOpen(true);
+  };
 
   if (!module) {
     return null;
@@ -63,15 +70,10 @@ const ModuleReportsMenu = ({ module, context, disabled }: Props) => {
           <Dropdown.Item disabled>No reports for this module</Dropdown.Item>
         )}
         {visibleReports.map(report => (
-          <Dropdown.Item
-            key={report.id ?? report.code}
-            onClick={() => {
-              setSelected(report);
-              setOpen(true);
-            }}
-          >
-            {report.name || report.code}
-          </Dropdown.Item>
+          <Dropdown.Menu key={report.id ?? report.code} title={report.name || report.code}>
+            <Dropdown.Item onClick={() => openReport(report, 'view')}>View</Dropdown.Item>
+            <Dropdown.Item onClick={() => openReport(report, 'print')}>Print</Dropdown.Item>
+          </Dropdown.Menu>
         ))}
       </Dropdown>
 
@@ -83,6 +85,7 @@ const ModuleReportsMenu = ({ module, context, disabled }: Props) => {
         }}
         report={selected}
         context={context}
+        mode={dialogMode}
       />
     </>
   );

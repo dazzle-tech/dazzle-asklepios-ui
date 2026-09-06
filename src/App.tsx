@@ -74,7 +74,6 @@ const PregnancyFollowup = lazy (() => import ( './pages/encounter/encounter-comp
 const PrescriptionNew = lazy (() => import ( './pages/encounter/encounter-component/prescription-new'));
 const PressureUlcerRiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/pressure-ulce-risk-assessment'));
 const ProcedureNew = lazy (() => import ( './pages/encounter/encounter-component/procedure-new/Procedure'));
-const EncounterReport= lazy(()=> import ('./pages/encounter/PatientEncounterReportPage'));
 const StimulsoftReportTemplateList = lazy(
   () =>
     import(
@@ -663,7 +662,6 @@ const App = () => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
-              <Route path="encounter-report" element={<EncounterReport/>}/>
               <Route path="report-designer" element={<StimulsoftReportTemplateList />} />
               <Route path="report-designer/new" element={<StimulsoftReportDesignerPage />} />
               <Route path="report-designer/:id" element={<StimulsoftReportDesignerPage />} />

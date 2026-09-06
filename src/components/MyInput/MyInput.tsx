@@ -338,7 +338,7 @@ const MyInput = ({
     });
   };
 
-  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
+  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName ?? '');
 
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;

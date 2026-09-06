@@ -3,7 +3,7 @@ import { Panel } from 'rsuite';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
-import { MdPrint } from 'react-icons/md';
+import { MdPrint, MdVisibility } from 'react-icons/md';
 
 import MyTable from '@/components/MyTable';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -14,7 +14,9 @@ import {
   StimulsoftReportTemplate,
   useGetPrintableStimulsoftReportsQuery,
 } from '@/services/reports/stimulsoftReportService';
-import PrintReportDialog from '@/components/ModuleReportsMenu/PrintReportDialog';
+import PrintReportDialog, {
+  type ReportDialogMode,
+} from '@/components/ModuleReportsMenu/PrintReportDialog';
 
 const ModuleReportsPage = () => {
   const dispatch = useDispatch();
@@ -26,11 +28,18 @@ const ModuleReportsPage = () => {
 
   const [selected, setSelected] = useState<StimulsoftReportTemplate | null>(null);
   const [open, setOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<ReportDialogMode>('print');
 
   const handleDialogOpen = useCallback((next: boolean) => {
     setOpen(next);
     if (!next) setSelected(null);
   }, []);
+
+  const openReport = (row: StimulsoftReportTemplate, nextMode: ReportDialogMode) => {
+    setSelected(row);
+    setDialogMode(nextMode);
+    setOpen(true);
+  };
 
   const { data: reports = [], isFetching } = useGetPrintableStimulsoftReportsQuery(
     {
@@ -69,21 +78,32 @@ const ModuleReportsPage = () => {
     },
     {
       key: 'actions',
-      title: 'Print',
-      width: 90,
+      title: 'Actions',
+      width: 120,
       align: 'center' as const,
       render: (row: StimulsoftReportTemplate) => (
-        <IconButton
-          size="small"
-          title="Print"
-          onClick={event => {
-            event.stopPropagation();
-            setSelected(row);
-            setOpen(true);
-          }}
-        >
-          <MdPrint style={{ color: 'var(--primary-blue)' }} />
-        </IconButton>
+        <>
+          <IconButton
+            size="small"
+            title="View report"
+            onClick={event => {
+              event.stopPropagation();
+              openReport(row, 'view');
+            }}
+          >
+            <MdVisibility style={{ color: 'var(--primary-blue)' }} />
+          </IconButton>
+          <IconButton
+            size="small"
+            title="Print"
+            onClick={event => {
+              event.stopPropagation();
+              openReport(row, 'print');
+            }}
+          >
+            <MdPrint style={{ color: 'var(--primary-blue)' }} />
+          </IconButton>
+        </>
       ),
     },
   ];
@@ -100,6 +120,7 @@ const ModuleReportsPage = () => {
         open={open}
         setOpen={handleDialogOpen}
         report={selected}
+        mode={dialogMode}
         context={{ departmentId, facilityId }}
       />
     </Panel>

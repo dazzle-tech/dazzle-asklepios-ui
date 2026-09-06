@@ -1,16 +1,5 @@
-import {
-  applyStimulsoftWebServer,
-  attachStimulsoftProxyHeaders,
-  loadStimulsoftEngine,
-} from './loadStimulsoftDesigner';
-import {
-  applyPrintParameterValues,
-  enableDynamicStimulsoftApis,
-  patchStimulsoftParsePath,
-  prepareStimulsoftDataRequest,
-  setActiveStimulsoftReport,
-  tryFulfillStimulsoftApiRequest,
-} from './stimulsoftApiProxy';
+import { createPreparedStimulsoftReport } from './prepareStimulsoftReport';
+import { setActiveStimulsoftReport } from './stimulsoftApiProxy';
 
 const toPdfBlob = (data: unknown): Blob => {
   if (data instanceof Blob) {
@@ -82,37 +71,14 @@ const exportPdfData = async (Stimulsoft: any, report: any) => {
   return report.exportDocument(format);
 };
 
-const bindDataRequest = (report: any) => {
-  if (!report || report.__stiBeginBound) return;
-  report.__stiBeginBound = true;
-  const previousBegin = report.onBeginProcessData;
-  report.onBeginProcessData = (args: any, callback?: any) => {
-    prepareStimulsoftDataRequest(report, args);
-    if (tryFulfillStimulsoftApiRequest(args, callback)) {
-      return;
-    }
-    previousBegin?.call(report, args, callback);
-  };
-};
-
 export const exportStimulsoftTemplatePdf = async (
   templateJson: string,
   params: Record<string, string> = {}
 ): Promise<Blob> => {
-  if (!templateJson?.trim()) {
-    throw new Error('This report has no template to print.');
-  }
-
-  const Stimulsoft = await loadStimulsoftEngine();
-  applyStimulsoftWebServer(Stimulsoft);
-  patchStimulsoftParsePath(Stimulsoft);
-
-  const report = new Stimulsoft.Report.StiReport();
-  attachStimulsoftProxyHeaders(report);
-  report.load(templateJson);
-  enableDynamicStimulsoftApis(Stimulsoft, report);
-  applyPrintParameterValues(report, params);
-  bindDataRequest(report);
+  const { Stimulsoft, report } = await createPreparedStimulsoftReport(
+    templateJson,
+    params
+  );
 
   try {
     await renderReport(report);

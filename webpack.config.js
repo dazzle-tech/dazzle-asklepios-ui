@@ -88,6 +88,14 @@ module.exports = {
     hot: true,
     liveReload: false,
     allowedHosts: 'all',
+    client: {
+      overlay: {
+        runtimeErrors: error => {
+          const message = String(error?.message || error || '');
+          return message !== 'Unauthorized' && !message.includes('Unauthorized');
+        },
+      },
+    },
     // HashRouter does not need SPA fallback. The CLI --history-api-fallback flag
     // was serving index.html for /api, which Stimulsoft then parsed as JSON.
     historyApiFallback: false,

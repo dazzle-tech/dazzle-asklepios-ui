@@ -1,5 +1,4 @@
-﻿import config from '../../../app-config';
-import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
+﻿import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const PATH_FIELDS = ['pathData', 'path', 'url', 'connectionString'] as const;
 
@@ -23,27 +22,23 @@ const tryUrl = (value?: string | null): URL | null => {
   }
 };
 
-const backendBase = () => (config.backendBaseURL || '').replace(/\/$/, '');
-
-const backendOrigin = () => {
-  try {
-    return backendBase() ? new URL(backendBase()).origin : '';
-  } catch {
-    return '';
-  }
-};
-
-const isHisApiPath = (value?: string | null): boolean => {
-  if (!value) return false;
+const hisPathname = (value?: string | null): string => {
+  if (!value) return '';
   const trimmed = value.trim();
-  if (trimmed.startsWith('/api/') || trimmed.startsWith('api/')) return true;
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/api/')) return trimmed.split('?')[0];
+  if (trimmed.startsWith('api/')) return `/${trimmed.split('?')[0]}`;
+  const apiIndex = trimmed.indexOf('/api/');
+  if (apiIndex >= 0) {
+    return trimmed.slice(apiIndex).split('?')[0];
+  }
   const parsed = tryUrl(trimmed);
-  if (!parsed) return false;
-  if (!parsed.pathname.startsWith('/api/')) return false;
-  const origin = window.location.origin;
-  const backend = backendOrigin();
-  return parsed.origin === origin || (!!backend && parsed.origin === backend);
+  return parsed?.pathname?.startsWith('/api/') ? parsed.pathname : '';
 };
+
+/** Any Stimulsoft JSON URL whose path is /api/... — host does not matter. */
+const isHisApiPath = (value?: string | null): boolean =>
+  hisPathname(value).startsWith('/api/');
 
 const toIsoDate = (date: Date) => {
   const year = date.getFullYear();
@@ -193,8 +188,20 @@ export const toDesignerApiUrl = (value?: string | null): string => {
   if (!value) return value ?? '';
   const trimmed = value.trim();
   if (!isHisApiPath(trimmed)) return trimmed;
-  const parsed = tryUrl(trimmed.startsWith('api/') ? `/${trimmed}` : trimmed);
-  if (!parsed) return trimmed;
+  const apiIndex = trimmed.indexOf('/api/');
+  const fromIndex =
+    apiIndex >= 0
+      ? trimmed.slice(apiIndex)
+      : trimmed.startsWith('api/')
+        ? `/${trimmed}`
+        : trimmed;
+  const parsed = tryUrl(fromIndex.startsWith('/') ? fromIndex : `/${fromIndex}`);
+  if (!parsed) {
+    const q = fromIndex.indexOf('?');
+    const path = q >= 0 ? fromIndex.slice(0, q) : fromIndex;
+    const search = q >= 0 ? fromIndex.slice(q) : '';
+    return `${window.location.origin}${path}${search}`;
+  }
   return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
 };
 
@@ -291,7 +298,9 @@ const originalHttp = (): OriginalXhr => {
   return w.__stiXhrOriginal;
 };
 
-const fetchHisApiSync = (url: string): string | null => {
+const fetchHisApiSync = (
+  url: string
+): { ok: boolean; status: number; text: string } => {
   const resolved = resolveHisApiRequestUrl(url);
   const { open, send } = originalHttp();
   const xhr = new XMLHttpRequest();
@@ -299,21 +308,27 @@ const fetchHisApiSync = (url: string): string | null => {
   applyAuthHeadersToXhr(xhr);
   send.call(xhr);
   const text = xhr.responseText || '';
-  if (xhr.status < 200 || xhr.status >= 300) {
+  const ok = xhr.status >= 200 && xhr.status < 300 && !text.trim().startsWith('<');
+  if (!ok) {
     console.error(
       `[Stimulsoft] HIS API ${xhr.status} ${resolved}`,
-      text.slice(0, 240)
+      text.slice(0, 400)
     );
-    return null;
   }
-  if (text.trim().startsWith('<')) {
-    console.error(
-      '[Stimulsoft] /api returned HTML instead of JSON. Restart `npm run dev` so webpack proxies /api to Spring Boot.'
-    );
-    return null;
-  }
-  return text;
+  return { ok, status: xhr.status, text };
 };
+
+const emptyJsonForCommand = (command: string) =>
+  command === 'GetSchema' ? '{}' : '[]';
+
+const DATA_COMMANDS = new Set([
+  'GetSchema',
+  'GetData',
+  'RetrieveColumns',
+  'RetrieveData',
+  'TestConnection',
+  'ExecuteQuery',
+]);
 
 export const tryFulfillStimulsoftApiRequest = (
   args: any,
@@ -326,15 +341,21 @@ export const tryFulfillStimulsoftApiRequest = (
         ? args.callback
         : null;
   if (typeof done !== 'function') return false;
-  const command = args?.command;
-  if (command !== 'GetSchema' && command !== 'GetData') return false;
-  const path = args?.pathData || args?.path || args?.url;
+  const command = String(args?.command || '');
+  if (command && !DATA_COMMANDS.has(command)) return false;
+  const path =
+    args?.pathData || args?.path || args?.url || args?.connectionString;
   if (!isHisApiPath(path)) return false;
-  const text = fetchHisApiSync(path);
-  if (text == null) return false;
+
+  const result = fetchHisApiSync(path);
   args.preventDefault = true;
   args.async = true;
-  done(text);
+  if (result.ok) {
+    done(result.text);
+  } else {
+    // Never let Stimulsoft retry this URL without JWT (that 401 becomes the overlay).
+    done(emptyJsonForCommand(command));
+  }
   return true;
 };
 
@@ -349,16 +370,34 @@ const applyAuthHeadersToXhr = (xhr: XMLHttpRequest) => {
 };
 
 /**
- * Attach JWT on Stimulsoft JSON GETs (XHR and fetch).
- * Always rebind from the native originals so HMR cannot leave a stale wrap.
- * Do not rewrite POST/PUT — template CRUD uses RTK Query fetch to backendBaseURL.
+ * Attach the current JWT to every HIS /api call from Stimulsoft.
+ * Rewrite only GET URLs to the UI origin so webpack can proxy them (sync XHR
+ * cannot CORS-preflight Authorization to :8080). Do not rewrite POST/PUT —
+ * template CRUD uses RTK Query to backendBaseURL.
  */
 export const installStimulsoftApiInterceptor = () => {
   if (typeof window === 'undefined') return;
   const originals = originalHttp();
   interceptorInstalled = true;
 
-  const isGet = (method: string) => String(method || 'GET').toUpperCase() === 'GET';
+  if (!(window as Window & { __stiUnauthorizedGuard?: boolean }).__stiUnauthorizedGuard) {
+    (window as Window & { __stiUnauthorizedGuard?: boolean }).__stiUnauthorizedGuard =
+      true;
+    window.addEventListener('unhandledrejection', event => {
+      const reason = event.reason;
+      const message = String(
+        reason?.message || reason?.statusText || reason || ''
+      );
+      if (message === 'Unauthorized' || message.includes('Unauthorized')) {
+        event.preventDefault();
+        console.warn('[Stimulsoft] data request failed; JWT was already sent.');
+      }
+    });
+  }
+
+  const methodOf = (method: string) => String(method || 'GET').toUpperCase();
+  const isGet = (method: string) => methodOf(method) === 'GET';
+  const skipAuth = (method: string) => methodOf(method) === 'OPTIONS';
 
   XMLHttpRequest.prototype.open = function (
     method: string,
@@ -369,7 +408,7 @@ export const installStimulsoftApiInterceptor = () => {
     const rewrite = isGet(method) && isHisApiPath(raw);
     const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
     (this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi =
-      rewrite || (isGet(method) && isHisApiPath(resolved));
+      !skipAuth(method) && (isHisApiPath(raw) || isHisApiPath(resolved));
     const result = originals.open.call(this, method, resolved, ...(rest as []));
     if ((this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi) {
       applyAuthHeadersToXhr(this);
@@ -394,12 +433,13 @@ export const installStimulsoftApiInterceptor = () => {
         : input instanceof URL
           ? input.toString()
           : input.url;
-    const method = (
-      init?.method ||
-      (input instanceof Request ? input.method : 'GET')
-    ).toUpperCase();
+    const method = methodOf(
+      init?.method || (input instanceof Request ? input.method : 'GET')
+    );
 
-    if (method !== 'GET' || !isHisApiPath(originalUrl)) {
+    // Leave POST/PUT/PATCH/DELETE alone. Rebuilding those requests drops the
+    // body, so template save never reaches the network.
+    if (!isGet(method) || !isHisApiPath(originalUrl)) {
       return originals.fetch(input as RequestInfo, init);
     }
 
@@ -412,6 +452,7 @@ export const installStimulsoftApiInterceptor = () => {
     });
     if (input instanceof Request) {
       return originals.fetch(resolved, {
+        method: 'GET',
         headers,
         credentials: input.credentials,
         cache: input.cache,
@@ -420,7 +461,7 @@ export const installStimulsoftApiInterceptor = () => {
         signal: input.signal,
       });
     }
-    return originals.fetch(resolved, { ...init, headers });
+    return originals.fetch(resolved, { ...init, method: 'GET', headers });
   };
 };
 
