@@ -72,14 +72,14 @@ const AddNormalRange = ({
     }));
   }, []);
 
-  useEffect(() => {
-    if (!diagnosticsTestProfile?.resultType) return;
+useEffect(() => {
+  if (!diagnosticsTestProfile?.resultType) return;
 
-    setDiagnosticTestNormalRange(prev => ({
-      ...prev,
-      resultType: diagnosticsTestProfile.resultType
-    }));
-  }, [diagnosticsTestProfile?.resultType]);
+  setDiagnosticTestNormalRange(prev => ({
+    ...prev,
+    resultType: diagnosticsTestProfile.resultType
+  }));
+}, [diagnosticsTestProfile?.resultType]);
 
               // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

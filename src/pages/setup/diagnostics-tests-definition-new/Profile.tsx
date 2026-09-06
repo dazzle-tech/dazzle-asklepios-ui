@@ -64,6 +64,8 @@ const Profile = ({
       ...newDiagnosticTestNormalRange
     });
 
+  const [normalRangeFormKey, setNormalRangeFormKey] = useState(0);
+
   const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
   const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
 
@@ -505,6 +507,7 @@ const Profile = ({
   const conjureFormContentOfSecondChildModal = () => {
     return (
       <AddNormalRange
+        key={normalRangeFormKey}
         diagnosticTestNormalRange={diagnosticTestNormalRange}
         setDiagnosticTestNormalRange={setDiagnosticTestNormalRange}
         diagnosticsTestProfile={diagnosticsTestProfile}
@@ -540,18 +543,60 @@ const Profile = ({
       };
 
       if (diagnosticTestNormalRange.id) {
-        await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
-        dispatch(notify({ msg: 'Normal Range Updated', sev: 'success' }));
+        await updateDiagnosticTestNormalRange({
+          id: diagnosticTestNormalRange.id,
+          body: payload
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Normal Range Updated',
+            sev: 'success'
+          })
+        );
       } else {
-        await createDiagnosticTestNormalRange(payload);
-        dispatch(notify({ msg: 'Normal Range Created', sev: 'success' }));
+        await createDiagnosticTestNormalRange(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Normal Range Created',
+            sev: 'success'
+          })
+        );
+
+        const currentNormalRangeType =
+          diagnosticTestNormalRange.normalRangeType;
+
+        setDiagnosticTestNormalRange({
+          ...newDiagnosticTestNormalRange,
+          testId: diagnosticsTest.id,
+          profileTestId: diagnosticsTestProfile?.id,
+          resultType: diagnosticsTestProfile?.resultType ?? '',
+          normalRangeType: currentNormalRangeType
+        });
+
+        setNormalRangeFormKey(prev => prev + 1);
+
+        return;
+
       }
 
-      setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id });
+      // For Update
+      setDiagnosticTestNormalRange({
+        ...newDiagnosticTestNormalRange,
+        testId: diagnosticsTest.id
+      });
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to Save Normal Range', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: 'Failed to Save Normal Range',
+          sev: 'error'
+        })
+      );
     }
   };
+
+
 
   useEffect(() => {
     if (open && diagnosticsTest?.id) {
