@@ -353,8 +353,8 @@ const SOAP = props => {
       title: 'Physical Examination & Findings',
       content: (
         <div
-          className={clsx('column-container', { 'disabled-panel': edit })}
-          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          className={clsx('column-container',
+            )}
         >
           <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} setEncounter={setLocalEncounter} />
         </div>
