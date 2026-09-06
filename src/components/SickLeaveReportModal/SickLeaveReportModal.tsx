@@ -25,8 +25,8 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
     'The above-named patient is advised to rest and refrain from work duties for the duration specified. Please contact the clinic for further clarification if required.';
 
   const [sickLeaveForm, setSickLeaveForm] = useState<any>({
-    fromDate: '',
-    toDate: '',
+    fromDate: new Date().toISOString().split('T')[0],
+    toDate: new Date().toISOString().split('T')[0],
     notes: defaultNotes
   });
   const [language, setLanguage] = useState({ lang: 'en' });
@@ -38,8 +38,8 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
   useEffect(() => {
     if (open) {
       setSickLeaveForm({
-        fromDate: '',
-        toDate: '',
+        fromDate: new Date().toISOString().split('T')[0],
+        toDate: new Date().toISOString().split('T')[0],
         notes: defaultNotes
       });
       setIsLoading(false);
@@ -150,6 +150,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
                 setRecord={setSickLeaveForm}
                 required
                 disablePastDates
+                disabled={true}
               />
             </div>
             <div style={{ flex: 1, minWidth: 180 }}>
@@ -163,6 +164,7 @@ const SickLeaveReportModal: React.FC<SickLeaveReportModalProps> = ({
                 record={sickLeaveForm}
                 setRecord={setSickLeaveForm}
                 required
+                disabled={true}
               />
             </div>
           </div>
