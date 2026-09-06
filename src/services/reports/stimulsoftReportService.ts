@@ -55,20 +55,41 @@ export type StimulsoftReportTemplateWriteVM = {
   module?: string | null;
 };
 
-export type StimulsoftPdfParams = {
+/**
+ * Matches GET /api/analytics/reports/pdf
+ *   templateCode  -> @RequestParam String templateCode
+ *   remaining keys -> @RequestParam Map<String, String> parameters
+ */
+export interface StimulsoftPdfParams {
   templateCode: string;
-  patientId?: number;
-  encounterId?: number;
-  departmentId?: number;
-  facilityId?: number;
-  status?: string;
-  timezone?: string;
-  lang?: string;
-  startDate?: string;
-  endDate?: string;
-  fromDate?: string;
-  toDate?: string;
-  [key: string]: string | number | boolean | null | undefined;
+  [key: string]: string;
+}
+
+const toPdfString = (raw: unknown): string | undefined => {
+  if (raw == null || raw === '') return undefined;
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+    return raw.toISOString().slice(0, 10);
+  }
+  if (typeof raw === 'string') {
+    const value = raw.trim();
+    return value || undefined;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+  if (typeof raw === 'boolean') return String(raw);
+  return undefined;
+};
+
+export const toStimulsoftPdfParams = (
+  templateCode: string,
+  params: Record<string, unknown> = {}
+): StimulsoftPdfParams => {
+  const next: StimulsoftPdfParams = { templateCode };
+  Object.entries(params).forEach(([key, raw]) => {
+    if (key === 'templateCode') return;
+    const value = toPdfString(raw);
+    if (value !== undefined) next[key] = value;
+  });
+  return next;
 };
 
 const compactParams = (params: Record<string, unknown>) =>
@@ -223,12 +244,27 @@ export const stimulsoftReportService = createApi({
     }),
 
     printStimulsoftReportPdf: builder.query<Blob, StimulsoftPdfParams>({
-      query: ({ templateCode, ...rest }) => ({
+      query: params => ({
         url: '/api/analytics/reports/pdf',
         method: 'GET',
-        params: compactParams({ templateCode, ...rest }),
-        responseHandler: (response: Response) => response.blob(),
+        params: compactParams(params),
+        responseHandler: async (response: Response) => {
+          const blob = await response.blob();
+          if (!response.ok) {
+            const text = await blob.text();
+            let message = `Failed to generate report PDF (${response.status})`;
+            try {
+              const json = JSON.parse(text);
+              message = json.message || json.detail || json.error || message;
+            } catch {
+              if (text?.trim()) message = text.slice(0, 400);
+            }
+            throw new Error(message);
+          }
+          return blob;
+        },
       }),
+      keepUnusedDataFor: 0,
     }),
 
     getPrintableStimulsoftReports: builder.query<

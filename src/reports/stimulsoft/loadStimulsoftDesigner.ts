@@ -4,13 +4,27 @@ import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
-const SCRIPT_FILES = [
+const ENGINE_FILES = [
   '/stimulsoft/stimulsoft.reports.pack.js',
   '/stimulsoft/stimulsoft.viewer.pack.js',
+];
+
+const SCRIPT_FILES = [
+  ...ENGINE_FILES,
   '/stimulsoft/stimulsoft.designer.pack.js',
 ];
 
 let loadPromise: Promise<any> | null = null;
+let enginePromise: Promise<any> | null = null;
+
+const finishEngine = (Stimulsoft: any) => {
+  if (!Stimulsoft?.Report?.StiReport) {
+    throw new Error('Stimulsoft engine did not initialize.');
+  }
+  applyLicense(Stimulsoft);
+  applyStimulsoftWebServer(Stimulsoft);
+  return Stimulsoft;
+};
 
 const loadScript = (src: string) =>
   new Promise<void>((resolve, reject) => {
@@ -84,6 +98,35 @@ export const attachStimulsoftProxyHeaders = (report: any) => {
       )
     : [];
   report.httpHeadersContainer = [...withoutAuth, ...headers];
+};
+
+/**
+ * Reports + viewer only — used for print. Designer pack is not required.
+ */
+export const loadStimulsoftEngine = (): Promise<any> => {
+  installStimulsoftApiInterceptor();
+
+  if (window.Stimulsoft?.Report?.StiReport) {
+    return Promise.resolve(finishEngine(window.Stimulsoft));
+  }
+
+  if (loadPromise) {
+    return loadPromise;
+  }
+
+  if (!enginePromise) {
+    enginePromise = ENGINE_FILES.reduce(
+      (chain, src) => chain.then(() => loadScript(src)),
+      Promise.resolve()
+    )
+      .then(() => finishEngine(window.Stimulsoft))
+      .catch(error => {
+        enginePromise = null;
+        throw error;
+      });
+  }
+
+  return enginePromise;
 };
 
 /**

@@ -511,6 +511,60 @@ const attachPrepareVariables = (report: any) => {
   };
 };
 
+/** Apply print-dialog values so JSON URLs and expressions match designer Preview. */
+export const applyPrintParameterValues = (
+  report: any,
+  params: Record<string, string>
+) => {
+  const entries = Object.entries(params).filter(
+    ([, value]) => value != null && String(value).trim() !== ''
+  );
+  cachePreviewVariables(entries.map(([name, value]) => ({ name, value })));
+  setActiveStimulsoftReport(report);
+
+  entries.forEach(([name, value]) => {
+    const variable = findVariable(report, name);
+    if (variable) {
+      try {
+        variable.value = value;
+      } catch {
+        /* read-only */
+      }
+      try {
+        variable.valueObject = value;
+      } catch {
+        /* read-only */
+      }
+    }
+    try {
+      report.setVariable?.(name, value);
+    } catch {
+      /* not supported */
+    }
+  });
+
+  const previous = report.onPrepareVariables;
+  report.onPrepareVariables = (args: any, callback?: any) => {
+    if (Array.isArray(args?.variables)) {
+      args.variables.forEach((item: { name?: string; alias?: string; value?: unknown }) => {
+        const key = item?.name || item?.alias;
+        if (!key) return;
+        const match = entries.find(
+          ([name]) => normalizeVarName(name) === normalizeVarName(key)
+        );
+        if (match) item.value = match[1];
+      });
+    }
+    cachePreviewVariables(args?.variables);
+    cachePreviewVariables(entries.map(([name, value]) => ({ name, value })));
+    if (typeof previous === 'function') {
+      previous.call(report, args, callback);
+      return;
+    }
+    callback?.(args?.variables ?? args);
+  };
+};
+
 /**
  * Enable any JSON/REST endpoint added in the designer.
  * No per-API registration — JWT + same-origin proxy apply to every HIS /api URL.

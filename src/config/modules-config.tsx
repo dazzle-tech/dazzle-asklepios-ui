@@ -53,6 +53,31 @@ export interface Screen {
   navPath: string;
 }
 
+/** Stimulsoft `Modules` enum value → screen code used on the print-only reports page. */
+export const MODULE_REPORTS_SCREENS: Record<string, { screenCode: string }> = {
+  ENCOUNTER: { screenCode: "CLINICS_MODULE_REPORTS" },
+  URGENT_CARE: { screenCode: "URGENT_CARE_MODULE_REPORTS" },
+  EMERGENCY: { screenCode: "EMERGENCY_MODULE_REPORTS" },
+  INPATIENT: { screenCode: "INPATIENT_MODULE_REPORTS" },
+  DAY_CASE: { screenCode: "DAY_CASE_MODULE_REPORTS" },
+  FRONT_DESK: { screenCode: "FRONT_DESK_MODULE_REPORTS" },
+  PROCEDURE: { screenCode: "PROCEDURE_MODULE_REPORTS" },
+  OPERATION: { screenCode: "OPERATION_MODULE_REPORTS" },
+  LABORATORY: { screenCode: "LABORATORY_MODULE_REPORTS" },
+  RADIOLOGY: { screenCode: "RADIOLOGY_MODULE_REPORTS" },
+  PHARMACY: { screenCode: "PHARMACY_MODULE_REPORTS" },
+  BILLING: { screenCode: "BILLING_MODULE_REPORTS" },
+};
+
+export const moduleReportsScreen = (moduleCode: string, viewOrder = 20): Screen => ({
+  name: "Reports",
+  code: MODULE_REPORTS_SCREENS[moduleCode]?.screenCode || `${moduleCode}_MODULE_REPORTS`,
+  description: "Print reports declared for this module",
+  icon: "FaPrint",
+  viewOrder,
+  navPath: `module-reports/${moduleCode}`,
+});
+
 export interface Module {
   name: string;
   description?: string | null;
@@ -364,7 +389,8 @@ export const MODULES: Module[] =
         { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
         { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
-        { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" }
+        { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
+        moduleReportsScreen("FRONT_DESK"),
       ],
     },
     {
@@ -458,6 +484,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "encounter-list"
         },
         { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        moduleReportsScreen("ENCOUNTER"),
 
       ],
     },
@@ -475,6 +502,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "inpatient-encounters-list"
         },
         { name: "Waiting List", code: "WAITING_LIST", description: "", icon: "FaClock", viewOrder: 0, navPath: "waiting-encounters-list" },
+        moduleReportsScreen("INPATIENT"),
 
       ],
     },
@@ -488,7 +516,8 @@ export const MODULES: Module[] =
         code: "DAY_CASE_PATIENT_LIST",
         description: "",
         icon: "FaPersonWalkingArrowRight", viewOrder: 0, navPath: "day-case-list"
-      }
+      },
+        moduleReportsScreen("DAY_CASE"),
 
       ],
     },
@@ -507,6 +536,7 @@ export const MODULES: Module[] =
 
         { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
         { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
+        moduleReportsScreen("EMERGENCY"),
 
       ],
     },
@@ -519,6 +549,7 @@ export const MODULES: Module[] =
       screens: [
         { name: "Urgent Care Triage", code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage" },
         { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+        moduleReportsScreen("URGENT_CARE"),
       ],
     },
     {
@@ -531,7 +562,9 @@ export const MODULES: Module[] =
         code: "PROCEDURE_REQUESTS_LIST",
         description: "",
         icon: "FaClipboardUser", viewOrder: 0, navPath: "procedure-module"
-      }],
+      },
+        moduleReportsScreen("PROCEDURE"),
+      ],
     },
     {
       name: "Operation Theater",
@@ -547,6 +580,7 @@ export const MODULES: Module[] =
         },
         { name: "Recovery Room", code: "RECOVERY_ROOM", description: "", icon: "FaClover", viewOrder: 2, navPath: "recovery-module" },
         { name: "Operation Room Materials", code: "OPERATION_ROOM_MATERIALS", description: "", icon: "FaSyringe", viewOrder: 0, navPath: "operation-room-materials" },
+        moduleReportsScreen("OPERATION"),
 
       ],
     },
@@ -561,9 +595,9 @@ export const MODULES: Module[] =
         code: "CLINICAL_LABORATORY",
         description: "", icon: "FaFlaskVial",
         viewOrder: 0, navPath: "lab-module",
-
-
-      }],
+      },
+        moduleReportsScreen("LABORATORY"),
+      ],
     },
     {
       name: "Radiology",
@@ -576,8 +610,9 @@ export const MODULES: Module[] =
         code: "IMAGING_RADIOLOGY",
         description: "",
         icon: "FaSkull", viewOrder: 0, navPath: "rad-module",
-
-      }],
+      },
+        moduleReportsScreen("RADIOLOGY"),
+      ],
     },
     {
       name: "Pharmacy",
@@ -592,6 +627,7 @@ export const MODULES: Module[] =
         },
         { name: "ePrescriptions", code: "EPRESCRIPTIONS", description: "", icon: "FaPrescription", viewOrder: 1, navPath: "pharmacy-ePrescriptions" },
         { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
+        moduleReportsScreen("PHARMACY"),
       ],
     },
     {
@@ -766,6 +802,7 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+        moduleReportsScreen("BILLING"),
       ],
     },
     {

@@ -14,6 +14,18 @@ const CONTEXT_PARAM_NAMES = new Set([
   'lang',
 ]);
 
+const SKIP_KEYS = new Set([
+  'pages',
+  'renderedpages',
+  'image',
+  'bytes',
+  'hash',
+  'previousresult',
+  'styles',
+  'components',
+  'watermark',
+]);
+
 const PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 
 const toLabel = (name: string) =>
@@ -25,8 +37,10 @@ const toLabel = (name: string) =>
 const isDateParam = (name: string) =>
   /^(start|end|from|to)?date$/i.test(name) || /date/i.test(name);
 
-const collectNames = (value: unknown, names: Set<string>) => {
+const collectNames = (value: unknown, names: Set<string>, depth = 0) => {
+  if (depth > 12 || names.size > 40) return;
   if (typeof value === 'string') {
+    if (value.length > 4000) return;
     value.replace(PLACEHOLDER_RE, (_match, name: string) => {
       names.add(name);
       return _match;
@@ -40,7 +54,10 @@ const collectNames = (value: unknown, names: Set<string>) => {
   if (varName && (ident === 'StiVariable' || record.RequestFromUser === true)) {
     names.add(varName);
   }
-  Object.values(record).forEach(child => collectNames(child, names));
+  Object.entries(record).forEach(([key, child]) => {
+    if (SKIP_KEYS.has(key.toLowerCase())) return;
+    collectNames(child, names, depth + 1);
+  });
 };
 
 export const extractReportPrintParameters = (
@@ -73,4 +90,24 @@ export const defaultDateValue = (name: string): string => {
   if (/^(endDate|toDate)$/i.test(name)) return iso(end);
   if (/date/i.test(name)) return iso(end);
   return '';
+};
+
+export const DEFAULT_MODULE_PRINT_PARAMETERS: ReportPrintParameter[] = [
+  { name: 'startDate', label: 'Start Date', type: 'date' },
+  { name: 'endDate', label: 'End Date', type: 'date' },
+];
+
+export const mergePrintParameters = (
+  extra: ReportPrintParameter[],
+  includeDefaultDates: boolean
+): ReportPrintParameter[] => {
+  const merged = includeDefaultDates
+    ? [...DEFAULT_MODULE_PRINT_PARAMETERS]
+    : [];
+  extra.forEach(param => {
+    if (!merged.some(item => item.name.toLowerCase() === param.name.toLowerCase())) {
+      merged.push(param);
+    }
+  });
+  return merged;
 };
