@@ -1,5 +1,7 @@
 import {
+  PointOfSaleTransactionDTO,
   usePurchaseMutation,
+  useRefreshTransactionStatusMutation,
 } from '@/services/point-of-sale/PointOfSaleTransactionService';
 
 import { isCreditCardPaymentMethod }
@@ -38,8 +40,55 @@ export const getEnteredPaymentAmount = (
 export const useCreditCardMachinePayment = () => {
 
   const [purchase] =
-    usePurchaseMutation();
+  usePurchaseMutation();
 
+const [refreshTransactionStatus] =
+  useRefreshTransactionStatusMutation();
+const waitForFinalStatus = async (
+  transactionId: number
+): Promise<PointOfSaleTransactionDTO> => {
+
+  const maxAttempts = 5;
+
+  for (
+    let attempt = 0;
+    attempt < maxAttempts;
+    attempt++
+  ) {
+
+    await new Promise(resolve =>
+      setTimeout(resolve, 3000)
+    );
+
+    const transaction =
+      await refreshTransactionStatus(
+        transactionId
+      ).unwrap();
+
+    if (
+      transaction.transactionStatus ===
+      'APPROVED'
+    ) {
+
+      return transaction;
+    }
+
+    if (
+      transaction.transactionStatus ===
+      'DECLINED'
+    ) {
+
+      return transaction;
+    }
+  }
+
+  return {
+  ok: false,
+  amount: 0,
+  message:
+    'POS terminal did not return a final status.'
+};
+};
   const processCreditCardMachinePayment =
     async (
       request: CreditCardMachinePaymentRequest
@@ -104,22 +153,51 @@ export const useCreditCardMachinePayment = () => {
           posResponse
         );
 
-        return {
+       if (
+  posResponse.transactionStatus !==
+  'PROCESSING'
+) {
 
-          ok: true,
+  return {
+    ok: false,
+    amount: 0,
+    message:
+      posResponse.responseMessage ??
+      'Failed to initiate POS transaction.'
+  };
+}
 
-          amount,
+const finalTransaction =
+  await waitForFinalStatus(
+    posResponse.id
+  );
 
-          authorizationCode:
-            posResponse.authCode,
+if (
+  finalTransaction.transactionStatus !==
+  'APPROVED'
+) {
 
-          processorReference:
-            posResponse.externalTransactionId,
+  return {
+    ok: false,
+    amount: 0,
+    processorReference:
+      finalTransaction.externalTransactionId,
+    message:
+      finalTransaction.responseMessage ??
+      'POS transaction declined.'
+  };
+}
 
-          message:
-            'POS purchase request submitted successfully.'
-
-        };
+return {
+  ok: true,
+  amount,
+  authorizationCode:
+    finalTransaction.authCode,
+  processorReference:
+    finalTransaction.externalTransactionId,
+  message:
+    'POS payment approved.'
+};
 
       } catch (error) {
 
