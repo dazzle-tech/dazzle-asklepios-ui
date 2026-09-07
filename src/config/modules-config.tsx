@@ -60,7 +60,7 @@ export const MODULE_REPORTS_SCREENS: Record<string, { screenCode: string }> = {
   EMERGENCY: { screenCode: "EMERGENCY_MODULE_REPORTS" },
   INPATIENT: { screenCode: "INPATIENT_MODULE_REPORTS" },
   DAY_CASE: { screenCode: "DAY_CASE_MODULE_REPORTS" },
-  FRONT_DESK: { screenCode: "FRONT_DESK_MODULE_REPORTS" },
+  PATIENT: { screenCode: "PATIENT_MODULE_REPORTS" },
   PROCEDURE: { screenCode: "PROCEDURE_MODULE_REPORTS" },
   OPERATION: { screenCode: "OPERATION_MODULE_REPORTS" },
   LABORATORY: { screenCode: "LABORATORY_MODULE_REPORTS" },
@@ -406,7 +406,7 @@ export const MODULES: Module[] =
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
         { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
         { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
-        moduleReportsScreen("FRONT_DESK"),
+        moduleReportsScreen("PATIENT"),
       ],
     },
     {
