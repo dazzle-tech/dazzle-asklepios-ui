@@ -373,7 +373,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
         content={
           <>
           
-              <div className="margin-bottom-10">
+              <div className="margin-bottom-10 show-cancelled">
                 <MyInput
                   fieldType="check"
                   fieldLabel="Show Cancelled"
