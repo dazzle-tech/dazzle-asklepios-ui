@@ -232,14 +232,51 @@ const MyInput = ({
   }, [isDateOpen]);
 
   useEffect(() => {
+    if (!isDateOpen && !isDateTimeOpen) return;
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (!target) return;
+      if (pickerRef.current?.contains(target)) return;
+      if (
+        target.closest?.(
+          '.rs-picker-date-menu, .rs-picker-popup, .rs-calendar, .rs-calendar-panel, .my-input-calendar-popup'
+        )
+      ) {
+        return;
+      }
+      setIsDateOpen(false);
+      setIsDateTimeOpen(false);
+    };
+
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onMouseDown, true);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onMouseDown, true);
+    };
+  }, [isDateOpen, isDateTimeOpen]);
+
+  useEffect(() => {
     const handleScroll = event => {
+      const targetEl = event.target as Element | null;
+      if (
+        targetEl?.closest?.(
+          '.rs-picker-popup, .rs-picker-date-menu, .rs-calendar, .rs-calendar-panel, .my-input-calendar-popup'
+        )
+      ) {
+        return;
+      }
+
+      if (isDateOpen || isDateTimeOpen) {
+        return;
+      }
+
       if (document.querySelector('.rs-picker-popup')) {
         return;
       }
       if (Date.now() - selectOpenGuardRef.current < 300) {
-        return;
-      }
-      if (isDateOpen && Date.now() - dateOpenGuardRef.current < 200) {
         return;
       }
 
@@ -276,7 +313,7 @@ const MyInput = ({
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [isDateOpen]);
+  }, [isDateOpen, isDateTimeOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -461,11 +498,43 @@ const MyInput = ({
   const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
   const pickerRef = useRef<any>(null);
 
-  const calculatePlacement = () => {
+  const calculatePlacement = (popupHeight = 250) => {
     if (!pickerRef.current) return 'bottomStart';
     const rect = pickerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    return spaceBelow > 250 ? 'bottomStart' : 'topStart';
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    if (spaceBelow >= popupHeight) return 'bottomStart';
+    if (spaceAbove >= popupHeight) return 'topStart';
+    return spaceAbove > spaceBelow ? 'topStart' : 'bottomStart';
+  };
+
+  const openCalendar = (kind: 'date' | 'datetime') => {
+    if (props.disabled) return;
+    dateOpenGuardRef.current = Date.now();
+    setPlacement(calculatePlacement(kind === 'datetime' ? 420 : 360));
+    if (kind === 'datetime') {
+      setIsDateTimeOpen(true);
+    } else {
+      setIsDateOpen(true);
+    }
+  };
+
+  // Anchor the hidden RSuite DatePicker to the visible input edge so the
+  // popup sits flush under/above the field instead of leaving a large gap.
+  const getCalendarTriggerStyle = (kind: 'date' | 'datetime'): React.CSSProperties => {
+    const open = kind === 'datetime' ? isDateTimeOpen : isDateOpen;
+    const placeAbove = open && String(placement).startsWith('top');
+    return {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      width: '100%',
+      height: 0,
+      top: placeAbove ? 0 : '100%',
+      opacity: 0,
+      pointerEvents: 'none',
+      overflow: 'hidden'
+    };
   };
 
   const resolveContainer = () => {
@@ -524,6 +593,11 @@ const MyInput = ({
 
   const isPickerSearchable = props.searchable ?? true;
 
+const shouldVirtualizePicker = (itemCount = 0) => {
+    if (isPickerSearchable) return false;
+    if (props.virtualized !== undefined) return Boolean(props.virtualized);
+    return itemCount > 20;
+  };
   const getPickerItemSearchText = (
     item: any,
     labelKeys: string[],
@@ -549,12 +623,13 @@ const MyInput = ({
     if (props.searchBy) {
       return props.searchBy;
     }
-    return (keyword: string, _label: any, item: any) => {
+return (keyword: string, label: any, item: any) => {
+      if (item?.isLoadMore) return !String(keyword ?? '').trim();
       const needle = String(keyword ?? '').trim().toLowerCase();
       if (!needle) return true;
-      return getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum)
-        .toLowerCase()
-        .includes(needle);
+      const fromItem = getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum);
+      const fromLabel = typeof label === 'string' ? label : '';
+      return `${fromItem} ${fromLabel}`.toLowerCase().includes(needle);
     };
   };
 
@@ -664,17 +739,13 @@ const MyInput = ({
               )}
 
               open={isDateTimeOpen}
-
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsDateTimeOpen(true);
+                dateOpenGuardRef.current = Date.now();
               }}
-
-              onClose={() => setIsDateTimeOpen(false)}
-
+              onClose={() => undefined}
               placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              container={resolveContainer()}
+              preventOverflow={false}
+              container={() => document.body}
 
               shouldDisableDate={(date: Date) => {
                 const today = new Date(
@@ -692,14 +763,8 @@ const MyInput = ({
                 return false;
               }}
 
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                pointerEvents: 'none',
-                zIndex: -1
-              }}
+              className="my-input-date-trigger"
+              style={getCalendarTriggerStyle('datetime')}
             />
 
             {/* Real DateTime input */}
@@ -737,15 +802,12 @@ const MyInput = ({
 
                 onFocus={() => {
                   if (!props.disabled) {
-                    setPlacement(calculatePlacement());
+                    setPlacement(calculatePlacement(420));
                   }
                 }}
 
                 onClick={() => {
-                  if (!props.disabled) {
-                    setPlacement(calculatePlacement());
-                    setIsDateTimeOpen(true);
-                  }
+                  openCalendar('datetime');
                 }}
 
                 onBlur={() => {
@@ -1229,14 +1291,11 @@ const MyInput = ({
                 }}
                 onClick={() => {
                   if (props.disabled) return;
-
-                  setPlacement(
-                    calculatePlacement()
-                  );
-
-                  setIsDateTimeOpen(
-                    prev => !prev
-                  );
+                  if (isDateTimeOpen) {
+                    setIsDateTimeOpen(false);
+                    return;
+                  }
+                  openCalendar('datetime');
                 }}
                 style={{
                   position: 'absolute',
@@ -1692,9 +1751,7 @@ const MyInput = ({
                 'my-input-select-menu',
                 props.menuClassName
               )}
-              virtualized={
-                props?.virtualized ?? dataList.length > 20
-              }
+virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(
                 dataList,
                 valueKey
@@ -1951,7 +2008,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(pickerData.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
@@ -2115,7 +2172,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
@@ -2173,13 +2230,12 @@ const MyInput = ({
 
               open={isDateOpen}
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsDateOpen(true);
+                dateOpenGuardRef.current = Date.now();
               }}
-              onClose={() => setIsDateOpen(false)}
+              onClose={() => undefined}
               placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              container={resolveContainer()}
+              preventOverflow={false}
+              container={() => document.body}
               shouldDisableDate={(date: Date) => {
                 const today = new Date(
                   new Date().setHours(0, 0, 0, 0)
@@ -2199,14 +2255,8 @@ const MyInput = ({
 
                 return false;
               }}
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                pointerEvents: 'none',
-                zIndex: -1
-              }}
+              className="my-input-date-trigger"
+              style={getCalendarTriggerStyle('date')}
             />
 
             <div
@@ -2236,14 +2286,11 @@ const MyInput = ({
                 }}
                 onFocus={() => {
                   if (!props.disabled) {
-                    setPlacement(calculatePlacement());
+                    setPlacement(calculatePlacement(360));
                   }
                 }}
                 onClick={() => {
-                  if (!props.disabled) {
-                    setPlacement(calculatePlacement());
-                    setIsDateOpen(true);
-                  }
+                  openCalendar('date');
                 }}
                 onBlur={() => {
                   const value = dateTextRef.current?.value || '';
@@ -2619,9 +2666,11 @@ const MyInput = ({
                 }}
                 onClick={() => {
                   if (props.disabled) return;
-
-                  setPlacement(calculatePlacement());
-                  setIsDateOpen(prev => !prev);
+                  if (isDateOpen) {
+                    setIsDateOpen(false);
+                    return;
+                  }
+                  openCalendar('date');
                 }}
                 style={{
                   position: 'absolute',

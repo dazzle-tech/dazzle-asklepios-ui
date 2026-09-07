@@ -49,8 +49,30 @@
   }
 }
 
+.my-input-date-trigger.rs-picker-date,
+.my-input-date-trigger .rs-picker-toggle,
+.my-input-date-trigger .rs-picker-toggle-wrapper {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
 .my-input-calendar-popup {
-  z-index: 9999 !important;
+  z-index: 14000 !important;
+  pointer-events: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.rs-picker-date-menu,
+.rs-picker-popup.rs-picker-date-menu {
+  z-index: 14000 !important;
+  pointer-events: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .arrow-number-style {
