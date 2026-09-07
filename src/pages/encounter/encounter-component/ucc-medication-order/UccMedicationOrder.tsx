@@ -7,7 +7,7 @@ import { notify } from '@/utils/uiReducerActions';
 import UccMedicationOrderAddModal from './UccMedicationOrderAddModal';
 import CancellationModal from '@/components/CancellationModal';
 import PlusIcon from '@rsuite/icons/Plus';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Tooltip, Whisper } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -369,24 +369,41 @@ const UccMedicationOrder = (props: any) => {
       width: 120,
       render: (row: any) => (
         <div style={{ display: 'flex', gap: 10 }}>
-          <FontAwesomeIcon
-            icon={faPenToSquare}
-            className="ucc-medication-order-icons-size"
-            style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
-            }}
-            onClick={() => {
-              if (row?.status !== 'NEW') return;
-              setEditRow(row);
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Edit</Translate>
+              </Tooltip>
+            }
+          >
+            <FontAwesomeIcon
+              icon={faPenToSquare}
+              className="ucc-medication-order-icons-size"
+              style={{
+                cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
+                opacity: row?.status === 'NEW' ? 1 : 0.4
+              }}
+              onClick={() => {
+                if (row?.status !== 'NEW') return;
+                setEditRow(row);
 
-              setTimeout(() => {
-                setOpenAdd(true);
-              }, 0);
-            }}
-          />
+                setTimeout(() => {
+                  setOpenAdd(true);
+                }, 0);
+              }}
+            />
+          </Whisper>
 
-          <CheckRoundIcon
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Submit</Translate>
+              </Tooltip>
+            }
+          >
+            <CheckRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
@@ -397,8 +414,17 @@ const UccMedicationOrder = (props: any) => {
               handleSubmit(row);
             }}
           />
+          </Whisper>
 
-          <WarningRoundIcon
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Cancel</Translate>
+              </Tooltip>
+            }
+          >
+            <WarningRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
@@ -410,13 +436,14 @@ const UccMedicationOrder = (props: any) => {
               setOpenCancel(true);
             }}
           />
+          </Whisper>
         </div>
       )
     }
   ];
 
   return (
-      <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
+    <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
       <MyTable
         height={450}
         data={rows}
