@@ -123,16 +123,39 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       type: formData.type,
       dateOfResolution: formData.dateOfResolution,
       byPatient: formData.byPatient,
-      sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation
+      sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation,
+      patientIsFree: formData.patientIsFree
     };
 
     const errors: string[] = [];
 
-    if (!payload.condition?.trim()) errors.push('Condition is required');
-    if (!payload.dateOfDiagnosis) errors.push('Date of Diagnosis is required');
-    if (!payload.conditionStatus) errors.push('Condition Status is required');
-    if (!payload.type) errors.push('Type is required');
+    if (!payload.patientIsFree) {
 
+      if (!payload.condition?.trim()) {
+        errors.push('Condition is required');
+      }
+
+      if (!payload.dateOfDiagnosis) {
+        errors.push('Date of Diagnosis is required');
+      }
+
+      if (!payload.conditionStatus) {
+        errors.push('Condition Status is required');
+      }
+
+      if (!payload.type) {
+        errors.push('Type is required');
+      }
+
+      if (
+        payload.byPatient === false &&
+        !payload.sourceOfInformation?.trim()
+      ) {
+        errors.push(
+          'Source of Information is required when problem is not reported by patient'
+        );
+      }
+    }
     if (errors.length) {
       dispatch(notify({ msg: errors.join(', '), sev: 'warning' }));
       return;
@@ -205,14 +228,38 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
   };
-
+useEffect(() => {
+  if (formData.patientIsFree) {
+    setFormData(prev => ({
+      ...prev,
+      condition: '',
+      dateOfDiagnosis: null,
+      conditionStatus: null,
+      type: null,
+      dateOfResolution: null,
+      byPatient: true,
+      sourceOfInformation: null
+    }));
+  }
+}, [formData.patientIsFree]);
   const content = (
     <Form fluid className="fields-container">
       <Row>
+        <MyInput
+          width={'14vw'}
+          column
+          fieldLabel="Patient Is Free"
+          fieldType="checkbox"
+          fieldName="patientIsFree"
+          record={formData}
+          setRecord={setFormData}
+
+        />
         <Row>
           <Col md={12}>
             <div style={{ marginBottom: 12 }}>
               <MultiSelectAppender
+                disabled={formData.patientIsFree}
                 key={formKey}
                 label="Condition"
                 options={patientConditions ?? []}
@@ -239,7 +286,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               record={formData}
               setRecord={setFormData}
               disableFutureDates
-              required
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
             />
           </Col>
         </Row>
@@ -259,7 +307,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               record={formData}
               setRecord={setFormData}
               searchable={false}
-              required
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
             />
           </Col>
 
@@ -277,7 +326,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               record={formData}
               setRecord={setFormData}
               searchable={false}
-              required
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
             />
           </Col>
         </Row>
@@ -291,6 +341,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
             fieldName="dateOfResolution"
             record={formData}
             setRecord={setFormData}
+            disabled={formData.patientIsFree}
           />
         </Row>
 
@@ -304,6 +355,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               fieldName="byPatient"
               record={formData}
               setRecord={setFormData}
+              disabled={formData.patientIsFree}
             />
           </Col>
 
@@ -321,7 +373,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
               record={formData}
               setRecord={setFormData}
               searchable={false}
-              disabled={formData.byPatient === true}
+              disabled={formData.byPatient === true || formData.patientIsFree}
             />
           </Col>
         </Row>
