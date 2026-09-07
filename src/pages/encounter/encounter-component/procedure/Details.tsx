@@ -72,10 +72,9 @@ const Details = ({
   });
 
   const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
-  const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
-    listRequestPro,
-    { skip: procedure.categoryKey == undefined }
-  );
+  const { data: procedureQueryResponse } = useGetProcedureListQuery(listRequestPro, {
+    skip: procedure.categoryKey == undefined
+  });
 
   const [indicationsDescription, setIndicationsDescription] = useState<string>('');
   const [searchKeywordicd, setSearchKeywordicd] = useState('');
