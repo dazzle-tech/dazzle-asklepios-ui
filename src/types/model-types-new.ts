@@ -4054,6 +4054,12 @@ export type EmergencyTriageLevelAssessmentUpdate = Pick<
   | 'consultationRequired'
 >;
 
+export type CTASEmergencyTriageLevelUpdate = Pick<
+  EmergencyTriage,
+  | 'id'
+  | 'emergencyLevel'
+>;
+
 // PUT /api/patient/emergency-triage/{id}/destination
 export type EmergencyTriageDestinationUpdate = Pick<EmergencyTriage, 'id' | 'destination'>;
 
