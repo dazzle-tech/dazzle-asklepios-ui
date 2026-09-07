@@ -63,15 +63,22 @@ export const dentalProcedureService = createApi({
     }),
 
     cancelDentalProcedure: builder.mutation({
-      query: ({ id }: { id: number }) => ({
+      query: ({
+        id,
+        cancellationReason
+      }: {
+        id: number;
+        cancellationReason: string;
+      }) => ({
         url: `/api/patient/dental-procedures/${id}/cancel`,
-        method: 'PUT'
+        method: 'PUT',
+        body: {
+          cancellationReason
+        }
       }),
       invalidatesTags: ['DentalProcedure'],
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
     })
   })
 });
