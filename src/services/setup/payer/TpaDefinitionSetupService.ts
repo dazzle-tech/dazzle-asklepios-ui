@@ -23,14 +23,217 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+const toId = (value: unknown): number | null => {
+  if (value == null || value === '') {
+    return null;
+  }
+  if (typeof value === 'object') {
+    const nested = Number(
+      (value as { id?: unknown; value?: unknown }).id ?? (value as { value?: unknown }).value
+    );
+    return Number.isFinite(nested) ? nested : null;
+  }
+  const id = Number(value);
+  return Number.isFinite(id) ? id : null;
+};
+
+const pickText = (...values: unknown[]) => {
+  for (const value of values) {
+    if (value == null || value === '') {
+      continue;
+    }
+    const text = String(value).trim();
+    if (text) {
+      return text;
+    }
+  }
+  return '';
+};
+
+const nestedCompany = (company: any) =>
+  company?.nphiesPayer ??
+  company?.insuranceCompany ??
+  company?.payerCompany ??
+  company?.payer ??
+  company?.company ??
+  null;
+
+export const unwrapList = (value: unknown): any[] => {
+  if (value == null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value;
+  }
+  const obj = value as Record<string, unknown>;
+  if (Array.isArray(obj.data)) {
+    return obj.data;
+  }
+  if (Array.isArray(obj.content)) {
+    return obj.content;
+  }
+  if (Array.isArray((obj.data as { content?: unknown })?.content)) {
+    return (obj.data as { content: unknown[] }).content;
+  }
+  if (Array.isArray((obj.data as { data?: unknown })?.data)) {
+    return (obj.data as { data: unknown[] }).data;
+  }
+  if (Array.isArray(obj.items)) {
+    return obj.items as unknown[];
+  }
+  if (Array.isArray(obj.result)) {
+    return obj.result as unknown[];
+  }
+  return [];
+};
+
 const toPagedResult = <T>(res: T[], meta: any): PagedResult<T> => {
   const h = meta?.response?.headers;
-  const data = Array.isArray(res) ? res : [];
+  const data = unwrapList(res);
   return {
     data,
     totalCount: Number(h?.get('X-Total-Count') ?? data.length),
     links: parseLinkHeader(h?.get('Link'))
   };
+};
+
+export const normalizeTpaDefinition = (
+  tpa: any
+): { id: number; tpaCode: string; name: string; isActive: boolean } | null => {
+  if (tpa == null || tpa === '') {
+    return null;
+  }
+
+  const nested = tpa?.tpa ?? tpa?.tpaDefinition ?? tpa?.tpaDetails ?? null;
+  const source = nested && typeof nested === 'object' ? nested : typeof tpa === 'object' ? tpa : null;
+  const id = toId(
+    source?.id ??
+      source?.tpaId ??
+      source?.tpaDefinitionId ??
+      tpa?.tpaId ??
+      tpa?.tpaDefinitionId ??
+      tpa?.id ??
+      tpa?.value ??
+      tpa
+  );
+  if (id == null) {
+    return null;
+  }
+
+  const tpaCode = pickText(
+    source?.tpaCode,
+    source?.tpa_code,
+    source?.code,
+    tpa?.tpaCode,
+    tpa?.tpa_code,
+    tpa?.code
+  );
+  const name = pickText(
+    source?.name,
+    source?.tpaName,
+    source?.label,
+    tpa?.name,
+    tpa?.tpaName,
+    tpa?.label
+  );
+  const activeValue = source?.isActive ?? source?.active ?? tpa?.isActive ?? tpa?.active;
+  const isActive =
+    activeValue !== false &&
+    activeValue !== 0 &&
+    String(activeValue ?? 'true').toLowerCase() !== 'false' &&
+    String(activeValue ?? '').toLowerCase() !== 'inactive';
+
+  return { id, tpaCode, name, isActive };
+};
+
+export const normalizeLinkedInsuranceCompany = (
+  company: any
+): TpaLinkedInsuranceCompany | null => {
+  if (company == null || typeof company !== 'object') {
+    const id = toId(company);
+    return id == null
+      ? null
+      : { id, nphiesId: '', nameEn: '', nameAr: null, isActive: true };
+  }
+
+  const nested = nestedCompany(company);
+  const id = toId(
+    nested?.id ??
+      company?.nphiesPayerId ??
+      company?.insuranceCompanyId ??
+      company?.payerId ??
+      company?.id ??
+      company?.value
+  );
+  if (id == null) {
+    return null;
+  }
+
+  const source = nested ?? company;
+  const activeValue =
+    source?.isActive ?? source?.active ?? company?.isActive ?? company?.active;
+  const isActive =
+    activeValue !== false &&
+    activeValue !== 0 &&
+    String(activeValue).toLowerCase() !== 'false' &&
+    String(activeValue).toLowerCase() !== 'inactive';
+
+  return {
+    id,
+    nphiesId: pickText(
+      source?.nphiesId,
+      source?.nphies_id,
+      source?.code,
+      source?.payerCompanyCode,
+      source?.payerCode,
+      company?.nphiesId,
+      company?.nphies_id,
+      company?.code,
+      company?.payerCompanyCode
+    ),
+    nameEn: pickText(
+      source?.nameEn,
+      source?.name_en,
+      source?.name,
+      source?.englishName,
+      source?.nameEnglish,
+      source?.shortName,
+      source?.label,
+      company?.nameEn,
+      company?.name_en,
+      company?.name,
+      company?.label
+    ),
+    nameAr:
+      pickText(
+        source?.nameAr,
+        source?.name_ar,
+        source?.arabicName,
+        source?.nameArabic,
+        company?.nameAr,
+        company?.name_ar
+      ) || null,
+    isActive
+  };
+};
+
+const toInsuranceCompanyList = (res: any): TpaLinkedInsuranceCompany[] => {
+  const byId = new Map<number, TpaLinkedInsuranceCompany>();
+  unwrapList(res).forEach(item => {
+    const company = normalizeLinkedInsuranceCompany(item);
+    if (!company) {
+      return;
+    }
+    const existing = byId.get(company.id);
+    byId.set(company.id, {
+      id: company.id,
+      nphiesId: company.nphiesId || existing?.nphiesId || '',
+      nameEn: company.nameEn || existing?.nameEn || '',
+      nameAr: company.nameAr || existing?.nameAr || null,
+      isActive: company.nphiesId || company.nameEn ? company.isActive : existing?.isActive ?? company.isActive
+    });
+  });
+  return [...byId.values()];
 };
 
 export const TpaDefinitionService = createApi({
@@ -91,6 +294,7 @@ export const TpaDefinitionService = createApi({
         url: `/api/setup/tpa-definitions/${id}/insurance-companies`,
         method: 'GET'
       }),
+      transformResponse: toInsuranceCompanyList,
       providesTags: (_result, _error, id) => [{ type: 'TpaDefinition', id }]
     }),
 
@@ -99,8 +303,7 @@ export const TpaDefinitionService = createApi({
         url: '/api/setup/tpa-definitions/linkable-insurance-companies',
         method: 'GET'
       }),
-      transformResponse: (res: any) =>
-        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
+      transformResponse: toInsuranceCompanyList,
       providesTags: ['TpaDefinition', 'NphiesPayer']
     }),
 
