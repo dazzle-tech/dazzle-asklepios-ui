@@ -69,7 +69,8 @@ const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
   cannotUpdateCancelled: 'Cannot update a cancelled dental procedure.',
   procedureAlreadyBilled: 'Cannot modify this procedure because it has already been billed.',
   serviceAlreadyBilled: 'Cannot modify this procedure because the service has already been billed.',
-  alreadyCancelled: 'This dental procedure is already cancelled.'
+  alreadyCancelled: 'This dental procedure is already cancelled.',
+  cancellationReasonRequired: 'Cancellation reason is required.'
 };
 
 const normalizeMsg = (msg: string) => {
@@ -422,8 +423,9 @@ const DentalProcedures = props => {
     if (!selectedRow?.id) return;
 
     try {
-      await cancelProcedure({ id: selectedRow.id }).unwrap();
+      await cancelProcedure({ id: selectedRow.id, cancellationReason: cancelForm.cancellationReason || '' }).unwrap();
     } catch (error) {
+      console.log("error:",error)
       handleCrudError(error, dispatch);
       setCancelModalOpen(false);
     }
@@ -565,7 +567,24 @@ const DentalProcedures = props => {
             }}
           />
         )
-      }
+      },
+      {
+        key: 'cancelledByAt',
+        title: "Cancelled By / At",
+        render: (row: DentalProcedureResponseVM) => (
+          <>
+            {row.cancelledBy ?? '-'}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
+          </>
+        ),
+        expandable: true
+      },
+      {
+        key: 'cancellationReason',
+        title: "Cancellation Reason",
+        expandable: true
+      },
     ],
     [serviceList, procedureList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
   );
@@ -809,7 +828,7 @@ const DentalProcedures = props => {
         setObject={setCancelForm}
         handleCancle={handleCancel}
         fieldName="cancellationReason"
-        required={false}
+        required={true}
       />
 
       <MyModal

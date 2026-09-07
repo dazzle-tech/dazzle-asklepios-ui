@@ -5098,6 +5098,9 @@ export interface DentalProcedureResponseVM {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
 }
 
 export interface DentalProcedureCreateDTO {
