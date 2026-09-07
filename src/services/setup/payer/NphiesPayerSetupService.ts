@@ -2,7 +2,6 @@ import { BaseQuery } from '@/newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import { createApi } from '@reduxjs/toolkit/dist/query/react';
 import type { NphiesPayer } from '@/types/model-types-new';
-import { unwrapList } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type PagedParams = {
   page: number;
@@ -37,19 +36,11 @@ export const NphiesPayerService = createApi({
       }),
       transformResponse: (res: any, meta) => {
         const h = meta?.response?.headers;
-        const data = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res?.content)
-              ? res.content
-              : Array.isArray(res?.data?.content)
-                ? res.data.content
-                : [];
+        const data = Array.isArray(res) ? res : res?.data ?? res?.content ?? [];
 
         return {
           data,
-          totalCount: Number(h?.get('X-Total-Count') ?? (Array.isArray(data) ? data.length : 0)),
+          totalCount: Number(h?.get('X-Total-Count') ?? data.length),
           links: parseLinkHeader(h?.get('Link'))
         };
       },
@@ -133,15 +124,7 @@ export const NphiesPayerService = createApi({
         method: 'GET'
       }),
       transformResponse: (res: any) =>
-        Array.isArray(res)
-          ? res
-          : Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res?.content)
-              ? res.content
-              : Array.isArray(res?.data?.content)
-                ? res.data.content
-                : [],
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
       providesTags: ['NphiesPayer']
     }),
 
@@ -153,7 +136,8 @@ export const NphiesPayerService = createApi({
         url: `/api/setup/nphies-payers/${id}/available-tpas`,
         method: 'GET'
       }),
-      transformResponse: (res: any) => unwrapList(res),
+      transformResponse: (res: any) =>
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
       providesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 

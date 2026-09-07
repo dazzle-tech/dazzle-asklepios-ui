@@ -9,8 +9,6 @@ import { useGetActiveCountriesQuery } from '@/services/setup/country/countryServ
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import {
-  normalizeLinkedInsuranceCompany,
-  unwrapList,
   useGetLinkableInsuranceCompaniesQuery,
   useGetTpaLinkedInsuranceCompaniesQuery
 } from '@/services/setup/payer/TpaDefinitionSetupService';
@@ -94,38 +92,37 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
   }, [citiesResponse, tpa.cityId, tpa.cityName]);
 
   const insuranceOptions = useMemo(() => {
-    const byId = new Map<number, NonNullable<ReturnType<typeof normalizeLinkedInsuranceCompany>>>();
+    const toList = (value: unknown) => (Array.isArray(value) ? value : []);
+    const fetched = Array.isArray(payersResponse)
+      ? payersResponse
+      : toList((payersResponse as any)?.data ?? (payersResponse as any)?.content);
+    const byId = new Map<number, any>();
     [
-      ...unwrapList(insuranceCompanies),
-      ...unwrapList(payersResponse),
-      ...unwrapList(linkableCompanies),
-      ...unwrapList(linkedCompanies),
-      ...unwrapList(tpa.insuranceCompanies)
-    ].forEach(item => {
-      const company = normalizeLinkedInsuranceCompany(item);
-      if (!company) {
-        return;
+      ...toList(insuranceCompanies),
+      ...fetched,
+      ...toList(linkableCompanies),
+      ...toList(linkedCompanies),
+      ...toList(tpa.insuranceCompanies)
+    ].forEach(
+      company => {
+        const id = Number(company?.id ?? company?.nphiesPayerId ?? company?.value);
+        if (!Number.isFinite(id) || byId.has(id)) {
+          return;
+        }
+        byId.set(id, { ...company, id });
       }
-      const existing = byId.get(company.id);
-      byId.set(company.id, {
-        id: company.id,
-        nphiesId: company.nphiesId || existing?.nphiesId || '',
-        nameEn: company.nameEn || existing?.nameEn || '',
-        nameAr: company.nameAr || existing?.nameAr || null,
-        isActive:
-          !company.nphiesId && !company.nameEn
-            ? existing?.isActive ?? company.isActive
-            : company.isActive
-      });
-    });
+    );
     return [...byId.values()]
       .filter(
         company =>
           company.isActive !== false || (tpa.insuranceCompanyIds ?? []).includes(company.id)
       )
       .map(company => {
-        const displayName =
-          [company.nphiesId, company.nameEn].filter(Boolean).join(' - ') || `Company #${company.id}`;
+        const code = String(company.nphiesId ?? company.code ?? '').trim();
+        const name = String(
+          company.nameEn ?? company.name ?? company.nameAr ?? company.shortName ?? ''
+        ).trim();
+        const displayName = [code, name].filter(Boolean).join(' - ') || `Company #${company.id}`;
         return {
           id: company.id,
           displayName,

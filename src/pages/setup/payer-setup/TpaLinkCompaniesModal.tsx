@@ -3,11 +3,9 @@ import { Checkbox, Form, Input } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { NphiesPayer, TpaDefinition, TpaLinkedInsuranceCompany } from '@/types/model-types-new';
+import { TpaDefinition, TpaLinkedInsuranceCompany } from '@/types/model-types-new';
 import {
   TpaDefinitionService,
-  normalizeLinkedInsuranceCompany,
-  unwrapList,
   useGetLinkableInsuranceCompaniesQuery,
   useGetTpaDefinitionByIdQuery,
   useGetTpaLinkedInsuranceCompaniesQuery,
@@ -15,7 +13,6 @@ import {
 } from '@/services/setup/payer/TpaDefinitionSetupService';
 import {
   NphiesPayerService,
-  useGetActiveNphiesPayersQuery,
   useGetAllNphiesPayersQuery
 } from '@/services/setup/payer/NphiesPayerSetupService';
 import { useAppDispatch } from '@/hooks';
@@ -26,11 +23,23 @@ type TpaLinkCompaniesModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   tpa: TpaDefinition | null;
-  insuranceCompanies?: NphiesPayer[];
 };
 
 const uniqueIds = (ids?: Array<number | null | undefined>) =>
   [...new Set((ids ?? []).filter((id): id is number => Number.isFinite(Number(id))))].map(Number);
+
+const toList = (value: unknown): any[] => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (Array.isArray((value as any)?.data)) {
+    return (value as any).data;
+  }
+  if (Array.isArray((value as any)?.content)) {
+    return (value as any).content;
+  }
+  return [];
+};
 
 const toId = (value: unknown): number | null => {
   if (value == null || value === '') {
@@ -46,32 +55,22 @@ const toId = (value: unknown): number | null => {
   return Number.isFinite(id) ? id : null;
 };
 
-const companyIdOf = (company: any): number | null =>
-  normalizeLinkedInsuranceCompany(company)?.id ?? toId(company);
-
-const mergeCompany = (
-  existing: TpaLinkedInsuranceCompany | undefined,
-  next: TpaLinkedInsuranceCompany
-): TpaLinkedInsuranceCompany => {
-  if (!existing) {
-    return next;
+const normalizeCompany = (company: any): TpaLinkedInsuranceCompany | null => {
+  const id = toId(company?.id ?? company?.nphiesPayerId ?? company?.value);
+  if (id == null) {
+    return null;
   }
-  const incomingIsStub = !next.nphiesId && !next.nameEn && !next.nameAr;
+
   return {
-    id: next.id,
-    nphiesId: next.nphiesId || existing.nphiesId,
-    nameEn: next.nameEn || existing.nameEn,
-    nameAr: next.nameAr || existing.nameAr,
-    isActive: incomingIsStub ? existing.isActive : next.isActive
+    id,
+    nphiesId: String(company?.nphiesId ?? company?.code ?? '').trim(),
+    nameEn: String(company?.nameEn ?? company?.name ?? company?.shortName ?? '').trim(),
+    nameAr: String(company?.nameAr ?? '').trim() || null,
+    isActive: company?.isActive !== false
   };
 };
 
-const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
-  open,
-  setOpen,
-  tpa,
-  insuranceCompanies = []
-}) => {
+const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({ open, setOpen, tpa }) => {
   const dispatch = useAppDispatch();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [search, setSearch] = useState('');
@@ -91,18 +90,12 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
     useGetLinkableInsuranceCompaniesQuery(undefined, { skip: !open });
 
   const { data: payersResponse, isFetching: isPayersLoading } = useGetAllNphiesPayersQuery(
-    { page: 0, size: 200, sort: 'id,asc' },
+    { page: 0, size: 1000, sort: 'id,asc' },
     { skip: !open, refetchOnMountOrArgChange: true }
   );
 
-  const { data: activePayers = [], isFetching: isActivePayersLoading } =
-    useGetActiveNphiesPayersQuery(undefined, { skip: !open });
-
   const currentTpa = tpaDetails ?? tpa;
   const initializedTpaIdRef = React.useRef<number | null>(null);
-
-  const linkedCompanyList = useMemo(() => unwrapList(linkedCompanies), [linkedCompanies]);
-  const linkableCompanyList = useMemo(() => unwrapList(linkableCompanies), [linkableCompanies]);
 
   useEffect(() => {
     if (!open) {
@@ -116,8 +109,8 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
     }
 
     const fallbackIds = uniqueIds([
-      ...(currentTpa?.insuranceCompanyIds ?? []).map(toId),
-      ...(currentTpa?.insuranceCompanies ?? []).map(companyIdOf)
+      ...(currentTpa?.insuranceCompanyIds ?? []),
+      ...(currentTpa?.insuranceCompanies?.map(company => company.id) ?? [])
     ]);
 
     if (isLinkedLoading) {
@@ -125,51 +118,60 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
       return;
     }
 
-    const linkedIds = uniqueIds(linkedCompanyList.map(companyIdOf));
-    setSelectedIds(linkedIds.length ? linkedIds : fallbackIds);
+    setSelectedIds(uniqueIds(linkedCompanies.map(company => company.id)));
     initializedTpaIdRef.current = tpa.id;
-  }, [open, tpa?.id, tpaDetails, isLinkedLoading, linkedCompanyList, currentTpa]);
+  }, [open, tpa?.id, tpaDetails, isLinkedLoading, linkedCompanies, currentTpa]);
 
   const companies = useMemo(() => {
     const byId = new Map<number, TpaLinkedInsuranceCompany>();
     [
-      ...unwrapList(payersResponse),
-      ...unwrapList(activePayers),
-      ...unwrapList(insuranceCompanies),
-      ...linkableCompanyList,
-      ...linkedCompanyList,
-      ...unwrapList(currentTpa?.insuranceCompanies)
+      ...toList(payersResponse),
+      ...toList(linkableCompanies),
+      ...toList(linkedCompanies),
+      ...toList(currentTpa?.insuranceCompanies)
     ].forEach(item => {
-      const company = normalizeLinkedInsuranceCompany(item);
-      if (!company) {
+      const company = normalizeCompany(item);
+      if (!company || byId.has(company.id)) {
         return;
       }
-      byId.set(company.id, mergeCompany(byId.get(company.id), company));
+      byId.set(company.id, company);
     });
     return [...byId.values()];
-  }, [
-    payersResponse,
-    activePayers,
-    insuranceCompanies,
-    linkableCompanyList,
-    linkedCompanyList,
-    currentTpa
-  ]);
+  }, [payersResponse, linkableCompanies, linkedCompanies, currentTpa]);
+
+  const linkableIdSet = useMemo(
+    () =>
+      new Set(
+        toList(linkableCompanies)
+          .map(item => toId(item?.id))
+          .filter((id): id is number => id != null)
+      ),
+    [linkableCompanies]
+  );
 
   const originallyLinkedIdSet = useMemo(
     () =>
       new Set(
         uniqueIds([
-          ...(currentTpa?.insuranceCompanyIds ?? []).map(toId),
-          ...(currentTpa?.insuranceCompanies ?? []).map(companyIdOf),
-          ...linkedCompanyList.map(companyIdOf)
+          ...(currentTpa?.insuranceCompanyIds ?? []),
+          ...(currentTpa?.insuranceCompanies?.map(company => company.id) ?? []),
+          ...linkedCompanies.map(company => company.id)
         ])
       ),
-    [currentTpa, linkedCompanyList]
+    [currentTpa, linkedCompanies]
   );
 
-  const isCompanySelectable = (company: TpaLinkedInsuranceCompany) =>
-    company.isActive !== false || originallyLinkedIdSet.has(company.id);
+  const isCompanySelectable = (company: TpaLinkedInsuranceCompany) => {
+    const allowedByLink =
+      originallyLinkedIdSet.has(company.id) || isLinkableLoading || linkableIdSet.has(company.id);
+    if (!allowedByLink) {
+      return false;
+    }
+    if (company.isActive === false && !originallyLinkedIdSet.has(company.id)) {
+      return false;
+    }
+    return true;
+  };
 
   const filteredCompanies = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -185,8 +187,7 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
 
   const selectableFiltered = filteredCompanies.filter(isCompanySelectable);
   const allFilteredSelected =
-    selectableFiltered.length > 0 &&
-    selectableFiltered.every(company => selectedIds.includes(company.id));
+    selectableFiltered.length > 0 && selectableFiltered.every(company => selectedIds.includes(company.id));
   const someFilteredSelected =
     !allFilteredSelected && selectableFiltered.some(company => selectedIds.includes(company.id));
 
@@ -258,8 +259,7 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
     }
   };
 
-  const isLoading =
-    isTpaLoading || isLinkedLoading || isLinkableLoading || isPayersLoading || isActivePayersLoading;
+  const isLoading = isTpaLoading || isLinkedLoading || isLinkableLoading || isPayersLoading;
 
   const columns = [
     {
@@ -282,7 +282,7 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
             <Checkbox
               checked={selectedIds.includes(rowData.id)}
               disabled={!currentTpa?.isActive || !selectable}
-              title={selectable ? undefined : 'Inactive company cannot be linked'}
+              title={selectable ? undefined : 'Already linked to another TPA'}
               onChange={() => toggleCompany(rowData.id, !selectedIds.includes(rowData.id))}
             />
           </span>
@@ -292,20 +292,17 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
     {
       key: 'nphiesId',
       title: <Translate>Payer Company Code</Translate>,
-      flexGrow: 2,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nphiesId || '-'}</span>
+      flexGrow: 2
     },
     {
       key: 'nameEn',
       title: <Translate>Name English</Translate>,
-      flexGrow: 3,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nameEn || '-'}</span>
+      flexGrow: 3
     },
     {
       key: 'nameAr',
       title: <Translate>Name Arabic</Translate>,
-      flexGrow: 3,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nameAr || '-'}</span>
+      flexGrow: 3
     },
     {
       key: 'isActive',
@@ -337,7 +334,7 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
         <Form fluid layout="vertical" className="nphies-payer-form">
           <p className="payer-link-tpas-hint">
             Select insurance companies from the list below to link them with this TPA. A company
-            can be linked to more than one TPA.
+            already linked to another TPA cannot be selected again.
           </p>
           <div className="tpa-link-companies-toolbar">
             <Input
@@ -345,14 +342,15 @@ const TpaLinkCompaniesModal: React.FC<TpaLinkCompaniesModalProps> = ({
               onChange={value => setSearch(String(value ?? ''))}
               placeholder="Search company code or name"
             />
-            <span className="tpa-link-companies-count">{selectedIds.length} selected</span>
+            <span className="tpa-link-companies-count">
+              {selectedIds.length} selected
+            </span>
           </div>
           <MyTable
             data={filteredCompanies}
             columns={columns}
             loading={isLoading}
             height={380}
-            dontTranslateData
             onRowClick={(rowData: TpaLinkedInsuranceCompany) => {
               if (!currentTpa?.isActive || !isCompanySelectable(rowData)) {
                 return;

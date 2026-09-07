@@ -572,7 +572,6 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
         open={openLinkCompanies}
         setOpen={setOpenLinkCompanies}
         tpa={selectedTpa}
-        insuranceCompanies={insuranceCompanies}
       />
 
       <TpaLinkedCompaniesModal

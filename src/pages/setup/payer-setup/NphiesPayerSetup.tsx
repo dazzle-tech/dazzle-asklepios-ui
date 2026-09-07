@@ -378,13 +378,7 @@ const NphiesPayerSetup = () => {
         onClick={() => {
           setSelectedPayer({
             ...rowData,
-            tpaIds: [
-              ...new Set(
-                [...(rowData.tpaIds ?? []), ...(rowData.tpas ?? []).map(tpa => tpa.id)].filter(
-                  (id): id is number => Number.isFinite(Number(id))
-                )
-              )
-            ].map(Number)
+            tpaIds: [...new Set(rowData.tpaIds ?? [])]
           });
           setOpenModal(true);
         }}
@@ -397,13 +391,7 @@ const NphiesPayerSetup = () => {
         onClick={() => {
           setSelectedPayer({
             ...rowData,
-            tpaIds: [
-              ...new Set(
-                [...(rowData.tpaIds ?? []), ...(rowData.tpas ?? []).map(tpa => tpa.id)].filter(
-                  (id): id is number => Number.isFinite(Number(id))
-                )
-              )
-            ].map(Number)
+            tpaIds: [...new Set(rowData.tpaIds ?? rowData.tpas?.map(tpa => tpa.id) ?? [])]
           });
           setOpenLinkTpas(true);
         }}

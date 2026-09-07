@@ -1,13 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { TpaDefinition, TpaLinkedInsuranceCompany } from '@/types/model-types-new';
-import {
-  normalizeLinkedInsuranceCompany,
-  unwrapList,
-  useGetTpaLinkedInsuranceCompaniesQuery
-} from '@/services/setup/payer/TpaDefinitionSetupService';
+import { useGetTpaLinkedInsuranceCompaniesQuery } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type TpaLinkedCompaniesModalProps = {
   open: boolean;
@@ -24,32 +20,21 @@ const TpaLinkedCompaniesModal: React.FC<TpaLinkedCompaniesModalProps> = ({
     skip: !open || !tpa?.id
   });
 
-  const companies = useMemo(
-    () =>
-      unwrapList(data)
-        .map(item => normalizeLinkedInsuranceCompany(item))
-        .filter((company): company is TpaLinkedInsuranceCompany => company != null),
-    [data]
-  );
-
   const columns = [
     {
       key: 'nphiesId',
       title: <Translate>Insurance Company Code</Translate>,
-      flexGrow: 2,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nphiesId || '-'}</span>
+      flexGrow: 2
     },
     {
       key: 'nameEn',
       title: <Translate>Name English</Translate>,
-      flexGrow: 3,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nameEn || '-'}</span>
+      flexGrow: 3
     },
     {
       key: 'nameAr',
       title: <Translate>Name Arabic</Translate>,
-      flexGrow: 3,
-      render: (rowData: TpaLinkedInsuranceCompany) => <span>{rowData.nameAr || '-'}</span>
+      flexGrow: 3
     },
     {
       key: 'isActive',
@@ -74,11 +59,10 @@ const TpaLinkedCompaniesModal: React.FC<TpaLinkedCompaniesModalProps> = ({
       steps={[]}
       content={
         <MyTable
-          data={companies}
+          data={data}
           columns={columns}
           loading={isFetching}
           height={420}
-          dontTranslateData
         />
       }
     />
