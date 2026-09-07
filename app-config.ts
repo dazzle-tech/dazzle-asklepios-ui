@@ -17,7 +17,4 @@ const config = {
     window.APP_CONFIG?.tenantSecurityToken || '4994'
 };
 
-console.log('APP_CONFIG', window.APP_CONFIG);
-console.log('CONFIG', config);
-
 export default config;

@@ -30,7 +30,7 @@ const MyModal = ({
   handleCancelFunction = () => {},
   modalColor = 'var(--primary-blue)',
   initialStep = 0,
-  enforceFocus = true,
+  enforceFocus = false,
   /** If it returns false (or a Promise that resolves false), the step does not advance. */
   onBeforeNext
 }: {
