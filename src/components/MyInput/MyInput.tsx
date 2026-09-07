@@ -593,12 +593,11 @@ const MyInput = ({
 
   const isPickerSearchable = props.searchable ?? true;
 
-  const shouldVirtualizePicker = (itemCount = 0) => {
+const shouldVirtualizePicker = (itemCount = 0) => {
     if (isPickerSearchable) return false;
     if (props.virtualized !== undefined) return Boolean(props.virtualized);
     return itemCount > 20;
   };
-
   const getPickerItemSearchText = (
     item: any,
     labelKeys: string[],
@@ -624,7 +623,7 @@ const MyInput = ({
     if (props.searchBy) {
       return props.searchBy;
     }
-    return (keyword: string, label: any, item: any) => {
+return (keyword: string, label: any, item: any) => {
       if (item?.isLoadMore) return !String(keyword ?? '').trim();
       const needle = String(keyword ?? '').trim().toLowerCase();
       if (!needle) return true;
@@ -1752,7 +1751,7 @@ const MyInput = ({
                 'my-input-select-menu',
                 props.menuClassName
               )}
-              virtualized={shouldVirtualizePicker(dataList.length)}
+virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(
                 dataList,
                 valueKey
