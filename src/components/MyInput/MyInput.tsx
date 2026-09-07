@@ -524,6 +524,12 @@ const MyInput = ({
 
   const isPickerSearchable = props.searchable ?? true;
 
+  const shouldVirtualizePicker = (itemCount = 0) => {
+    if (isPickerSearchable) return false;
+    if (props.virtualized !== undefined) return Boolean(props.virtualized);
+    return itemCount > 20;
+  };
+
   const getPickerItemSearchText = (
     item: any,
     labelKeys: string[],
@@ -549,12 +555,13 @@ const MyInput = ({
     if (props.searchBy) {
       return props.searchBy;
     }
-    return (keyword: string, _label: any, item: any) => {
+    return (keyword: string, label: any, item: any) => {
+      if (item?.isLoadMore) return !String(keyword ?? '').trim();
       const needle = String(keyword ?? '').trim().toLowerCase();
       if (!needle) return true;
-      return getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum)
-        .toLowerCase()
-        .includes(needle);
+      const fromItem = getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum);
+      const fromLabel = typeof label === 'string' ? label : '';
+      return `${fromItem} ${fromLabel}`.toLowerCase().includes(needle);
     };
   };
 
@@ -1692,9 +1699,7 @@ const MyInput = ({
                 'my-input-select-menu',
                 props.menuClassName
               )}
-              virtualized={
-                props?.virtualized ?? dataList.length > 20
-              }
+              virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(
                 dataList,
                 valueKey
@@ -1951,7 +1956,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(pickerData.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
@@ -2115,7 +2120,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
