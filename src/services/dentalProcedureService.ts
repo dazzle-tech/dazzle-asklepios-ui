@@ -72,14 +72,14 @@ export const dentalProcedureService = createApi({
       }) => ({
         url: `/api/patient/dental-procedures/${id}/cancel`,
         method: 'PUT',
-        body: cancellationReason
+        body: {
+          cancellationReason
+        }
       }),
       invalidatesTags: ['DentalProcedure'],
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    })
   })
 });
 
