@@ -131,7 +131,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Speech Therapy', code: 'SPEECH_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/speech-therapy', type: "Specialty" },
   // { name: 'IV Fluid Administration', code: 'IV_FLUID_ADMINISTRATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-administration' },
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
-  // { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
+  { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
   { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
