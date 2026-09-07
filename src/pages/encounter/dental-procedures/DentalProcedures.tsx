@@ -5,7 +5,7 @@ import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPen } from '@fortawesome/free-solid-svg-icons';
-
+import { MdAttachFile } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
@@ -501,6 +501,27 @@ const DentalProcedures = props => {
         }
       },
       {
+        key: 'attachments',
+        dataKey: '',
+        title: <Translate>ATTACHMENTS</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          return (
+            <MdAttachFile
+              size={20}
+              fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
+              onClick={() => {
+                if (rowData?.id) {
+                  // setProcedure(rowData);
+                  setAttachmentsModalOpen(true)
+                }
+              }}
+              className={rowData?.id ? 'attachment-icon active' : 'attachment-icon disabled'}
+            />
+          );
+        }
+      },
+      {
         key: 'anesthesiaUsed',
         title: <Translate>Anesthesia Used</Translate>,
         flexGrow: 1,
@@ -624,15 +645,7 @@ const DentalProcedures = props => {
                   <Translate>Cancel</Translate>
                 </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  disabled={!selectedRow}
-                  onClick={() => setAttachmentsModalOpen(true)}
-                >
-                  <Translate>Attach</Translate>
-                </MyButton>
-
-                <Checkbox  className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
+                <Checkbox className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
                   <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
@@ -695,10 +708,10 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
-                            disableByField='isValid'
+                    disableByField='isValid'
 
                   />
-                  
+
                 </Col>
               </Row>
 
@@ -741,8 +754,7 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
-                            disableByField='isValid'
-
+                    disableByField='isValid'
                   />
                 </Col>
 
@@ -843,7 +855,7 @@ const DentalProcedures = props => {
             source="DENTAL_PROCEDURE_ATTACHMENT"
             sourceId={selectedRow?.id ? Number(selectedRow.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

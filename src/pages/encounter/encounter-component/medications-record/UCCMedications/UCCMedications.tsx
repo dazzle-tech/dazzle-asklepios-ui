@@ -30,6 +30,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { skipToken } from '@reduxjs/toolkit/query';
 import MedicationAdministrationModal from '@/pages/encounter/urgent-care/MedicationAdministrationModal';
 import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
+import { Tooltip, Whisper } from 'rsuite';
 
 type Props = {
   patient: any;
@@ -396,66 +397,96 @@ const UCCMedications = ({ patient }: Props) => {
       minWidth: 140,
       render: (row: MedicationOrderRow) =>
         formatEnumString(row.status)
-    }, 
-      {
-            key: 'actions',
-            title: <Translate>ACTIONS</Translate>,
-            width: 120,
-            align: 'center',
-         render: (row: MedicationOrderRow) => {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 12
-          }}
-        >
-          {row.status === 'SUBMITTED' && (
-            <>
-              <CheckRoundIcon
-                className="medication-record-order-icons-size"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setSelectedOrderId(row.id);
-                  setAdministrationModalOpen(true);
-                }}
-              />
-    
-              <FontAwesomeIcon
-                icon={faXmark}
-                className="medication-record-order-icons-size"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setSelectedRow(row);
-                  setCancelObject({
-                    discardReason: ''
-                  });
-                  setOpenDiscardModal(true);
-                }}
-              />
-            </>
-          )}
-    
-          {row.status === 'WAITING_DOUBLE_CHECK' && (
-            <FontAwesomeIcon
-              icon={faCheckDouble}
-              className="medication-record-order-icons-size"
-              style={{
-                cursor: 'pointer'
-              }}
-              onClick={() => handleDoubleCheck(row)}
+    },
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      width: 120,
+      align: 'center',
+      render: (row: MedicationOrderRow) => {
+        return (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 12
+            }}
+          >
+            {row.status === 'SUBMITTED' && (
+              <>
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Administer</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <CheckRoundIcon
+                    className="medication-record-order-icons-size"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setSelectedOrderId(row.id);
+                      setAdministrationModalOpen(true);
+                    }}
+                  />
+                </Whisper>
+
+
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Discard</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={faXmark}
+                    className="medication-record-order-icons-size"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setSelectedRow(row);
+                      setCancelObject({
+                        discardReason: ''
+                      });
+                      setOpenDiscardModal(true);
+                    }}
+                  />
+                </Whisper>
+
+              </>
+            )}
+
+            {row.status === 'WAITING_DOUBLE_CHECK' && (
+              <Whisper
+                placement="top"
+                speaker={
+                  <Tooltip>
+                    <Translate>Double Check</Translate>
+                  </Tooltip>
+                }
+              >
+                <FontAwesomeIcon
+                  icon={faCheckDouble}
+                  className="medication-record-order-icons-size"
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleDoubleCheck(row)}
+                />
+              </Whisper>
+
+            )}
+
+            <MedicationAdministrationLogs
+              order={row}
             />
-          )}
-    
-          <MedicationAdministrationLogs
-            order={row}
-          />
-        </div>
-      );
+          </div>
+        );
+      }
     }
-          }
   ];
 
   const tableLoading =
@@ -463,13 +494,13 @@ const UCCMedications = ({ patient }: Props) => {
     orderedFetching ||
     adminLoading ||
     adminFetching ||
-     
+
     discarding ||
     doubleChecking;
 
-    console.log('patient', patient);
-    console.log('patient.id', patient?.id);
-    console.log('patient.key', patient?.key);
+  console.log('patient', patient);
+  console.log('patient.id', patient?.id);
+  console.log('patient.key', patient?.key);
 
 
   return (
@@ -533,15 +564,15 @@ const UCCMedications = ({ patient }: Props) => {
           />
         }
       />
-<MedicationAdministrationModal
-  orderId={selectedOrderId}
-  open={administrationModalOpen}
-  setOpen={setAdministrationModalOpen}
-  onSuccess={async () => {
-    await refetchOrdered();
-    await refetchAdmin();
-  }}
-/>
+      <MedicationAdministrationModal
+        orderId={selectedOrderId}
+        open={administrationModalOpen}
+        setOpen={setAdministrationModalOpen}
+        onSuccess={async () => {
+          await refetchOrdered();
+          await refetchAdmin();
+        }}
+      />
       <CancellationModal
         open={openDiscardModal}
         setOpen={setOpenDiscardModal}

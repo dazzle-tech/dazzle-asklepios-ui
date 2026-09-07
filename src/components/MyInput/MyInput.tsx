@@ -445,6 +445,7 @@ const MyInput = ({
       if (pickerRef.current?.contains(target)) return;
       if (portaledSelectMenuRef.current?.contains(target)) return;
       setPortaledSelectOpen(false);
+      setLocalSearch('');
     };
 
     const timer = window.setTimeout(() => {
@@ -493,6 +494,18 @@ const MyInput = ({
     ) as HTMLElement;
   };
 
+  const focusPickerSearch = () => {
+    window.requestAnimationFrame(() => {
+      const input = document.querySelector(
+        '.rs-picker-popup:not(.rs-anim-leave) .rs-picker-search-bar-input, .rs-picker-popup:not(.rs-anim-leave) .rs-picker-search-bar input'
+      ) as HTMLInputElement | null;
+      if (!input) return;
+      input.disabled = false;
+      input.readOnly = false;
+      input.focus();
+    });
+  };
+
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
     const parts = labelKeys
@@ -508,6 +521,42 @@ const MyInput = ({
         ? dataList
           .filter(item => item?.[props.disableByField] === false).map(item => item[valueKey])
         : [];
+
+  const isPickerSearchable = props.searchable ?? true;
+
+  const getPickerItemSearchText = (
+    item: any,
+    labelKeys: string[],
+    isArrayLabel: boolean,
+    isEnum?: boolean
+  ) => {
+    if (!item) return '';
+    const raw = isArrayLabel
+      ? String(buildCombinedLabel(item, labelKeys, '') ?? '')
+      : String(item?.[labelKeys[0] ?? 'label'] ?? '');
+    return isEnum ? `${raw} ${formatEnumString(raw)}`.trim() : raw;
+  };
+
+  const resolvePickerSearchBy = (
+    labelKeys: string[],
+    isArrayLabel: boolean,
+    isEnum?: boolean,
+    skipClientFilter?: boolean
+  ) => {
+    if (skipClientFilter) {
+      return () => true;
+    }
+    if (props.searchBy) {
+      return props.searchBy;
+    }
+    return (keyword: string, _label: any, item: any) => {
+      const needle = String(keyword ?? '').trim().toLowerCase();
+      if (!needle) return true;
+      return getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum)
+        .toLowerCase()
+        .includes(needle);
+    };
+  };
 
 
   const conjureFormControl = () => {
@@ -1274,30 +1323,24 @@ const MyInput = ({
         const valueKey = props?.selectDataValue ?? 'value';
 
         const dataList = props?.selectData ?? [];
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum
+        );
 
         const filteredData = !localSearch
           ? dataList
-          : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
-
-            return text
-              .toLowerCase()
-              .includes(localSearch.toLowerCase());
-          });
+          : dataList.filter(item => pickerSearchBy(localSearch, '', item));
 
         const longestLabel = dataList.reduce(
           (longest, item) => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(
-                item,
-                labelKeys,
-                ''
-              )
-              : String(
-                item?.[primaryLabelKey] ?? ''
-              );
+            const text = getPickerItemSearchText(
+              item,
+              labelKeys,
+              isArrayLabel,
+              props.isEnum
+            );
 
             return text.length > longest.length
               ? text
@@ -1314,7 +1357,7 @@ const MyInput = ({
         );
 
         const dataForPicker =
-          props.searchable && localSearch ? filteredData : dataList;
+          isPickerSearchable && localSearch ? filteredData : dataList;
 
         const selectedSelectItem = dataList.find(
           (item: any) => String(item?.[valueKey]) === String(record?.[fieldName] ?? '')
@@ -1429,6 +1472,17 @@ const MyInput = ({
                     }}
                     onMouseDown={event => event.stopPropagation()}
                   >
+                    {isPickerSearchable && (
+                      <input
+                        className="my-input-portaled-select-search"
+                        type="text"
+                        value={localSearch}
+                        placeholder="Search"
+                        autoFocus
+                        onMouseDown={event => event.stopPropagation()}
+                        onChange={event => setLocalSearch(event.target.value)}
+                      />
+                    )}
                     {dataForPicker.length ? (
                       dataForPicker.map((item: any) => {
                         const itemValue = item?.[valueKey];
@@ -1487,10 +1541,11 @@ const MyInput = ({
                 }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
-              searchable={props.searchable ?? false}
-              data={dataForPicker}
+              searchable={isPickerSearchable}
+              data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
+              searchBy={pickerSearchBy}
               value={
                 record?.[fieldName] !== undefined &&
                   record?.[fieldName] !== null
@@ -1510,41 +1565,6 @@ const MyInput = ({
                   props.onSelectItem(selectedItem);
                 }
               }}
-              onKeyDown={
-                props.searchable
-                  ? (event: any) => {
-                    const key = event?.key;
-                    if (!key) return;
-
-                    const ignoredKeys = [
-                      'Shift',
-                      'Tab',
-                      'Enter',
-                      'Escape',
-                      'ArrowUp',
-                      'ArrowDown',
-                      'ArrowLeft',
-                      'ArrowRight',
-                      'Control',
-                      'Alt',
-                      'Meta'
-                    ];
-
-                    if (ignoredKeys.includes(key)) {
-                      return;
-                    }
-
-                    if (key === 'Backspace') {
-                      setLocalSearch(prev => prev.slice(0, -1));
-                      return;
-                    }
-
-                    if (key.length === 1) {
-                      setLocalSearch(prev => prev + key);
-                    }
-                  }
-                  : undefined
-              }
               renderMenuItem={
                 props.renderMenuItem ??
                 (isArrayLabel
@@ -1643,11 +1663,7 @@ const MyInput = ({
                       );
                     }
               }
-              placeholder={
-                localSearch && props.searchable
-                  ? `Search: ${localSearch}`
-                  : props.placeholder
-              }
+              placeholder={props.placeholder}
               cleanable={
                 props.cleanable !== undefined
                   ? props.cleanable
@@ -1656,6 +1672,7 @@ const MyInput = ({
               loading={props?.loading ?? false}
               onOpen={() => {
                 selectOpenGuardRef.current = Date.now();
+                focusPickerSearch();
               }}
               onClose={() => {
                 setLocalSearch('');
@@ -1664,7 +1681,7 @@ const MyInput = ({
               preventOverflow={false}
               container={() => document.body}
               menuMaxHeight={getDynamicMenuMaxHeight(
-                dataForPicker
+                dataList
               )}
               menuStyle={{
                 minWidth: props?.width ?? '12vw',
@@ -1676,7 +1693,7 @@ const MyInput = ({
                 props.menuClassName
               )}
               virtualized={
-                props?.virtualized ?? dataForPicker.length > 20
+                props?.virtualized ?? dataList.length > 20
               }
               disabledItemValues={getDisabledValues(
                 dataList,
@@ -1698,6 +1715,12 @@ const MyInput = ({
         const primaryLabelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
         const dataList = props.selectData ?? [];
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum,
+          isServerSideSearch
+        );
         const searchTerm = isServerSideSearch
           ? String(props.searchKeyWard ?? '')
           : localSearch;
@@ -1706,16 +1729,10 @@ const MyInput = ({
           ? dataList
           : !localSearch
             ? dataList
-            : dataList.filter(item => {
-              const text = isArrayLabel
-                ? buildCombinedLabel(item, labelKeys, '')
-                : String(item?.[primaryLabelKey] ?? '');
-
-              return text.toLowerCase().includes(localSearch.toLowerCase());
-            });
+            : dataList.filter(item => pickerSearchBy(localSearch, '', item));
 
         const shouldAutoLoadSearch =
-          Boolean(props.searchable) &&
+          isPickerSearchable &&
           isServerSideSearch &&
           Boolean(String(searchTerm).trim());
 
@@ -1745,10 +1762,18 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={props.searchable ?? false}
+              searchable={isPickerSearchable}
               data={pickerData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
+              searchBy={pickerSearchBy}
+              onSearch={(keyword: string) => {
+                if (isServerSideSearch && props.setSearchKeyWard) {
+                  props.setSearchKeyWard(keyword);
+                  return;
+                }
+                setLocalSearch(keyword);
+              }}
               value={
                 record?.[fieldName] !== undefined && record?.[fieldName] !== null
                   ? record[fieldName]
@@ -1780,7 +1805,10 @@ const MyInput = ({
                   props.onSelectItem(selectedItem);
                 }
               }}
-              onKeyDown={(event: any) => {
+              onKeyDown={
+                isPickerSearchable
+                  ? undefined
+                  : (event: any) => {
                 const key = event?.key;
                 if (!key) return;
 
@@ -1818,7 +1846,8 @@ const MyInput = ({
                     setLocalSearch(prev => prev + key);
                   }
                 }
-              }}
+              }
+              }
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => {
@@ -1898,6 +1927,7 @@ const MyInput = ({
                 selectOpenGuardRef.current = Date.now();
                 setPlacement(calculatePlacement());
                 setIsSelectOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => {
                 if (loadMoreClickedRef.current) {
@@ -1931,6 +1961,11 @@ const MyInput = ({
       case 'multyPicker': {
         const dataList = props?.selectData ?? [];
         const valueKey = props?.selectDataValue ?? '';
+        const pickerSearchBy = resolvePickerSearchBy(
+          [String(props?.selectDataLabel ?? 'name')],
+          false,
+          props.isEnum
+        );
 
         return (
           <div ref={pickerRef}>
@@ -1951,7 +1986,8 @@ const MyInput = ({
               placeholder={props.placeholder ?? 'Select...'}
               creatable={props.creatable ?? false}
               groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
+              searchable={isPickerSearchable}
+              searchBy={pickerSearchBy}
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => (
@@ -1964,6 +2000,7 @@ const MyInput = ({
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsMultyPickerOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => setIsMultyPickerOpen(false)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
@@ -1994,16 +2031,11 @@ const MyInput = ({
         const primaryLabelKey = labelKeys[0] ?? 'label';
         const valueKey = props?.selectDataValue ?? 'value';
         const dataList = props?.selectData ?? [];
-
-        const filteredData = !localSearch
-          ? dataList
-          : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
-
-            return text.toLowerCase().includes(localSearch.toLowerCase());
-          });
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum
+        );
 
         return (
           <div ref={pickerRef}>
@@ -2017,12 +2049,13 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
-              searchable={false}
+              searchable={isPickerSearchable}
+              searchBy={pickerSearchBy}
               container={resolveContainer()}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               name={fieldName}
-              data={filteredData}
+              data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
               menuClassName={clsx(
@@ -2042,10 +2075,6 @@ const MyInput = ({
                   }
 
                   if (props.isEnum) {
-                    // NOTE: don't use `label` here — RSuite swaps it for a
-                    // highlighted React node while the search box has text,
-                    // which is what produced "[object Object]" during search.
-                    // Always read the raw string straight from `item`.
                     return (
                       <Translate>
                         {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
@@ -2069,48 +2098,14 @@ const MyInput = ({
                   props.onSelectItem(selectedItems);
                 }
               }}
-              onKeyDown={(event: any) => {
-                const key = event?.key;
-                if (!key) return;
-
-                const ignoredKeys = [
-                  'Shift',
-                  'Tab',
-                  'Enter',
-                  'Escape',
-                  'ArrowUp',
-                  'ArrowDown',
-                  'ArrowLeft',
-                  'ArrowRight',
-                  'Control',
-                  'Alt',
-                  'Meta'
-                ];
-
-                if (ignoredKeys.includes(key)) {
-                  return;
-                }
-
-                if (key === 'Backspace') {
-                  setLocalSearch(prev => prev.slice(0, -1));
-                  return;
-                }
-
-                if (key.length === 1) {
-                  setLocalSearch(prev => prev + key);
-                }
-              }}
-              placeholder={
-                localSearch
-                  ? `Search: ${localSearch}`
-                  : props.placeholder ?? 'Select...'
-              }
+              placeholder={props.placeholder ?? 'Select...'}
               groupBy={props.groupBy ?? null}
-              menuMaxHeight={getDynamicMenuMaxHeight(filteredData)}
+              menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               open={isCheckPickerOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => {
                 setIsCheckPickerOpen(false);

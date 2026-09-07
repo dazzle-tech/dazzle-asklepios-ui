@@ -484,6 +484,17 @@
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
 }
 
+.my-input-portaled-select-search {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 4px 8px 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--rs-border-primary, #d6dde8);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
 .my-input-portaled-select-option {
   width: 100%;
   display: block;
@@ -510,4 +521,18 @@
   padding: 8px 12px;
   font-size: 12px;
   color: #8f98ab;
+}
+
+.rs-picker-popup,
+.my-input-select-menu {
+  pointer-events: auto !important;
+
+  .rs-picker-search-bar,
+  .rs-picker-search-bar-input,
+  .rs-picker-search-bar input,
+  .rs-picker-search-bar .rs-input {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    cursor: text !important;
+  }
 }

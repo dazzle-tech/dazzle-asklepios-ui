@@ -208,18 +208,25 @@ const indicationUseLovMap = useMemo(() => {
         }
   
       },
-    {
-      key: 'medicationsId',
-      dataKey: 'medicationsId',
-      title: <Translate>Medication Name</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        return genericMedicationListResponse?.data?.find(
-          (item: any) => String(item.id) === String(medId)
-        )?.name;
-      }
-    },
+      {
+        key: 'medicationsId',
+        dataKey: 'medicationsId',
+        title: <Translate>Medication Name</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
+
+          if (medId != null) {
+            return (
+              genericMedicationListResponse?.data?.find(
+                (item: any) => String(item.id) === String(medId)
+              )?.name ?? '-'
+            );
+          }
+
+          return rowData.otherMedicationName ?? '-';
+        }
+      },
     {
       key: 'instructions',
       dataKey: '',

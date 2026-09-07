@@ -156,6 +156,11 @@ const Encounter = ({
     CompletionValidationItem[]
   >([]);
 
+  const handleCloseValidationModal = () => {
+    setShowValidationModal(false);
+    setValidationItems([]);
+  };
+
   const [edit, setEdit] = useState(() => {
     return propsData?.viewMode === 'readOnly' || propsData?.readOnly === true;
   });
@@ -1302,24 +1307,37 @@ const Encounter = ({
 
       <EncounterCompletionValidationModal
         open={showValidationModal}
-        setOpen={setShowValidationModal}
+        setOpen={open => {
+          if (open) {
+            setShowValidationModal(true);
+          } else {
+            handleCloseValidationModal();
+          }
+        }}
         items={validationItems}
         onGoToMedicalSheet={path => {
+          handleCloseValidationModal();
+
           navigate(`/encounter${path}`, {
             state: sharedNavigationState
           });
         }}
         onGoToPrescription={() => {
+          handleCloseValidationModal();
+
           navigate('/encounter/prescription', {
             state: sharedNavigationState
           });
         }}
         onGoToDiagnosticOrders={() => {
+          handleCloseValidationModal();
+
           navigate('/encounter/diagnostics-order', {
             state: sharedNavigationState
           });
         }}
       />
+
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}

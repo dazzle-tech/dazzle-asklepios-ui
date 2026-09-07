@@ -31,7 +31,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyNestedTable from '@/components/MyNestedTable';
-import { Form, Modal } from 'rsuite';
+import { Form, Modal, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MedicationAdministrationModal from './MedicationAdministrationModal';
 import MedicationAdministrationLogs from './MedicationAdministrationLogs';
@@ -667,7 +667,15 @@ const MedicationRecord = () => {
     >
       {row.status === 'SUBMITTED' && (
         <>
-          <CheckRoundIcon
+        <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Administer</Translate>
+              </Tooltip>
+            }
+          >
+            <CheckRoundIcon
             className="medication-record-order-icons-size"
             style={{ cursor: 'pointer' }}
             onClick={() => {
@@ -675,8 +683,17 @@ const MedicationRecord = () => {
               setAdministrationModalOpen(true);
             }}
           />
-
-          <FontAwesomeIcon
+          </Whisper>
+          
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Discard</Translate>
+              </Tooltip>
+            }
+          >
+           <FontAwesomeIcon
             icon={faXmark}
             className="medication-record-order-icons-size"
             style={{ cursor: 'pointer' }}
@@ -688,11 +705,21 @@ const MedicationRecord = () => {
               setOpenDiscardModal(true);
             }}
           />
+          </Whisper>
+          
         </>
       )}
 
       {row.status === 'WAITING_DOUBLE_CHECK' && (
-        <FontAwesomeIcon
+        <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Double Check</Translate>
+              </Tooltip>
+            }
+          >
+           <FontAwesomeIcon
           icon={faCheckDouble}
           className="medication-record-order-icons-size"
           style={{
@@ -700,6 +727,8 @@ const MedicationRecord = () => {
           }}
           onClick={() => handleDoubleCheck(row)}
         />
+          </Whisper>
+        
       )}
 
       <MedicationAdministrationLogs
