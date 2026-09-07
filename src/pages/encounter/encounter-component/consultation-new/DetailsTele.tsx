@@ -181,7 +181,10 @@ const DetailsTele = ({
         practitionerId: null
       });
 
-      setPractitioner({ ...newPractitioner });
+      setPractitioner({
+        ...newPractitioner,
+        facilityId: encounter?.facilityId ?? null,
+      });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
