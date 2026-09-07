@@ -87,6 +87,7 @@ const MedicationAdministrationModal: React.FC<
             fieldType="datetime"
             record={record}
             setRecord={setRecord}
+            width='100%'
           />
         </div>
       }

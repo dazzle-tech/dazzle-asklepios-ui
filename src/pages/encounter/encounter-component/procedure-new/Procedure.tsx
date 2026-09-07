@@ -376,6 +376,10 @@ const Referrals = (props: any) => {
           return formatEnumString(rowData?.procedureLevel);
         }
       },
+       {
+        key: 'result',
+        title: 'Result',
+      },
       {
         key: 'indicationId',
         title: <Translate>INDICATIONS</Translate>,
