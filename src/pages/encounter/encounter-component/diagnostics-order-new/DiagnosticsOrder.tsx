@@ -87,7 +87,7 @@ const DiagnosticsOrder = (props: any) => {
   return (
       <div
     dir={dir}
-    className={clsx({ 'disabled-panel': edit })}
+    // className={clsx({ 'disabled-panel': edit })}
   >
       <DiagnosticsOrderHeader
         orders={vm.orders}
@@ -142,6 +142,7 @@ const DiagnosticsOrder = (props: any) => {
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
         patient={vm.patient}
         departments={vm.departments}
+        edit={vm.edit}
       />
 
       <DiagnosticsOrderModals

@@ -49,6 +49,7 @@ type Props = {
   // patient
   patient: any;
   departments: any[];
+  edit?: boolean;
 };
 
 const DiagnosticsOrderTable: React.FC<Props> = props => {
@@ -79,7 +80,8 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     setPreviewDiagnosticsOrder,
 
     patient,
-    departments
+    departments,
+    edit,
   } = props;
 
   const resolveReceivedDepartmentName = (rowData: any) => {
@@ -250,7 +252,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
               <span style={{ display: 'inline-flex', alignItems: 'center', cursor: actionCursor }}>
                 <MdModeEdit
                   onClick={() => {
-                    if (isRescheduled) return;
+                    if (isRescheduled || edit) return;
                     handleEdit(rowData);
                   }}
                   className="icons-styles"
@@ -270,7 +272,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
                   className="icons-styles"
                   color={actionColor}
                   onClick={() => {
-                    if (isRescheduled) return;
+                    if (isRescheduled || edit) return;
                     setOrderTest(normalizeOrderTest(rowData));
                     setTest(rowData.test);
                     setTestCardModal(true);

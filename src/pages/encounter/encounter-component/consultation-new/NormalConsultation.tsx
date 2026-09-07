@@ -603,7 +603,7 @@ const editDisabled =
   );
 
   const filters = () => (
-    <Form layout="inline" fluid className="date-filter-form">
+    <Form layout="inline" fluid className="date-filter-form filter-form-disable-fix">
       <MyInput
         column
         width={180}

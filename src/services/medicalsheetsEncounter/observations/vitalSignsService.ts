@@ -25,6 +25,9 @@ export type VitalSignsResponseVM = {
   bloodPressureSystolic: number | null;
   bloodPressureDiastolic: number | null;
   oxygenSaturation: number | null;
+  encounterId: number | null;
+  encounterNumber: string | null;
+  isActive: boolean |null;
 };
 
 export type TemperatureResponseVM = {

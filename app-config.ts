@@ -28,7 +28,4 @@ const config = {
   stimulsoftEncryptData: window.APP_CONFIG?.stimulsoftEncryptData,
 };
 
-console.log('APP_CONFIG', window.APP_CONFIG);
-console.log('CONFIG', config);
-
 export default config;

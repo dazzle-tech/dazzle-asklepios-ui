@@ -2710,7 +2710,7 @@ export const newConsultation: modelTypes.Consultation = {
   consultantSpeciality: null,
   consultationMethod: '',
   practitionerId: null,
-  consultationLevel: 'ROUTINE',
+  consultationLevel: null,
   consultationContent: '',
   notes: null,
   extraDocument: null,

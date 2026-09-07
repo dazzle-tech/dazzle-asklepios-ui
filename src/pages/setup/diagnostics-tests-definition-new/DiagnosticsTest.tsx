@@ -883,6 +883,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   useEffect(() => {
     if (!openProfileModal) {
       setOpenNormalRangesDirectly(false);
+      setSelectedProfile(null);
     }
   }, [openProfileModal]);
 
