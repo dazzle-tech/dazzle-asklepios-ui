@@ -156,7 +156,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [bulkSaveNurseMedicalSheets] = useBulkSaveNurseMedicalSheetsMutation();
   // Enums
   const depTypeOptions = useEnumOptions('DepartmentType');
-  const encTypesEnum = useEnumOptions('EncounterType');
+  const encTypesEnum = useEnumOptions('EncounterType', { exclude: ['ALL'] });
   const DayOfWeek = useEnumOptions('DayOfWeek');
 
   const filterFields = [

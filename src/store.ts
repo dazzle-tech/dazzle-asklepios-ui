@@ -244,6 +244,7 @@ import { medicationValidationService } from './services/medicationTestOrdersVali
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
+import { coverageManagementService } from '@/services/setup/coverageManagement/coverageManagementService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
 import {billingConfigurationService} from './services/billing/billingConfigurationService';
@@ -620,6 +621,7 @@ export const store = configureStore({
   [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
     [TpaDefinitionService.reducerPath]: TpaDefinitionService.reducer,
+    [coverageManagementService.reducerPath]: coverageManagementService.reducer,
 
   [priceListSetupService.reducerPath]: priceListSetupService.reducer,
   [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
@@ -849,6 +851,7 @@ export const store = configureStore({
         systemConfigService.middleware,
         NphiesPayerService.middleware,
         TpaDefinitionService.middleware,
+        coverageManagementService.middleware,
         priceListSetupService.middleware,
         billingRuleSetupService.middleware,
         billingConfigurationService.middleware,

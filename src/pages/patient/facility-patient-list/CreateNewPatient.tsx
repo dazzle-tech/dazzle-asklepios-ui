@@ -504,7 +504,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
-  const EncounterTypeEnum = useEnumOptions('EncounterType');
+  const EncounterTypeEnum = useEnumOptions('EncounterType', { exclude: ['ALL'] });
   const authSlice = useAppSelector(s => s.auth);
 
   const selectedDepartment = authSlice.selectedDepartment;

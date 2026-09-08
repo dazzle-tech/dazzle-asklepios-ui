@@ -119,7 +119,15 @@ const Icd10Search: React.FC<Props> = ({
 
   const selectedItem = useMemo(() => {
     if (mode !== 'singleICD10') return null;
-    return picked ?? items.find(it => String(it.id) === String(object?.[fieldName])) ?? null;
+    if (picked) return picked;
+    const fromItems = items.find(it => String(it.id) === String(object?.[fieldName]));
+    if (fromItems) return fromItems;
+    if (object?.[fieldName] == null || object?.[fieldName] === '') return null;
+    const code = object.diagnosisCode ?? object.icdCode ?? '';
+    const description =
+      object.diagnosisName ?? object.icdShortDescription ?? object.icdFullDescription ?? '';
+    if (!code && !description) return null;
+    return { id: object[fieldName], code, description };
   }, [picked, items, object, fieldName, mode, instanceId]);
 
   const getAddedItemsSet = useMemo(() => {
@@ -159,8 +167,16 @@ const Icd10Search: React.FC<Props> = ({
 
   const selectAndClose = (mod: any) => {
     if (mode === 'singleICD10') {
+      const numericId = Number(mod.id);
       setOpject((prev: any) => {
-        const updated = { ...prev, [fieldName]: mod.id };
+        const updated: any = {
+          ...prev,
+          [fieldName]: Number.isFinite(numericId) ? numericId : mod.id
+        };
+        if (fieldName === 'diagnosisId') {
+          updated.diagnosisCode = mod.code;
+          updated.diagnosisName = mod.description;
+        }
         return updated;
       });
       setPicked(mod);
@@ -246,7 +262,11 @@ const Icd10Search: React.FC<Props> = ({
   const clearAll = () => {
     if (mode === 'singleICD10') {
       setPicked(null);
-      setOpject((prev: any) => ({ ...prev, [fieldName]: null }));
+      setOpject((prev: any) => ({
+        ...prev,
+        [fieldName]: null,
+        ...(fieldName === 'diagnosisId' ? { diagnosisCode: null, diagnosisName: null } : {})
+      }));
       setValue('');
       setOpenList(false);
       setItems([]);

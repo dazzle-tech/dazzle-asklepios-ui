@@ -320,6 +320,14 @@ export const MODULES: Module[] =
           icon: "FaTags",
           viewOrder: 31,
           navPath: "discount-setup"
+        },
+        {
+          name: "Coverage Management",
+          code: "COVERAGE_MANAGEMENT",
+          description: "Insurance and TPA coverage contract setup",
+          icon: "FaFileInvoice",
+          viewOrder: 32,
+          navPath: "coverage-management"
         }
         // { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
 

@@ -233,7 +233,7 @@ const PriceListSetupItems: React.FC<Props> = ({
   const isInsurancePriceList =
     priceListType === 'INSURANCE';
 
-  const encounterTypeOptions = useEnumOptions('EncounterType');
+  const encounterTypeOptions = useEnumOptions('EncounterType', { exclude: ['ALL'] });
   const visitTypeOptions = [
     { label: 'All', value: 'ALL' },
     ...(encounterTypeOptions ?? [])

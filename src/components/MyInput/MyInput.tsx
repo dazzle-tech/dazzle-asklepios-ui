@@ -1549,6 +1549,18 @@ const MyInput = ({
               disabled={props.disabled}
               accepter={SelectPicker}
               searchable={props.searchable ?? false}
+              searchBy={
+                isServerSideSearch
+                  ? () => true
+                  : undefined
+              }
+              onSearch={(value: string) => {
+                if (isServerSideSearch && props.setSearchKeyWard) {
+                  props.setSearchKeyWard(value);
+                  return;
+                }
+                setLocalSearch(value);
+              }}
               data={pickerData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}

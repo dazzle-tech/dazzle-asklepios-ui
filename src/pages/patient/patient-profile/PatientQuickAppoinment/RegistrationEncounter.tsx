@@ -66,7 +66,7 @@ const RegistrationEncounter = ({
   const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
-    exclude: ['DAYCASE', 'INPATIENT']
+    exclude: ['DAYCASE', 'INPATIENT', 'ALL']
   });
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');

@@ -257,6 +257,7 @@ import BillingConfigurationSetup from './pages/setup/billing-configuration/Billi
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
+import CoverageManagement from './pages/setup/coverage-management/CoverageManagement';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
@@ -764,6 +765,7 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="discount-setup" element={<DiscountSetup />} />
+              <Route path="coverage-management" element={<CoverageManagement />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
