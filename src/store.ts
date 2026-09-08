@@ -255,6 +255,7 @@ import { taxService } from './services/billing/taxService';
   import { billingTransactionService } from './services/billing/billingTransactionService';
   import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
   import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -594,6 +595,7 @@ export const store = configureStore({
     [patientAdministrativeWarningsService.reducerPath]:
       patientAdministrativeWarningsService.reducer,
     [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+    [flaccPainSacoreService.reducerPath]: flaccPainSacoreService.reducer,
 
     // setup - room and bed management
     [roomService.reducerPath]: roomService.reducer,
@@ -855,7 +857,8 @@ export const store = configureStore({
         discountService.middleware,
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
-        financialDocumentAdjustmentService.middleware
+        financialDocumentAdjustmentService.middleware,
+        flaccPainSacoreService.middleware
       ) as any
 });
 

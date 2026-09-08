@@ -1,63 +1,350 @@
 import React, { useState } from 'react';
-import { Checkbox } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBan,
+  faPlus,
+  faPen
+} from '@fortawesome/free-solid-svg-icons';
+
 import NewFlacc from './NewFlacc';
 import '../style.less';
 import Translate from '@/components/Translate/Translate';
+import { FLACCPainScale } from '@/types/model-types-new';
+import {
+  useCancelFLACCPainScaleMutation,
+  useGetFLACCPainScalesByEncounterQuery
+} from '@/services/encounters/flaccPainSacoreService';
+import { useLocation } from 'react-router-dom';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  conjureValueBasedOnKeyFromListOfValues,
+  extractErrorMessage,
+  formatEnumString
+} from '@/utils';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { MdModeEdit } from 'react-icons/md';
+import CancellationModal from '@/components/CancellationModal';
+import MyInput from '@/components/MyInput';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 
-const Flacc = () => {
-  const [flaccData, setFlaccData] = useState<any[]>([]);
+const Flacc = ({ ...props }) => {
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+
+  const patient = props.patient ?? location.state?.patient ?? {};
+  const encounter = props.encounter ?? location.state?.encounter ?? {};
+
   const [openFlaccModal, setOpenFlaccModal] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(true);
-  //
-  const flaccColumns = [
-    { key: 'totalScore', title: 'Total Score' },
-    { key: 'face', title: 'Face' },
-    { key: 'legs', title: 'Legs' },
-    { key: 'activity', title: 'Activity' },
-    { key: 'cry', title: 'Cry' },
-    { key: 'consolability', title: 'Consolability' },
+  const [showCanceled, setShowCanceled] = useState({
+    showCancelled: false
+  });
+  const [selectedRecord, setSelectedRecord] =
+    useState<FLACCPainScale | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({});
+
+  const {
+    data: flaccData = [],
+    refetch
+  } = useGetFLACCPainScalesByEncounterQuery(
     {
-      key: 'expand',
-      title: 'Details',
+      encounterId: encounter?.id,
+      showCancelled: showCanceled?.showCancelled
+    },
+    {
+      skip: !encounter?.id
+    }
+  );
+
+  const [cancelFLACCPainScale, { isLoading: isCancelling }] =
+    useCancelFLACCPainScaleMutation();
+
+  const { data: faceFlaccLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLACC_FACE');
+
+  const { data: legsFlaccLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLACC_LEGS');
+
+  const { data: activityFlaccLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLACC_ACTIVITY');
+
+  const { data: cryFlaccLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLACC_CRY');
+
+  const { data: consolabilityFlaccLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLACC_CONSO');
+
+  const isSelected = (rowData: FLACCPainScale) =>
+    rowData?.id === selectedRecord?.id ? 'selected-row' : '';
+
+  const handleAdd = () => {
+    setSelectedRecord(null);
+    setEditMode(false);
+    setOpenFlaccModal(true);
+  };
+
+  const handleEdit = (row: FLACCPainScale) => {
+    if (row.status === 'CANCELLED') {
+      dispatch(
+        notify({
+          msg: 'Cancelled FLACC records cannot be edited.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedRecord(row);
+    setEditMode(true);
+    setOpenFlaccModal(true);
+  };
+
+  const handleCancel = () => {
+    if (!selectedRecord) {
+      dispatch(
+        notify({
+          msg: 'Please select a FLACC record to cancel.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (selectedRecord.status === 'CANCELLED') {
+      dispatch(
+        notify({
+          msg: 'This FLACC record is already cancelled.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setCancelObject({
+      ...selectedRecord,
+      cancellationReason: ''
+    });
+
+    setOpenCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelObject?.id) {
+      dispatch(
+        notify({
+          msg: 'Please select a FLACC record to cancel.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (
+      !cancelObject?.cancellationReason ||
+      !cancelObject.cancellationReason.trim()
+    ) {
+      dispatch(
+        notify({
+          msg: 'Cancellation reason is required.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      await cancelFLACCPainScale({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'FLACC record cancelled successfully.',
+          sev: 'success'
+        })
+      );
+
+      setOpenCancelModal(false);
+      setCancelObject({});
+      setSelectedRecord(null);
+
+      await refetch();
+    } catch (error: any) {
+      dispatch(
+                notify({
+                  msg: extractErrorMessage(error) || 'Failed to cancel FLACC record',
+                  sev: 'warning',
+                })
+              );
+    }
+  };
+
+  const flaccColumns = [
+    {
+      key: 'totalScore',
+      title: 'Total Score'
+    },
+    {
+      key: 'painLevel',
+      title: 'Pain Level',
+      render: (row: FLACCPainScale) =>
+        formatEnumString(row?.painLevel ?? '') ?? '-'
+    },
+    {
+      key: 'faceLov',
+      title: 'Face',
+      render: (row: FLACCPainScale) =>
+        conjureValueBasedOnKeyFromListOfValues(
+          faceFlaccLovQueryResponse?.object ?? [],
+          row?.faceLov ?? '',
+          'lovDisplayVale'
+        ) ?? '-'
+    },
+    {
+      key: 'legsLov',
+      title: 'Legs',
+      render: (row: FLACCPainScale) =>
+        conjureValueBasedOnKeyFromListOfValues(
+          legsFlaccLovQueryResponse?.object ?? [],
+          row?.legsLov ?? '',
+          'lovDisplayVale'
+        ) ?? '-'
+    },
+    {
+      key: 'activityLov',
+      title: 'Activity',
+      render: (row: FLACCPainScale) =>
+        conjureValueBasedOnKeyFromListOfValues(
+          activityFlaccLovQueryResponse?.object ?? [],
+          row?.activityLov ?? '',
+          'lovDisplayVale'
+        ) ?? '-'
+    },
+    {
+      key: 'cryLov',
+      title: 'Cry',
+      render: (row: FLACCPainScale) =>
+        conjureValueBasedOnKeyFromListOfValues(
+          cryFlaccLovQueryResponse?.object ?? [],
+          row?.cryLov ?? '',
+          'lovDisplayVale'
+        ) ?? '-'
+    },
+    {
+      key: 'consolabilityLov',
+      title: 'Consolability',
+      render: (row: FLACCPainScale) =>
+        conjureValueBasedOnKeyFromListOfValues(
+          consolabilityFlaccLovQueryResponse?.object ?? [],
+          row?.consolabilityLov ?? '',
+          'lovDisplayVale'
+        ) ?? '-'
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      render: (row: FLACCPainScale) => {
+        let color = 'var(--primary-gray)';
+
+        if (row.status === 'CANCELLED') {
+          color = '#ff8902ff';
+        } else if (row.status === 'ACTIVE') {
+          color = '#388E3C';
+        }
+
+        return (
+          <MyBadgeStatus
+            color={color}
+            contant={row.status}
+          />
+        );
+      }
+    },
+    {
+      key: 'createdBy/AT',
+      title: 'Created By/At',
       expandable: true,
       render: row => (
         <>
-          <div>Created By: {row.createdBy}</div>
-          <div>Created At: {row.createdAt}</div>
-          {row.cancelledBy && (
-            <>
-              <div>Cancelled By: {row.cancelledBy}</div>
-              <div>Cancelled At: {row.cancelledAt}</div>
-              <div>Reason: {row.cancelReason}</div>
-            </>
-          )}
+          {row.createdBy}
+          <br />
+          <span className="date-table-style">
+            {row.createdAt}
+          </span>
         </>
+      )
+    },
+    {
+      key: 'cancelledBy/AT',
+      title: 'Cancelled By/At',
+      expandable: true,
+      render: row => (
+        <>
+          {row.cancelledBy}
+          <br />
+          <span className="date-table-style">
+            {row.cancelledAt}
+          </span>
+        </>
+      )
+    },
+    {
+      key: 'cancellationReason',
+      title: 'Cancellation Reason',
+      expandable: true
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      render: (row: FLACCPainScale) => (
+        <MdModeEdit
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          className="icons-style"
+          style={{ cursor: row.status === 'ACTIVE' ? 'pointer' : 'not-allowed' }}
+          onClick={() =>{ 
+            if (row.status === 'ACTIVE') {
+            handleEdit(row)
+            }
+          }
+          }
+        />
       )
     }
   ];
-  //
+
   const tableButtons = (
     <>
-      <div className="table-buttons-left-part-handle-positions">
-        <Checkbox className="show-cancelled"
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-          }}
-        >
-          <Translate>Show Cancelled</Translate>
-        </Checkbox>
+      <div className="table-buttons-left-part-handle-positions show-cancelled">
+        <MyInput
+          fieldName="showCancelled"
+          fieldType="check"
+          record={showCanceled}
+          setRecord={setShowCanceled}
+          showLabel={false}
+        />
       </div>
 
       <div className="bt-right">
-        <MyButton onClick={() => setOpenFlaccModal(true)}>
-          <FontAwesomeIcon icon={faBan} /> <Translate>Cancel</Translate>
+        <MyButton
+          disabled={
+            !selectedRecord ||
+            selectedRecord.status === 'CANCELLED' ||
+            isCancelling
+          }
+          onClick={handleCancel}
+        >
+          <FontAwesomeIcon icon={faBan} />
+          <Translate>Cancel</Translate>
         </MyButton>
-        <MyButton onClick={() => setOpenFlaccModal(true)}>
+
+        <MyButton onClick={handleAdd}>
           <FontAwesomeIcon icon={faPlus} />
           <Translate>Add</Translate>
         </MyButton>
@@ -65,32 +352,50 @@ const Flacc = () => {
     </>
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
       <MyTable
-        data={showCanceled ? flaccData : flaccData.filter(r => !r.cancelledBy)}
+        data={flaccData}
         columns={flaccColumns}
         tableButtons={tableButtons}
+        onRowClick={(row: FLACCPainScale) => {
+          setSelectedRecord(row);
+        }}
+        rowClassName={isSelected}
       />
 
       <NewFlacc
         open={openFlaccModal}
         setOpen={setOpenFlaccModal}
-        patient={null}
-        encounter={null}
-        edit={false}
-        refetch={null}
+        patient={patient}
+        encounter={encounter}
+        edit={editMode}
+        recordToEdit={selectedRecord}
+        refetch={refetch}
+      />
+
+      <CancellationModal
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        handleCancle={handleConfirmCancel}
+        object={cancelObject}
+        setObject={setCancelObject}
+        fieldLabel="Cancellation Reason"
+        title="FLACC Record"
+        fieldName="cancellationReason"
+        statusField="status"
+        statusKey="CANCELLED"
+        withReason={true}
+        required={true}
+        size="30vw"
+        bodyheight="auto"
       />
     </div>
   );
 };
 
 export default Flacc;
+
