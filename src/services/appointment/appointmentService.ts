@@ -9,8 +9,11 @@ import type {
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
   AppointmentFromTemplateRescheduleDTO,
+  AppointmentTransferVM,
   BulkAppointmentRescheduleDTO,
   BulkAppointmentRescheduleResponseVM,
+  BulkAppointmentTransferDTO,
+  BulkAppointmentTransferResponseVM,
   BulkReschedulePreviewVM,
   DiagnosticTestAppointmentRescheduleDTO,
   AppointmentSearchFilterMultiDepartmentDTO,
@@ -460,6 +463,50 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: (result, _error, _arg) => (result?.success ? ['AppointmentFromTemplate'] : [])
     }),
 
+    getTransferSourceAppointments: builder.query<
+      AppointmentTransferVM[],
+      { startDate: string; endDate: string }
+    >({
+      query: ({ startDate, endDate }) => ({
+        url: `${APPOINTMENT_BASE_URL}/transfer/sources`,
+        method: 'GET',
+        params: { startDate, endDate }
+      }),
+      transformResponse: (response: AppointmentTransferVM[]) => response ?? [],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    getTransferTargetAppointments: builder.query<
+      AppointmentTransferVM[],
+      { departmentId: Id; startDate: string; endDate: string }
+    >({
+      query: ({ departmentId, startDate, endDate }) => ({
+        url: `${APPOINTMENT_BASE_URL}/transfer/targets`,
+        method: 'GET',
+        params: { departmentId, startDate, endDate }
+      }),
+      transformResponse: (response: AppointmentTransferVM[]) => response ?? [],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    bulkAppointmentTransfer: builder.mutation<
+      BulkAppointmentTransferResponseVM,
+      BulkAppointmentTransferDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/bulk-transfer`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: (result, _error, _arg) => (result?.success ? ['AppointmentFromTemplate'] : [])
+    }),
+
     getAppointmentLogs: builder.query<AppointmentLog[], { appointmentId: Id }>({
       query: ({ appointmentId }) => ({
         url: `${APPOINTMENT_BASE_URL}/${appointmentId}/logs`,
@@ -504,6 +551,11 @@ export const {
   useCancelBulkRescheduleAppointmentsMutation,
   useNotifyPatientForBulkRescheduleMutation,
   useBulkRescheduleAppointmentsMutation,
+  useGetTransferSourceAppointmentsQuery,
+  useLazyGetTransferSourceAppointmentsQuery,
+  useGetTransferTargetAppointmentsQuery,
+  useLazyGetTransferTargetAppointmentsQuery,
+  useBulkAppointmentTransferMutation,
   useGetAppointmentLogsQuery,
   useLazyGetAppointmentLogsQuery
 } = appointmentFromTemplateService;
