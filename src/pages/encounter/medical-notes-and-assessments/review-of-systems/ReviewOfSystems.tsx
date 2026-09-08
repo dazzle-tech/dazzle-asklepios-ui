@@ -239,16 +239,17 @@ const handleClearSection = async () => {
               >
                 Clear
               </MyButton>
-
+            <div className="filter-form-disable-fix">
             <MyButton
               onClick={() => {
                 setOpenModel(!openModel);
               }}
-              disabled={edit}
               prefixIcon={() => <icons.List />}
+              // className="filter-form-disable-fix show-cancelled"
             >
               Findings
             </MyButton>
+            </div>
             </div>
           </div>
 
@@ -260,6 +261,7 @@ const handleClearSection = async () => {
                   encounter={encounter}
                   setEncounter={setEncounter}
                   system={bodySystemsLovQueryResponse}
+                  edit={edit}
                 />
               </div>
             )}
