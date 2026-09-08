@@ -16,7 +16,8 @@ const Summary = ({
   list,
   encounter,
   setEncounter,
-  system
+  system,
+  ...props
 }) => {
   const dispatch = useAppDispatch();
 
@@ -236,6 +237,7 @@ const Summary = ({
               setRecord={
                 setLocalEncounter
               }
+              disabled={props?.edit}
             />
           </Form>
         </Col>
@@ -247,6 +249,7 @@ const Summary = ({
             onClick={
               saveChanges
             }
+            disabled={props?.edit}
           >
             Save
           </MyButton>
