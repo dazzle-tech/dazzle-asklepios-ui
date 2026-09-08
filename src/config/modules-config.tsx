@@ -67,6 +67,7 @@ export const MODULE_REPORTS_SCREENS: Record<string, { screenCode: string }> = {
   RADIOLOGY: { screenCode: "RADIOLOGY_MODULE_REPORTS" },
   PHARMACY: { screenCode: "PHARMACY_MODULE_REPORTS" },
   BILLING: { screenCode: "BILLING_MODULE_REPORTS" },
+  APPOINTMENT: { screenCode: "APPOINTMENT_MODULE_REPORTS" },
 };
 
 export const moduleReportsScreen = (moduleCode: string, viewOrder = 20): Screen => ({
@@ -449,7 +450,8 @@ export const MODULES: Module[] =
           icon: "FaCalendarCheck",
           viewOrder: 1,
           navPath: "apply-template",
-        }
+        },
+        moduleReportsScreen("APPOINTMENT"),
       ],
     },
     {
