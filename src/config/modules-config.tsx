@@ -248,6 +248,14 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+      {
+          name: "Patients List",
+          code: "PATIENTS_LIST",
+          description: "",
+          icon: "FaMoneyBill",
+          viewOrder: 0,
+          navPath: "patients-list",
+      },
         { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
         {
           name: 'Patient Merge Config',
@@ -765,6 +773,14 @@ export const MODULES: Module[] =
           icon: "FaMoneyBillTrendUp",
           viewOrder: 3,
           navPath: "insurance-receivables",
+        },
+        {
+          name: "Patients List",
+          code: "PATIENTS_LIST",
+          description: "",
+          icon: "FaMoneyBill",
+          viewOrder: 0,
+          navPath: "patients-list",
         },
         {
           name: "Price Lists",

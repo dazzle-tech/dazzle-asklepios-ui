@@ -258,6 +258,7 @@ import FinancialDocumentNumberingSetup from './pages/setup/financial-document-nu
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
+import PatientsLists from './pages/billing-module/patientList/PatientsLists';
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
 
@@ -754,6 +755,7 @@ const App = () => {
               <Route path="facility-patients" element={<FacilityPatients />} />
               <Route path="patients-encounters-list" element={<PatientsEncounters />} />
               <Route path="price-list" element={<PriceLists />} />
+              <Route path="patients-list" element={<PatientsLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
