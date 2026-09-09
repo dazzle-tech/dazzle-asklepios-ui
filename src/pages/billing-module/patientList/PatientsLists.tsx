@@ -1578,6 +1578,10 @@ const PatientsLists = () => {
             isEmergencyTriageWorkflow &&
             isPendingPayment;
 
+          const showClinicAddPayment =
+            isClinic &&
+            isPendingPayment;
+
           const showEmergencyWristband =
             isEmergencyTriageWorkflow &&
             !isPendingPayment;
@@ -1643,8 +1647,8 @@ const PatientsLists = () => {
             !row?.isObserved;
 
 
-          const clinicViewOnly =
-            isCompleted || isCancelled;
+const clinicViewOnly =
+  isCompleted || isCancelled || isPendingPayment;
 
           const showClinicNurseStation =
             isClinic &&
@@ -1744,7 +1748,7 @@ const PatientsLists = () => {
                 </Whisper>
               )}
 
-              {showEmergencyAddPayment && (
+              {(showEmergencyAddPayment || showClinicAddPayment) && (
                 <Whisper
                   trigger="hover"
                   placement="top"
