@@ -3,19 +3,21 @@ import { Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
+import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import { useCreateAdvancePaymentMutation } from '@/services/billing/billingTransactionService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { newCreateAdvancePaymentRequest } from '@/types/model-types-constructor-new';
 import type {
   CreateAdvancePaymentRequest,
   EncounterBillingSummary,
   PatientEncounter
 } from '@/types/model-types-new';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import {
+  useCreditCardMachinePayment
+} from '@/utils/cardMachinePayment';
 import { notify } from '@/utils/uiReducerActions';
-import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
-import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
-import PaymentMethodSelector from './PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildBillingPaymentReceipt,
@@ -30,8 +32,7 @@ import {
   resolvePaymentReceiptNumber,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
-import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
-
+import PaymentMethodSelector from './PaymentMethodSelector';
 const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -132,7 +133,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receipt, setReceipt] = useState<PaymentReceiptData | null>(null);
-
+  const {
+    collectCreditCardAmountOrSkip,
+    isProcessingCard
+  } = useCreditCardMachinePayment();
   const [createAdvancePayment, { isLoading }] = useCreateAdvancePaymentMutation();
 
   const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
@@ -163,6 +167,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       )
     }));
   }, [open, isWalletMethod, suggestedAmount, walletAvailable]);
+
 
   const handleSubmit = async () => {
     if (!form.paymentMethodCode) {
@@ -224,30 +229,49 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     const paymentAmount = isWalletMethod
       ? walletCollectPreview.applyAmount
       : Number(form.amount);
+    const chargeCreditCardIfNeeded =
+      async () => {
 
-    const creditCardCollect = await collectCreditCardAmountOrSkip(
-      form.paymentMethodCode,
-      paymentAmount,
-      {
-        currency,
-        patientId,
-        encounterId,
-        facilityId
-      }
-    );
+        const creditCardCollect =
+          await collectCreditCardAmountOrSkip(
+            selectedMethod?.value ??
+            form.paymentMethodCode,
+            paymentAmount,
+            {
+              patientId,
 
-    if (!creditCardCollect.proceed) {
-      dispatch(
-        notify({
-          msg:
-            creditCardCollect.result?.message ??
-            'Credit card payment was not completed.',
-          sev: 'warning'
-        })
-      );
+              sourceType: 'ENCOUNTER',
+
+              sourceReferenceId: encounterId,
+
+              facilityId
+            }
+          );
+
+        if (!creditCardCollect.proceed) {
+
+          dispatch(
+            notify({
+              msg:
+                creditCardCollect.result
+                  ?.message ??
+                'Credit card payment was not completed.',
+              sev: 'warning'
+            })
+          );
+
+          return false;
+        }
+
+        return true;
+      };
+
+    const creditCardCharged =
+      await chargeCreditCardIfNeeded();
+
+    if (!creditCardCharged) {
       return;
     }
-
     const request: CreateAdvancePaymentRequest = {
       ...newCreateAdvancePaymentRequest,
       patientId,
@@ -311,112 +335,112 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
   return (
     <>
-    <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
-      <Modal.Header>
-        <Modal.Title>Collect payment</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="billing-collect-payment-modal">
-          <Text muted size="sm" style={{ marginBottom: 12 }}>
-            {dedupedSelectedRows.length} line(s) selected · suggested{' '}
-            {formatMoney(suggestedAmount, currency)}
-            {dedupedSelectedRows.length !== selectedRows.length
-              ? ' · duplicate visit lines ignored'
-              : ''}
-            {totalReservedOnSelection > 0
-              ? ` (${formatMoney(totalReservedOnSelection, currency)} already reserved from advance)`
-              : ''}
-          </Text>
-          {walletAvailable > 0 && (
+      <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
+        <Modal.Header>
+          <Modal.Title>Collect payment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="billing-collect-payment-modal">
             <Text muted size="sm" style={{ marginBottom: 12 }}>
-              Wallet available {formatMoney(walletAvailable, currency)}
-              {reservedBalance > 0
-                ? ` · ${formatMoney(reservedBalance, currency)} already reserved on this encounter`
+              {dedupedSelectedRows.length} line(s) selected · suggested{' '}
+              {formatMoney(suggestedAmount, currency)}
+              {dedupedSelectedRows.length !== selectedRows.length
+                ? ' · duplicate visit lines ignored'
+                : ''}
+              {totalReservedOnSelection > 0
+                ? ` (${formatMoney(totalReservedOnSelection, currency)} already reserved from advance)`
                 : ''}
             </Text>
-          )}
-          <Form fluid>
-            <PaymentMethodSelector
-              value={form.paymentMethodCode}
-              options={paymentMethods}
-              onChange={paymentMethodCode =>
-                setForm(previous => ({
-                  ...previous,
-                  paymentMethodCode
-                }))
-              }
-            />
-            {isWalletMethod && (
-              <>
-                <Text muted size="sm" style={{ marginBottom: 12 }}>
-                  Pays from the patient wallet advance balance. If the service costs more than the
-                  wallet, only the available balance is applied and the rest stays as remaining to
-                  pay.
-                </Text>
-                <Text size="sm" style={{ marginBottom: 12 }}>
-                  Service due {formatMoney(suggestedAmount, currency)} · Wallet will apply{' '}
-                  {formatMoney(walletCollectPreview.applyAmount, currency)} · Remaining to pay{' '}
-                  {formatMoney(walletCollectPreview.remainingAfter, currency)}
-                </Text>
-              </>
+            {walletAvailable > 0 && (
+              <Text muted size="sm" style={{ marginBottom: 12 }}>
+                Wallet available {formatMoney(walletAvailable, currency)}
+                {reservedBalance > 0
+                  ? ` · ${formatMoney(reservedBalance, currency)} already reserved on this encounter`
+                  : ''}
+              </Text>
             )}
-            <MyInput
-              column
-              fieldType="number"
-              fieldLabel={isWalletMethod ? 'Amount to apply from wallet' : 'Amount'}
-              fieldName="amount"
-              record={form}
-              setRecord={nextRecord => {
-                if (!isWalletMethod) {
-                  setForm(nextRecord);
-                  return;
+            <Form fluid>
+              <PaymentMethodSelector
+                value={form.paymentMethodCode}
+                options={paymentMethods}
+                onChange={paymentMethodCode =>
+                  setForm(previous => ({
+                    ...previous,
+                    paymentMethodCode
+                  }))
                 }
+              />
+              {isWalletMethod && (
+                <>
+                  <Text muted size="sm" style={{ marginBottom: 12 }}>
+                    Pays from the patient wallet advance balance. If the service costs more than the
+                    wallet, only the available balance is applied and the rest stays as remaining to
+                    pay.
+                  </Text>
+                  <Text size="sm" style={{ marginBottom: 12 }}>
+                    Service due {formatMoney(suggestedAmount, currency)} · Wallet will apply{' '}
+                    {formatMoney(walletCollectPreview.applyAmount, currency)} · Remaining to pay{' '}
+                    {formatMoney(walletCollectPreview.remainingAfter, currency)}
+                  </Text>
+                </>
+              )}
+              <MyInput
+                column
+                fieldType="number"
+                fieldLabel={isWalletMethod ? 'Amount to apply from wallet' : 'Amount'}
+                fieldName="amount"
+                record={form}
+                setRecord={nextRecord => {
+                  if (!isWalletMethod) {
+                    setForm(nextRecord);
+                    return;
+                  }
 
-                const rawAmount = Number(nextRecord.amount ?? 0);
-                const cappedAmount = Math.min(
-                  Math.max(0, rawAmount),
-                  suggestedAmount,
-                  walletAvailable
-                );
+                  const rawAmount = Number(nextRecord.amount ?? 0);
+                  const cappedAmount = Math.min(
+                    Math.max(0, rawAmount),
+                    suggestedAmount,
+                    walletAvailable
+                  );
 
-                setForm({
-                  ...nextRecord,
-                  amount: Number(cappedAmount.toFixed(2))
-                });
-              }}
-              width="100%"
-            />
-            <MyInput
-              column
-              fieldType="textarea"
-              fieldLabel="Notes"
-              fieldName="notes"
-              record={form}
-              setRecord={setForm}
-              width="100%"
-            />
-          </Form>
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <MyButton onClick={onClose} disabled={isLoading}>
-          Cancel
-        </MyButton>
-        <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
-          Collect payment
-        </MyButton>
-      </Modal.Footer>
-    </Modal>
+                  setForm({
+                    ...nextRecord,
+                    amount: Number(cappedAmount.toFixed(2))
+                  });
+                }}
+                width="100%"
+              />
+              <MyInput
+                column
+                fieldType="textarea"
+                fieldLabel="Notes"
+                fieldName="notes"
+                record={form}
+                setRecord={setForm}
+                width="100%"
+              />
+            </Form>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <MyButton onClick={onClose} disabled={isLoading}>
+            Cancel
+          </MyButton>
+          <MyButton appearance="primary" loading={isLoading || isProcessingCard} onClick={handleSubmit}>
+            Collect payment
+          </MyButton>
+        </Modal.Footer>
+      </Modal>
 
-    <PaymentReceiptModal
-      open={receiptOpen}
-      onClose={() => {
-        setReceiptOpen(false);
-        setReceipt(null);
-      }}
-      receipt={receipt}
-      autoPrint
-    />
+      <PaymentReceiptModal
+        open={receiptOpen}
+        onClose={() => {
+          setReceiptOpen(false);
+          setReceipt(null);
+        }}
+        receipt={receipt}
+        autoPrint
+      />
     </>
   );
 };

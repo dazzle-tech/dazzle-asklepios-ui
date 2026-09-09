@@ -48,7 +48,13 @@ const AddEditPointOfSaleConfiguration = ({
           record={configuration}
           setRecord={setConfiguration}
         />
-
+        <MyInput
+          required
+          fieldName="clientSecret"
+          fieldLabel="Client Secret"
+          record={configuration}
+          setRecord={setConfiguration}
+        />  
         <MyInput
           required
           fieldName="terminalId"

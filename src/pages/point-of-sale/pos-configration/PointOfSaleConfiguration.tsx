@@ -1,28 +1,29 @@
-import Translate from '@/components/Translate';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Panel } from 'rsuite';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
-import MyTable from '@/components/MyTable';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
-import AddEditPointOfSaleConfiguration from './AddEditPointOfSaleConfiguration';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import HistoryIcon from '@mui/icons-material/History';
 import {
   PointOfSaleConfigurationDTO,
   useCreatePointOfSaleConfigurationMutation,
   useGetPointOfSaleConfigurationsQuery,
-  useUpdatePointOfSaleConfigurationMutation,
-  useTogglePointOfSaleConfigurationActiveMutation
+  useRegisterTerminalMutation,
+  useTogglePointOfSaleConfigurationActiveMutation,
+  useUpdatePointOfSaleConfigurationMutation
 } from '@/services/point-of-sale/PointOfSaleConfigurationService';
-import PointOfSaleConfigurationHistory from './PointOfSaleConfigurationHistory';
+import { notify } from '@/utils/uiReducerActions';
+import HistoryIcon from '@mui/icons-material/History';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { isUndefined } from 'lodash';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { Panel } from 'rsuite';
+import AddEditPointOfSaleConfiguration from './AddEditPointOfSaleConfiguration';
+import PointOfSaleConfigurationHistory from './PointOfSaleConfigurationHistory';
+import Tooltip from '@mui/material/Tooltip';
+import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 const newConfiguration: Partial<PointOfSaleConfigurationDTO> = {
   name: '',
   clientId: '',
@@ -32,6 +33,8 @@ const newConfiguration: Partial<PointOfSaleConfigurationDTO> = {
   counterNumber: '',
   cashRegisterNo: '',
   isActive: true,
+  occupied: false,
+  clientSecret: '',
 };
 
 const PointOfSaleConfiguration = () => {
@@ -67,11 +70,14 @@ const PointOfSaleConfiguration = () => {
     data = [],
     isFetching,
     refetch,
-  } = useGetPointOfSaleConfigurationsQuery();
+  } = useGetPointOfSaleConfigurationsQuery({}, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const [createConfiguration] =
     useCreatePointOfSaleConfigurationMutation();
-
+  const [registerTerminal] =
+    useRegisterTerminalMutation();
   const [updateConfiguration] =
     useUpdatePointOfSaleConfigurationMutation();
   const [toggleActive] =
@@ -143,6 +149,59 @@ const PointOfSaleConfiguration = () => {
       setOpenConfirmModal(false);
     }
   };
+  const handleRegisterTerminal = async (
+    id: number
+  ) => {
+    try {
+      await registerTerminal(id).unwrap();
+
+      dispatch(
+        notify({
+          msg: "Terminal registered successfully",
+          sev: "success",
+        })
+      );
+
+      refetch();
+    } catch (error: any) {
+
+  let message = "Terminal registration failed";
+
+  const backendMessage =
+    error?.data?.detail ||
+    error?.data?.message ||
+    "";
+
+  if (
+    error?.status === 401 ||
+    backendMessage.includes("Bad credentials")
+  ) {
+
+    message =
+      "Invalid Client ID or Client Secret configured for this terminal.";
+
+  } else if (
+    backendMessage.includes(
+      "POS configuration not found"
+    )
+  ) {
+
+    message =
+      "POS configuration not found.";
+
+  } else if (backendMessage) {
+
+    message = backendMessage;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: "warning",
+    })
+  );
+}
+  };
   const tableColumns = [
     {
       key: 'name',
@@ -152,6 +211,11 @@ const PointOfSaleConfiguration = () => {
     {
       key: 'clientId',
       title: <Translate>Client Id</Translate>,
+      flexGrow: 3,
+    },
+    {
+      key: 'clientSecret',
+      title: <Translate>Client Secret</Translate>,
       flexGrow: 3,
     },
     {
@@ -174,36 +238,36 @@ const PointOfSaleConfiguration = () => {
       title: <Translate>Active</Translate>,
       flexGrow: 1,
       render: (rowData: any) =>
-          <MyBadgeStatus
-                contant={
-                  rowData?.isActive
-                    ? 'Yes'
-                    : 'No'
-                }
-                color={
-                  rowData?.isActive
-                    ? '#0DAA41'
-                    : '#D64545'
-                }
-              />
+        <MyBadgeStatus
+          contant={
+            rowData?.isActive
+              ? 'Yes'
+              : 'No'
+          }
+          color={
+            rowData?.isActive
+              ? '#0DAA41'
+              : '#D64545'
+          }
+        />
     },
     {
-      key:'occupied',
+      key: 'occupied',
       title: <Translate>occupied</Translate>,
       flexGrow: 1,
-       render: (rowData: any) =>
-         <MyBadgeStatus
-                contant={
-                  rowData?.occupied
-                    ? 'Yes'
-                    : 'No'
-                }
-                color={
-                  rowData?.occupied
-                    ? '#0DAA41'
-                    : '#D64545'
-                }
-              />
+      render: (rowData: any) =>
+        <MyBadgeStatus
+          contant={
+            rowData?.occupied
+              ? 'Yes'
+              : 'No'
+          }
+          color={
+            rowData?.occupied
+              ? '#0DAA41'
+              : '#D64545'
+          }
+        />
 
     },
     {
@@ -211,56 +275,78 @@ const PointOfSaleConfiguration = () => {
       title: '',
       flexGrow: 3,
       render: (rowData: PointOfSaleConfigurationDTO) => (
-        <div className="container-of-icons">
+  <div className="container-of-icons">
 
-          <MdModeEdit
-            className="icons-style"
+    <Tooltip title="Edit">
+      <MdModeEdit
+        className="icons-style"
+        size={22}
+        onClick={() => {
+          setConfiguration(rowData);
+          setPopupOpen(true);
+        }}
+      />
+    </Tooltip>
+
+    {rowData.isActive ? (
+      <Tooltip title="Deactivate">
+        <span>
+          <MdDelete
             size={22}
-            title="Edit"
+            fill="var(--primary-pink)"
+            className="icons-style"
             onClick={() => {
               setConfiguration(rowData);
-              setPopupOpen(true);
+              setActionType('deactivate');
+              setOpenConfirmModal(true);
             }}
           />
-
-          {rowData.isActive ? (
-            <MdDelete
-              title="Deactivate"
-              size={22}
-              fill="var(--primary-pink)"
-              className="icons-style"
-              onClick={() => {
-                setConfiguration(rowData);
-                setActionType('deactivate');
-                setOpenConfirmModal(true);
-              }}
-            />
-          ) : (
-            <FaUndo
-              title="Activate"
-              size={20}
-              fill="var(--primary-gray)"
-              className="icons-style"
-              onClick={() => {
-                setConfiguration(rowData);
-                setActionType('reactivate');
-                setOpenConfirmModal(true);
-              }}
-            />
-          )}
-
-          <HistoryIcon
+        </span>
+      </Tooltip>
+    ) : (
+      <Tooltip title="Activate">
+        <span>
+          <FaUndo
+            size={20}
+            fill="var(--primary-gray)"
             className="icons-style"
-            fontSize="small"
-            titleAccess="History"
             onClick={() => {
-              setSelectedConfiguration(rowData);
-              setOpenHistoryModal(true);
+              setConfiguration(rowData);
+              setActionType('reactivate');
+              setOpenConfirmModal(true);
             }}
           />
+        </span>
+      </Tooltip>
+    )}
 
-        </div>
-      ),
+    <Tooltip title="Register Terminal">
+      <span>
+        <SettingsEthernetIcon
+          className="icons-style"
+          fontSize="small"
+          onClick={() =>
+            handleRegisterTerminal(rowData.id)
+          }
+        />
+      </span>
+    </Tooltip>
+
+    <Tooltip title="History">
+      <span>
+        <HistoryIcon
+          className="icons-style"
+          fontSize="small"
+          onClick={() => {
+            setSelectedConfiguration(rowData);
+            setOpenHistoryModal(true);
+          }}
+        />
+      </span>
+    </Tooltip>
+
+  </div>
+),
     },
   ];
 

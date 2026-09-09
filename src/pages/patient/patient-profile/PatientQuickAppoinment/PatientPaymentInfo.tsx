@@ -43,7 +43,6 @@ import {
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
-  collectCreditCardAmountOrSkip,
   getEnteredPaymentAmount,
   useCreditCardMachinePayment
 } from '@/utils/cardMachinePayment';
@@ -3230,11 +3229,16 @@ const PatientPaymentInfo =
               formState.paymentMethodCode,
               formState.paymentAmount,
               {
+                 patientId,
+
+               sourceType: 'ENCOUNTER',
+
+               sourceReferenceId: encounterId,
+
+               facilityId,
                 currency:
-                  activeCurrency,
-                patientId,
-                encounterId,
-                facilityId,
+                  'SAR',
+              
                 onAmount:
                   onCreditCardPaymentAmount
               }

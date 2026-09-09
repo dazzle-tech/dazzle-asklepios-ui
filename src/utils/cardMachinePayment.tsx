@@ -6,16 +6,22 @@ import {
 
 import { isCreditCardPaymentMethod }
   from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import { useState } from 'react';
 
 export type CreditCardMachinePaymentRequest = {
   amount: number;
   paymentMethodCode: string;
   currency?: string | null;
   patientId?: number | null;
-  encounterId?: number | null;
+
+  sourceType:
+  | 'ENCOUNTER'
+  | 'WALLET_BALANCE';
+
+  sourceReferenceId?: number | null;
+
   facilityId?: number | null;
 };
-
 export type CreditCardMachinePaymentResult = {
   ok: boolean;
   amount: number;
@@ -38,56 +44,83 @@ export const getEnteredPaymentAmount = (
 };
 
 export const useCreditCardMachinePayment = () => {
-
+ const [isProcessingCard, setIsProcessingCard] =useState(false);
+ console.log('isProcessingCard', isProcessingCard);
   const [purchase] =
-  usePurchaseMutation();
+    usePurchaseMutation();
 
-const [refreshTransactionStatus] =
-  useRefreshTransactionStatusMutation();
-const waitForFinalStatus = async (
-  transactionId: number
-): Promise<PointOfSaleTransactionDTO> => {
+  const [refreshTransactionStatus] =
+    useRefreshTransactionStatusMutation();
+  const waitForFinalStatus = async (
+    transactionId: number
+  ): Promise<PointOfSaleTransactionDTO> => {
 
-  const maxAttempts = 5;
+    const maxAttempts = 20;
 
-  for (
-    let attempt = 0;
-    attempt < maxAttempts;
-    attempt++
+    for (
+      let attempt = 0;
+      attempt < maxAttempts;
+      attempt++
+    ) {
+
+      await new Promise(resolve =>
+        setTimeout(resolve, 3000)
+      );
+
+      const transaction =
+        await refreshTransactionStatus(
+          transactionId
+        ).unwrap();
+
+      if (
+        transaction.transactionStatus ===
+        'APPROVED'
+      ) {
+
+        return transaction;
+      }
+
+      if (
+        transaction.transactionStatus ===
+        'DECLINED'
+      ) {
+
+        return transaction;
+      }
+    }
+
+    return {
+      ok: false,
+      amount: 0,
+      message:
+        'Transaction is still being processed. Please check the transaction status later.'
+    };
+  };
+  const getPosErrorMessage = (
+  message?: string
+) => {
+
+  const errorMessage =
+    message?.toLowerCase() ?? '';
+
+  if (
+    errorMessage.includes('i/o error') ||
+    errorMessage.includes('resourceaccessexception') ||
+    errorMessage.includes('connectexception')
   ) {
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 3000)
-    );
-
-    const transaction =
-      await refreshTransactionStatus(
-        transactionId
-      ).unwrap();
-
-    if (
-      transaction.transactionStatus ===
-      'APPROVED'
-    ) {
-
-      return transaction;
-    }
-
-    if (
-      transaction.transactionStatus ===
-      'DECLINED'
-    ) {
-
-      return transaction;
-    }
+    return 'Payment service is currently unavailable. Please try again later.';
   }
 
-  return {
-  ok: false,
-  amount: 0,
-  message:
-    'POS terminal did not return a final status.'
-};
+  if (
+    errorMessage.includes('timeout')
+  ) {
+    return 'The payment service did not respond in time. Please try again.';
+  }
+
+  return (
+    message ??
+    'Unable to process the card payment at this time.'
+  );
 };
   const processCreditCardMachinePayment =
     async (
@@ -112,94 +145,103 @@ const waitForFinalStatus = async (
             'Enter a credit card payment amount greater than zero.'
         };
       }
-
+  setIsProcessingCard(true);
       try {
-
-        console.log(
-          'POS PURCHASE REQUEST',
-          {
-            patientId:
-              request.patientId,
-
-            encounterId:
-              request.encounterId,
-
-            amount
-          }
-        );
-
         const posResponse =
           await purchase({
-
-            patientId:
-              Number(
-                request.patientId
-              ),
+            patientId: Number(
+              request.patientId
+            ),
 
             sourceType:
-              'ENCOUNTER',
+              request.sourceType,
 
             sourceReferenceId:
-              Number(
-                request.encounterId
-              ),
+              request.sourceReferenceId != null
+                ? Number(
+                  request.sourceReferenceId
+                )
+                : null,
 
             amount
-
           }).unwrap();
 
-        console.log(
-          'POS PURCHASE RESPONSE',
-          posResponse
-        );
 
-       if (
-  posResponse.transactionStatus !==
-  'PROCESSING'
-) {
 
-  return {
-    ok: false,
-    amount: 0,
-    message:
-      posResponse.responseMessage ??
-      'Failed to initiate POS transaction.'
-  };
-}
+        if (
+          posResponse.transactionStatus !==
+          'PROCESSING'
+        ) {
 
-const finalTransaction =
-  await waitForFinalStatus(
-    posResponse.id
-  );
+          return {
+            ok: false,
+            amount: 0,
+            message:
+             getPosErrorMessage(
+                posResponse.responseMessage
+              )
+          };
+        }
 
-if (
-  finalTransaction.transactionStatus !==
-  'APPROVED'
-) {
+        const finalTransaction =
+          await waitForFinalStatus(
+            posResponse.id
+          );
 
-  return {
-    ok: false,
-    amount: 0,
-    processorReference:
-      finalTransaction.externalTransactionId,
-    message:
-      finalTransaction.responseMessage ??
-      'POS transaction declined.'
-  };
-}
+        if (
+          finalTransaction.transactionStatus !==
+          'APPROVED'
+        ) {
+          const getPosMessage = (
+            code?: string,
+            message?: string
+          ) => {
+            switch (code) {
 
-return {
-  ok: true,
-  amount,
-  authorizationCode:
-    finalTransaction.authCode,
-  processorReference:
-    finalTransaction.externalTransactionId,
-  message:
-    'POS payment approved.'
-};
+              case '993':
+                return 'PIN entry timed out. Please try again.';
 
-      } catch (error) {
+              case '987':
+                return 'Transaction was cancelled on the terminal.';
+
+              case '116':
+                return 'Insufficient funds.';
+
+              case '423':
+                return 'Terminal is currently busy. Please try again in a few moments.';
+
+              case '1008':
+                return 'Terminal is not registered. Please contact support.';
+
+              default:
+                return message ?? 'Transaction failed.';
+            }
+          };
+          return {
+            ok: false,
+            amount: 0,
+            processorReference:
+              finalTransaction.externalTransactionId,
+            message: getPosMessage(
+              finalTransaction.responseCode,
+              finalTransaction.responseMessage
+            )
+          };
+        }
+
+        return {
+          ok: true,
+          amount,
+          authorizationCode:
+            finalTransaction.authCode,
+          processorReference:
+            finalTransaction.externalTransactionId,
+          message:
+            'POS payment approved.'
+        };
+
+      } 
+      catch (error) {
 
         console.error(
           'POS PURCHASE ERROR',
@@ -213,9 +255,14 @@ return {
           amount: 0,
 
           message:
-            'Failed to initiate POS transaction.'
+            getPosErrorMessage(
+              error?.message
+            )
 
         };
+      }
+      finally {
+        setIsProcessingCard(false);
       }
     };
 
@@ -266,16 +313,13 @@ return {
       await options?.onAmount?.(
         amount
       );
-
       const result =
         await processCreditCardMachinePayment({
 
           amount,
 
           paymentMethodCode:
-            String(
-              paymentMethodCode
-            ),
+            String(paymentMethodCode),
 
           currency:
             options?.currency,
@@ -283,13 +327,18 @@ return {
           patientId:
             options?.patientId,
 
-          encounterId:
-            options?.encounterId,
+          sourceType:
+            options?.sourceType ??
+            'ENCOUNTER',
+
+          sourceReferenceId:
+            options?.sourceReferenceId,
 
           facilityId:
             options?.facilityId
 
         });
+
 
       return {
 
@@ -309,5 +358,6 @@ return {
   return {
     processCreditCardMachinePayment,
     collectCreditCardAmountOrSkip,
+    isProcessingCard
   };
 };

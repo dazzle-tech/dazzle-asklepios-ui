@@ -10,7 +10,24 @@ export interface CreatePointOfSaleTransactionDTO {
 
   amount: number;
 }
+export interface GenerateWebhookUrlRequest {
+  clientId: string;
+  terminalId: string;
+  secretKey: string;
+  baseUrl: string;
+  webhookPath: string;
+  signatureAlgorithm: string;
+  tokenExpiryHours: string;
+  retryAttempts: string;
+}
 
+export interface GenerateWebhookUrlResponse {
+  success: boolean;
+  message: string;
+  webhookUrl: string;
+  generatedAt: string;
+  expiresAt: string;
+}
 export interface PointOfSaleTransactionDTO {
   id: number;
 

@@ -1240,6 +1240,9 @@ export const resolveBillingPaymentCategory = (paymentMethodCode: string): string
   if (paymentMethodCode === 'BANK_TRANSFER') return 'BANK_TRANSFER';
   if (paymentMethodCode === 'CHEQUE') return 'CHEQUE';
   if (paymentMethodCode === 'DEDUCT_FROM_FREE_BALANCE') return 'WALLET';
+  if (paymentMethodCode === 'CREDIT_CARD' || paymentMethodCode === 'CREDIT_DEBIT_CARD') {
+    return 'CREDIT_CARD';
+  }
   return 'CASH';
 };
 

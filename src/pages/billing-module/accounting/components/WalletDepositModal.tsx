@@ -23,8 +23,9 @@ import {
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber
 } from '../utils/billingAccountingUtils';
-import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
-
+import {
+  useCreditCardMachinePayment
+} from '@/utils/cardMachinePayment';
 const toOptionalFacilityId = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -67,7 +68,11 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
       exclude: ['INSURANCE_COVERAGE', 'DEDUCT_FROM_FREE_BALANCE'],
       labelOverrides: BILLING_PAYMENT_METHOD_LABELS
     }) ?? [];
-
+  const {
+    collectCreditCardAmountOrSkip,
+    isProcessingCard
+  } = useCreditCardMachinePayment();
+  console.log('isProcessingCard in wallet deposit', isProcessingCard);
   const paymentMethods =
     mergeBillingPaymentMethodOptions(enumPaymentMethods, {
       exclude: ['DEDUCT_FROM_FREE_BALANCE']
@@ -114,7 +119,8 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
       {
         currency,
         patientId,
-        encounterId,
+        sourceType: 'WALLET_BALANCE',
+        sourceReferenceId: patientId,
         facilityId
       }
     );
@@ -190,51 +196,51 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
 
   return (
     <Modal open={open} onClose={onClose} size="sm" overflow={false} enforceFocus={false}>
-        <Modal.Header>
-          <Modal.Title>Deposit to patient wallet</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="billing-wallet-deposit-modal">
-            <Form fluid>
-              <PaymentMethodSelector
-                value={form.paymentMethodCode}
-                options={paymentMethods}
-                onChange={paymentMethodCode =>
-                  setForm(previous => ({
-                    ...previous,
-                    paymentMethodCode
-                  }))
-                }
-              />
-              <MyInput
-                column
-                fieldType="number"
-                fieldLabel="Amount"
-                fieldName="amount"
-                record={form}
-                setRecord={setForm}
-                width="100%"
-              />
-              <MyInput
-                column
-                fieldType="textarea"
-                fieldLabel="Notes"
-                fieldName="notes"
-                record={form}
-                setRecord={setForm}
-                width="100%"
-              />
-            </Form>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <MyButton onClick={onClose} disabled={isLoading}>
-            Cancel
-          </MyButton>
-          <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
-            Record deposit
-          </MyButton>
-        </Modal.Footer>
+      <Modal.Header>
+        <Modal.Title>Deposit to patient wallet</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="billing-wallet-deposit-modal">
+          <Form fluid>
+            <PaymentMethodSelector
+              value={form.paymentMethodCode}
+              options={paymentMethods}
+              onChange={paymentMethodCode =>
+                setForm(previous => ({
+                  ...previous,
+                  paymentMethodCode
+                }))
+              }
+            />
+            <MyInput
+              column
+              fieldType="number"
+              fieldLabel="Amount"
+              fieldName="amount"
+              record={form}
+              setRecord={setForm}
+              width="100%"
+            />
+            <MyInput
+              column
+              fieldType="textarea"
+              fieldLabel="Notes"
+              fieldName="notes"
+              record={form}
+              setRecord={setForm}
+              width="100%"
+            />
+          </Form>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <MyButton onClick={onClose} disabled={isLoading}>
+          Cancel
+        </MyButton>
+        <MyButton appearance="primary" loading={isLoading || isProcessingCard} onClick={handleSubmit}>
+          Record deposit
+        </MyButton>
+      </Modal.Footer>
     </Modal>
   );
 };

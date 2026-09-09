@@ -244,6 +244,7 @@ const InAppNotification = lazy (() => import ( './pages/notification-management/
 const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
 const PushNotification = lazy (() => import ( './pages/notification-management/push-notification'));
 const PosCheckIn= lazy(()=>import ('./pages/point-of-sale/pos-checkIn/PointOfSaleCheckIn'));
+const PointOfSaleWebhookLogsPage = lazy(() => import('./pages/point-of-sale/pos-webhook/PointOfSaleWebhookLogsPage'));
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
@@ -677,6 +678,7 @@ const App = () => {
               <Route path="push-notification" element={<PushNotification />} />
               <Route path='pos-check-in' element={<PosCheckIn/>}/>
               <Route path='pos-configration' element={<PointOfSaleConfiguration/>}/>
+              <Route path='pos-webhook-logs' element={<PointOfSaleWebhookLogsPage/>}/>
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />

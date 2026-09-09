@@ -795,7 +795,8 @@ export const MODULES: Module[] =
       viewOrder: 2,
       screens: [
        { name: "Check-In", code: "POINT_OF_SALE_CHECK_IN", description: "", icon: "FaSignInAlt", viewOrder: 3, navPath: "pos-check-in" },
-        { name: "Configration", code: "POINT_OF_SALE_CONFIGRATION", description: "", icon: "FaCogs", viewOrder: 3, navPath: "pos-configration" },
+        { name: "Configuration", code: "POINT_OF_SALE_CONFIGRATION", description: "", icon: "FaCogs", viewOrder: 3, navPath: "pos-configration" },
+        { name: "Webhook Logs", code: "POINT_OF_SALE_WEBHOOK_LOGS", description: "", icon: "FaClockRotateLeft", viewOrder: 4, navPath: "pos-webhook-logs" },
 
       ]
 

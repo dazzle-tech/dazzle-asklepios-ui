@@ -4,12 +4,17 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 export interface PointOfSaleConfigurationDTO {
   id: number;
   name: string;
+
   clientId: string;
+  clientSecret: string;
+
   terminalId: string;
   terminalSerialNo?: string;
   terminalType?: string;
+
   counterNumber?: string;
   cashRegisterNo?: string;
+
   isActive: boolean;
   occupied: boolean;
 }
@@ -80,6 +85,13 @@ export const PointOfSaleConfigurationService = createApi({
       }),
       invalidatesTags: ["PointOfSaleConfiguration"],
     }),
+    registerTerminal: builder.mutation<any, number>({
+  query: id => ({
+    url: `/api/patient/pos-configration/${id}/register`,
+    method: "POST",
+  }),
+  invalidatesTags: ["PointOfSaleConfiguration"],
+}),
   }),
 });
 
@@ -93,4 +105,5 @@ export const {
   useCreatePointOfSaleConfigurationMutation,
   useUpdatePointOfSaleConfigurationMutation,
   useTogglePointOfSaleConfigurationActiveMutation,
+  useRegisterTerminalMutation
 } = PointOfSaleConfigurationService;
