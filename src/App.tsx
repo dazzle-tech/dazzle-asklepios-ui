@@ -243,7 +243,8 @@ const SmsNotification = lazy (() => import ( './pages/notification-management/sm
 const InAppNotification = lazy (() => import ( './pages/notification-management/in-app-notification'));
 const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
 const PushNotification = lazy (() => import ( './pages/notification-management/push-notification'));
-
+const PosCheckIn= lazy(()=>import ('./pages/point-of-sale/pos-checkIn/PointOfSaleCheckIn'));
+const PointOfSaleWebhookLogsPage = lazy(() => import('./pages/point-of-sale/pos-webhook/PointOfSaleWebhookLogsPage'));
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
@@ -259,6 +260,7 @@ import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 import PatientsLists from './pages/billing-module/patientList/PatientsLists';
+const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
 
@@ -675,6 +677,9 @@ const App = () => {
               <Route path="in-app-notification" element={<InAppNotification />} />
               <Route path="whatsapp-notification" element={<WhatsAppNotification />} />
               <Route path="push-notification" element={<PushNotification />} />
+              <Route path='pos-check-in' element={<PosCheckIn/>}/>
+              <Route path='pos-configration' element={<PointOfSaleConfiguration/>}/>
+              <Route path='pos-webhook-logs' element={<PointOfSaleWebhookLogsPage/>}/>
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />

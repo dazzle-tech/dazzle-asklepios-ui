@@ -246,15 +246,17 @@ import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSe
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
-import {billingConfigurationService} from './services/billing/billingConfigurationService';
-import {financialDocumentNumberingService} from './services/billing/financialDocumentNumberingService';
+import { billingConfigurationService } from './services/billing/billingConfigurationService';
+import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
-
-
-  import { billingTransactionService } from './services/billing/billingTransactionService';
-  import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
-  import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
+import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
+import { billingTransactionService } from './services/billing/billingTransactionService';
+import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
+import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
+import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -615,21 +617,25 @@ export const store = configureStore({
     [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
     [claimSettlementApi.reducerPath]: claimSettlementApi.reducer,
     [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
-  [systemConfigService.reducerPath]: systemConfigService.reducer,
+    [systemConfigService.reducerPath]: systemConfigService.reducer,
 
-  [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
+    [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
 
-  [priceListSetupService.reducerPath]: priceListSetupService.reducer,
-  [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
-  [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
-  [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
-  [taxService.reducerPath]: taxService.reducer,
-  [discountService.reducerPath]: discountService.reducer,
+    [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+    [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
+    [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+    [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
+    [taxService.reducerPath]: taxService.reducer,
+    [discountService.reducerPath]: discountService.reducer,
 
-  [billingTransactionService.reducerPath]:billingTransactionService.reducer,
-  [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
-  [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [billingTransactionService.reducerPath]: billingTransactionService.reducer,
+    [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
+    [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
+    [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
+    [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
+    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -855,7 +861,10 @@ export const store = configureStore({
         discountService.middleware,
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
-        financialDocumentAdjustmentService.middleware
+        PointOfSaleCheckInService.middleware,
+        PointOfSaleConfigurationService.middleware,
+        PointOfSaleTransactionService.middleware,
+        pointOfSaleWebhookLogService.middleware
       ) as any
 });
 

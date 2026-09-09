@@ -780,7 +780,7 @@ const ICD10BrowserExpand = () => {
                       totalCount={1}
                       loading={nodeLoading}
                       page={0}
-                      rowsPerPage={25}
+                      rowsPerPage={15}
                       onPageChange={() => {}}
                       onRowsPerPageChange={() => {}}
                     />

@@ -1,49 +1,31 @@
+import {
+  faBedPulse,
+  faBoxOpen,
+  faClockRotateLeft,
+  faFileLines,
+  faFilePrescription,
+  faFileWaveform,
+  faG,
+  faHeartbeat,
+  faNotesMedical,
+  faPersonDotsFromLine,
+  faPills,
+  faRuler,
+  faStethoscope,
+  faSyringe,
+  faTooth,
+  faTriangleExclamation,
+  faUserDoctor,
+  faVials,
+  
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  FaCashRegister,
+  FaSignInAlt,
+  FaCogs,
+} from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
-import {
-  faBed,
-  faBraille,
-  faG,
-  faUserDoctor,
-  faBedPulse,
-  faPersonDotsFromLine,
-  faTriangleExclamation,
-  faFileWaveform,
-  faSyringe,
-  faFilePrescription,
-  faPills,
-  faVials,
-  faStethoscope,
-  faNotesMedical,
-  faClockRotateLeft,
-  faComment,
-  faRightFromBracket,
-  faSuitcaseMedical,
-  faDroplet,
-  faSquarePollHorizontal,
-  faPersonFallingBurst,
-  faHeartPulse,
-  faTooth,
-  faEye,
-  faEarListen,
-  faFileLines,
-  faBrain,
-  faLeaf,
-  faCapsules,
-  faPersonWalking,
-  faChild,
-  faRuler,
-  faPaperclip,
-  faBoxOpen,
-  faHeartbeat,
-  faThermometerHalf,
-  faClipboardCheck,
-  faWalking,
-  faRedoAlt,
-  faBandAid,
-  faFileMedical,
-} from '@fortawesome/free-solid-svg-icons';
-import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
   name: string;
   code: string;
@@ -131,7 +113,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Speech Therapy', code: 'SPEECH_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/speech-therapy', type: "Specialty" },
   // { name: 'IV Fluid Administration', code: 'IV_FLUID_ADMINISTRATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-administration' },
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
-  // { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
+  { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
   { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
@@ -381,7 +363,6 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaRegIdBadge",
       viewOrder: 2,
-      departmentTypes: ["REGISTRATION"],
       screens: [
 
         { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
@@ -399,7 +380,6 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaCalendarDay",
       viewOrder: 3,
-      departmentTypes: ["REGISTRATION"],
 
       screens: [
         {
@@ -446,7 +426,6 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaFileWaveform",
       viewOrder: 4,
-      departmentTypes: ["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
 
       screens: [
         {
@@ -463,7 +442,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaStethoscope",
       viewOrder: 4,
-      departmentTypes: ["OUTPATIENT_CLINIC"],
+
       screens: [
 
         {
@@ -513,7 +492,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaExplosion",
       viewOrder: 6,
-      departmentTypes: ["EMERGENCY_ROOM"],
+
       screens: [
         {
           name: "ER Triage",
@@ -531,7 +510,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaNotesMedical",
       viewOrder: 6,
-      departmentTypes: ["EMERGENCY_ROOM"],
+
       screens: [
         { name: "Urgent Care Triage", code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage" },
         { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
@@ -571,7 +550,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaFlask",
       viewOrder: 9,
-      departmentTypes: ["LABORATORY"],
+
       screens: [{
         name: "Clinical Laboratory",
         code: "CLINICAL_LABORATORY",
@@ -586,7 +565,6 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaXRay",
       viewOrder: 10,
-      departmentTypes: ["RADIOLOGY"],
       screens: [{
         name: "Imaging Radiology",
         code: "IMAGING_RADIOLOGY",
@@ -747,7 +725,6 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaMoneyBill1",
       viewOrder: 12,
-      departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Ledger Account",
@@ -820,9 +797,19 @@ export const MODULES: Module[] =
         { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 2, navPath: "insurance-eligibility-requests" },
         { name: "Claims", code: "CLAIMS", description: "Waseel insurance claim submissions", icon: "FaFileInvoiceDollar", viewOrder: 3, navPath: "billing-claims" },
       ],
-    }
+    },
 
+{
+ name:"Point of Sale",
+ description: null,
+      icon: "FaCashRegister",
+      viewOrder: 2,
+      screens: [
+       { name: "Check-In", code: "POINT_OF_SALE_CHECK_IN", description: "", icon: "FaSignInAlt", viewOrder: 3, navPath: "pos-check-in" },
+        { name: "Configuration", code: "POINT_OF_SALE_CONFIGRATION", description: "", icon: "FaCogs", viewOrder: 3, navPath: "pos-configration" },
+        { name: "Webhook Logs", code: "POINT_OF_SALE_WEBHOOK_LOGS", description: "", icon: "FaClockRotateLeft", viewOrder: 4, navPath: "pos-webhook-logs" },
 
+      ]
 
-
+}
   ];

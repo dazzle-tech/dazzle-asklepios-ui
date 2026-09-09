@@ -33,6 +33,7 @@ import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
 import BulkRescheduleModal from './components/BulkRescheduleModal';
+import BulkTransferModal from './components/BulkTransferModal';
 import CancelledAppointmentsModal from './components/CancelledAppointmentsModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -178,6 +179,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const [bulkRescheduleModalOpen, setBulkRescheduleModalOpen] = useState(false);
+  const [bulkTransferModalOpen, setBulkTransferModalOpen] = useState(false);
   const [cancelledAppointmentsModalOpen, setCancelledAppointmentsModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
@@ -2001,6 +2003,12 @@ const ScheduleScreen = () => {
         setOpen={setBulkRescheduleModalOpen}
         onSuccess={() => void handleSearchAppointmentsByCriteria()}
       />
+      <BulkTransferModal
+        open={bulkTransferModalOpen}
+        setOpen={setBulkTransferModalOpen}
+        calendarViewRange={calendarViewRange}
+        onSuccess={() => void handleSearchAppointmentsByCriteria()}
+      />
       <CancelledAppointmentsModal
         open={cancelledAppointmentsModalOpen}
         setOpen={setCancelledAppointmentsModalOpen}
@@ -2017,6 +2025,7 @@ const ScheduleScreen = () => {
       <ScheduleFloatingActions
         onViewAppointmentRequests={() => setAppRequestModalOpen(true)}
         onBulkReschedule={() => setBulkRescheduleModalOpen(true)}
+        onBulkTransfer={() => setBulkTransferModalOpen(true)}
         onViewCancelledAppointments={() => setCancelledAppointmentsModalOpen(true)}
       />
     </div>
