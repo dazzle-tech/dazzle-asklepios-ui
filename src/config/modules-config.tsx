@@ -1,49 +1,31 @@
+import {
+  faBedPulse,
+  faBoxOpen,
+  faClockRotateLeft,
+  faFileLines,
+  faFilePrescription,
+  faFileWaveform,
+  faG,
+  faHeartbeat,
+  faNotesMedical,
+  faPersonDotsFromLine,
+  faPills,
+  faRuler,
+  faStethoscope,
+  faSyringe,
+  faTooth,
+  faTriangleExclamation,
+  faUserDoctor,
+  faVials,
+  
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  FaCashRegister,
+  FaSignInAlt,
+  FaCogs,
+} from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
-import {
-  faBed,
-  faBraille,
-  faG,
-  faUserDoctor,
-  faBedPulse,
-  faPersonDotsFromLine,
-  faTriangleExclamation,
-  faFileWaveform,
-  faSyringe,
-  faFilePrescription,
-  faPills,
-  faVials,
-  faStethoscope,
-  faNotesMedical,
-  faClockRotateLeft,
-  faComment,
-  faRightFromBracket,
-  faSuitcaseMedical,
-  faDroplet,
-  faSquarePollHorizontal,
-  faPersonFallingBurst,
-  faHeartPulse,
-  faTooth,
-  faEye,
-  faEarListen,
-  faFileLines,
-  faBrain,
-  faLeaf,
-  faCapsules,
-  faPersonWalking,
-  faChild,
-  faRuler,
-  faPaperclip,
-  faBoxOpen,
-  faHeartbeat,
-  faThermometerHalf,
-  faClipboardCheck,
-  faWalking,
-  faRedoAlt,
-  faBandAid,
-  faFileMedical,
-} from '@fortawesome/free-solid-svg-icons';
-import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
   name: string;
   code: string;
@@ -804,9 +786,19 @@ export const MODULES: Module[] =
         { name: "Eligibility Requests", code: "WASEEL_ELIGIBILITY_REQUESTS", description: "", icon: "FaFilePen", viewOrder: 2, navPath: "insurance-eligibility-requests" },
         { name: "Claims", code: "CLAIMS", description: "Waseel insurance claim submissions", icon: "FaFileInvoiceDollar", viewOrder: 3, navPath: "billing-claims" },
       ],
-    }
+    },
 
+{
+ name:"Point of Sale",
+ description: null,
+      icon: "FaCashRegister",
+      viewOrder: 2,
+      screens: [
+       { name: "Check-In", code: "POINT_OF_SALE_CHECK_IN", description: "", icon: "FaSignInAlt", viewOrder: 3, navPath: "pos-check-in" },
+        { name: "Configuration", code: "POINT_OF_SALE_CONFIGRATION", description: "", icon: "FaCogs", viewOrder: 3, navPath: "pos-configration" },
+        { name: "Webhook Logs", code: "POINT_OF_SALE_WEBHOOK_LOGS", description: "", icon: "FaClockRotateLeft", viewOrder: 4, navPath: "pos-webhook-logs" },
 
+      ]
 
-
+}
   ];
