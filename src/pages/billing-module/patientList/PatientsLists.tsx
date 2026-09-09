@@ -1,6 +1,5 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-import { Form, Tooltip, Whisper } from 'rsuite';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Form, Tooltip, Whisper, Popover } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -9,13 +8,38 @@ import {
   faFileWaveform,
   faRectangleXmark,
   faEye,
-  faRotateLeft
+  faRotateLeft,
+  faMoneyBillWave,
+  faFlag,
+  faPause,
+  faCircleExclamation,
+  faBedPulse,
+  faCirclePlay,
+  faCommentMedical,
+  faPrint,
+  faBed
 } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
+import BedAssignmentModal from '@/pages/encounter/day-case/DayCaseList/BedAssignmentModal';
+import {
+  useCreateOrGetEmergencyTriageMutation,
+  useGetLatestEmergencyTriageByEncounterQuery
+} from '@/services/encounters/er-triage/emergencyTriageService';
+import {
+  useUpdateEncounterMutation,
+  useStartTriageEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+import {
+  buildPostPaymentEncounterStatusPatch,
+  getEncounterTreatmentStatus,
+  POST_PAYMENT_TREATMENT_STATUS
+} from '@/utils/encounterStatusHelpers';
+import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import AddPaymentModal from '@/pages/encounter/urgent-care/triage-urgent-care/component/AddPaymentModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import VisitReportPrintButton from '@/pages/encounter/encounter-list/VisitReportPrintButton';
@@ -33,7 +57,6 @@ import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useAppSelector } from '@/hooks';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
-  getEncounterTreatmentStatus,
   isEncounterAlreadyOngoingError,
   shouldSkipEncounterStart
 } from '@/utils/encounterStatusHelpers';
@@ -44,6 +67,7 @@ import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetActivePractitionersByFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import PatientWritBandPrintLabelButton from '@/pages/encounter/urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
 
 const toISODate = (value: Date | string | null | undefined): string | undefined => {
   if (!value) return undefined;
@@ -54,8 +78,8 @@ const toISODate = (value: Date | string | null | undefined): string | undefined 
 const uniqueNonEmpty = (arr?: any[]): string[] | undefined => {
   if (!arr) return undefined;
   const cleaned = arr
-    .filter((value) => value !== null && value !== undefined && String(value).trim() !== '')
-    .map((value) => String(value));
+    .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
+    .map(value => String(value));
   return cleaned.length ? Array.from(new Set(cleaned)) : undefined;
 };
 
@@ -85,23 +109,290 @@ const defaultFilters = {
   treatmentStatusIn: ['ONGOING'] as string[]
 };
 
+const EncounterPriorityAction = ({
+  rowData,
+  encounterPriorityEnumOptions,
+  priorityDotColor,
+  isPendingPayment,
+  onUpdatePriority,
+  isReceptionist
+}: {
+  rowData: any;
+  encounterPriorityEnumOptions: any[];
+  priorityDotColor: Map<string, string>;
+  isPendingPayment: boolean;
+  onUpdatePriority: (rowData: any, priorityCode: string) => Promise<boolean>;
+  isReceptionist: boolean;
+}) => {
+  const whisperRef = useRef<any>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const mode = useSelector((state: any) => state.ui.mode);
+  const isDark = mode === 'dark';
+
+  const popoverBackground = isDark ? '#0f172a' : '#ffffff';
+  const popoverForeground = isDark ? '#e5e7eb' : '#111827';
+  const popoverBorder = isDark ? '#334155' : '#e5e7eb';
+  const mutedForeground = isDark ? '#94a3b8' : '#64748b';
+  const selectedBackground = isDark ? 'rgba(59, 130, 246, 0.16)' : '#eff6ff';
+  const selectedBorder = isDark ? '#3b82f6' : '#bfdbfe';
+
+  const selectedPriority = String(rowData?.priorityLevel ?? '');
+
+  const prioritySpeaker = (
+    <Popover
+      style={{
+        backgroundColor: popoverBackground,
+        color: popoverForeground,
+        border: `1px solid ${popoverBorder}`,
+        borderRadius: 12,
+        boxShadow: isDark ? '0 12px 32px rgba(0, 0, 0, 0.45)' : '0 12px 32px rgba(15, 23, 42, 0.12)'
+      }}
+    >
+      <div
+        style={{
+          minWidth: 220,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 8,
+          color: popoverForeground,
+          backgroundColor: 'transparent'
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            padding: '4px 6px 10px',
+            borderBottom: `1px solid ${popoverBorder}`,
+            marginBottom: 8,
+            color: popoverForeground
+          }}
+        >
+          Priority
+        </div>
+
+        {!encounterPriorityEnumOptions?.length ? (
+          <div
+            style={{
+              padding: 8,
+              color: mutedForeground
+            }}
+          >
+            No priority options
+          </div>
+        ) : (
+          encounterPriorityEnumOptions.map((p: any) => {
+            const value = String(p?.value ?? '');
+            const label = String(p?.label ?? p?.value ?? '');
+
+            const isSelected = selectedPriority === value;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={async (e: any) => {
+                  e?.stopPropagation?.();
+
+                  if (!value || saving) {
+                    return;
+                  }
+
+                  try {
+                    setSaving(value);
+
+                    const ok = await onUpdatePriority(rowData, value);
+
+                    if (ok) {
+                      whisperRef.current?.close?.();
+                    }
+                  } finally {
+                    setSaving(null);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '10px 12px',
+                  marginBottom: 6,
+                  borderRadius: 8,
+                  border: isSelected ? `1px solid ${selectedBorder}` : `1px solid ${popoverBorder}`,
+                  backgroundColor: isSelected ? selectedBackground : 'transparent',
+                  color: popoverForeground,
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    minWidth: 0
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: priorityDotColor.get(value) ?? mutedForeground,
+                      flex: '0 0 auto'
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: popoverForeground
+                    }}
+                  >
+                    {label}
+                  </span>
+                </span>
+
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: isSelected ? popoverForeground : mutedForeground,
+                    minWidth: 16,
+                    textAlign: 'right'
+                  }}
+                >
+                  {saving === value ? '...' : isSelected ? '✓' : ''}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </Popover>
+  );
+
+  return (
+    <Whisper
+      ref={whisperRef}
+      trigger="click"
+      placement="leftStart"
+      enterable
+      speaker={isPendingPayment ? <Tooltip>Please add payment first</Tooltip> : prioritySpeaker}
+    >
+      <div
+        onClick={(e: any) => {
+          e?.stopPropagation?.();
+        }}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center'
+        }}
+      >
+        <MyButton size="small" disabled={isReceptionist}>
+          <FontAwesomeIcon icon={faCircleExclamation} />
+        </MyButton>
+      </div>
+    </Whisper>
+  );
+};
+
+const AssignBedAction = ({
+  rowData,
+  isPendingPayment,
+  isReceptionist,
+  setLocalEncounter,
+  setOpenBedAssignmentModal
+}: {
+  rowData: any;
+  isPendingPayment: boolean;
+  isReceptionist: boolean;
+  setLocalEncounter: React.Dispatch<React.SetStateAction<any>>;
+  setOpenBedAssignmentModal: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const encounterId = Number(rowData?.id ?? rowData?.encounterId ?? rowData?.key);
+
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(
+    encounterId as any,
+    {
+      skip: Number.isNaN(encounterId)
+    }
+  );
+
+  const latest = latestEmergencyTriage?.object ?? latestEmergencyTriage;
+
+  const emergencyLevel = latest?.emergencyLevel ?? null;
+
+  const statusUpper = String(
+    getEncounterTreatmentStatus(rowData) ?? rowData?.status ?? rowData?.encounterStatus ?? ''
+  ).toUpperCase();
+
+  const isTriageStarted = statusUpper === 'TRIAGE_STARTED';
+
+  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel || isReceptionist;
+
+  const speaker = isPendingPayment ? (
+    <Tooltip>Please add payment first</Tooltip>
+  ) : !isTriageStarted ? (
+    <Tooltip>Assign Bed is only available when triage is started</Tooltip>
+  ) : !emergencyLevel ? (
+    <Tooltip>Please set Emergency Level first</Tooltip>
+  ) : (
+    <Tooltip>Assign Bed</Tooltip>
+  );
+
+  return (
+    <Whisper trigger="hover" placement="top" speaker={speaker}>
+      <div>
+        <MyButton
+          size="small"
+          backgroundColor="black"
+          disabled={disabled}
+          onClick={() => {
+            setLocalEncounter(rowData);
+            setOpenBedAssignmentModal(true);
+          }}
+        >
+          <FontAwesomeIcon icon={faBedPulse} />
+        </MyButton>
+      </div>
+    </Whisper>
+  );
+};
+
 const PatientsLists = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const authSlice = useAppSelector((state) => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const facilityId = authSlice?.tenant?.selectedFacility?.id;
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
   const [dateFilter, setDateFilter] = useState({ fromDate: new Date(), toDate: new Date() });
   const [dateFilterKey, setDateFilterKey] = useState(0);
-  const [patientSearchApplied, setPatientSearchApplied] = useState({ searchByField: 'fullName', patientName: '' });
+  const [patientSearchApplied, setPatientSearchApplied] = useState({
+    searchByField: 'fullName',
+    patientName: ''
+  });
   const [filters, setFilters] = useState(defaultFilters);
   const [selectedEncounter, setSelectedEncounter] = useState<any>(null);
   const [openCancel, setOpenCancel] = useState(false);
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [localEncounter, setLocalEncounter] = useState<any>(null);
+  const [openBedAssignmentModal, setOpenBedAssignmentModal] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentRow, setPaymentRow] = useState<any>(null);
+  const [payment, setPayment] = useState<any>({ ...newPatientPayments });
+  const [patientInsurance, setPatientInsurance] = useState<any>({
+    ...newPatientInsurance
+  });
+
   const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
   const { data: departmentsResponse } = useGetAppointableDepartmentsQuery(
@@ -128,7 +419,6 @@ const PatientsLists = () => {
     }
   );
 
-
   useEffect(() => {
     dispatch(setPageCode('P_PatientsLists'));
     dispatch(setDivContent('Patients Visit List'));
@@ -145,13 +435,147 @@ const PatientsLists = () => {
   const EncounterStatusEnum = useEnumOptions('EncounterStatus');
   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus');
   const CoverageTypeEnum = useEnumOptions('BillingCoverageType');
+  const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
+
+  const priorityDotColor = useMemo(() => {
+    const palette = ['#16a34a', '#dc2626', '#f97316', '#eab308', '#7c3aed', '#0ea5e9'];
+
+    const map = new Map<string, string>();
+
+    EncounterPriorityEnum.forEach((option: any, index: number) => {
+      if (option?.value != null) {
+        map.set(String(option.value), palette[index % palette.length]);
+      }
+    });
+
+    return map;
+  }, [EncounterPriorityEnum]);
 
   const [getPatientById, getPatientState] = useLazyGetPatientByIdQuery();
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [reopenEncounter, { isLoading: reopening }] = useReopenEncounterMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
+  const [startTriageEncounter, { isLoading: isStartTriageEncounterLoading }] =
+    useStartTriageEncounterMutation();
 
-  const { data: encountersPaged, isLoading, isFetching, refetch } = useGetEncounterListQuery(appliedFilters, {
+  const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
+
+  const handleUpdateEncounterPriority = useCallback(
+    async (rowData: any, priorityCode: string): Promise<boolean> => {
+      try {
+        const encounterId = rowData?.id ?? null;
+
+        if (!encounterId) {
+          return false;
+        }
+
+        const body = {
+          id: rowData?.id ?? rowData?.key,
+          patientId: rowData?.patientId ?? rowData?.patient?.id ?? rowData?.patientObject?.id,
+
+          encounterNumber: rowData?.encounterNumber ?? null,
+
+          facilityId: rowData?.facilityId ?? facilityId ?? null,
+
+          departmentId: rowData?.departmentId ?? null,
+
+          practitionerId: rowData?.practitionerId ?? null,
+
+          encounterType: rowData?.encounterType,
+
+          encounterReason: rowData?.encounterReason,
+
+          followUpEncounterId: rowData?.followUpEncounterId ?? null,
+
+          priorityLevel: priorityCode,
+
+          originType: rowData?.originType ?? null,
+
+          originName: rowData?.originName ?? null,
+
+          notes: rowData?.notes ?? null,
+
+          departmentDailySequenceNumber: rowData?.departmentDailySequenceNumber ?? null,
+
+          encounterDate: rowData?.encounterDate ?? rowData?.plannedStartDate ?? null,
+
+          status: getEncounterTreatmentStatus(rowData) ?? rowData?.status,
+
+          treatmentStatus:
+            rowData?.treatmentStatus ?? getEncounterTreatmentStatus(rowData) ?? rowData?.status,
+
+          encounterStatus: rowData?.encounterStatus ?? null,
+
+          chiefComplaint: rowData?.chiefComplaint ?? null,
+
+          hasPrescription: rowData?.hasPrescription ?? false,
+
+          hasOrder: rowData?.hasOrder ?? false,
+
+          isObserved: rowData?.isObserved ?? false
+        };
+
+        if (
+          body.id == null ||
+          body.patientId == null ||
+          body.facilityId == null ||
+          body.departmentId == null ||
+          body.encounterType == null ||
+          body.encounterReason == null ||
+          body.priorityLevel == null ||
+          body.status == null
+        ) {
+          dispatch(
+            notify({
+              msg: 'Cannot update encounter: missing required fields',
+              sev: 'error'
+            })
+          );
+
+          return false;
+        }
+
+        await updateEncounter({
+          id: encounterId,
+          body
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Priority updated',
+            sev: 'success'
+          })
+        );
+
+        refetch();
+
+        return true;
+      } catch (error: any) {
+        console.error('Priority update error:', error, {
+          rowData,
+          priorityCode
+        });
+
+        dispatch(
+          notify({
+            msg: error?.data?.message ?? error?.message ?? 'Failed to update priority',
+            sev: 'error'
+          })
+        );
+
+        return false;
+      }
+    },
+    [updateEncounter, dispatch, refetch, facilityId]
+  );
+
+  const {
+    data: encountersPaged,
+    isLoading,
+    isFetching,
+    refetch
+  } = useGetEncounterListQuery(appliedFilters, {
     skip: !appliedFilters || !facilityId
   });
 
@@ -188,6 +612,8 @@ const PatientsLists = () => {
     [tableData]
   );
 
+  console.log("normalizedTableData", normalizedTableData);
+
   const startEncounterSafe = async (row: any) => {
     const encounterId = row?.id;
     if (!encounterId) return false;
@@ -201,7 +627,9 @@ const PatientsLists = () => {
       return true;
     } catch (error: any) {
       if (isEncounterAlreadyOngoingError(error)) return true;
-      dispatch(notify({ msg: error?.data?.message ?? 'Unable to start encounter', sev: 'warning' }));
+      dispatch(
+        notify({ msg: error?.data?.message ?? 'Unable to start encounter', sev: 'warning' })
+      );
       return false;
     } finally {
       startingEncounterIdsRef.current.delete(encounterId);
@@ -242,8 +670,8 @@ const PatientsLists = () => {
         patient,
         encounter: row,
         edit: false,
-        viewMode: 'edit',
-      },
+        viewMode: 'edit'
+      }
     });
   };
 
@@ -266,7 +694,6 @@ const PatientsLists = () => {
       }
     });
   };
-
 
   const handleNurseStation = async (row: any) => {
     dispatch(showSystemLoader());
@@ -297,7 +724,9 @@ const PatientsLists = () => {
       dispatch(notify({ msg: 'Encounter reopened successfully', sev: 'success' }));
       refetch();
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.message ?? 'Unable to reopen encounter', sev: 'warning' }));
+      dispatch(
+        notify({ msg: error?.data?.message ?? 'Unable to reopen encounter', sev: 'warning' })
+      );
     }
   };
 
@@ -327,7 +756,7 @@ const PatientsLists = () => {
       toDate: today
     });
 
-    setDateFilterKey((prev) => prev + 1);
+    setDateFilterKey(prev => prev + 1);
 
     setPatientSearchApplied({
       searchByField: 'fullName',
@@ -364,43 +793,31 @@ const PatientsLists = () => {
           ? patientSearchApplied?.patientName?.trim() || undefined
           : filters.mrnFilter.trim() || undefined,
 
-      encounterType:
-        filters.encounterType,
+      encounterType: filters.encounterType,
 
-      encounterNumber:
-        filters.encounterNumber.trim() || undefined,
+      encounterNumber: filters.encounterNumber.trim() || undefined,
 
-      departmentId:
-        filters.departmentId ?? undefined,
+      departmentId: filters.departmentId ?? undefined,
 
-      practitionerId:
-        filters.practitionerId ?? undefined,
+      practitionerId: filters.practitionerId ?? undefined,
 
+      coverageType: filters.coverageType || undefined,
 
-      coverageType:
-        filters.coverageType || undefined,
+      paymentStatus: filters.paymentStatus || undefined,
 
-      paymentStatus:
-        filters.paymentStatus || undefined,
+      insuranceName: filters.insuranceName.trim() || undefined,
 
-      insuranceName:
-        filters.insuranceName.trim() || undefined,
+      doctorStartedFrom: filters.doctorStartedFrom
+        ? `${toISODate(filters.doctorStartedFrom)}T00:00:00`
+        : undefined,
 
-      doctorStartedFrom:
-        filters.doctorStartedFrom
-          ? `${toISODate(filters.doctorStartedFrom)}T00:00:00`
-          : undefined,
+      doctorStartedTo: filters.doctorStartedTo
+        ? `${toISODate(filters.doctorStartedTo)}T23:59:59`
+        : undefined,
 
-      doctorStartedTo:
-        filters.doctorStartedTo
-          ? `${toISODate(filters.doctorStartedTo)}T23:59:59`
-          : undefined,
+      encounterStatusIn: uniqueNonEmpty(filters.encounterStatusIn),
 
-      encounterStatusIn:
-        uniqueNonEmpty(filters.encounterStatusIn),
-
-      treatmentStatusIn:
-        uniqueNonEmpty(filters.treatmentStatusIn),
+      treatmentStatusIn: uniqueNonEmpty(filters.treatmentStatusIn),
 
       page: 0,
       size: pageSize,
@@ -439,9 +856,11 @@ const PatientsLists = () => {
   const canSeeNurseStation = jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
   const canSeeDoctorVisit = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
   const canSeeEMR = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
-  const canSeePrint = jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
-  const canSeeCancel = jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
-
+  const canSeePrint =
+    jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
+  const canSeeCancel =
+    jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
+  const isReceptionist = jobRole === 'RECEPTIONIST';
   const departmentOptions = useMemo(
     () =>
       (departmentsResponse?.data ?? []).map((department: any) => ({
@@ -454,10 +873,7 @@ const PatientsLists = () => {
   const practitionerOptions = useMemo(
     () =>
       (practitionersResponse?.data ?? []).map((practitioner: any) => ({
-        label:
-          [practitioner?.firstName, practitioner?.lastName]
-            .filter(Boolean)
-            .join(' ') || '-',
+        label: [practitioner?.firstName, practitioner?.lastName].filter(Boolean).join(' ') || '-',
         value: practitioner?.id
       })),
     [practitionersResponse]
@@ -473,11 +889,10 @@ const PatientsLists = () => {
   const mainSearchFilters = (
     <div style={{ marginTop: 15 }}>
       <Form fluid className="search-patient-criteria-handle-position-row">
-
         <MyInput
           key={`fromDate-${dateFilterKey}`}
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="date"
           fieldLabel="Encounter Date From"
           fieldName="fromDate"
@@ -489,7 +904,7 @@ const PatientsLists = () => {
         <MyInput
           key={`toDate-${dateFilterKey}`}
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="date"
           fieldLabel="Encounter Date To"
           fieldName="toDate"
@@ -506,31 +921,23 @@ const PatientsLists = () => {
         </div>
         <MyInput
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="text"
           fieldLabel="Encounter Number"
           fieldName="encounterNumber"
           record={{ encounterNumber: filters.encounterNumber }}
-          setRecord={(value: any) =>
-            updateFilter(
-              'encounterNumber',
-              value?.encounterNumber ?? ''
-            )
-          }
+          setRecord={(value: any) => updateFilter('encounterNumber', value?.encounterNumber ?? '')}
         />
 
         <MyInput
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="select"
           fieldLabel="Encounter Type"
           fieldName="encounterType"
           record={{ encounterType: filters.encounterType }}
           setRecord={(value: any) =>
-            updateFilter(
-              'encounterType',
-              value?.encounterType || undefined
-            )
+            updateFilter('encounterType', value?.encounterType || undefined)
           }
           selectData={EncounterTypeEnum}
           selectDataLabel="label"
@@ -540,7 +947,7 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"15vw"}
+          width={'15vw'}
           fieldType="select"
           fieldLabel="Department"
           fieldName="departmentId"
@@ -548,9 +955,7 @@ const PatientsLists = () => {
           setRecord={(value: any) =>
             updateFilter(
               'departmentId',
-              value?.departmentId
-                ? Number(value.departmentId)
-                : undefined
+              value?.departmentId ? Number(value.departmentId) : undefined
             )
           }
           selectData={departmentOptions}
@@ -561,7 +966,7 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"15vw"}
+          width={'15vw'}
           fieldType="select"
           fieldLabel="Practitioner"
           fieldName="practitionerId"
@@ -569,9 +974,7 @@ const PatientsLists = () => {
           setRecord={(value: any) =>
             updateFilter(
               'practitionerId',
-              value?.practitionerId
-                ? Number(value.practitionerId)
-                : undefined
+              value?.practitionerId ? Number(value.practitionerId) : undefined
             )
           }
           selectData={practitionerOptions}
@@ -582,19 +985,14 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="select"
           fieldLabel="Coverage Type"
           fieldName="coverageType"
           record={{
             coverageType: filters.coverageType
           }}
-          setRecord={(value: any) =>
-            updateFilter(
-              'coverageType',
-              value?.coverageType || undefined
-            )
-          }
+          setRecord={(value: any) => updateFilter('coverageType', value?.coverageType || undefined)}
           selectData={CoverageTypeEnum}
           selectDataLabel="label"
           selectDataValue="value"
@@ -603,24 +1001,19 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"15vw"}
+          width={'15vw'}
           fieldType="text"
           fieldLabel="Insurance Name"
           fieldName="insuranceName"
           record={{
             insuranceName: filters.insuranceName
           }}
-          setRecord={(value: any) =>
-            updateFilter(
-              'insuranceName',
-              value?.insuranceName ?? ''
-            )
-          }
+          setRecord={(value: any) => updateFilter('insuranceName', value?.insuranceName ?? '')}
         />
 
         <MyInput
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="select"
           fieldLabel="Payment Status"
           fieldName="paymentStatus"
@@ -628,10 +1021,7 @@ const PatientsLists = () => {
             paymentStatus: filters.paymentStatus
           }}
           setRecord={(value: any) =>
-            updateFilter(
-              'paymentStatus',
-              value?.paymentStatus || undefined
-            )
+            updateFilter('paymentStatus', value?.paymentStatus || undefined)
           }
           selectData={PaymentStatusEnum}
           selectDataLabel="label"
@@ -641,7 +1031,7 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"15vw"}
+          width={'15vw'}
           fieldType="checkPicker"
           fieldLabel="Encounter Status"
           fieldName="encounterStatusIn"
@@ -649,16 +1039,9 @@ const PatientsLists = () => {
             encounterStatusIn: filters.encounterStatusIn
           }}
           setRecord={(value: any) => {
-            const values = Array.isArray(value)
-              ? value
-              : value?.encounterStatusIn;
+            const values = Array.isArray(value) ? value : value?.encounterStatusIn;
 
-            updateFilter(
-              'encounterStatusIn',
-              Array.isArray(values)
-                ? values.map(String)
-                : []
-            );
+            updateFilter('encounterStatusIn', Array.isArray(values) ? values.map(String) : []);
           }}
           selectData={EncounterStatusEnum}
           selectDataLabel="label"
@@ -668,7 +1051,7 @@ const PatientsLists = () => {
 
         <MyInput
           column
-          width={"15vw"}
+          width={'15vw'}
           fieldType="checkPicker"
           fieldLabel="Treatment Status"
           fieldName="treatmentStatusIn"
@@ -676,23 +1059,15 @@ const PatientsLists = () => {
             treatmentStatusIn: filters.treatmentStatusIn
           }}
           setRecord={(value: any) => {
-            const values = Array.isArray(value)
-              ? value
-              : value?.treatmentStatusIn;
+            const values = Array.isArray(value) ? value : value?.treatmentStatusIn;
 
-            updateFilter(
-              'treatmentStatusIn',
-              Array.isArray(values)
-                ? values.map(String)
-                : []
-            );
+            updateFilter('treatmentStatusIn', Array.isArray(values) ? values.map(String) : []);
           }}
           selectData={TreatmentStatusEnum}
           selectDataLabel="label"
           selectDataValue="value"
           searchable
         />
-
       </Form>
     </div>
   );
@@ -700,11 +1075,10 @@ const PatientsLists = () => {
   const searchFiltersContent = (
     <div style={{ marginTop: 15 }}>
       <Form layout="inline" fluid>
-
         <MyInput
           key={`doctorStartedFrom-${dateFilterKey}`}
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="date"
           fieldLabel="Doctor Start From"
           fieldName="doctorStartedFrom"
@@ -714,9 +1088,7 @@ const PatientsLists = () => {
           setRecord={(value: any) =>
             updateFilter(
               'doctorStartedFrom',
-              value?.doctorStartedFrom
-                ? new Date(value.doctorStartedFrom)
-                : undefined
+              value?.doctorStartedFrom ? new Date(value.doctorStartedFrom) : undefined
             )
           }
         />
@@ -724,7 +1096,7 @@ const PatientsLists = () => {
         <MyInput
           key={`doctorStartedTo-${dateFilterKey}`}
           column
-          width={"13vw"}
+          width={'13vw'}
           fieldType="date"
           fieldLabel="Doctor Start To"
           fieldName="doctorStartedTo"
@@ -734,16 +1106,109 @@ const PatientsLists = () => {
           setRecord={(value: any) =>
             updateFilter(
               'doctorStartedTo',
-              value?.doctorStartedTo
-                ? new Date(value.doctorStartedTo)
-                : undefined
+              value?.doctorStartedTo ? new Date(value.doctorStartedTo) : undefined
             )
           }
         />
-
       </Form>
     </div>
   );
+
+  const handleGoToTriage = async (encounterData: any, patientData: any) => {
+    try {
+      const encounterId = encounterData?.id;
+
+      const patientId = Number(patientData?.id ?? patientData?.patientId ?? patientData?.key);
+
+      const statusUpper = getEncounterTreatmentStatus(encounterData);
+
+      if (
+        statusUpper !== 'TRIAGE_STARTED' &&
+        typeof encounterId === 'number' &&
+        !Number.isNaN(encounterId)
+      ) {
+        await startTriageEncounter({
+          id: encounterId
+        }).unwrap();
+      }
+
+      const emergencyTriageNew =
+        typeof encounterId === 'number' &&
+          !Number.isNaN(encounterId) &&
+          typeof patientId === 'number' &&
+          !Number.isNaN(patientId)
+          ? await createOrGetEmergencyTriage({
+            encounterId,
+            patientId
+          }).unwrap()
+          : null;
+
+      navigate('/urgent-care-start-triage', {
+        state: {
+          info: 'to_Urgent_Care_Start_Triage',
+          fromPage: 'urgent-care-triage',
+          patient: patientData,
+          encounter: encounterData,
+          emergencyTriageNew
+        }
+      });
+    } catch (error: any) {
+      console.error('Start triage error:', error);
+
+      const errorKey = error?.message ?? error?.data?.message ?? '';
+
+      let readableMessage = 'Failed to start triage';
+
+      if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
+        readableMessage =
+          'Cannot start a new triage because the patient already has an ongoing encounter.';
+      } else if (errorKey) {
+        readableMessage = errorKey.replaceAll('.', ' ');
+      }
+
+      dispatch(
+        notify({
+          msg: readableMessage,
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleGoToViewTriage = async (encounterData: any, patientData: any) => {
+    navigate('/urgent-care-view-triage', {
+      state: {
+        from: 'Urgent_Care_List',
+        info: 'toUrgentCareViewTriage',
+        patient: patientData,
+        encounter: encounterData
+      }
+    });
+  };
+
+  const handleAddPayment = async (rowData: any): Promise<boolean> => {
+    setPaymentRow(rowData);
+
+    setPayment({
+      ...newPatientPayments
+    });
+
+    setPatientInsurance({
+      ...newPatientInsurance
+    });
+
+    setPaymentModalOpen(true);
+
+    return true;
+  };
+
+  const handleSetPaymentModalOpen = (open: boolean) => {
+    setPaymentModalOpen(open);
+
+    if (!open) {
+      setPaymentRow(null);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -761,17 +1226,11 @@ const PatientsLists = () => {
                   <strong>{row?.patientFullName ?? '-'}</strong>
                 </div>
 
-                <div>
-                  MRN: {row?.mrn ?? '-'}
-                </div>
+                <div>MRN: {row?.mrn ?? '-'}</div>
 
-                <div>
-                  Age: {row?.age != null ? `${row.age} years` : '-'}
-                </div>
+                <div>Age: {row?.age != null ? `${row.age} years` : '-'}</div>
 
-                <div>
-                  Gender: {formatEnumString(row?.gender) || '-'}
-                </div>
+                <div>Gender: {formatEnumString(row?.gender) || '-'}</div>
               </Tooltip>
             }
           >
@@ -783,21 +1242,19 @@ const PatientsLists = () => {
                 maxWidth: '100%',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {row?.patientFullName ?? '-'}
             </span>
           </Whisper>
-        ),
+        )
       },
       {
         key: 'documentType',
         title: 'DOCUMENT TYPE',
         render: (row: any) => (
-          <span className="encounter-text-cell">
-            {formatEnumString(row?.documentType) || '-'}
-          </span>
+          <span className="encounter-text-cell">{formatEnumString(row?.documentType) || '-'}</span>
         )
       },
 
@@ -805,9 +1262,7 @@ const PatientsLists = () => {
         key: 'documentNumber',
         title: 'DOCUMENT NUMBER',
         render: (row: any) => (
-          <span className="encounter-text-cell">
-            {row?.documentNumber ?? '-'}
-          </span>
+          <span className="encounter-text-cell">{row?.documentNumber ?? '-'}</span>
         )
       },
 
@@ -815,9 +1270,7 @@ const PatientsLists = () => {
         key: 'primaryMobileNumber',
         title: 'MOBILE',
         render: (row: any) => (
-          <span className="encounter-text-cell">
-            {row?.primaryMobileNumber ?? '-'}
-          </span>
+          <span className="encounter-text-cell">{row?.primaryMobileNumber ?? '-'}</span>
         )
       },
 
@@ -835,9 +1288,7 @@ const PatientsLists = () => {
         key: 'encounterNumber',
         title: 'ENCOUNTER #',
         render: (row: any) => (
-          <span className="encounter-number-cell">
-            {row?.encounterNumber ?? '-'}
-          </span>
+          <span className="encounter-number-cell">{row?.encounterNumber ?? '-'}</span>
         )
       },
 
@@ -847,21 +1298,13 @@ const PatientsLists = () => {
         render: (row: any) => {
           if (!row?.encounterDate) return '-';
 
-          const time = row?.encounterTime
-            ? String(row.encounterTime).slice(0, 5)
-            : '';
+          const time = row?.encounterTime ? String(row.encounterTime).slice(0, 5) : '';
 
           return (
             <div className="encounter-date-cell">
-              <div className="encounter-date">
-                {row.encounterDate}
-              </div>
+              <div className="encounter-date">{row.encounterDate}</div>
 
-              {time && (
-                <div className="encounter-time">
-                  {time}
-                </div>
-              )}
+              {time && <div className="encounter-time">{time}</div>}
             </div>
           );
         }
@@ -874,11 +1317,7 @@ const PatientsLists = () => {
           <Whisper
             trigger="hover"
             placement="top"
-            speaker={
-              <Tooltip>
-                {row?.departmentName ?? '-'}
-              </Tooltip>
-            }
+            speaker={<Tooltip>{row?.departmentName ?? '-'}</Tooltip>}
           >
             <span
               className="encounter-text-cell"
@@ -888,22 +1327,20 @@ const PatientsLists = () => {
                 maxWidth: '100%',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {row?.departmentName ?? '-'}
             </span>
           </Whisper>
-        ),
+        )
       },
       {
         key: 'practitionerName',
         title: 'PRACTITIONER',
         render: (row: any) => (
           <div className="practitioner-cell">
-            <span className="practitioner-name">
-              {row?.practitionerName ?? '-'}
-            </span>
+            <span className="practitioner-name">{row?.practitionerName ?? '-'}</span>
           </div>
         )
       },
@@ -912,9 +1349,7 @@ const PatientsLists = () => {
         key: 'defaultServiceName',
         title: 'SERVICE',
         render: (row: any) => (
-          <span className="encounter-text-cell">
-            {row?.defaultServiceName ?? '-'}
-          </span>
+          <span className="encounter-text-cell">{row?.defaultServiceName ?? '-'}</span>
         )
       },
 
@@ -922,9 +1357,7 @@ const PatientsLists = () => {
         key: 'amount',
         title: 'AMOUNT',
         render: (row: any) => (
-          <span className="amount-cell">
-            {row?.amount != null ? row.amount : '-'}
-          </span>
+          <span className="amount-cell">{row?.amount != null ? row.amount : '-'}</span>
         )
       },
 
@@ -978,9 +1411,7 @@ const PatientsLists = () => {
         key: 'insuranceName',
         title: 'INSURANCE',
         render: (row: any) => (
-          <span className="encounter-text-cell">
-            {row?.insuranceName ?? '-'}
-          </span>
+          <span className="encounter-text-cell">{row?.insuranceName ?? '-'}</span>
         )
       },
 
@@ -989,15 +1420,9 @@ const PatientsLists = () => {
         title: 'TRIAGE',
         render: (row: any) =>
           row?.triageStarted ? (
-            <MyBadgeStatus
-              contant="YES"
-              color="#45b887"
-            />
+            <MyBadgeStatus contant="YES" color="#45b887" />
           ) : (
-            <MyBadgeStatus
-              contant="NO"
-              color="#969fb0"
-            />
+            <MyBadgeStatus contant="NO" color="#969fb0" />
           )
       },
 
@@ -1023,9 +1448,7 @@ const PatientsLists = () => {
         key: 'encounterStatus',
         title: 'ENCOUNTER STATUS',
         render: (row: any) => {
-          const status = String(
-            row?.encounterStatus ?? ''
-          ).toUpperCase();
+          const status = String(row?.encounterStatus ?? '').toUpperCase();
 
           const statusColorMap: Record<string, string> = {
             NEW: '#0d6efd',
@@ -1053,9 +1476,7 @@ const PatientsLists = () => {
         key: 'treatmentStatus',
         title: 'TREATMENT STATUS',
         render: (row: any) => {
-          const status = String(
-            row?.treatmentStatus ?? ''
-          ).toUpperCase();
+          const status = String(row?.treatmentStatus ?? '').toUpperCase();
 
           const treatmentStatusColorMap: Record<string, string> = {
             NEW: '#0d6efd',
@@ -1081,173 +1502,770 @@ const PatientsLists = () => {
       {
         key: 'actions',
         title: 'ACTIONS',
+
         render: (row: any) => {
           const status = String(
-            row?.treatmentStatus ?? row?.status ?? ''
+            getEncounterTreatmentStatus(row) ??
+            row?.status ??
+            row?.encounterStatus ??
+            ''
           ).toUpperCase();
 
-          const isViewOnlyStatus =
-            status === 'COMPLETED' ||
-            status === 'CANCELLED';
+          const encounterType = String(
+            row?.encounterType ?? ''
+          ).toUpperCase();
+
+          const isEmergency = encounterType === 'EMERGENCY';
+          const isClinic = encounterType === 'CLINIC';
 
           const isNew = status === 'NEW';
+          const isPendingPayment = status === 'PENDING_PAYMENT';
+          const isTriageStarted = status === 'TRIAGE_STARTED';
+          const isWaitingTriage = status === 'WAITING_TRIAGE';
+          const isOngoing = status === 'ONGOING';
+          const isAssignedToBed = status === 'ASSIGNED_TO_BED';
+          const isCompleted = status === 'COMPLETED';
+          const isDischarged = status === 'DISCHARGED';
+          const isCancelled =
+            status === 'CANCELLED' || status === 'CANCELED';
+          const isSentToEr = status === 'SENT_TO_ER';
 
-          const canReopen =
-            status === 'COMPLETED' ||
-            status === 'DISCHARGED';
+          const isEmergencyTriageWorkflow =
+            isEmergency &&
+            [
+              'NEW',
+              'WAITING_TRIAGE',
+              'PENDING_PAYMENT',
+              'TRIAGE_STARTED',
+              'SENT_TO_ER'
+            ].includes(status);
 
-          const actions: Array<{
-            show: boolean;
-            tooltip: string;
-            icon: any;
-            bg?: string;
-            onClick: () => void;
-            loading?: boolean;
-            renderCustom?: React.ReactNode;
-          }> = [
-              {
-                show:
-                  canSeeNurseStation &&
-                  !isViewOnlyStatus,
-                tooltip: 'Nurse Station',
-                icon: faUserNurse,
-                bg: '#212529',
-                onClick: () => {
-                  setSelectedEncounter(row);
-                  handleNurseStation(row);
-                }
-              },
+          const isEmergencyListWorkflow =
+            isEmergency &&
+            [
+              'ONGOING',
+              'ASSIGNED_TO_BED',
+              'COMPLETED',
+              'DISCHARGED',
+              'CANCELLED',
+              'CANCELED'
+            ].includes(status);
 
-              {
-                show:
-                  canSeeDoctorVisit &&
-                  isViewOnlyStatus,
-                tooltip: 'View Visit',
-                icon: faEye,
-                bg: '#6c757d',
-                onClick: () => {
-                  setSelectedEncounter(row);
-                  handleViewVisit(row);
-                }
-              },
+          const showEmergencyPriority =
+            isEmergencyTriageWorkflow &&
+            [
+              'NEW',
+              'WAITING_TRIAGE',
+              'TRIAGE_STARTED'
+            ].includes(status) &&
+            !isPendingPayment;
 
-              {
-                show:
-                  canSeeDoctorVisit &&
-                  !isViewOnlyStatus,
-                tooltip: 'Doctor Visit',
-                icon: faUserDoctor,
-                bg: '#0d6efd',
-                onClick: () => {
-                  setSelectedEncounter(row);
-                  handleGoToVisit(row);
-                }
-              },
+          const showEmergencyStartTriage =
+            isEmergencyTriageWorkflow &&
+            [
+              'NEW',
+              'WAITING_TRIAGE',
+              'TRIAGE_STARTED'
+            ].includes(status);
 
-              {
-                show: canSeeEMR,
-                tooltip: 'Go to EMR',
-                icon: faFileWaveform,
-                bg: '#6f42c1',
-                onClick: () => {
-                  setSelectedEncounter(row);
-                  setEmrEncounter(row);
+          const showEmergencyViewTriage =
+            isEmergencyTriageWorkflow &&
+            [
+              'SENT_TO_ER'
+            ].includes(status);
 
-                  setEmrPatient(
-                    row?.patientObject ??
-                    row?.patient ??
-                    null
-                  );
+          const showEmergencyAddPayment =
+            isEmergencyTriageWorkflow &&
+            isPendingPayment;
 
-                  dispatch(setEncounter(row));
+          const showEmergencyWristband =
+            isEmergencyTriageWorkflow &&
+            !isPendingPayment;
 
-                  const patient =
-                    row?.patientObject ??
-                    row?.patient;
+          const showEmergencyAssignBed =
+            isEmergencyTriageWorkflow &&
+            isTriageStarted &&
+            !isPendingPayment;
 
-                  if (patient) {
-                    dispatch(setPatient(patient));
-                  }
+          const showEmergencyTriageCancel =
+            isEmergencyTriageWorkflow &&
+            canSeeCancel &&
+            !row?.isObserved &&
+            [
+              'NEW',
+              'WAITING_TRIAGE',
+              'PENDING_PAYMENT'
+            ].includes(status);
 
-                  setOpenEMRModal(true);
-                }
-              },
+          const isEncounterClosed =
+            String(row?.encounterStatus ?? '').toUpperCase() === 'CLOSED';
 
-              {
-                show:
-                  canSeeCancel &&
-                  isNew &&
-                  !row?.isObserved,
-                tooltip: 'Cancel Visit',
-                icon: faRectangleXmark,
-                bg: '#dc3545',
-                onClick: () => {
-                  setSelectedEncounter(row);
-                  setOpenCancel(true);
-                }
-              },
+          const emergencyListViewOnly =
+            isCompleted || isCancelled || isEncounterClosed;
 
-              {
-                show: canReopen,
-                tooltip: 'Reopen Encounter',
-                icon: faRotateLeft,
-                bg: '#0d6efd',
-                loading: reopening,
-                onClick: () => {
-                  handleReopen(row.id);
-                }
-              },
+          const showEmergencyListViewTriage =
+            isEmergencyListWorkflow;
 
-              {
-                show: canSeePrint,
-                tooltip: 'Print Visit Report',
-                icon: null,
-                onClick: () => undefined,
-                renderCustom: (
-                  <VisitReportPrintButton row={row} />
-                )
-              }
-            ];
+          const showEmergencyListViewVisit =
+            isEmergencyListWorkflow &&
+            canSeeDoctorVisit &&
+            (
+              isCompleted ||
+              isDischarged ||
+              isCancelled
+            );
+
+          const showEmergencyListGoToVisit =
+            isEmergencyListWorkflow &&
+            canSeeDoctorVisit &&
+            !emergencyListViewOnly;
+
+          const showEmergencyListNurseStation =
+            isEmergencyListWorkflow &&
+            canSeeNurseStation &&
+            !emergencyListViewOnly;
+
+          const showEmergencyListEMR =
+            isEmergencyListWorkflow &&
+            canSeeEMR;
+
+          const showEmergencyListReopen =
+            isEmergencyListWorkflow &&
+            (
+              isCompleted ||
+              isDischarged
+            );
+
+          const showEmergencyListCancel =
+            isEmergencyListWorkflow &&
+            canSeeCancel &&
+            isNew &&
+            !row?.isObserved;
+
+
+          const clinicViewOnly =
+            isCompleted || isCancelled;
+
+          const showClinicNurseStation =
+            isClinic &&
+            canSeeNurseStation &&
+            !clinicViewOnly;
+
+          const showClinicViewVisit =
+            isClinic &&
+            canSeeDoctorVisit &&
+            clinicViewOnly;
+
+          const showClinicDoctorVisit =
+            isClinic &&
+            canSeeDoctorVisit &&
+            !clinicViewOnly;
+
+          const showClinicEMR =
+            isClinic &&
+            canSeeEMR;
+
+          const showClinicCancel =
+            isClinic &&
+            canSeeCancel &&
+            isNew &&
+            !row?.isObserved;
+
+          const showClinicReopen =
+            isClinic &&
+            (
+              isCompleted ||
+              isDischarged
+            );
+
+          const showClinicPrint =
+            isClinic &&
+            canSeePrint;
 
           return (
             <Form
+              layout="inline"
               fluid
               className="nurse-doctor-form-actions"
             >
-              {actions
-                .filter((item) => item.show)
-                .map((item, index) => (
-                  <Whisper
-                    key={`${item.tooltip}-${index}`}
-                    trigger="hover"
-                    placement="top"
-                    speaker={
-                      <Tooltip>
-                        {item.tooltip}
-                      </Tooltip>
+
+              {isEmergencyTriageWorkflow && canSeeEMR && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      {isPendingPayment
+                        ? 'Please add payment first'
+                        : 'Go to EMR'}
+                    </Tooltip>
+                  }
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#6f42c1"
+                      disabled={
+                        isPendingPayment ||
+                        isReceptionist
+                      }
+                      onClick={() => {
+                        if (
+                          isPendingPayment ||
+                          isReceptionist
+                        ) {
+                          return;
+                        }
+
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        setEmrEncounter(row);
+                        setEmrPatient(patient);
+
+                        dispatch(setEncounter(row));
+
+                        if (patient) {
+                          dispatch(setPatient(patient));
+                        }
+
+                        setOpenEMRModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faFileWaveform}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyAddPayment && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Add Payment</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="green"
+                      onClick={() => {
+                        void handleAddPayment(row);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faMoneyBillWave}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyPriority && (
+                <EncounterPriorityAction
+                  rowData={row}
+                  encounterPriorityEnumOptions={
+                    EncounterPriorityEnum
+                  }
+                  priorityDotColor={priorityDotColor}
+                  isPendingPayment={isPendingPayment}
+                  onUpdatePriority={
+                    handleUpdateEncounterPriority
+                  }
+                  isReceptionist={isReceptionist}
+                />
+              )}
+
+              {showEmergencyStartTriage && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      {isPendingPayment
+                        ? 'Please add payment first'
+                        : status === 'TRIAGE_STARTED'
+                          ? 'Resume Triage'
+                          : 'Start Triage'}
+                    </Tooltip>
+                  }
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="black"
+                      disabled={
+                        isReceptionist ||
+                        isPendingPayment ||
+                        (
+                          status !== 'TRIAGE_STARTED' &&
+                          !row?.priorityLevel
+                        )
+                      }
+                      onClick={() => {
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        void handleGoToTriage(
+                          row,
+                          patient
+                        );
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={
+                          status === 'TRIAGE_STARTED'
+                            ? faPause
+                            : faCirclePlay
+                        }
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyViewTriage && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>View Triage</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      disabled={isReceptionist}
+                      onClick={() => {
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        void handleGoToViewTriage(
+                          row,
+                          patient
+                        );
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faCommentMedical}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyWristband && (
+                <div>
+                  <PatientWritBandPrintLabelButton
+                    patientId={row?.patientId}
+                    disabled={
+                      isPendingPayment ||
+                      isReceptionist
                     }
-                  >
-                    <div>
-                      {item.renderCustom ?? (
-                        <MyButton
-                          size="small"
-                          backgroundColor={
-                            item.bg ?? '#1f2937'
-                          }
-                          loading={item.loading}
-                          onClick={item.onClick}
-                        >
-                          <FontAwesomeIcon
-                            icon={item.icon}
-                          />
-                        </MyButton>
-                      )}
-                    </div>
-                  </Whisper>
-                ))}
+                  />
+                </div>
+              )}
+
+              {showEmergencyAssignBed && (
+                <AssignBedAction
+                  rowData={row}
+                  isPendingPayment={
+                    isPendingPayment
+                  }
+                  isReceptionist={isReceptionist}
+                  setLocalEncounter={
+                    setLocalEncounter
+                  }
+                  setOpenBedAssignmentModal={
+                    setOpenBedAssignmentModal
+                  }
+                />
+              )}
+
+              {showEmergencyTriageCancel && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Cancel Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#dc3545"
+                      disabled={isReceptionist}
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        setOpenCancel(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faRectangleXmark}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListViewTriage && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>View Triage</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      disabled={isReceptionist}
+                      onClick={() => {
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        void handleGoToViewTriage(
+                          row,
+                          patient
+                        );
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faCommentMedical}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListViewVisit && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>View Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="gray"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleViewVisit(row);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListGoToVisit && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Go to Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleGoToVisit(row);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faUserDoctor}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListNurseStation && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Nurse Station</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="black"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleNurseStation(row);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faUserNurse}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListEMR && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Go to EMR</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#6f42c1"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        setEmrEncounter(row);
+                        setEmrPatient(patient);
+
+                        dispatch(setEncounter(row));
+
+                        if (patient) {
+                          dispatch(setPatient(patient));
+                        }
+
+                        setOpenEMRModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faFileWaveform}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListReopen && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      loading={reopening}
+                      onClick={() => {
+                        void handleReopen(row.id);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faRotateLeft}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showEmergencyListCancel && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Cancel Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#dc3545"
+                      disabled={isReceptionist}
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        setOpenCancel(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faRectangleXmark}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicNurseStation && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Nurse Station</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="black"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleNurseStation(row);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faUserNurse}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicViewVisit && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>View Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="gray"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleViewVisit(row);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicDoctorVisit && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Go to Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        void handleGoToVisit(row);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faUserDoctor}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicEMR && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Go to EMR</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#6f42c1"
+                      onClick={() => {
+                        setSelectedEncounter(row);
+
+                        const patient =
+                          row?.patientObject ??
+                          row?.patient ??
+                          null;
+
+                        setEmrEncounter(row);
+                        setEmrPatient(patient);
+
+                        dispatch(setEncounter(row));
+
+                        if (patient) {
+                          dispatch(setPatient(patient));
+                        }
+
+                        setOpenEMRModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faFileWaveform}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicCancel && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Cancel Visit</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#dc3545"
+                      disabled={isReceptionist}
+                      onClick={() => {
+                        setSelectedEncounter(row);
+                        setOpenCancel(true);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faRectangleXmark}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicReopen && (
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="#0d6efd"
+                      loading={reopening}
+                      onClick={() => {
+                        void handleReopen(row.id);
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faRotateLeft}
+                      />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+              {showClinicPrint && (
+                <div>
+                  <VisitReportPrintButton row={row} />
+                </div>
+              )}
+
             </Form>
           );
-        }
+        },
+
+        expandable: false
       }
     ],
     [
@@ -1256,7 +2274,11 @@ const PatientsLists = () => {
       canSeeEMR,
       canSeeNurseStation,
       canSeePrint,
-      reopening
+      reopening,
+      EncounterPriorityEnum,
+      priorityDotColor,
+      handleUpdateEncounterPriority,
+      isReceptionist
     ]
   );
 
@@ -1284,7 +2306,7 @@ const PatientsLists = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        onRowClick={(row) => setSelectedEncounter(row)}
+        onRowClick={row => setSelectedEncounter(row)}
       />
 
       <DeletionConfirmationModal
@@ -1295,6 +2317,28 @@ const PatientsLists = () => {
         confirmationQuestion={'Do you want to cancel this Encounter?'}
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
+      />
+
+      <AddPaymentModal
+        open={paymentModalOpen}
+        setOpen={handleSetPaymentModalOpen}
+        paymentRow={paymentRow}
+        payment={payment}
+        setPayment={setPayment}
+        patientInsurance={patientInsurance}
+        setPatientInsurance={setPatientInsurance}
+        onSave={async () => {
+          await refetch();
+          handleSetPaymentModalOpen(false);
+        }}
+      />
+
+      <BedAssignmentModal
+        refetchEncounter={refetch}
+        open={openBedAssignmentModal}
+        setOpen={setOpenBedAssignmentModal}
+        encounter={localEncounter}
+        departmentId={String(localEncounter?.departmentId ?? '')}
       />
 
       <MyModal
