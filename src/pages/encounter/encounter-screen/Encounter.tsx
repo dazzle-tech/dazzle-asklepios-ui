@@ -82,13 +82,15 @@ type EncounterModalProps = {
   encounter?: any;
   onSheetNavigate?: (relativePath: string) => void;
   outletContent?: React.ReactNode;
+  editableFromPatientsList?: boolean;
 };
 
 const Encounter = ({
   patient: modalPatient,
   encounter: modalEncounter,
   onSheetNavigate,
-  outletContent
+  outletContent,
+  editableFromPatientsList = false
 }: EncounterModalProps = {}) => {
   const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
@@ -951,6 +953,9 @@ const Encounter = ({
   }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
+  const allowCrossDepartmentFromPatientsLists =
+    location.state?.fromPage === 'PatientsLists';
+
 
   useEffect(() => {
     if (inModal) return;
@@ -958,10 +963,23 @@ const Encounter = ({
 
     const encounterDeptId = propsData?.encounter?.departmentId;
 
-    if (!propsData?.encounter || !encounterDeptId || encounterDeptId !== selectedDeptId) {
+    if (
+      !allowCrossDepartmentFromPatientsLists &&
+      (
+        !propsData?.encounter ||
+        !encounterDeptId ||
+        encounterDeptId !== selectedDeptId
+      )
+    ) {
       navigate('/encounter-list', { replace: true });
     }
-  }, [selectedDeptId, propsData?.encounter, location.pathname, navigate]);
+  }, [
+    allowCrossDepartmentFromPatientsLists,
+    selectedDeptId,
+    propsData?.encounter,
+    location.pathname,
+    navigate
+  ]);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>

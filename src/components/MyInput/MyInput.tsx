@@ -134,6 +134,8 @@ type MyInputProps = {
   allowEnterNewLine?: boolean;
   showZero?: boolean;
   disablePastDates?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
   disableFutureDates?: boolean;
   showWarningIfBeforeYear1900?: boolean;
   showWarningIfInPast?: boolean;
@@ -2213,6 +2215,8 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   ? dayjs(record[fieldName]).toDate()
                   : null
               }
+              minDate={props.minDate}
+              maxDate={props.maxDate}
               onChange={(value: Date | null) => {
                 if (!value) {
                   setDateText('');
@@ -2254,20 +2258,43 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               preventOverflow={false}
               container={() => document.body}
               shouldDisableDate={(date: Date) => {
-                const today = new Date(
-                  new Date().setHours(0, 0, 0, 0)
-                );
+                const currentDate = new Date(date);
+                currentDate.setHours(0, 0, 0, 0);
 
-                const minDate = new Date(1900, 0, 1);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-                if (date < minDate) return true;
+                const minYearDate = new Date(1900, 0, 1);
+                minYearDate.setHours(0, 0, 0, 0);
 
-                if (props.disablePastDates) {
-                  return date < today;
+                if (currentDate < minYearDate) {
+                  return true;
                 }
 
-                if (props.disableFutureDates) {
-                  return date > today;
+                if (props.minDate) {
+                  const minDate = new Date(props.minDate);
+                  minDate.setHours(0, 0, 0, 0);
+
+                  if (currentDate < minDate) {
+                    return true;
+                  }
+                }
+
+                if (props.maxDate) {
+                  const maxDate = new Date(props.maxDate);
+                  maxDate.setHours(0, 0, 0, 0);
+
+                  if (currentDate > maxDate) {
+                    return true;
+                  }
+                }
+
+                if (props.disablePastDates && currentDate < today) {
+                  return true;
+                }
+
+                if (props.disableFutureDates && currentDate > today) {
+                  return true;
                 }
 
                 return false;
@@ -2309,58 +2336,92 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                 onClick={() => {
                   openCalendar('date');
                 }}
-                onBlur={() => {
-                  const value = dateTextRef.current?.value || '';
+onBlur={() => {
+  const value = dateTextRef.current?.value || '';
+  const parsed = getDateFromText(value);
 
-                  const parsed = getDateFromText(value);
+  if (parsed) {
+    const recordValue = parsed.toDate();
+    recordValue.setHours(0, 0, 0, 0);
 
-                  if (parsed) {
-                    setRecord?.({
-                      ...record,
-                      [fieldName]: parsed.format('YYYY-MM-DD')
-                    });
-                  }
+    if (props.minDate) {
+      const minDate = new Date(props.minDate);
+      minDate.setHours(0, 0, 0, 0);
 
-                  const recordValue = parsed
-                    ? parsed.toDate()
-                    : record?.[fieldName]
-                      ? new Date(record[fieldName])
-                      : null;
+      if (recordValue < minDate) {
+        dispatch(
+          notify({
+            msg: 'Date cannot be earlier than the allowed date',
+            sev: 'warning'
+          })
+        );
 
-                  if (!recordValue) return;
+        setDateText(formatDateText(record?.[fieldName]));
+        return;
+      }
+    }
 
-                  const minDate = new Date(1900, 0, 1);
+    if (props.maxDate) {
+      const maxDate = new Date(props.maxDate);
+      maxDate.setHours(0, 0, 0, 0);
 
-                  const today = new Date(
-                    new Date().setHours(0, 0, 0, 0)
-                  );
+      if (recordValue > maxDate) {
+        dispatch(
+          notify({
+            msg: 'Date cannot be later than the allowed date',
+            sev: 'warning'
+          })
+        );
 
-                  if (
-                    props.showWarningIfBeforeYear1900 &&
-                    recordValue < minDate
-                  ) {
-                    dispatch(
-                      notify({
-                        msg: 'Date cannot be before 01-01-1900',
-                        sev: 'warning'
-                      })
-                    );
+        setDateText(formatDateText(record?.[fieldName]));
+        return;
+      }
+    }
 
-                    return;
-                  }
+    setRecord?.({
+      ...record,
+      [fieldName]: parsed.format('YYYY-MM-DD')
+    });
+  }
 
-                  if (
-                    props.showWarningIfInPast &&
-                    recordValue < today
-                  ) {
-                    dispatch(
-                      notify({
-                        msg: 'Date cannot be in the past',
-                        sev: 'warning'
-                      })
-                    );
-                  }
-                }}
+  const recordValue = parsed
+    ? parsed.toDate()
+    : record?.[fieldName]
+      ? new Date(record[fieldName])
+      : null;
+
+  if (!recordValue) return;
+
+  const minDate = new Date(1900, 0, 1);
+  const today = new Date(
+    new Date().setHours(0, 0, 0, 0)
+  );
+
+  if (
+    props.showWarningIfBeforeYear1900 &&
+    recordValue < minDate
+  ) {
+    dispatch(
+      notify({
+        msg: 'Date cannot be earlier than 1900',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (
+    props.showWarningIfInPast &&
+    recordValue < today
+  ) {
+    dispatch(
+      notify({
+        msg: 'Date is in the past',
+        sev: 'warning'
+      })
+    );
+  }
+}}
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   const input = e.currentTarget;
 

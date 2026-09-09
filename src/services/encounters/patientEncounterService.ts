@@ -49,6 +49,37 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+export type EncounterListVM = {
+  id: number;
+  patientId: number | null;
+  patientFullName: string;
+  mrn: string | null;
+  age: number | null;
+  gender: string | null;
+  documentType: string | null;
+  documentNumber: string | null;
+  primaryMobileNumber: string | null;
+  encounterNumber: string | null;
+  encounterDate: string | null;
+  encounterTime: string | null;
+  encounterType: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  practitionerId: number | null;
+  practitionerName: string | null;
+  defaultServiceName: string | null;
+  amount: number | null;
+  paymentStatus: string | null;
+  coverageType: string | null;
+  paymentType: string | null;
+  insuranceName: string | null;
+  triageStarted: boolean;
+  doctorStartDateTime: string | null;
+  encounterStatus: string | null;
+  treatmentStatus: string | null;
+  isObserved: boolean;
+};
+
 const mapPaged = (response: any[], meta: any): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -273,6 +304,129 @@ export const patientEncounterService = createApi({
             })),
             'PatientEncounter',
           ]
+          : ['PatientEncounter'],
+    }),
+
+    getEncounterList: builder.query<
+      PagedResult<EncounterListVM>,
+      {
+        facilityId?: Id;
+        fromDate?: string;
+        toDate?: string;
+        patientName?: string;
+        mrn?: string;
+        ageFrom?: number;
+        ageTo?: number;
+        gender?: string;
+        documentType?: string;
+        documentNumber?: string;
+        primaryMobileNumber?: string;
+        encounterType?: string;
+        encounterNumber?: string;
+        departmentId?: Id;
+        practitionerId?: Id;
+        defaultServiceName?: string;
+        amountFrom?: number;
+        amountTo?: number;
+        paymentStatus?: string;
+        coverageType?: string;
+        paymentType?: string;
+        insuranceName?: string;
+        triageStarted?: boolean;
+        doctorStartedFrom?: string;
+        doctorStartedTo?: string;
+        encounterStatusIn?: string[];
+        treatmentStatusIn?: string[];
+        encounterReasons?: string[];
+      } & PagedParams
+    >({
+      query: ({
+        facilityId,
+        fromDate,
+        toDate,
+        patientName,
+        mrn,
+        ageFrom,
+        ageTo,
+        gender,
+        documentType,
+        documentNumber,
+        primaryMobileNumber,
+        encounterType,
+        encounterNumber,
+        departmentId,
+        practitionerId,
+        defaultServiceName,
+        amountFrom,
+        amountTo,
+        paymentStatus,
+        coverageType,
+        paymentType,
+        insuranceName,
+        triageStarted,
+        doctorStartedFrom,
+        doctorStartedTo,
+        encounterStatusIn,
+        treatmentStatusIn,
+        encounterReasons,
+        page,
+        size,
+        sort = 'id,desc',
+      }) => ({
+        url: `/api/patient/encounter/list`,
+        method: 'GET',
+        params: {
+          facilityId,
+          fromDate,
+          toDate,
+          patientName,
+          mrn,
+          ageFrom,
+          ageTo,
+          gender,
+          documentType,
+          documentNumber,
+          primaryMobileNumber,
+          encounterType,
+          encounterNumber,
+          departmentId,
+          practitionerId,
+          defaultServiceName,
+          amountFrom,
+          amountTo,
+          paymentStatus,
+          coverageType,
+          paymentType,
+          insuranceName,
+          triageStarted,
+          doctorStartedFrom,
+          doctorStartedTo,
+          encounterStatusIn,
+          treatmentStatusIn,
+          encounterReasons,
+          page,
+          size,
+          sort,
+        },
+      }),
+
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : response?.content ?? [];
+
+        return mapPaged(rows, meta);
+      },
+
+      providesTags: res =>
+        res
+          ? [
+              ...res.data.map(e => ({
+                type: 'PatientEncounter' as const,
+                id: e.id,
+              })),
+              'PatientEncounter',
+            ]
           : ['PatientEncounter'],
     }),
 
@@ -703,6 +857,8 @@ export const {
   useStartTriageEncounterMutation,
   useSearchBillingPendingQueueQuery,
   useLazySearchBillingPendingQueueQuery,
+  useGetEncounterListQuery,
+  useLazyGetEncounterListQuery,
   useReopenEncounterMutation,
   useGetEncounterAuditQuery,
   useLazyGetEncounterAuditQuery
