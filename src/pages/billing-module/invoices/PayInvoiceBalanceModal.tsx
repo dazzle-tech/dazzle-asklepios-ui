@@ -23,7 +23,7 @@ import {
   mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
-import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
+import { useCreditCardMachinePayment } from '@/utils/cardMachinePayment';
 
 export type InvoicePaymentCompletedContext = {
   paymentMethodLabel: string;
@@ -34,6 +34,8 @@ type PayInvoiceBalanceModalProps = {
   open: boolean;
   onClose: () => void;
   invoiceId: number;
+  patientId?: number | null;
+  encounterId?: number | null;
   documentNumber?: string | null;
   summary?: InvoiceAdjustmentSummary | null;
   lineItems?: InvoiceLineItem[];
@@ -90,7 +92,10 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   });
 
   const [collectInvoiceBalance, { isLoading }] = useCollectInvoiceBalanceMutation();
-
+  const {
+    collectCreditCardAmountOrSkip,
+    isProcessingCard
+  } = useCreditCardMachinePayment();
   const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
   const walletAvailable = Math.max(0, Number(walletBalance) + Number(walletReserved));
   const walletCollectPreview = computeWalletCollectAmounts(
@@ -208,24 +213,48 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
       );
       return;
     }
+    // const chargeCreditCardIfNeeded =
+    //   async () => {
+    //     const creditCardCollect =
+    //       await collectCreditCardAmountOrSkip(
+    //         selectedMethod?.value ??
+    //         form.paymentMethodCode,
+    //         paymentAmount,
+    //         {
+    //           patientId,
 
-    const creditCardCollect = await collectCreditCardAmountOrSkip(
-      form.paymentMethodCode,
-      paymentAmount,
-      { currency }
-    );
+    //           sourceType: 'ENCOUNTER',
 
-    if (!creditCardCollect.proceed) {
-      dispatch(
-        notify({
-          msg:
-            creditCardCollect.result?.message ??
-            'Credit card payment was not completed.',
-          sev: 'warning'
-        })
-      );
-      return;
-    }
+    //           sourceReferenceId: encounterId,
+
+    //           facilityId
+    //         }
+    //       );
+
+    //     if (!creditCardCollect.proceed) {
+
+    //       dispatch(
+    //         notify({
+    //           msg:
+    //             creditCardCollect.result
+    //               ?.message ??
+    //             'Credit card payment was not completed.',
+    //           sev: 'warning'
+    //         })
+    //       );
+
+    //       return false;
+    //     }
+
+    //     return true;
+    //   };
+
+    // const creditCardCharged =
+    //   await chargeCreditCardIfNeeded();
+
+    // if (!creditCardCharged) {
+    //   return;
+    // }
 
     try {
       const result = await collectInvoiceBalance({
@@ -427,7 +456,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
         <MyButton onClick={onClose} disabled={isLoading}>
           Cancel
         </MyButton>
-        <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
+        <MyButton appearance="primary" loading={isLoading || isProcessingCard} onClick={handleSubmit}>
           Collect payment
         </MyButton>
       </Modal.Footer>
