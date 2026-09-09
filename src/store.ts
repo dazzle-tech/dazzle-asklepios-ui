@@ -138,6 +138,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { stimulsoftReportService } from './services/reports/stimulsoftReportService';
 import { userStickyNotesService } from './services/userStickyNotes/userStickyNotes';
 import { BillingService } from './services/billing/BillingService';
 import { PriceListItemService } from './services/billing/PriceListItemService';
@@ -498,6 +499,7 @@ export const store = configureStore({
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+    [stimulsoftReportService.reducerPath]: stimulsoftReportService.reducer,
 
     // sticky notes
     [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
@@ -753,6 +755,7 @@ export const store = configureStore({
         appointmentWaitingListService.middleware,
         ReportTemplateService.middleware,
         DiagnosticTestTemplateService.middleware,
+        stimulsoftReportService.middleware,
         userStickyNotesService.middleware,
         referralRequestService.middleware,
         PayorService.middleware,

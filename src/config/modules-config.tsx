@@ -35,6 +35,32 @@ export interface Screen {
   navPath: string;
 }
 
+/** Stimulsoft `Modules` enum value → screen code used on the print-only reports page. */
+export const MODULE_REPORTS_SCREENS: Record<string, { screenCode: string }> = {
+  ENCOUNTER: { screenCode: "CLINICS_MODULE_REPORTS" },
+  URGENT_CARE: { screenCode: "URGENT_CARE_MODULE_REPORTS" },
+  EMERGENCY: { screenCode: "EMERGENCY_MODULE_REPORTS" },
+  INPATIENT: { screenCode: "INPATIENT_MODULE_REPORTS" },
+  DAY_CASE: { screenCode: "DAY_CASE_MODULE_REPORTS" },
+  PATIENT: { screenCode: "PATIENT_MODULE_REPORTS" },
+  PROCEDURE: { screenCode: "PROCEDURE_MODULE_REPORTS" },
+  OPERATION: { screenCode: "OPERATION_MODULE_REPORTS" },
+  LABORATORY: { screenCode: "LABORATORY_MODULE_REPORTS" },
+  RADIOLOGY: { screenCode: "RADIOLOGY_MODULE_REPORTS" },
+  PHARMACY: { screenCode: "PHARMACY_MODULE_REPORTS" },
+  BILLING: { screenCode: "BILLING_MODULE_REPORTS" },
+  APPOINTMENT: { screenCode: "APPOINTMENT_MODULE_REPORTS" },
+};
+
+export const moduleReportsScreen = (moduleCode: string, viewOrder = 20): Screen => ({
+  name: "Reports",
+  code: MODULE_REPORTS_SCREENS[moduleCode]?.screenCode || `${moduleCode}_MODULE_REPORTS`,
+  description: "Print reports declared for this module",
+  icon: "FaPrint",
+  viewOrder,
+  navPath: `module-reports/${moduleCode}`,
+});
+
 export interface Module {
   name: string;
   description?: string | null;
@@ -62,9 +88,9 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
   { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit', isDefaultMedicalSheet: true },
-  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
-  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true , isDefaultMedicalSheet: true },
-  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true  },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings', isDefaultNurseMedicalSheet: true, isDefaultMedicalSheet: true },
   { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result', isDefaultMedicalSheet: true },
   // { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
   { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
@@ -83,8 +109,8 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
   // { name: 'Care Plan & Goals', code: 'CARE_PLAN_AND_GOALS', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/care-plan-and-goals' },
   // { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
-  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record', isDefaultMedicalSheet: true  },
-  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record', isDefaultMedicalSheet: true  },
+  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record', isDefaultMedicalSheet: true },
+  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record', isDefaultMedicalSheet: true },
   // { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
   // { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
   { name: 'Dental Procedures', code: 'DENTAL_PROCEDURES', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-procedures', type: "Specialty" },
@@ -115,7 +141,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   // { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
-  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" , isDefaultMedicalSheet: true },
+  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements", isDefaultMedicalSheet: true },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
   // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   // { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
@@ -129,7 +155,7 @@ export const MedicalSheets: MedicalSheet[] = [
   // { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   // { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products', isDefaultNurseMedicalSheet: true },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use', isDefaultMedicalSheet: true  },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use', isDefaultMedicalSheet: true },
   {
     name: 'Nurse Assessment',
     code: 'NURSE_ASSESSMENT',
@@ -141,7 +167,7 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment'
-    , isDefaultMedicalSheet: true 
+    , isDefaultMedicalSheet: true
   },
 
   { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' },
@@ -167,7 +193,7 @@ export const MODULES: Module[] =
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
       ],
     },
-   
+
     {
       name: "System Setup",
       description: "",
@@ -370,11 +396,19 @@ export const MODULES: Module[] =
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
         { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
         { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
-
-
+        moduleReportsScreen("PATIENT"),
       ],
     },
-
+    {
+      name: "Reports ",
+      description: null,
+      icon: "FaChartColumn",
+      viewOrder: 2,
+      screens: [
+        { name: "Report Designer", code: "STIMULSOFT_REPORT_DESIGNER", description: "Design Stimulsoft report templates", icon: "FaFilePen", viewOrder: 5, navPath: "report-designer" }
+      ]
+    }
+    ,
     {
       name: "Scheduling",
       description: "",
@@ -404,7 +438,8 @@ export const MODULES: Module[] =
           icon: "FaCalendarCheck",
           viewOrder: 1,
           navPath: "apply-template",
-        }
+        },
+        moduleReportsScreen("APPOINTMENT"),
       ],
     },
     {
@@ -452,6 +487,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "encounter-list"
         },
         { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        moduleReportsScreen("ENCOUNTER"),
         { name: "Tests Results", code: "TESTS_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "tests-results" },
 
       ],
@@ -470,6 +506,7 @@ export const MODULES: Module[] =
           viewOrder: 1, navPath: "inpatient-encounters-list"
         },
         { name: "Waiting List", code: "WAITING_LIST", description: "", icon: "FaClock", viewOrder: 0, navPath: "waiting-encounters-list" },
+        moduleReportsScreen("INPATIENT"),
 
       ],
     },
@@ -483,7 +520,8 @@ export const MODULES: Module[] =
         code: "DAY_CASE_PATIENT_LIST",
         description: "",
         icon: "FaPersonWalkingArrowRight", viewOrder: 0, navPath: "day-case-list"
-      }
+      },
+        moduleReportsScreen("DAY_CASE"),
 
       ],
     },
@@ -502,6 +540,7 @@ export const MODULES: Module[] =
 
         { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
         { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
+        moduleReportsScreen("EMERGENCY"),
 
       ],
     },
@@ -514,6 +553,7 @@ export const MODULES: Module[] =
       screens: [
         { name: "Urgent Care Triage", code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage" },
         { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+        moduleReportsScreen("URGENT_CARE"),
       ],
     },
     {
@@ -526,7 +566,9 @@ export const MODULES: Module[] =
         code: "PROCEDURE_REQUESTS_LIST",
         description: "",
         icon: "FaClipboardUser", viewOrder: 0, navPath: "procedure-module"
-      }],
+      },
+        moduleReportsScreen("PROCEDURE"),
+      ],
     },
     {
       name: "Operation Theater",
@@ -542,6 +584,7 @@ export const MODULES: Module[] =
         },
         { name: "Recovery Room", code: "RECOVERY_ROOM", description: "", icon: "FaClover", viewOrder: 2, navPath: "recovery-module" },
         { name: "Operation Room Materials", code: "OPERATION_ROOM_MATERIALS", description: "", icon: "FaSyringe", viewOrder: 0, navPath: "operation-room-materials" },
+        moduleReportsScreen("OPERATION"),
 
       ],
     },
@@ -556,9 +599,9 @@ export const MODULES: Module[] =
         code: "CLINICAL_LABORATORY",
         description: "", icon: "FaFlaskVial",
         viewOrder: 0, navPath: "lab-module",
-
-
-      }],
+      },
+        moduleReportsScreen("LABORATORY"),
+      ],
     },
     {
       name: "Radiology",
@@ -570,8 +613,9 @@ export const MODULES: Module[] =
         code: "IMAGING_RADIOLOGY",
         description: "",
         icon: "FaSkull", viewOrder: 0, navPath: "rad-module",
-
-      }],
+      },
+        moduleReportsScreen("RADIOLOGY"),
+      ],
     },
     {
       name: "Pharmacy",
@@ -586,6 +630,7 @@ export const MODULES: Module[] =
         },
         { name: "ePrescriptions", code: "EPRESCRIPTIONS", description: "", icon: "FaPrescription", viewOrder: 1, navPath: "pharmacy-ePrescriptions" },
         { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
+        moduleReportsScreen("PHARMACY"),
       ],
     },
     {
@@ -767,6 +812,7 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+        moduleReportsScreen("BILLING"),
       ],
     },
     {
