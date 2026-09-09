@@ -134,8 +134,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             sort: 'id,asc'
           }).unwrap();
 
-          if (page === 0) setPatients(resp.data);
-          else setPatients(prev => [...prev, ...resp.data]);
+          const visiblePatients = (resp.data || []).filter(
+            (patient: Patient) => patient?.patientStatus !== 'MERGED'
+          );
+
+          if (page === 0) {
+            setPatients(visiblePatients);
+          } else {
+            setPatients(prev => [...prev, ...visiblePatients]);
+          }
 
           setLinks(resp.links || {});
         } catch (e) {
@@ -153,8 +160,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       try {
         const resp = await trigger(params).unwrap();
 
-        if (page === 0) setPatients(resp.data);
-        else setPatients(prev => [...prev, ...resp.data]);
+        const visiblePatients = (resp.data || []).filter(
+          (patient: Patient) => patient?.patientStatus !== 'MERGED'
+        );
+
+        if (page === 0) {
+          setPatients(visiblePatients);
+        } else {
+          setPatients(prev => [...prev, ...visiblePatients]);
+        }
 
         setLinks(resp.links || {});
       } catch (e) {
