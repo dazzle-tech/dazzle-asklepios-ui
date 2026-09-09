@@ -23,6 +23,7 @@ import {
   mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
+import { collectCreditCardAmountOrSkip } from '@/utils/cardMachinePayment';
 
 export type InvoicePaymentCompletedContext = {
   paymentMethodLabel: string;
@@ -202,6 +203,24 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
       dispatch(
         notify({
           msg: `Amount exceeds outstanding balance (${formatMoney(outstandingAmount, currency)}).`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    const creditCardCollect = await collectCreditCardAmountOrSkip(
+      form.paymentMethodCode,
+      paymentAmount,
+      { currency }
+    );
+
+    if (!creditCardCollect.proceed) {
+      dispatch(
+        notify({
+          msg:
+            creditCardCollect.result?.message ??
+            'Credit card payment was not completed.',
           sev: 'warning'
         })
       );

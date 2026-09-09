@@ -43,6 +43,11 @@ import {
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
+  getEnteredPaymentAmount,
+  useCreditCardMachinePayment
+} from '@/utils/cardMachinePayment';
+
+import {
   useGetFacilityByIdQuery
 } from '@/services/security/facilityService';
 
@@ -177,6 +182,8 @@ export type PatientPaymentInfoHandle = {
   clear: () => void;
   validate: () => boolean;
   wasPayZeroNowConfirmed: () => boolean;
+  getPaymentAmount: () => number;
+  getPaymentMethodCode: () => string;
 };
 
 type PatientPaymentInfoProps = {
@@ -214,6 +221,10 @@ type PatientPaymentInfoProps = {
   onConfirmingChange?: (
     confirming: boolean
   ) => void;
+
+  onCreditCardPaymentAmount?: (
+    amount: number
+  ) => void | Promise<void>;
 };
 
 const initialFormState:
@@ -576,7 +587,8 @@ const PatientPaymentInfo =
         onPaymentDeferred,
         onNothingToPay,
         onViewOnlyChange,
-        onConfirmingChange
+        onConfirmingChange,
+        onCreditCardPaymentAmount
       },
       ref
     ) => {
@@ -633,6 +645,9 @@ const PatientPaymentInfo =
               !practitionerId
           }
         );
+        const {
+  collectCreditCardAmountOrSkip,
+} = useCreditCardMachinePayment();
 
       const encounterSpecialty =
         useMemo(() => {
@@ -3409,6 +3424,47 @@ const PatientPaymentInfo =
           return result;
         };
 
+      const chargeCreditCardIfNeeded =
+        async () => {
+          const creditCardCollect =
+            await collectCreditCardAmountOrSkip(
+              formState.paymentMethodCode,
+              formState.paymentAmount,
+              {
+                 patientId,
+
+               sourceType: 'ENCOUNTER',
+
+               sourceReferenceId: encounterId,
+
+               facilityId,
+                currency:
+                  'SAR',
+              
+                onAmount:
+                  onCreditCardPaymentAmount
+              }
+            );
+
+          if (
+            !creditCardCollect.proceed
+          ) {
+            dispatch(
+              notify({
+                msg:
+                  creditCardCollect.result
+                    ?.message ??
+                  'Credit card payment was not completed.',
+                sev: 'warning'
+              })
+            );
+
+            return false;
+          }
+
+          return true;
+        };
+
       const handleConfirm =
         async () => {
           lastConfirmPayZeroNowRef.current =
@@ -3649,6 +3705,15 @@ const PatientPaymentInfo =
               return true;
             }
 
+            const creditCardCharged =
+              await chargeCreditCardIfNeeded();
+
+            if (
+              !creditCardCharged
+            ) {
+              return false;
+            }
+
             const paymentResult =
               await receivePayment(
                 paymentTargetIds,
@@ -3820,7 +3885,15 @@ const PatientPaymentInfo =
 
           validate,
 
-          wasPayZeroNowConfirmed: () => lastConfirmPayZeroNowRef.current
+          wasPayZeroNowConfirmed: () => lastConfirmPayZeroNowRef.current,
+
+          getPaymentAmount: () =>
+            getEnteredPaymentAmount(
+              formState.paymentAmount
+            ),
+
+          getPaymentMethodCode: () =>
+            formState.paymentMethodCode
         })
       );
 
@@ -4965,6 +5038,15 @@ const PatientPaymentInfo =
                             'Default services already prepared.'
                         }
                       : await prepareServices();
+
+                  const creditCardCharged =
+                    await chargeCreditCardIfNeeded();
+
+                  if (
+                    !creditCardCharged
+                  ) {
+                    return;
+                  }
 
                   const result =
                     await receivePayment(
