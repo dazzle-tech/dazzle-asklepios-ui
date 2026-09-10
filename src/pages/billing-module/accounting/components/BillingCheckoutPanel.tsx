@@ -681,6 +681,8 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
           open={payModalOpen}
           onClose={() => setPayModalOpen(false)}
           invoiceId={invoiceId}
+          patientId={summary.patientId ?? null}
+          encounterId={summary.encounterId ?? null}
           documentNumber={invoiceAdjustments?.documentNumber ?? summary.invoiceNumber}
           summary={invoiceAdjustments}
           outstandingAmount={invoiceOutstanding}

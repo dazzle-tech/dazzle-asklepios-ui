@@ -871,7 +871,8 @@ export const store = configureStore({
         PointOfSaleCheckInService.middleware,
         PointOfSaleConfigurationService.middleware,
         PointOfSaleTransactionService.middleware,
-        pointOfSaleWebhookLogService.middleware
+        pointOfSaleWebhookLogService.middleware,
+        financialDocumentAdjustmentService.middleware
       ) as any
 });
 

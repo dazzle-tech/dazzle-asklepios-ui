@@ -11,6 +11,7 @@ import type {
   InvoicePricingSummary
 } from '@/services/billing/financialDocumentAdjustmentService';
 import { useCollectInvoiceBalanceMutation } from '@/services/billing/financialDocumentAdjustmentService';
+import { useGetInvoiceByIdQuery } from '@/services/billing/BillingService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import PaymentMethodSelector from '@/pages/billing-module/accounting/components/PaymentMethodSelector';
@@ -54,6 +55,8 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   open,
   onClose,
   invoiceId,
+  patientId = null,
+  encounterId = null,
   documentNumber,
   summary,
   lineItems = [],
@@ -65,6 +68,27 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   onPaid
 }) => {
   const dispatch = useAppDispatch();
+   console.log("Summary:", summary);
+   
+  const resolvedPatientId =
+    patientId ??
+    (typeof (summary as any)?.patientId === 'number'
+      ? Number((summary as any).patientId)
+      : null) ??
+    (typeof (summary as any)?.patient?.id === 'number'
+      ? Number((summary as any).patient.id)
+      : null);
+
+  const resolvedEncounterId =
+    encounterId ??
+    (typeof (summary as any)?.encounterId === 'number'
+      ? Number((summary as any).encounterId)
+      : null) ??
+    (typeof (summary as any)?.encounter?.id === 'number'
+      ? Number((summary as any).encounter.id)
+      : null);
+console.log("Resolved Patient ID:", resolvedPatientId);
+   console.log("Resolved Encounter ID:", resolvedEncounterId);
   const enumPaymentMethods =
     useEnumOptions('PaymentMethods', {
       exclude: ['INSURANCE_COVERAGE'],
@@ -213,48 +237,40 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
       );
       return;
     }
-    // const chargeCreditCardIfNeeded =
-    //   async () => {
-    //     const creditCardCollect =
-    //       await collectCreditCardAmountOrSkip(
-    //         selectedMethod?.value ??
-    //         form.paymentMethodCode,
-    //         paymentAmount,
-    //         {
-    //           patientId,
+    const chargeCreditCardIfNeeded = async () => {
+      if (resolvedPatientId == null || resolvedEncounterId == null) {
+        return true;
+      }
 
-    //           sourceType: 'ENCOUNTER',
+      const creditCardCollect = await collectCreditCardAmountOrSkip(
+        selectedMethod?.value ?? form.paymentMethodCode,
+        paymentAmount,
+        {
+          patientId: resolvedPatientId,
+          sourceType: 'ENCOUNTER',
+          sourceReferenceId: resolvedEncounterId,
+          facilityId: null
+        }
+      );
 
-    //           sourceReferenceId: encounterId,
+      if (!creditCardCollect.proceed) {
+        dispatch(
+          notify({
+            msg: creditCardCollect.result?.message ?? 'Credit card payment was not completed.',
+            sev: 'warning'
+          })
+        );
+        return false;
+      }
 
-    //           facilityId
-    //         }
-    //       );
+      return true;
+    };
 
-    //     if (!creditCardCollect.proceed) {
+    const creditCardCharged = await chargeCreditCardIfNeeded();
 
-    //       dispatch(
-    //         notify({
-    //           msg:
-    //             creditCardCollect.result
-    //               ?.message ??
-    //             'Credit card payment was not completed.',
-    //           sev: 'warning'
-    //         })
-    //       );
-
-    //       return false;
-    //     }
-
-    //     return true;
-    //   };
-
-    // const creditCardCharged =
-    //   await chargeCreditCardIfNeeded();
-
-    // if (!creditCardCharged) {
-    //   return;
-    // }
+    if (!creditCardCharged) {
+      return;
+    }
 
     try {
       const result = await collectInvoiceBalance({
