@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
@@ -397,7 +398,17 @@ const ERList = () => {
       title: <Translate>ADMISSION DATE</Translate>,
       dataKey: 'plannedStartDate'
     },
-
+    {
+         key: 'createdBy',
+         title: 'CREATED BY',
+           expandable: true,
+         render: (row: any) => {
+          
+           const login = row?.createdBy ;
+   
+           return <UserDateCell login={login} date={row?.createdAt } />;
+         }
+       },
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
