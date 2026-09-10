@@ -7110,11 +7110,11 @@ export interface FLACCPainScale {
   patientId: number;
   encounterId: number;
 
-  faceLov: string;
-  legsLov: string;
-  activityLov: string;
-  cryLov: string;
-  consolabilityLov: string;
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
 
   totalScore: number;
   status: string;
@@ -7135,11 +7135,11 @@ export interface FLACCPainScaleCreateDTO {
   patientId: number;
   encounterId: number;
 
-  faceLov: string;
-  legsLov: string;
-  activityLov: string;
-  cryLov: string;
-  consolabilityLov: string;
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
 }
 
 export interface FLACCPainScaleUpdateDTO {
@@ -7148,9 +7148,9 @@ export interface FLACCPainScaleUpdateDTO {
   patientId: number;
   encounterId: number;
 
-  faceLov: string;
-  legsLov: string;
-  activityLov: string;
-  cryLov: string;
-  consolabilityLov: string;
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
 }

@@ -21,6 +21,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   conjureValueBasedOnKeyFromListOfValues,
   extractErrorMessage,
+  formatDateWithoutSeconds,
   formatEnumString
 } from '@/utils';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -196,52 +197,52 @@ const Flacc = ({ ...props }) => {
         formatEnumString(row?.painLevel ?? '') ?? '-'
     },
     {
-      key: 'faceLov',
+      key: 'face',
       title: 'Face',
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           faceFlaccLovQueryResponse?.object ?? [],
-          row?.faceLov ?? '',
+          row?.face ?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
     {
-      key: 'legsLov',
+      key: 'legs',
       title: 'Legs',
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           legsFlaccLovQueryResponse?.object ?? [],
-          row?.legsLov ?? '',
+          row?.legs ?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
     {
-      key: 'activityLov',
+      key: 'activity',
       title: 'Activity',
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           activityFlaccLovQueryResponse?.object ?? [],
-          row?.activityLov ?? '',
+          row?.activity ?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
     {
-      key: 'cryLov',
+      key: 'cry',
       title: 'Cry',
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           cryFlaccLovQueryResponse?.object ?? [],
-          row?.cryLov ?? '',
+          row?.cry?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
     {
-      key: 'consolabilityLov',
+      key: 'consolability',
       title: 'Consolability',
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           consolabilityFlaccLovQueryResponse?.object ?? [],
-          row?.consolabilityLov ?? '',
+          row?.consolability ?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
@@ -273,9 +274,7 @@ const Flacc = ({ ...props }) => {
         <>
           {row.createdBy}
           <br />
-          <span className="date-table-style">
-            {row.createdAt}
-          </span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
         </>
       )
     },
@@ -287,9 +286,7 @@ const Flacc = ({ ...props }) => {
         <>
           {row.cancelledBy}
           <br />
-          <span className="date-table-style">
-            {row.cancelledAt}
-          </span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
         </>
       )
     },

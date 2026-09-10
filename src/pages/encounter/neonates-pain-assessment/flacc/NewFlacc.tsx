@@ -78,11 +78,11 @@ const NewFlacc = ({
         id: recordToEdit.id,
         patientId: recordToEdit.patientId,
         encounterId: recordToEdit.encounterId,
-        faceLov: recordToEdit.faceLov,
-        legsLov: recordToEdit.legsLov,
-        activityLov: recordToEdit.activityLov,
-        cryLov: recordToEdit.cryLov,
-        consolabilityLov: recordToEdit.consolabilityLov,
+        face: recordToEdit.face,
+        legs: recordToEdit.legs,
+        activity: recordToEdit.activity,
+        cry: recordToEdit.cry,
+        consolability: recordToEdit.consolability,
         totalScore: recordToEdit.totalScore
       });
     } else {
@@ -96,23 +96,23 @@ const NewFlacc = ({
   useEffect(() => {
     const selectedValues = [
       {
-        key: record.faceLov,
+        key: record.face,
         values: faceFlaccLovQueryResponse?.object ?? []
       },
       {
-        key: record.legsLov,
+        key: record.legs,
         values: legsFlaccLovQueryResponse?.object ?? []
       },
       {
-        key: record.activityLov,
+        key: record.activity,
         values: activityFlaccLovQueryResponse?.object ?? []
       },
       {
-        key: record.cryLov,
+        key: record.cry,
         values: cryFlaccLovQueryResponse?.object ?? []
       },
       {
-        key: record.consolabilityLov,
+        key: record.consolability,
         values: consolabilityFlaccLovQueryResponse?.object ?? []
       }
     ];
@@ -158,11 +158,11 @@ const NewFlacc = ({
       painLevel
     }));
   }, [
-    record.faceLov,
-    record.legsLov,
-    record.activityLov,
-    record.cryLov,
-    record.consolabilityLov,
+    record.face,
+    record.legs,
+    record.activity,
+    record.cry,
+    record.consolability,
     faceFlaccLovQueryResponse,
     legsFlaccLovQueryResponse,
     activityFlaccLovQueryResponse,
@@ -173,23 +173,23 @@ const NewFlacc = ({
   const handleSave = async () => {
     const validationErrors: string[] = [];
 
-    if (!record.faceLov) {
+    if (!record.face) {
       validationErrors.push('Face is required.');
     }
 
-    if (!record.legsLov) {
+    if (!record.legs) {
       validationErrors.push('Legs is required.');
     }
 
-    if (!record.activityLov) {
+    if (!record.activity) {
       validationErrors.push('Activity is required.');
     }
 
-    if (!record.cryLov) {
+    if (!record.cry) {
       validationErrors.push('Cry is required.');
     }
 
-    if (!record.consolabilityLov) {
+    if (!record.consolability) {
       validationErrors.push('Consolability is required.');
     }
 
@@ -209,11 +209,11 @@ const NewFlacc = ({
           id: record.id,
           patientId: record.patientId,
           encounterId: record.encounterId,
-          faceLov: record.faceLov,
-          legsLov: record.legsLov,
-          activityLov: record.activityLov,
-          cryLov: record.cryLov,
-          consolabilityLov: record.consolabilityLov
+          face: record.face,
+          legs: record.legs,
+          activity: record.activity,
+          cry: record.cry,
+          consolability: record.consolability
         };
 
         await updateFLACC(payload).unwrap();
@@ -221,11 +221,11 @@ const NewFlacc = ({
         const payload: FLACCPainScaleCreateDTO = {
           patientId: record.patientId,
           encounterId: record.encounterId,
-          faceLov: record.faceLov,
-          legsLov: record.legsLov,
-          activityLov: record.activityLov,
-          cryLov: record.cryLov,
-          consolabilityLov: record.consolabilityLov
+          face: record.face,
+          legs: record.legs,
+          activity: record.activity,
+          cry: record.cry,
+          consolability: record.consolability
         };
 
         await createFLACC(payload).unwrap();
@@ -249,7 +249,7 @@ const NewFlacc = ({
       <div className="flex-row-5-1">
         <MyInput
           width={120}
-          fieldName="faceLov"
+          fieldName="face"
           fieldLabel="Face"
           fieldType="select"
           record={record}
@@ -262,7 +262,7 @@ const NewFlacc = ({
 
         <MyInput
           width={120}
-          fieldName="legsLov"
+          fieldName="legs"
           fieldLabel="Legs"
           fieldType="select"
           record={record}
@@ -275,7 +275,7 @@ const NewFlacc = ({
 
         <MyInput
           width={120}
-          fieldName="activityLov"
+          fieldName="activity"
           fieldLabel="Activity"
           fieldType="select"
           record={record}
@@ -290,7 +290,7 @@ const NewFlacc = ({
       <div className="flex-row-5-1">
         <MyInput
           width={120}
-          fieldName="cryLov"
+          fieldName="cry"
           fieldLabel="Cry"
           fieldType="select"
           record={record}
@@ -303,7 +303,7 @@ const NewFlacc = ({
 
         <MyInput
           width={120}
-          fieldName="consolabilityLov"
+          fieldName="consolability"
           fieldLabel="Consolability"
           fieldType="select"
           record={record}
