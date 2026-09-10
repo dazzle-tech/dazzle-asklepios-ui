@@ -174,6 +174,21 @@ export const templateJsonToString = (templateJson?: string | object | null): str
   }
 };
 
+export const normalizeStimulsoftTemplateJson = (source: unknown): string => {
+  if (source == null) return '';
+  if (typeof source === 'string') return source;
+  const picked = pickTemplateJson(source);
+  if (picked != null) return templateJsonToString(picked);
+  const record = asRecord(source);
+  if (
+    record &&
+    (record.Pages || record.ReportName || record.Dictionary || record.ReportUnit)
+  ) {
+    return templateJsonToString(source);
+  }
+  return '';
+};
+
 export const pickTemplateJson = (body: unknown): unknown => {
   if (body == null) return null;
   if (typeof body === 'string') return body;
