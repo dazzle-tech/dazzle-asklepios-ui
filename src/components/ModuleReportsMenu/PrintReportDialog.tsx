@@ -67,7 +67,7 @@ const fetchTemplateById = async (
 
   for (const url of urls) {
     try {
-      const response = await fetch(url, { method: 'GET', headers });
+      const response = await fetch(url, { method: 'GET', headers, cache: 'no-store' });
       if (!response.ok) continue;
       const body = await response.json();
       const json = pickTemplateJson(body);

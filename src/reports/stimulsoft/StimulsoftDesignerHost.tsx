@@ -123,7 +123,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
 
       const designer = new Stimulsoft.Designer.StiDesigner(
         options,
-        'StiDesigner',
+        `StiDesigner_${Date.now()}`,
         false
       );
 
@@ -254,6 +254,12 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
         } catch {
           // designer may already be disposed
         }
+        try {
+          designer.destroy?.();
+        } catch {
+          // older Stimulsoft builds have no destroy
+        }
+        loadedJsonRef.current = null;
         setActiveStimulsoftReport(null);
         reportRef.current = null;
         designerRef.current = null;

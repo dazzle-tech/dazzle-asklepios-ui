@@ -53,7 +53,9 @@ const StimulsoftReportTemplateList = () => {
     useState<StimulsoftReportTemplate | null>(null);
 
   const { data, isLoading } =
-    useGetStimulsoftReportTemplatesQuery(paginationParams);
+    useGetStimulsoftReportTemplatesQuery(paginationParams, {
+      refetchOnMountOrArgChange: true,
+    });
   const [triggerFilter, { data: filterResponse, isFetching: fetchingFilter }] =
     useLazyGetStimulsoftReportTemplatesByNameQuery();
   const [toggleActive] = useToggleStimulsoftReportTemplateActiveMutation();

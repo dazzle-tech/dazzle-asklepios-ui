@@ -229,7 +229,7 @@ const StimulsoftReportTemplateModal = ({
     }
 
     setTemplateReady(false);
-    loadTemplate(initialData.id)
+    loadTemplate(initialData.id, false)
       .unwrap()
       .then(template => {
         setTemplateJson(normalizeStimulsoftTemplateJson(template) || null);

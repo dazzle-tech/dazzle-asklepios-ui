@@ -47,7 +47,7 @@ const ModuleReportsPage = () => {
       facilityId,
       departmentId,
     },
-    { skip: !module }
+    { skip: !module, refetchOnMountOrArgChange: true }
   );
 
   const visibleReports = useMemo(

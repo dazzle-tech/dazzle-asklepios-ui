@@ -89,10 +89,10 @@ const StimulsoftReportDesignerPage = () => {
 
         const designerLoad = loadStimulsoftDesigner();
         const templateLoad = templateId
-          ? loadTemplate(templateId).unwrap()
+          ? loadTemplate(templateId, false).unwrap()
           : Promise.resolve(null);
         const schemaLoad = templateId
-          ? loadSchema(templateId)
+          ? loadSchema(templateId, false)
               .unwrap()
               .catch(() => null)
           : Promise.resolve(null);

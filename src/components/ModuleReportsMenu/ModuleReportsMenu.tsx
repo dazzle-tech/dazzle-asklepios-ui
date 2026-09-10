@@ -27,7 +27,7 @@ const ModuleReportsMenu = ({ module, context, disabled }: Props) => {
       facilityId: context?.facilityId as number | undefined,
       departmentId: context?.departmentId as number | undefined,
     },
-    { skip: !module }
+    { skip: !module, refetchOnMountOrArgChange: true }
   );
 
   const [open, setOpen] = useState(false);

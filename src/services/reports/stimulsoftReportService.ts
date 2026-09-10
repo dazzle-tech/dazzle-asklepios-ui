@@ -161,6 +161,8 @@ export const stimulsoftReportService = createApi({
   reducerPath: 'stimulsoftReportApi',
   baseQuery: BaseQuery,
   tagTypes: ['StimulsoftReportTemplate'],
+  keepUnusedDataFor: 0,
+  refetchOnMountOrArgChange: true,
   endpoints: builder => ({
     getStimulsoftReportTemplates: builder.query<
       PagedResult<StimulsoftReportTemplate>,
@@ -169,6 +171,7 @@ export const stimulsoftReportService = createApi({
       query: ({ page, size, sort = 'id,desc', timestamp }) => ({
         url: '/api/analytics/reports/templates',
         method: 'GET',
+        cache: 'no-store' as RequestCache,
         params: { page, size, sort, timestamp },
       }),
       transformResponse: mapPagedTemplates,
@@ -182,6 +185,7 @@ export const stimulsoftReportService = createApi({
       query: ({ name, page, size, sort, timestamp }) => ({
         url: `/api/analytics/reports/templates/by-name/${encodeURIComponent(name)}`,
         method: 'GET',
+        cache: 'no-store' as RequestCache,
         params: { page, size, sort, timestamp },
       }),
       transformResponse: mapPagedTemplates,
@@ -192,6 +196,8 @@ export const stimulsoftReportService = createApi({
       query: id => ({
         url: `/api/analytics/reports/templates/${id}`,
         method: 'GET',
+        cache: 'no-store' as RequestCache,
+        params: { t: Date.now() },
       }),
       transformResponse: (response: unknown): StimulsoftReportTemplate => {
         const record = (
@@ -211,6 +217,8 @@ export const stimulsoftReportService = createApi({
       query: idOrCode => ({
         url: `/api/analytics/reports/templates/${idOrCode}/schema`,
         method: 'GET',
+        cache: 'no-store' as RequestCache,
+        params: { t: Date.now() },
       }),
     }),
 
@@ -286,6 +294,7 @@ export const stimulsoftReportService = createApi({
       query: ({ module, facilityId, departmentId }) => ({
         url: '/api/analytics/reports/templates',
         method: 'GET',
+        cache: 'no-store' as RequestCache,
         params: compactParams({
           module,
           facilityId,
@@ -294,6 +303,7 @@ export const stimulsoftReportService = createApi({
           page: 0,
           size: 200,
           sort: 'name,asc',
+          t: Date.now(),
         }),
       }),
       transformResponse: (response: unknown, meta: any, arg) => {
