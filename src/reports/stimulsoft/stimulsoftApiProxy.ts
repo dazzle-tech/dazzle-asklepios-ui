@@ -1,4 +1,5 @@
-﻿import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
+﻿import config from '../../../app-config';
+import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const PATH_FIELDS = ['pathData', 'path', 'url', 'connectionString'] as const;
 
@@ -280,6 +281,40 @@ const resolveHisApiRequestUrl = (url: string): string => {
   return applyLiveQueryParams(expanded, activeReport);
 };
 
+/** Fetch report JSON from backendBaseURL only. Does not change stored template URLs. */
+const resolveReportDataUrl = (url: string): string => {
+  const expanded = applyLiveQueryParams(
+    expandReportVariables(activeReport, url),
+    activeReport
+  );
+  const designerUrl = toDesignerApiUrl(expanded);
+  const parsed = tryUrl(designerUrl);
+  if (!parsed) return designerUrl;
+  let pathname = parsed.pathname;
+  const localePrefixed = pathname.match(/^\/[a-z]{2}(\/api\/.*)/i);
+  if (localePrefixed) pathname = localePrefixed[1];
+  if (!pathname.startsWith('/api/')) {
+    pathname = hisPathname(expanded) || pathname;
+  }
+  const backend = String(config.backendBaseURL || '').replace(/\/$/, '');
+  if (!backend) {
+    return `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`;
+  }
+  try {
+    const backendUrl = new URL(backend, window.location.origin);
+    if (
+      backendUrl.host === window.location.host ||
+      backendUrl.hostname === 'localhost' ||
+      backendUrl.hostname === '127.0.0.1'
+    ) {
+      return `${window.location.origin}${pathname}${parsed.search}${parsed.hash}`;
+    }
+    return `${backend}${pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`;
+  }
+};
+
 type OriginalXhr = {
   open: typeof XMLHttpRequest.prototype.open;
   send: typeof XMLHttpRequest.prototype.send;
@@ -298,24 +333,28 @@ const originalHttp = (): OriginalXhr => {
   return w.__stiXhrOriginal;
 };
 
-const fetchHisApiSync = (
+const isHtmlBody = (text: string) => text.trim().startsWith('<');
+
+const fetchHisApi = async (
   url: string
-): { ok: boolean; status: number; text: string } => {
-  const resolved = resolveHisApiRequestUrl(url);
-  const { open, send } = originalHttp();
-  const xhr = new XMLHttpRequest();
-  open.call(xhr, 'GET', resolved, false);
-  applyAuthHeadersToXhr(xhr);
-  send.call(xhr);
-  const text = xhr.responseText || '';
-  const ok = xhr.status >= 200 && xhr.status < 300 && !text.trim().startsWith('<');
+): Promise<{ ok: boolean; status: number; text: string }> => {
+  const resolved = resolveReportDataUrl(url);
+  const { fetch } = originalHttp();
+  const headers = new Headers();
+  headers.set('Accept', 'application/json');
+  getStimulsoftAuthHeaders().forEach(header => {
+    headers.set(header.key, header.value);
+  });
+  const response = await fetch(resolved, { method: 'GET', headers });
+  const text = (await response.text()) || '';
+  const ok = response.ok && !isHtmlBody(text);
   if (!ok) {
     console.error(
-      `[Stimulsoft] HIS API ${xhr.status} ${resolved}`,
+      `[Stimulsoft] HIS API ${response.status} ${resolved}`,
       text.slice(0, 400)
     );
   }
-  return { ok, status: xhr.status, text };
+  return { ok, status: response.status, text };
 };
 
 const emptyJsonForCommand = (command: string) =>
@@ -347,15 +386,21 @@ export const tryFulfillStimulsoftApiRequest = (
     args?.pathData || args?.path || args?.url || args?.connectionString;
   if (!isHisApiPath(path)) return false;
 
-  const result = fetchHisApiSync(path);
   args.preventDefault = true;
   args.async = true;
-  if (result.ok) {
-    done(result.text);
-  } else {
-    // Never let Stimulsoft retry this URL without JWT (that 401 becomes the overlay).
-    done(emptyJsonForCommand(command));
-  }
+  fetchHisApi(path)
+    .then(result => {
+      if (result.ok) {
+        done(result.text);
+        return;
+      }
+      // Never let Stimulsoft retry this URL without JWT (that 401 becomes the overlay).
+      done(emptyJsonForCommand(command));
+    })
+    .catch(error => {
+      console.error('[Stimulsoft] HIS API request failed', path, error);
+      done(emptyJsonForCommand(command));
+    });
   return true;
 };
 
