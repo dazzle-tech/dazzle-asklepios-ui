@@ -422,7 +422,7 @@ export const MODULES: Module[] =
           description: "",
           icon: "FaCalendarDays",
           viewOrder: 0,
-          navPath: "schedual-screen",
+          navPath: "schedule-screen",
         },
         {
           name: "Availability Templates",
