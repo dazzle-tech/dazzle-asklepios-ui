@@ -671,6 +671,8 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
         open={payModalOpen}
         onClose={() => setPayModalOpen(false)}
         invoiceId={invoice.id}
+        patientId={invoice?.patientId ?? patient?.id ?? null}
+        encounterId={invoice?.encounterId ?? null}
         documentNumber={displayDocumentNumber}
         summary={summary}
         lineItems={lineItems}
