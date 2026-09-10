@@ -31,6 +31,7 @@ import {
 
 import {
   useGetLatestEmergencyTriageByEncounterQuery,
+  useUpdateCTASEmergencyTriageLevelMutation,
   useUpdateEmergencyTriageLevelAssessmentMutation,
 } from "@/services/encounters/er-triage/emergencyTriageService";
 
@@ -40,6 +41,7 @@ import { useEnumOptions } from "@/services/enumsApi";
 
 import type { PatientEncounter } from "@/types/model-types-new";
 import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
+import CTASEmergencyLevelAssessment from "./CTASEmergencyLevelAssessment";
 
 type StartTriageProps = {
   patient: any;
@@ -57,6 +59,7 @@ const StartTriage = ({
   const navigate = useNavigate();
   const [updateLevelAssessment] =
     useUpdateEmergencyTriageLevelAssessmentMutation();
+  const [updateCTASLevel] = useUpdateCTASEmergencyTriageLevelMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector((state) => state.auth);
@@ -294,6 +297,38 @@ const StartTriage = ({
     }
   };
 
+  const handleSaveCTASLevelNew = async () => {
+    const triageId =
+      triage?.id ??
+      latestTriageFromServer?.id ??
+      emergencyTriageNew?.id;
+
+    if (!triageId) {
+      dispatch(
+        notify({
+          msg: "Emergency triage record not found (missing id)",
+          sev: "error",
+        })
+      );
+      return;
+    }
+
+    try {
+      const updated = await updateCTASLevel({
+        id: Number(triageId),
+        emergencyLevel: triage.emergencyLevel
+      }).unwrap();
+
+      setTriage((prev: any) => ({ ...prev, ...updated }));
+      await refetchLatestTriage();
+
+      dispatch(notify({ msg: "Emergency assessment saved", sev: "success" }));
+    } catch (error) {
+      console.error("Error saving emergency assessment", error);
+      dispatch(notify({ msg: "Failed to save emergency assessment", sev: "error" }));
+    }
+  };
+
   const toNumberOrNaN = (v: any) => {
     const n = typeof v === "string" ? Number(v) : v;
     return typeof n === "number" && !Number.isNaN(n) ? n : Number.NaN;
@@ -304,10 +339,10 @@ const StartTriage = ({
 
   const encounterStatus = String(
     localEncounter?.status ??
-      encounterFromServer?.status ??
-      encounter?.status ??
-      encounter?.encounterStatus ??
-      ""
+    encounterFromServer?.status ??
+    encounter?.status ??
+    encounter?.encounterStatus ??
+    ""
   ).toUpperCase();
   const isTriageStarted = encounterStatus === "TRIAGE_STARTED";
   const filledEmergencyLevel = triage?.emergencyLevel ?? null;
@@ -350,6 +385,9 @@ const StartTriage = ({
     await refetchEncounter();
     dispatch(setRefetchEncounter(true));
   };
+  console.log("latestTriageFromServer:", latestTriageFromServer);
+  console.log("emergencyTriageNew:", emergencyTriageNew);
+  console.log("triage:", triage);
 
   return (
     <div>
@@ -398,11 +436,19 @@ const StartTriage = ({
       </Row>
 
       <Row gutter={30}>
-        <EmergencyLevelAssessment
-          triage={triage}
-          setTriage={setTriage}
-          onSave={handleSaveLevelAssessmentNew}
-        />
+        {/* Please don't remove this condition, as it will depend on the configuration later. */}
+        {true == true ? (
+          <CTASEmergencyLevelAssessment
+            triage={triage}
+            setTriage={setTriage}
+            onSave={handleSaveCTASLevelNew}
+          />
+        ) :
+          (<EmergencyLevelAssessment
+            triage={triage}
+            setTriage={setTriage}
+            onSave={handleSaveLevelAssessmentNew}
+          />)}
       </Row>
 
       <Row gutter={30}>
