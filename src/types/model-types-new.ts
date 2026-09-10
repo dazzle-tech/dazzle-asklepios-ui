@@ -7147,3 +7147,54 @@ export interface EncounterPlanFieldAudit {
   logDate: string;
   logBy: string;
 }
+
+export interface FLACCPainScale {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
+
+  totalScore: number;
+  status: string;
+
+  cancellationReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+
+  createdBy: string;
+  createdDate: string;
+
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+  painLevel?: string;
+}
+
+export interface FLACCPainScaleCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
+}
+
+export interface FLACCPainScaleUpdateDTO {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  face: string;
+  legs: string;
+  activity: string;
+  cry: string;
+  consolability: string;
+}

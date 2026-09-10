@@ -251,6 +251,7 @@ import { billingConfigurationService } from './services/billing/billingConfigura
 import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
+import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
 import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
 import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
 import { billingTransactionService } from './services/billing/billingTransactionService';
@@ -598,6 +599,7 @@ export const store = configureStore({
     [patientAdministrativeWarningsService.reducerPath]:
       patientAdministrativeWarningsService.reducer,
     [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+    [flaccPainSacoreService.reducerPath]: flaccPainSacoreService.reducer,
 
     // setup - room and bed management
     [roomService.reducerPath]: roomService.reducer,
@@ -864,6 +866,8 @@ export const store = configureStore({
         discountService.middleware,
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
+        financialDocumentAdjustmentService.middleware,
+        flaccPainSacoreService.middleware,
         PointOfSaleCheckInService.middleware,
         PointOfSaleConfigurationService.middleware,
         PointOfSaleTransactionService.middleware,
