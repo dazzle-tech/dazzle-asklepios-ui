@@ -74,7 +74,27 @@ const PregnancyFollowup = lazy (() => import ( './pages/encounter/encounter-comp
 const PrescriptionNew = lazy (() => import ( './pages/encounter/encounter-component/prescription-new'));
 const PressureUlcerRiskAssessment = lazy (() => import ( './pages/encounter/encounter-component/pressure-ulce-risk-assessment'));
 const ProcedureNew = lazy (() => import ( './pages/encounter/encounter-component/procedure-new/Procedure'));
-
+const StimulsoftReportTemplateList = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-report-list" */
+      './pages/setup/stimulsoft-report-designer'
+    )
+);
+const StimulsoftReportDesignerPage = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-designer" */
+      './pages/setup/stimulsoft-report-designer/StimulsoftReportDesignerPage'
+    )
+);
+const ModuleReportsPage = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "module-reports" */
+      './pages/reports/ModuleReportsPage'
+    )
+);
 import { MODULES } from '@/config/modules-config';
 const ApplyTemplateList = lazy (() => import ( './pages/appointments-new/ApplyTemplate/ApplyTemplateList'));
 const ScheduleScreen = lazy (() => import ( './pages/appointments-new/scheduling-screen/ScheduleScreen'));
@@ -243,7 +263,8 @@ const SmsNotification = lazy (() => import ( './pages/notification-management/sm
 const InAppNotification = lazy (() => import ( './pages/notification-management/in-app-notification'));
 const WhatsAppNotification = lazy (() => import ( './pages/notification-management/whatsapp-notification'));
 const PushNotification = lazy (() => import ( './pages/notification-management/push-notification'));
-
+const PosCheckIn= lazy(()=>import ('./pages/point-of-sale/pos-checkIn/PointOfSaleCheckIn'));
+const PointOfSaleWebhookLogsPage = lazy(() => import('./pages/point-of-sale/pos-webhook/PointOfSaleWebhookLogsPage'));
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 const PatientMergeConfig = lazy (() => import ( './pages/setup/patient-merge-config/PatientMergeConfig'));
 import { setSelectedDepartment } from './reducers/authSlice';
@@ -258,6 +279,8 @@ import FinancialDocumentNumberingSetup from './pages/setup/financial-document-nu
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
+import PatientsLists from './pages/billing-module/patientList/PatientsLists';
+const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
 
@@ -642,6 +665,10 @@ const App = () => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
+              <Route path="report-designer" element={<StimulsoftReportTemplateList />} />
+              <Route path="report-designer/new" element={<StimulsoftReportDesignerPage />} />
+              <Route path="report-designer/:id" element={<StimulsoftReportDesignerPage />} />
+              <Route path="module-reports/:moduleCode" element={<ModuleReportsPage />} />
               <Route
                 path="patient-old/facility-patient-list"
                 element={<PatientOldFacilityPatientList />}
@@ -674,6 +701,9 @@ const App = () => {
               <Route path="in-app-notification" element={<InAppNotification />} />
               <Route path="whatsapp-notification" element={<WhatsAppNotification />} />
               <Route path="push-notification" element={<PushNotification />} />
+              <Route path='pos-check-in' element={<PosCheckIn/>}/>
+              <Route path='pos-configration' element={<PointOfSaleConfiguration/>}/>
+              <Route path='pos-webhook-logs' element={<PointOfSaleWebhookLogsPage/>}/>
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />
@@ -754,6 +784,7 @@ const App = () => {
               <Route path="facility-patients" element={<FacilityPatients />} />
               <Route path="patients-encounters-list" element={<PatientsEncounters />} />
               <Route path="price-list" element={<PriceLists />} />
+              <Route path="patients-list" element={<PatientsLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
@@ -910,7 +941,7 @@ const App = () => {
               <Route path="error-503" element={<Error503Page />} />
               <Route path="error-department-type" element={<ErrorDepartmentTypePage />} />
               <Route path="playground" element={<Playground />} />
-              <Route path="schedual-screen" element={<ScheduleScreen />} />
+              <Route path="schedule-screen" element={<ScheduleScreen />} />
               <Route path="apply-template" element={<ApplyTemplateList />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />

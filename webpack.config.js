@@ -1,11 +1,76 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+const fs = require('fs');
 const path = require('path');
  
+const express = require('express');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
  
 const isProduction = process.env.NODE_ENV === 'production';
- 
+
+/**
+ * Copy Stimulsoft designer/viewer scripts into public/ so they are served as
+ * static files and never enter the webpack application bundle.
+ * Missing files are skipped (e.g. if the npm package is not installed).
+ */
+function copyStimulsoftAssets() {
+  const srcRoot = path.resolve(__dirname, 'node_modules/stimulsoft-reports-js');
+  const dest = path.resolve(__dirname, 'public/stimulsoft');
+  if (!fs.existsSync(srcRoot)) {
+    return;
+  }
+  fs.mkdirSync(dest, { recursive: true });
+  const candidates = [
+    ['Scripts/stimulsoft.reports.pack.js', 'stimulsoft.reports.pack.js'],
+    ['Scripts/stimulsoft.viewer.pack.js', 'stimulsoft.viewer.pack.js'],
+    ['Scripts/stimulsoft.designer.pack.js', 'stimulsoft.designer.pack.js'],
+  ];
+  for (const [from, to] of candidates) {
+    const src = path.join(srcRoot, from);
+    const out = path.join(dest, to);
+    if (!fs.existsSync(src)) continue;
+    const srcMtime = fs.statSync(src).mtimeMs;
+    const shouldCopy = !fs.existsSync(out) || fs.statSync(out).mtimeMs < srcMtime;
+    if (shouldCopy) {
+      fs.copyFileSync(src, out);
+    }
+  }
+}
+copyStimulsoftAssets();
+
+/**
+ * Same-origin Stimulsoft / HIS API proxy for local `webpack serve`.
+ * Designer JSON sources call /api/... ; SQL adapter calls /proxy.
+ * Webpack forwards both to Spring Boot with the browser JWT.
+ *
+ * Spring Boot: STIMULSOFT_PROXY_TARGET=http://localhost:8080
+ * Node adapter: STIMULSOFT_PROXY_TARGET=http://localhost:9615
+ *               STIMULSOFT_PROXY_STRIP_PATH=true
+ */
+const stimulsoftProxyTarget =
+  process.env.STIMULSOFT_PROXY_TARGET || 'http://localhost:8080';
+const stimulsoftProxyStripPath =
+  process.env.STIMULSOFT_PROXY_STRIP_PATH === 'true';
+
+const forwardHisAuthHeaders = (proxyReq, req) => {
+  const authorization = req.headers.authorization;
+  if (authorization) {
+    proxyReq.setHeader('Authorization', authorization);
+  }
+  const idToken = req.headers.id_token;
+  if (idToken) {
+    proxyReq.setHeader('id_token', idToken);
+  }
+};
+
+const hisApiProxyOptions = {
+  target: stimulsoftProxyTarget,
+  changeOrigin: true,
+  secure: false,
+  logLevel: 'warn',
+  onProxyReq: forwardHisAuthHeaders,
+};
+
 // Check environment variable to determine if source maps should be generated
 // In Docker, we set this to 'false' to save memory.
 const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
@@ -23,7 +88,17 @@ module.exports = {
     hot: true,
     liveReload: false,
     allowedHosts: 'all',
-    historyApiFallback: { disableDotRule: true },
+    client: {
+      overlay: {
+        runtimeErrors: error => {
+          const message = String(error?.message || error || '');
+          return message !== 'Unauthorized' && !message.includes('Unauthorized');
+        },
+      },
+    },
+    // HashRouter does not need SPA fallback. The CLI --history-api-fallback flag
+    // was serving index.html for /api, which Stimulsoft then parsed as JSON.
+    historyApiFallback: false,
     static: {
       directory: path.resolve(__dirname, 'public'),
       publicPath: '/',
@@ -31,12 +106,40 @@ module.exports = {
     devMiddleware: {
       publicPath: '/',
     },
+    proxy: [
+      {
+        context: ['/api', '/proxy'],
+        ...hisApiProxyOptions,
+        ...(stimulsoftProxyStripPath
+          ? { pathRewrite: { '^/proxy': '/' } }
+          : {}),
+      },
+    ],
+    setupMiddlewares: middlewares => {
+      // Serve public/ (including Stimulsoft pack scripts) before
+      // webpack-dev-middleware. Otherwise /stimulsoft/*.pack.js waits for the
+      // ~100MB app bundle and the designer <script> tag times out.
+      middlewares.unshift({
+        name: 'public-static-first',
+        middleware: express.static(path.resolve(__dirname, 'public'), {
+          index: false,
+          fallthrough: true,
+        }),
+      });
+      return middlewares;
+    },
   },
   output: {
     path: path.resolve(__dirname, 'assets'),
     filename: 'bundle.js',
+    chunkFilename: '[name].chunk.js',
     publicPath: isProduction ? './' : '/',
     clean: true,
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'async',
+    },
   },
  
   module: {

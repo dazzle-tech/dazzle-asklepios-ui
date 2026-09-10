@@ -612,6 +612,44 @@ export interface BulkAppointmentRescheduleResponseVM {
   message?: string | null;
 }
 
+/** GET `/appointments/transfer/sources|targets` — AppointmentTransferVM */
+export interface AppointmentTransferVM {
+  id: number;
+  patientId: number;
+  patientName: string;
+  medicalRecordNumber: string;
+  departmentId: number;
+  departmentName: string;
+  practitionerId: number;
+  practitionerName: string;
+  resourceType: TemplateType;
+  resourceId: number;
+  startDatetime: string;
+  endDatetime: string;
+  status: AppointmentStatus;
+  bookingMode: BookingMode;
+}
+
+/** POST `/appointments/bulk-transfer` — AppointmentTransferMappingDTO */
+export interface AppointmentTransferMappingDTO {
+  oldAppointmentId: number;
+  newAppointmentId: number;
+}
+
+/** POST `/appointments/bulk-transfer` — BulkAppointmentTransferDTO */
+export interface BulkAppointmentTransferDTO {
+  transfers: AppointmentTransferMappingDTO[];
+}
+
+/** POST `/appointments/bulk-transfer` — BulkAppointmentTransferResponseVM */
+export interface BulkAppointmentTransferResponseVM {
+  success: boolean;
+  message: string;
+  transferredCount: number;
+  oldAppointmentIds: number[];
+  newAppointmentIds: number[];
+}
+
 export type AppointmentRequestStatus = string;
 
 export interface AppointmentRequestResponseVM {
@@ -4052,6 +4090,12 @@ export type EmergencyTriageLevelAssessmentUpdate = Pick<
   | 'medicationRequired'
   | 'ecgRequired'
   | 'consultationRequired'
+>;
+
+export type CTASEmergencyTriageLevelUpdate = Pick<
+  EmergencyTriage,
+  | 'id'
+  | 'emergencyLevel'
 >;
 
 // PUT /api/patient/emergency-triage/{id}/destination

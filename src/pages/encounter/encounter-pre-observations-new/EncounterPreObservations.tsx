@@ -44,11 +44,42 @@ const NurseStation = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const selectedDeptId = useSelector(
+    (state: any) => state.auth?.selectedDepartment?.departmentId
+  );
+  
   const propsData = inModal
     ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
     : location.state;
   const fromPage = propsData?.fromPage;
   const pageSource = fromPage || '';
+
+useEffect(() => {
+  if (inModal) return;
+  if (!location.pathname.includes('/nurse-station')) return;
+
+  const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+  const encounterDeptId = propsData?.encounter?.departmentId;
+
+  if (
+    !fromPatientsLists &&
+    (
+      !propsData?.encounter ||
+      !encounterDeptId ||
+      encounterDeptId !== selectedDeptId
+    )
+  ) {
+    navigate('/encounter-list', { replace: true });
+  }
+}, [
+  inModal,
+  location.pathname,
+  location.state?.fromPage,
+  propsData?.encounter,
+  selectedDeptId,
+  navigate
+]);
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
@@ -59,11 +90,14 @@ const NurseStation = ({
     location.state?.fromPage === 'PatientEMR' ||
     location.pathname.includes('emr');
 
-  const edit =
-    isFromEMR ||
-    viewMode === 'readOnly' ||
-    location.state?.edit ||
-    localEncounter?.status === 'COMPLETED';
+  const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+
+  const edit = fromPatientsLists
+    ? false
+    : isFromEMR ||
+      viewMode === 'readOnly' ||
+      location.state?.edit ||
+      localEncounter?.status === 'COMPLETED';
 
   const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 

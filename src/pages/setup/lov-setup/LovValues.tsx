@@ -359,8 +359,8 @@ const LovValues = ({ lov, goBack, width }) => {
           </MyButton>
           </div>
 
+        <div style={{ width: '93vw', justifyContent: 'center'}}>
           <MyTable
-            height={450}
             data={lovValueListResponse?.object ?? []}
             loading={isFetching}
             columns={tableColumns}
@@ -381,6 +381,7 @@ const LovValues = ({ lov, goBack, width }) => {
             onRowsPerPageChange={handleRowsPerPageChange}
             dontTranslateData 
           />
+        </div>
           <AddEditLovValue
             open={lovValuePopupOpen}
             setOpen={setLovValuePopupOpen}
