@@ -23,6 +23,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
@@ -1086,6 +1087,17 @@ const UrgentCareList = () => {
       title: 'STARTED BY',
       expandable: true,
       render: (row: any) => row?.startedBy ?? '-'
+    },
+    {
+      key: 'createdBy',
+      title: 'CREATED BY',
+        expandable: true,
+      render: (row: any) => {
+        console.log('createdBy row:', row);
+        const login = row?.createdBy ;
+
+        return <UserDateCell login={login} date={row?.createdAt } />;
+      }
     },
     {
       key: 'doorToPhysician',

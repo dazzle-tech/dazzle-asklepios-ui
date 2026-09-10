@@ -3,6 +3,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 import { DesignerSchema } from '@/reports/stimulsoft/reportDesignerSchema';
+import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = {
@@ -198,6 +199,17 @@ export const stimulsoftReportService = createApi({
         cache: 'no-store' as RequestCache,
         params: { t: Date.now() },
       }),
+      transformResponse: (response: unknown): StimulsoftReportTemplate => {
+        const record = (
+          response && typeof response === 'object' && 'data' in (response as object)
+            ? (response as { data: StimulsoftReportTemplate }).data
+            : response
+        ) as StimulsoftReportTemplate;
+        return {
+          ...record,
+          templateJson: normalizeStimulsoftTemplateJson(record),
+        };
+      },
       providesTags: (_r, _e, id) => [{ type: 'StimulsoftReportTemplate', id }],
     }),
 

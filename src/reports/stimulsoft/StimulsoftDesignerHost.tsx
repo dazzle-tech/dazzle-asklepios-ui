@@ -15,6 +15,7 @@ import {
   DesignerSchema,
   registerSchemaOnReport,
 } from './reportDesignerSchema';
+import { templateJsonToString } from './reportPrintParameters';
 
 export type StimulsoftDesignerHostHandle = {
   getTemplateJson: () => string | null;
@@ -37,14 +38,32 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
     const onSaveRef = useRef(onSave);
     const schemaRef = useRef(schema);
     const templateJsonRef = useRef(templateJson);
+    const loadedJsonRef = useRef<string | null>(null);
     const reportRef = useRef<any>(null);
     const designerRef = useRef<any>(null);
-    const latestJsonRef = useRef<string | null>(templateJson ?? null);
+    const latestJsonRef = useRef<string | null>(
+      templateJsonToString(templateJson) || null
+    );
     const cacheTimerRef = useRef<number | null>(null);
 
     const cacheJson = (json?: string | null) => {
-      if (typeof json === 'string' && json.trim()) {
-        latestJsonRef.current = json;
+      const text = templateJsonToString(json);
+      if (text.trim()) {
+        latestJsonRef.current = text;
+      }
+    };
+
+    const applySavedTemplate = (report: any, json?: string | null) => {
+      const text = templateJsonToString(json);
+      if (!report || !text.trim()) return false;
+      if (loadedJsonRef.current === text) return true;
+      try {
+        report.load(text);
+        loadedJsonRef.current = text;
+        cacheJson(text);
+        return true;
+      } catch {
+        return false;
       }
     };
 
@@ -66,6 +85,18 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
     useEffect(() => {
       schemaRef.current = schema;
     }, [schema]);
+
+    useEffect(() => {
+      templateJsonRef.current = templateJson;
+      const text = templateJsonToString(templateJson);
+      if (text.trim()) latestJsonRef.current = text;
+      const report = reportRef.current;
+      const designer = designerRef.current;
+      if (!report || !text.trim()) return;
+      if (applySavedTemplate(report, text) && designer) {
+        designer.report = report;
+      }
+    }, [templateJson]);
 
     useImperativeHandle(ref, () => ({
       getTemplateJson: () => readLiveJson(),
@@ -98,13 +129,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
 
       const report = new Stimulsoft.Report.StiReport();
       attachStimulsoftProxyHeaders(report);
-      if (templateJsonRef.current) {
-        try {
-          report.load(templateJsonRef.current);
-        } catch {
-          // empty / invalid template — keep a blank report with schema bound
-        }
-      }
+      applySavedTemplate(report, templateJsonRef.current);
 
       const bindDataRequest = (targetReport: any) => {
         if (!targetReport || targetReport.__stiBeginBound) return;
@@ -130,7 +155,9 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
 
       bindDataRequest(report);
 
-      registerSchemaOnReport(Stimulsoft, report, schemaRef.current);
+      if (!templateJsonToString(templateJsonRef.current).trim()) {
+        registerSchemaOnReport(Stimulsoft, report, schemaRef.current);
+      }
       enableDynamicStimulsoftApis(Stimulsoft, report);
       designer.report = report;
       reportRef.current = report;
@@ -178,18 +205,26 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
       }
 
       designer.onCreateReport = (args: any) => {
-        if (args?.report) {
-          const created = args.report;
-          attachStimulsoftProxyHeaders(created);
-          bindDataRequest(created);
-          registerSchemaOnReport(Stimulsoft, created, schemaRef.current);
-          enableDynamicStimulsoftApis(Stimulsoft, created);
-          reportRef.current = created;
+        if (!args?.report) return;
+        const saved = templateJsonToString(templateJsonRef.current);
+        if (saved.trim() && reportRef.current) {
+          args.report = reportRef.current;
+          designer.report = reportRef.current;
+          return;
         }
+        const created = args.report;
+        attachStimulsoftProxyHeaders(created);
+        bindDataRequest(created);
+        registerSchemaOnReport(Stimulsoft, created, schemaRef.current);
+        enableDynamicStimulsoftApis(Stimulsoft, created);
+        reportRef.current = created;
       };
 
       container.innerHTML = '';
       designer.renderHtml(container);
+      if (reportRef.current) {
+        designer.report = reportRef.current;
+      }
 
       const jsObject = designer.jsObject;
       const originalReceive =

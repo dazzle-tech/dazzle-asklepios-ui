@@ -941,7 +941,7 @@ const App = () => {
               <Route path="error-503" element={<Error503Page />} />
               <Route path="error-department-type" element={<ErrorDepartmentTypePage />} />
               <Route path="playground" element={<Playground />} />
-              <Route path="schedual-screen" element={<ScheduleScreen />} />
+              <Route path="schedule-screen" element={<ScheduleScreen />} />
               <Route path="apply-template" element={<ApplyTemplateList />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />

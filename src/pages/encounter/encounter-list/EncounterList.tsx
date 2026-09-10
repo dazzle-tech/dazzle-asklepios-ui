@@ -31,6 +31,7 @@ import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
@@ -943,6 +944,17 @@ const EncounterList = () => {
       expandable: true,
       render: (row: any) => row?.startedBy ?? '-'
     },
+    {
+         key: 'createdBy',
+         title: 'CREATED BY',
+           expandable: true,
+         render: (row: any) => {
+           
+           const login = row?.createdBy ;
+   
+           return <UserDateCell login={login} date={row?.createdAt } />;
+         }
+       },
     {
       key: 'status',
       title: 'STATUS',
