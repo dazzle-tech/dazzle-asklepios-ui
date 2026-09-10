@@ -22,7 +22,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Build the application
-RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
+RUN npm run build
 
 # Use Nginx to serve the application
 FROM nginx:alpine
