@@ -20,6 +20,7 @@ import {
 } from '@/services/reports/stimulsoftReportService';
 
 import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
+import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
 
 const StimulsoftDesignerHost = React.lazy(
   () =>
@@ -118,7 +119,9 @@ const StimulsoftReportDesignerPage = () => {
             departmentIds: template.departmentIds ?? '',
             module: template.module ?? '',
           });
-          setTemplateJson(template.templateJson ?? null);
+          setTemplateJson(
+            normalizeStimulsoftTemplateJson(template) || null
+          );
         }
 
         setSchema(nextSchema);

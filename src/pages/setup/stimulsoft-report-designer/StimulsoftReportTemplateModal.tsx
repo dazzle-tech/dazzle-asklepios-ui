@@ -26,6 +26,7 @@ import {
   useUpdateStimulsoftReportTemplateMutation,
 } from '@/services/reports/stimulsoftReportService';
 import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
+import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -181,6 +182,7 @@ const StimulsoftReportTemplateModal = ({
   const [templateJson, setTemplateJson] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
   const [designerEnabled, setDesignerEnabled] = useState(false);
+  const [templateReady, setTemplateReady] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [loadTemplate] = useLazyGetStimulsoftReportTemplateByIdQuery();
@@ -211,25 +213,31 @@ const StimulsoftReportTemplateModal = ({
       setTemplateJson(null);
       setSavedId(null);
       setDesignerEnabled(false);
+      setTemplateReady(false);
       setSaving(false);
       return;
     }
 
     setDetails(mapTemplateToDetails(initialData));
     setSavedId(initialData?.id ?? null);
-    setTemplateJson(initialData?.templateJson ?? null);
+    setTemplateJson(normalizeStimulsoftTemplateJson(initialData) || null);
     setDesignerEnabled(false);
 
-    if (initialData?.id) {
-      loadTemplate(initialData.id)
-        .unwrap()
-        .then(template => {
-          setTemplateJson(template.templateJson ?? null);
-          setDetails(mapTemplateToDetails(template));
-          setSavedId(template.id ?? initialData.id ?? null);
-        })
-        .catch(() => undefined);
+    if (!initialData?.id) {
+      setTemplateReady(true);
+      return;
     }
+
+    setTemplateReady(false);
+    loadTemplate(initialData.id)
+      .unwrap()
+      .then(template => {
+        setTemplateJson(normalizeStimulsoftTemplateJson(template) || null);
+        setDetails(mapTemplateToDetails(template));
+        setSavedId(template.id ?? initialData.id ?? null);
+      })
+      .catch(() => undefined)
+      .finally(() => setTemplateReady(true));
   }, [open, initialData, loadTemplate]);
 
   const validateDetails = useCallback(() => {
@@ -252,10 +260,19 @@ const StimulsoftReportTemplateModal = ({
     async (activeStep: number) => {
       if (activeStep !== 0) return true;
       if (!validateDetails()) return false;
+      if (savedId && !templateReady) {
+        dispatch(
+          notify({
+            msg: 'Please wait for the saved template to finish loading.',
+            sev: 'warning',
+          })
+        );
+        return false;
+      }
       setDesignerEnabled(true);
       return true;
     },
-    [validateDetails]
+    [dispatch, savedId, templateReady, validateDetails]
   );
 
   const persist = useCallback(
@@ -467,6 +484,7 @@ const StimulsoftReportTemplateModal = ({
               hidden={stepNumber !== 1}
             >
               <DesignStep
+                key={savedId ?? 'new'}
                 code={details.code.trim()}
                 templateJson={templateJson}
                 designerRef={designerRef}
