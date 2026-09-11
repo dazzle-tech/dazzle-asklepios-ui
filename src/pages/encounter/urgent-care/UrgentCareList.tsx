@@ -78,10 +78,17 @@ dayjs.extend(duration);
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
-  if (typeof d === 'string') return d;
-  return d.toISOString().slice(0, 10);
-};
 
+  if (typeof d === 'string') {
+    return d;
+  }
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 const uniqueNonEmpty = (arr?: any[]) => {
   if (!arr) return undefined;
   const cleaned = arr.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
@@ -286,20 +293,17 @@ const UrgentCareList = () => {
 
   const getDefaultDates = () => {
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
     const lastWeek = new Date(now);
     lastWeek.setDate(lastWeek.getDate() - 7);
 
-    return { now, tomorrow, lastWeek };
+    return { now, lastWeek };
   };
 
-  const { now: initialNow, tomorrow: initialTomorrow, lastWeek: initialLastWeek } = getDefaultDates();
+  const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: initialLastWeek,
-    toDate: initialTomorrow
+    toDate: initialNow
   });
 
   const DEFAULT_STATUS = useMemo(() => ['ONGOING', 'ASSIGNED_TO_BED'], []);
