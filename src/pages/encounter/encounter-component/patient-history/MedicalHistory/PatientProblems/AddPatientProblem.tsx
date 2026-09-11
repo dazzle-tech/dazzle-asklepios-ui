@@ -69,7 +69,8 @@ const emptyPatientProblem = {
   type: null,
   dateOfResolution: null,
   byPatient: true,
-  sourceOfInformation: null
+  sourceOfInformation: null,
+  patientIsFree: false
 };
 
 const normalizeConditions = (value = '') =>
@@ -99,6 +100,22 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
   const [getProblems] = useLazyGetPatientProblemsQuery();
   const [getPatient] = useLazyGetPatientByIdQuery();
 
+  const normalizeSavedValue = (value: any) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'object') {
+      return (
+        value?.key ??
+        value?.value ??
+        value?.id ??
+        value?.code ??
+        value?.lovKey ??
+        null
+      );
+    }
+    return value;
+  };
+
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -114,24 +131,29 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
   }, [initialData, open, patient?.id]);
 
   const handleSave = async () => {
+    const normalizedType = normalizeSavedValue(formData.type);
+    const normalizedConditionStatus = normalizeSavedValue(formData.conditionStatus);
+    const normalizedSourceOfInformation = normalizeSavedValue(
+      formData.byPatient ? null : formData.sourceOfInformation
+    );
+
     const payload = {
       id: formData.id,
       patientId: Number(patient.id),
-      condition: formData.condition,
+      condition: String(formData.condition ?? '').trim(),
       dateOfDiagnosis: formData.dateOfDiagnosis,
-      conditionStatus: formData.conditionStatus,
-      type: formData.type,
+      conditionStatus: normalizedConditionStatus,
+      type: normalizedType,
       dateOfResolution: formData.dateOfResolution,
       byPatient: formData.byPatient,
-      sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation,
+      sourceOfInformation: normalizedSourceOfInformation,
       patientIsFree: formData.patientIsFree
     };
 
     const errors: string[] = [];
 
     if (!payload.patientIsFree) {
-
-      if (!payload.condition?.trim()) {
+      if (!payload.condition) {
         errors.push('Condition is required');
       }
 
@@ -147,10 +169,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
         errors.push('Type is required');
       }
 
-      if (
-        payload.byPatient === false &&
-        !payload.sourceOfInformation?.trim()
-      ) {
+      if (payload.byPatient === false && !payload.sourceOfInformation) {
         errors.push(
           'Source of Information is required when problem is not reported by patient'
         );
@@ -229,6 +248,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
     }
   };
 useEffect(() => {
+  console.log('Patient Is Free changed:', formData.patientIsFree);
   if (formData.patientIsFree) {
     setFormData(prev => ({
       ...prev,
