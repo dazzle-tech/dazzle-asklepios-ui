@@ -286,17 +286,20 @@ const UrgentCareList = () => {
 
   const getDefaultDates = () => {
     const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const lastWeek = new Date(now);
     lastWeek.setDate(lastWeek.getDate() - 7);
 
-    return { now, lastWeek };
+    return { now, tomorrow, lastWeek };
   };
 
-  const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
+  const { now: initialNow, tomorrow: initialTomorrow, lastWeek: initialLastWeek } = getDefaultDates();
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: initialLastWeek,
-    toDate: initialNow
+    toDate: initialTomorrow
   });
 
   const DEFAULT_STATUS = useMemo(() => ['ONGOING', 'ASSIGNED_TO_BED'], []);

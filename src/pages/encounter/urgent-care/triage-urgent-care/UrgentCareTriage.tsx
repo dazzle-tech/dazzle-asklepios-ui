@@ -461,9 +461,14 @@ const UrgentCareTriage = () => {
     return d;
   }, []);
 
-  const [dateFilter, setDateFilter] = useState({
-    fromDate: lastWeekDefault,
-    toDate: new Date()
+  const [dateFilter, setDateFilter] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return {
+      fromDate: lastWeekDefault,
+      toDate: tomorrow
+    };
   });
 
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
