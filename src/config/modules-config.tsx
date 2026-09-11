@@ -388,6 +388,7 @@ export const MODULES: Module[] =
       name: "Front Desk Office",
       description: null,
       icon: "FaRegIdBadge",
+       departmentTypes: ["REGISTRATION"],
       viewOrder: 2,
       screens: [
 
@@ -414,7 +415,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaCalendarDay",
       viewOrder: 3,
-
+       departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Scheduling Screen",
@@ -461,7 +462,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaFileWaveform",
       viewOrder: 4,
-
+    departmentTypes: ["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
       screens: [
         {
           name: "Electronic Medical Records",
@@ -477,7 +478,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaStethoscope",
       viewOrder: 4,
-
+      departmentTypes: ["OUTPATIENT_CLINIC"],
       screens: [
 
         {
@@ -530,7 +531,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaExplosion",
       viewOrder: 6,
-
+       departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         {
           name: "ER Triage",
@@ -549,7 +550,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaNotesMedical",
       viewOrder: 6,
-
+        departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         { name: "Urgent Care Triage", code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage" },
         { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
@@ -593,7 +594,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaFlask",
       viewOrder: 9,
-
+departmentTypes: ["LABORATORY"],
       screens: [{
         name: "Clinical Laboratory",
         code: "CLINICAL_LABORATORY",
@@ -608,6 +609,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaXRay",
       viewOrder: 10,
+      departmentTypes: ["RADIOLOGY"],
       screens: [{
         name: "Imaging Radiology",
         code: "IMAGING_RADIOLOGY",
@@ -770,6 +772,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaMoneyBill1",
       viewOrder: 12,
+      departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Ledger Account",
