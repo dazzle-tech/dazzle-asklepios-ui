@@ -2,16 +2,11 @@ import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { NphiesPayer, TpaDefinition } from '@/types/model-types-new';
+import { TpaDefinition } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
-import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
-import {
-  useGetLinkableInsuranceCompaniesQuery,
-  useGetTpaLinkedInsuranceCompaniesQuery
-} from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type TpaDefinitionModalProps = {
   open: boolean;
@@ -19,7 +14,6 @@ type TpaDefinitionModalProps = {
   tpa: TpaDefinition;
   setTpa: React.Dispatch<React.SetStateAction<TpaDefinition>>;
   onSave: () => void;
-  insuranceCompanies?: NphiesPayer[];
 };
 
 const statusOptions = [
@@ -34,8 +28,7 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
   setOpen,
   tpa,
   setTpa,
-  onSave,
-  insuranceCompanies = []
+  onSave
 }) => {
   const { data: countriesResponse, isFetching: isCountriesLoading } = useGetActiveCountriesQuery(
     { page: 0, size: 500, sort: 'id,asc' },
@@ -51,18 +44,6 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
     },
     { skip: !open || !tpa.countryId }
   );
-
-  const { data: payersResponse, isFetching: isPayersLoading } = useGetAllNphiesPayersQuery(
-    { page: 0, size: 100, sort: 'id,asc' },
-    { skip: !open, refetchOnMountOrArgChange: true }
-  );
-
-  const { data: linkedCompanies = [] } = useGetTpaLinkedInsuranceCompaniesQuery(tpa.id as number, {
-    skip: !open || !tpa.id
-  });
-
-  const { data: linkableCompanies = [], isFetching: isLinkableLoading } =
-    useGetLinkableInsuranceCompaniesQuery(undefined, { skip: !open });
 
   const countryOptions = useMemo(() => {
     const list = (countriesResponse?.data ?? []).map((country: any) => ({
@@ -90,53 +71,6 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
     }
     return list;
   }, [citiesResponse, tpa.cityId, tpa.cityName]);
-
-  const insuranceOptions = useMemo(() => {
-    const toList = (value: unknown) => (Array.isArray(value) ? value : []);
-    const fetched = Array.isArray(payersResponse)
-      ? payersResponse
-      : toList((payersResponse as any)?.data ?? (payersResponse as any)?.content);
-    const byId = new Map<number, any>();
-    [
-      ...toList(insuranceCompanies),
-      ...fetched,
-      ...toList(linkableCompanies),
-      ...toList(linkedCompanies),
-      ...toList(tpa.insuranceCompanies)
-    ].forEach(
-      company => {
-        const id = Number(company?.id ?? company?.nphiesPayerId ?? company?.value);
-        if (!Number.isFinite(id) || byId.has(id)) {
-          return;
-        }
-        byId.set(id, { ...company, id });
-      }
-    );
-    return [...byId.values()]
-      .filter(
-        company =>
-          company.isActive !== false || (tpa.insuranceCompanyIds ?? []).includes(company.id)
-      )
-      .map(company => {
-        const code = String(company.nphiesId ?? company.code ?? '').trim();
-        const name = String(
-          company.nameEn ?? company.name ?? company.nameAr ?? company.shortName ?? ''
-        ).trim();
-        const displayName = [code, name].filter(Boolean).join(' - ') || `Company #${company.id}`;
-        return {
-          id: company.id,
-          displayName,
-          isActive: company.isActive !== false
-        };
-      });
-  }, [
-    insuranceCompanies,
-    payersResponse,
-    linkableCompanies,
-    linkedCompanies,
-    tpa.insuranceCompanies,
-    tpa.insuranceCompanyIds
-  ]);
 
   const toId = (value: unknown): number | null => {
     if (value == null || value === '') {
@@ -298,27 +232,6 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
                     fieldType="text"
                     fieldLabel="Email"
                   />
-                  <div className="nphies-payer-field-span-2">
-                    <MyInput
-                      {...fieldProps}
-                      fieldName="insuranceCompanyIds"
-                      fieldType="checkPicker"
-                      fieldLabel="Insurance Name"
-                      selectData={insuranceOptions}
-                      selectDataLabel="displayName"
-                      selectDataValue="id"
-                      searchable
-                      virtualized={false}
-                      loading={isPayersLoading || isLinkableLoading}
-                      disableByField="isActive"
-                      disabled={!tpa.isActive}
-                      placeholder={
-                        tpa.isActive
-                          ? 'Select insurance companies'
-                          : 'Activate TPA before linking insurance'
-                      }
-                    />
-                  </div>
                 </div>
               }
             />

@@ -5,12 +5,12 @@ import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdBusiness, MdDelete, MdHistory, MdLink, MdModeEdit } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
+import { MdBlock, MdBusiness, MdDelete, MdFactCheck, MdHistory, MdModeEdit } from 'react-icons/md';
+import { FaPercent, FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { NphiesPayer, TpaDefinition } from '@/types/model-types-new';
+import { TpaDefinition } from '@/types/model-types-new';
 import { newTpaDefinition } from '@/types/model-types-constructor-new';
 import {
   TpaDefinitionService,
@@ -24,8 +24,8 @@ import {
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
 import TpaDefinitionModal from './TpaDefinitionModal';
 import TpaLinkedCompaniesModal from './TpaLinkedCompaniesModal';
-import TpaLinkCompaniesModal from './TpaLinkCompaniesModal';
 import TpaAuditLogModal from './TpaAuditLogModal';
+import TpaRuleModal, { TpaRuleKind } from './TpaRuleModal';
 
 type FilterCriteria = '' | 'tpaCode' | 'name';
 
@@ -42,18 +42,15 @@ const initialTpaFilter = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type TpaDefinitionSectionProps = {
-  insuranceCompanies?: NphiesPayer[];
-};
-
-const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionProps) => {
+const TpaDefinitionSection = () => {
   const dispatch = useAppDispatch();
 
   const [selectedTpa, setSelectedTpa] = useState<TpaDefinition>({ ...newTpaDefinition });
   const [openModal, setOpenModal] = useState(false);
   const [openLinkedCompanies, setOpenLinkedCompanies] = useState(false);
-  const [openLinkCompanies, setOpenLinkCompanies] = useState(false);
   const [openLog, setOpenLog] = useState(false);
+  const [openRule, setOpenRule] = useState(false);
+  const [ruleKind, setRuleKind] = useState<TpaRuleKind | null>(null);
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
     'deactivate'
@@ -308,22 +305,6 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
           setOpenModal(true);
         }}
       />
-      <MdLink
-        className="icons-style"
-        title="Link insurance companies"
-        size={24}
-        fill="var(--deep-blue)"
-        onClick={() => {
-          setSelectedTpa({
-            ...rowData,
-            insuranceCompanyIds:
-              rowData.insuranceCompanyIds ??
-              rowData.insuranceCompanies?.map(company => company.id) ??
-              []
-          });
-          setOpenLinkCompanies(true);
-        }}
-      />
       <MdBusiness
         className="icons-style"
         title="Linked insurance companies"
@@ -342,6 +323,39 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
         onClick={() => {
           setSelectedTpa(rowData);
           setOpenLog(true);
+        }}
+      />
+      <MdFactCheck
+        className="icons-style"
+        title="Approval"
+        size={22}
+        fill="var(--deep-blue)"
+        onClick={() => {
+          setSelectedTpa(rowData);
+          setRuleKind('approval');
+          setOpenRule(true);
+        }}
+      />
+      <MdBlock
+        className="icons-style"
+        title="Excluded"
+        size={22}
+        fill="var(--primary-pink)"
+        onClick={() => {
+          setSelectedTpa(rowData);
+          setRuleKind('exclusion');
+          setOpenRule(true);
+        }}
+      />
+      <FaPercent
+        className="icons-style"
+        title="Discount"
+        size={18}
+        fill="var(--deep-blue)"
+        onClick={() => {
+          setSelectedTpa(rowData);
+          setRuleKind('discount');
+          setOpenRule(true);
         }}
       />
       {rowData.isActive ? (
@@ -430,7 +444,7 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
     {
       key: 'actions',
       title: <Translate></Translate>,
-      flexGrow: 2.4,
+      flexGrow: 3.4,
       render: (rowData: TpaDefinition) => iconsForActions(rowData)
     }
   ];
@@ -565,13 +579,6 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
         tpa={selectedTpa}
         setTpa={setSelectedTpa}
         onSave={handleSave}
-        insuranceCompanies={insuranceCompanies}
-      />
-
-      <TpaLinkCompaniesModal
-        open={openLinkCompanies}
-        setOpen={setOpenLinkCompanies}
-        tpa={selectedTpa}
       />
 
       <TpaLinkedCompaniesModal
@@ -581,6 +588,13 @@ const TpaDefinitionSection = ({ insuranceCompanies = [] }: TpaDefinitionSectionP
       />
 
       <TpaAuditLogModal open={openLog} setOpen={setOpenLog} tpa={selectedTpa} />
+
+      <TpaRuleModal
+        open={openRule}
+        setOpen={setOpenRule}
+        tpa={selectedTpa}
+        kind={ruleKind}
+      />
     </div>
   );
 };

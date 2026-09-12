@@ -27,9 +27,13 @@ export type CoverageLookupItem = {
   encounterType?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
   isActive?: boolean;
   relatedId?: number | null;
   relatedName?: string | null;
+  payerId?: number | null;
+  payerName?: string | null;
 };
 
 export type CoverageContract = {
@@ -47,6 +51,8 @@ export type CoverageContract = {
   priceListName?: string;
   startDate?: string | null;
   endDate?: string | null;
+  priceListEffectiveFrom?: string | null;
+  priceListEffectiveTo?: string | null;
   parentPayerId?: number | null;
   parentPayerName?: string | null;
   className?: string;
@@ -87,7 +93,7 @@ export type CoverageTerm = {
 export type CoverageTermItem = {
   id?: number;
   categoryScope?: string;
-  serviceCategory?: string | null;
+  billingItemType?: string | null;
   serviceId?: number | null;
   serviceCode?: string | null;
   serviceName?: string | null;
@@ -99,7 +105,7 @@ export type CoverageTermItem = {
 export type CoverageDiscount = {
   id?: number;
   targetType?: string;
-  serviceCategory?: string | null;
+  billingItemType?: string | null;
   serviceId?: number | null;
   serviceCode?: string | null;
   serviceName?: string | null;
@@ -112,7 +118,7 @@ export type CoverageDiscount = {
 export type CoverageExclusion = {
   id?: number;
   exclusionType?: string;
-  serviceCategory?: string | null;
+  billingItemType?: string | null;
   serviceId?: number | null;
   serviceCode?: string | null;
   serviceName?: string | null;
@@ -164,6 +170,43 @@ const toContractPayload = (body: CoverageContract) => ({
   isActive: body.isActive
 });
 
+const firstDefined = <T>(...values: Array<T | null | undefined>): T | null => {
+  for (const value of values) {
+    if (value !== undefined && value !== null && String(value) !== '') {
+      return value;
+    }
+  }
+  return null;
+};
+
+export const normalizeCoverageLookupItem = (
+  item: CoverageLookupItem | null | undefined
+): CoverageLookupItem | null => {
+  if (!item) {
+    return null;
+  }
+  return {
+    ...item,
+    startDate: firstDefined(item.startDate, item.effectiveFrom),
+    endDate: firstDefined(item.endDate, item.effectiveTo),
+    relatedId: firstDefined(item.relatedId, item.payerId),
+    relatedName: firstDefined(item.relatedName, item.payerName)
+  };
+};
+
+export const normalizeCoverageContract = (
+  contract: CoverageContract | null | undefined
+): CoverageContract => {
+  if (!contract) {
+    return contract as CoverageContract;
+  }
+  return {
+    ...contract,
+    startDate: firstDefined(contract.startDate, contract.priceListEffectiveFrom),
+    endDate: firstDefined(contract.endDate, contract.priceListEffectiveTo)
+  };
+};
+
 const toList = <T>(res: T[] | { data?: T[]; content?: T[] } | null | undefined): T[] => {
   if (Array.isArray(res)) {
     return res;
@@ -177,15 +220,25 @@ const toList = <T>(res: T[] | { data?: T[]; content?: T[] } | null | undefined):
   return [];
 };
 
-const toPagedResult = <T>(res: T[] | { data?: T[]; content?: T[] }, meta: any): PagedResult<T> => {
+const toPagedResult = <T>(
+  res: T[] | { data?: T[]; content?: T[] },
+  meta: any,
+  mapItem?: (item: T) => T
+): PagedResult<T> => {
   const h = meta?.response?.headers;
-  const data = toList(res);
+  const data = toList(res).map(item => (mapItem ? mapItem(item) : item));
   return {
     data,
     totalCount: Number(h?.get('X-Total-Count') ?? data.length),
     links: parseLinkHeader(h?.get('Link'))
   };
 };
+
+const toLookupPagedResult = (res: CoverageLookupItem[], meta: any) =>
+  toPagedResult(res, meta, item => normalizeCoverageLookupItem(item) as CoverageLookupItem);
+
+const toContractPagedResult = (res: CoverageContract[], meta: any) =>
+  toPagedResult(res, meta, item => normalizeCoverageContract(item));
 
 export const coverageManagementService = createApi({
   reducerPath: 'coverageManagementApi',
@@ -216,11 +269,12 @@ export const coverageManagementService = createApi({
         method: 'GET',
         params: { page, size, sort, ...params }
       }),
-      transformResponse: (res: CoverageContract[], meta) => toPagedResult(res, meta),
+      transformResponse: (res: CoverageContract[], meta) => toContractPagedResult(res, meta),
       providesTags: ['CoverageContract']
     }),
     getCoverageContract: builder.query<CoverageContract, number>({
       query: id => `/api/setup/coverage-contracts/${id}`,
+      transformResponse: (res: CoverageContract) => normalizeCoverageContract(res),
       providesTags: (_r, _e, id) => [{ type: 'CoverageContract', id }]
     }),
     createCoverageContract: builder.mutation<CoverageContract, CoverageContract>({
@@ -229,6 +283,7 @@ export const coverageManagementService = createApi({
         method: 'POST',
         body: toContractPayload(body)
       }),
+      transformResponse: (res: CoverageContract) => normalizeCoverageContract(res),
       invalidatesTags: ['CoverageContract']
     }),
     updateCoverageContract: builder.mutation<CoverageContract, CoverageContract>({
@@ -237,10 +292,12 @@ export const coverageManagementService = createApi({
         method: 'PUT',
         body: toContractPayload(body)
       }),
+      transformResponse: (res: CoverageContract) => normalizeCoverageContract(res),
       invalidatesTags: ['CoverageContract']
     }),
     toggleCoverageContractActive: builder.mutation<CoverageContract, number>({
       query: id => ({ url: `/api/setup/coverage-contracts/${id}/toggle-active`, method: 'PATCH' }),
+      transformResponse: (res: CoverageContract) => normalizeCoverageContract(res),
       invalidatesTags: ['CoverageContract']
     }),
     searchCoverageCompanies: builder.query<
@@ -257,7 +314,7 @@ export const coverageManagementService = createApi({
           ...(search ? { search } : {})
         }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageInsurancePayers: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -267,7 +324,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/insurance-payers',
         params: { page, size, sort, ...(search ? { search } : {}) }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageTpaInsurancePayers: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -277,7 +334,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/tpa-insurance-payers',
         params: { page, size, tpaId, ...(search ? { search } : {}) }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoveragePriceLists: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -292,7 +349,7 @@ export const coverageManagementService = createApi({
           ...(search ? { search } : {})
         }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageFacilities: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -302,7 +359,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/facilities',
         params: { page, size, sort, search }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageDepartments: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -312,7 +369,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/departments',
         params: { page, size, sort, facilityId, search }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageServices: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -322,7 +379,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/services',
         params: { page, size, sort, search, category }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     searchCoverageDiagnoses: builder.query<
       PagedResult<CoverageLookupItem>,
@@ -332,7 +389,7 @@ export const coverageManagementService = createApi({
         url: '/api/setup/coverage-contracts/lookups/diagnoses',
         params: { page, size, sort, search }
       }),
-      transformResponse: (res: CoverageLookupItem[], meta) => toPagedResult(res, meta)
+      transformResponse: toLookupPagedResult
     }),
     listCopayments: builder.query<
       PagedResult<CoverageCopayment>,
@@ -378,7 +435,12 @@ export const coverageManagementService = createApi({
     >({
       query: ({ termId, page, size, sort = 'id,desc', isActive }) => ({
         url: `/api/setup/coverage-contracts/terms/${termId}/items`,
-        params: { page, size, sort, isActive }
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
       }),
       transformResponse: (res: CoverageTermItem[], meta) => toPagedResult(res, meta),
       providesTags: ['CoverageTermItem']
@@ -393,18 +455,30 @@ export const coverageManagementService = createApi({
     }),
     listDiscounts: builder.query<
       PagedResult<CoverageDiscount>,
-      PagedParams & { contractId: number; isActive?: boolean }
+      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/discounts`,
-        params: { page, size, sort, isActive }
+      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/discounts`
+          : `/api/setup/coverage-contracts/${contractId}/discounts`,
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
       }),
       transformResponse: (res: CoverageDiscount[], meta) => toPagedResult(res, meta),
       providesTags: ['CoverageDiscount']
     }),
-    createDiscount: builder.mutation<CoverageDiscount, { contractId: number; body: CoverageDiscount }>({
-      query: ({ contractId, body }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/discounts`,
+    createDiscount: builder.mutation<
+      CoverageDiscount,
+      { contractId?: number; tpaId?: number; body: CoverageDiscount }
+    >({
+      query: ({ contractId, tpaId, body }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/discounts`
+          : `/api/setup/coverage-contracts/${contractId}/discounts`,
         method: 'POST',
         body
       }),
@@ -419,18 +493,30 @@ export const coverageManagementService = createApi({
     }),
     listExclusions: builder.query<
       PagedResult<CoverageExclusion>,
-      PagedParams & { contractId: number; isActive?: boolean }
+      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/exclusions`,
-        params: { page, size, sort, isActive }
+      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
+          : `/api/setup/coverage-contracts/${contractId}/exclusions`,
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
       }),
       transformResponse: (res: CoverageExclusion[], meta) => toPagedResult(res, meta),
       providesTags: ['CoverageExclusion']
     }),
-    createExclusion: builder.mutation<CoverageExclusion, { contractId: number; body: CoverageExclusion }>({
-      query: ({ contractId, body }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/exclusions`,
+    createExclusion: builder.mutation<
+      CoverageExclusion,
+      { contractId?: number; tpaId?: number; body: CoverageExclusion }
+    >({
+      query: ({ contractId, tpaId, body }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
+          : `/api/setup/coverage-contracts/${contractId}/exclusions`,
         method: 'POST',
         body
       }),
@@ -445,18 +531,25 @@ export const coverageManagementService = createApi({
     }),
     listPreApprovals: builder.query<
       PagedResult<CoveragePreApproval>,
-      PagedParams & { contractId: number; isActive?: boolean }
+      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
+      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/pre-approvals`
+          : `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
         params: { page, size, sort, isActive }
       }),
       transformResponse: (res: CoveragePreApproval[], meta) => toPagedResult(res, meta),
       providesTags: ['CoveragePreApproval']
     }),
-    savePreApproval: builder.mutation<CoveragePreApproval, { contractId: number; body: CoveragePreApproval }>({
-      query: ({ contractId, body }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
+    savePreApproval: builder.mutation<
+      CoveragePreApproval,
+      { contractId?: number; tpaId?: number; body: CoveragePreApproval }
+    >({
+      query: ({ contractId, tpaId, body }) => ({
+        url: tpaId
+          ? `/api/setup/tpa-definitions/${tpaId}/pre-approvals`
+          : `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
         method: body.id ? 'PUT' : 'POST',
         body
       }),

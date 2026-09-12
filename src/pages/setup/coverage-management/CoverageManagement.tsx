@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -39,7 +39,7 @@ const CoverageManagement = () => {
     companyId: undefined as number | undefined,
     className: '',
     search: '',
-    isActive: true
+    isActive: '' as boolean | ''
   });
   const [applied, setApplied] = useState(filter);
   const companyLookup = useLookupPaging(filter.guarantorType);
@@ -59,7 +59,7 @@ const CoverageManagement = () => {
     companyId: applied.companyId,
     className: applied.className || undefined,
     search: applied.search || undefined,
-    isActive: applied.isActive
+    ...(typeof applied.isActive === 'boolean' ? { isActive: applied.isActive } : {})
   });
   const [toggleActive] = useToggleCoverageContractActiveMutation();
 
@@ -138,9 +138,11 @@ const CoverageManagement = () => {
               record={filter}
               setRecord={setFilter}
               selectData={[
+                { label: 'All', value: '' },
                 { label: 'Active', value: true },
                 { label: 'Inactive', value: false }
               ]}
+              placeholder="Status"
               selectDataLabel="label"
               selectDataValue="value"
               showLabel={false}
@@ -219,17 +221,18 @@ const CoverageManagement = () => {
                   }}
                 />
                 {row.isActive ? (
-                  <span
+                  <MdDelete
+                    className="icons-style"
                     title="Deactivate"
+                    size={22}
+                    fill="var(--primary-pink)"
                     onClick={event => {
                       event.stopPropagation();
                       setSelected(row);
                       setToggleActionType('deactivate');
                       setConfirmOpen(true);
                     }}
-                  >
-                    <FaUndo className="icons-style" size={18} />
-                  </span>
+                  />
                 ) : (
                   <FaUndo
                     className="icons-style"
@@ -249,7 +252,13 @@ const CoverageManagement = () => {
         ]}
       />
 
-      {selected.id ? <CoverageRulePanels key={selected.id} contractId={Number(selected.id)} /> : null}
+      {selected.id ? (
+        <CoverageRulePanels
+          key={`${selected.id}-${Boolean(selected.isActive)}`}
+          contractId={Number(selected.id)}
+          readOnly={!selected.isActive}
+        />
+      ) : null}
 
       <CoverageContractEditor
         open={headerOpen}
@@ -265,8 +274,10 @@ const CoverageManagement = () => {
         actionType={toggleActionType}
         actionButtonFunction={async () => {
           if (!selected.id) return;
+          setConfirmOpen(false);
           try {
-            await toggleActive(selected.id).unwrap();
+            const updated = await toggleActive(selected.id).unwrap();
+            setSelected(updated);
             notifySuccess(dispatch, 'Coverage contract status updated');
           } catch (error: any) {
             notifyError(dispatch, error, 'Unable to update status');

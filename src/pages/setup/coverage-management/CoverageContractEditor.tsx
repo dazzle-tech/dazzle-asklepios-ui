@@ -13,6 +13,8 @@ import {
   useSearchCoveragePriceListsQuery,
   useSearchCoverageTpaInsurancePayersQuery,
   useUpdateCoverageContractMutation,
+  normalizeCoverageContract,
+  normalizeCoverageLookupItem,
   type CoverageContract,
   type CoverageLookupItem
 } from '@/services/setup/coverageManagement/coverageManagementService';
@@ -79,20 +81,24 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
 
   useEffect(() => {
     if (open) {
-      setRecord({ ...emptyContract(), ...contract });
+      setRecord(normalizeCoverageContract({ ...emptyContract(), ...contract }));
     }
   }, [open, contract]);
 
-  const applyPriceListDates = (priceListId?: number, selectedItem?: CoverageLookupItem | null) => {
+  const applyPriceListSelection = (priceListId?: number, selectedItem?: CoverageLookupItem | null) => {
     const selected =
-      selectedItem ??
-      (priceLists.data?.data ?? []).find(item => Number(item.id) === Number(priceListId));
+      normalizeCoverageLookupItem(selectedItem) ??
+      normalizeCoverageLookupItem(
+        (priceLists.data?.data ?? []).find(item => Number(item.id) === Number(priceListId))
+      );
     setRecord(previous => ({
       ...previous,
-      priceListSetupId: priceListId,
+      priceListSetupId: priceListId || undefined,
       priceListName: selected?.name,
       startDate: selected?.startDate ?? null,
-      endDate: selected?.endDate ?? null
+      endDate: selected?.endDate ?? null,
+      insurancePayerId: selected?.relatedId ?? previous.insurancePayerId,
+      insurancePayerName: selected?.relatedName ?? previous.insurancePayerName
     }));
   };
 
@@ -291,7 +297,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             fieldName="priceListSetupId"
             fieldLabel="Price list"
             record={record}
-            setRecord={next => applyPriceListDates(next.priceListSetupId)}
+            setRecord={next => applyPriceListSelection(next.priceListSetupId)}
             result={priceLists}
             page={priceListLookup.page}
             setPage={priceListLookup.setPage}
@@ -305,7 +311,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   ? 'Select insurance name first'
                   : 'Select insurance company first'
             }
-            onSelected={item => applyPriceListDates(item?.id, item)}
+            onSelected={item => applyPriceListSelection(item?.id, item)}
           />
           <MyInput
             width="100%"

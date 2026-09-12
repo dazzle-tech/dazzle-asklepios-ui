@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { notify } from '@/utils/uiReducerActions';
+import { formatEnumString } from '@/utils';
 import type { CoverageLookupItem, PagedResult } from '@/services/setup/coverageManagement/coverageManagementService';
 
 type QueryResult = {
@@ -84,10 +85,17 @@ export function formatLookupLabel(item: CoverageLookupItem) {
     item.code && item.name && item.code !== item.name
       ? `${item.code} — ${item.name}`
       : item.name || item.code || '';
-  if (item.relatedName && item.relatedName !== item.name) {
-    return `${base} (${item.relatedName})`;
+  const extras: string[] = [];
+  const insuranceName = item.relatedName ?? item.payerName;
+  if (insuranceName && insuranceName !== item.name) {
+    extras.push(insuranceName);
   }
-  return base;
+  const startDate = item.startDate ?? item.effectiveFrom;
+  const endDate = item.endDate ?? item.effectiveTo;
+  if (startDate || endDate) {
+    extras.push([startDate, endDate].filter(Boolean).join(' → '));
+  }
+  return extras.length ? `${base} (${extras.join(' · ')})` : base;
 }
 
 export function useStatusFilter() {
@@ -146,4 +154,47 @@ export function notifyWarning(dispatch: any, msg: string) {
 
 export function notifyError(dispatch: any, error: any, fallback: string) {
   dispatch(notify({ msg: coverageApiError(error, fallback), sev: 'error' }));
+}
+
+export function discountCategoryLabel(row: any) {
+  if (row?.billingItemType) {
+    return formatEnumString(row.billingItemType);
+  }
+  if (row?.targetType === 'ALL') {
+    return 'All';
+  }
+  return formatEnumString(row?.targetType) || '-';
+}
+
+export function discountItemLabel(row: any) {
+  if (row?.serviceName) {
+    return row.serviceName;
+  }
+  if (row?.billingItemType) {
+    return `All ${formatEnumString(row.billingItemType)}`;
+  }
+  if (row?.targetType === 'ALL') {
+    return 'All';
+  }
+  return '-';
+}
+
+export function exclusionTypeLabel(row: any) {
+  return row?.exclusionType === 'DIAGNOSIS' ? 'Diagnosis' : 'Category';
+}
+
+export function exclusionResultLabel(row: any) {
+  if (row?.exclusionType === 'DIAGNOSIS') {
+    return row.diagnosisName || (row.allDiagnoses ? 'All diagnoses' : '-');
+  }
+  if (row?.serviceName) {
+    return row.serviceName;
+  }
+  if (row?.billingItemType) {
+    return `All ${formatEnumString(row.billingItemType)}`;
+  }
+  if (row?.exclusionType === 'ALL') {
+    return 'All';
+  }
+  return '-';
 }
