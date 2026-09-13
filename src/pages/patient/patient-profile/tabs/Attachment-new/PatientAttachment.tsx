@@ -1,6 +1,6 @@
 
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -14,12 +14,13 @@ import MyButton from '@/components/MyButton/MyButton';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/AttachmentModals';
-import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList, extractErrorMessage } from '@/utils';
 import { PatientAttachment as PatientAttachmentType, EncounterAttachment } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import UserDateCell from '@/components/UserDateCell';
 
 const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
+    const authSlice = useAppSelector(state => state.auth);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<PatientAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -178,6 +179,24 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
 
     // Handle Preview Selected Attachment (patient or encounter)
     const handlePreviewSelectedPatientAttachment = async (attachment: any) => {
+        const jobRole = authSlice?.user?.jobRole || '';
+
+        const attachmentTypeCode =
+            attachmentsLovQueryResponse?.object?.find(
+                (v: any) => v.key === attachment.type
+            )?.valueCode || '';
+
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+
+        if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
+            dispatch(
+                notify({
+                    msg: 'You do not have permission to download this attachment',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
         try {
             const attachmentType = attachment.attachmentType;
             let downloadTicket;
@@ -194,7 +213,12 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             setPreviewFileType(attachment.mimeType);
             setPreviewModalOpen(true);
         } catch (error) {
-            dispatch(notify({ msg: 'Failed to get preview URL', sev: 'error' }));
+            dispatch(
+                notify({
+                    msg: extractErrorMessage(error) || 'Failed to get preview URL',
+                    sev: 'warning',
+                })
+            );
         }
     };
 
@@ -208,6 +232,24 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
 
     // Handle Download Selected Attachment (patient or encounter)
     const handleDownloadSelectedPatientAttachment = async (attachment: any) => {
+        const jobRole = authSlice?.user?.jobRole || '';
+
+        const attachmentTypeCode =
+            attachmentsLovQueryResponse?.object?.find(
+                (v: any) => v.key === attachment.type
+            )?.valueCode || '';
+
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+
+        if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
+            dispatch(
+                notify({
+                    msg: 'You do not have permission to download this attachment',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
         try {
             const attachmentType = attachment.attachmentType;
             let downloadTicket;
@@ -229,7 +271,12 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
 
             dispatch(notify({ msg: 'Download started', sev: 'success' }));
         } catch (error) {
-            dispatch(notify({ msg: 'Failed to get download URL', sev: 'error' }));
+            dispatch(
+                notify({
+                    msg: extractErrorMessage(error) || 'Failed to get download URL',
+                    sev: 'warning',
+                })
+            );
         }
     };
 
