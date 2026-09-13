@@ -1,14 +1,13 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useGetLabResultLogsByResultIdQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useGetLovAllValuesQuery } from '@/services/setupService';
 import { initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React from 'react';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
-import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   open: boolean;

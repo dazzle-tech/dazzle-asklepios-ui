@@ -1,9 +1,12 @@
-import ChatModal from '@/components/ChatModal';
-import MyTable from '@/components/MyTable';
-import Translate from '@/components/Translate';
 import CancellationModal from '@/components/CancellationModal';
+import ChatModal from '@/components/ChatModal';
+import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import LovValueCell from '@/components/LovValueCell';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
@@ -26,7 +29,7 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faArrowDown,
@@ -36,11 +39,12 @@ import {
   faDiagramPredecessor,
   faFileLines,
   faPenToSquare,
-  faPrint,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, {
   forwardRef,
   useEffect,
@@ -48,24 +52,19 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import { FaChartLine } from 'react-icons/fa';
 import {
-  Button,
   Checkbox,
   HStack,
   Panel,
   Tooltip,
   Whisper
 } from 'rsuite';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { FaChartLine } from 'react-icons/fa';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
 import EditResultModal from './EditResultModal';
 import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
-import MyButton from '@/components/MyButton/MyButton';
-import UserDateCell from '@/components/UserDateCell/UserDateCell';
-import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -280,11 +279,11 @@ const resolveResultDisplay = (row: any) => {
     profile?.resultType?.toUpperCase()?.trim();
 
   if (resultType === 'LOV') {
-    return resolveLovDisplayValue(
-      profile,
-      row.resultValueText,
-      lovDefinitions,
-      allLovValues
+    return (
+      <LovValueCell
+        valueKey={row.resultValueText}
+        listOfValueId={profile.listOfValueId}
+      />
     );
   }
 
@@ -662,11 +661,11 @@ const resolveResultDisplay = (row: any) => {
 
           if (hasViewRange) {
             if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                row.viewNormalRange,
-                lovDefinitions,
-                allLovValues
+              return (
+                <LovValueCell
+                  valueKey={row.viewNormalRange}
+                  listOfValueId={profile.listOfValueId}
+                />
               );
             }
 
