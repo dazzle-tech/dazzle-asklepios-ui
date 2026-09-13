@@ -19,8 +19,8 @@ import {
   useCreateDiagnosticOrderTestTechnicianNoteMutation,
   useGetNotesByOrderTestIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
@@ -114,12 +114,8 @@ const Tests = forwardRef<any, Props>(
 
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
 
-    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({
-      page: 0,
-      size: 10000
-    });
-
-    const allTests = allTestsResponse?.data ?? [];
+    const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIds }] =
+      useLazyGetDiagnosticTestsByIdsQuery();
 
     const {
       data: notesResponse,
@@ -194,20 +190,73 @@ const Tests = forwardRef<any, Props>(
     const [rejectTest] = useRejectDiagnosticOrderTestMutation();
     const [undoAcceptTest, { isLoading: isUndoing }] = useUndoAcceptDiagnosticOrderTestMutation();
 
+    const orderTestIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            (orderTests ?? [])
+              .map((item: any) => item.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [orderTests]
+    );
+
+    useEffect(() => {
+      if (!orderTestIds.length) return;
+
+      fetchDiagnosticTestsByIds({ ids: orderTestIds });
+    }, [fetchDiagnosticTestsByIds, orderTestIds]);
+
     const testsMap = useMemo(() => {
-      return new Map(allTests.map(t => [t.id, t]));
-    }, [allTests]);
+      return new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t]));
+    }, [diagnosticTestsByIds]);
 
-    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({
-      page: 0,
-      size: 10000
-    });
+    const [fetchLaboratoryByTestId] = useLazyGetLaboratoriesByTestIdsQuery();
+    const [labsByTestIdMapState, setLabsByTestIdMapState] = useState<Record<number, any>>({});
 
-    const allLabs = allLabsResponse?.data ?? [];
+    useEffect(() => {
+      if (!orderTestIds.length) {
+        setLabsByTestIdMapState({});
+        return;
+      }
+
+      let isMounted = true;
+
+      Promise.all(
+        orderTestIds.map(async (testId) => {
+          const lab = await fetchLaboratoryByTestId({ testIds: [testId] }).unwrap();
+          return [testId, lab[0]] as const;
+        })
+      )
+        .then((entries) => {
+          if (!isMounted) return;
+
+          const nextMap: Record<number, any> = {};
+          entries.forEach(([testId, lab]) => {
+            if (lab != null) {
+              nextMap[testId] = lab;
+            }
+          });
+
+          setLabsByTestIdMapState(nextMap);
+        })
+        .catch(() => {
+          if (isMounted) {
+            setLabsByTestIdMapState({});
+          }
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }, [fetchLaboratoryByTestId, orderTestIds]);
 
     const labByTestIdMap = useMemo(() => {
-      return new Map(allLabs.map(lab => [lab.testId, lab]));
-    }, [allLabs]);
+      return new Map(
+        Object.entries(labsByTestIdMapState).map(([testId, lab]) => [Number(testId), lab])
+      );
+    }, [labsByTestIdMapState]);
 
     const normalizedOrderTests = useMemo(() => {
       return orderTests.map(orderTest => {

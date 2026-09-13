@@ -21,13 +21,15 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+
 import {
   useGetLovAllValuesQuery,
   useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
@@ -74,7 +76,6 @@ type Props = {
   setTest: (test: any) => void;
   refetchAllLabData: () => Promise<void>;
 };
-
 type PaginationParams = {
   page: number;
   size: number;
@@ -154,10 +155,10 @@ const Result = forwardRef<any, Props>(
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
     const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
-    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
-    const allTests = allTestsResponse?.data ?? [];
-    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
-    const allLabs = allLabsResponse?.data ?? [];
+    const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIdsResponse }] =
+      useLazyGetDiagnosticTestsByIdsQuery();
+    const [fetchLaboratoriesByTestIds, { data: labsByTestIds }] =
+      useLazyGetLaboratoriesByTestIdsQuery();
     const [getProfilesByIds, { data: profilesResponse }] =
       useGetDiagnosticTestProfilesByIdsMutation();
 
@@ -168,8 +169,7 @@ const Result = forwardRef<any, Props>(
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
 
-    const testsMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
-    const labByTestIdMap = useMemo(() => new Map(allLabs.map(l => [l.testId, l])), [allLabs]);
+   
 
     const {
       data: resultsResponse,
@@ -204,6 +204,38 @@ const Result = forwardRef<any, Props>(
       () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
       [profilesResponse]
     );
+ const testIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIdsResponse ?? []).map((test: any) => [test.id, test])),
+      [diagnosticTestsByIdsResponse]
+    );
+    const labTestIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const labByTestIdMap = useMemo(
+      () => new Map((labsByTestIds ?? []).map((lab: any) => [lab.testId, lab])),
+      [labsByTestIds]
+    );
 
     useEffect(() => {
       if (!profileTestIds.length) return;
@@ -213,6 +245,24 @@ const Result = forwardRef<any, Props>(
         .then(() => undefined)
         .catch(() => undefined);
     }, [getProfilesByIds, profileTestIds]);
+
+    useEffect(() => {
+      if (!testIds.length) return;
+
+      fetchDiagnosticTestsByIds({ ids: testIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchDiagnosticTestsByIds, testIds]);
+
+    useEffect(() => {
+      if (!labTestIds.length) return;
+
+      fetchLaboratoriesByTestIds({ testIds: labTestIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchLaboratoriesByTestIds, labTestIds]);
 
     const {
       data: resultNotesResponse,
