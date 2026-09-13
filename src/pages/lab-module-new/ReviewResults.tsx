@@ -1,26 +1,35 @@
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import LovValueCell from '@/components/LovValueCell';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import PatientSearch from '@/components/PatientSearch';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useLazyFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetNotesByResultIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
-  useLazyFilterDiagnosticOrderTestResultsQuery,
   useLazyGetDiagnosticOrderTestResultIdsQuery,
   useToggleReviewDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import {
   faArrowDown,
   faArrowUp,
@@ -38,20 +47,9 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useDispatch } from 'react-redux';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
-import { newApEncounter } from '@/types/model-types-constructor';
-import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import './ReviewResultsIcon.less';
-import UserDateCell from '@/components/UserDateCell';
-import PatientSearch from '@/components/PatientSearch';
-import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
-import { notify } from '@/utils/uiReducerActions';
-import MyButton from '@/components/MyButton/MyButton';
 
 const renderMarker = (marker?: string) => {
   switch (marker) {
@@ -142,6 +140,8 @@ const ReviewResults = forwardRef<any, any>(
       useToggleReviewDiagnosticOrderTestResultMutation();
     const [bulkToggleReviewDiagnosticOrderTestResult] =
       useBulkToggleReviewDiagnosticOrderTestResultMutation();
+    const [getProfilesByIds, { data: profilesResponse }] =
+      useGetDiagnosticTestProfilesByIdsMutation();
     const [getAllIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
@@ -269,6 +269,29 @@ const ReviewResults = forwardRef<any, any>(
     const results = resultsResponse?.data ?? [];
     const totalCount = resultsResponse?.totalCount ?? 0;
 
+    const profileTestIds = useMemo(
+      () =>
+        results
+          .map((r: any) => r.profileTestId)
+          .filter((id): id is number => Boolean(id))
+          .filter((id, index, arr) => arr.indexOf(id) === index),
+      [results]
+    );
+
+    const profilesMap = useMemo(
+      () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
+      [profilesResponse]
+    );
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      getProfilesByIds(profileTestIds)
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [getProfilesByIds, profileTestIds]);
+
     const { data: notesResponse } = useGetNotesByResultIdQuery(
       openNotesModal && selectedResultId ? selectedResultId : skipToken
     );
@@ -351,17 +374,6 @@ const ReviewResults = forwardRef<any, any>(
         }
       });
     }, [orderTestsMap]);
-
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-
-    const profilesMap = useMemo(
-      () => new Map(profilesResponse?.data?.map((p) => [p.id, p]) ?? []),
-      [profilesResponse]
-    );
 
     const normalizedResults = useMemo(() => {
       return results.map((r) => {

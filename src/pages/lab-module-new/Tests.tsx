@@ -3,7 +3,9 @@ import ChatModal from '@/components/ChatModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
   useAcceptDiagnosticOrderTestMutation,
@@ -19,9 +21,10 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faComment, faPlusCircle, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -34,13 +37,9 @@ import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import AddResultModal from './AddResultModal';
 import BulkCollectSampleModal from './BulkCollectSampleModal';
 import ExternalLabAction from './ExternalLabAction';
+import PrintSampleLabelAction from './PrintSampleLabelAction';
 import SampleModal from './SampleModal';
 import './styles.less';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import PrintSampleLabelAction from './PrintSampleLabelAction';
-import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
-import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   order: any;

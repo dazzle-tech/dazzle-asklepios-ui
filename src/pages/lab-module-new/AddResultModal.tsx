@@ -4,9 +4,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import {
-  useCreateDiagnosticOrderTestResultMutation,
-  useGetFilledProfileTestIdsQuery,
-  useBulkCreateDiagnosticOrderTestResultMutation
+  useBulkCreateDiagnosticOrderTestResultMutation,
+  useGetFilledProfileTestIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -19,12 +18,12 @@ import {
   useGetActiveLabProfilesByTestIdsMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 import {
   useGetLovAllValuesQuery,
   useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
 
 type Props = {
   open: boolean;

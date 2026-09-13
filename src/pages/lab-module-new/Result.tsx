@@ -20,7 +20,7 @@ import {
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import {
@@ -158,12 +158,8 @@ const Result = forwardRef<any, Props>(
     const allTests = allTestsResponse?.data ?? [];
     const { data: allLabsResponse } = useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
     const allLabs = allLabsResponse?.data ?? [];
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-    const allProfiles = profilesResponse?.data ?? [];
+    const [getProfilesByIds, { data: profilesResponse }] =
+      useGetDiagnosticTestProfilesByIdsMutation();
 
     const [fetchNormalRangesByProfileTestId] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
     const [approveResult] = useApproveDiagnosticOrderTestResultMutation();
@@ -174,7 +170,6 @@ const Result = forwardRef<any, Props>(
 
     const testsMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
     const labByTestIdMap = useMemo(() => new Map(allLabs.map(l => [l.testId, l])), [allLabs]);
-    const profilesMap = useMemo(() => new Map(allProfiles.map(p => [p.id, p])), [allProfiles]);
 
     const {
       data: resultsResponse,
@@ -204,6 +199,20 @@ const Result = forwardRef<any, Props>(
           .filter((id, i, arr) => arr.indexOf(id) === i),
       [results]
     );
+
+    const profilesMap = useMemo(
+      () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
+      [profilesResponse]
+    );
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      getProfilesByIds(profileTestIds)
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [getProfilesByIds, profileTestIds]);
 
     const {
       data: resultNotesResponse,
