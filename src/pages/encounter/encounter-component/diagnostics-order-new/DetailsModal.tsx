@@ -173,7 +173,15 @@ const DetailsModal = ({
                   width="12vw"
                 />
 
-                {/* ✅ Departments بدون pagination */}
+                <MyInput
+                  fieldType="textarea"
+                  fieldLabel="Clinical Notes"
+                  fieldName="notes"
+                  record={orderTest}
+                  setRecord={setOrderTest}
+                  width="12vw"
+                />
+
                 <MyInput
                   fieldType="select"
                   fieldLabel="Add Department"

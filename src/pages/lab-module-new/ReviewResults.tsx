@@ -1,5 +1,6 @@
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
+import LovValueCell from '@/components/LovValueCell';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -17,13 +18,8 @@ import {
   useToggleReviewDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   faArrowDown,
@@ -56,7 +52,6 @@ import PatientSearch from '@/components/PatientSearch';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
-
 
 const renderMarker = (marker?: string) => {
   switch (marker) {
@@ -106,41 +101,9 @@ const renderMarker = (marker?: string) => {
 const isLovProfile = (profile?: any) =>
   profile?.resultType?.toUpperCase() === 'LOV';
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
-
-  const normalizedKey = String(key);
-
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === normalizedKey
-    )?.lovDisplayVale ?? key
-  );
-};
-
 const ReviewResults = forwardRef<any, any>(
   ({ loading, setTest, setPatient, setEncounter }, ref) => {
-    const today = new Date();
+    const today = new Date(Date.now());
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
     const [openNotesModal, setOpenNotesModal] = useState(false);
@@ -163,11 +126,8 @@ const ReviewResults = forwardRef<any, any>(
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
     const [filtersKey, setFiltersKey] = useState(0);
-
     const [orderIdFilter, setOrderIdFilter] = useState('');
-
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
-
     const [departmentFilter, setDepartmentFilter] = useState<any>({
       fromDepartmentIdIn: null
     });
@@ -182,21 +142,11 @@ const ReviewResults = forwardRef<any, any>(
       useToggleReviewDiagnosticOrderTestResultMutation();
     const [bulkToggleReviewDiagnosticOrderTestResult] =
       useBulkToggleReviewDiagnosticOrderTestResultMutation();
-      const [getAllIds] =useLazyGetDiagnosticOrderTestResultIdsQuery();
+    const [getAllIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-    const { data: allLovValues } = useGetLovAllValuesQuery({
-      ...initialListRequestAllValues
-    });
-
-    const { data: lovDefinitions } = useGetLovsQuery({
-      ...initialListRequest,
-      pageSize: 1000
-    });
-
-
     const { data: departmentsList = [] } =
-      useGetAllDepartmentsWithoutPaginationQuery();
+      useGetAllDepartmentsWithoutPaginationQuery({});
 
     const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
       if (from && to && from > to) {
@@ -513,26 +463,23 @@ const ReviewResults = forwardRef<any, any>(
     //     setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
     //   }
     // };
-const handleSelectAll = async (checked: boolean) => {
+    const handleSelectAll = async (checked: boolean) => {
+      if (!checked) {
+        setSelectedRows([]);
+        return;
+      }
 
-  if (!checked) {
-    setSelectedRows([]);
-    return;
-  }
+      try {
+        const ids = await getAllIds({
+          ...filterParams
+        }).unwrap();
+        console.log('IDS', ids);
+        setSelectedRows(ids);
+      } catch (e) {
+        console.error(e);
+      }
+    };
 
-  try {
-
-    const ids = await getAllIds({
-      ...filterParams
-    }).unwrap();
-     console.log("IDS",ids)
-    setSelectedRows(ids);
-
-  } catch (e) {
-    console.error(e);
-  }
-};
-``
     const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
         prev.includes(rowId) ? prev.filter(id => id !== rowId) : [...prev, rowId]
@@ -599,11 +546,11 @@ const handleSelectAll = async (checked: boolean) => {
             const value = row.resultValueNumber ?? row.resultValueText ?? '';
 
             if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                value,
-                lovDefinitions,
-                allLovValues
+              return (
+                <LovValueCell
+                  valueKey={value}
+                  listOfValueId={profile.listOfValueId}
+                />
               );
             }
 
@@ -628,11 +575,11 @@ const handleSelectAll = async (checked: boolean) => {
 
             if (hasViewRange) {
               if (isLovProfile(profile)) {
-                return resolveLovDisplayValue(
-                  profile,
-                  String(row.normalRangeValue),
-                  lovDefinitions,
-                  allLovValues
+                return (
+                  <LovValueCell
+                    valueKey={String(row.normalRangeValue)}
+                    listOfValueId={profile.listOfValueId}
+                  />
                 );
               }
 
@@ -721,7 +668,7 @@ const handleSelectAll = async (checked: boolean) => {
           )
         },
       ],
-      [patientsMap, normalizedResults,,isAllSelected,isSomeSelected,selectedRows]
+      [patientsMap, normalizedResults, isAllSelected, isSomeSelected, selectedRows]
     );
 
     const filters = () => (
