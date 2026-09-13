@@ -115,7 +115,7 @@ export type DiagnosticOrderTestResultIdsFilterParams = Omit<
 export const diagnosticOrderTestResultService = createApi({
   reducerPath: "diagnosticOrderTestResultApi",
   baseQuery: BaseQuery,
-  tagTypes: ["DiagnosticOrderTestResult"],
+  tagTypes: ["DiagnosticOrderTestResult", "LabResultLog"],
 
   endpoints: (builder) => ({
 
@@ -171,7 +171,7 @@ export const diagnosticOrderTestResultService = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: ["DiagnosticOrderTestResult"],
+      invalidatesTags: ["DiagnosticOrderTestResult", "LabResultLog"],
     }),
 
     /* 🔹 Toggle Review */
@@ -309,6 +309,7 @@ export const diagnosticOrderTestResultService = createApi({
         url: `/api/patient/lab-result-logs/by-result/${resultId}`,
         method: "GET",
       }),
+      providesTags: ["LabResultLog"],
     }),
 
     rejectDiagnosticOrderTestResult: builder.mutation<
