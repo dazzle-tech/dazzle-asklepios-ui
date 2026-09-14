@@ -259,6 +259,7 @@ import { invoiceGenerationService } from './services/billing/invoiceGenerationSe
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -308,7 +309,7 @@ export const store = configureStore({
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
     [documentManagementService.reducerPath]: documentManagementService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
-
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -872,7 +873,8 @@ export const store = configureStore({
         PointOfSaleConfigurationService.middleware,
         PointOfSaleTransactionService.middleware,
         pointOfSaleWebhookLogService.middleware,
-        financialDocumentAdjustmentService.middleware
+        financialDocumentAdjustmentService.middleware,
+        patientTimelineService.middleware
       ) as any
 });
 
