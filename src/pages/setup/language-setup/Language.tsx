@@ -12,6 +12,7 @@ import {
   useAddTranslationMutation,
   useGetTranslationsByLangQuery,
   useGetTranslationsQuery,
+  useLazyGetDictionaryQuery,
   useUpdateTranslationMutation
 } from '@/services/setup/translationService';
 import { useAppDispatch } from '@/hooks';
@@ -23,7 +24,11 @@ import { LanguageModal } from './LanguageModal';
 import { LanguagesSection } from './LanguagesSection';
 import { TranslationModal } from './TranslationModal';
 import { TranslationsSection } from './TranslationsSection';
-
+import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRefresh } from '@fortawesome/free-solid-svg-icons';
+import { setTranslations } from '@/reducers/uiSlice';
+import { extractErrorMessage } from '@/utils';
 const LanguagesSetup: React.FC = () => {
   const dispatch = useAppDispatch();
 
@@ -68,6 +73,9 @@ const LanguagesSetup: React.FC = () => {
   const [addTranslation, addTranslationState] = useAddTranslationMutation();
   const [updateTranslation, updateTranslationState] = useUpdateTranslationMutation();
 
+  const [getDictionary] = useLazyGetDictionaryQuery();
+  const [isRefreshingCache, setIsRefreshingCache] = useState(false);
+
   // Global loader integration for language mutations
   useEffect(() => {
     const busy = addLanguageState.isLoading || updateLanguageState.isLoading;
@@ -87,12 +95,12 @@ const LanguagesSetup: React.FC = () => {
   } = useGetTranslationsQuery(
     usePaged
       ? {
-          lang: langKey,
-          value: debouncedSearch,
-          page: pageIndex,
-          size: rowsPerPage,
-          sort: `${sortBy},${sortType}`
-        }
+        lang: langKey,
+        value: debouncedSearch,
+        page: pageIndex,
+        size: rowsPerPage,
+        sort: `${sortBy},${sortType}`
+      }
       : undefined,
     { skip: !usePaged }
   );
@@ -111,7 +119,7 @@ const LanguagesSetup: React.FC = () => {
 
   // ------------------ Local sorting/pagination (only for unpaged mode) ------------------
   const locallySorted = useMemo(() => {
-    if (usePaged) return []; 
+    if (usePaged) return [];
     const arr = [...(transData ?? [])];
     if (!sortBy) return arr;
     return arr.sort((a: any, b: any) => {
@@ -249,20 +257,62 @@ const LanguagesSetup: React.FC = () => {
     setPageIndex(0);
   };
 
+  const handleRefreshCache = async () => {
+  const language = localStorage.getItem('language');
+
+  if (!language) {
+    return;
+  }
+
+  try {
+    setIsRefreshingCache(true);
+
+    const dict = await getDictionary(language).unwrap();
+
+    localStorage.setItem('dict', JSON.stringify(dict));
+    dispatch(setTranslations(dict));
+    dispatch(
+      notify({
+        msg: 'Translation cache refreshed successfully',
+        sev: 'success'
+      })
+    );
+  } catch (error) {
+     dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to Refresh Cache',
+          sev: 'warning'
+        })
+      );
+  } finally {
+    setIsRefreshingCache(false);
+  }
+};
+
   // Global loader (queries + translations)
   useEffect(() => {
-    const busy = langsLoading || langsFetching || translationsLoading;
+  const busy =
+    langsLoading ||
+    langsFetching ||
+    translationsLoading ||
+    isRefreshingCache;
 
-    if (busy) {
-      dispatch(showSystemLoader());
-    } else {
-      dispatch(hideSystemLoader());
-    }
+  if (busy) {
+    dispatch(showSystemLoader());
+  } else {
+    dispatch(hideSystemLoader());
+  }
 
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [langsLoading, langsFetching, translationsLoading, dispatch]);
+  return () => {
+    dispatch(hideSystemLoader());
+  };
+}, [
+  langsLoading,
+  langsFetching,
+  translationsLoading,
+  isRefreshingCache,
+  dispatch
+]);
 
   // ------------------ Filters UI (search box) ------------------
   const filters = (
@@ -279,19 +329,26 @@ const LanguagesSetup: React.FC = () => {
     </Form>
   );
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div className="padding-header-20" dir={dir}>
       <div className="flex-center-between">
         <h5>Languages</h5>
       </div>
-
       <div className="grid-20">
+        <div>
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faRefresh} />}
+          onClick={handleRefreshCache}
+          loading={isRefreshingCache}>
+          Refresh Cache
+        </MyButton>
+        </div>
         {/* Languages Section */}
         <LanguagesSection
           selectedLanguage={languages}

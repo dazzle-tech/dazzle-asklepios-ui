@@ -623,7 +623,7 @@ const App = () => {
                   <Box sx={{ position: 'relative', minHeight: '100vh' }}>
 
                     {/* Overlay Loader */}
-                    {uiSlice.loading && (
+                    {uiSlice.systemLoader  && (
                       <Box
                         sx={{
                           position: 'fixed',
