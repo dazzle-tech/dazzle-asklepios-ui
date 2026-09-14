@@ -64,6 +64,11 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  ageSpecific: false,
+  fromAge: null,
+  fromAgeUnit: null,
+  toAge: null,
+  toAgeUnit: null,
   workingDays: []
 };
 // ------------------- Facility -------------------

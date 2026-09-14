@@ -296,6 +296,11 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       requirePractitioner: true,
       requireBilling: department?.requireBilling,
       requirePreAssessment: department?.requirePreAssessment,
+      ageSpecific: Boolean(department?.ageSpecific),
+      fromAge: department?.fromAge,
+      fromAgeUnit: department?.fromAgeUnit,
+      toAge: department?.toAge,
+      toAgeUnit: department?.toAgeUnit,
       workingDays: buildWorkingDaysPayload(department?.workingDays),
     });
 
@@ -352,8 +357,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     }
 
     setOpenForm(false);
-    setLoad(true);
-
+    setLoad(true)
     updateDepartment({
       ...department,
       encounterType: department?.encounterType || undefined,
