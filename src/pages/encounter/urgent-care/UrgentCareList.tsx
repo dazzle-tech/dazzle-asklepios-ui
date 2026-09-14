@@ -843,14 +843,33 @@ const UrgentCareList = () => {
     setOpen(false);
   };
 
-  const handlePageChange = useCallback((_: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
+ const handlePageChange = useCallback((_: unknown, newPage: number) => {
+  setPage(newPage);
 
-  const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setPageSize(parseInt(event.target.value, 10));
+  setAppliedFilters((prev: any) =>
+    prev ? { ...prev, page: newPage } : prev
+  );
+}, []);
+
+const handleRowsPerPageChange = useCallback(
+  (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newPageSize = parseInt(event.target.value, 10);
+
+    setPageSize(newPageSize);
     setPage(0);
-  }, []);
+
+    setAppliedFilters((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            page: 0,
+            size: newPageSize
+          }
+        : prev
+    );
+  },
+  []
+);
 
   const handleGoToViewTriage = (encounterData: any, patientData: any) => {
     navigate('/urgent-care-view-triage', {
