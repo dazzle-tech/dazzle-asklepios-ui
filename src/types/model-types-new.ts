@@ -7208,3 +7208,26 @@ export interface FLACCPainScaleUpdateDTO {
   cry: string;
   consolability: string;
 }
+
+export interface TimelineEvent {
+  date: string;
+  event_type: string;
+  title: string;
+  description: string;
+  clinical_importance: string;
+  source: string;
+}
+
+export interface ProcessingMetadata {
+  model: string;
+  timestamp: string;
+  input_fields_count: number;
+  timeline_event_count: number;
+}
+
+export interface TimelineResponse {
+  request_id: string;
+  timeline: TimelineEvent[];
+  summary: string;
+  processing_metadata: ProcessingMetadata;
+}

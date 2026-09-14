@@ -4017,3 +4017,15 @@ export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
   dateFrom: null,
   dateTo: null,
 };
+
+export const newTimelineResponse: modelTypes.TimelineResponse = {
+  request_id: '',
+  timeline: [],
+  summary: '',
+  processing_metadata: {
+    model: '',
+    timestamp: '',
+    input_fields_count: 0,
+    timeline_event_count: 0
+  }
+}
