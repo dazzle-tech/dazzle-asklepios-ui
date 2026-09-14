@@ -59,7 +59,7 @@ const EMPTY_ENCOUNTERS: any[] = [];
 const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any) => {
   const dispatch = useDispatch();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
-  const getTooltipContainer = () => tooltipContainerRef.current || document.body;
+  const getTooltipContainer = () => document.body;
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
