@@ -2915,6 +2915,7 @@ export const newPainAssessment: modelTypes.PainAssessment = {
 
   painDegree: null,
   painLevel: null,
+  painAssessmentType: null,
   painDescription: null,
 
   isActive: true,

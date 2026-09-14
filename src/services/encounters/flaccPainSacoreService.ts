@@ -81,6 +81,15 @@ export const flaccPainSacoreService = createApi({
             }),
             invalidatesTags: ['FLACCPainScale'],
         }),
+
+        getLatestActiveFLACCPainScaleByEncounter: builder.query<
+            FLACCPainScale | null,
+            number
+        >({
+            query: encounterId =>
+                `/api/patient/flacc-pain-scales/encounter/${encounterId}/latest`,
+            providesTags: ['FLACCPainScale'],
+        }),
     }),
 });
 
@@ -91,4 +100,6 @@ export const {
     useGetFLACCPainScalesByPatientQuery,
     useGetFLACCPainScalesByEncounterQuery,
     useCancelFLACCPainScaleMutation,
+    useGetLatestActiveFLACCPainScaleByEncounterQuery,
+    useLazyGetLatestActiveFLACCPainScaleByEncounterQuery
 } = flaccPainSacoreService;

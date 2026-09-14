@@ -4,11 +4,11 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBaby } from '@fortawesome/free-solid-svg-icons';
-import '../style.less';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   useCreateFLACCPainScaleMutation,
+  useGetLatestActiveFLACCPainScaleByEncounterQuery,
   useUpdateFLACCPainScaleMutation
 } from '@/services/encounters/flaccPainSacoreService';
 
@@ -21,6 +21,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { notify } from '@/utils/uiReducerActions';
 import { extractErrorMessage } from '@/utils';
 import { useAppDispatch } from '@/hooks';
+import { useCreatePainAssessmentMutation } from '@/services/medicalsheetsEncounter/observations/painAssessmentService';
 
 interface NewFlaccProps {
   open: boolean;
@@ -66,6 +67,19 @@ const NewFlacc = ({
     useGetLovValuesByCodeQuery('FLACC_CONSO');
 
   const painLevelEnum = useEnumOptions('FLACCPainLevel');
+
+  const { data: latestActiveFlacc } = useGetLatestActiveFLACCPainScaleByEncounterQuery(
+  encounter?.id,
+  { skip: !encounter?.id }
+);
+
+  const [createPainAssessment] = useCreatePainAssessmentMutation();
+  const flaccPainLevelToSeverity: Record<string, string> = {
+    NO_PAIN: 'NOTHING',
+    MILD_PAIN: 'MILD_MINOR',
+    MODERATE_PAIN: 'MODERATE',
+    SEVERE_PAIN: 'SEVERE',
+  };
 
   useEffect(() => {
     if (!open) {
@@ -141,12 +155,12 @@ const NewFlacc = ({
     }, 0);
 
     let painLevel;
-
+    // IMPORTANT: If you change the scoring here, update the backend scoring accordingly so the displayed level matches the stored value.
     if (totalScore === 0) {
       painLevel = 'NO_PAIN';
     } else if (totalScore <= 3) {
       painLevel = 'MILD_PAIN';
-    } else if (totalScore <= 6) {
+    } else if (totalScore <= 7) {
       painLevel = 'MODERATE_PAIN';
     } else {
       painLevel = 'SEVERE_PAIN';
@@ -171,78 +185,108 @@ const NewFlacc = ({
   ]);
 
   const handleSave = async () => {
-    const validationErrors: string[] = [];
+  const validationErrors: string[] = [];
 
-    if (!record.face) {
-      validationErrors.push('Face is required.');
+  if (!record.face) validationErrors.push('Face is required.');
+  if (!record.legs) validationErrors.push('Legs is required.');
+  if (!record.activity) validationErrors.push('Activity is required.');
+  if (!record.cry) validationErrors.push('Cry is required.');
+  if (!record.consolability) validationErrors.push('Consolability is required.');
+
+  if (validationErrors.length > 0) {
+    dispatch(
+      notify({
+        msg: validationErrors.join(' '),
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  try {
+    let savedFlacc: FLACCPainScale;
+
+    if (edit) {
+      const payload: FLACCPainScaleUpdateDTO = {
+        id: record.id,
+        patientId: record.patientId,
+        encounterId: record.encounterId,
+        face: record.face,
+        legs: record.legs,
+        activity: record.activity,
+        cry: record.cry,
+        consolability: record.consolability
+      };
+
+      savedFlacc = await updateFLACC(payload).unwrap();
+    } else {
+      const payload: FLACCPainScaleCreateDTO = {
+        patientId: record.patientId,
+        encounterId: record.encounterId,
+        face: record.face,
+        legs: record.legs,
+        activity: record.activity,
+        cry: record.cry,
+        consolability: record.consolability
+      };
+
+      savedFlacc = await createFLACC(payload).unwrap();
     }
 
-    if (!record.legs) {
-      validationErrors.push('Legs is required.');
-    }
+    dispatch(
+      notify({
+        msg: 'FLACC record saved successfully.',
+        sev: 'success'
+      })
+    );
 
-    if (!record.activity) {
-      validationErrors.push('Activity is required.');
-    }
+    const isEditingLatestActive =
+      edit && latestActiveFlacc?.id === record.id;
+    const shouldSyncPainAssessment = !edit || isEditingLatestActive;
 
-    if (!record.cry) {
-      validationErrors.push('Cry is required.');
-    }
+    if (shouldSyncPainAssessment) {
+      const painAssessmentPayload = {
+        patientId: savedFlacc.patientId,
+        encounterId: savedFlacc.encounterId,
+        painAssessmentType: 'FLACC',
+        painLevel: `LEVEL_${savedFlacc.totalScore}`,
+        painDegree: flaccPainLevelToSeverity[savedFlacc.painLevel] ?? null,
+        painPattern: null,
+        painDescription: null,
+        isActive: true
+      };
 
-    if (!record.consolability) {
-      validationErrors.push('Consolability is required.');
-    }
+      try {
+          await createPainAssessment(painAssessmentPayload).unwrap();
 
-    if (validationErrors.length > 0) {
-      dispatch(
-        notify({
-          msg: validationErrors.join(' '),
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-
-    try {
-      if (edit) {
-        const payload: FLACCPainScaleUpdateDTO = {
-          id: record.id,
-          patientId: record.patientId,
-          encounterId: record.encounterId,
-          face: record.face,
-          legs: record.legs,
-          activity: record.activity,
-          cry: record.cry,
-          consolability: record.consolability
-        };
-
-        await updateFLACC(payload).unwrap();
-      } else {
-        const payload: FLACCPainScaleCreateDTO = {
-          patientId: record.patientId,
-          encounterId: record.encounterId,
-          face: record.face,
-          legs: record.legs,
-          activity: record.activity,
-          cry: record.cry,
-          consolability: record.consolability
-        };
-
-        await createFLACC(payload).unwrap();
+        dispatch(
+          notify({
+            msg: 'Pain Assessment saved successfully.',
+            sev: 'success'
+          })
+        );
+      } catch (syncError) {
+        dispatch(
+          notify({
+            msg: extractErrorMessage(syncError) || 'FLACC saved, but failed to update Pain Assessment.',
+            sev: 'warning'
+          })
+        );
       }
-
-      setOpen(false);
-      setRecord({});
-      refetch?.();
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: extractErrorMessage(error) || 'Failed to save FLACC record.',
-          sev: 'warning'
-        })
-      );
     }
-  };
+
+    setOpen(false);
+    setRecord({});
+    refetch?.();
+  } catch (error) {
+    dispatch(
+      notify({
+        msg: extractErrorMessage(error) || 'Failed to save FLACC record.',
+        sev: 'warning'
+      })
+    );
+  }
+};
 
   const content = (
     <Form fluid>
