@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { Form, Input, Modal } from 'rsuite';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { Form, Input, Modal, SelectPicker } from 'rsuite';
 import { useDispatch } from 'react-redux';
 import { IconButton } from '@mui/material';
 import { MdClose, MdCloseFullscreen, MdOpenInFull } from 'react-icons/md';
@@ -23,6 +23,10 @@ import {
   toStimulsoftPdfParams,
   useLazyGetStimulsoftReportTemplateByIdQuery,
 } from '@/services/reports/stimulsoftReportService';
+import {
+  useGetActiveDepartmentByFacilityListQuery,
+  useGetAllDepartmentsWithoutPaginationQuery,
+} from '@/services/security/departmentService';
 import type { ModuleReportContext } from './types';
 
 const StimulsoftViewerHost = React.lazy(
@@ -48,6 +52,42 @@ const toParamValue = (raw: unknown) => {
     return dayjs(raw).format('YYYY-MM-DD');
   }
   return String(raw ?? '').trim();
+};
+
+const applyContextDefaults = (
+  parameters: ReportPrintParameter[],
+  context?: ModuleReportContext
+) => {
+  const next = valuesFromParameters(parameters);
+  Object.entries(context || {}).forEach(([key, raw]) => {
+    if (raw == null || raw === '') return;
+    const param = parameters.find(
+      item => item.name.toLowerCase() === key.toLowerCase()
+    );
+    if (param) next[param.name] = String(raw);
+  });
+  return next;
+};
+
+const departmentOptions = (list: unknown) => {
+  const record =
+    list && typeof list === 'object' && !Array.isArray(list)
+      ? (list as Record<string, unknown>)
+      : null;
+  const rows = Array.isArray(list)
+    ? list
+    : Array.isArray(record?.data)
+      ? record.data
+      : Array.isArray(record?.content)
+        ? record.content
+        : [];
+  return rows
+    .map((item: any) => {
+      const id = Number(item?.id ?? item?.departmentId);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      return { label: String(item?.name || item?.departmentName || id), value: String(id) };
+    })
+    .filter(Boolean) as { label: string; value: string }[];
 };
 
 const isAbortError = (error: unknown) => {
@@ -108,6 +148,23 @@ const PrintReportDialog = ({
   const templateCode = String(resolved?.code || report?.code || '').trim();
   const titleName = resolved?.name || report?.name;
   const isView = mode === 'view';
+  const hasDepartmentParam = parameters.some(param => param.type === 'department');
+  const facilityId = Number(context?.facilityId) || 0;
+  const { data: facilityDepartments, isFetching: facilityDepartmentsLoading } =
+    useGetActiveDepartmentByFacilityListQuery(
+      { facilityId },
+      { skip: !open || !hasDepartmentParam || !facilityId }
+    );
+  const { data: allDepartments, isFetching: allDepartmentsLoading } =
+    useGetAllDepartmentsWithoutPaginationQuery(undefined, {
+      skip: !open || !hasDepartmentParam || !!facilityId,
+    });
+  const departments = useMemo(
+    () =>
+      departmentOptions(facilityId ? facilityDepartments : allDepartments),
+    [allDepartments, facilityDepartments, facilityId]
+  );
+  const departmentsLoading = facilityDepartmentsLoading || allDepartmentsLoading;
 
   useEffect(() => {
     if (!open || !report) {
@@ -166,7 +223,7 @@ const PrintReportDialog = ({
         ),
       });
       setParameters(extra);
-      setValues(valuesFromParameters(extra));
+      setValues(applyContextDefaults(extra, context));
       setLoadingParams(false);
     };
 
@@ -177,7 +234,7 @@ const PrintReportDialog = ({
     return () => {
       cancelled = true;
     };
-  }, [open, report, loadTemplate]);
+  }, [open, report, loadTemplate, context]);
 
   const handleClose = () => {
     setViewerSession(null);
@@ -199,8 +256,16 @@ const PrintReportDialog = ({
       },
       {}
     );
+    const hiddenContext = { ...(context || {}) };
+    parameters.forEach(param => {
+      Object.keys(hiddenContext).forEach(key => {
+        if (key.toLowerCase() === param.name.toLowerCase()) {
+          delete hiddenContext[key];
+        }
+      });
+    });
     const params = toStimulsoftPdfParams(templateCode, {
-      ...context,
+      ...hiddenContext,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       ...formParams,
     });
@@ -295,6 +360,22 @@ const PrintReportDialog = ({
                       [param.name]: event.target.value,
                     }))
                   }
+                />
+              ) : param.type === 'department' ? (
+                <SelectPicker
+                  data={departments}
+                  value={String(values[param.name] || '') || null}
+                  onChange={value =>
+                    setValues(current => ({
+                      ...current,
+                      [param.name]: value || '',
+                    }))
+                  }
+                  placeholder="Select department"
+                  searchable
+                  cleanable
+                  block
+                  loading={departmentsLoading}
                 />
               ) : (
                 <Input

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import { useDispatch } from 'react-redux';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -18,6 +18,7 @@ import {
 } from '@/utils/uiReducerActions';
 import {
   StimulsoftReportTemplate,
+  stimulsoftReportService,
   useGetStimulsoftReportTemplatesQuery,
   useLazyGetStimulsoftReportTemplatesByNameQuery,
   useToggleStimulsoftReportTemplateActiveMutation,
@@ -39,7 +40,6 @@ const StimulsoftReportTemplateList = () => {
     page: 0,
     size: 20,
     sort: 'id,desc',
-    timestamp: Date.now(),
   });
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
@@ -52,7 +52,7 @@ const StimulsoftReportTemplateList = () => {
   const [editingTemplate, setEditingTemplate] =
     useState<StimulsoftReportTemplate | null>(null);
 
-  const { data, isLoading } =
+  const { data, isLoading, refetch } =
     useGetStimulsoftReportTemplatesQuery(paginationParams, {
       refetchOnMountOrArgChange: true,
     });
@@ -85,12 +85,15 @@ const StimulsoftReportTemplateList = () => {
       }
       setIsFiltered(true);
       setFilterPagination(prev => ({ ...prev, page: 0 }));
-      triggerFilter({
-        name: input,
-        page: 0,
-        size: filterPagination.size,
-        sort: filterPagination.sort,
-      });
+      triggerFilter(
+        {
+          name: input,
+          page: 0,
+          size: filterPagination.size,
+          sort: filterPagination.sort,
+        },
+        false
+      );
     }, 100);
     return () => clearTimeout(delay);
   }, [filterValue.name]);
@@ -100,20 +103,33 @@ const StimulsoftReportTemplateList = () => {
     ? rawList
     : [];
 
-  const refreshList = async () => {
-    const timestamp = Date.now();
+  const refreshList = useCallback(async () => {
+    dispatch(
+      stimulsoftReportService.util.invalidateTags(['StimulsoftReportTemplate'])
+    );
     if (isFiltered) {
-      await triggerFilter({
-        name: filterValue?.name?.trim?.() ?? '',
-        page: filterPagination.page,
-        size: filterPagination.size,
-        sort: filterPagination.sort,
-        timestamp,
-      }).unwrap();
+      await triggerFilter(
+        {
+          name: filterValue?.name?.trim?.() ?? '',
+          page: filterPagination.page,
+          size: filterPagination.size,
+          sort: filterPagination.sort,
+        },
+        false
+      ).unwrap();
       return;
     }
-    setPaginationParams(prev => ({ ...prev, timestamp }));
-  };
+    await refetch();
+  }, [
+    dispatch,
+    filterPagination.page,
+    filterPagination.size,
+    filterPagination.sort,
+    filterValue?.name,
+    isFiltered,
+    refetch,
+    triggerFilter,
+  ]);
 
   const handleToggleActive = async () => {
     if (!selectedItemId) return;
@@ -217,12 +233,15 @@ const StimulsoftReportTemplateList = () => {
     const page = Math.max(0, Number(newPage));
     if (isFiltered) {
       setFilterPagination(prev => ({ ...prev, page }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? '',
-        page,
-        size: filterPagination.size,
-        sort: filterPagination.sort,
-      });
+      triggerFilter(
+        {
+          name: filterValue?.name?.trim?.() ?? '',
+          page,
+          size: filterPagination.size,
+          sort: filterPagination.sort,
+        },
+        false
+      );
     } else {
       setPaginationParams(prev => ({ ...prev, page }));
     }
@@ -232,12 +251,15 @@ const StimulsoftReportTemplateList = () => {
     const newSize = Number(e?.target?.value ?? e);
     if (isFiltered) {
       setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? '',
-        page: 0,
-        size: newSize,
-        sort: filterPagination.sort,
-      });
+      triggerFilter(
+        {
+          name: filterValue?.name?.trim?.() ?? '',
+          page: 0,
+          size: newSize,
+          sort: filterPagination.sort,
+        },
+        false
+      );
     } else {
       setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
     }
@@ -251,12 +273,15 @@ const StimulsoftReportTemplateList = () => {
     const sortValue = `${realColumn},${type}`;
     if (isFiltered) {
       setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? '',
-        page: 0,
-        size: filterPagination.size,
-        sort: sortValue,
-      });
+      triggerFilter(
+        {
+          name: filterValue?.name?.trim?.() ?? '',
+          page: 0,
+          size: filterPagination.size,
+          sort: sortValue,
+        },
+        false
+      );
     } else {
       setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0 }));
     }

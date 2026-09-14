@@ -78,6 +78,36 @@ const mapTemplateToDetails = (template?: StimulsoftReportTemplate | null): Detai
   module: template?.module ?? '',
 });
 
+const MountWhenVisible = ({
+  visible,
+  reset,
+  className,
+  children,
+}: {
+  visible: boolean;
+  reset?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (reset) {
+      setMounted(false);
+      return;
+    }
+    if (visible) setMounted(true);
+  }, [reset, visible]);
+
+  if (!mounted) return null;
+
+  return (
+    <div className={className} hidden={!visible}>
+      {children}
+    </div>
+  );
+};
+
 type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -181,7 +211,6 @@ const StimulsoftReportTemplateModal = ({
   const [details, setDetails] = useState<Details>({ ...EMPTY_DETAILS });
   const [templateJson, setTemplateJson] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
-  const [designerEnabled, setDesignerEnabled] = useState(false);
   const [templateReady, setTemplateReady] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -212,7 +241,6 @@ const StimulsoftReportTemplateModal = ({
       setDetails({ ...EMPTY_DETAILS });
       setTemplateJson(null);
       setSavedId(null);
-      setDesignerEnabled(false);
       setTemplateReady(false);
       setSaving(false);
       return;
@@ -221,7 +249,6 @@ const StimulsoftReportTemplateModal = ({
     setDetails(mapTemplateToDetails(initialData));
     setSavedId(initialData?.id ?? null);
     setTemplateJson(normalizeStimulsoftTemplateJson(initialData) || null);
-    setDesignerEnabled(false);
 
     if (!initialData?.id) {
       setTemplateReady(true);
@@ -269,7 +296,6 @@ const StimulsoftReportTemplateModal = ({
         );
         return false;
       }
-      setDesignerEnabled(true);
       return true;
     },
     [dispatch, savedId, templateReady, validateDetails]
@@ -478,19 +504,18 @@ const StimulsoftReportTemplateModal = ({
               </Row>
             </Form>
           </div>
-          {designerEnabled && (
-            <div
-              className="stimulsoft-report-design-step"
-              hidden={stepNumber !== 1}
-            >
-              <DesignStep
-                key={savedId ?? 'new'}
-                code={details.code.trim()}
-                templateJson={templateJson}
-                designerRef={designerRef}
-              />
-            </div>
-          )}
+          <MountWhenVisible
+            className="stimulsoft-report-design-step"
+            visible={stepNumber === 1}
+            reset={!open}
+          >
+            <DesignStep
+              key={savedId ?? 'new'}
+              code={details.code.trim()}
+              templateJson={templateJson}
+              designerRef={designerRef}
+            />
+          </MountWhenVisible>
         </>
       )}
     />

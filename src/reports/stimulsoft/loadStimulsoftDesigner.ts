@@ -1,5 +1,5 @@
 ﻿import config from '../../../app-config';
-import { installStimulsoftApiInterceptor } from './stimulsoftApiProxy';
+import { installStimulsoftApiInterceptor, patchStimulsoftHttp } from './stimulsoftApiProxy';
 import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
@@ -23,6 +23,9 @@ const finishEngine = (Stimulsoft: any) => {
   }
   applyLicense(Stimulsoft);
   applyStimulsoftWebServer(Stimulsoft);
+  installStimulsoftErrorGuards();
+  patchStimulsoftHttp(Stimulsoft);
+  patchStimulsoftDesignerRuntime(Stimulsoft);
   return Stimulsoft;
 };
 
@@ -100,6 +103,194 @@ export const attachStimulsoftProxyHeaders = (report: any) => {
   report.httpHeadersContainer = [...withoutAuth, ...headers];
 };
 
+const isStimulsoftInternalError = (error: unknown) => {
+  const message = String((error as any)?.message || error || '');
+  const stack = String((error as any)?.stack || '');
+  return (
+    stack.includes('StiDictionaryHelper') ||
+    stack.includes('synchronizeDictionary') ||
+    stack.includes('StiMobileDesigner.ZoomPage') ||
+    stack.includes('StiMobileDesigner.ConvertPixelToUnit') ||
+    stack.includes('StiMobileDesigner.FindMousePosOnSvgPage') ||
+    stack.includes('ZoomPage') ||
+    stack.includes('ConvertPixelToUnit') ||
+    stack.includes('FindMousePosOnSvgPage') ||
+    message.includes("reading 'reportUnit'") ||
+    message.includes("reading 'forEach'") ||
+    message.includes("reading 'repaint'")
+  );
+};
+
+const wrapSafeMethod = (obj: any, name: string) => {
+  if (!obj || typeof obj[name] !== 'function' || obj[name].__stiSafe) return;
+  const original = obj[name];
+  const wrapped = function (this: any, ...args: any[]) {
+    try {
+      const result = original.apply(this, args);
+      if (result && typeof result.then === 'function') {
+        return Promise.resolve(result).catch(() => undefined);
+      }
+      return result;
+    } catch {
+      return undefined;
+    }
+  };
+  wrapped.__stiSafe = true;
+  obj[name] = wrapped;
+};
+
+const designerReport = (js: any) =>
+  js?.options?.report ?? js?.options?.currentPage?.report ?? js?.report;
+
+const wrapConvertPixelToUnit = (obj: any) => {
+  if (!obj || typeof obj.ConvertPixelToUnit !== 'function' || obj.ConvertPixelToUnit.__stiSafe) {
+    return;
+  }
+  const original = obj.ConvertPixelToUnit;
+  const wrapped = function (this: any, value: any, ...rest: any[]) {
+    const report = designerReport(this);
+    if (!report || report.reportUnit == null) return value;
+    try {
+      return original.call(this, value, ...rest);
+    } catch {
+      return value;
+    }
+  };
+  wrapped.__stiSafe = true;
+  obj.ConvertPixelToUnit = wrapped;
+};
+
+const wrapFindMousePosOnSvgPage = (obj: any) => {
+  if (
+    !obj ||
+    typeof obj.FindMousePosOnSvgPage !== 'function' ||
+    obj.FindMousePosOnSvgPage.__stiSafe
+  ) {
+    return;
+  }
+  const original = obj.FindMousePosOnSvgPage;
+  const wrapped = function (this: any, ...args: any[]) {
+    const report = designerReport(this);
+    if (!report || report.reportUnit == null || !this?.options?.currentPage) {
+      return { x: 0, y: 0 };
+    }
+    try {
+      return original.apply(this, args);
+    } catch {
+      return { x: 0, y: 0 };
+    }
+  };
+  wrapped.__stiSafe = true;
+  obj.FindMousePosOnSvgPage = wrapped;
+};
+
+const ensureCollectionList = (collection: any) => {
+  if (!collection || Array.isArray(collection.list)) return;
+  try {
+    collection.list = [];
+  } catch {
+    // read-only collection
+  }
+};
+
+const ensureReportDictionaryLists = (report: any) => {
+  const dictionary = report?.dictionary;
+  if (!dictionary) return;
+  [
+    'databases',
+    'dataSources',
+    'variables',
+    'resources',
+    'relations',
+    'businessObjects',
+    'userFunctions',
+  ].forEach(name => ensureCollectionList(dictionary[name]));
+};
+
+/**
+ * DictionaryHelper.synchronizeDictionaryAsync does `databases.list.forEach`.
+ * If that throws, the designer never receives the tree (data sources, variables,
+ * functions all stay empty). Keep the command working and still return a tree.
+ */
+export const patchStimulsoftDictionaryHelper = (Stimulsoft?: any) => {
+  const Helper = (Stimulsoft ?? window.Stimulsoft)?.Designer?.StiDictionaryHelper;
+  if (!Helper?.synchronizeDictionaryAsync || Helper.synchronizeDictionaryAsync.__stiPatched) {
+    return;
+  }
+  const original = Helper.synchronizeDictionaryAsync.bind(Helper);
+  const patched = async function (
+    report: any,
+    param: any,
+    callbackResult: any
+  ) {
+    ensureReportDictionaryLists(report);
+    try {
+      return await original(report, param, callbackResult);
+    } catch {
+      if (callbackResult && typeof Helper.getDictionaryTree === 'function') {
+        try {
+          callbackResult.dictionary = Helper.getDictionaryTree(report);
+        } catch {
+          // designer keeps the previous tree
+        }
+      }
+    }
+  };
+  patched.__stiPatched = true;
+  Helper.synchronizeDictionaryAsync = patched;
+};
+
+/** Stimulsoft throws while the designer canvas is still booting. */
+export const patchStimulsoftDesignerRuntime = (target?: any) => {
+  const Stimulsoft = window.Stimulsoft;
+  patchStimulsoftDictionaryHelper(Stimulsoft);
+  const methodNames = ['ZoomPage'];
+  const patchRoot = (root: any) => {
+    if (!root) return;
+    methodNames.forEach(name => {
+      wrapSafeMethod(root, name);
+      wrapSafeMethod(root.prototype, name);
+    });
+    wrapConvertPixelToUnit(root);
+    wrapConvertPixelToUnit(root.prototype);
+    wrapFindMousePosOnSvgPage(root);
+    wrapFindMousePosOnSvgPage(root.prototype);
+  };
+  const roots = [
+    target,
+    target?.constructor?.prototype,
+    Stimulsoft?.Designer,
+    (window as any).StiMobileDesigner,
+    (window as any).StiMobileDesigner?.prototype,
+  ];
+  roots.forEach(patchRoot);
+};
+
+let stimulsoftErrorGuardsInstalled = false;
+
+const installStimulsoftErrorGuards = () => {
+  if (stimulsoftErrorGuardsInstalled || typeof window === 'undefined') return;
+  stimulsoftErrorGuardsInstalled = true;
+  window.addEventListener(
+    'error',
+    event => {
+      if (!isStimulsoftInternalError(event.error || event.message)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },
+    true
+  );
+  window.addEventListener(
+    'unhandledrejection',
+    event => {
+      if (!isStimulsoftInternalError(event.reason)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },
+    true
+  );
+};
+
 const ensureViewer = async (Stimulsoft: any) => {
   if (Stimulsoft?.Viewer?.StiViewer) return Stimulsoft;
   await loadScript('/stimulsoft/stimulsoft.viewer.pack.js');
@@ -155,6 +346,9 @@ export const loadStimulsoftDesigner = (): Promise<any> => {
   if (window.Stimulsoft?.Designer?.StiDesigner) {
     applyLicense(window.Stimulsoft);
     applyStimulsoftWebServer(window.Stimulsoft);
+    installStimulsoftErrorGuards();
+    patchStimulsoftHttp(window.Stimulsoft);
+    patchStimulsoftDesignerRuntime(window.Stimulsoft);
     return Promise.resolve(window.Stimulsoft);
   }
 
@@ -175,6 +369,9 @@ export const loadStimulsoftDesigner = (): Promise<any> => {
         }
         applyLicense(Stimulsoft);
         applyStimulsoftWebServer(Stimulsoft);
+        installStimulsoftErrorGuards();
+        patchStimulsoftHttp(Stimulsoft);
+        patchStimulsoftDesignerRuntime(Stimulsoft);
         return Stimulsoft;
       })
       .catch(error => {

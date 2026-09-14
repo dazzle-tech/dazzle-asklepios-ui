@@ -1,14 +1,13 @@
 export type ReportPrintParameter = {
   name: string;
   label: string;
-  type: 'date' | 'text';
+  type: 'date' | 'text' | 'department';
   required: boolean;
 };
 
 const CONTEXT_PARAM_NAMES = new Set([
   'patientid',
   'encounterid',
-  'departmentid',
   'facilityid',
   'status',
   'timezone',
@@ -52,6 +51,9 @@ const toLabel = (name: string) =>
     .replace(/^\w/, char => char.toUpperCase());
 
 const isKnownDateName = (name: string) => DATE_PARAM_NAMES.has(name.trim().toLowerCase());
+
+const isDepartmentParam = (name: string) =>
+  /^(departmentid|department)$/i.test(String(name || '').trim());
 
 const isDateType = (name: string, typeHint?: string) => {
   if (isKnownDateName(name)) return true;
@@ -233,9 +235,13 @@ const toParameters = (
     if (byName.has(key)) return;
     byName.set(key, {
       name,
-      label: toLabel(name) || name,
-      type: isDateType(name, typeHints[name] || typeHints[key]) ? 'date' : 'text',
-      required: true,
+      label: isDepartmentParam(name) ? 'Department' : toLabel(name) || name,
+      type: isDateType(name, typeHints[name] || typeHints[key])
+        ? 'date'
+        : isDepartmentParam(name)
+          ? 'department'
+          : 'text',
+      required: !isDepartmentParam(name),
     });
   });
   return Array.from(byName.values());
