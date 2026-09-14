@@ -157,6 +157,83 @@ const mapPagedTemplates = (response: unknown, meta: any): PagedResult<Stimulsoft
   };
 };
 
+const unwrapTemplate = (response: unknown): StimulsoftReportTemplate => {
+  if (!response || typeof response !== 'object') {
+    return {} as StimulsoftReportTemplate;
+  }
+  const body = response as Record<string, any>;
+  const nested = body.data;
+  if (
+    nested &&
+    typeof nested === 'object' &&
+    !Array.isArray(nested) &&
+    (nested.id != null || nested.code != null || nested.templateJson != null)
+  ) {
+    return nested as StimulsoftReportTemplate;
+  }
+  return body as StimulsoftReportTemplate;
+};
+
+const noStoreGet = (url: string, params: Record<string, unknown> = {}) => ({
+  url,
+  method: 'GET' as const,
+  cache: 'no-store' as RequestCache,
+  headers: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+  },
+  params: compactParams({
+    ...params,
+    _ts: Date.now(),
+  }),
+});
+
+const patchCachedTemplateLists = (
+  dispatch: (action: unknown) => void,
+  getState: () => unknown,
+  patch: (draft: PagedResult<StimulsoftReportTemplate>) => void
+) => {
+  const api = stimulsoftReportService;
+  api.util
+    .selectCachedArgsForQuery(getState(), 'getStimulsoftReportTemplates')
+    .forEach(args => {
+      dispatch(
+        api.util.updateQueryData('getStimulsoftReportTemplates', args, draft => {
+          if (draft?.data) patch(draft);
+        })
+      );
+    });
+  api.util
+    .selectCachedArgsForQuery(getState(), 'getStimulsoftReportTemplatesByName')
+    .forEach(args => {
+      dispatch(
+        api.util.updateQueryData(
+          'getStimulsoftReportTemplatesByName',
+          args,
+          draft => {
+            if (draft?.data) patch(draft);
+          }
+        )
+      );
+    });
+};
+
+const applyTemplateToPagedList = (
+  draft: PagedResult<StimulsoftReportTemplate>,
+  template: StimulsoftReportTemplate,
+  fallbackId?: number
+) => {
+  const id = template.id ?? fallbackId;
+  if (id == null) return;
+  const row = draft.data.find(item => item.id === id);
+  if (row) {
+    Object.assign(row, template);
+    return;
+  }
+  draft.data = [template, ...draft.data];
+  draft.totalCount = (draft.totalCount ?? 0) + 1;
+};
+
 export const stimulsoftReportService = createApi({
   reducerPath: 'stimulsoftReportApi',
   baseQuery: BaseQuery,
@@ -168,58 +245,51 @@ export const stimulsoftReportService = createApi({
       PagedResult<StimulsoftReportTemplate>,
       PagedParams
     >({
-      query: ({ page, size, sort = 'id,desc', timestamp }) => ({
-        url: '/api/analytics/reports/templates',
-        method: 'GET',
-        cache: 'no-store' as RequestCache,
-        params: { page, size, sort, timestamp },
-      }),
+      query: ({ page, size, sort = 'id,desc' }) =>
+        noStoreGet('/api/analytics/reports/templates', { page, size, sort }),
       transformResponse: mapPagedTemplates,
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        const { timestamp, ...rest } = queryArgs;
+        return `${endpointName}(${JSON.stringify(rest)})`;
+      },
       providesTags: ['StimulsoftReportTemplate'],
+      forceRefetch: () => true,
     }),
 
     getStimulsoftReportTemplatesByName: builder.query<
       PagedResult<StimulsoftReportTemplate>,
       { name: string } & PagedParams
     >({
-      query: ({ name, page, size, sort, timestamp }) => ({
-        url: `/api/analytics/reports/templates/by-name/${encodeURIComponent(name)}`,
-        method: 'GET',
-        cache: 'no-store' as RequestCache,
-        params: { page, size, sort, timestamp },
-      }),
+      query: ({ name, page, size, sort }) =>
+        noStoreGet(
+          `/api/analytics/reports/templates/by-name/${encodeURIComponent(name)}`,
+          { page, size, sort }
+        ),
       transformResponse: mapPagedTemplates,
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        const { timestamp, ...rest } = queryArgs;
+        return `${endpointName}(${JSON.stringify(rest)})`;
+      },
       providesTags: ['StimulsoftReportTemplate'],
+      forceRefetch: () => true,
     }),
 
     getStimulsoftReportTemplateById: builder.query<StimulsoftReportTemplate, number>({
-      query: id => ({
-        url: `/api/analytics/reports/templates/${id}`,
-        method: 'GET',
-        cache: 'no-store' as RequestCache,
-        params: { t: Date.now() },
-      }),
+      query: id => noStoreGet(`/api/analytics/reports/templates/${id}`),
       transformResponse: (response: unknown): StimulsoftReportTemplate => {
-        const record = (
-          response && typeof response === 'object' && 'data' in (response as object)
-            ? (response as { data: StimulsoftReportTemplate }).data
-            : response
-        ) as StimulsoftReportTemplate;
+        const record = unwrapTemplate(response);
         return {
           ...record,
           templateJson: normalizeStimulsoftTemplateJson(record),
         };
       },
       providesTags: (_r, _e, id) => [{ type: 'StimulsoftReportTemplate', id }],
+      forceRefetch: () => true,
     }),
 
     getStimulsoftDesignerSchema: builder.query<DesignerSchema, number | string>({
-      query: idOrCode => ({
-        url: `/api/analytics/reports/templates/${idOrCode}/schema`,
-        method: 'GET',
-        cache: 'no-store' as RequestCache,
-        params: { t: Date.now() },
-      }),
+      query: idOrCode =>
+        noStoreGet(`/api/analytics/reports/templates/${idOrCode}/schema`),
     }),
 
     createStimulsoftReportTemplate: builder.mutation<
@@ -231,7 +301,19 @@ export const stimulsoftReportService = createApi({
         method: 'POST',
         body,
       }),
+      transformResponse: unwrapTemplate,
       invalidatesTags: ['StimulsoftReportTemplate'],
+      async onQueryStarted(_body, { dispatch, getState, queryFulfilled }) {
+        try {
+          const { data: created } = await queryFulfilled;
+          if (!created?.id) return;
+          patchCachedTemplateLists(dispatch, getState, draft => {
+            applyTemplateToPagedList(draft, created);
+          });
+        } catch {
+          // list refetch from invalidatesTags still runs
+        }
+      },
     }),
 
     updateStimulsoftReportTemplate: builder.mutation<
@@ -243,10 +325,25 @@ export const stimulsoftReportService = createApi({
         method: 'PUT',
         body,
       }),
+      transformResponse: unwrapTemplate,
       invalidatesTags: (_r, _e, { id }) => [
         { type: 'StimulsoftReportTemplate', id },
         'StimulsoftReportTemplate',
       ],
+      async onQueryStarted({ id, ...body }, { dispatch, getState, queryFulfilled }) {
+        try {
+          const { data: updated } = await queryFulfilled;
+          patchCachedTemplateLists(dispatch, getState, draft => {
+            applyTemplateToPagedList(
+              draft,
+              { ...body, ...updated, id: updated?.id ?? id },
+              id
+            );
+          });
+        } catch {
+          // list refetch from invalidatesTags still runs
+        }
+      },
     }),
 
     toggleStimulsoftReportTemplateActive: builder.mutation<
@@ -257,10 +354,26 @@ export const stimulsoftReportService = createApi({
         url: `/api/analytics/reports/templates/${id}/toggle-active`,
         method: 'PATCH',
       }),
+      transformResponse: unwrapTemplate,
       invalidatesTags: (_r, _e, id) => [
         { type: 'StimulsoftReportTemplate', id },
         'StimulsoftReportTemplate',
       ],
+      async onQueryStarted(id, { dispatch, getState, queryFulfilled }) {
+        try {
+          const { data: updated } = await queryFulfilled;
+          patchCachedTemplateLists(dispatch, getState, draft => {
+            const row = draft.data.find(item => item.id === id);
+            if (row && updated && Object.keys(updated).length > 0) {
+              Object.assign(row, updated);
+            } else if (row) {
+              row.isActive = !row.isActive;
+            }
+          });
+        } catch {
+          // list refetch from invalidatesTags still runs
+        }
+      },
     }),
 
     printStimulsoftReportPdf: builder.query<Blob, StimulsoftPdfParams>({
@@ -291,11 +404,8 @@ export const stimulsoftReportService = createApi({
       StimulsoftReportTemplate[],
       { module: string; facilityId?: number | null; departmentId?: number | null }
     >({
-      query: ({ module, facilityId, departmentId }) => ({
-        url: '/api/analytics/reports/templates',
-        method: 'GET',
-        cache: 'no-store' as RequestCache,
-        params: compactParams({
+      query: ({ module, facilityId, departmentId }) =>
+        noStoreGet('/api/analytics/reports/templates', {
           module,
           facilityId,
           departmentId,
@@ -303,9 +413,7 @@ export const stimulsoftReportService = createApi({
           page: 0,
           size: 200,
           sort: 'name,asc',
-          t: Date.now(),
         }),
-      }),
       transformResponse: (response: unknown, meta: any, arg) => {
         const mapped = mapPagedTemplates(response, meta);
         return mapped.data.filter(template => {
@@ -335,6 +443,7 @@ export const stimulsoftReportService = createApi({
         });
       },
       providesTags: ['StimulsoftReportTemplate'],
+      forceRefetch: () => true,
     }),
   }),
 });
