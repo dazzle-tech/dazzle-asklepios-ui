@@ -258,7 +258,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
             />
           </div> */}
 
-             <div className="animation-emr-card-patient-emr">
+             {/* <div className="animation-emr-card-patient-emr">
               <EMRCard
                 number={0}
                 footerText="Timeline"
@@ -268,7 +268,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                 height={100}
                 onClick={() => setTimelineModalOpen(true)}
               />
-            </div>
+            </div> */}
 
             <div className="animation-emr-card-patient-emr">
               <EMRCard
