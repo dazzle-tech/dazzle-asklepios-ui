@@ -23,6 +23,11 @@ import {
   toStimulsoftPdfParams,
   useLazyGetStimulsoftReportTemplateByIdQuery,
 } from '@/services/reports/stimulsoftReportService';
+import {
+  useGetActiveDepartmentByFacilityListQuery,
+  useGetAllDepartmentsWithoutPaginationQuery,
+} from '@/services/security/departmentService';
+import { useEnumOptions } from '@/services/enumsApi';
 import type { ModuleReportContext } from './types';
 
 const StimulsoftViewerHost = React.lazy(
@@ -49,6 +54,48 @@ const toParamValue = (raw: unknown) => {
   }
   return String(raw ?? '').trim();
 };
+
+
+const applyContextDefaults = (
+  parameters: ReportPrintParameter[],
+  context?: ModuleReportContext
+) => {
+  const next = valuesFromParameters(parameters);
+  Object.entries(context || {}).forEach(([key, raw]) => {
+    if (raw == null || raw === '') return;
+    const param = parameters.find(
+      item => item.name.toLowerCase() === key.toLowerCase()
+    );
+    if (param) next[param.name] = String(raw);
+  });
+  return next;
+};
+
+const departmentOptions = (list: unknown) => {
+  const record =
+    list && typeof list === 'object' && !Array.isArray(list)
+      ? (list as Record<string, unknown>)
+      : null;
+  const rows = Array.isArray(list)
+    ? list
+    : Array.isArray(record?.data)
+      ? record.data
+      : Array.isArray(record?.content)
+        ? record.content
+        : [];
+  return rows
+    .map((item: any) => {
+      const id = Number(item?.id ?? item?.departmentId);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      return { label: String(item?.name || item?.departmentName || id), value: String(id) };
+    })
+    .filter(Boolean) as { label: string; value: string }[];
+};
+
+const FALLBACK_COVERAGE_TYPES = [
+  { label: 'Self Pay', value: 'SELF_PAY' },
+  { label: 'Insurance', value: 'INSURANCE' },
+];
 
 const isAbortError = (error: unknown) => {
   const err = error as { name?: string; status?: string; message?: string; error?: string };
@@ -108,6 +155,28 @@ const PrintReportDialog = ({
   const templateCode = String(resolved?.code || report?.code || '').trim();
   const titleName = resolved?.name || report?.name;
   const isView = mode === 'view';
+
+  const hasDepartmentParam = parameters.some(param => param.type === 'department');
+  const facilityId = Number(context?.facilityId) || 0;
+  const { data: facilityDepartments, isFetching: facilityDepartmentsLoading } =
+    useGetActiveDepartmentByFacilityListQuery(
+      { facilityId },
+      { skip: !open || !hasDepartmentParam || !facilityId }
+    );
+  const { data: allDepartments, isFetching: allDepartmentsLoading } =
+    useGetAllDepartmentsWithoutPaginationQuery(undefined, {
+      skip: !open || !hasDepartmentParam || !!facilityId,
+    });
+  const departments = useMemo(
+    () =>
+      departmentOptions(facilityId ? facilityDepartments : allDepartments),
+    [allDepartments, facilityDepartments, facilityId]
+  );
+  const departmentsLoading = facilityDepartmentsLoading || allDepartmentsLoading;
+  const billingCoverageOptions = useEnumOptions('BillingCoverageType');
+  const coverageTypeOptions = billingCoverageOptions.length
+    ? billingCoverageOptions
+    : FALLBACK_COVERAGE_TYPES;
 
   useEffect(() => {
     if (!open || !report) {
@@ -295,6 +364,42 @@ const PrintReportDialog = ({
                       [param.name]: event.target.value,
                     }))
                   }
+                />
+
+              ) : param.type === 'department' ? (
+                <SelectPicker
+                  data={departments}
+                  value={String(values[param.name] || '') || null}
+                  onChange={value =>
+                    setValues(current => ({
+                      ...current,
+                      [param.name]: value || '',
+                    }))
+                  }
+                  placeholder="Select department"
+                  searchable
+                  cleanable
+                  block
+                  loading={departmentsLoading}
+                />
+              ) : param.type === 'enum' ? (
+                <SelectPicker
+                  data={
+                    param.enumName === 'BillingCoverageType'
+                      ? coverageTypeOptions
+                      : []
+                  }
+                  value={String(values[param.name] || '') || null}
+                  onChange={value =>
+                    setValues(current => ({
+                      ...current,
+                      [param.name]: value || '',
+                    }))
+                  }
+                  placeholder="All types"
+                  searchable
+                  cleanable
+                  block
                 />
               ) : (
                 <Input
