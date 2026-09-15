@@ -260,6 +260,7 @@ import { financialDocumentAdjustmentService } from './services/billing/financial
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -575,6 +576,8 @@ export const store = configureStore({
 
     [medicationValidationService.reducerPath]: medicationValidationService.reducer,
 
+     [autoPopulationService.reducerPath]: autoPopulationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -874,7 +877,8 @@ export const store = configureStore({
         PointOfSaleTransactionService.middleware,
         pointOfSaleWebhookLogService.middleware,
         financialDocumentAdjustmentService.middleware,
-        patientTimelineService.middleware
+        patientTimelineService.middleware,
+        autoPopulationService.middleware
       ) as any
 });
 
