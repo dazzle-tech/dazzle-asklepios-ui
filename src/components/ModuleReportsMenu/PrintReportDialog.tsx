@@ -27,6 +27,8 @@ import {
   useGetActiveDepartmentByFacilityListQuery,
   useGetAllDepartmentsWithoutPaginationQuery,
 } from '@/services/security/departmentService';
+import { useEnumOptions } from '@/services/enumsApi';
+
 import type { ModuleReportContext } from './types';
 
 const StimulsoftViewerHost = React.lazy(
@@ -89,6 +91,12 @@ const departmentOptions = (list: unknown) => {
     })
     .filter(Boolean) as { label: string; value: string }[];
 };
+
+const FALLBACK_COVERAGE_TYPES = [
+  { label: 'Self Pay', value: 'SELF_PAY' },
+  { label: 'Insurance', value: 'INSURANCE' },
+];
+
 
 const isAbortError = (error: unknown) => {
   const err = error as { name?: string; status?: string; message?: string; error?: string };
@@ -165,6 +173,10 @@ const PrintReportDialog = ({
     [allDepartments, facilityDepartments, facilityId]
   );
   const departmentsLoading = facilityDepartmentsLoading || allDepartmentsLoading;
+  const billingCoverageOptions = useEnumOptions('BillingCoverageType');
+  const coverageTypeOptions = billingCoverageOptions.length
+    ? billingCoverageOptions
+    : FALLBACK_COVERAGE_TYPES;
 
   useEffect(() => {
     if (!open || !report) {
@@ -376,6 +388,25 @@ const PrintReportDialog = ({
                   cleanable
                   block
                   loading={departmentsLoading}
+                />
+              ) : param.type === 'enum' ? (
+                <SelectPicker
+                  data={
+                    param.enumName === 'BillingCoverageType'
+                      ? coverageTypeOptions
+                      : []
+                  }
+                  value={String(values[param.name] || '') || null}
+                  onChange={value =>
+                    setValues(current => ({
+                      ...current,
+                      [param.name]: value || '',
+                    }))
+                  }
+                  placeholder="All types"
+                  searchable
+                  cleanable
+                  block
                 />
               ) : (
                 <Input

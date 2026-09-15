@@ -1,8 +1,9 @@
 export type ReportPrintParameter = {
   name: string;
   label: string;
-  type: 'date' | 'text' | 'department';
+  type: 'date' | 'text' | 'department' | 'enum';
   required: boolean;
+  enumName?: string;
 };
 
 const CONTEXT_PARAM_NAMES = new Set([
@@ -55,6 +56,40 @@ const isKnownDateName = (name: string) => DATE_PARAM_NAMES.has(name.trim().toLow
 const isDepartmentParam = (name: string) =>
   /^(departmentid|department)$/i.test(String(name || '').trim());
 
+type ParamHint = {
+  enumName?: string;
+  label?: string;
+  required?: boolean;
+};
+
+const PATH_PARAM_HINTS: { test: RegExp; params: Record<string, ParamHint> }[] = [
+  {
+    test: /\/api\/analytics\/financial-reports/i,
+    params: {
+      type: {
+        enumName: 'BillingCoverageType',
+        label: 'Coverage Type',
+        required: false,
+      },
+    },
+  },
+];
+
+const applyPathParamHints = (
+  path: string,
+  names: string[],
+  hints: Record<string, ParamHint>
+) => {
+  PATH_PARAM_HINTS.forEach(rule => {
+    if (!rule.test.test(path)) return;
+    Object.entries(rule.params).forEach(([paramName, hint]) => {
+      addName(names, paramName);
+      hints[paramName.toLowerCase()] = hint;
+    });
+  });
+};
+
+
 const isDateType = (name: string, typeHint?: string) => {
   if (isKnownDateName(name)) return true;
   const hint = String(typeHint || '').toLowerCase();
@@ -106,7 +141,11 @@ const resetGlobalRegex = (regex: RegExp) => {
   regex.lastIndex = 0;
 };
 
-const collectFromDataPath = (path: string, names: string[]) => {
+const collectFromDataPath = (
+  path: string,
+  names: string[],
+  hints: Record<string, ParamHint> = {}
+) => {
   if (!path || path.length > 4000) return;
   const decoded = path
     .replace(/&amp;/g, '&')
@@ -127,21 +166,27 @@ const collectFromDataPath = (path: string, names: string[]) => {
     return _match;
   });
   if (/daily-visits/i.test(decoded)) addName(names, 'date');
+  applyPathParamHints(decoded, names, hints);
 };
 
-const collectFromValue = (value: unknown, names: string[], depth = 0) => {
+const collectFromValue = (
+  value: unknown,
+  names: string[],
+  hints: Record<string, ParamHint> = {},
+  depth = 0
+) => {
   if (depth > 18) return;
   if (typeof value === 'string') {
     if (
       value.length <= 4000 &&
       (/\/api\//i.test(value) || /[?&][A-Za-z_]+=/.test(value) || /daily-visits/i.test(value))
     ) {
-      collectFromDataPath(value, names);
+      collectFromDataPath(value, names, hints);
     }
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach(item => collectFromValue(item, names, depth + 1));
+    value.forEach(item => collectFromValue(item, names, hints, depth + 1));
     return;
   }
   const record = asRecord(value);
@@ -162,7 +207,7 @@ const collectFromValue = (value: unknown, names: string[], depth = 0) => {
   Object.entries(record).forEach(([key, child]) => {
     const lower = key.toLowerCase();
     if (lower === 'image' || lower === 'bytes' || lower === 'watermark') return;
-    collectFromValue(child, names, depth + 1);
+    collectFromValue(child, names, hints, depth + 1);
   });
 };
 
@@ -224,7 +269,8 @@ const parseTemplateJson = (templateJson: string): unknown => {
 
 const toParameters = (
   names: string[],
-  typeHints: Record<string, string> = {}
+  typeHints: Record<string, string> = {},
+  enumHints: Record<string, ParamHint> = {}
 ): ReportPrintParameter[] => {
   const byName = new Map<string, ReportPrintParameter>();
   names.forEach(raw => {
@@ -233,15 +279,21 @@ const toParameters = (
     if (!PARAM_NAME_RE.test(name) || !shouldKeepParam(name)) return;
     const key = name.toLowerCase();
     if (byName.has(key)) return;
+    const enumHint = enumHints[key];
     byName.set(key, {
       name,
-      label: isDepartmentParam(name) ? 'Department' : toLabel(name) || name,
-      type: isDateType(name, typeHints[name] || typeHints[key])
-        ? 'date'
-        : isDepartmentParam(name)
-          ? 'department'
-          : 'text',
-      required: !isDepartmentParam(name),
+      label:
+        enumHint?.label ||
+        (isDepartmentParam(name) ? 'Department' : toLabel(name) || name),
+      type: enumHint?.enumName
+        ? 'enum'
+        : isDateType(name, typeHints[name] || typeHints[key])
+          ? 'date'
+          : isDepartmentParam(name)
+            ? 'department'
+            : 'text',
+      required: enumHint ? enumHint.required !== false : !isDepartmentParam(name),
+      enumName: enumHint?.enumName,
     });
   });
   return Array.from(byName.values());
@@ -254,22 +306,24 @@ export const extractReportPrintParameters = (
   if (!text.trim()) return [];
 
   const names: string[] = [];
+  const enumHints: Record<string, ParamHint> = {};
   resetGlobalRegex(DATE_TOKEN_RE);
   text.replace(DATE_TOKEN_RE, (_match, name: string) => {
     addName(names, name);
     return _match;
   });
   if (/daily-visits/i.test(text)) addName(names, 'date');
+  applyPathParamHints(text, names, enumHints);
 
   const parsed = parseTemplateJson(text);
   const typeHints: Record<string, string> = {};
   if (parsed && typeof parsed !== 'string') {
-    collectFromValue(parsed, names);
+    collectFromValue(parsed, names, enumHints);
   } else {
-    collectFromDataPath(text.slice(0, 20000), names);
+    collectFromDataPath(text.slice(0, 20000), names, enumHints);
   }
 
-  return toParameters(names, typeHints);
+  return toParameters(names, typeHints, enumHints);
 };
 
 const stimCollection = (value: any): any[] => {
@@ -292,10 +346,11 @@ export const extractReportPrintParametersFromStimulsoftReport = (
 ): ReportPrintParameter[] => {
   const names: string[] = [];
   const typeHints: Record<string, string> = {};
+  const enumHints: Record<string, ParamHint> = {};
 
   stimCollection(report?.dictionary?.databases).forEach((database: any) => {
     const path = String(database?.pathData || database?.path || database?.url || '');
-    collectFromDataPath(path, names);
+    collectFromDataPath(path, names, enumHints);
   });
   stimCollection(report?.dictionary?.dataSources).forEach((source: any) => {
     collectFromDataPath(
@@ -306,7 +361,8 @@ export const extractReportPrintParametersFromStimulsoftReport = (
           source?.path ||
           ''
       ),
-      names
+      names,
+      enumHints
     );
   });
 
@@ -323,7 +379,7 @@ export const extractReportPrintParametersFromStimulsoftReport = (
     }
   });
 
-  return toParameters(names, typeHints);
+  return toParameters(names, typeHints, enumHints);
 };
 
 export const defaultDateValue = (name: string): string => {
