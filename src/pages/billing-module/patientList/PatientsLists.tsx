@@ -1146,7 +1146,7 @@ const PatientsLists = () => {
       navigate('/urgent-care-start-triage', {
         state: {
           info: 'to_Urgent_Care_Start_Triage',
-          fromPage: 'urgent-care-triage',
+          fromPage: 'PatientsLists',
           patient: patientData,
           encounter: encounterData,
           emergencyTriageNew

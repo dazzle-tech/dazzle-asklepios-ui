@@ -9,7 +9,6 @@ export type ReportPrintParameter = {
 const CONTEXT_PARAM_NAMES = new Set([
   'patientid',
   'encounterid',
-  'departmentid',
   'facilityid',
   'status',
   'timezone',
@@ -54,7 +53,6 @@ const toLabel = (name: string) =>
 
 const isKnownDateName = (name: string) => DATE_PARAM_NAMES.has(name.trim().toLowerCase());
 
-
 const isDepartmentParam = (name: string) =>
   /^(departmentid|department)$/i.test(String(name || '').trim());
 
@@ -90,6 +88,7 @@ const applyPathParamHints = (
     });
   });
 };
+
 
 const isDateType = (name: string, typeHint?: string) => {
   if (isKnownDateName(name)) return true;

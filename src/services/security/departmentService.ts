@@ -342,6 +342,17 @@ export const departmentService = createApi({
         };
       },
       providesTags: ['Department']
+    }),
+
+    // GET /api/setup/department/{departmentId}/age-allowed?dateOfBirth=YYYY-MM-DD
+    isPatientAgeAllowed: builder.query<
+      boolean,
+      { departmentId: number | string; dateOfBirth: string }
+    >({
+      query: ({ departmentId, dateOfBirth }) => ({
+        url: `/api/setup/department/${departmentId}/age-allowed`,
+        params: { dateOfBirth }
+      })
     })
   })
 });
@@ -384,5 +395,7 @@ export const {
   useGetActiveDepartmentByTypeQuery,
   useGetActiveDepartmentByTypeAndFacilityQuery,
   useLazyGetActiveDepartmentByTypeAndFacilityQuery,
-  useLazyGetActiveDepartmentByTypeQuery
+  useLazyGetActiveDepartmentByTypeQuery,
+  useIsPatientAgeAllowedQuery,
+  useLazyIsPatientAgeAllowedQuery
 } = departmentService;

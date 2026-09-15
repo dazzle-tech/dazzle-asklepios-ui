@@ -5,14 +5,16 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import RescheduleAppointmentsLookupModal from '@/pages/encounter/encounter-component/diagnostics-order-new/RescheduleAppointmentsLookupModal';
 import {
   useAcceptDiagnosticOrderTestMutation,
   useBulkAcceptDiagnosticOrderTestsMutation,
   useBulkRejectDiagnosticOrderTestsMutation,
+  useCancelDiagnosticOrderTestMutation,
   useFilterDiagnosticOrderTestsQuery,
   useRejectDiagnosticOrderTestMutation,
-  useCancelDiagnosticOrderTestMutation,
   useUndoAcceptDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
@@ -28,26 +30,23 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faCalendarCheck, faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay , faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import ReloadIcon from '@rsuite/icons/Reload';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Checkbox, Dropdown, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import PatientArrivalModal from './PatientArrivalModal';
-import RescheduleAppointmentsLookupModal from '@/pages/encounter/encounter-component/diagnostics-order-new/RescheduleAppointmentsLookupModal';
 import './styles.less';
-import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
-import { useGetUserFullNameByLoginQuery } from '@/services/userService';
-import UserDateCell from '@/components/UserDateCell';
 
 type Props = {
   order: any;

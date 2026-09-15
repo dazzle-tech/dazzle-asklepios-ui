@@ -64,6 +64,11 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  ageSpecific: false,
+  fromAge: null,
+  fromAgeUnit: null,
+  toAge: null,
+  toAgeUnit: null,
   workingDays: []
 };
 // ------------------- Facility -------------------
@@ -4012,3 +4017,15 @@ export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
   dateFrom: null,
   dateTo: null,
 };
+
+export const newTimelineResponse: modelTypes.TimelineResponse = {
+  request_id: '',
+  timeline: [],
+  summary: '',
+  processing_metadata: {
+    model: '',
+    timestamp: '',
+    input_fields_count: 0,
+    timeline_event_count: 0
+  }
+}

@@ -353,6 +353,7 @@ const resolveReportDataUrl = (url: string): string => {
 };
 
 type OriginalXhr = {
+  XHR: typeof XMLHttpRequest;
   open: typeof XMLHttpRequest.prototype.open;
   send: typeof XMLHttpRequest.prototype.send;
   fetch: typeof fetch;
@@ -362,6 +363,7 @@ const originalHttp = (): OriginalXhr => {
   const w = window as Window & { __stiXhrOriginal?: OriginalXhr };
   if (!w.__stiXhrOriginal) {
     w.__stiXhrOriginal = {
+      XHR: window.XMLHttpRequest,
       open: XMLHttpRequest.prototype.open,
       send: XMLHttpRequest.prototype.send,
       fetch: window.fetch.bind(window),
@@ -451,6 +453,135 @@ const applyAuthHeadersToXhr = (xhr: XMLHttpRequest) => {
   });
 };
 
+const mergeAuthHeadersList = (
+  headers?: { key?: string; value?: string }[]
+) => {
+  const authHeaders = getStimulsoftAuthHeaders();
+  const existing = Array.isArray(headers) ? headers : [];
+  return [
+    ...existing.filter(
+      item => !AUTH_HEADER_NAMES.has(String(item?.key).toLowerCase())
+    ),
+    ...authHeaders,
+  ];
+};
+
+const resolveHttpFilePath = (filePath: string) => {
+  if (!isHisApiPath(filePath)) return filePath;
+  return applyLiveQueryParams(
+    toDesignerApiUrl(expandReportVariables(activeReport, filePath)),
+    activeReport
+  );
+};
+
+const emptyHttpBody = (binary?: boolean) => (binary ? new Uint8Array() : '[]');
+
+/**
+ * Stimulsoft dictionary/data loads go through System.IO.Http.getFile as a
+ * synchronous XHR. A 401 throws "Unauthorized" and the whole dictionary tree
+ * (data sources, variables, functions) stays empty.
+ */
+export const patchStimulsoftHttp = (Stimulsoft?: any) => {
+  const sti = Stimulsoft ?? window.Stimulsoft;
+  const Http = sti?.System?.IO?.Http;
+  if (!Http || Http.__stiHttpPatched) return;
+  Http.__stiHttpPatched = true;
+
+  if (typeof Http.getFile === 'function') {
+    const originalGetFile = Http.getFile.bind(Http);
+    Http.getFile = function getFile(
+      filePath: string,
+      binary?: boolean,
+      contentType?: string,
+      headers?: { key?: string; value?: string }[],
+      ...rest: unknown[]
+    ) {
+      const url = resolveHttpFilePath(filePath);
+      try {
+        return originalGetFile(
+          url,
+          binary,
+          contentType,
+          mergeAuthHeadersList(headers),
+          ...rest
+        );
+      } catch (error) {
+        if (!isHisApiPath(filePath) && !isHisApiPath(url)) throw error;
+        console.warn('[Stimulsoft] data file request failed', url, error);
+        return emptyHttpBody(binary);
+      }
+    };
+  }
+
+  if (typeof Http.getFileAsync === 'function') {
+    const originalGetFileAsync = Http.getFileAsync.bind(Http);
+    Http.getFileAsync = function getFileAsync(
+      callback: (data: any) => void,
+      filePath: string,
+      binary?: boolean,
+      contentType?: string,
+      headers?: { key?: string; value?: string }[],
+      ...rest: unknown[]
+    ) {
+      const url = resolveHttpFilePath(filePath);
+      const done = (data: any) => {
+        if (data == null && (isHisApiPath(filePath) || isHisApiPath(url))) {
+          callback?.(emptyHttpBody(binary));
+          return;
+        }
+        callback?.(data);
+      };
+      try {
+        return originalGetFileAsync(
+          done,
+          url,
+          binary,
+          contentType,
+          mergeAuthHeadersList(headers),
+          ...rest
+        );
+      } catch (error) {
+        if (!isHisApiPath(filePath) && !isHisApiPath(url)) throw error;
+        console.warn('[Stimulsoft] data file request failed', url, error);
+        callback?.(emptyHttpBody(binary));
+      }
+    };
+  }
+
+  if (typeof Http.send === 'function') {
+    const originalSend = Http.send.bind(Http);
+    Http.send = function send(
+      method: string,
+      url: string,
+      body?: string,
+      headers?: { key?: string; value?: string }[],
+      ...rest: unknown[]
+    ) {
+      const resolved = resolveHttpFilePath(url);
+      try {
+        const result = originalSend(
+          method,
+          resolved,
+          body,
+          mergeAuthHeadersList(headers),
+          ...rest
+        );
+        if (
+          result &&
+          Number(result.status) === 401 &&
+          (isHisApiPath(url) || isHisApiPath(resolved))
+        ) {
+          return { ...result, status: 200, responseText: '[]', statusText: 'OK' };
+        }
+        return result;
+      } catch (error) {
+        if (!isHisApiPath(url) && !isHisApiPath(resolved)) throw error;
+        return { status: 200, responseText: '[]', statusText: 'OK' };
+      }
+    };
+  }
+};
+
 /**
  * Attach the current JWT to every HIS /api call from Stimulsoft.
  * Rewrite only GET URLs to the UI origin so webpack can proxy them (sync XHR
@@ -481,32 +612,106 @@ export const installStimulsoftApiInterceptor = () => {
   const isGet = (method: string) => methodOf(method) === 'GET';
   const skipAuth = (method: string) => methodOf(method) === 'OPTIONS';
 
+  const markAndOpen = function (
+    xhr: XMLHttpRequest,
+    nativeOpen: typeof XMLHttpRequest.prototype.open,
+    method: string,
+    url: string | URL,
+    rest: unknown[]
+  ) {
+    const raw = String(url);
+    const rewrite = isGet(method) && isHisApiPath(raw);
+    const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
+    const flagged = xhr as XMLHttpRequest & {
+      __stiHisApi?: boolean;
+      __stiUrl?: string;
+    };
+    flagged.__stiUrl = resolved;
+    flagged.__stiHisApi =
+      !skipAuth(method) && (isHisApiPath(raw) || isHisApiPath(resolved));
+    const result = nativeOpen.call(xhr, method, resolved, ...(rest as []));
+    if (flagged.__stiHisApi) applyAuthHeadersToXhr(xhr);
+    return result;
+  };
+
+  const sendWithAuth = function (
+    xhr: XMLHttpRequest,
+    nativeSend: typeof XMLHttpRequest.prototype.send,
+    body?: Document | XMLHttpRequestBodyInit | null
+  ) {
+    const flagged = xhr as XMLHttpRequest & {
+      __stiHisApi?: boolean;
+      __stiUrl?: string;
+    };
+    if (flagged.__stiHisApi || isHisApiPath(flagged.__stiUrl)) {
+      applyAuthHeadersToXhr(xhr);
+    }
+    const result = nativeSend.call(xhr, body);
+    if (
+      (flagged.__stiHisApi || isHisApiPath(flagged.__stiUrl)) &&
+      xhr.status === 401
+    ) {
+      try {
+        Object.defineProperty(xhr, 'status', { configurable: true, value: 200 });
+        Object.defineProperty(xhr, 'statusText', {
+          configurable: true,
+          value: 'OK',
+        });
+        Object.defineProperty(xhr, 'responseText', {
+          configurable: true,
+          value: '[]',
+        });
+        Object.defineProperty(xhr, 'response', {
+          configurable: true,
+          value: '[]',
+        });
+      } catch {
+        // some browsers keep status read-only
+      }
+    }
+    return result;
+  };
+
   XMLHttpRequest.prototype.open = function (
     method: string,
     url: string | URL,
     ...rest: unknown[]
   ) {
-    const raw = String(url);
-    const rewrite = isGet(method) && isHisApiPath(raw);
-    const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
-    (this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi =
-      !skipAuth(method) && (isHisApiPath(raw) || isHisApiPath(resolved));
-    const result = originals.open.call(this, method, resolved, ...(rest as []));
-    if ((this as XMLHttpRequest & { __stiHisApi?: boolean }).__stiHisApi) {
-      applyAuthHeadersToXhr(this);
-    }
-    return result;
+    return markAndOpen(this, originals.open, method, url, rest);
   };
 
   XMLHttpRequest.prototype.send = function (
     body?: Document | XMLHttpRequestBodyInit | null
   ) {
-    const xhr = this as XMLHttpRequest & { __stiHisApi?: boolean };
-    if (xhr.__stiHisApi) {
-      applyAuthHeadersToXhr(xhr);
-    }
-    return originals.send.call(this, body);
+    return sendWithAuth(this, originals.send, body);
   };
+
+  const w = window as Window & { __stiXhrWrapped?: boolean };
+  if (!w.__stiXhrWrapped) {
+    w.__stiXhrWrapped = true;
+    const NativeXHR = originals.XHR;
+    const PatchedXHR = function PatchedXHR(
+      this: XMLHttpRequest
+    ): XMLHttpRequest {
+      const xhr = new NativeXHR();
+      const nativeOpen = originals.open.bind(xhr);
+      const nativeSend = originals.send.bind(xhr);
+      xhr.open = function (
+        method: string,
+        url: string | URL,
+        ...rest: unknown[]
+      ) {
+        return markAndOpen(xhr, nativeOpen, method, url, rest);
+      } as typeof xhr.open;
+      xhr.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
+        return sendWithAuth(xhr, nativeSend, body);
+      };
+      return xhr;
+    } as unknown as typeof XMLHttpRequest;
+    PatchedXHR.prototype = NativeXHR.prototype;
+    Object.setPrototypeOf(PatchedXHR, NativeXHR);
+    window.XMLHttpRequest = PatchedXHR;
+  }
 
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const originalUrl =
@@ -705,6 +910,7 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
   attachPrepareVariables(report);
   patchStimulsoftParsePath(Stimulsoft);
   installStimulsoftApiInterceptor();
+  patchStimulsoftHttp(Stimulsoft);
   ensureVariablesFromApiPaths(Stimulsoft, report);
   listDatabases(report).forEach(applyAuthHeadersToDatabase);
 };

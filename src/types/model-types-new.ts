@@ -71,6 +71,11 @@ export interface Department {
   requirePractitioner: boolean,
   requireBilling: boolean,
   requirePreAssessment: boolean,
+  ageSpecific: boolean;
+  fromAge?: number | null;
+  fromAgeUnit?: string | null;
+  toAge?: number | null;
+  toAgeUnit?: string | null;
   workingDays?: OrganizationWorkingDay[];
 }
 
@@ -95,6 +100,11 @@ export interface DepartmentResponseVM {
   requirePractitioner?: boolean | null;
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
+  ageSpecific?: boolean | null;
+  fromAge?: number | null;
+  fromAgeUnit?: string | null;
+  toAge?: number | null;
+  toAgeUnit?: string | null;
   workingDays?: OrganizationWorkingDay[] | null;
 }
 
@@ -5068,53 +5078,95 @@ export type CurrentMedicationForm = CurrentMedication & {
 };
 
 
-export interface PatientUccMedicationOrder {
-  id?: number;
+  export interface PatientUccMedicationOrder {
+    id?: number;
 
-  patientId: number;
-  encounterId: number;
+    patientId: number;
+    encounterId: number;
 
-  activeIngredientId: number;
+    activeIngredientId: number;
 
-  instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
-  instructionText?: string | null;
+    instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+    instructionText?: string | null;
 
-  dose?: number | null;
-  doseUnit?: string | null;
-  route?: string | null;
-  frequency?: string | null;
+    dose?: number | null;
+    doseUnit?: string | null;
+    route?: string | null;
+    frequency?: string | null;
 
-  isHighAlert?: boolean | null;
+    isHighAlert?: boolean | null;
 
-  status?:
-  | 'WAITING_DOUBLE_CHECK'
-  | 'ADMINISTERED'
-  | 'CANCELLED'
-  | 'DISCARDED'
-  | 'NEW'
-  | 'SUBMITTED';
+    status?:
+    | 'WAITING_DOUBLE_CHECK'
+    | 'ADMINISTERED'
+    | 'CANCELLED'
+    | 'DISCARDED'
+    | 'NEW'
+    | 'SUBMITTED';
 
-  submittedDate?: string | Date | null;
-  submittedBy?: string | null;
+    submittedDate?: string | Date | null;
+    submittedBy?: string | null;
 
-  administeredDate?: string | Date | null;
-  administeredBy?: string | null;
+    administeredDate?: string | Date | null;
+    administeredBy?: string | null;
 
-  doubleCheckedDate?: string | Date | null;
-  doubleCheckedBy?: string | null;
+    doubleCheckedDate?: string | Date | null;
+    doubleCheckedBy?: string | null;
 
-  discardedDate?: string | Date | null;
-  discardedBy?: string | null;
-  discardReason?: string | null;
+    discardedDate?: string | Date | null;
+    discardedBy?: string | null;
+    discardReason?: string | null;
 
-  cancelledDate?: string | Date | null;
-  cancelledBy?: string | null;
-  cancellationReason?: string | null;
-  createdBy?: string | null;
-  createdDate?: string | Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: string | Date | null;
-}
+    cancelledDate?: string | Date | null;
+    cancelledBy?: string | null;
+    cancellationReason?: string | null;
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
+
+  export interface PatientUccMedicationOrderGroup {
+    orderGroupId: number;
+
+    patientId: number;
+    encounterId: number;
+    activeIngredientId: number;
+
+    instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+
+    instructionText?: string | null;
+
+    dose?: number | null;
+    doseUnit?: string | null;
+    route?: string | null;
+
+    frequencyNumber?: number | null;
+    frequencyUnit?: string | null;
+    duration?: number | null;
+    startTime?: string | null;
+
+    doseCount: number;
+
+    isHighAlert?: boolean | null;
+
+    status?:
+      | 'WAITING_DOUBLE_CHECK'
+      | 'ADMINISTERED'
+      | 'CANCELLED'
+      | 'DISCARDED'
+      | 'NEW'
+      | 'SUBMITTED';
+
+    submittedDate?: string | Date | null;
+    submittedBy?: string | null;
+
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
 
 // ------------------- Dental Procedures -------------------
 
@@ -7197,4 +7249,27 @@ export interface FLACCPainScaleUpdateDTO {
   activity: string;
   cry: string;
   consolability: string;
+}
+
+export interface TimelineEvent {
+  date: string;
+  event_type: string;
+  title: string;
+  description: string;
+  clinical_importance: string;
+  source: string;
+}
+
+export interface ProcessingMetadata {
+  model: string;
+  timestamp: string;
+  input_fields_count: number;
+  timeline_event_count: number;
+}
+
+export interface TimelineResponse {
+  request_id: string;
+  timeline: TimelineEvent[];
+  summary: string;
+  processing_metadata: ProcessingMetadata;
 }

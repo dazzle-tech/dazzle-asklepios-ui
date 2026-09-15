@@ -53,11 +53,11 @@ const stimulsoftProxyStripPath =
   process.env.STIMULSOFT_PROXY_STRIP_PATH === 'true';
 
 const forwardHisAuthHeaders = (proxyReq, req) => {
-  const authorization = req.headers.authorization;
+  const authorization = req.headers.authorization || req.headers.Authorization;
   if (authorization) {
     proxyReq.setHeader('Authorization', authorization);
   }
-  const idToken = req.headers.id_token;
+  const idToken = req.headers.id_token || req.headers['id-token'];
   if (idToken) {
     proxyReq.setHeader('id_token', idToken);
   }
@@ -92,7 +92,21 @@ module.exports = {
       overlay: {
         runtimeErrors: error => {
           const message = String(error?.message || error || '');
-          return message !== 'Unauthorized' && !message.includes('Unauthorized');
+          const stack = String(error?.stack || '');
+          if (message === 'Unauthorized' || message.includes('Unauthorized')) {
+            return false;
+          }
+          if (
+            stack.includes('StiDictionaryHelper') ||
+            stack.includes('synchronizeDictionary') ||
+            stack.includes('StiMobileDesigner') ||
+            stack.includes('ZoomPage') ||
+            message.includes("reading 'forEach'") ||
+            message.includes("reading 'repaint'")
+          ) {
+            return false;
+          }
+          return true;
         },
       },
     },
