@@ -292,7 +292,7 @@ const toParameters = (
           : isDepartmentParam(name)
             ? 'department'
             : 'text',
-      required: enumHint ? enumHint.required !== false : !isDepartmentParam(name),
+      required: enumHint ? enumHint.required !== false : true,
       enumName: enumHint?.enumName,
     });
   });

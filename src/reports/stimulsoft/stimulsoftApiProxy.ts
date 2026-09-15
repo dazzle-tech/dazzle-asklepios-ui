@@ -55,11 +55,41 @@ const defaultDateRange = () => {
   return { startDate: toIsoDate(start), endDate: toIsoDate(end) };
 };
 
+const readSelectedDepartment = (): {
+  departmentId?: number;
+  facilityId?: number;
+} => {
+  try {
+    const raw = localStorage.getItem('selectedDepartment');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const departmentId = Number(parsed?.departmentId ?? parsed?.id);
+    const facilityId = Number(parsed?.facilityId ?? parsed?.facility?.id);
+    return {
+      departmentId:
+        Number.isFinite(departmentId) && departmentId > 0
+          ? departmentId
+          : undefined,
+      facilityId:
+        Number.isFinite(facilityId) && facilityId > 0 ? facilityId : undefined,
+    };
+  } catch {
+    return {};
+  }
+};
+
 const defaultForVariable = (name: string): string | null => {
   const { startDate, endDate } = defaultDateRange();
   if (name === 'startDate' || name === 'fromDate') return startDate;
   if (name === 'endDate' || name === 'toDate') return endDate;
   if (/date/i.test(name)) return endDate;
+  const session = readSelectedDepartment();
+  if (/^(departmentid|department)$/i.test(name) && session.departmentId) {
+    return String(session.departmentId);
+  }
+  if (/^facilityid$/i.test(name) && session.facilityId) {
+    return String(session.facilityId);
+  }
   return null;
 };
 
@@ -250,7 +280,6 @@ const omitBlankQueryParams = (url: string): string => {
 
 const isOptionalQueryParam = (name: string, pathname: string) => {
   if (/financial-reports/i.test(pathname) && /^type$/i.test(name)) return true;
-  if (/^(departmentid|department)$/i.test(name)) return true;
   return false;
 };
 
@@ -264,7 +293,7 @@ const applyLiveQueryParams = (url: string, report: any): string => {
       const key = String(rawKey ?? '');
       if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) return;
       const current = parsed.searchParams.get(key) ?? '';
-      const live = getVariableValue(report, key);
+      const live = getVariableValue(report, key) ?? defaultForVariable(key);
       if (live == null || live === '') {
         if (
           isOptionalQueryParam(key, parsed.pathname) ||
@@ -291,6 +320,43 @@ const applyLiveQueryParams = (url: string, report: any): string => {
     return omitBlankQueryParams(url);
   }
 };
+
+const KPI_DEFAULT_QUERY_KEYS = ['startDate', 'endDate', 'departmentId'] as const;
+
+/** Designer retrieve often uses the path with no query. KPI endpoints still need dates + department. */
+const ensureKpiQueryDefaults = (url: string, report: any): string => {
+  try {
+    const parsed = tryUrl(url);
+    if (!parsed || !/\/api\/analytics\/kpis\//i.test(parsed.pathname)) {
+      return url;
+    }
+    let changed = false;
+    KPI_DEFAULT_QUERY_KEYS.forEach(key => {
+      const current = parsed.searchParams.get(key) ?? '';
+      if (current && !isUnresolvedPlaceholder(current)) return;
+      const live = getVariableValue(report, key) ?? defaultForVariable(key);
+      if (!live) return;
+      parsed.searchParams.set(key, live);
+      changed = true;
+    });
+    if (!changed) return url;
+    const search = parsed.searchParams.toString();
+    return `${parsed.origin}${parsed.pathname}${search ? `?${search}` : ''}${parsed.hash}`;
+  } catch {
+    return url;
+  }
+};
+
+const resolveHisApiUrl = (url: string, report: any): string =>
+  omitBlankQueryParams(
+    ensureKpiQueryDefaults(
+      applyLiveQueryParams(
+        toDesignerApiUrl(expandReportVariables(report, url)),
+        report
+      ),
+      report
+    )
+  );
 
 /** Store portable /api/... paths in the .mrt so templates are not bound to one host. */
 export const toPortableApiPath = (value?: string | null): string => {
@@ -343,14 +409,16 @@ export const setActiveStimulsoftReport = (report: any) => {
 
 const resolveHisApiRequestUrl = (url: string): string => {
   if (!url || !isHisApiPath(url)) return url;
-  const expanded = toDesignerApiUrl(expandReportVariables(activeReport, url));
-  return omitBlankQueryParams(applyLiveQueryParams(expanded, activeReport));
+  return resolveHisApiUrl(url, activeReport);
 };
 
 /** Fetch report JSON from backendBaseURL only. Does not change stored template URLs. */
 const resolveReportDataUrl = (url: string): string => {
-  const expanded = applyLiveQueryParams(
-    expandReportVariables(activeReport, url),
+  const expanded = ensureKpiQueryDefaults(
+    applyLiveQueryParams(
+      expandReportVariables(activeReport, url),
+      activeReport
+    ),
     activeReport
   );
   const designerUrl = toDesignerApiUrl(expanded);
@@ -505,12 +573,7 @@ const mergeAuthHeadersList = (
 
 const resolveHttpFilePath = (filePath: string) => {
   if (!isHisApiPath(filePath)) return filePath;
-  return omitBlankQueryParams(
-    applyLiveQueryParams(
-      toDesignerApiUrl(expandReportVariables(activeReport, filePath)),
-      activeReport
-    )
-  );
+  return resolveHisApiUrl(filePath, activeReport);
 };
 
 const emptyHttpBody = (binary?: boolean) => (binary ? new Uint8Array() : '[]');
@@ -843,18 +906,13 @@ export const patchStimulsoftParsePath = (Stimulsoft: any) => {
     const source = String(path || '');
     const processReport = report || activeReport;
     try {
+      if (isHisApiPath(source)) {
+        return resolveHisApiUrl(source, processReport);
+      }
       const expanded = applyLiveQueryParams(
         expandReportVariables(processReport, source),
         processReport
       );
-      if (isHisApiPath(source) || isHisApiPath(expanded)) {
-        const withoutBraces = expanded.replace(PLACEHOLDER_RE, (_match, name: string) =>
-          encodeURIComponent(
-            getVariableValue(processReport, name) || defaultForVariable(name) || ''
-          )
-        );
-        return toDesignerApiUrl(omitBlankQueryParams(withoutBraces));
-      }
       try {
         return originalParsePath(path, report);
       } catch {
@@ -961,13 +1019,6 @@ export const prepareStimulsoftDataRequest = (report: any, args: any) => {
   setActiveStimulsoftReport(processReport);
   attachPrepareVariables(processReport);
   listDatabases(processReport).forEach(applyAuthHeadersToDatabase);
-  rewritePathFields(args, value =>
-    omitBlankQueryParams(
-      applyLiveQueryParams(
-        toDesignerApiUrl(expandReportVariables(processReport, value)),
-        processReport
-      )
-    )
-  );
+  rewritePathFields(args, value => resolveHisApiUrl(value, processReport));
   attachStimulsoftRequestAuth(args);
 };
