@@ -5,7 +5,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyModal from '@/components/MyModal/MyModal';
 import './styles.less';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faFileMedical  } from '@fortawesome/free-solid-svg-icons';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PatientEncounterDischarge } from '@/types/model-types-new';
 import { newPatientEncounterDischarge } from '@/types/model-types-constructor-new';
@@ -14,6 +14,8 @@ import MyInput from '@/components/MyInput';
 import { useLazyGetActiveAssignmentByEncounterIdQuery } from '@/services/patients/emergency/encounterAssignToBedService';
 import { useDischargeEncounterMutation } from '@/services/encounters/patientEncounterService';
 import dayjs from 'dayjs';
+import MyButton from '@/components/MyButton/MyButton';
+import DischargeReportModal from './DischargeReportModal';
 
 const EncounterDischarge = ({
   open,
@@ -129,6 +131,23 @@ const EncounterDischarge = ({
     }
   };
 
+  const [openReportModal, setOpenReportModal] = useState(false);
+  const [reportEncounterId, setReportEncounterId] = useState<number | null>(null);
+
+  const handleGenerateDischargeReport = () => {
+    const encounterId = encounter?.id ?? encounter?.key;
+
+    if (!encounterId) {
+      dispatch(notify({ msg: 'Encounter ID is required', sev: 'error' }));
+      return;
+    }
+
+    const numericId = typeof encounterId === 'string' ? Number(encounterId) : encounterId;
+
+    setReportEncounterId(numericId);
+    setOpenReportModal(true);
+  };
+
   const content = (
     <Form fluid layout="inline" className="encounter-discharge-form">
       <MyInput
@@ -154,6 +173,13 @@ const EncounterDischarge = ({
         record={localEncounter}
         setRecord={setLocalEncounter}
       />
+       <MyButton
+        prefixIcon={() => <FontAwesomeIcon icon={faFileMedical} />}
+        onClick={handleGenerateDischargeReport}
+        appearance="ghost"
+      >
+        Generate Discharge Report
+      </MyButton>
     </Form>
   );
 
@@ -171,6 +197,7 @@ const EncounterDischarge = ({
   }, [encounter]);
 
   return (
+    <>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -187,6 +214,12 @@ const EncounterDischarge = ({
       ]}
       content={content}
     />
+    <DischargeReportModal
+        open={openReportModal}
+        setOpen={setOpenReportModal}
+        encounterId={reportEncounterId}
+      />
+      </>
   );
 };
 
