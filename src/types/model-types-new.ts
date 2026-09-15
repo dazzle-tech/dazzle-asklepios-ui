@@ -7326,3 +7326,21 @@ export interface AutoPopulationResponse {
   warnings: AutoPopulationWarning[];
   processing_metadata?: Record<string, any>;
 }
+export interface DischargeReportSection {
+  section_name: string;
+  content: string;
+  confidence: number;
+  sources: string[];
+}
+
+export interface DischargeReportResponse {
+  patient_id: string;
+  generation_timestamp: string;
+  generation_mode: string;
+  report_sections: DischargeReportSection[];
+  full_report_text: string;
+  template_used?: Record<string, any> | null;
+  confidence_score?: number;
+  disclaimer?: string;
+  requires_physician_review?: boolean;
+}
