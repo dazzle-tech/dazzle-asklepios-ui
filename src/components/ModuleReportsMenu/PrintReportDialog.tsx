@@ -173,24 +173,6 @@ const PrintReportDialog = ({
     [allDepartments, facilityDepartments, facilityId]
   );
   const departmentsLoading = facilityDepartmentsLoading || allDepartmentsLoading;
-
-  const hasDepartmentParam = parameters.some(param => param.type === 'department');
-  const facilityId = Number(context?.facilityId) || 0;
-  const { data: facilityDepartments, isFetching: facilityDepartmentsLoading } =
-    useGetActiveDepartmentByFacilityListQuery(
-      { facilityId },
-      { skip: !open || !hasDepartmentParam || !facilityId }
-    );
-  const { data: allDepartments, isFetching: allDepartmentsLoading } =
-    useGetAllDepartmentsWithoutPaginationQuery(undefined, {
-      skip: !open || !hasDepartmentParam || !!facilityId,
-    });
-  const departments = useMemo(
-    () =>
-      departmentOptions(facilityId ? facilityDepartments : allDepartments),
-    [allDepartments, facilityDepartments, facilityId]
-  );
-  const departmentsLoading = facilityDepartmentsLoading || allDepartmentsLoading;
   const billingCoverageOptions = useEnumOptions('BillingCoverageType');
   const coverageTypeOptions = billingCoverageOptions.length
     ? billingCoverageOptions

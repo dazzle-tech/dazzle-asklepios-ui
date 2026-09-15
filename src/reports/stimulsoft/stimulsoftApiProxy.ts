@@ -95,6 +95,7 @@ const coerceVariableValue = (raw: unknown): string | null => {
   }
   const text = String(raw).trim();
   if (!text) return null;
+  if (/^\{[A-Za-z_][A-Za-z0-9_]*\}$/.test(text)) return null;
   if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
   const us = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (us) {
@@ -221,6 +222,32 @@ const isUnresolvedPlaceholder = (value: string) =>
   /^\{[A-Za-z_][A-Za-z0-9_]*\}$/.test(value.trim()) ||
   /^%7B[A-Za-z_][A-Za-z0-9_]*%7D$/i.test(value.trim());
 
+/** Spring treats `?type=` as an empty enum and returns 500. Drop blank params. */
+const omitBlankQueryParams = (url: string): string => {
+  const trimmed = String(url || '');
+  const q = trimmed.indexOf('?');
+  if (q < 0) return trimmed;
+  const hash = trimmed.indexOf('#', q);
+  const before = trimmed.slice(0, q);
+  const hashPart = hash >= 0 ? trimmed.slice(hash) : '';
+  const search = hash >= 0 ? trimmed.slice(q + 1, hash) : trimmed.slice(q + 1);
+  const kept = search.split('&').filter(part => {
+    if (!part) return false;
+    const eq = part.indexOf('=');
+    let value = eq >= 0 ? part.slice(eq + 1) : '';
+    try {
+      value = decodeURIComponent(value.replace(/\+/g, ' '));
+    } catch {
+      // keep raw value
+    }
+    const decoded = value.trim();
+    if (!decoded) return false;
+    if (isUnresolvedPlaceholder(decoded)) return false;
+    return true;
+  });
+  return kept.length ? `${before}?${kept.join('&')}${hashPart}` : `${before}${hashPart}`;
+};
+
 const isOptionalQueryParam = (name: string, pathname: string) => {
   if (/financial-reports/i.test(pathname) && /^type$/i.test(name)) return true;
   if (/^(departmentid|department)$/i.test(name)) return true;
@@ -231,7 +258,7 @@ const isOptionalQueryParam = (name: string, pathname: string) => {
 const applyLiveQueryParams = (url: string, report: any): string => {
   try {
     const parsed = tryUrl(url);
-    if (!parsed || !parsed.search) return url;
+    if (!parsed || !parsed.search) return omitBlankQueryParams(url);
     let changed = false;
     [...parsed.searchParams.keys()].forEach(rawKey => {
       const key = String(rawKey ?? '');
@@ -255,11 +282,13 @@ const applyLiveQueryParams = (url: string, report: any): string => {
         changed = true;
       }
     });
-    if (!changed) return url;
+    if (!changed) return omitBlankQueryParams(url);
     const search = parsed.searchParams.toString();
-    return `${parsed.origin}${parsed.pathname}${search ? `?${search}` : ''}${parsed.hash}`;
+    return omitBlankQueryParams(
+      `${parsed.origin}${parsed.pathname}${search ? `?${search}` : ''}${parsed.hash}`
+    );
   } catch {
-    return url;
+    return omitBlankQueryParams(url);
   }
 };
 
@@ -315,7 +344,7 @@ export const setActiveStimulsoftReport = (report: any) => {
 const resolveHisApiRequestUrl = (url: string): string => {
   if (!url || !isHisApiPath(url)) return url;
   const expanded = toDesignerApiUrl(expandReportVariables(activeReport, url));
-  return applyLiveQueryParams(expanded, activeReport);
+  return omitBlankQueryParams(applyLiveQueryParams(expanded, activeReport));
 };
 
 /** Fetch report JSON from backendBaseURL only. Does not change stored template URLs. */
@@ -335,7 +364,9 @@ const resolveReportDataUrl = (url: string): string => {
   }
   const backend = String(config.backendBaseURL || '').replace(/\/$/, '');
   if (!backend) {
-    return `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`;
+    return omitBlankQueryParams(
+      `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`
+    );
   }
   try {
     const backendUrl = new URL(backend, window.location.origin);
@@ -344,11 +375,17 @@ const resolveReportDataUrl = (url: string): string => {
       backendUrl.hostname === 'localhost' ||
       backendUrl.hostname === '127.0.0.1'
     ) {
-      return `${window.location.origin}${pathname}${parsed.search}${parsed.hash}`;
+      return omitBlankQueryParams(
+        `${window.location.origin}${pathname}${parsed.search}${parsed.hash}`
+      );
     }
-    return `${backend}${pathname}${parsed.search}${parsed.hash}`;
+    return omitBlankQueryParams(
+      `${backend}${pathname}${parsed.search}${parsed.hash}`
+    );
   } catch {
-    return `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`;
+    return omitBlankQueryParams(
+      `${parsed.origin}${pathname}${parsed.search}${parsed.hash}`
+    );
   }
 };
 
@@ -468,9 +505,11 @@ const mergeAuthHeadersList = (
 
 const resolveHttpFilePath = (filePath: string) => {
   if (!isHisApiPath(filePath)) return filePath;
-  return applyLiveQueryParams(
-    toDesignerApiUrl(expandReportVariables(activeReport, filePath)),
-    activeReport
+  return omitBlankQueryParams(
+    applyLiveQueryParams(
+      toDesignerApiUrl(expandReportVariables(activeReport, filePath)),
+      activeReport
+    )
   );
 };
 
@@ -814,7 +853,7 @@ export const patchStimulsoftParsePath = (Stimulsoft: any) => {
             getVariableValue(processReport, name) || defaultForVariable(name) || ''
           )
         );
-        return toDesignerApiUrl(withoutBraces);
+        return toDesignerApiUrl(omitBlankQueryParams(withoutBraces));
       }
       try {
         return originalParsePath(path, report);
@@ -923,9 +962,11 @@ export const prepareStimulsoftDataRequest = (report: any, args: any) => {
   attachPrepareVariables(processReport);
   listDatabases(processReport).forEach(applyAuthHeadersToDatabase);
   rewritePathFields(args, value =>
-    applyLiveQueryParams(
-      toDesignerApiUrl(expandReportVariables(processReport, value)),
-      processReport
+    omitBlankQueryParams(
+      applyLiveQueryParams(
+        toDesignerApiUrl(expandReportVariables(processReport, value)),
+        processReport
+      )
     )
   );
   attachStimulsoftRequestAuth(args);
