@@ -5,12 +5,13 @@ import '../styles.less';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import StartTriage from './component/StartTriage';
+
 interface ERTriageProps {
   patient?: any;
   encounter?: any;
   edit?: boolean;
   emergencyTriageNew?: any;
-
+  fromPage?: string;
 }
 
 const UrgentCareStartTriage = (props: ERTriageProps) => {
@@ -19,7 +20,7 @@ const UrgentCareStartTriage = (props: ERTriageProps) => {
   const encounterData = props.encounter ?? location.state?.encounter ?? {};
   const emergencyTriageNew = props.emergencyTriageNew ?? location.state?.emergencyTriageNew ?? null;
   const dispatch = useAppDispatch();
-
+  const fromPage = props.fromPage ?? location.state?.fromPage ?? '';
   const [refetchPatientObservations] = useState(false);
 
   useEffect(() => {
@@ -39,12 +40,12 @@ const UrgentCareStartTriage = (props: ERTriageProps) => {
   return (
     <div className="er-main-container" dir={dir}>
       <div className="left-box">
-       <StartTriage
+        <StartTriage
           patient={patient}
           encounter={encounterData}
-          sourcePage={"UrgentCare"}
+          sourcePage="UrgentCare"
+          fromPage={fromPage}
           emergencyTriageNew={emergencyTriageNew}
-          // edit={edit}
         />
       </div>
       <div className="right-box">

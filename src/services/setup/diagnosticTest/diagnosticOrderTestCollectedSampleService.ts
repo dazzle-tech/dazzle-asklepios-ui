@@ -136,6 +136,17 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       invalidatesTags: ["DiagnosticOrderTestCollectedSample"],
     }),
 
+    rejectCollectedSample: builder.mutation<
+      DiagnosticOrderTestCollectedSampleResponseVM,
+      number
+    >({
+      query: (id) => ({
+        url: `/api/patient/diagnostic-order-test-collected-samples/${id}/reject`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["DiagnosticOrderTestCollectedSample"],
+    }),
+
     getSampleLabel: builder.query<SampleLabelVM, { orderTestId: number }>({
       query: ({ orderTestId }) => ({
         url: `/api/patient/diagnostic-order-test-collected-samples/sample-label/${orderTestId}`,
@@ -212,5 +223,6 @@ export const {
   useGetSampleLabelsPdfQuery,
   useLazyGetSampleLabelsPdfQuery,
   useGetOrderSampleLabelPdfQuery,
+  useRejectCollectedSampleMutation,
   useLazyGetOrderSampleLabelPdfQuery
 } = diagnosticOrderTestCollectedSampleService;

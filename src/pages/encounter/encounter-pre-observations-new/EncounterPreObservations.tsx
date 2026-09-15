@@ -208,6 +208,11 @@ useEffect(() => {
   };
 
   const handleGoBack = () => {
+    if (pageSource === 'PatientsLists') {
+      navigate('/patients-list');
+      return;
+    }
+
     if (pageSource === 'Urgent_Care_List') {
       navigate('/urgent-care-department-list', {
         state: {
@@ -232,7 +237,13 @@ useEffect(() => {
               {!inModal && (
                 <BackButton
                   onClick={handleGoBack}
-                  text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
+                 text={
+                  pageSource === 'PatientsLists'
+                    ? 'To Patients list'
+                    : pageSource === 'Urgent_Care_List'
+                      ? 'To Urgent Care list'
+                      : 'To Encounters list'
+                 }
                 />
               )}
               {!inModal && (

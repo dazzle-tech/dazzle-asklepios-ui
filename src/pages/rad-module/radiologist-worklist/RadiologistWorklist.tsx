@@ -622,7 +622,7 @@ const handleViewImage = async (reportId: number) => {
       {
         key: 'report',
         title: 'Report',
-        width: 80,
+        width: 100,
         align: 'center',
         render: row => {
           const reportContent =
@@ -639,17 +639,31 @@ const handleViewImage = async (reportId: number) => {
               ? reportContent.replace(/<[^>]*>/g, '').trim().length > 0
               : !!reportContent;
 
+          const isSevere =
+            String(row?.severity ?? '').toUpperCase() === 'SEVERE';
+
           return (
-            <Whisper speaker={<Tooltip>Add Report</Tooltip>}>
+            <Whisper
+              speaker={
+                <Tooltip>
+                  {isSevere ? 'Critical Result - Severe' : 'Add Report'}
+                </Tooltip>
+              }
+            >
               <span style={{ cursor: 'pointer' }}>
                 <FontAwesomeIcon
                   className="icon-radiologist-worklist-size"
                   icon={faSheetPlastic}
                   style={{
-                    color: hasReport ? '#1675e0' : '#969fb0'
+                    color: isSevere
+                      ? '#ff0000'
+                      : hasReport
+                        ? '#1675e0'
+                        : '#969fb0'
                   }}
                   onClick={() => {
-                    const ot = orderTestsMap[String(row.orderTestId)];
+                    const ot =
+                      orderTestsMap[String(row.orderTestId)];
 
                     setSelectedReportRow(row);
 
