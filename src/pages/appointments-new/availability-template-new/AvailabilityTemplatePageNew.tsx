@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Checkbox, Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete, MdContentCopy, MdPublish, MdOutlineCalendarMonth } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { RiFolderHistoryLine } from 'react-icons/ri';
@@ -43,6 +43,7 @@ const AvailabilityTemplatePageNew = () => {
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter?: string; value?: string }>({});
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<any[]>([]);
+  const [showInactiveTemplates, setShowInactiveTemplates] = useState(false);
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 20 });
   const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM>({ ...newAvailabilityTemplateResponseVM });
   const [openAddEditModal, setOpenAddEditModal] = useState(false);
@@ -70,10 +71,15 @@ const AvailabilityTemplatePageNew = () => {
   const templateTypeEnum = useEnumOptions('TemplateType');
 
   // ─── Computed (useMemo) ──────────────────────────────────────────────────────
-  const currentList = useMemo(
-    () => (isFiltered ? filteredList : (templatesList ?? [])),
-    [filteredList, isFiltered, templatesList]
-  );
+  const currentList = useMemo(() => {
+    const sourceList = isFiltered ? filteredList : (templatesList ?? []);
+
+    if (showInactiveTemplates) {
+      return sourceList;
+    }
+
+    return sourceList.filter(item => item?.isActive === true);
+  }, [filteredList, isFiltered, templatesList, showInactiveTemplates]);
 
   const pagedList = useMemo(() => {
     const { page, size } = paginationParams;
@@ -248,17 +254,17 @@ const AvailabilityTemplatePageNew = () => {
                 className="icons-style"
                 onClick={() => handlePublishTemplate(rowData)}
               />
-          <MdOutlineCalendarMonth
-            title="Schedule"
-            size={24}
-            fill="var(--primary-gray)"
-            className="icons-style"
-            onClick={() => {
-              setSelectedTemplate(rowData);
-              setOpenScheduleModal(true);
-            }}
-          />
-          </>
+              <MdOutlineCalendarMonth
+                title="Schedule"
+                size={24}
+                fill="var(--primary-gray)"
+                className="icons-style"
+                onClick={() => {
+                  setSelectedTemplate(rowData);
+                  setOpenScheduleModal(true);
+                }}
+              />
+            </>
           )}
           <MdContentCopy
             title="Clone"
@@ -364,6 +370,16 @@ const AvailabilityTemplatePageNew = () => {
       >
         Search
       </MyButton>
+
+      <Checkbox
+        checked={showInactiveTemplates}
+        onChange={(_, checked) => {
+          setShowInactiveTemplates(checked);
+          setPaginationParams(prev => ({ ...prev, page: 0 }));
+        }}
+      >
+        <Translate>Show Inactive Templates</Translate>
+      </Checkbox>
     </Form>
   );
 

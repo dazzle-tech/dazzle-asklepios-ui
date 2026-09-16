@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBedPulse } from "@fortawesome/free-solid-svg-icons";
 import { useAppSelector } from "@/hooks";
-
+import PainAssessment from "@/pages/encounter/encounter-pre-observations-new/observations/PainAssessment";
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 
 import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
@@ -474,6 +474,18 @@ const handleGoBackToTriageList = () => {
               </Form>
             }
           />
+        )}
+      </Row>
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
+          <Form fluid>
+            <PainAssessment
+              patientId={patientId}
+              encounterId={safeEncounterId}
+              encounter={encounter}
+              title="Pain Assessment"
+            />
+          </Form>
         )}
       </Row>
       <Row gutter={30}>
