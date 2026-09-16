@@ -9,7 +9,6 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
-import { useGetAllTpaDefinitionsQuery } from '@/services/setup/payer/TpaDefinitionSetupService';
 import { APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from '@/pages/setup/coverage-management/coverageHelpers';
 
 type NphiesPayerModalProps = {
@@ -48,11 +47,6 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
       sort: 'name,asc'
     },
     { skip: !open || !payer.countryId }
-  );
-
-  const { data: tpaResponse, isFetching: isTpasLoading } = useGetAllTpaDefinitionsQuery(
-    { page: 0, size: 1000, sort: 'id,asc' },
-    { skip: !open }
   );
 
   const approvalCoverageCompanies = approvalCoverageCompanyOptions(
@@ -105,47 +99,13 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
     return list;
   }, [citiesResponse, payer.cityId, payer.cityName]);
 
-  const tpaOptions = useMemo(() => {
-    const raw = Array.isArray(tpaResponse)
-      ? tpaResponse
-      : tpaResponse?.data ?? tpaResponse?.content ?? [];
-    const byId = new Map<number, any>();
-    [...raw, ...(payer.tpas ?? [])].forEach(tpa => {
-      const id = Number(tpa?.id ?? tpa?.tpaId ?? tpa?.value);
-      if (!Number.isFinite(id) || byId.has(id)) {
-        return;
-      }
-      byId.set(id, { ...tpa, id });
-    });
-    const options = [...byId.values()]
-      .filter(tpa => tpa.isActive !== false || (payer.tpaIds ?? []).includes(tpa.id))
-      .map(tpa => {
-        const tpaCode = String(tpa.tpaCode ?? tpa.code ?? '').trim();
-        const name = String(tpa.name ?? tpa.tpaName ?? tpa.label ?? '').trim();
-        return {
-          value: tpa.id,
-          label: [tpaCode, name].filter(Boolean).join(' - ') || `TPA #${tpa.id}`,
-          isActive: tpa.isActive !== false
-        };
-      });
-    (payer.tpaIds ?? []).forEach(id => {
-      if (id != null && !options.some(option => option.value === id)) {
-        options.push({ value: id, label: `TPA #${id}`, isActive: true });
-      }
-    });
-    return options;
-  }, [tpaResponse, payer.tpas, payer.tpaIds]);
-
   const handleSetPayer: React.Dispatch<React.SetStateAction<NphiesPayer>> = updated => {
     const next = typeof updated === 'function' ? updated(payer) : updated;
     if (next.countryId !== payer.countryId) {
       setPayer({ ...next, cityId: null, cityName: null });
       return;
     }
-    setPayer({
-      ...next,
-      tpaIds: [...new Set(next.tpaIds ?? [])]
-    });
+    setPayer(next);
   };
 
   const fieldProps = {
@@ -233,20 +193,6 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
                     searchable={false}
                     cleanable
                   />
-                  <div className="nphies-payer-field-span-2">
-                    <MyInput
-                      {...fieldProps}
-                      fieldName="tpaIds"
-                      fieldType="checkPicker"
-                      fieldLabel="Linked TPAs"
-                      selectData={tpaOptions}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      loading={isTpasLoading}
-                      disableByField="isActive"
-                      placeholder="Select one or more TPAs"
-                    />
-                  </div>
                 </div>
               }
             />

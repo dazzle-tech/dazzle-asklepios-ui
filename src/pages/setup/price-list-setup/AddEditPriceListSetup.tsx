@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -46,7 +47,10 @@ import type {
   PriceListSetupType,
   SavePriceListSetupRequest
 } from '@/types/model-types-new';
-import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import {
+  useGetAllNphiesPayersQuery,
+  useGetNphiesPayerByIdQuery
+} from '@/services/setup/payer/NphiesPayerSetupService';
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetActiveTaxesByFacilityQuery } from '@/services/billing/taxService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -149,7 +153,7 @@ const normalizePayerOptions = (
         nameAr,
 
         displayName:
-          displayParts.join(' - ')
+          displayParts.join(' - ') || `Payer #${Number(row.id)}`
       };
     });
 };
@@ -161,7 +165,20 @@ const toDateValue = (
     return undefined;
   }
 
-  return String(value).slice(0, 10);
+  const text = String(value).trim();
+  const isoDate = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) {
+    return isoDate[1];
+  }
+
+  return text.slice(0, 10);
+};
+
+const localToday = (): string => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 };
 
 const intervalsOverlap = (
@@ -365,6 +382,18 @@ React.FC<Props> = ({
       }
     );
 
+  const {
+    data: currentNphiesPayer
+  } = useGetNphiesPayerByIdQuery(
+    Number(priceList.nphiesPayerId),
+    {
+      skip:
+        !open ||
+        priceList.type !== 'INSURANCE' ||
+        priceList.nphiesPayerId == null
+    }
+  );
+
   /*
    * ============================================================
    * MUTATIONS
@@ -509,8 +538,6 @@ React.FC<Props> = ({
         );
 
         setPayerPage(0);
-
-        setPayerCache([]);
       }, 300);
 
     return () =>
@@ -535,16 +562,53 @@ React.FC<Props> = ({
       );
 
     setPayerCache(
-      previous =>
-        mergePayerOptions(
-          previous,
-          options,
-          payerPage
-        )
+      previous => {
+        const merged =
+          mergePayerOptions(
+            previous,
+            options,
+            payerPage
+          );
+
+        const selectedId =
+          priceList.nphiesPayerId;
+
+        if (
+          selectedId == null ||
+          merged.some(
+            payer =>
+              Number(payer.id) ===
+              Number(selectedId)
+          )
+        ) {
+          return merged;
+        }
+
+        const seeded =
+          previous.find(
+            payer =>
+              Number(payer.id) ===
+              Number(selectedId)
+          ) ??
+          normalizePayerOptions([
+            {
+              id: Number(selectedId),
+              nameEn:
+                priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])[0];
+
+        return seeded
+          ? [seeded, ...merged]
+          : merged;
+      }
     );
   }, [
     payerResponse,
-    payerPage
+    payerPage,
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName
   ]);
 
   /*
@@ -572,6 +636,37 @@ React.FC<Props> = ({
     payerTotalCount >
       payerCache.length;
 
+  const payerSelectData = useMemo(() => {
+    const selectedId = priceList.nphiesPayerId;
+    if (
+      selectedId == null ||
+      payerCache.some(payer => Number(payer.id) === Number(selectedId))
+    ) {
+      return payerCache;
+    }
+
+    const seeded =
+      (currentNphiesPayer
+        ? normalizePayerOptions([currentNphiesPayer])[0]
+        : undefined) ??
+      selectedPayer ??
+      normalizePayerOptions([
+        {
+          id: Number(selectedId),
+          nameEn: priceList.nphiesPayerName,
+          nphiesId: ''
+        }
+      ])[0];
+
+    return seeded ? [seeded, ...payerCache] : payerCache;
+  }, [
+    payerCache,
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName,
+    currentNphiesPayer,
+    selectedPayer
+  ]);
+
   /*
    * ============================================================
    * AUTO-SELECT PAYER IN EDIT MODE
@@ -583,8 +678,7 @@ React.FC<Props> = ({
       !open ||
       priceList.type !==
         'INSURANCE' ||
-      !priceList.payerId ||
-      payerCache.length === 0
+      priceList.nphiesPayerId == null
     ) {
       return;
     }
@@ -594,9 +688,21 @@ React.FC<Props> = ({
         payer =>
           Number(payer.id) ===
           Number(
-            priceList.payerId
+            priceList.nphiesPayerId
           )
-      );
+      ) ??
+      (currentNphiesPayer
+        ? normalizePayerOptions([
+            currentNphiesPayer
+          ])[0]
+        : undefined) ??
+      normalizePayerOptions([
+        {
+          id: Number(priceList.nphiesPayerId),
+          nameEn: priceList.nphiesPayerName,
+          nphiesId: ''
+        }
+      ])[0];
 
     if (matchingPayer) {
       setSelectedPayer(
@@ -606,9 +712,30 @@ React.FC<Props> = ({
   }, [
     open,
     priceList.type,
-    priceList.payerId,
-    payerCache
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName,
+    payerCache,
+    currentNphiesPayer
   ]);
+
+  useEffect(() => {
+    if (!currentNphiesPayer?.id) {
+      return;
+    }
+
+    const option =
+      normalizePayerOptions([
+        currentNphiesPayer
+      ])[0];
+
+    if (!option) {
+      return;
+    }
+
+    setPayerCache(previous =>
+      mergePayerOptions(previous, [option], 1)
+    );
+  }, [currentNphiesPayer]);
 
   /*
    * ============================================================
@@ -648,9 +775,29 @@ React.FC<Props> = ({
 
     setAppliedPayerSearch('');
 
-    setPayerCache([]);
+    setPayerCache(
+      priceList.nphiesPayerId != null
+        ? normalizePayerOptions([
+            {
+              id: Number(priceList.nphiesPayerId),
+              nameEn: priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])
+        : []
+    );
 
-    setSelectedPayer(null);
+    setSelectedPayer(
+      priceList.nphiesPayerId != null
+        ? normalizePayerOptions([
+            {
+              id: Number(priceList.nphiesPayerId),
+              nameEn: priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])[0] ?? null
+        : null
+    );
 
     setCloneOptions({
       cloneItems: true
@@ -783,9 +930,9 @@ React.FC<Props> = ({
 
     if (
       !isClone &&
-      priceList.effectiveFrom &&
-      priceList.effectiveFrom <
-        new Date().toISOString().slice(0, 10)
+      !isEdit &&
+      toDateValue(priceList.effectiveFrom) &&
+      toDateValue(priceList.effectiveFrom)! < localToday()
     ) {
       return 'The start date cannot be in the past.';
     }
@@ -950,15 +1097,11 @@ React.FC<Props> = ({
           ),
 
         effectiveFrom:
-          priceList.effectiveFrom
-            ? String(
-                priceList.effectiveFrom
-              )
-            : null,
+          toDateValue(priceList.effectiveFrom) ||
+          null,
 
         effectiveTo:
-          priceList
-            .effectiveTo ||
+          toDateValue(priceList.effectiveTo) ||
           null,
 
         currency:
@@ -1273,7 +1416,7 @@ React.FC<Props> = ({
             fieldType="selectPagination"
             fieldName="nphiesPayerId"
             selectData={
-              payerCache
+              payerSelectData
             }
             selectDataLabel="displayName"
             selectDataValue="id"
@@ -1284,12 +1427,13 @@ React.FC<Props> = ({
               updatedPriceList:
                 PriceListSetup
             ) => {
-              setPriceList(
-                updatedPriceList
-              );
+              if (updatedPriceList.nphiesPayerId == null) {
+                handlePayerSelected(null);
+                return;
+              }
 
               const payer =
-                payerCache.find(
+                payerSelectData.find(
                   item =>
                     Number(
                       item.id
@@ -1300,9 +1444,15 @@ React.FC<Props> = ({
                     )
                 );
 
-              handlePayerSelected(
-                payer ||
-                null
+              if (payer) {
+                handlePayerSelected(
+                  payer
+                );
+                return;
+              }
+
+              setPriceList(
+                updatedPriceList
               );
             }}
             searchable
@@ -1440,12 +1590,13 @@ React.FC<Props> = ({
         width="100%"
         fieldLabel="Currency"
         fieldName="currency"
-        record={
-          priceList
-        }
-        setRecord={
-          setPriceList
-        }
+        record={{
+          ...priceList,
+          currency: priceList.currency
+            ? String(priceList.currency).toUpperCase()
+            : priceList.currency
+        }}
+        setRecord={setPriceList}
       />
 
       <br />

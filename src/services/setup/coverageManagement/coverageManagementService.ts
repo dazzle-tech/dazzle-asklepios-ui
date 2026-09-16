@@ -19,6 +19,17 @@ export type PagedResult<T> = {
   };
 };
 
+export type CoverageContractedInsurance = {
+  insurancePayerId: number;
+  nphiesId?: string | null;
+  name: string;
+  nameAr?: string | null;
+  payorId?: number | null;
+  payorName?: string | null;
+  contractCount?: number;
+  isActive?: boolean;
+};
+
 export type CoverageLookupItem = {
   id: number;
   code?: string | null;
@@ -318,6 +329,7 @@ export const coverageManagementService = createApi({
       PagedParams & {
         guarantorType?: string;
         companyId?: number;
+        insurancePayerId?: number;
         isActive?: boolean;
         className?: string;
         search?: string;
@@ -329,6 +341,18 @@ export const coverageManagementService = createApi({
         params: { page, size, sort, ...params }
       }),
       transformResponse: (res: CoverageContract[], meta) => toContractPagedResult(res, meta),
+      providesTags: ['CoverageContract']
+    }),
+    searchContractedInsurances: builder.query<
+      PagedResult<CoverageContractedInsurance>,
+      PagedParams & { search?: string }
+    >({
+      query: ({ page, size, sort = 'nameEn,asc', search }) => ({
+        url: '/api/setup/coverage-contracts/lookups/contracted-insurances',
+        params: { page, size, sort, ...(search ? { search } : {}) }
+      }),
+      transformResponse: (res: CoverageContractedInsurance[], meta) =>
+        toPagedResult(res, meta),
       providesTags: ['CoverageContract']
     }),
     getCoverageContract: builder.query<CoverageContract, number>({
@@ -658,6 +682,7 @@ export const coverageManagementService = createApi({
 
 export const {
   useSearchCoverageContractsQuery,
+  useSearchContractedInsurancesQuery,
   useGetCoverageContractQuery,
   useCreateCoverageContractMutation,
   useUpdateCoverageContractMutation,

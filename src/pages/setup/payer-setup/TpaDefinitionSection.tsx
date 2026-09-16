@@ -311,7 +311,7 @@ const TpaDefinitionSection = () => {
         className="icons-style"
         title="Linked insurance companies"
         size={22}
-        fill="var(--deep-blue)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setSelectedTpa(rowData);
           setOpenLinkedCompanies(true);
@@ -331,7 +331,7 @@ const TpaDefinitionSection = () => {
         className="icons-style"
         title="Approval"
         size={22}
-        fill="var(--deep-blue)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setSelectedTpa(rowData);
           setRuleKind('approval');
@@ -342,7 +342,7 @@ const TpaDefinitionSection = () => {
         className="icons-style"
         title="Excluded"
         size={22}
-        fill="var(--primary-pink)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setSelectedTpa(rowData);
           setRuleKind('exclusion');
@@ -353,7 +353,7 @@ const TpaDefinitionSection = () => {
         className="icons-style"
         title="Discount"
         size={18}
-        fill="var(--deep-blue)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setSelectedTpa(rowData);
           setRuleKind('discount');

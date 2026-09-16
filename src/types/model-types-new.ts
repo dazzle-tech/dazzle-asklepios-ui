@@ -5562,8 +5562,11 @@ export type PricingMethod =
 
   payerId?: number;
   payerName?: string;
+  nphiesPayerId?: number;
+  nphiesPayerName?: string;
 
   name?: string;
+  shortName?: string;
   description?: string;
 
   versionNumber?: number;
@@ -5574,6 +5577,13 @@ export type PricingMethod =
   status?: PriceListSetupStatus;
 
   currency?: string;
+  taxId?: number;
+  appliesToAllFacilities?: boolean;
+
+  createdDate?: string;
+  lastModifiedDate?: string;
+  createdBy?: string;
+  lastModifiedBy?: string;
 
   isActive?: boolean;
 };
@@ -5620,13 +5630,17 @@ export type SavePriceListSetupRequest = {
   facilityId: number;
   type: PriceListSetupType;
   payerId?: number | null;
+  nphiesPayerId?: number | null;
   name: string;
+  shortName?: string | null;
   description?: string | null;
   versionNumber: number;
-  effectiveFrom: string;
+  effectiveFrom: string | null;
   effectiveTo?: string | null;
   currency: string;
   status?: PriceListSetupStatus;
+  appliesToAllFacilities?: boolean;
+  taxId?: number | null;
 };
 
 export type ClonePriceListSetupRequest =

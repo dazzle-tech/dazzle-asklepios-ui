@@ -219,7 +219,15 @@ const PriceListSetup: React.FC = () => {
     setCloneSourceId(undefined);
 
     setSelectedPriceList({
-      ...row
+      ...row,
+      nphiesPayerId:
+        row.nphiesPayerId != null
+          ? Number(row.nphiesPayerId)
+          : undefined,
+      payerId:
+        row.payerId != null
+          ? Number(row.payerId)
+          : undefined
     });
 
     setHeaderModalOpen(true);
@@ -444,7 +452,7 @@ const PriceListSetup: React.FC = () => {
           payerListResponse?.data?.find(
             item =>
               Number(item.id) ===
-              Number(row.payerId)
+              Number(row.nphiesPayerId ?? row.payerId)
           );
 
         return (
@@ -496,7 +504,12 @@ const PriceListSetup: React.FC = () => {
       key: 'currency',
       title: <Translate>Currency</Translate>,
       width: 100,
-      align: 'center' as const
+      align: 'center' as const,
+      render: (row: PriceListSetupModel) => (
+        <span>
+          {row.currency ? String(row.currency).toUpperCase() : '-'}
+        </span>
+      )
     },
 
     {
@@ -562,7 +575,7 @@ const PriceListSetup: React.FC = () => {
               className="icons-style"
               title="Activate for billing"
               size={23}
-              fill="var(--primary-green, #28a745)"
+              fill="var(--primary-gray)"
               onClick={event => {
                 event.stopPropagation();
                 void handleActivate(row);
@@ -585,7 +598,7 @@ const PriceListSetup: React.FC = () => {
             className="icons-style"
             title="Clone"
             size={22}
-            fill="var(--deep-blue)"
+            fill="var(--primary-gray)"
             onClick={event => {
               event.stopPropagation();
               handleClone(row);
@@ -596,7 +609,7 @@ const PriceListSetup: React.FC = () => {
             className="icons-style"
             title="Price List Items"
             size={24}
-            fill="var(--deep-blue)"
+            fill="var(--primary-gray)"
             onClick={event => {
               event.stopPropagation();
               handleOpenItems(row);
@@ -607,7 +620,7 @@ const PriceListSetup: React.FC = () => {
             className="icons-style"
             title="Delete"
             size={23}
-            fill="var(--primary-pink)"
+            fill="var(--primary-gray)"
             onClick={event => {
               event.stopPropagation();
               handleDeleteRequest(row);

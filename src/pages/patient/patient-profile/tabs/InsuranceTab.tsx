@@ -15,7 +15,7 @@ import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
-import { faCheckDouble, faLayerGroup, faTrash, faUserPen, faRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faLayerGroup, faTrash, faUserPen, faRotate, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Form, Message, SelectPicker, Tooltip, Whisper } from 'rsuite';
@@ -263,6 +263,23 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     }
 
     setSelectedInsurance(target);
+    setInsuranceModalOpen(true);
+    setInsuranceBrowsing(false);
+    setHideSaveBtn(false);
+  };
+
+  const handleAddInsurance = () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before adding insurance',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedInsurance(null);
     setInsuranceModalOpen(true);
     setInsuranceBrowsing(false);
     setHideSaveBtn(false);
@@ -898,18 +915,28 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
               <Translate>Discard</Translate>
             </MyButton>
           </>
-        ) : savedInsurances.length === 0 ? (
-          <MyButton
-            onClick={handleFetchInsuranceFromCchi}
-            disabled={
-              !localPatient.id || isFetchingInsuranceFromCchi || isLoadingDocumentOptions
-            }
-            loading={isFetchingInsuranceFromCchi || isLoadingDocumentOptions}
-            prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
-          >
-            <Translate>Fetch Insurance from CCHI</Translate>
-          </MyButton>
-        ) : null}
+        ) : (
+          <>
+            <MyButton
+              onClick={handleAddInsurance}
+              disabled={!localPatient.id}
+              prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+            >
+              <Translate>Add Insurance</Translate>
+            </MyButton>
+            <MyButton
+              appearance="ghost"
+              onClick={handleFetchInsuranceFromCchi}
+              disabled={
+                !localPatient.id || isFetchingInsuranceFromCchi || isLoadingDocumentOptions
+              }
+              loading={isFetchingInsuranceFromCchi || isLoadingDocumentOptions}
+              prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
+            >
+              <Translate>Fetch Insurance from CCHI</Translate>
+            </MyButton>
+          </>
+        )}
       </div>
 
       <MyModal

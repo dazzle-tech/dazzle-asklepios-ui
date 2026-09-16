@@ -3523,8 +3523,11 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
 
   payerId: undefined,
   payerName: undefined,
+  nphiesPayerId: undefined,
+  nphiesPayerName: undefined,
 
   name: undefined,
+  shortName: undefined,
   description: undefined,
 
   versionNumber: 1,

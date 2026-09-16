@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
+import { Form, Message } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { useGetActivePlansByPayorQuery, useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetActivePlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
 import { formatEnumString } from '@/utils';
@@ -13,6 +14,14 @@ import PlanCoverageItemsSection from './PlanCoverageItemsSection';
 import { PatientInsurance } from '@/types/model-types-new';
 import { newPatientInsurance } from '@/types/model-types-constructor-new';
 import { normalizePatientInsuranceFromApi } from './cchiMappers';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { formatInsuranceDate } from './insuranceDisplayUtils';
+import {
+  useSearchContractedInsurancesQuery,
+  useSearchCoverageContractsQuery,
+  type CoverageContract,
+  type CoverageContractedInsurance
+} from '@/services/setup/coverageManagement/coverageManagementService';
 
 import {
   useAddPatientInsuranceMutation,
@@ -25,6 +34,7 @@ const INSURANCE_ERROR_MAP: Record<string, string> = {
   'patient.required': 'Patient is required.',
   'patient.payor.duplicate': 'This patient already has an insurance for the selected payor.',
   'primary.exists': 'This patient already has a primary insurance.',
+  'payor.unresolved': 'Could not match this insurance company to a Payor in Setup.',
   'db.constraint': 'Database constraint violation while saving insurance.',
   notfound: 'Insurance record not found.'
 };
@@ -62,6 +72,55 @@ const normalizeFieldErrorMessage = (message: string): string => {
 };
 
 const getFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
+
+type PatientInsuranceForm = PatientInsurance & {
+  insurancePayerId?: number | null;
+  coverageContractId?: number | null;
+  contractCode?: string | null;
+  contractStartDate?: string | null;
+  contractEndDate?: string | null;
+  priceListName?: string | null;
+};
+
+const emptyInsuranceForm = (): PatientInsuranceForm => ({
+  ...newPatientInsurance,
+  insurancePayerId: null,
+  coverageContractId: null,
+  contractCode: null,
+  contractStartDate: null,
+  contractEndDate: null,
+  priceListName: null
+});
+
+const formatContractedInsuranceLabel = (item: CoverageContractedInsurance): string => {
+  const name = item.name || item.payorName || item.nphiesId || `Insurance #${item.insurancePayerId}`;
+  const nphies = item.nphiesId ? ` (${item.nphiesId})` : '';
+  const count =
+    item.contractCount && item.contractCount > 0
+      ? ` · ${item.contractCount} contract${item.contractCount === 1 ? '' : 's'}`
+      : '';
+  return `${name}${nphies}${count}`;
+};
+
+const formatCoverageContractLabel = (contract: CoverageContract): string => {
+  const policy = contract.policyNumber || contract.code || `Contract #${contract.id}`;
+  const className = contract.className ? `Class ${formatEnumString(contract.className)}` : '';
+  const dates = [contract.startDate, contract.endDate].filter(Boolean).join(' → ');
+  return [policy, className, dates].filter(Boolean).join(' · ');
+};
+
+const stripUiOnlyInsuranceFields = (insurance: PatientInsuranceForm): PatientInsurance => {
+  const {
+    insurancePayerId: _insurancePayerId,
+    coverageContractId: _coverageContractId,
+    contractCode: _contractCode,
+    contractStartDate: _contractStartDate,
+    contractEndDate: _contractEndDate,
+    priceListName: _priceListName,
+    ...payload
+  } = insurance;
+  return payload;
+};
 
 const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
   const responseData = error?.data ?? {};
@@ -117,9 +176,7 @@ const InsuranceModal = ({
   const resolvedPatientId =
     typeof patientKey === 'object' ? Number(patientKey?.id) : Number(patientKey);
 
-  const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
-    ...newPatientInsurance
-  });
+  const [patientInsurance, setPatientInsurance] = useState<PatientInsuranceForm>(emptyInsuranceForm());
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
@@ -129,36 +186,80 @@ const InsuranceModal = ({
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
   const [planPage, setPlanPage] = useState(0);
 
-  // Policy Holder pagination state
+  const [insuranceSearch, setInsuranceSearch] = useState('');
+  const [insurancePage, setInsurancePage] = useState(0);
+  const [allContractedInsurances, setAllContractedInsurances] = useState<CoverageContractedInsurance[]>([]);
+  const [contractPage, setContractPage] = useState(0);
+  const [allCoverageContracts, setAllCoverageContracts] = useState<CoverageContract[]>([]);
+
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
+  const isContractedCreate = Boolean(open && !editing?.id && !insuranceBrowsing);
+
+  const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
 
   const {
     data: payorResponse,
     isLoading: payorLoading,
     isFetching: payorFetching
-  } = useGetAllActivePayorsQuery({
-    page: payorPage,
-    size: 20,
-    sort: 'name,asc'
-  });
+  } = useGetAllActivePayorsQuery(
+    {
+      page: payorPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    { skip: !open || isContractedCreate }
+  );
 
-    const {
-      data: plansResponse,
-      isLoading: plansLoading,
-      isFetching: plansFetching
-    } = useGetActivePlansByPayorQuery(
-      {
-        payorId: Number(patientInsurance?.payorId),
-        page: planPage,
-        size: 20,
-        sort: 'name,asc'
-      },
-      {
-        skip: !patientInsurance?.payorId
-      }
-    );
+  const {
+    data: plansResponse,
+    isLoading: plansLoading,
+    isFetching: plansFetching
+  } = useGetActivePlansByPayorQuery(
+    {
+      payorId: Number(patientInsurance?.payorId),
+      page: planPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip: !open || isContractedCreate || !patientInsurance?.payorId
+    }
+  );
+
+  const {
+    data: contractedInsurancesResponse,
+    isLoading: contractedInsurancesLoading,
+    isFetching: contractedInsurancesFetching
+  } = useSearchContractedInsurancesQuery(
+    {
+      page: insurancePage,
+      size: 20,
+      sort: 'nameEn,asc',
+      search: insuranceSearch.trim() || undefined
+    },
+    { skip: !open || !isContractedCreate }
+  );
+
+  const selectedInsurancePayerId = Number(patientInsurance.insurancePayerId);
+
+  const {
+    data: coverageContractsResponse,
+    isLoading: coverageContractsLoading,
+    isFetching: coverageContractsFetching
+  } = useSearchCoverageContractsQuery(
+    {
+      page: contractPage,
+      size: 20,
+      sort: 'policyNumber,asc',
+      isActive: true,
+      insurancePayerId: selectedInsurancePayerId
+    },
+    {
+      skip: !open || !isContractedCreate || !Number.isFinite(selectedInsurancePayerId) || selectedInsurancePayerId <= 0
+    }
+  );
 
   const {
     data: relativesResponse,
@@ -174,9 +275,49 @@ const InsuranceModal = ({
     { skip: !resolvedPatientId || !open }
   );
 
+  const applyContractedInsurance = (item: CoverageContractedInsurance | null) => {
+    setContractPage(0);
+    setAllCoverageContracts([]);
+    setPatientInsurance(prev => ({
+      ...prev,
+      insurancePayerId: item?.insurancePayerId ?? null,
+      coverageContractId: null,
+      contractCode: null,
+      contractStartDate: null,
+      contractEndDate: null,
+      priceListName: null,
+      payorId: item?.payorId ?? null,
+      payerNphiesId: item?.nphiesId ?? null,
+      payerName: item?.payorName || item?.name || null,
+      policyNumber: '',
+      policyClassName: null,
+      groupName: null,
+      planId: null
+    }));
+  };
+
+  const applyCoverageContract = (contract: CoverageContract | null) => {
+    setPatientInsurance(prev => ({
+      ...prev,
+      coverageContractId: contract?.id ?? null,
+      contractCode: contract?.code ?? null,
+      contractStartDate: contract?.startDate ?? null,
+      contractEndDate: contract?.endDate ?? null,
+      priceListName: contract?.priceListName ?? null,
+      policyNumber: contract?.policyNumber || prev.policyNumber || '',
+      policyClassName: contract?.className || prev.policyClassName || null,
+      groupName: contract?.companyName || contract?.insurancePayerName || prev.groupName || null,
+      payerName: prev.payerName || contract?.insurancePayerName || null
+    }));
+  };
+
   useEffect(() => {
     setPayorPage(0);
   }, [payorSearchKeyword]);
+
+  useEffect(() => {
+    setInsurancePage(0);
+  }, [insuranceSearch]);
 
   useEffect(() => {
     const currentPayorId = patientInsurance?.payorId
@@ -186,14 +327,75 @@ const InsuranceModal = ({
     if (currentPayorId === prevPayorId) return;
 
     setPlanPage(0);
+    setPrevPayorId(currentPayorId);
+
+    if (isContractedCreate) {
+      return;
+    }
 
     setPatientInsurance(prev => ({
       ...prev,
       planId: null
     }));
-
-    setPrevPayorId(currentPayorId);
   }, [patientInsurance?.payorId]);
+
+  useEffect(() => {
+    if (!open || !isContractedCreate) {
+      setAllContractedInsurances([]);
+      return;
+    }
+
+    const incoming = contractedInsurancesResponse?.data ?? [];
+    setAllContractedInsurances(prev => {
+      if (insurancePage === 0) {
+        return incoming;
+      }
+      const seen = new Set(prev.map(item => Number(item.insurancePayerId)));
+      return [
+        ...prev,
+        ...incoming.filter(item => !seen.has(Number(item.insurancePayerId)))
+      ];
+    });
+  }, [contractedInsurancesResponse, insurancePage, open, isContractedCreate]);
+
+  useEffect(() => {
+    if (!open || !isContractedCreate || !selectedInsurancePayerId) {
+      setAllCoverageContracts([]);
+      return;
+    }
+
+    const incoming = coverageContractsResponse?.data ?? [];
+    setAllCoverageContracts(prev => {
+      if (contractPage === 0) {
+        return incoming;
+      }
+      const seen = new Set(prev.map(item => Number(item.id)));
+      return [...prev, ...incoming.filter(item => !seen.has(Number(item.id)))];
+    });
+  }, [coverageContractsResponse, contractPage, open, isContractedCreate, selectedInsurancePayerId]);
+
+  useEffect(() => {
+    if (!isContractedCreate || !selectedInsurancePayerId) {
+      return;
+    }
+
+    const contracts = coverageContractsResponse?.data ?? [];
+    if (
+      contractPage === 0 &&
+      contracts.length === 1 &&
+      !patientInsurance.coverageContractId &&
+      !coverageContractsFetching
+    ) {
+      applyCoverageContract(contracts[0]);
+    }
+  }, [
+    coverageContractsResponse,
+    coverageContractsFetching,
+    contractPage,
+    isContractedCreate,
+    selectedInsurancePayerId,
+    patientInsurance.coverageContractId
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -226,6 +428,12 @@ const InsuranceModal = ({
   const hasMorePayors = payorResponse?.links?.next != null;
   const hasMorePlans = plansResponse?.links?.next != null;
   const hasMoreRelatives = relativesResponse?.links?.next != null;
+  const hasMoreContractedInsurances =
+    contractedInsurancesResponse?.links?.next != null ||
+    Number(contractedInsurancesResponse?.totalCount ?? 0) > allContractedInsurances.length;
+  const hasMoreCoverageContracts =
+    coverageContractsResponse?.links?.next != null ||
+    Number(coverageContractsResponse?.totalCount ?? 0) > allCoverageContracts.length;
 
   const handleLoadMorePayors = () => {
     if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
@@ -241,9 +449,73 @@ const InsuranceModal = ({
     }
   };
 
+  const handleLoadMoreContractedInsurances = () => {
+    if (hasMoreContractedInsurances && !contractedInsurancesFetching) {
+      setInsurancePage(currentPage => currentPage + 1);
+    }
+  };
+
+  const handleLoadMoreCoverageContracts = () => {
+    if (hasMoreCoverageContracts && !coverageContractsFetching) {
+      setContractPage(currentPage => currentPage + 1);
+    }
+  };
+
   const handleSave = async () => {
+    if (isContractedCreate) {
+      if (!patientInsurance.insurancePayerId) {
+        dispatch(
+          notify({
+            msg: 'Select an insurance company that has an active coverage contract.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patientInsurance.coverageContractId) {
+        dispatch(
+          notify({
+            msg: 'Select a coverage contract to link this patient.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patientInsurance.policyNumber) {
+        dispatch(
+          notify({
+            msg: 'Policy number is required.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patientInsurance.expirationDate) {
+        dispatch(
+          notify({
+            msg: 'Expiration date is required.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patientInsurance.memberCardId) {
+        dispatch(
+          notify({
+            msg: 'Member ID is required for non-CCHI insurance.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
     const insuranceBody: PatientInsurance = {
-      ...patientInsurance,
+      ...stripUiOnlyInsuranceFields(patientInsurance),
       patientId: resolvedPatientId
     };
 
@@ -263,34 +535,40 @@ const InsuranceModal = ({
     }
   };
 
-  const handleClearModal = () => {
-    setPatientInsurance({ ...newPatientInsurance });
+  const resetFormState = () => {
+    setPatientInsurance(emptyInsuranceForm());
     setPrevPayorId(undefined);
     setPayorPage(0);
     setPayorSearchKeyword('');
     setPlanPage(0);
+    setInsuranceSearch('');
+    setInsurancePage(0);
+    setAllContractedInsurances([]);
+    setContractPage(0);
+    setAllCoverageContracts([]);
     setRelativePage(0);
     setAllRelatives([]);
+  };
+
+  const handleClearModal = () => {
+    resetFormState();
     onClose();
   };
 
   useEffect(() => {
     if (open) {
-      if (editing && editing.id) {
-        setPatientInsurance(
-          normalizePatientInsuranceFromApi({
+      if (editing) {
+        setPatientInsurance({
+          ...emptyInsuranceForm(),
+          ...normalizePatientInsuranceFromApi({
             ...editing,
-            payorId: Number(editing.payorId),
+            payorId: editing.payorId ? Number(editing.payorId) : null,
             planId: editing.planId ? Number(editing.planId) : null
           })
-        );
-        setPrevPayorId(Number(editing.payorId));
+        });
+        setPrevPayorId(editing.payorId ? Number(editing.payorId) : undefined);
       } else {
-        setPatientInsurance({ ...newPatientInsurance });
-        setPrevPayorId(undefined);
-        setPayorPage(0);
-        setPayorSearchKeyword('');
-        setPlanPage(0);
+        resetFormState();
       }
 
       setRelativePage(0);
@@ -300,13 +578,7 @@ const InsuranceModal = ({
   useEffect(() => {
     if (!open) {
       const resetTimer = setTimeout(() => {
-        setPatientInsurance({ ...newPatientInsurance });
-        setPrevPayorId(undefined);
-        setPayorPage(0);
-        setPayorSearchKeyword('');
-        setPlanPage(0);
-        setRelativePage(0);
-        setAllRelatives([]);
+        resetFormState();
       }, 300);
       return () => clearTimeout(resetTimer);
     }
@@ -330,7 +602,181 @@ const InsuranceModal = ({
     </div>
   );
 
-  const renderPolicySection = () => (
+  const contractedInsuranceOptions = useMemo(
+    () =>
+      allContractedInsurances.map(item => ({
+        ...item,
+        id: item.insurancePayerId,
+        displayName: formatContractedInsuranceLabel(item)
+      })),
+    [allContractedInsurances]
+  );
+
+  const coverageContractOptions = useMemo(
+    () =>
+      allCoverageContracts.map(item => ({
+        ...item,
+        displayName: formatCoverageContractLabel(item)
+      })),
+    [allCoverageContracts]
+  );
+
+  const renderContractedPolicySection = () => (
+    <>
+      <div className="insurance-modal__section-title">Contracted Insurance</div>
+      <Message showIcon type="info" className="insurance-modal__info-banner">
+        <Translate>
+          Choose an insurance company that already has an active coverage contract, then select
+          the contract to link this patient.
+        </Translate>
+      </Message>
+      {!contractedInsurancesLoading &&
+      !contractedInsurancesFetching &&
+      allContractedInsurances.length === 0 ? (
+        <Message showIcon type="warning" className="insurance-modal__info-banner">
+          <Translate>
+            No insurance companies with an active coverage contract were found. Add a coverage
+            contract in Setup first.
+          </Translate>
+        </Message>
+      ) : null}
+      <MyInput
+        column
+        required
+        fieldLabel="Insurance Company"
+        fieldType="selectPagination"
+        fieldName="insurancePayerId"
+        selectData={contractedInsuranceOptions}
+        selectDataLabel="displayName"
+        selectDataValue="insurancePayerId"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+        searchable
+        loading={contractedInsurancesLoading || contractedInsurancesFetching}
+        hasMore={hasMoreContractedInsurances}
+        onFetchMore={handleLoadMoreContractedInsurances}
+        searchKeyWard={insuranceSearch}
+        setSearchKeyWard={setInsuranceSearch}
+        placeholder="Select insurance with a contract..."
+        onSelectItem={(item: any) => {
+          if (!item?.isLoadMore) {
+            applyContractedInsurance(item);
+          }
+        }}
+      />
+      <MyInput
+        column
+        required
+        fieldLabel="Coverage Contract"
+        fieldType="selectPagination"
+        fieldName="coverageContractId"
+        selectData={coverageContractOptions}
+        selectDataLabel="displayName"
+        selectDataValue="id"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing || !patientInsurance.insurancePayerId}
+        searchable
+        loading={coverageContractsLoading || coverageContractsFetching}
+        hasMore={hasMoreCoverageContracts}
+        onFetchMore={handleLoadMoreCoverageContracts}
+        placeholder={
+          !patientInsurance.insurancePayerId
+            ? 'Select insurance company first...'
+            : 'Select coverage contract...'
+        }
+        onSelectItem={(item: any) => {
+          if (!item?.isLoadMore) {
+            applyCoverageContract(item);
+          }
+        }}
+      />
+      {patientInsurance.coverageContractId ? (
+        <div className="insurance-modal__contract-summary">
+          <div>
+            <span>Policy</span>
+            <strong>{patientInsurance.policyNumber || '-'}</strong>
+          </div>
+          <div>
+            <span>Class</span>
+            <strong>
+              {patientInsurance.policyClassName
+                ? formatEnumString(patientInsurance.policyClassName)
+                : '-'}
+            </strong>
+          </div>
+          <div>
+            <span>Contract period</span>
+            <strong>
+              {formatInsuranceDate(patientInsurance.contractStartDate)} →{' '}
+              {formatInsuranceDate(patientInsurance.contractEndDate)}
+            </strong>
+          </div>
+          {patientInsurance.priceListName ? (
+            <div>
+              <span>Price list</span>
+              <strong>{patientInsurance.priceListName}</strong>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      <MyInput
+        column
+        required
+        fieldType="textnumber"
+        fieldLabel="Policy Number"
+        fieldName="policyNumber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="text"
+        fieldLabel="Policy Class"
+        fieldName="policyClassName"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled
+      />
+      <MyInput
+        column
+        fieldType="textnumber"
+        fieldLabel="Group Number"
+        fieldName="groupNumber"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        fieldType="date"
+        fieldLabel="Issue Date"
+        fieldName="issueDate"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+      <MyInput
+        column
+        required
+        fieldType="date"
+        fieldLabel="Expiration Date"
+        fieldName="expirationDate"
+        record={patientInsurance}
+        setRecord={setPatientInsurance}
+        disabled={insuranceBrowsing}
+      />
+    </>
+  );
+
+  const renderPolicySection = () => {
+    if (isContractedCreate) {
+      return renderContractedPolicySection();
+    }
+
+    return (
     <>
       <div className="insurance-modal__section-title">Plan &amp; Policy</div>
       <MyInput
@@ -433,13 +879,15 @@ const InsuranceModal = ({
         disabled={insuranceBrowsing}
       />
     </>
-  );
+    );
+  };
 
   const renderMemberSection = () => (
     <>
       <div className="insurance-modal__section-title">Member &amp; Coverage</div>
       <MyInput
         column
+        required={isContractedCreate}
         fieldType="text"
         fieldLabel="Member ID"
         fieldName="memberCardId"
@@ -447,41 +895,49 @@ const InsuranceModal = ({
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
       />
+      {isContractedCreate ? null : (
+        <>
+          <MyInput
+            column
+            fieldType="text"
+            fieldLabel="Network"
+            fieldName="networkId"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            disabled={insuranceBrowsing}
+          />
+          <MyInput
+            column
+            fieldType="text"
+            fieldLabel="Coverage Type"
+            fieldName="coverageType"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            disabled={insuranceBrowsing}
+          />
+          <MyInput
+            column
+            fieldType="text"
+            fieldLabel="Sponsor Number"
+            fieldName="sponsorNumber"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            disabled={insuranceBrowsing}
+          />
+        </>
+      )}
       <MyInput
         column
-        fieldType="text"
-        fieldLabel="Network"
-        fieldName="networkId"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
-        disabled={insuranceBrowsing}
-      />
-      <MyInput
-        column
-        fieldType="text"
-        fieldLabel="Coverage Type"
-        fieldName="coverageType"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
-        disabled={insuranceBrowsing}
-      />
-      <MyInput
-        column
-        fieldType="text"
+        fieldType={isContractedCreate ? 'select' : 'text'}
         fieldLabel="Relation With Subscriber"
         fieldName="relationWithSubscriber"
+        selectData={relationsLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
         record={patientInsurance}
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
-      />
-      <MyInput
-        column
-        fieldType="text"
-        fieldLabel="Sponsor Number"
-        fieldName="sponsorNumber"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
-        disabled={insuranceBrowsing}
+        searchable={false}
       />
       <MyInput
         column
@@ -638,7 +1094,7 @@ const InsuranceModal = ({
         {renderPolicySection()}
         {renderMemberSection()}
         {renderFinancialSection()}
-        {renderEligibilitySection()}
+        {isContractedCreate ? null : renderEligibilitySection()}
       </Form>
       <div className="insurance-modal__coverage-section">
         {patientInsurance?.planId && <PlanCoverageItemsSection planId={patientInsurance.planId} />}
@@ -658,7 +1114,13 @@ const InsuranceModal = ({
       setOpen={setOpen}
       leftTitle="Benefits Overview"
       rightTitle="Patient Insurance"
-      subRightTitle={editing?.id ? 'Edit Insurance Information' : 'Add New Insurance'}
+      subRightTitle={
+        editing?.id
+          ? 'Edit Insurance Information'
+          : isContractedCreate
+            ? 'Link Contracted Insurance'
+            : 'Add New Insurance'
+      }
       leftContent={<div dir={dir}>{renderLeftContent()}</div>}
       rightContent={<div dir={dir}>{renderRightContent()}</div>}
       actionButtonLabel="Save"

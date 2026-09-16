@@ -1272,6 +1272,7 @@ const MyInput = ({
         return (
           <div ref={pickerRef}>
             <Form.Control
+              name={fieldName}
               style={{
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
@@ -2724,8 +2725,9 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const rawValue = record ? record[fieldName] : '';
-        const displayValue =
+        const formattedValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
+        const displayValue = formattedValue ?? '';
 
         const isPassword = fieldType === 'password';
 

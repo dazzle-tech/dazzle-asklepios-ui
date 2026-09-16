@@ -298,31 +298,67 @@ const NphiesPayerSetup = () => {
     try {
       dispatch(showSystemLoader());
 
-      const {
-        createdDate,
-        lastModifiedDate,
-        facilityName,
-        countryName,
-        cityName,
-        tpas,
-        ...payload
-      } = selectedPayer;
+      const toId = (value: unknown): number | null => {
+        if (value == null || value === '') {
+          return null;
+        }
+        if (typeof value === 'object') {
+          const nested = Number(
+            (value as { id?: unknown; value?: unknown }).id ??
+              (value as { value?: unknown }).value
+          );
+          return Number.isFinite(nested) ? nested : null;
+        }
+        const id = Number(value);
+        return Number.isFinite(id) ? id : null;
+      };
 
-      const uniqueTpaIds = [...new Set(payload.tpaIds ?? [])];
+      const toIdList = (values?: unknown[]) =>
+        [...new Set((values ?? []).map(toId).filter((id): id is number => id != null))];
+
+      const blankToNull = (value?: string | null) => {
+        const text = value?.trim();
+        return text ? text : null;
+      };
+
+      const tpaIds = toIdList(
+        selectedPayer.tpaIds?.length
+          ? selectedPayer.tpaIds
+          : selectedPayer.tpas?.map(tpa => tpa.id)
+      );
+
+      const payload = {
+        nphiesId: selectedPayer.nphiesId.trim(),
+        nameEn: selectedPayer.nameEn.trim(),
+        nameAr: blankToNull(selectedPayer.nameAr),
+        shortName: blankToNull(selectedPayer.shortName),
+        facilityId: toId(selectedPayer.facilityId),
+        insuranceAuthorityLicenseNo: selectedPayer.insuranceAuthorityLicenseNo?.trim(),
+        commercialRegistrationNo: selectedPayer.commercialRegistrationNo?.trim(),
+        vatRegistrationNo: selectedPayer.vatRegistrationNo?.trim(),
+        unifiedNationalNo: blankToNull(selectedPayer.unifiedNationalNo),
+        headOfficeAddress: blankToNull(selectedPayer.headOfficeAddress),
+        countryId: toId(selectedPayer.countryId),
+        cityId: toId(selectedPayer.cityId),
+        postalCode: blankToNull(selectedPayer.postalCode),
+        contactPerson: blankToNull(selectedPayer.contactPerson),
+        phone: selectedPayer.phone.trim(),
+        mobile: blankToNull(selectedPayer.mobile),
+        email: selectedPayer.email.trim(),
+        website: blankToNull(selectedPayer.website),
+        isActive: selectedPayer.isActive,
+        approvalCoverageCompany: blankToNull(selectedPayer.approvalCoverageCompany),
+        tpaIds
+      };
 
       if (selectedPayer.id) {
         await updateNphiesPayer({
           ...payload,
-          tpaIds: uniqueTpaIds,
-          approvalCoverageCompany: payload.approvalCoverageCompany || null
+          id: selectedPayer.id
         }).unwrap();
         dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
       } else {
-        await createNphiesPayer({
-          ...payload,
-          tpaIds: uniqueTpaIds,
-          approvalCoverageCompany: payload.approvalCoverageCompany || null
-        }).unwrap();
+        await createNphiesPayer(payload).unwrap();
         dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
       }
 
@@ -396,7 +432,7 @@ const NphiesPayerSetup = () => {
         className="icons-style"
         title="Link TPAs"
         size={24}
-        fill="var(--deep-blue)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setSelectedPayer({
             ...rowData,
@@ -496,14 +532,6 @@ const NphiesPayerSetup = () => {
       flexGrow: 2,
       render: (rowData: NphiesPayer) => (
         <span>{approvalCoverageCompanyLabel(rowData.approvalCoverageCompany)}</span>
-      )
-    },
-    {
-      key: 'tpas',
-      title: <Translate>Linked TPAs</Translate>,
-      flexGrow: 2,
-      render: (rowData: NphiesPayer) => (
-        <span>{(rowData.tpas ?? []).map(tpa => tpa.name).filter(Boolean).join(', ') || '-'}</span>
       )
     },
     {
